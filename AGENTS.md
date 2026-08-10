@@ -50,7 +50,7 @@ Extension (capture → Drive upload)
 - Vercel project: `bugsnap` (`prj_07vmHWiKLnvJ3EacILxkznfkMIxt`) - production deploy = `vercel deploy --prod`.
 - Cloudflare DNS: `CNAME bugsnap.akusaraproject.my.id → cname.vercel-dns.com` (proxied=false).
 - Vercel CLI auth token lives at `%APPDATA%\xdg.data\com.vercel.cli\auth.json` (NOT `~/.vercel/auth.json`).
-- If a stray `dashboard.*` / `mazway*` domain appears on Vercel or Cloudflare, remove it from both (project domains API + DNS records) - no exceptions.
+- If a stray `dashboard.*` / `bugsnap_db_only` domain appears on Vercel or Cloudflare, remove it from both (project domains API + DNS records) - no exceptions.
 
 ## Non-Negotiable Rules
 
