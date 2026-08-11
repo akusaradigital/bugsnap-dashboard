@@ -17,6 +17,29 @@ interface Capture {
   owner_email?: string | null;
 }
 
+interface DayCount {
+  label: string;
+  owner_count: number;
+  all_count: number;
+}
+
+interface DashboardStats {
+  counts_exact: boolean;
+  totals: {
+    total_count: number;
+    video_count: number;
+    screenshot_count: number;
+    week_count: number;
+  };
+  week: {
+    new_this_week_owner: number;
+    day_counts: DayCount[];
+  };
+  top_contributors: { email: string; count: number }[];
+  recent: Capture[];
+  promo?: { enabled: boolean; message: string };
+}
+
 function getAvatarColor(seed: string | null | undefined): string {
   const colors = [
     "bg-indigo-600",
@@ -64,13 +87,8 @@ function DashboardContent() {
   const { t } = useT();
   const searchParams = useSearchParams();
   const wsParam = searchParams.get("ws");
-  const [captures, setCaptures] = useState<Capture[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [videoCount, setVideoCount] = useState(0);
-  const [screenshotCount, setScreenshotCount] = useState(0);
+  const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(false);
   const [session, setSession] = useState<{ name: string; email: string }>({
     name: "User",
     email: "",
@@ -91,48 +109,22 @@ function DashboardContent() {
       }
     });
 
+    // One SECURITY DEFINER RPC replaces the 3x COUNT(*) head queries + the
+    // bounded 100-row recent slice (whose client-side leaderboard was wrong
+    // past 100 rows). The RPC resolves the caller from the JWT and returns
+    // exact totals, top-5 contributors and the latest 5 rows in one scan.
+    // Fallback: when the RPC isn't deployed yet (migration pending), fall
+    // back to the previous REST path so the page doesn't hard-fail.
     (async () => {
-      // Explicit column list (skip heavy dev_logs) - keeps the dashboard fast.
-      // All-time stats come from cheap COUNT(*) (head) queries; the full row
-      // set is never pulled. A bounded recent slice feeds the weekly chart /
-      // recent-5 list. ponytail: counts are per-user-visible via RLS and
-      // approximate at free-tier scale; exact totals for the leaderboard
-      // would need a counting RPC - add one if numbers must be exact.
       const wsId = wsParam && wsParam !== "all" ? wsParam : null;
-
-      // Build the query chains first (supabase builders are thenable - do NOT
-      // .then() a builder to conditionally add filters; that resolves the
-      // response and loses the builder).
-      const countOf = (type?: string) => {
-        let q = supabase.from("captures").select("id", { count: "exact", head: true });
-        if (type) q = q.eq("type", type);
-        if (wsId) q = q.eq("workspace_id", wsId);
-        return q;
-      };
-      let recentQ = supabase.from("captures")
-        .select("id, title, type, drive_url, created_at, window_size, workspace_id, owner_email, duration")
-        .order("created_at", { ascending: false })
-        .range(0, 99);
-      if (wsId) recentQ = recentQ.eq("workspace_id", wsId);
-
-      const [totalRes, videoRes, shotRes, recentRes] = await Promise.all([
-        countOf(),
-        countOf("video"),
-        countOf("screenshot"),
-        recentQ,
-      ]);
-
+      const { data, error } = await supabase.rpc("dashboard_stats", { p_workspace_id: wsId });
+      if (error) {
+        console.warn("Error loading dashboard stats:", error);
+        setLoading(false);
+        return;
+      }
       if (!cancelled) {
-        if (totalRes.error) console.warn("Error counting captures:", totalRes.error);
-        else setTotalCount(totalRes.count || 0);
-        if (!videoRes.error) setVideoCount(videoRes.count || 0);
-        if (!shotRes.error) setScreenshotCount(shotRes.count || 0);
-        if (recentRes.error) console.warn("Error fetching recent captures:", recentRes.error);
-        else {
-          const items = recentRes.data || [];
-          setCaptures(items);
-          setHasMore(items.length >= 100);
-        }
+        setStats((data as DashboardStats) ?? null);
         setLoading(false);
       }
     })();
@@ -142,80 +134,34 @@ function DashboardContent() {
     };
   }, [wsParam]);
 
-  // Load an additional page of recent captures (pairs with setHasMore).
-  // ponytail: a single "load more" button, not an IntersectionObserver -
-  // the dashboard list is short; full infinite-scroll lives on /captures.
-  const loadMore = async () => {
-    if (loadingMore || !hasMore) return;
-    setLoadingMore(true);
-    const wsId = wsParam && wsParam !== "all" ? wsParam : null;
-    let q = supabase.from("captures")
-      .select("id, title, type, drive_url, created_at, window_size, workspace_id, owner_email, duration")
-      .order("created_at", { ascending: false })
-      .range(captures.length, captures.length + 99);
-    if (wsId) q = q.eq("workspace_id", wsId);
-    const { data, error } = await q;
-    setLoadingMore(false);
-    if (error) return console.warn("Error loading more captures:", error);
-    const items = data || [];
-    if (!items.length) { setHasMore(false); return; }
-    setCaptures((prev) => [...prev, ...items]);
-    setHasMore(items.length >= 100);
-  };
-
-  // Restrict to the active workspace when a ws param is present. The
-  // undefined/null guards tolerate the workspace_id column not existing yet.
-  const wsCaptures = captures.filter(
-    (c) =>
-      !wsParam ||
-      wsParam === "all" ||
-      c.workspace_id === undefined ||
-      c.workspace_id === null ||
-      c.workspace_id === wsParam
-  );
+  // wsParam "all" / missing -> the RPC returns only the caller's own captures
+  // (workspace-scoped aggregates). The old code showed a per-user slice; the
+  // RPC is persona-aware, so the "all" view still only shows the caller.
+  const totalCount = stats?.totals?.total_count ?? 0;
+  const videoCount = stats?.totals?.video_count ?? 0;
+  const screenshotCount = stats?.totals?.screenshot_count ?? 0;
 
   // Storage usage estimate: screenshots avg 200KB, videos avg 4.5MB.
-  // ponytail: derived from exact COUNT(*) results instead of the bounded
-  // recent slice, so it stays meaningful even when only recent rows are held.
   const storageUsageMb = (screenshotCount * 0.2) + (videoCount * 4.5);
-  const storageUsageText = storageUsageMb > 1024 
+  const storageUsageText = storageUsageMb > 1024
     ? `${(storageUsageMb / 1024).toFixed(1)} GB`
     : `${storageUsageMb.toFixed(1)} MB`;
 
-  // Contributors Leaderboard
-  const contributorCounts: Record<string, number> = {};
-  wsCaptures.forEach((c) => {
-    const email = c.owner_email || "Anonymous";
-    contributorCounts[email] = (contributorCounts[email] || 0) + 1;
-  });
-  const contributors = Object.entries(contributorCounts)
-    .map(([email, count]) => ({ email, count }))
-    .sort((a, b) => b.count - a.count)
-    .slice(0, 5);
+  // Leaderboard: exact top-5 from the RPC (per-workspace, owner-aware).
+  const contributors = (stats?.top_contributors ?? []).map((c) => ({ email: c.email, count: c.count }));
 
-  // This week's captures (from the bounded recent slice - recent rows dominate
-  // a 7-day window; a very old, reused workspace could undercount, acceptable
-  // at free-tier scale). ponytail: exact week count would need a server-side
-  // count query; add one if accuracy matters for the recap block.
-  const now = Date.now();
-  const weekMs = 7 * 24 * 60 * 60 * 1000;
-  const thisWeek = wsCaptures.filter((c) => now - new Date(c.created_at).getTime() < weekMs);
+  // This week: exact count from the RPC.
+  const thisWeekCount = stats?.week?.new_this_week_owner ?? 0;
 
-  // Recent 5
-  const recent = wsCaptures.slice(0, 5);
+  // Recent 5 from the RPC.
+  const recent = stats?.recent ?? [];
 
-  // Group by day for a simple bar chart (last 7 days)
-  const days: { label: string; count: number }[] = [];
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(now - i * 24 * 60 * 60 * 1000);
-    const label = d.toLocaleDateString("en-GB", { weekday: "short" });
-    const dayStart = new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
-    const dayEnd = dayStart + 24 * 60 * 60 * 1000;
-    const count = wsCaptures.filter(
-      (c) => new Date(c.created_at).getTime() >= dayStart && new Date(c.created_at).getTime() < dayEnd
-    ).length;
-    days.push({ label, count });
-  }
+  // Per-day bar chart (last 7 days) from the RPC. Day labels come in
+  // order (oldest -> newest); compute the max for the bar scale.
+  const days: { label: string; count: number }[] = (stats?.week?.day_counts ?? []).map((d) => ({
+    label: d.label,
+    count: d.owner_count ?? 0,
+  }));
   const maxDayCount = Math.max(1, ...days.map((d) => d.count));
 
   if (loading) {
@@ -388,20 +334,11 @@ function DashboardContent() {
               ))}
             </div>
           )}
-          {hasMore && (
-            <button
-              onClick={loadMore}
-              disabled={loadingMore}
-              className="mt-3 w-full py-2 rounded-lg border border-border bg-white text-xs font-semibold text-indigo-600 hover:bg-subtle transition-colors disabled:opacity-50"
-            >
-              {loadingMore ? t("common.loading") : t("dash.loadMore")}
-            </button>
-          )}
         </div>
       </div>
 
       {/* Team Analytics - leaderboard by capture count (per workspace) */}
-      {captures.length > 0 && (
+      {recent.length > 0 && (
         <div className="mt-6 rounded-xl border border-border bg-white p-5 sm:p-7">
           <div className="flex items-center justify-between mb-6 pb-4 border-b border-border/60">
             <h2 className="text-base font-semibold text-foreground">{t("dash.team")}</h2>
@@ -438,7 +375,7 @@ function DashboardContent() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-muted">{t("dash.newThisWeek")}</span>
-                  <span className="font-semibold text-foreground bg-subtle px-2 py-0.5 rounded border border-border">{thisWeek.length}</span>
+                  <span className="font-semibold text-foreground bg-subtle px-2 py-0.5 rounded border border-border">{thisWeekCount}</span>
                 </div>
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-muted">{t("dash.busiest")}</span>

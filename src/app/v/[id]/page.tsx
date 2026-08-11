@@ -9,6 +9,7 @@ import Comments from "@/components/Comments";
 import MediaViewer from "@/components/MediaViewer";
 import { useT } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
+import { hasAiSummary, normalizePlan, type Plan } from "@/lib/tiers";
 
 interface Capture {
   id: string;
@@ -97,10 +98,14 @@ function SingleViewContent() {
 
   const [viewerEmail, setViewerEmail] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const [plan, setPlan] = useState<Plan>("free");
   const [brand, setBrand] = useState({ name: "BugSnap", logo: "", hideWatermark: false });
 
   // 1. Initial Access Check (Non-Login default)
   useEffect(() => {
+    // Branding is a per-workspace paid feature stored in workspace_settings.
+    // Legacy localStorage (BugSnap_settings) remains as a fallback for very
+    // old captures/links, but the live table is the source of truth.
     try {
       const savedData = localStorage.getItem("BugSnap_settings");
       if (savedData) {
@@ -122,10 +127,20 @@ function SingleViewContent() {
       return;
     }
 
-    supabase.auth.getSession().then(({ data }) => {
+    supabase.auth.getSession().then(async ({ data }) => {
       if (cancelled) return;
-      setIsAuthenticated(!!data.session?.user);
-      setViewerEmail(data.session?.user?.email ?? null);
+      const u = data.session?.user;
+      setIsAuthenticated(!!u);
+      setViewerEmail(u?.email ?? null);
+      // Plan drives the AI button visibility; users.plan is the source of truth.
+      if (u?.email) {
+        const { data: row } = await supabase
+          .from("users")
+          .select("plan")
+          .ilike("email", u.email)
+          .maybeSingle();
+        if (!cancelled) setPlan(normalizePlan(row?.plan ?? u.user_metadata?.plan));
+      }
     });
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -133,6 +148,32 @@ function SingleViewContent() {
       setIsAuthenticated(!!session?.user);
       setViewerEmail(session?.user?.email ?? null);
     });
+
+    // 1b. Fetch live workspace branding (fire-and-forget; RLS only returns
+    // rows for members, so non-members keep defaults).
+    (async () => {
+      try {
+        const { data: wsRow } = await supabase
+          .from("captures")
+          .select("workspace_id")
+          .eq("id", id)
+          .maybeSingle();
+        if (cancelled || !wsRow?.workspace_id) return;
+        const { data: settingsRow } = await supabase
+          .from("workspace_settings")
+          .select("brand_name, custom_logo_url, hide_watermark")
+          .eq("workspace_id", wsRow.workspace_id)
+          .maybeSingle();
+        if (cancelled) return;
+        setBrand((prev) => ({
+          name: settingsRow?.brand_name || prev.name,
+          logo: settingsRow?.custom_logo_url || prev.logo,
+          hideWatermark: prev.hideWatermark || !!settingsRow?.hide_watermark,
+        }));
+      } catch {
+        // Keep defaults; branding is a best-effort enhancement.
+      }
+    })();
 
     supabase
       .rpc("get_public_capture", { p_id: id, p_password: null })
@@ -176,10 +217,15 @@ function SingleViewContent() {
         } catch {}
 
         if (bypass) {
-          // Force bypass password/domain whitelists for authenticated workspace members
+          // Force bypass password/domain whitelists for authenticated workspace members.
+          // Explicit column list - never `select *`: anon column grants (014) hide
+          // password/expires_at from the public key, and this client only uses the
+          // anonymous key, so the grant is the enforcement boundary here.
           const { data: directData } = await supabase
             .from("captures")
-            .select("*")
+            .select(
+              "id, title, type, drive_url, description, dev_logs, os, browser, site_url, window_size, created_at, workspace_id, tag, status, allowed_domains, allowed_ips, burn_after_read, expires_at"
+            )
             .eq("id", id)
             .single();
           if (directData && !cancelled) {
@@ -237,7 +283,13 @@ function SingleViewContent() {
     let cancelled = false;
     (async () => {
       try {
-        const { error } = await supabase.rpc("record_view", { p_capture_id: id, p_ref: document.referrer || null });
+        // p_ref omitted when not logged in: anonymous viewer_key is derived
+        // from the trusted client IP (014), so a referrer value must never
+        // be part of the key - send it only as metadata for members.
+        const { error } = await supabase.rpc("record_view", {
+          p_capture_id: id,
+          ...(isAuthenticated ? { p_ref: document.referrer || null } : {}),
+        });
         if (error && !cancelled) recordedViewRef.current = null;
       } catch {
         if (!cancelled) recordedViewRef.current = null;
@@ -447,12 +499,21 @@ function SingleViewContent() {
           )}
 
           {status === "ready" && (
-            <button
-              onClick={handleGenerateAiReport}
-              className="px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold hover:bg-indigo-100 transition-colors flex items-center gap-1.5 shadow-sm"
-            >
-              <span>✨ <span className="hidden sm:inline">{t("v.aiBugReport")}</span><span className="sm:hidden">AI</span></span>
-            </button>
+            hasAiSummary(plan) ? (
+              <button
+                onClick={handleGenerateAiReport}
+                className="px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold hover:bg-indigo-100 transition-colors flex items-center gap-1.5 shadow-sm"
+              >
+                <span>✨ <span className="hidden sm:inline">{t("v.aiBugReport")}</span><span className="sm:hidden">AI</span></span>
+              </button>
+            ) : (
+              <Link
+                href="/pricing"
+                className="px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold hover:bg-indigo-100 transition-colors flex items-center gap-1.5 shadow-sm"
+              >
+                <span>✨ <span className="hidden sm:inline">{t("v.aiProPlus")}</span><span className="sm:hidden">AI</span></span>
+              </Link>
+            )
           )}
 
           {/* More Actions Dropdown */}

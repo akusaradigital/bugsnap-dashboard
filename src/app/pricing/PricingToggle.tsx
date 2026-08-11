@@ -12,12 +12,12 @@ const TIERS = [
     href: "https://chrome.google.com/webstore",
     popular: false,
     features: [
+      "5 new captures per week",
       "Unlimited screen & tab recordings (HD)",
       "Automated console & network log capture",
       "Stored in your own Google Drive - full ownership",
-      "Public share links",
+      "Public share links & basic view analytics",
       "Up to 5 team members",
-      "Basic view analytics",
     ],
   },
   {
@@ -33,24 +33,40 @@ const TIERS = [
       "Unlimited team members",
       "Custom branding (logo & name)",
       "Remove the BugSnap watermark",
-      "Slack & Discord alerts",
+      "Slack & Discord webhooks",
       "AI-generated bug summaries",
     ],
   },
   {
-    name: "Business",
+    name: "Pro+",
+    tagline: "More quota, longer videos, priority AI.",
+    monthly: 12,
+    yearly: 9,
+    cta: "Start Free Trial",
+    href: "/login",
+    popular: false,
+    features: [
+      "Everything in Pro",
+      "Larger capture quota",
+      "Extended video length",
+      "Priority AI bug summaries",
+      "Advanced access & analytics",
+    ],
+  },
+  {
+    name: "Enterprise",
     tagline: "For organizations with strict security requirements.",
-    monthly: 10,
-    yearly: 10,
+    monthly: 24,
+    yearly: 20,
     cta: "Contact Sales",
     href: "/contact",
     popular: false,
     features: [
-      "Everything in Pro",
+      "Everything in Pro+",
       "Custom domain for share links",
       "IP & domain access whitelist",
       "Burn-after-reading links",
-      "Priority support & SLA",
+      "Priority support & SLA, SSO-ready",
     ],
   },
 ];
@@ -78,7 +94,7 @@ export function PricingToggle() {
         </span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 items-stretch">
         {TIERS.map((tier) => {
           const price = yearly ? tier.yearly : tier.monthly;
           return (

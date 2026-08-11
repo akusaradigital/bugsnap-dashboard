@@ -13,6 +13,9 @@ export interface ConsoleLog extends TimedLog {
   level?: string;
   message?: string;
   text?: string;
+  // Native Error.stack from the uncaught-exception handler; multi-line
+  // string or literal null (injected_logger.js:227). Absent on other paths.
+  stack?: string | null;
 }
 export interface NetworkLog extends TimedLog {
   type: "network";
@@ -21,6 +24,11 @@ export interface NetworkLog extends TimedLog {
   status?: number;
   resourceType?: string;
   url?: string;
+  statusText?: string;
+  duration?: number; // elapsed ms, injected fetch/XHR logger only
+  requestBody?: string | null; // string|null; absent on webRequest records
+  responseBody?: string;
+  error?: string; // chrome.webRequest details.error (e.g. net::ERR_*)
 }
 export interface ActionLog extends TimedLog {
   type: "step";
@@ -168,15 +176,23 @@ export default function DevToolsPanel({ capture }: Props) {
       : [];
   const summary = summaryOnly ? (capture.dev_logs as DevLogSummary) : null;
 
-  const earliestTimestamp = logs.reduce((min, log) => {
-    const ts = new Date(log.time || log.timestamp || "").getTime();
-    if (Number.isFinite(ts) && (min === 0 || ts < min)) return ts;
-    return min;
+  // Baseline for relative times. Absolute epoch ms wins; "mm:ss" session
+  // times (GAP 3) are relative by nature so they never drive the baseline.
+  const earliestTimestamp = logs.reduce<number>((min, log) => {
+    const raw = log.timestamp;
+    const ts =
+      typeof raw === "number"
+        ? raw
+        : typeof raw === "string" && !/^\d{1,2}:\d{2}$/.test(raw)
+          ? new Date(raw).getTime()
+          : 0;
+    return Number.isFinite(ts) && ts > 0 && (min === 0 || ts < min) ? ts : min;
   }, 0);
 
   const getRelativeTime = (log: TimedLog) => {
     const value = log.time || log.timestamp;
     if (!value) return "-";
+    if (typeof value === "string" && /^\d{1,2}:\d{2}$/.test(value)) return value;
     if (/^[+\d].*(?:ms|s|m|h)$/i.test(value)) return value;
     const ts = new Date(value).getTime();
     if (!Number.isFinite(ts) || earliestTimestamp === 0) return "-";
@@ -213,7 +229,7 @@ export default function DevToolsPanel({ capture }: Props) {
     });
 
   const actionLogs = logs
-    .filter((l): l is ActionLog | NavigationLog => l.type === "step" || l.type === "navigation")
+    .filter((l): l is ActionLog | NavigationLog | ScreenshotLog => l.type === "step" || l.type === "navigation" || l.type === "screenshot")
     .filter((l) => !logSearch || `${l.message || ""} ${"url" in l ? l.url || "" : ""}`.toLowerCase().includes(logSearch.toLowerCase()));
   const groupedNetworkLogs = groupBy(
     networkLogs,
@@ -517,7 +533,18 @@ export default function DevToolsPanel({ capture }: Props) {
                 <div key={i} className={`grid grid-cols-[42px_18px_minmax(0,1fr)_auto] gap-1.5 border-b border-border/70 px-2 py-1.5 text-xs ${isWarn ? "bg-amber-50/60" : level === "error" ? "bg-red-50/60" : "bg-white"}`}>
                   <time className="pt-0.5 text-[9px] tabular-nums text-muted" title={eventTime(log)}>{getRelativeTime(log)}</time>
                   <span className={`pt-0.5 text-center font-bold ${isWarn ? "text-amber-600" : level === "error" ? "text-red-600" : "text-muted"}`} aria-label={level === "error" ? t("dt.consoleError") : `${level} event`} title={level}>{isWarn ? "!" : level === "error" ? "×" : "•"}</span>
-                  <p className="min-w-0 overflow-hidden text-ellipsis break-words leading-4 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]" title={fullText}>{detail}</p>
+                  <div className="min-w-0">
+                    <p className="min-w-0 overflow-hidden text-ellipsis break-words leading-4 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]" title={fullText}>{detail}</p>
+                    {log.type === "console" && log.stack != null && (
+                      <details className="group mt-1">
+                        <summary className="flex list-none cursor-pointer items-center gap-1 text-[9px] font-semibold text-muted hover:text-foreground">
+                          <svg className="w-2 h-2 transition-transform group-open:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+                          {t("dt.stack")}
+                        </summary>
+                        <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-[10px] leading-4 text-red-700/90">{log.stack}</pre>
+                      </details>
+                    )}
+                  </div>
                   {logCount(log) > 1 && <span className="text-[9px] font-semibold text-muted" aria-label={t("dt.repeated", { n: logCount(log) })}>×{logCount(log)}</span>}
                 </div>
               );
@@ -562,16 +589,42 @@ export default function DevToolsPanel({ capture }: Props) {
                     const { domain, path } = networkLocation(log.url);
                     const fullLocation = log.url || domain;
                     return (
-                      <tr key={i} className="group border-b border-border/70 hover:bg-subtle/60">
-                        <td className="px-2 py-1.5 font-mono font-semibold uppercase">{log.method || "GET"}</td>
-                        <td className={`px-1 py-1.5 font-mono font-semibold ${!log.status || log.status >= 400 ? "text-red-600" : log.status < 300 ? "text-emerald-600" : "text-amber-700"}`}>{log.status || "FAILED"}</td>
-                        <td className="truncate px-1 py-1.5 text-muted" title={log.resourceType || "xhr"}>{log.resourceType || "xhr"}</td>
-                        <td className="min-w-0 px-1 py-1.5" title={fullLocation}>
-                          <div className="flex min-w-0 items-center gap-1">
-                            <span className="truncate font-medium">{domain}</span>
-                            {count > 1 && <span className="shrink-0 font-semibold text-muted" aria-label={t("dt.repeated", { n: count })}>×{count}</span>}
-                          </div>
-                          {path && <div className="truncate font-mono text-[9px] text-muted">{path}</div>}
+                      <tr key={i}>
+                        <td colSpan={4} className="p-0">
+                          <details className="group border-b border-border/70 hover:bg-subtle/60" title={fullLocation}>
+                            <summary className="grid list-none cursor-pointer grid-cols-[56px_56px_56px_minmax(0,1fr)] items-center">
+                              <span className="px-2 py-1.5 font-mono font-semibold uppercase">{log.method || "GET"}</span>
+                              <span className={`px-1 py-1.5 font-mono font-semibold ${!log.status || log.status >= 400 ? "text-red-600" : log.status < 300 ? "text-emerald-600" : "text-amber-700"}`}>{log.status || "FAILED"}</span>
+                              <span className="truncate px-1 py-1.5 text-muted" title={log.resourceType || "xhr"}>{log.resourceType || "xhr"}</span>
+                              <span className="min-w-0 px-1 py-1.5">
+                                <span className="flex min-w-0 items-center gap-1">
+                                  <svg className="w-2 h-2 shrink-0 text-muted transition-transform group-open:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
+                                  <span className="truncate font-medium">{domain}</span>
+                                  {count > 1 && <span className="shrink-0 font-semibold text-muted" aria-label={t("dt.repeated", { n: count })}>×{count}</span>}
+                                </span>
+                                {path && <span className="truncate font-mono text-[9px] text-muted">{path}</span>}
+                              </span>
+                            </summary>
+                            <div className="space-y-2 border-t border-border/60 px-3 py-2">
+                              <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] font-mono">
+                                {log.duration != null && <span><span className="text-muted">{t("dt.duration")}:</span> {log.duration}ms</span>}
+                                {log.statusText && <span><span className="text-muted">{t("dt.statusText")}:</span> {log.statusText}</span>}
+                                {log.error && <span className="text-red-600">{t("dt.error")}: {log.error}</span>}
+                              </div>
+                              {log.requestBody != null && (
+                                <div>
+                                  <p className="text-[9px] font-semibold uppercase tracking-wide text-muted">{t("dt.requestBody")}</p>
+                                  <pre className="whitespace-pre-wrap break-words font-mono text-[10px] leading-4 text-foreground/90">{log.requestBody}</pre>
+                                </div>
+                              )}
+                              {log.responseBody && (
+                                <div>
+                                  <p className="text-[9px] font-semibold uppercase tracking-wide text-muted">{t("dt.responseBody")}</p>
+                                  <pre className="whitespace-pre-wrap break-words font-mono text-[10px] leading-4 text-foreground/90">{log.responseBody}</pre>
+                                </div>
+                              )}
+                            </div>
+                          </details>
                         </td>
                       </tr>
                     );
@@ -600,12 +653,18 @@ export default function DevToolsPanel({ capture }: Props) {
                   {actionLogs.map((log, i) => {
                     const isClick = (log.message || "").toLowerCase().includes("click");
                     const isType  = (log.message || "").toLowerCase().includes("type") || (log.message || "").toLowerCase().includes("input");
+                    const isScreenshot = log.type === "screenshot";
                     return (
                       <div key={i} className="flex items-start gap-3 pl-0.5">
                         <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 z-10 border-2 border-white ${
-                          isClick ? "bg-indigo-100" : isType ? "bg-emerald-100" : "bg-subtle"
+                          isScreenshot ? "bg-rose-100" : isClick ? "bg-indigo-100" : isType ? "bg-emerald-100" : "bg-subtle"
                         }`}>
-                          {isClick ? (
+                          {isScreenshot ? (
+                            <svg className="w-4 h-4 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
+                            </svg>
+                          ) : isClick ? (
                             <svg className="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/>
                             </svg>
@@ -623,7 +682,7 @@ export default function DevToolsPanel({ capture }: Props) {
                           <div className="flex items-center gap-2">
                             {eventTime(log) && <span className="text-[10px] text-muted font-mono">{getRelativeTime(log)}</span>}
                           </div>
-                          <p className="text-xs text-foreground leading-relaxed">{log.type === "navigation" ? t("dt.navigateTo", { url: log.url || log.message || "" }) : log.message || ""}</p>
+                          <p className="text-xs text-foreground leading-relaxed">{log.type === "navigation" ? t("dt.navigateTo", { url: log.url || log.message || "" }) : log.type === "screenshot" ? t("dt.screenshotTaken") : log.message || ""}</p>
                         </div>
                       </div>
                     );

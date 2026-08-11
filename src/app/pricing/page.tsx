@@ -4,7 +4,7 @@ import { PricingToggle } from "./PricingToggle";
 
 export const metadata: Metadata = {
   title: "Pricing - BugSnap",
-  description: "BugSnap pricing. Free forever screen recorder and bug reporting tool, with Pro and Business plans for growing teams.",
+  description: "BugSnap pricing. Free forever screen recorder and bug reporting tool, with Pro, Pro+, and Enterprise plans for growing teams.",
 };
 
 export default function PricingPage() {

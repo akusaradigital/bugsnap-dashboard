@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
+import { hasAdvancedAccess, normalizePlan, type Plan } from "@/lib/tiers";
 
 export type CaptureFilter = "all" | "video" | "screenshot";
 
@@ -37,7 +38,7 @@ interface EditModalProps {
   capture: Capture;
   onClose: () => void;
   onSaved: (updated: Capture) => void;
-  userPlan: "free" | "pro";
+  userPlan: Plan;
 }
 
 const EXPIRY_OPTIONS: { value: "never" | "24h" | "7d"; labelKey: string }[] = [
@@ -204,11 +205,17 @@ function EditModal({ capture, onClose, onSaved, userPlan }: EditModalProps) {
         <div className="flex-1 overflow-y-auto px-6 py-4">
           <div className="space-y-4">
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("cap.titleLabel")}</label>
+            <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">
+              <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+              {t("cap.titleLabel")}
+            </label>
             <input className={inputClasses} value={title} onChange={(e) => setTitle(e.target.value)} />
           </div>
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("cap.descLabel")}</label>
+            <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">
+              <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" /><path d="M14 2v6h6" /><path d="M9 13h6M9 17h6" /></svg>
+              {t("cap.descLabel")}
+            </label>
             <textarea
               className={`${inputClasses} min-h-[72px] resize-none`}
               value={description}
@@ -224,7 +231,10 @@ function EditModal({ capture, onClose, onSaved, userPlan }: EditModalProps) {
             <div className="space-y-4">
               {/* Tag */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("cap.tagLabel")}</label>
+                <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">
+              <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12.59 2.59A2 2 0 0 0 11.17 2H4a2 2 0 0 0-2 2v7.17c0 .53.21 1.04.59 1.41l8.83 8.83a2 2 0 0 0 2.83 0l7.17-7.17a2 2 0 0 0 0-2.83Z" /><circle cx="7" cy="7" r="1.5" fill="currentColor" stroke="none" /></svg>
+              {t("cap.tagLabel")}
+            </label>
                 <select
                   className={inputClasses}
                   value={tag}
@@ -238,7 +248,10 @@ function EditModal({ capture, onClose, onSaved, userPlan }: EditModalProps) {
               </div>
               {/* Status */}
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("cap.statusLabel")}</label>
+                <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">
+              <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v3M12 19v3M22 12h-3M5 12H2" /></svg>
+              {t("cap.statusLabel")}
+            </label>
                 <select
                   className={inputClasses}
                   value={status}
@@ -250,7 +263,10 @@ function EditModal({ capture, onClose, onSaved, userPlan }: EditModalProps) {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("cap.passwordLabel")}</label>
+                <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">
+              <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+              {t("cap.passwordLabel")}
+            </label>
                 <input
                   className={inputClasses}
                   type="text"
@@ -260,7 +276,10 @@ function EditModal({ capture, onClose, onSaved, userPlan }: EditModalProps) {
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("cap.expiresLabel")}</label>
+                <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">
+              <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+              {t("cap.expiresLabel")}
+            </label>
                 <div className="inline-flex rounded-lg border border-border bg-subtle p-1 w-full">
                   {EXPIRY_OPTIONS.map((opt) => (
                     <button
@@ -285,21 +304,21 @@ function EditModal({ capture, onClose, onSaved, userPlan }: EditModalProps) {
                 </p>
               </div>
 
-              {/* Advanced Security Upgrades */}
+              {/* Advanced Security (Pro+ and above) */}
               <div className="border-t border-border pt-4 space-y-4">
                 <div className="flex items-center gap-2">
                   <h4 className="text-xs font-semibold text-foreground">{t("cap.advancedProtection")}</h4>
-                  {userPlan === "free" && (
-                    <span className="bg-indigo-100 text-indigo-700 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">{t("cap.proOnly")}</span>
+                  {!hasAdvancedAccess(userPlan) && (
+                    <span className="bg-indigo-100 text-indigo-700 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">{t("cap.proPlusOnly")}</span>
                   )}
                 </div>
 
                 {/* Burn after reading */}
-                <label className={`flex items-center gap-2.5 text-xs text-foreground select-none ${userPlan === "free" ? "opacity-50 cursor-not-allowed" : "cursor-pointer"}`}>
+                <label className={`flex items-center gap-2.5 text-xs text-foreground select-none ${hasAdvancedAccess(userPlan) ? "cursor-pointer" : "opacity-50 cursor-not-allowed"}`}>
                   <input
                     type="checkbox"
                     checked={burnAfterRead}
-                    disabled={userPlan === "free"}
+                    disabled={!hasAdvancedAccess(userPlan)}
                     onChange={(e) => setBurnAfterRead(e.target.checked)}
                     className="w-4 h-4 rounded border-border text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
                   />
@@ -317,9 +336,9 @@ function EditModal({ capture, onClose, onSaved, userPlan }: EditModalProps) {
                   <input
                     type="text"
                     value={allowedDomainsText}
-                    disabled={userPlan === "free"}
+                    disabled={!hasAdvancedAccess(userPlan)}
                     onChange={(e) => setAllowedDomainsText(e.target.value)}
-                    placeholder={userPlan === "free" ? t("cap.domainPlaceholderFree") : t("cap.domainPlaceholder")}
+                    placeholder={hasAdvancedAccess(userPlan) ? t("cap.domainPlaceholder") : t("cap.domainPlaceholderFree")}
                     className={`${inputClasses} disabled:bg-subtle disabled:text-muted/60 disabled:cursor-not-allowed`}
                   />
                   <p className="text-[9px] text-muted leading-tight mt-1">{t("cap.domainHint")}</p>
@@ -333,9 +352,9 @@ function EditModal({ capture, onClose, onSaved, userPlan }: EditModalProps) {
                   <input
                     type="text"
                     value={allowedIpsText}
-                    disabled={userPlan === "free"}
+                    disabled={!hasAdvancedAccess(userPlan)}
                     onChange={(e) => setAllowedIpsText(e.target.value)}
-                    placeholder={userPlan === "free" ? t("cap.ipPlaceholderFree") : t("cap.ipPlaceholder")}
+                    placeholder={hasAdvancedAccess(userPlan) ? t("cap.ipPlaceholder") : t("cap.ipPlaceholderFree")}
                     className={`${inputClasses} disabled:bg-subtle disabled:text-muted/60 disabled:cursor-not-allowed`}
                   />
                   <p className="text-[9px] text-muted leading-tight mt-1">{t("cap.ipHint")}</p>
@@ -393,7 +412,7 @@ function CapturesContent() {
   const [driveNotConnected, setDriveNotConnected] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [thumbFailed, setThumbFailed] = useState<Record<string, boolean>>({});
-  const [userPlan, setUserPlan] = useState<"free" | "pro">("free");
+  const [userPlan, setUserPlan] = useState<Plan>("free");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [activeHoverId, setActiveHoverId] = useState<string | null>(null);
   const [shortcutCopied, setShortcutCopied] = useState(false);
@@ -424,7 +443,7 @@ function CapturesContent() {
     supabase.auth.getSession().then(async ({ data }) => {
       const u = data.session?.user;
       if (!u) return;
-      let plan = (u.user_metadata?.plan || "free") as "free" | "pro";
+      let plan: Plan = normalizePlan(u.user_metadata?.plan);
       // Prefer plan from public.users (source of truth via Stripe webhook)
       if (u.email) {
         const { data: userRow } = await supabase
@@ -432,7 +451,7 @@ function CapturesContent() {
           .select("plan")
           .ilike("email", u.email)
           .maybeSingle();
-        if (userRow?.plan === "pro") plan = "pro";
+        if (userRow?.plan) plan = normalizePlan(userRow.plan);
       }
       setUserPlan(plan);
     });
@@ -450,7 +469,12 @@ function CapturesContent() {
   const PAGE_SIZE = 12;
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const pageRef = useRef(0);
+  // Keyset cursor: the last row of the loaded set, (created_at, id). Filters
+  // like wsParam/folderParam change the sort context, so a cursor from one
+  // filter is invalid under another - reset it whenever they change. NULL
+  // means "start at the newest". (created_at,id) is an exact tiebreak for
+  // the captures_ws_created_idx sort.
+  const cursorRef = useRef<{ created_at: string; id: string } | null>(null);
   // Bumped on every filter change; in-flight loadPage() from an old filter
   // that resolves afterwards is discarded (no stale append to the new list).
   const loadGenRef = useRef(0);
@@ -461,20 +485,24 @@ function CapturesContent() {
     "id, title, type, drive_url, created_at, window_size, workspace_id, folder_name, tag, status, expires_at, password, duration, owner_email, burn_after_read";
 
   const loadPage = useCallback(
-    async (pageToLoad: number, replace: boolean) => {
+    async (replace: boolean) => {
       const gen = loadGenRef.current;
-      const from = pageToLoad * PAGE_SIZE;
-      const to = from + PAGE_SIZE - 1;
       let query = supabase
         .from("captures")
         .select(CAPTURES_COLUMNS)
         .order("created_at", { ascending: false })
-        .range(from, to);
+        .limit(PAGE_SIZE);
       if (wsParam && wsParam !== "all") {
         query = query.eq("workspace_id", wsParam);
       }
       if (folderParam) {
         query = query.eq("folder_name", folderParam);
+      }
+      const cursor = cursorRef.current;
+      if (cursor) {
+        query = query
+          .lt("created_at", cursor.created_at)
+          .or(`and(created_at.eq.${cursor.created_at},id.lt.${cursor.id})`);
       }
       const { data, error } = await query;
       // Stale response for a filter that changed mid-flight - drop it.
@@ -486,6 +514,10 @@ function CapturesContent() {
       }
       const items = data || [];
       setCaptures((prev) => (replace ? items : [...prev, ...items]));
+      if (items.length > 0) {
+        const last = items[items.length - 1];
+        cursorRef.current = { created_at: last.created_at, id: last.id };
+      }
       setHasMore(items.length === PAGE_SIZE);
     },
     [wsParam, folderParam]
@@ -494,38 +526,17 @@ function CapturesContent() {
   // Initial load + reload on workspace / folder change
   useEffect(() => {
     let cancelled = false;
-    pageRef.current = 0;
+    cursorRef.current = null;
     loadGenRef.current += 1;
     setLoadingMore(false);
     setLoading(true);
-    (async () => {
-      const from = 0;
-      const to = PAGE_SIZE - 1;
-      let query = supabase
-        .from("captures")
-        .select(CAPTURES_COLUMNS)
-        .order("created_at", { ascending: false })
-        .range(from, to);
-      if (wsParam && wsParam !== "all") {
-        query = query.eq("workspace_id", wsParam);
-      }
-      if (folderParam) {
-        query = query.eq("folder_name", folderParam);
-      }
-      const { data, error } = await query;
-      if (error) {
-        console.warn("Error fetching captures:", error);
-        setHasMore(false);
-      } else if (!cancelled) {
-        setCaptures(data || []);
-        setHasMore((data || []).length === PAGE_SIZE);
-      }
+    loadPage(true).finally(() => {
       if (!cancelled) setLoading(false);
-    })();
+    });
     return () => {
       cancelled = true;
     };
-  }, [wsParam, folderParam]);
+  }, [wsParam, folderParam, loadPage]);
 
   // IntersectionObserver: Callback Ref to safely load more when the sentinel enters the viewport
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -538,8 +549,7 @@ function CapturesContent() {
         (entries) => {
           if (entries[0].isIntersecting && hasMore && !loadingMore) {
             setLoadingMore(true);
-            pageRef.current += 1;
-            loadPage(pageRef.current, false).finally(() => setLoadingMore(false));
+            loadPage(false).finally(() => setLoadingMore(false));
           }
         },
         { rootMargin: "300px" }

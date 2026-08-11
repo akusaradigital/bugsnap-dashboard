@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { createServiceClient } from "@/lib/supabase-server";
+import { getAuthenticatedUser } from "@/lib/supabase-server";
+import { hasAiSummary, normalizePlan } from "@/lib/tiers";
 
 interface DevLog {
   type: string;
@@ -26,12 +27,19 @@ interface DevLogSummary {
 export const runtime = "nodejs"; // fetch to OpenAI works in edge too, but nodejs is safest
 
 export async function POST(req: Request) {
-  const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-  if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
   try {
-    const { data: { user }, error } = await createServiceClient().auth.getUser(token);
-    if (error || !user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const user = await getAuthenticatedUser(req);
+    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    // AI bug summary is a Pro+ entitlement. Enforced server-side: a Free/Pro
+    // user (or someone calling the route directly) gets a hard 403, never the
+    // summary. The client hides the button, but the server is authoritative.
+    if (!hasAiSummary(normalizePlan(user.plan))) {
+      return NextResponse.json(
+        { error: "plan_required", required: "pro_plus" },
+        { status: 403 }
+      );
+    }
 
     const body: unknown = await req.json();
     if (!body || typeof body !== "object") {

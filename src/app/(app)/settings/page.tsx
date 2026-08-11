@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
+import { hasBranding, normalizePlan, type Plan } from "@/lib/tiers";
 
 export default function SettingsPage() {
   const { t } = useT();
@@ -14,7 +15,8 @@ export default function SettingsPage() {
   const [logoUrl, setLogoUrl] = useState("");
   const [hideWatermark, setHideWatermark] = useState(false);
   const [customDomain, setCustomDomain] = useState("");
-  const [userPlan, setUserPlan] = useState<"free" | "pro">("free");
+  const [userPlan, setUserPlan] = useState<Plan>("free");
+  const [autoDeleteMonths, setAutoDeleteMonths] = useState(3);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -55,7 +57,7 @@ export default function SettingsPage() {
       const u = data.session?.user;
       if (!u) return;
 
-      let plan = (u.user_metadata?.plan || "free") as "free" | "pro";
+      let plan: Plan = normalizePlan(u.user_metadata?.plan);
       // Prefer plan from public.users (source of truth via Stripe webhook)
       if (u.email) {
         const { data: userRow } = await supabase
@@ -63,7 +65,7 @@ export default function SettingsPage() {
           .select("plan")
           .ilike("email", u.email)
           .maybeSingle();
-        if (userRow?.plan === "pro") plan = "pro";
+        if (userRow?.plan) plan = normalizePlan(userRow.plan);
       }
       setUserPlan(plan);
 
@@ -80,6 +82,7 @@ export default function SettingsPage() {
             setLogoUrl(row.custom_logo_url || "");
             setHideWatermark(!!row.hide_watermark);
             setCustomDomain(row.custom_domain || "");
+            setAutoDeleteMonths(row.auto_delete_months ?? 3);
           });
       }
     });
@@ -151,17 +154,43 @@ export default function SettingsPage() {
       if (!activeWsId) {
         throw new Error(t("settings.noWs"));
       }
+      const canBrand = hasBranding(normalizePlan(userPlan));
+      // Server-side branding gate (mirrored by the disabled inputs): a Free
+      // caller is stripped of PRO-only fields before the upsert so they can
+      // never write brand_name / logo / watermark / domain even if the inputs
+      // are bypassed. Webhook (webhook_url) stays available on all tiers.
       const { error } = await supabase.from("workspace_settings").upsert({
         workspace_id: activeWsId,
         webhook_url: webhookUrl.trim(),
-        brand_name: brandName.trim() || "BugSnap",
-        custom_logo_url: logoUrl.trim(),
-        hide_watermark: hideWatermark,
-        custom_domain: customDomain.trim(),
+        brand_name: canBrand ? brandName.trim() || "BugSnap" : "BugSnap",
+        custom_logo_url: canBrand ? logoUrl.trim() : "",
+        hide_watermark: canBrand ? hideWatermark : false,
+        custom_domain: canBrand ? customDomain.trim() : "",
+        auto_delete_months: [0, 3, 6, 12].includes(autoDeleteMonths) ? autoDeleteMonths : 3,
       });
       if (error) throw error;
       setSaved(true);
       setTimeout(() => setSaved(false), 3000);
+
+      // Light auto-delete: drain expired captures in bounded batches. Only
+      // runs when retention is on (0 = Never). Best-effort — the RPC may not
+      // exist yet on a bare schema (T-012), so failures are silent and never
+      // block the save confirmation.
+      if (autoDeleteMonths !== 0) {
+        try {
+          // Cap total work so a huge backlog never blocks the tab.
+          for (let i = 0; i < 20; i++) {
+            const { data, error: rpcError } = await supabase.rpc("delete_expired_captures", {
+              p_workspace_id: activeWsId,
+              p_batch_limit: 100,
+            });
+            if (rpcError) break; // 404 / permission — silent
+            if (!data || Number(data) <= 0) break;
+          }
+        } catch {
+          // never surface retention failure in the settings UI
+        }
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : t("settings.failedSave");
       setError(msg);
@@ -212,6 +241,33 @@ export default function SettingsPage() {
       </div>
 
       <form onSubmit={handleSave} className="space-y-6">
+        {/* Section 0: Auto Delete History (retention) */}
+        <div className="rounded-xl border border-border bg-white p-6 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
+            <div>
+              <h2 className="text-base font-semibold text-foreground">{t("settings.retentionTitle")}</h2>
+              <p className="text-xs text-muted">{t("settings.retentionHint")}</p>
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+            <label className="text-sm font-medium text-foreground">
+              {t("settings.retentionLabel")}
+            </label>
+            <select
+              value={autoDeleteMonths}
+              onChange={(e) => setAutoDeleteMonths(Number(e.target.value))}
+              className="w-full sm:w-40 text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-white"
+            >
+              {[0, 3, 6, 12].map((m) => (
+                <option key={m} value={m}>
+                  {m === 0 ? t("settings.retentionNever") : t("settings.retentionMonths", { months: m })}
+                </option>
+              ))}
+            </select>
+          </div>
+          <p className="text-[11px] text-muted">{t("settings.retentionDisabled")}</p>
+        </div>
+
         {/* Section 1: Integrations */}
         <div className="rounded-xl border border-border bg-white p-6 space-y-4">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">

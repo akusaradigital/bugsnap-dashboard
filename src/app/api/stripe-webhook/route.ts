@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-server";
+import { isPlan } from "@/lib/tiers";
 
 export const runtime = "nodejs";
 
@@ -40,16 +41,28 @@ export async function POST(req: NextRequest) {
   }
   if (event.type !== "checkout.session.completed") return NextResponse.json({ received: true });
 
-  const object = (event as { data?: { object?: { customer_details?: { email?: unknown }; customer_email?: unknown } } }).data?.object;
+  const object = (event as {
+    data?: { object?: {
+      customer_details?: { email?: unknown };
+      customer_email?: unknown;
+      metadata?: { plan?: unknown };
+    } };
+  }).data?.object;
   const rawEmail = object?.customer_details?.email ?? object?.customer_email;
   if (typeof rawEmail !== "string" || !rawEmail.trim() || rawEmail.length > 320) {
     return NextResponse.json({ error: "Checkout session has no valid customer email" }, { status: 400 });
   }
 
+  // Tier comes from the checkout session's plan metadata (set at session
+  // creation), not a client-supplied field. Fall back to "pro" so the old
+  // behaviour holds until session creation sets metadata.
+  const rawPlan = object?.metadata?.plan;
+  const plan = typeof rawPlan === "string" && isPlan(rawPlan) ? rawPlan : "pro";
+
   try {
     const { error } = await createServiceClient()
       .from("users")
-      .update({ plan: "pro" })
+      .update({ plan })
       .eq("email", rawEmail.trim().toLowerCase());
     if (error) throw error;
     return NextResponse.json({ received: true });

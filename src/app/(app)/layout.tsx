@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
+import { normalizePlan, seatLimit, tierLabel, type Plan } from "@/lib/tiers";
 
 const navItems = [
   { labelKey: "nav.dashboard", href: "/dashboard", icon: "📊" },
@@ -75,7 +76,7 @@ export default function DashboardLayout({
 
   const [session, setSession] = useState<{
     loading: boolean;
-    user: null | { id: string; email: string; name: string; avatar: string; plan: "free" | "pro" };
+    user: null | { id: string; email: string; name: string; avatar: string; plan: Plan };
     suspended?: boolean;
   }>({ loading: true, user: null });
   const [billingModalOpen, setBillingModalOpen] = useState(false);
@@ -100,13 +101,13 @@ export default function DashboardLayout({
         const lastSeenMs = notifLastSeen || Date.now() - 7 * 24 * 60 * 60 * 1000;
         const since = new Date(lastSeenMs).toISOString();
         // One SECURITY DEFINER RPC joins comments to the caller's captures and
-        // counts rows newer than `since` - no unbounded fetch-every-id +
-        // oversized .in() on every 60s tick. ponytail: the RPC counts comments
-        // on the caller's own captures; workspace-shared visibility adds
-        // policy complexity - covered by RLS if it's ever needed.
-        const { count, error } = await supabase.rpc("count_unseen_comments", { p_since: since });
+        // checks EXISTS() for rows newer than `since` - no unbounded
+        // fetch-every-id + oversized .in() on every 60s tick (T-022). The
+        // badge only needs "new or not", so the RPC returns boolean and the
+        // index scan stops at the first match.
+        const { data: hasNew, error } = await supabase.rpc("count_unseen_comments", { p_since: since });
         if (error) throw error;
-        if (!cancelled) setNewCommentCount(count ?? 0);
+        if (!cancelled) setNewCommentCount(hasNew ? 1 : 0);
       } catch (error) {
         console.warn("Failed to load notifications:", error);
       }
@@ -148,7 +149,7 @@ export default function DashboardLayout({
       
       // Read the plan from public.users (source of truth updated by the
       // Stripe webhook) so upgrades take effect immediately without re-login.
-      let dbPlan: "free" | "pro" = (meta.plan || "free") as "free" | "pro";
+      let dbPlan: Plan = normalizePlan(meta.plan);
       let suspended = false;
       if (userEmail) {
         const { data: userRow } = await supabase
@@ -156,7 +157,9 @@ export default function DashboardLayout({
           .select("plan, suspended")
           .ilike("email", userEmail)
           .maybeSingle();
-        if (userRow?.plan === "pro") dbPlan = "pro";
+        // users.plan is the source of truth (Stripe webhook writes it). Fall
+        // back to auth metadata only as a bootstrap for pre-webhook accounts.
+        if (userRow?.plan) dbPlan = normalizePlan(userRow.plan);
         if (userRow?.suspended) suspended = true;
       }
 
@@ -453,21 +456,15 @@ export default function DashboardLayout({
     }
 
     try {
-      // 1. Update folder name in workspace_folders table
-      const { error: folderErr } = await supabase
-        .from("workspace_folders")
-        .update({ name: newName })
-        .eq("workspace_id", activeWsId)
-        .eq("name", folderToRename);
-      if (folderErr) throw folderErr;
-
-      // 2. Update captures table records matching this folder
-      const { error: capErr } = await supabase
-        .from("captures")
-        .update({ folder_name: newName })
-        .eq("workspace_id", activeWsId)
-        .eq("folder_name", folderToRename);
-      if (capErr) throw capErr;
+      // Single-source-of-truth RPC: validates the name (btrim, 1-200 chars,
+      // owner-only) and renames workspace_folders + captures atomically.
+      // Previously two raw .update() calls bypassed that contract.
+      const { error } = await supabase.rpc("rename_workspace_folder", {
+        p_workspace_id: activeWsId,
+        p_old_name: folderToRename,
+        p_new_name: newName,
+      });
+      if (error) throw error;
 
       // 3. Update local state
       setFolders((prev) =>
@@ -622,8 +619,9 @@ export default function DashboardLayout({
     const email = inviteEmail.trim();
     if (!email || !activeWsId || inviting) return;
 
-    // SaaS Seats Limit: Max 5 members on Free tier
-    if (currentUser.plan === "free" && activeMembers.length >= 4) {
+    // SaaS Seats Limit: Free tier is capped (owner + 4). Pro+ is unlimited.
+    const cap = seatLimit(currentUser.plan);
+    if (cap !== null && activeMembers.length >= cap) {
       setInviteError(t("layout.seatLimit"));
       return;
     }
@@ -1054,7 +1052,7 @@ export default function DashboardLayout({
         </nav>
 
         {/* SaaS Upgrade CTA (Free tier only) */}
-        {currentUser.plan !== "pro" && (
+        {currentUser.plan === "free" && (
           <div className="px-4 py-3 mx-3 mb-3 bg-indigo-50 border border-indigo-100 rounded-xl">
             <h5 className="text-[11px] font-bold text-indigo-900 tracking-wide uppercase">{t("layout.upgradeToPro")}</h5>
             <p className="text-[10px] text-indigo-700 leading-tight mt-1 mb-2.5">{t("layout.upgradeDesc")}</p>
@@ -1083,9 +1081,9 @@ export default function DashboardLayout({
             <div className="text-sm min-w-0 flex-1">
               <div className="flex items-center gap-1.5 min-w-0">
                 <p className="font-medium text-foreground truncate">{currentUser.name}</p>
-                {currentUser.plan === "pro" && (
+                {currentUser.plan !== "free" && (
                   <span className="bg-indigo-600 text-white text-[9px] font-bold px-1.5 py-0 rounded inline-flex items-center justify-center leading-none h-[15px] shrink-0 uppercase tracking-wide">
-                    PRO
+                    {tierLabel(currentUser.plan)}
                   </span>
                 )}
               </div>
@@ -1223,7 +1221,8 @@ export default function DashboardLayout({
         </div>
       )}
 
-      {/* Billing / Upgrade Modal */}
+      {/* Upgrade CTA — read-only; upgrades activate via the Stripe webhook
+          (checkout.session.completed → users.plan). No client-side plan flip. */}
       {billingModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setBillingModalOpen(false)} />
@@ -1233,57 +1232,16 @@ export default function DashboardLayout({
               {t("layout.upgradeSub")}
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-              <div className="p-4 rounded-xl border border-border bg-subtle text-left">
-                <span className="text-[10px] font-bold text-muted uppercase tracking-wider">{t("layout.freePlan")}</span>
-                <p className="text-2xl font-extrabold text-foreground mt-1">$0</p>
-                <ul className="text-[11px] text-muted space-y-1.5 mt-3">
-                  <li>• {t("layout.free1")}</li>
-                  <li>• {t("layout.free2")}</li>
-                  <li>• {t("layout.free3")}</li>
-                </ul>
-              </div>
-              <div className="p-4 rounded-xl border-2 border-indigo-500 bg-indigo-50/40 text-left relative overflow-hidden">
-                <span className="absolute top-1.5 right-1.5 bg-indigo-600 text-white text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded">{t("layout.popular")}</span>
-                <span className="text-[10px] font-bold text-indigo-600 uppercase tracking-wider">{t("layout.proPlan")}</span>
-                <p className="text-2xl font-extrabold text-foreground mt-1">$5<span className="text-xs font-normal text-muted">/mo</span></p>
-                <ul className="text-[11px] text-indigo-950 space-y-1.5 mt-3">
-                  <li>• {t("layout.pro1")}</li>
-                  <li>• {t("layout.pro2")}</li>
-                  <li>• {t("layout.pro3")}</li>
-                  <li>• {t("layout.pro4")}</li>
-                </ul>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
-              <button
-                onClick={() => setBillingModalOpen(false)}
-                className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors"
-              >
-                {t("common.cancel")}
-              </button>
-              <button
-                onClick={async () => {
-                  try {
-                    // Update user metadata in Supabase auth to simulate payment success
-                    const { error } = await supabase.auth.updateUser({
-                      data: { plan: "pro" }
-                    });
-                    if (error) throw error;
-                    setBillingModalOpen(false);
-                    // Reload window to re-fetch session with metadata
-                    window.location.reload();
-                  } catch (err) {
-                    console.warn("Upgrade error:", err);
-                    showToast(t("layout.errMockCheckout"), "error");
-                  }
-                }}
-                className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors shadow-sm"
-              >
-                {t("layout.mockUpgrade")}
-              </button>
-            </div>
+            <Link
+              href="/pricing"
+              onClick={() => setBillingModalOpen(false)}
+              className="block w-full rounded-lg bg-indigo-600 text-white text-sm font-semibold px-6 py-3 hover:bg-indigo-700 transition-colors shadow-sm"
+            >
+              {t("layout.upgradeToPro")}
+            </Link>
+            <p className="text-[11px] text-muted mt-3">
+              {t("layout.upgradeViaStripe")}
+            </p>
           </div>
         </div>
       )}

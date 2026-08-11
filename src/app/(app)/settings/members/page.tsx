@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
+import { normalizePlan, seatLimit, type Plan } from "@/lib/tiers";
 
 interface Member {
   user_id: string;
@@ -27,6 +28,8 @@ export default function TeamManagementPage() {
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviting, setInviting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [plan, setPlan] = useState<Plan>("free");
+  const cap = seatLimit(plan); // null on PRO+ = unlimited
 
   useEffect(() => {
     let cancelled = false;
@@ -48,6 +51,21 @@ export default function TeamManagementPage() {
       cancelled = true;
     };
   }, [t]);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(async ({ data }) => {
+      const u = data.session?.user;
+      if (!u?.email) return;
+      let p: Plan = normalizePlan(u.user_metadata?.plan);
+      const { data: row } = await supabase
+        .from("users")
+        .select("plan")
+        .ilike("email", u.email)
+        .maybeSingle();
+      if (row?.plan) p = normalizePlan(row.plan);
+      setPlan(p);
+    });
+  }, []);
 
   useEffect(() => {
     if (!activeWsId) return;
@@ -72,6 +90,11 @@ export default function TeamManagementPage() {
   async function handleInvite() {
     const email = inviteEmail.trim();
     if (!email || !activeWsId || inviting) return;
+    // Free tier seat cap (owner + 4). Pro+ is unlimited.
+    if (cap !== null && members.length >= cap) {
+      setError(t("members.seatLimit", { cap }));
+      return;
+    }
     setInviting(true);
     setError(null);
     try {
@@ -147,16 +170,20 @@ export default function TeamManagementPage() {
             onChange={(e) => setInviteEmail(e.target.value)}
             placeholder="teammate@company.com"
             onKeyDown={(e) => e.key === "Enter" && handleInvite()}
-            className="flex-1 text-sm rounded-lg border border-border px-3.5 py-2.5 outline-none focus:border-indigo-500 bg-white"
+            disabled={cap !== null && members.length >= cap}
+            className="flex-1 text-sm rounded-lg border border-border px-3.5 py-2.5 outline-none focus:border-indigo-500 bg-white disabled:bg-subtle disabled:cursor-not-allowed"
           />
           <button
             onClick={handleInvite}
-            disabled={inviting || !inviteEmail.trim()}
+            disabled={inviting || !inviteEmail.trim() || (cap !== null && members.length >= cap)}
             className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
           >
             {inviting ? t("members.inviting") : t("members.invite")}
           </button>
         </div>
+        {cap !== null && members.length >= cap && (
+          <p className="text-xs text-indigo-600 mt-2">{t("members.seatLimit", { cap })}</p>
+        )}
         {error && <p className="text-xs text-red-600 mt-2">{error}</p>}
       </div>
 

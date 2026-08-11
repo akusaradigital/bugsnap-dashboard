@@ -11,13 +11,33 @@ export async function POST(req: Request) {
     }
 
     const { comment } = body;
-    const { capture_id, author_name, body: commentBody } = comment;
+    const { capture_id, author_name, body: commentBody, id: commentId } =
+      comment as { capture_id?: unknown; author_name?: unknown; body?: string; id?: string };
 
-    if (!capture_id || !commentBody) {
+    if (!capture_id || typeof commentBody !== "string" || typeof commentId !== "string") {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
     }
 
     const supabase = createServiceClient();
+
+    // Only a comment that actually exists in the DB, on this capture, with a
+    // matching body, and created just now may trigger emails. Without this
+    // check any anonymous caller who knows a capture id (share URLs are
+    // public) could email-bomb the workspace owner / members with fabricated
+    // comments and @mentions. post_comment's rate limit still governs posting.
+    const { data: saved, error: savedError } = await supabase
+      .from("comments")
+      .select("id, capture_id, body, created_at")
+      .eq("id", commentId)
+      .eq("capture_id", capture_id)
+      .maybeSingle();
+    if (savedError || !saved) {
+      return NextResponse.json({ error: "Comment not found" }, { status: 404 });
+    }
+    const commentAgeMs = Date.now() - new Date(saved.created_at).getTime();
+    if (saved.body !== commentBody || commentAgeMs < 0 || commentAgeMs > 5 * 60_000) {
+      return NextResponse.json({ error: "Comment is stale or body mismatch" }, { status: 400 });
+    }
 
     // 1. Get capture to know workspace_id and title
     const { data: capture, error: captureError } = await supabase

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
 
-// Turnstile anti-bot config â€” widget + managed siteverify Worker (Spin).
+// Turnstile anti-bot config — widget + managed siteverify Worker (Spin).
 const TURNSTILE_SITEKEY = "0x4AAAAAAEKHTA3AvZpK27ig";
 const TURNSTILE_WORKER = "https://turnstile-siteverify-bugsnap.akusaraproject.workers.dev";
 
@@ -213,47 +213,34 @@ export default function Comments({
 
   useEffect(() => {
     let cancelled = false;
+    let timer: ReturnType<typeof setInterval> | null = null;
 
-    supabase
-      .from("comments")
-      .select("id, capture_id, parent_id, author_name, body, video_timestamp, created_at")
-      .eq("capture_id", captureId)
-      .order("created_at", { ascending: true })
-      .then(({ data, error }) => {
-        if (cancelled) return;
-        setLoading(false);
-        if (error) {
-          setError(t("cm.errorLoad"));
-          return;
-        }
-        setComments((data as CommentRow[]) ?? []);
-      });
+    // Refetch the thread: first load + a 30s poll while the tab is open.
+    // The 30s poll replaces the Realtime postgres_changes channel - free-tier
+    // Realtime caps at 200 concurrent connections, and one channel per video
+    // tab exhausts it (T-022). New comments appear within 30s, which is
+    // ample for a comment thread.
+    const load = async () => {
+      const { data, error } = await supabase
+        .from("comments")
+        .select("id, capture_id, parent_id, author_name, body, video_timestamp, created_at")
+        .eq("capture_id", captureId)
+        .order("created_at", { ascending: true });
+      if (cancelled) return;
+      setLoading(false);
+      if (error) {
+        setError(t("cm.errorLoad"));
+        return;
+      }
+      setComments((data as CommentRow[]) ?? []);
+    };
 
-    // Live updates: new comments only. Requires Realtime on the comments
-    // table (see header of supabase/002_comments.sql).
-    const channel = supabase
-      .channel(`comments-${captureId}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "comments",
-          filter: `capture_id=eq.${captureId}`,
-        },
-        (payload) => {
-          const row = payload.new as CommentRow;
-          if (!row?.id) return;
-          setComments((prev) =>
-            prev.some((c) => c.id === row.id) ? prev : [...prev, row]
-          );
-        }
-      )
-      .subscribe();
+    load();
+    timer = setInterval(load, 30_000);
 
     return () => {
       cancelled = true;
-      supabase.removeChannel(channel);
+      if (timer) clearInterval(timer);
     };
   }, [captureId, t]);
 
