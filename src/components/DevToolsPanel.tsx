@@ -8,15 +8,15 @@ interface TimedLog {
   timestamp?: string;
   count?: number;
 }
+
 export interface ConsoleLog extends TimedLog {
   type: "console";
   level?: string;
   message?: string;
   text?: string;
-  // Native Error.stack from the uncaught-exception handler; multi-line
-  // string or literal null (injected_logger.js:227). Absent on other paths.
   stack?: string | null;
 }
+
 export interface NetworkLog extends TimedLog {
   type: "network";
   level?: string;
@@ -25,29 +25,31 @@ export interface NetworkLog extends TimedLog {
   resourceType?: string;
   url?: string;
   statusText?: string;
-  duration?: number; // elapsed ms, injected fetch/XHR logger only
-  requestBody?: string | null; // string|null; absent on webRequest records
+  duration?: number;
+  requestBody?: string | null;
   responseBody?: string;
-  error?: string; // chrome.webRequest details.error (e.g. net::ERR_*)
+  error?: string;
 }
+
 export interface ActionLog extends TimedLog {
   type: "step";
   message?: string;
 }
+
 export interface NavigationLog extends TimedLog {
   type: "navigation";
   message?: string;
   url?: string;
 }
+
 export interface ScreenshotLog extends TimedLog {
   type: "screenshot";
   message?: string;
   url?: string;
 }
+
 export type DevLog = ConsoleLog | NetworkLog | ActionLog | NavigationLog | ScreenshotLog;
 
-// Compact health snapshot persisted by the extension (v1). Replaces the raw
-// log array on the wire; legacy captures keep dev_logs as DevLog[].
 export interface DevLogSummary {
   version: number;
   errors: number;
@@ -56,15 +58,13 @@ export interface DevLogSummary {
   topErrors?: string[];
   failedUrls?: string[];
 }
+
 export type CapturedLogs = DevLog[] | DevLogSummary | null;
 
 function isSummary(logs: unknown): logs is DevLogSummary {
   return !!logs && typeof logs === "object" && typeof (logs as Record<string, unknown>).version === "number";
 }
 
-// Metadata is read as flat top-level capture fields (`os`, `browser`),
-// matching how the extension stores them as columns. Null/undefined falls
-// back to the placeholders below.
 interface Props {
   capture: {
     drive_url: string;
@@ -159,25 +159,50 @@ function isTracker(url?: string) {
   return TRACKER_PATTERNS.some((pattern) => pattern.test(url));
 }
 
+// Formats error messages cleanly (e.g. converts "POST\nhttps://..." into structured method + URL badges)
+function FormattedErrorMessage({ msg }: { msg: string }) {
+  const lines = msg.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+  if (lines.length >= 2 && /^(GET|POST|PUT|DELETE|PATCH|OPTIONS|HEAD)$/i.test(lines[0])) {
+    const method = lines[0].toUpperCase();
+    const url = lines[1];
+    return (
+      <div className="rounded-lg border border-red-200/80 bg-white p-2.5 shadow-sm space-y-1.5">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide uppercase bg-red-100 text-red-700 border border-red-200 shrink-0">
+            {method}
+          </span>
+          <span className="text-[11px] font-mono text-foreground font-medium truncate min-w-0 flex-1" title={url}>
+            {url}
+          </span>
+        </div>
+        {lines.slice(2).map((extra, idx) => (
+          <p key={idx} className="text-[10px] text-muted font-mono break-all leading-tight">
+            {extra}
+          </p>
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="rounded-lg border border-red-100 bg-white p-2.5 shadow-sm">
+      <p className="text-[11px] font-mono text-foreground/90 break-words leading-relaxed whitespace-pre-wrap">
+        {msg}
+      </p>
+    </div>
+  );
+}
+
 export default function DevToolsPanel({ capture }: Props) {
   const { t } = useT();
   const [activeTab, setActiveTab] = useState<Tab>("Info");
   const [logSearch, setLogSearch] = useState("");
   const [showErrorsOnly, setShowErrorsOnly] = useState(false);
 
-  // New captures ship a compact health summary; legacy captures carry a raw
-  // array. Normalize both to an array so every downstream filter/tab just
-  // works. A clean page stores ~0 bytes (summary is null) → empty arrays.
   const summaryOnly = !Array.isArray(capture.dev_logs) && isSummary(capture.dev_logs);
-  const logs: DevLog[] = Array.isArray(capture.dev_logs)
-    ? capture.dev_logs
-    : isSummary(capture.dev_logs)
-      ? []
-      : [];
+  const logs: DevLog[] = Array.isArray(capture.dev_logs) ? capture.dev_logs : [];
   const summary = summaryOnly ? (capture.dev_logs as DevLogSummary) : null;
 
-  // Baseline for relative times. Absolute epoch ms wins; "mm:ss" session
-  // times (GAP 3) are relative by nature so they never drive the baseline.
   const earliestTimestamp = logs.reduce<number>((min, log) => {
     const raw = log.timestamp;
     const ts =
@@ -201,7 +226,7 @@ export default function DevToolsPanel({ capture }: Props) {
     if (elapsed < 60000) return `${(elapsed / 1000).toFixed(1)}s`;
     return `${Math.floor(elapsed / 60000)}m ${Math.floor((elapsed % 60000) / 1000)}s`;
   };
-  
+
   const networkLogs = logs
     .filter((l): l is NetworkLog => l.type === "network")
     .filter((l) => {
@@ -221,8 +246,7 @@ export default function DevToolsPanel({ capture }: Props) {
         const level = normalizeLevel(log.level);
         if (level !== "error" && level !== "warn") return false;
       }
-      const detail = log.type === "console" ? consoleText(log)
-        : log.message || ("url" in log ? log.url : "") || "";
+      const detail = log.type === "console" ? consoleText(log) : log.message || ("url" in log ? log.url : "") || "";
       if (isTracker(detail) || ("url" in log && isTracker(log.url))) return false;
       const isError = log.type === "console" ? normalizeLevel(log.level) === "error" : false;
       return (!logSearch || detail.toLowerCase().includes(logSearch.toLowerCase())) && (!showErrorsOnly || isError);
@@ -231,19 +255,18 @@ export default function DevToolsPanel({ capture }: Props) {
   const actionLogs = logs
     .filter((l): l is ActionLog | NavigationLog | ScreenshotLog => l.type === "step" || l.type === "navigation" || l.type === "screenshot")
     .filter((l) => !logSearch || `${l.message || ""} ${"url" in l ? l.url || "" : ""}`.toLowerCase().includes(logSearch.toLowerCase()));
+  
   const groupedNetworkLogs = groupBy(
     networkLogs,
     (log) => `${(log.method || "GET").toUpperCase()}\u0000${log.status ?? "FAILED"}\u0000${canonicalUrl(log.url)}`,
-    (log) => ({ ...log, url: canonicalUrl(log.url) }),
+    (log) => ({ ...log, url: canonicalUrl(log.url) })
   );
 
-  // Format like: "July 8, 2026 at 4:55 PM GMT+7"
   const createdAt = new Date(capture.created_at).toLocaleString("en-US", {
     month: "long", day: "numeric", year: "numeric",
     hour: "numeric", minute: "2-digit", timeZoneName: "short",
   });
 
-  // Smart fallback for legacy metadata (pre-migration captures)
   const legacyLogsText = JSON.stringify(capture.dev_logs || []);
   const detectedOs = capture.os || (legacyLogsText.toLowerCase().includes("macintosh") || legacyLogsText.toLowerCase().includes("mac os") ? "macOS" : "Windows");
   const detectedBrowser = capture.browser || "Chrome";
@@ -319,7 +342,10 @@ export default function DevToolsPanel({ capture }: Props) {
       <div className="h-11 border-b border-border px-4 flex items-center justify-between shrink-0">
         <span className="text-sm font-semibold text-foreground">{t("v.devTools")}</span>
         <span className="text-[10px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
-          {summary ? (summary.errors === 0 && summary.warnings === 0 && summary.failedRequests === 0 ? t("dt.clean", { n: 0 }) : t("dt.events", { n: summary.errors + summary.warnings + summary.failedRequests }))
+          {summary
+            ? summary.errors === 0 && summary.warnings === 0 && summary.failedRequests === 0
+              ? t("dt.clean", { n: 0 })
+              : t("dt.events", { n: summary.errors + summary.warnings + summary.failedRequests })
             : t("dt.events", { n: totalLogCount(consoleLogs) + totalLogCount(networkLogs) + totalLogCount(actionLogs) })}
         </span>
       </div>
@@ -330,8 +356,8 @@ export default function DevToolsPanel({ capture }: Props) {
           <button
             key={t}
             onClick={() => setActiveTab(t)}
-            className={`px-2 py-2.5 text-[11px] font-medium relative transition-colors whitespace-nowrap ${
-              activeTab === t ? "text-indigo-600" : "text-muted hover:text-foreground"
+            className={`px-2.5 py-2.5 text-[11px] font-medium relative transition-colors whitespace-nowrap ${
+              activeTab === t ? "text-indigo-600 font-semibold" : "text-muted hover:text-foreground"
             }`}
           >
             {tabLabel(t)}
@@ -342,12 +368,11 @@ export default function DevToolsPanel({ capture }: Props) {
         ))}
       </div>
 
-      {/* Content - scrolls when logs overflow the panel */}
+      {/* Content - scrollable */}
       <div className="flex-1 overflow-y-auto min-h-0">
-
-        {/* Global Tab Search & Filters (Shown for Console, Network, Actions) */}
+        {/* Global Search & Filters */}
         {activeTab !== "Info" && (
-          <div className="p-3 border-b border-border bg-subtle/40 flex flex-col gap-2 shrink-0">
+          <div className="p-3 border-b border-border bg-subtle/30 flex flex-col gap-2 shrink-0">
             <div className="relative">
               <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
@@ -357,15 +382,15 @@ export default function DevToolsPanel({ capture }: Props) {
                 placeholder={t("dt.search", { tab: tabLabel(activeTab) })}
                 value={logSearch}
                 onChange={(e) => setLogSearch(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-border text-xs bg-white outline-none focus:border-indigo-500"
+                className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-border text-xs bg-white outline-none focus:border-indigo-500 shadow-sm"
               />
             </div>
             {(activeTab === "Console" || activeTab === "Network") && (
-              <div className="flex bg-border/50 p-0.5 rounded-lg shrink-0">
+              <div className="flex bg-border/40 p-0.5 rounded-lg shrink-0">
                 <button
                   type="button"
                   onClick={() => setShowErrorsOnly(false)}
-                  className={`flex-1 px-3 py-1.5 text-[10px] font-semibold rounded-md transition-colors ${
+                  className={`flex-1 px-3 py-1 text-[10px] font-semibold rounded-md transition-colors ${
                     !showErrorsOnly ? "bg-white text-foreground shadow-sm" : "text-muted hover:text-foreground"
                   }`}
                 >
@@ -374,7 +399,7 @@ export default function DevToolsPanel({ capture }: Props) {
                 <button
                   type="button"
                   onClick={() => setShowErrorsOnly(true)}
-                  className={`flex-1 px-3 py-1.5 text-[10px] font-semibold rounded-md transition-colors flex items-center justify-center gap-1 ${
+                  className={`flex-1 px-3 py-1 text-[10px] font-semibold rounded-md transition-colors flex items-center justify-center gap-1 ${
                     showErrorsOnly ? "bg-red-50 text-red-600 shadow-sm border border-red-100" : "text-muted hover:text-red-500"
                   }`}
                 >
@@ -388,8 +413,6 @@ export default function DevToolsPanel({ capture }: Props) {
         {/* INFO TAB */}
         {activeTab === "Info" && (
           <div className="p-4 space-y-4">
-
-            {/* URL */}
             {capture.site_url && (
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-muted mb-1.5">URL</p>
@@ -397,16 +420,14 @@ export default function DevToolsPanel({ capture }: Props) {
                   href={capture.site_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block text-[11px] font-mono text-indigo-600 hover:underline bg-subtle/60 border border-border rounded-lg px-2.5 py-2 truncate"
+                  className="block text-[11px] font-mono text-indigo-600 hover:underline bg-subtle/60 border border-border rounded-lg px-3 py-2 truncate"
                 >
                   {capture.site_url}
                 </a>
               </div>
             )}
 
-            {/* Device Card (Jam.dev style) */}
-            <div className="rounded-xl border border-border overflow-hidden">
-              {/* Info rows */}
+            <div className="rounded-xl border border-border overflow-hidden bg-white shadow-sm">
               {[
                 {
                   icon: (
@@ -467,8 +488,7 @@ export default function DevToolsPanel({ capture }: Props) {
               ))}
             </div>
 
-            {/* Action Buttons (moved below info card) */}
-            <div className="space-y-2">
+            <div className="space-y-2 pt-1">
               <button
                 onClick={copyToMarkdown}
                 className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition-colors"
@@ -498,7 +518,7 @@ export default function DevToolsPanel({ capture }: Props) {
           <div>
             {consoleLogs.length === 0 ? (
               summary ? (
-                <div className="px-4 py-5 space-y-3">
+                <div className="p-4 space-y-3">
                   {summary.errors === 0 && summary.warnings === 0 ? (
                     <div className="py-10 flex flex-col items-center gap-2 text-center text-xs text-muted">
                       <svg className="w-8 h-8 text-emerald-500/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -507,57 +527,100 @@ export default function DevToolsPanel({ capture }: Props) {
                     </div>
                   ) : (
                     <>
-                      <div className="flex items-center gap-2 rounded-lg bg-red-50 border border-red-100 px-3 py-2">
-                        <span className="text-lg font-bold text-red-600">{summary.errors}</span>
-                        <span className="text-xs text-red-700">{summary.errors === 1 ? t("dt.consoleErrOne") : t("dt.consoleErr")}</span>
-                        {summary.warnings > 0 && (
-                          <span className="text-[10px] ml-auto text-amber-700">{t("dt.warnSuffix", { n: summary.warnings })}</span>
-                        )}
+                      {/* Summary alert banner */}
+                      <div className="flex items-center gap-2.5 rounded-xl bg-red-50 border border-red-200/80 px-3.5 py-2.5 shadow-sm">
+                        <div className="w-7 h-7 rounded-full bg-red-100 border border-red-200 flex items-center justify-center shrink-0 text-red-600 text-xs font-bold">
+                          {summary.errors}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-semibold text-red-800 leading-tight">
+                            {summary.errors === 1 ? t("dt.consoleErrOne") : t("dt.consoleErr")}
+                          </p>
+                          {summary.warnings > 0 && (
+                            <p className="text-[10px] text-amber-700 font-medium leading-tight mt-0.5">
+                              {t("dt.warnSuffix", { n: summary.warnings })}
+                            </p>
+                          )}
+                        </div>
                       </div>
-                      {(summary.topErrors || []).map((msg, i) => (
-                        <p key={i} className="text-[11px] leading-4 text-foreground/90 border-b border-border/50 pb-1.5">{msg}</p>
-                      ))}
+
+                      {/* Clean error list */}
+                      <div className="space-y-2 pt-1">
+                        {(summary.topErrors || []).map((msg, i) => (
+                          <FormattedErrorMessage key={i} msg={msg} />
+                        ))}
+                      </div>
                     </>
                   )}
                 </div>
               ) : (
                 <div className="py-14 text-center text-xs text-muted">{t("dt.noConsoleEvents")}</div>
               )
-            ) : consoleLogs.map((log, i) => {
-              const level = log.type === "console" ? normalizeLevel(log.level) : log.type;
-              const isWarn = level === "warn";
-              const detail = log.type === "console" ? conciseConsoleText(log)
-                : log.message || ("url" in log ? log.url : "") || (log.type === "screenshot" ? t("dt.screenshotTaken") : t("dt.navigation"));
-              const fullText = log.type === "console" ? consoleText(log) : detail;
-              return (
-                <div key={i} className={`grid grid-cols-[42px_18px_minmax(0,1fr)_auto] gap-1.5 border-b border-border/70 px-2 py-1.5 text-xs ${isWarn ? "bg-amber-50/60" : level === "error" ? "bg-red-50/60" : "bg-white"}`}>
-                  <time className="pt-0.5 text-[9px] tabular-nums text-muted" title={eventTime(log)}>{getRelativeTime(log)}</time>
-                  <span className={`pt-0.5 text-center font-bold ${isWarn ? "text-amber-600" : level === "error" ? "text-red-600" : "text-muted"}`} aria-label={level === "error" ? t("dt.consoleError") : `${level} event`} title={level}>{isWarn ? "!" : level === "error" ? "×" : "•"}</span>
-                  <div className="min-w-0">
-                    <p className="min-w-0 overflow-hidden text-ellipsis break-words leading-4 [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2]" title={fullText}>{detail}</p>
-                    {log.type === "console" && log.stack != null && (
-                      <details className="group mt-1">
-                        <summary className="flex list-none cursor-pointer items-center gap-1 text-[9px] font-semibold text-muted hover:text-foreground">
-                          <svg className="w-2 h-2 transition-transform group-open:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
-                          {t("dt.stack")}
-                        </summary>
-                        <pre className="mt-1 whitespace-pre-wrap break-words font-mono text-[10px] leading-4 text-red-700/90">{log.stack}</pre>
-                      </details>
-                    )}
-                  </div>
-                  {logCount(log) > 1 && <span className="text-[9px] font-semibold text-muted" aria-label={t("dt.repeated", { n: logCount(log) })}>×{logCount(log)}</span>}
-                </div>
-              );
-            })}
+            ) : (
+              <div className="divide-y divide-border/60">
+                {consoleLogs.map((log, i) => {
+                  const level = log.type === "console" ? normalizeLevel(log.level) : log.type;
+                  const isWarn = level === "warn";
+                  const isErr = level === "error";
+                  const detail = log.type === "console" ? conciseConsoleText(log)
+                    : log.message || ("url" in log ? log.url : "") || (log.type === "screenshot" ? t("dt.screenshotTaken") : t("dt.navigation"));
+                  const fullText = log.type === "console" ? consoleText(log) : detail;
+                  return (
+                    <div
+                      key={i}
+                      className={`p-3 text-xs transition-colors ${
+                        isWarn ? "bg-amber-50/40 hover:bg-amber-50/70" : isErr ? "bg-red-50/40 hover:bg-red-50/70" : "hover:bg-subtle/50"
+                      }`}
+                    >
+                      <div className="flex items-start gap-2.5 min-w-0">
+                        <span className="pt-0.5 text-[10px] font-mono text-muted shrink-0 tabular-nums">
+                          {getRelativeTime(log)}
+                        </span>
+                        <span
+                          className={`px-1.5 py-0.2 rounded text-[9px] font-bold uppercase shrink-0 ${
+                            isWarn
+                              ? "bg-amber-100 text-amber-700 border border-amber-200"
+                              : isErr
+                              ? "bg-red-100 text-red-700 border border-red-200"
+                              : "bg-subtle text-muted border border-border"
+                          }`}
+                        >
+                          {isWarn ? "WARN" : isErr ? "ERR" : level.toUpperCase()}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <FormattedErrorMessage msg={fullText || detail} />
+                          {log.type === "console" && log.stack != null && (
+                            <details className="group mt-2">
+                              <summary className="flex list-none cursor-pointer items-center gap-1 text-[10px] font-semibold text-muted hover:text-foreground">
+                                <svg className="w-3 h-3 transition-transform group-open:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+                                {t("dt.stack")}
+                              </summary>
+                              <pre className="mt-1.5 p-2 rounded-lg bg-red-950 text-red-200 font-mono text-[10px] leading-relaxed whitespace-pre-wrap break-all overflow-x-auto">
+                                {log.stack}
+                              </pre>
+                            </details>
+                          )}
+                        </div>
+                        {logCount(log) > 1 && (
+                          <span className="px-1.5 py-0.5 rounded-full bg-subtle text-[10px] font-bold text-muted border border-border shrink-0">
+                            ×{logCount(log)}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 
         {/* NETWORK TAB */}
         {activeTab === "Network" && (
-          <div className="overflow-x-auto">
+          <div>
             {networkLogs.length === 0 ? (
               summary ? (
-                <div className="px-4 py-5 space-y-3">
+                <div className="p-4 space-y-3">
                   {summary.failedRequests === 0 ? (
                     <div className="py-10 flex flex-col items-center gap-2 text-center text-xs text-muted">
                       <svg className="w-8 h-8 text-emerald-500/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
@@ -566,13 +629,23 @@ export default function DevToolsPanel({ capture }: Props) {
                     </div>
                   ) : (
                     <>
-                      <div className="flex items-center gap-2 rounded-lg bg-red-50 border border-red-100 px-3 py-2">
-                        <span className="text-lg font-bold text-red-600">{summary.failedRequests}</span>
-                        <span className="text-xs text-red-700">{summary.failedRequests === 1 ? t("dt.failedReqOne") : t("dt.failedReq")}</span>
+                      <div className="flex items-center gap-2.5 rounded-xl bg-red-50 border border-red-200/80 px-3.5 py-2.5 shadow-sm">
+                        <div className="w-7 h-7 rounded-full bg-red-100 border border-red-200 flex items-center justify-center shrink-0 text-red-600 text-xs font-bold">
+                          {summary.failedRequests}
+                        </div>
+                        <p className="text-xs font-semibold text-red-800 leading-tight">
+                          {summary.failedRequests === 1 ? t("dt.failedReqOne") : t("dt.failedReq")}
+                        </p>
                       </div>
-                      {(summary.failedUrls || []).map((url, i) => (
-                        <p key={i} className="truncate text-[11px] font-mono text-foreground/80 border-b border-border/50 pb-1.5" title={url}>{url}</p>
-                      ))}
+                      <div className="space-y-2 pt-1">
+                        {(summary.failedUrls || []).map((url, i) => (
+                          <div key={i} className="rounded-lg border border-red-100 bg-white p-2.5 shadow-sm">
+                            <p className="text-[11px] font-mono text-red-700 break-all leading-tight">
+                              {url}
+                            </p>
+                          </div>
+                        ))}
+                      </div>
                     </>
                   )}
                 </div>
@@ -580,64 +653,91 @@ export default function DevToolsPanel({ capture }: Props) {
                 <div className="py-14 text-center text-xs text-muted">{t("dt.noNetworkErrors")}</div>
               )
             ) : (
-              <table className="w-full min-w-[350px] table-fixed text-left text-[10px]" aria-label={t("dt.network")}>
-                <thead className="sticky top-0 z-10 bg-subtle text-[9px] uppercase tracking-wide text-muted">
-                  <tr><th className="w-14 px-2 py-1.5 font-semibold">{t("dt.method")}</th><th className="w-14 px-1 py-1.5 font-semibold">{t("dt.status")}</th><th className="w-14 px-1 py-1.5 font-semibold">{t("dt.type")}</th><th className="px-1 py-1.5 font-semibold">{t("dt.domain")}</th></tr>
-                </thead>
-                <tbody>
-                  {groupedNetworkLogs.map(({ log, count }, i) => {
-                    const { domain, path } = networkLocation(log.url);
-                    const fullLocation = log.url || domain;
-                    return (
-                      <tr key={i}>
-                        <td colSpan={4} className="p-0">
-                          <details className="group border-b border-border/70 hover:bg-subtle/60" title={fullLocation}>
-                            <summary className="grid list-none cursor-pointer grid-cols-[56px_56px_56px_minmax(0,1fr)] items-center">
-                              <span className="px-2 py-1.5 font-mono font-semibold uppercase">{log.method || "GET"}</span>
-                              <span className={`px-1 py-1.5 font-mono font-semibold ${!log.status || log.status >= 400 ? "text-red-600" : log.status < 300 ? "text-emerald-600" : "text-amber-700"}`}>{log.status || "FAILED"}</span>
-                              <span className="truncate px-1 py-1.5 text-muted" title={log.resourceType || "xhr"}>{log.resourceType || "xhr"}</span>
-                              <span className="min-w-0 px-1 py-1.5">
-                                <span className="flex min-w-0 items-center gap-1">
-                                  <svg className="w-2 h-2 shrink-0 text-muted transition-transform group-open:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><polyline points="9 18 15 12 9 6"/></svg>
-                                  <span className="truncate font-medium">{domain}</span>
-                                  {count > 1 && <span className="shrink-0 font-semibold text-muted" aria-label={t("dt.repeated", { n: count })}>×{count}</span>}
-                                </span>
-                                {path && <span className="truncate font-mono text-[9px] text-muted">{path}</span>}
-                              </span>
-                            </summary>
-                            <div className="space-y-2 border-t border-border/60 px-3 py-2">
-                              <div className="flex flex-wrap gap-x-4 gap-y-1 text-[10px] font-mono">
-                                {log.duration != null && <span><span className="text-muted">{t("dt.duration")}:</span> {log.duration}ms</span>}
-                                {log.statusText && <span><span className="text-muted">{t("dt.statusText")}:</span> {log.statusText}</span>}
-                                {log.error && <span className="text-red-600">{t("dt.error")}: {log.error}</span>}
-                              </div>
-                              {log.requestBody != null && (
-                                <div>
-                                  <p className="text-[9px] font-semibold uppercase tracking-wide text-muted">{t("dt.requestBody")}</p>
-                                  <pre className="whitespace-pre-wrap break-words font-mono text-[10px] leading-4 text-foreground/90">{log.requestBody}</pre>
-                                </div>
-                              )}
-                              {log.responseBody && (
-                                <div>
-                                  <p className="text-[9px] font-semibold uppercase tracking-wide text-muted">{t("dt.responseBody")}</p>
-                                  <pre className="whitespace-pre-wrap break-words font-mono text-[10px] leading-4 text-foreground/90">{log.responseBody}</pre>
-                                </div>
-                              )}
-                            </div>
-                          </details>
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+              <div className="divide-y divide-border/60">
+                {groupedNetworkLogs.map(({ log, count }, i) => {
+                  const { domain, path } = networkLocation(log.url);
+                  const isFailed = !log.status || log.status >= 400;
+                  const isOk = log.status && log.status < 300;
+                  return (
+                    <details key={i} className="group hover:bg-subtle/50 transition-colors">
+                      <summary className="p-3 cursor-pointer list-none flex items-center justify-between gap-2 min-w-0">
+                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold font-mono uppercase bg-subtle text-foreground border border-border shrink-0">
+                            {log.method || "GET"}
+                          </span>
+                          <span
+                            className={`px-1.5 py-0.5 rounded text-[10px] font-bold font-mono shrink-0 ${
+                              isFailed
+                                ? "bg-red-100 text-red-700 border border-red-200"
+                                : isOk
+                                ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
+                                : "bg-amber-100 text-amber-800 border border-amber-200"
+                            }`}
+                          >
+                            {log.status || "FAIL"}
+                          </span>
+                          <div className="min-w-0 flex-1 truncate">
+                            <p className="text-xs font-medium text-foreground truncate" title={log.url}>
+                              {domain}
+                            </p>
+                            {path && (
+                              <p className="text-[10px] font-mono text-muted truncate" title={path}>
+                                {path}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          {count > 1 && (
+                            <span className="px-1.5 py-0.5 rounded-full bg-subtle text-[10px] font-bold text-muted border border-border">
+                              ×{count}
+                            </span>
+                          )}
+                          <svg className="w-3.5 h-3.5 text-muted transition-transform group-open:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <polyline points="9 18 15 12 9 6" />
+                          </svg>
+                        </div>
+                      </summary>
+                      <div className="px-3 pb-3 pt-1 space-y-2 border-t border-border/40 bg-subtle/20 text-xs">
+                        <div className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-[10px]">
+                          {log.duration != null && (
+                            <span><span className="text-muted">{t("dt.duration")}:</span> {log.duration}ms</span>
+                          )}
+                          {log.statusText && (
+                            <span><span className="text-muted">{t("dt.statusText")}:</span> {log.statusText}</span>
+                          )}
+                          {log.error && (
+                            <span className="text-red-600 font-semibold">{t("dt.error")}: {log.error}</span>
+                          )}
+                        </div>
+                        {log.requestBody != null && (
+                          <div>
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted mb-1">{t("dt.requestBody")}</p>
+                            <pre className="p-2 rounded-lg bg-white border border-border font-mono text-[10px] leading-relaxed whitespace-pre-wrap break-all max-h-32 overflow-y-auto">
+                              {log.requestBody}
+                            </pre>
+                          </div>
+                        )}
+                        {log.responseBody && (
+                          <div>
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted mb-1">{t("dt.responseBody")}</p>
+                            <pre className="p-2 rounded-lg bg-white border border-border font-mono text-[10px] leading-relaxed whitespace-pre-wrap break-all max-h-32 overflow-y-auto">
+                              {log.responseBody}
+                            </pre>
+                          </div>
+                        )}
+                      </div>
+                    </details>
+                  );
+                })}
+              </div>
             )}
           </div>
         )}
 
         {/* ACTIONS TAB */}
         {activeTab === "Actions" && (
-          <div className="p-3">
+          <div className="p-4">
             {actionLogs.length === 0 ? (
               <div className="py-14 flex flex-col items-center gap-2 text-muted">
                 <svg className="w-8 h-8 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -646,43 +746,45 @@ export default function DevToolsPanel({ capture }: Props) {
                 <p className="text-xs">{t("dt.noActions")}</p>
               </div>
             ) : (
-              <div className="relative">
-                {/* Timeline line */}
-                <div className="absolute left-[19px] top-3 bottom-3 w-px bg-border" />
-                <div className="space-y-1">
+              <div className="relative pl-2">
+                <div className="absolute left-[19px] top-3 bottom-3 w-px bg-border/80" />
+                <div className="space-y-3">
                   {actionLogs.map((log, i) => {
                     const isClick = (log.message || "").toLowerCase().includes("click");
-                    const isType  = (log.message || "").toLowerCase().includes("type") || (log.message || "").toLowerCase().includes("input");
+                    const isType = (log.message || "").toLowerCase().includes("type") || (log.message || "").toLowerCase().includes("input");
                     const isScreenshot = log.type === "screenshot";
                     return (
-                      <div key={i} className="flex items-start gap-3 pl-0.5">
-                        <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 z-10 border-2 border-white ${
-                          isScreenshot ? "bg-rose-100" : isClick ? "bg-indigo-100" : isType ? "bg-emerald-100" : "bg-subtle"
-                        }`}>
+                      <div key={i} className="flex items-start gap-3 relative">
+                        <div
+                          className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 z-10 border-2 border-white shadow-sm ${
+                            isScreenshot ? "bg-rose-100 text-rose-600" : isClick ? "bg-indigo-100 text-indigo-600" : isType ? "bg-emerald-100 text-emerald-600" : "bg-subtle text-muted"
+                          }`}
+                        >
                           {isScreenshot ? (
-                            <svg className="w-4 h-4 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z" />
                             </svg>
                           ) : isClick ? (
-                            <svg className="w-4 h-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/>
                             </svg>
                           ) : isType ? (
-                            <svg className="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                               <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                             </svg>
                           ) : (
-                            <svg className="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                               <circle cx="12" cy="12" r="4"/>
                             </svg>
                           )}
                         </div>
-                        <div className="flex-1 pb-3">
-                          <div className="flex items-center gap-2">
-                            {eventTime(log) && <span className="text-[10px] text-muted font-mono">{getRelativeTime(log)}</span>}
-                          </div>
-                          <p className="text-xs text-foreground leading-relaxed">{log.type === "navigation" ? t("dt.navigateTo", { url: log.url || log.message || "" }) : log.type === "screenshot" ? t("dt.screenshotTaken") : log.message || ""}</p>
+                        <div className="flex-1 min-w-0 pt-0.5">
+                          {eventTime(log) && (
+                            <span className="text-[10px] text-muted font-mono block mb-0.5">{getRelativeTime(log)}</span>
+                          )}
+                          <p className="text-xs text-foreground font-medium leading-normal break-words">
+                            {log.type === "navigation" ? t("dt.navigateTo", { url: log.url || log.message || "" }) : log.type === "screenshot" ? t("dt.screenshotTaken") : log.message || ""}
+                          </p>
                         </div>
                       </div>
                     );
@@ -692,7 +794,6 @@ export default function DevToolsPanel({ capture }: Props) {
             )}
           </div>
         )}
-
       </div>
     </div>
   );

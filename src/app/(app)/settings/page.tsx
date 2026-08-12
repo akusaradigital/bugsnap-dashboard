@@ -200,20 +200,21 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="p-4 sm:p-8 max-w-4xl mx-auto space-y-6 sm:space-y-8">
+    <div className="p-3 sm:p-6 max-w-5xl mx-auto space-y-4 sm:space-y-5">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">{t("settings.title")}</h1>
         <p className="text-sm text-muted mt-1">{t("settings.subtitle")}</p>
       </div>
 
-      <div className="rounded-xl border border-border bg-white p-6">
+      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="rounded-xl border border-border bg-white p-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h2 className="text-base font-semibold text-foreground">{t("settings.teamMembers")}</h2>
             <p className="text-xs text-muted">{t("settings.teamMembersHint")}</p>
           </div>
           <Link
-            href="/settings/members"
+            href={activeWsId ? `/settings/members?ws=${activeWsId}` : "/settings/members"}
             className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors w-fit"
           >
             {t("settings.manageMembers")}
@@ -221,14 +222,17 @@ export default function SettingsPage() {
         </div>
       </div>
 
-      <div className="rounded-xl border border-border bg-white p-6">
+      <div className="rounded-xl border border-border bg-white p-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
-              <h2 className="text-base font-semibold text-foreground">{t("settings.googleDrive")}</h2>
+              <h2 className="text-base font-semibold text-foreground">{t("settings.driveDashboard")}</h2>
               {!driveLoading && <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${driveConnected ? "text-emerald-700 bg-emerald-50 border-emerald-200" : "text-muted bg-subtle border-border"}`}>{driveConnected ? t("settings.connected") : t("settings.notConnected")}</span>}
             </div>
-            <p className="text-xs text-muted mt-1">{driveLoading ? t("settings.checkingDrive") : driveConnected ? t("settings.driveUses", { email: driveEmail || "your connected Google account" }) : t("settings.driveConnectHint")}</p>
+            <div className="mt-1 space-y-1">
+              <p className="text-xs text-muted">{driveLoading ? t("settings.checkingDrive") : driveConnected ? t("settings.driveUses", { email: driveEmail || "your connected Google account" }) : t("settings.driveConnectHint")}</p>
+              <p className="text-[11px] text-muted">{t("settings.driveExtensionHint")}</p>
+            </div>
           </div>
           {driveConnected ? (
             <button type="button" onClick={disconnectDrive} disabled={driveActionLoading} className="px-4 py-2 rounded-lg border border-red-200 text-red-600 text-sm font-semibold hover:bg-red-50 disabled:opacity-50 transition-colors">{driveActionLoading ? t("settings.disconnecting") : t("settings.disconnect")}</button>
@@ -239,11 +243,12 @@ export default function SettingsPage() {
         {driveSuccess && <p role="status" className="text-xs text-emerald-600 mt-3">{driveSuccess}</p>}
         {driveError && <p role="alert" className="text-xs text-red-600 mt-3">{driveError}</p>}
       </div>
+      </div>
 
-      <form onSubmit={handleSave} className="space-y-6">
+      <form onSubmit={handleSave} className="space-y-4">
         {/* Section 0: Auto Delete History (retention) */}
-        <div className="rounded-xl border border-border bg-white p-6 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
+        <div className="rounded-xl border border-border bg-white p-4 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-2">
             <div>
               <h2 className="text-base font-semibold text-foreground">{t("settings.retentionTitle")}</h2>
               <p className="text-xs text-muted">{t("settings.retentionHint")}</p>
@@ -256,7 +261,7 @@ export default function SettingsPage() {
             <select
               value={autoDeleteMonths}
               onChange={(e) => setAutoDeleteMonths(Number(e.target.value))}
-              className="w-full sm:w-40 text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-white"
+              className="w-full sm:w-40 text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-white"
             >
               {[0, 3, 6, 12].map((m) => (
                 <option key={m} value={m}>
@@ -269,8 +274,8 @@ export default function SettingsPage() {
         </div>
 
         {/* Section 1: Integrations */}
-        <div className="rounded-xl border border-border bg-white p-6 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
+        <div className="rounded-xl border border-border bg-white p-4 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-2">
             <div>
               <h2 className="text-base font-semibold text-foreground">{t("settings.webhooksTitle")}</h2>
               <p className="text-xs text-muted">{t("settings.webhookHint")}</p>
@@ -295,7 +300,7 @@ export default function SettingsPage() {
               value={webhookUrl}
               onChange={(e) => setWebhookUrl(e.target.value)}
               placeholder="https://hooks.slack.com/services/..."
-              className="w-full text-sm rounded-lg border border-border px-3.5 py-2.5 outline-none focus:border-indigo-500 bg-white font-mono"
+              className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-white font-mono"
             />
             <p className="text-[11px] text-muted mt-1.5">
               {t("settings.webhookPost")}
@@ -304,8 +309,8 @@ export default function SettingsPage() {
         </div>
 
         {/* Section 2: Custom Branding */}
-        <div className="rounded-xl border border-border bg-white p-6 space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-3">
+        <div className="rounded-xl border border-border bg-white p-4 space-y-3">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-border pb-2">
             <div>
               <h2 className="text-base font-semibold text-foreground">{t("settings.brandingTitle")}</h2>
               <p className="text-xs text-muted">{t("settings.brandingHint")}</p>
@@ -330,7 +335,7 @@ export default function SettingsPage() {
                 disabled={userPlan === "free"}
                 onChange={(e) => setBrandName(e.target.value)}
                 placeholder={userPlan === "free" ? t("settings.brandPlaceholderFree") : t("settings.brandPlaceholder")}
-                className="w-full text-sm rounded-lg border border-border px-3.5 py-2.5 outline-none focus:border-indigo-500 bg-white disabled:bg-subtle disabled:cursor-not-allowed"
+                className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-white disabled:bg-subtle disabled:cursor-not-allowed"
               />
             </div>
             <div>
@@ -343,7 +348,7 @@ export default function SettingsPage() {
                 disabled={userPlan === "free"}
                 onChange={(e) => setLogoUrl(e.target.value)}
                 placeholder={userPlan === "free" ? t("settings.logoPlaceholderFree") : t("settings.logoPlaceholder")}
-                className="w-full text-sm rounded-lg border border-border px-3.5 py-2.5 outline-none focus:border-indigo-500 bg-white disabled:bg-subtle disabled:cursor-not-allowed"
+                className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-white disabled:bg-subtle disabled:cursor-not-allowed"
               />
             </div>
           </div>
@@ -372,7 +377,7 @@ export default function SettingsPage() {
               disabled={userPlan === "free"}
               onChange={(e) => setCustomDomain(e.target.value)}
               placeholder={userPlan === "free" ? t("settings.domainPlaceholderFree") : t("settings.domainPlaceholder")}
-              className="w-full text-sm rounded-lg border border-border px-3.5 py-2.5 outline-none focus:border-indigo-500 bg-white font-mono disabled:bg-subtle disabled:cursor-not-allowed"
+              className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-white font-mono disabled:bg-subtle disabled:cursor-not-allowed"
             />
             <p className="text-[11px] text-muted mt-1.5">
               {t("settings.domainHint")}
@@ -382,7 +387,7 @@ export default function SettingsPage() {
 
         {error && <p className="text-xs text-red-600">{error}</p>}
 
-        <div className="flex items-center gap-3">
+        <div className="sticky bottom-0 z-10 flex items-center gap-3 rounded-xl border border-border bg-white/95 p-3 shadow-sm backdrop-blur">
           <button
             type="submit"
             disabled={saving}

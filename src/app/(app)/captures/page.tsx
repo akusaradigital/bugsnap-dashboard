@@ -33,6 +33,7 @@ interface Capture {
 
 const TAG_OPTIONS = ["bug", "feature-request", "wip", "design", "other"];
 const STATUS_OPTIONS = ["open", "in-progress", "fixed", "closed"];
+const CHROME_WEB_STORE_URL = "https://chromewebstore.google.com/detail/jfhbmdllebgpmceeoffkfhlhdchhbcg";
 
 interface EditModalProps {
   capture: Capture;
@@ -684,25 +685,25 @@ function CapturesContent() {
   const screenshotCount = workspaceCaptures.filter((c) => c.type === "screenshot").length;
 
   return (
-    <div className="p-4 sm:p-8 max-w-6xl mx-auto">
+    <div className="w-full min-w-0 p-3 sm:p-8 max-w-6xl mx-auto">
       {shortcutCopied && activeHoverId && (
         <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-neutral-900 text-white text-xs font-medium px-3 py-2 rounded-lg shadow-lg">
           {t("cap.copiedShortcut")}
         </div>
       )}
       {/* Header & Filter */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 sm:mb-8 gap-4">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">{t("cap.title")}</h1>
 
-        <div className="flex items-center gap-4 flex-wrap">
-          <div className="relative">
+        <div className="grid grid-cols-2 min-[430px]:grid-cols-[minmax(0,1fr)_auto_auto] lg:flex items-center gap-3 w-full lg:w-auto">
+          <div className="relative col-span-2 min-[430px]:col-span-1 min-w-0">
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             <input
               type="text"
               placeholder={t("cap.search")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 pr-4 py-2 text-sm rounded-lg border border-border bg-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 w-full sm:w-64"
+              className="pl-9 pr-3 py-2 text-sm rounded-lg border border-border bg-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 w-full min-w-0 lg:w-64"
             />
           </div>
           {!selectMode ? (
@@ -710,22 +711,24 @@ function CapturesContent() {
               <button
                 onClick={() => setSelectMode(true)}
                 disabled={filteredCaptures.length === 0}
-                className="flex items-center gap-2 px-3 py-2 rounded-lg border border-border bg-white text-sm font-medium text-muted hover:text-foreground hover:bg-subtle transition-colors disabled:opacity-40"
+                className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-border bg-white text-sm font-medium text-muted hover:text-foreground hover:bg-subtle transition-colors disabled:opacity-40 min-w-0"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                 {t("cap.select")}
               </button>
-              <Link
-                href="/"
-                title="Open the BugSnap extension to start a capture"
-                className="flex items-center gap-2 px-4 py-2 bg-emerald-400 text-white text-sm font-medium rounded-lg hover:bg-emerald-500 transition-colors"
+              <a
+                href={CHROME_WEB_STORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Install BugSnap from the Chrome Web Store"
+                className="flex items-center justify-center gap-2 px-3 min-[430px]:px-4 py-2 bg-emerald-400 text-white text-sm font-medium rounded-lg hover:bg-emerald-500 transition-colors whitespace-nowrap min-w-0"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
                 {t("cap.newCapture")}
-              </Link>
+              </a>
             </>
           ) : (
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="col-span-2 min-[430px]:col-span-3 flex flex-wrap items-center gap-2">
               <span className="text-xs text-muted mr-1">
                 {t("cap.selected", { count: selectedIds.size })}
               </span>
@@ -765,11 +768,11 @@ function CapturesContent() {
       </div>
 
       {/* Filter Row (Jam.dev style) - sticky so filters stay accessible while scrolling */}
-      <div className="sticky top-0 z-10 flex flex-wrap items-center gap-3 mb-6 pb-4 pt-3 border-b border-border overflow-x-auto bg-background/95 backdrop-blur-sm">
-        <div className="relative">
+      <div className="sticky top-0 z-10 grid grid-cols-2 min-[430px]:flex min-[430px]:flex-wrap items-center gap-3 mb-6 pb-4 pt-3 border-b border-border bg-background/95 backdrop-blur-sm">
+        <div className="relative min-w-0">
           <button
             onClick={() => setTypeMenuOpen((o) => !o)}
-            className={`flex items-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors ${
+            className={`w-full min-[430px]:w-auto flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors ${
               typeMenuOpen || showVideo || showScreenshot
                 ? "bg-subtle border-indigo-200 text-foreground"
                 : "bg-white border-border text-muted hover:text-foreground hover:bg-subtle"
@@ -787,7 +790,7 @@ function CapturesContent() {
           {typeMenuOpen && (
             <>
               <div className="fixed inset-0 z-20" onClick={() => setTypeMenuOpen(false)} />
-              <div className="absolute top-full left-0 mt-1.5 w-64 z-30 bg-white border border-border rounded-xl shadow-xl overflow-hidden">
+              <div className="absolute top-full left-0 mt-1.5 w-[min(16rem,calc(100vw-1.5rem))] z-30 bg-white border border-border rounded-xl shadow-xl overflow-hidden">
                 <div className="px-3 pt-3 pb-1">
                   <p className="text-[10px] font-semibold uppercase tracking-widest text-muted">{t("cap.type")}</p>
                 </div>
@@ -842,12 +845,12 @@ function CapturesContent() {
         </div>
 
         {/* Tag Filter */}
-        <div className="flex items-center gap-1.5 text-xs border border-border bg-white rounded-lg px-2 py-1.5 text-muted hover:text-foreground hover:bg-subtle transition-colors">
+        <div className="flex min-w-0 items-center gap-1.5 text-xs border border-border bg-white rounded-lg px-2 py-1.5 text-muted hover:text-foreground hover:bg-subtle transition-colors">
           <span>{t("cap.tagFilter")}</span>
           <select
             value={filterTag}
             onChange={(e) => setFilterTag(e.target.value)}
-            className="bg-transparent font-medium text-foreground outline-none cursor-pointer"
+            className="min-w-0 flex-1 bg-transparent font-medium text-foreground outline-none cursor-pointer"
           >
             <option value="">{t("cap.all")}</option>
             {TAG_OPTIONS.map((t) => (
@@ -857,12 +860,12 @@ function CapturesContent() {
         </div>
 
         {/* Status Filter */}
-        <div className="flex items-center gap-1.5 text-xs border border-border bg-white rounded-lg px-2 py-1.5 text-muted hover:text-foreground hover:bg-subtle transition-colors">
+        <div className="flex min-w-0 items-center gap-1.5 text-xs border border-border bg-white rounded-lg px-2 py-1.5 text-muted hover:text-foreground hover:bg-subtle transition-colors">
           <span>{t("cap.statusFilter")}</span>
           <select
             value={filterStatus}
             onChange={(e) => setFilterStatus(e.target.value)}
-            className="bg-transparent font-medium text-foreground outline-none cursor-pointer"
+            className="min-w-0 flex-1 bg-transparent font-medium text-foreground outline-none cursor-pointer"
           >
             <option value="">{t("cap.all")}</option>
             {STATUS_OPTIONS.map((s) => (
@@ -892,7 +895,7 @@ function CapturesContent() {
           ))}
         </div>
       ) : filteredCaptures.length === 0 ? (
-        <div className="py-20 text-center rounded-xl border border-dashed border-border bg-subtle/50 flex flex-col items-center gap-3">
+        <div className="px-4 py-14 sm:py-20 text-center rounded-xl border border-dashed border-border bg-subtle/50 flex flex-col items-center gap-3">
           <div className="w-16 h-16 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center">
             <svg className="w-8 h-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -902,19 +905,21 @@ function CapturesContent() {
             <h3 className="text-base font-semibold text-foreground">
               {search.trim() || showVideo || showScreenshot ? t("cap.noMatch") : t("cap.empty")}
             </h3>
-            <p className="text-xs text-muted mt-1 max-w-sm mx-auto">
+            <p className="text-xs text-muted mt-1 max-w-sm mx-auto text-balance">
               {search.trim() || showVideo || showScreenshot
                 ? t("cap.noMatchHint")
                 : t("cap.emptyHint")}
             </p>
           </div>
           {!search.trim() && !showVideo && !showScreenshot && (
-            <button
-              onClick={() => window.location.href="/features"}
+            <a
+              href={CHROME_WEB_STORE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
               className="mt-1 px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors"
             >
               {t("cap.install")}
-            </button>
+            </a>
           )}
         </div>
       ) : (

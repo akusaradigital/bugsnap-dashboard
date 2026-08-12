@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-server";
+import { createClient } from "@supabase/supabase-js";
 
 export const runtime = "nodejs";
 
@@ -12,10 +13,10 @@ export async function GET(req: Request) {
   if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
-    const supabase = createServiceClient();
+    const serviceClient = createServiceClient();
 
-    // 1. Verify caller identity
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    // 1. Verify caller identity via service role
+    const { data: { user }, error: authError } = await serviceClient.auth.getUser(token);
     if (authError || !user || !user.email) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -30,19 +31,56 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Forbidden: Super Admin only" }, { status: 403 });
     }
 
-    // 3. All the stats in one RPC
-    const { data, error } = await supabase.rpc("admin_stats");
+    // 3. Call admin_stats with the USER's JWT so auth.jwt()->>'email' resolves
+    //    correctly inside the SECURITY DEFINER RPC (service-role JWT has no email).
+    const userClient = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { global: { headers: { Authorization: `Bearer ${token}` } }, auth: { persistSession: false } }
+    );
+    const { data, error } = await userClient.rpc("admin_stats");
     if (error) {
-      // The RPC fails closed if the app_settings super_admin_emails key is
-      // absent on a fresh stack; fall back to a degraded empty payload rather
-      // than a 500 (the UI still renders the promo editor).
       if (error.message?.includes("forbidden")) {
         return NextResponse.json({ error: "Forbidden: Super Admin only" }, { status: 403 });
       }
       throw error;
     }
 
-    return NextResponse.json({ ok: true, ...(data ?? {}) });
+    const raw = data as {
+      stats?: { total_users?: number; total_workspaces?: number; total_captures?: number; total_views?: number; total_comments?: number };
+      users?: { id: string; email: string; full_name?: string | null; plan?: string | null; created_at: string; suspended?: boolean }[];
+      top_workspaces?: { name: string; owner_email: string; capture_count: number }[];
+      promo?: { enabled: boolean; message: string };
+    } | null;
+
+    const s = raw?.stats ?? {};
+    return NextResponse.json({
+      ok: true,
+      stats: {
+        totalUsers: s.total_users ?? 0,
+        totalWorkspaces: s.total_workspaces ?? 0,
+        totalCaptures: s.total_captures ?? 0,
+        totalViews: s.total_views ?? 0,
+        totalComments: s.total_comments ?? 0,
+      },
+      users: (raw?.users ?? []).map((u) => ({
+        id: u.id,
+        email: u.email,
+        full_name: u.full_name ?? null,
+        plan: u.plan ?? "free",
+        created_at: u.created_at,
+        suspended: u.suspended ?? false,
+        workspace_count: 0,
+        capture_count: 0,
+      })),
+      topWorkspaces: (raw?.top_workspaces ?? []).map((w) => ({
+        id: "",
+        name: w.name,
+        owner_email: w.owner_email,
+        capture_count: Number(w.capture_count),
+      })),
+      promo: raw?.promo ?? { enabled: false, message: "" },
+    });
   } catch (err) {
     console.error("Admin data fetch error:", err);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

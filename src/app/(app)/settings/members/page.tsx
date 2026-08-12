@@ -44,8 +44,9 @@ export default function TeamManagementPage() {
       }
       if (cancelled) return;
       const ws = (data as Workspace[]).map((w) => ({ id: w.id, name: w.name }));
+      const wsParam = new URL(window.location.href).searchParams.get("ws");
       setWorkspaces(ws);
-      setActiveWsId((prev) => prev ?? ws[0].id);
+      setActiveWsId((prev) => prev ?? (ws.find((w) => w.id === wsParam)?.id || ws[0].id));
     })();
     return () => {
       cancelled = true;
@@ -103,6 +104,15 @@ export default function TeamManagementPage() {
         p_email: email,
       });
       if (inviteError) throw inviteError;
+      const { data: authData } = await supabase.auth.getSession();
+      await fetch("/api/notifications/invite", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(authData.session?.access_token ? { Authorization: `Bearer ${authData.session.access_token}` } : {}),
+        },
+        body: JSON.stringify({ email, workspaceId: activeWsId }),
+      }).catch(() => null);
       setInviteEmail("");
       // Reload members
       const { data, error: membersError } = await supabase.rpc("get_workspace_members", {
@@ -163,6 +173,7 @@ export default function TeamManagementPage() {
       <div className="rounded-xl border border-border bg-white p-5">
         <h2 className="text-sm font-semibold text-foreground mb-1">{t("members.inviteTitle")}</h2>
         <p className="text-xs text-muted mb-3">{t("members.inviteHint")}</p>
+        <p className="text-[11px] text-muted mb-3">Invited teammates will receive an email to join the workspace and download the extension.</p>
         <div className="flex gap-2">
           <input
             type="email"

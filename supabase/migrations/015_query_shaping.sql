@@ -45,7 +45,21 @@ declare
   v_all jsonb;
   v_owned bigint;
 begin
-  if v_email = '' or v_ws is null then
+  if v_email = '' then
+    return '{"counts_exact":false}'::jsonb;
+  end if;
+
+  if v_ws is null then
+    select w.id into v_ws
+    from public.workspaces w
+    where w.owner_user_id = auth.uid()
+       or exists (select 1 from public.workspace_members wm
+                  where wm.workspace_id = w.id and wm.user_id = auth.uid())
+    order by w.created_at asc
+    limit 1;
+  end if;
+
+  if v_ws is null then
     return '{"counts_exact":false}'::jsonb;
   end if;
 
@@ -361,7 +375,21 @@ declare
   v_all jsonb;
   v_owned bigint;
 begin
-  if v_email = '' or v_ws is null then
+  if v_email = '' then
+    return '{"counts_exact":false}'::jsonb;
+  end if;
+
+  if v_ws is null then
+    select w.id into v_ws
+    from public.workspaces w
+    where w.owner_user_id = auth.uid()
+       or exists (select 1 from public.workspace_members wm
+                  where wm.workspace_id = w.id and wm.user_id = auth.uid())
+    order by w.created_at asc
+    limit 1;
+  end if;
+
+  if v_ws is null then
     return '{"counts_exact":false}'::jsonb;
   end if;
 

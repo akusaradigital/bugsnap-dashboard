@@ -51,6 +51,7 @@ export default function DashboardLayout({
   const [creating, setCreating] = useState(false);
   const [members, setMembers] = useState<Record<string, string[]>>({});
   const [folders, setFolders] = useState<string[]>([]);
+  const [folderMenuOpen, setFolderMenuOpen] = useState<string | null>(null);
   const [createFolderModalOpen, setCreateFolderModalOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [createFolderError, setCreateFolderError] = useState<string | null>(null);
@@ -66,13 +67,6 @@ export default function DashboardLayout({
   const [deletingFolder, setDeletingFolder] = useState(false);
 
   // Custom Rename & Delete Workspace Modal states
-  const [renameWsModalOpen, setRenameWsModalOpen] = useState(false);
-  const [wsToRename, setWsToRename] = useState<string | null>(null);
-  const [renameWsNameInput, setRenameWsNameInput] = useState("");
-
-  const [deleteWsModalOpen, setDeleteWsModalOpen] = useState(false);
-  const [wsToDelete, setWsToDelete] = useState<string | null>(null);
-  const [deletingWs, setDeletingWs] = useState(false);
 
   const [session, setSession] = useState<{
     loading: boolean;
@@ -80,6 +74,7 @@ export default function DashboardLayout({
     suspended?: boolean;
   }>({ loading: true, user: null });
   const [billingModalOpen, setBillingModalOpen] = useState(false);
+  const [upgradeCardDismissed, setUpgradeCardDismissed] = useState(false);
   const [newCommentCount, setNewCommentCount] = useState(0);
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifLastSeen, setNotifLastSeen] = useState<number>(() => {
@@ -268,6 +263,9 @@ export default function DashboardLayout({
             ? wsParam
             : rows[0]?.id ?? null;
         setActiveWsId(initialWs);
+        if (!wsParam && initialWs) {
+          router.replace(`${pathname}?ws=${initialWs}`, { scroll: false });
+        }
       } catch (err) {
         console.warn("Failed to load workspaces:", err);
         // Degrade gracefully: the default "Personal Workspace" view (no
@@ -287,7 +285,10 @@ export default function DashboardLayout({
 
   // Check if current user is a super admin
   useEffect(() => {
-    if (!session.user?.id) return;
+    if (!session.user?.id) {
+      setIsSuperAdmin(false);
+      return;
+    }
     let active = true;
     (async () => {
       try {
@@ -298,15 +299,15 @@ export default function DashboardLayout({
           headers: { Authorization: `Bearer ${token}` }
         });
         const json = await res.json();
-        if (active && json.isAdmin) {
-          setIsSuperAdmin(true);
+        if (active) {
+          setIsSuperAdmin(Boolean(json.isAdmin));
         }
       } catch {
         // ignore - admin link simply won't show
       }
     })();
     return () => { active = false; };
-  }, [session.user?.id]);
+  }, [session.user?.id, session.user?.email]);
 
   // Fetch Promo Banner
   useEffect(() => {
@@ -348,7 +349,7 @@ export default function DashboardLayout({
         // 2. Fetch custom created folders in workspace
         const { data: customFoldersData, error: customFoldersErr } = await supabase
           .from("workspace_folders")
-          .select("name")
+          .select("name, is_default")
           .eq("workspace_id", activeWsId);
 
         if (customFoldersErr) throw customFoldersErr;
@@ -360,9 +361,10 @@ export default function DashboardLayout({
         ].filter(Boolean) as string[];
 
         const uniqueFolders = Array.from(new Set(allFolderNames));
+        const defaultName = (customFoldersData || []).find((folder) => folder.is_default)?.name;
 
         if (active) {
-          setFolders(uniqueFolders.sort());
+          setFolders(uniqueFolders.sort((a, b) => a === defaultName ? -1 : b === defaultName ? 1 : a.localeCompare(b)));
         }
       } catch (err) {
         console.warn("Failed to load workspace folders:", err);
@@ -378,10 +380,7 @@ export default function DashboardLayout({
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
-          <svg className="w-7 h-7 text-muted animate-spin" viewBox="0 0 24 24" fill="none">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z" />
-          </svg>
+          <div className="h-7 w-7 rounded-full border-2 border-indigo-600 border-t-transparent animate-spin" aria-hidden="true" />
           <p className="text-sm text-muted">{t("layout.loading")}</p>
         </div>
       </div>
@@ -553,68 +552,6 @@ export default function DashboardLayout({
     }
   };
 
-  const handleRenameWorkspace = (id: string, currentName: string) => {
-    setWsToRename(id);
-    setRenameWsNameInput(currentName);
-    setRenameWsModalOpen(true);
-  };
-
-  const submitRenameWorkspace = async () => {
-    if (!wsToRename) return;
-    const newName = renameWsNameInput.trim();
-    if (!newName || newName === (workspaces.find(w => w.id === wsToRename)?.name || "")) {
-      setRenameWsModalOpen(false);
-      return;
-    }
-    try {
-      const { error } = await supabase
-        .from("workspaces")
-        .update({ name: newName })
-        .eq("id", wsToRename);
-      if (error) throw error;
-      setWorkspaces((prev) =>
-        prev.map((w) => (w.id === wsToRename ? { ...w, name: newName } : w))
-      );
-      setRenameWsModalOpen(false);
-    } catch (err) {
-      console.warn("Failed to rename workspace:", err);
-        showToast(t("layout.errRenameWs"), "error");
-    }
-  };
-
-  const handleDeleteWorkspace = (id: string) => {
-    if (workspaces.length <= 1) {
-        showToast(t("layout.keepOneWs"), "error");
-      return;
-    }
-    setWsToDelete(id);
-    setDeleteWsModalOpen(true);
-  };
-
-  const submitDeleteWorkspace = async () => {
-    if (!wsToDelete || deletingWs) return;
-    setDeletingWs(true);
-    try {
-      const { error } = await supabase.from("workspaces").delete().eq("id", wsToDelete);
-      if (error) throw error;
-      const remaining = workspaces.filter((w) => w.id !== wsToDelete);
-      setWorkspaces(remaining);
-      const nextActiveId = remaining[0]?.id || null;
-      setActiveWsId(nextActiveId);
-      if (nextActiveId) {
-        router.replace(`${pathname}?ws=${nextActiveId}`, { scroll: false });
-      } else {
-        router.replace(pathname, { scroll: false });
-      }
-      setDeleteWsModalOpen(false);
-    } catch (err) {
-      console.warn("Failed to delete workspace:", err);
-        showToast(t("layout.errDeleteWs"), "error");
-    } finally {
-      setDeletingWs(false);
-    }
-  };
-
   const handleInvite = async () => {
     const email = inviteEmail.trim();
     if (!email || !activeWsId || inviting) return;
@@ -634,17 +571,23 @@ export default function DashboardLayout({
         p_email: email,
       });
       if (error) throw error;
+      const { data: authData } = await supabase.auth.getSession();
+      await fetch("/api/notifications/invite", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(authData.session?.access_token ? { Authorization: `Bearer ${authData.session.access_token}` } : {}),
+        },
+        body: JSON.stringify({ email, workspaceId: activeWsId }),
+      }).catch(() => null);
+      setInviteEmail("");
+      setInviteModalOpen(false);
       setMembers((prev) => ({
         ...prev,
         [activeWsId]: [...(prev[activeWsId] || []), email],
       }));
-      setInviteEmail("");
-      setInviteModalOpen(false);
     } catch (err) {
       console.warn("Failed to invite member:", err);
-      // invite_member_by_email raises a clear message e.g. "No user found
-      // with that email..." - surface that to the user. Real email delivery
-      // (sending an actual invite mail) is a future task.
       setInviteError(
         (err as { message?: string })?.message ||
           t("layout.errInvite")
@@ -716,7 +659,7 @@ export default function DashboardLayout({
     <div className="flex flex-1 min-h-0 bg-background overflow-hidden">
       {/* Sidebar - inline on desktop, drawer on mobile */}
       <aside
-        className={`w-60 border-r border-border bg-white shrink-0 flex-col h-full overflow-visible max-h-screen lg:flex lg:relative lg:translate-x-0 fixed inset-y-0 left-0 z-50 transform transition-transform duration-200 ${
+        className={`w-60 border-r border-border bg-white shrink-0 flex flex-col h-full overflow-visible max-h-screen lg:relative lg:translate-x-0 fixed inset-y-0 left-0 z-50 transform transition-transform duration-200 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
@@ -730,7 +673,7 @@ export default function DashboardLayout({
           </div>
 
           {/* Notification Bell */}
-          <div className="relative ml-auto">
+          <div className="relative ml-auto hidden lg:block">
             <button
               onClick={() => setNotifOpen((o) => !o)}
               className="relative p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-subtle transition-colors"
@@ -808,21 +751,17 @@ export default function DashboardLayout({
                 <div className="px-3 py-1 mb-1">
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">{t("layout.workspaces")}</p>
                 </div>
-                {workspaces.map((ws) => (
-                  <div
-                    key={ws.id}
-                    className={`w-full flex items-center justify-between gap-1 px-1 rounded-lg group/item transition-colors ${
-                      activeWsId === ws.id ? "bg-indigo-50 font-medium" : "hover:bg-subtle"
-                    }`}
-                  >
+                <div className="space-y-1">
+                  {workspaces.map((ws) => (
                     <button
+                      key={ws.id}
                       onClick={() => {
                         setActiveWsId(ws.id);
                         setWsOpen(false);
                         router.replace(`?ws=${ws.id}`, { scroll: false });
                       }}
-                      className={`flex-1 flex items-center gap-3 px-2 py-2 text-sm text-left truncate ${
-                        activeWsId === ws.id ? "text-indigo-600 font-medium" : "text-foreground"
+                      className={`w-full flex items-center gap-3 px-3 py-2 text-sm text-left rounded-lg transition-colors ${
+                        activeWsId === ws.id ? "bg-indigo-50 text-indigo-600 font-semibold" : "text-foreground hover:bg-subtle"
                       }`}
                     >
                       <span className={`w-6 h-6 rounded-md text-[11px] font-semibold flex items-center justify-center shrink-0 ${
@@ -832,83 +771,40 @@ export default function DashboardLayout({
                       </span>
                       <span className="truncate flex-1">{ws.name}</span>
                       {activeWsId === ws.id && (
-                        <svg className="w-4 h-4 text-indigo-600 shrink-0 mr-1" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                           <polyline points="20 6 9 17 4 12" />
                         </svg>
                       )}
                     </button>
+                  ))}
+                </div>
 
-                    {/* Workspace Actions (Rename & Delete) - visible only for owners */}
-                    {ws.role === "owner" && (
-                      <div className="flex items-center gap-0.5 opacity-100 lg:opacity-0 lg:group-hover/item:opacity-100 transition-opacity shrink-0 pr-1">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleRenameWorkspace(ws.id, ws.name);
-                          }}
-                          title={t("layout.renameWorkspace")}
-                          className="p-1 rounded text-muted hover:text-foreground hover:bg-neutral-200/50 transition-colors"
-                        >
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeleteWorkspace(ws.id);
-                          }}
-                          title={t("layout.deleteWorkspaceQ")}
-                          className="p-1 rounded text-muted hover:text-red-600 hover:bg-red-50 transition-colors"
-                        >
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
-                    )}
+                <div className="border-t border-border mt-2 p-3 space-y-2">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold uppercase tracking-wider text-muted">Team</span>
+                    <span className="text-muted">{t("layout.membersCount", { count: 1 + activeMembers.length })}</span>
                   </div>
-                ))}
-
-                {/* Workspace Members list */}
-                <div className="border-t border-border mt-2 pt-2 px-3">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-[10px] font-semibold uppercase tracking-wider text-muted">
-                      {t("layout.membersCount", { count: 1 + activeMembers.length })}
-                    </span>
+                  <div className="grid grid-cols-2 gap-2">
                     <button
                       onClick={() => {
                         setWsOpen(false);
                         setInviteModalOpen(true);
                       }}
-                      className="text-[10px] font-semibold text-indigo-600 hover:underline"
+                      className="rounded-lg border border-border px-2 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 transition-colors"
                     >
                       {t("layout.invite")}
                     </button>
-                  </div>
-                  <div className="space-y-1 max-h-32 overflow-y-auto">
-                    {/* Owner */}
-                    <div className="flex items-center gap-2 py-1 text-xs text-foreground">
-                      <span className="w-5 h-5 rounded-full bg-indigo-600 text-white text-[9px] font-bold flex items-center justify-center shrink-0">
-                        {initials}
-                      </span>
-                      <span className="truncate flex-1 font-medium">{currentUser.name}</span>
-                      <span className="text-[9px] font-semibold text-muted bg-subtle px-1 py-0.5 rounded">{t("layout.owner")}</span>
-                    </div>
-                    {/* Invited members */}
-                    {activeMembers.map((m) => (
-                      <div key={m} className="flex items-center gap-2 py-1 text-xs text-foreground">
-                        <span className="w-5 h-5 rounded-full bg-emerald-500 text-white text-[9px] font-bold flex items-center justify-center shrink-0">
-                          {m.charAt(0).toUpperCase()}
-                        </span>
-                        <span className="truncate flex-1 text-muted">{m}</span>
-                        <span className="text-[9px] font-semibold text-emerald-600 bg-emerald-50 px-1 py-0.5 rounded">{t("layout.member")}</span>
-                      </div>
-                    ))}
+                    <Link
+                      href="/settings/members"
+                      onClick={() => setWsOpen(false)}
+                      className="rounded-lg border border-border px-2 py-1.5 text-center text-xs font-semibold text-muted hover:bg-subtle hover:text-foreground transition-colors"
+                    >
+                      Manage
+                    </Link>
                   </div>
                 </div>
 
-                <div className="border-t border-border mt-2 pt-1">
+                <div className="border-t border-border pt-1">
                   <button
                     onClick={() => {
                       setWsOpen(false);
@@ -980,14 +876,25 @@ export default function DashboardLayout({
               </button>
             </div>
             
-            <div className="max-h-40 overflow-y-auto space-y-0.5">
+            <div className="max-h-40 overflow-visible space-y-0.5">
+              <Link
+                href={activeWsId ? `/captures?ws=${activeWsId}` : "/captures"}
+                className={`flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-xs transition-colors ${
+                  pathname === "/captures" && typeof window !== "undefined" && !new URL(window.location.href).searchParams.get("folder")
+                    ? "bg-indigo-50 font-semibold text-indigo-600"
+                    : "text-muted hover:bg-subtle hover:text-foreground"
+                }`}
+              >
+                <span className="text-xs shrink-0">📂</span>
+                <span className="truncate">All Captures</span>
+              </Link>
               {folders.map((folder) => {
                 const isActiveFolder = typeof window !== "undefined" && new URL(window.location.href).searchParams.get("folder") === folder;
                 const activeWsRole = workspaces.find(w => w.id === activeWsId)?.role;
                 return (
                   <div
                     key={folder}
-                    className={`w-full flex items-center justify-between gap-1 px-1 rounded-lg group/folder transition-colors ${
+                    className={`relative w-full flex items-center justify-between gap-1 px-1 rounded-lg group/folder transition-colors ${
                       isActiveFolder ? "bg-indigo-50 font-semibold" : "hover:bg-subtle"
                     }`}
                   >
@@ -1001,35 +908,48 @@ export default function DashboardLayout({
                       <span className="truncate">{folder}</span>
                     </Link>
 
-                    {/* Folder Actions (Rename & Delete) - visible only for owners */}
+                    {/* Folder actions stay behind one menu to keep the sidebar quiet. */}
                     {activeWsRole === "owner" && (
-                      <div className="flex items-center gap-0.5 opacity-100 lg:opacity-0 lg:group-hover/folder:opacity-100 transition-opacity shrink-0 pr-1">
+                      <div className="shrink-0 pr-1">
                         <button
+                          type="button"
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
-                            handleRenameFolder(folder);
+                            setFolderMenuOpen((open) => (open === folder ? null : folder));
                           }}
-                          title={t("layout.renameFolder")}
-                          className="p-1 rounded text-muted hover:text-foreground hover:bg-neutral-200/50 transition-colors"
+                          aria-label={`${folder} actions`}
+                          className="flex h-6 w-6 items-center justify-center rounded-md text-muted hover:bg-white hover:text-foreground transition-colors"
                         >
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
-                          </svg>
+                          <span aria-hidden="true">⋯</span>
                         </button>
-                        <button
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleDeleteFolder(folder);
-                          }}
-                          title={t("layout.deleteFolderTitle")}
-                          className="p-1 rounded text-muted hover:text-red-600 hover:bg-red-50 transition-colors"
-                        >
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
+                        {folderMenuOpen === folder && (
+                          <>
+                            <div className="fixed inset-0 z-40" onClick={() => setFolderMenuOpen(null)} />
+                            <div className="absolute right-1 top-full z-50 mt-1 w-28 overflow-hidden rounded-lg border border-border bg-white py-1 text-xs shadow-lg">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setFolderMenuOpen(null);
+                                  handleRenameFolder(folder);
+                                }}
+                                className="block w-full px-3 py-2 text-left text-foreground hover:bg-subtle"
+                              >
+                                Rename
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setFolderMenuOpen(null);
+                                  handleDeleteFolder(folder);
+                                }}
+                                className="block w-full px-3 py-2 text-left text-red-600 hover:bg-red-50"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1051,10 +971,20 @@ export default function DashboardLayout({
           </div>
         </nav>
 
+        <div className="mt-auto shrink-0">
         {/* SaaS Upgrade CTA (Free tier only) */}
-        {currentUser.plan === "free" && (
-          <div className="px-4 py-3 mx-3 mb-3 bg-indigo-50 border border-indigo-100 rounded-xl">
-            <h5 className="text-[11px] font-bold text-indigo-900 tracking-wide uppercase">{t("layout.upgradeToPro")}</h5>
+        {currentUser.plan === "free" && !upgradeCardDismissed && (
+          <div className="relative px-4 py-3 mx-3 mb-3 bg-indigo-50 border border-indigo-100 rounded-xl">
+            <button
+              type="button"
+              onClick={() => setUpgradeCardDismissed(true)}
+              aria-label="Close upgrade offer"
+              title="Close"
+              className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-md text-indigo-500 hover:bg-indigo-100 hover:text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <span aria-hidden="true">×</span>
+            </button>
+            <h5 className="pr-7 text-[11px] font-bold text-indigo-900 tracking-wide uppercase">{t("layout.upgradeToPro")}</h5>
             <p className="text-[10px] text-indigo-700 leading-tight mt-1 mb-2.5">{t("layout.upgradeDesc")}</p>
             <button
               onClick={() => setBillingModalOpen(true)}
@@ -1121,6 +1051,7 @@ export default function DashboardLayout({
               </div>
             </>
           )}
+        </div>
         </div>
       </aside>
 
@@ -1371,81 +1302,6 @@ export default function DashboardLayout({
         </div>
       )}
 
-      {/* Rename Workspace Modal */}
-      {renameWsModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setRenameWsModalOpen(false)} />
-          <div className="relative w-full max-w-sm rounded-xl bg-white shadow-xl border border-border p-6">
-            <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.renameWorkspace")}</h2>
-            <p className="text-sm text-muted mb-5">{t("layout.renameWsDesc")}</p>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("layout.workspaceName")}</label>
-              <input
-                type="text"
-                value={renameWsNameInput}
-                onChange={(e) => setRenameWsNameInput(e.target.value)}
-                placeholder="e.g. QA Team"
-                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-white"
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && renameWsNameInput.trim()) {
-                    submitRenameWorkspace();
-                  }
-                }}
-              />
-            </div>
-            <div className="flex items-center justify-end gap-3 mt-6">
-              <button
-                onClick={() => setRenameWsModalOpen(false)}
-                className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors"
-              >
-                {t("common.cancel")}
-              </button>
-              <button
-                onClick={submitRenameWorkspace}
-                disabled={!renameWsNameInput.trim()}
-                className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-              >
-                {t("layout.saveChanges")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Workspace Modal (Jira Style Popup Confirmation) */}
-      {deleteWsModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setDeleteWsModalOpen(false)} />
-          <div className="relative w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-xl bg-white shadow-xl border border-border p-6 text-center">
-            <div className="mx-auto mb-4 w-12 h-12 rounded-full bg-red-50 border border-red-200 flex items-center justify-center text-red-600">
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
-            </div>
-            <h2 className="text-lg font-bold text-foreground mb-2">{t("layout.deleteWorkspaceQ")}</h2>
-            <p className="text-xs text-muted leading-relaxed mb-6">
-              {t("layout.deleteWsDesc")}
-            </p>
-
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
-              <button
-                onClick={() => setDeleteWsModalOpen(false)}
-                className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors"
-              >
-                {t("common.cancel")}
-              </button>
-              <button
-                onClick={submitDeleteWorkspace}
-                disabled={deletingWs}
-                className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 disabled:opacity-50 transition-colors"
-              >
-                {deletingWs ? t("layout.deleting") : t("layout.deleteWorkspaceQ")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
     </div>
   );
