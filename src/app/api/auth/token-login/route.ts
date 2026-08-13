@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-server";
+import type { User } from "@supabase/supabase-js";
 
 export async function POST(request: Request) {
   try {
@@ -29,7 +30,7 @@ export async function POST(request: Request) {
 
     // 3. Ensure user exists in Supabase Auth
     let page = 1;
-    let targetUser: any = null;
+    let targetUser: User | null = null;
 
     while (!targetUser) {
       const { data: userSearch, error: searchErr } = await supabaseAdmin.auth.admin.listUsers({
