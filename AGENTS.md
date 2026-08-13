@@ -61,6 +61,22 @@ Extension (capture → Drive upload)
 5. **Never hardcode environment-specific values** in source: use `CONFIG` object in `editor.js` (supabaseUrl, supabaseAnonKey, prodUrl, localUrl) and `process.env` in the dashboard.
 6. **Password & expires_at never leave the server** - the public share page goes through `get_public_capture` RPC which nulls sensitive fields when locked/expired.
 
+## Security & Credential Rules (ENFORCED)
+
+7. **Audit before every push**: Run `git log -S "<secret_fragment>" --oneline` for any sensitive value before `git push`. If a secret is found in history, rewrite with `git filter-repo` and rotate the key immediately — never push a known-leaked credential.
+8. **Anon key in extension is allowed** — Chrome extensions cannot use env vars. The anon key (`eyJ...role":"anon"...`) is safe to ship in `background.js`/`editor.js` as long as Supabase RLS is enforced on all user tables. **Never ship the service role key or any `sbp_*` PAT in extension files.**
+9. **Service role key is server-only** — only allowed in `process.env.SUPABASE_SERVICE_ROLE_KEY` on the server side (Next.js API routes). Never reference it in any client component, `NEXT_PUBLIC_*` var, or extension file.
+10. **Google OAuth secrets are server-only** — `GOOGLE_DRIVE_CLIENT_SECRET` and `GOOGLE_DRIVE_ENCRYPTION_KEY` must stay in `.env.local` only. Never log, echo, or return them in API responses.
+11. **Rotate immediately if exposed** — if any of the following are ever found in git history or public logs, rotate them at the source (Supabase dashboard / Google Cloud Console / Vercel) before doing anything else:
+    - `SUPABASE_SERVICE_ROLE_KEY`
+    - `GOOGLE_DRIVE_CLIENT_SECRET`
+    - `GOOGLE_DRIVE_ENCRYPTION_KEY`
+    - Any `sbp_*` PAT
+12. **`.env.local` must never be committed** — it is covered by `.gitignore` (`.env*` and `.env*.local`). If it ever appears in `git status` as staged, abort immediately and run `git rm --cached .env.local`.
+13. **Build must pass clean before every push** — run `npm run build` in `bugsnap-dashboard`. Zero errors AND zero warnings. A build with warnings that fail on Vercel (ESLint errors treated as errors) is not acceptable.
+14. **No `any` type in TypeScript** — use proper types from `@supabase/supabase-js` (`User`, `Session`, etc.) or define a local interface. `any` disables type safety and will fail the Vercel build via `@typescript-eslint/no-explicit-any`.
+15. **Supabase URL and project ref are fixed** — the live project is `kkmvanwgywrqsudvspge.supabase.co`. Never change the URL or point to a different project without explicit user instruction.
+
 ## DB Schema (public schema)
 
 | Table | Purpose | Notes |
