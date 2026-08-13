@@ -61,6 +61,7 @@ export default function LoginPage() {
       <div className="w-full max-w-sm">
         {/* Brand */}
         <div className="flex flex-col items-center text-center mb-8">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/icon.svg" alt="BugSnap" className="w-14 h-14 object-contain mb-4" />
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Welcome to BugSnap</h1>
           <p className="text-sm text-muted mt-2">

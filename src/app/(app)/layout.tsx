@@ -255,7 +255,7 @@ export default function DashboardLayout({
     return () => {
       active = false;
     };
-  }, [session.user?.id, wsParam]);
+  }, [session.user?.id, wsParam, pathname, router]);
 
   // Fetch members only for the active workspace to prevent menu navigation delay
   useEffect(() => {
@@ -640,6 +640,7 @@ export default function DashboardLayout({
           </svg>
         </button>
         <a href="/dashboard" className="flex items-center gap-2">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/icon.svg" alt="BugSnap" className="w-6 h-6 object-contain" />
           <span className="text-sm font-bold tracking-tight">BugSnap</span>
         </a>
@@ -676,6 +677,7 @@ export default function DashboardLayout({
           }`}
         >
         <div className="px-5 py-5 border-b border-border flex items-center gap-2.5">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/icon.svg" alt="BugSnap" className="w-7 h-7 shrink-0 object-contain" />
           <div>
             <h1 className="text-sm font-bold tracking-tight text-foreground leading-none">

@@ -81,6 +81,7 @@ export default function Home() {
       <header className="sticky top-0 z-10 border-b border-border bg-white/90 backdrop-blur">
         <div className="mx-auto max-w-6xl flex items-center justify-between px-6 py-4">
           <a href="/" className="flex items-center gap-2.5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/icon.svg" alt="BugSnap" className="w-8 h-8 object-contain" />
             <span className="text-lg font-bold tracking-tight">BugSnap</span>
           </a>
@@ -302,6 +303,7 @@ export default function Home() {
             {/* Brand column */}
             <div className="col-span-2 space-y-4">
               <div className="flex items-center gap-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/icon.svg" alt="" aria-hidden="true" className="w-6 h-6 object-contain" />
                 <div className="flex flex-col gap-1">
                   <span className="text-sm font-semibold">BugSnap</span>

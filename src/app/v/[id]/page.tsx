@@ -303,7 +303,7 @@ function SingleViewContent() {
     })();
 
     return () => { cancelled = true; };
-  }, [id, capture, status]);
+  }, [id, capture, status, isAuthenticated]);
 
   function submitPassword(e: React.FormEvent) {
     e.preventDefault();
@@ -477,6 +477,7 @@ function SingleViewContent() {
       <header className="h-14 border-b border-border px-3 sm:px-6 flex items-center justify-between shrink-0 bg-white">
         <div className="flex items-center gap-2">
           {brand.logo ? (
+            // eslint-disable-next-line @next/next/no-img-element
             <img src={brand.logo} alt="" className="h-6 w-auto object-contain" />
           ) : (
             <span className="text-base font-bold tracking-tight text-foreground truncate max-w-[140px]">{brand.name}</span>

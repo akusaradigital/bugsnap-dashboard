@@ -22,6 +22,7 @@ export function StaticShell({
       <header className="sticky top-0 z-10 border-b border-border bg-background/90 backdrop-blur">
         <div className="mx-auto max-w-5xl px-6 py-4 flex items-center justify-between">
           <a href="/" className="flex items-center gap-2.5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/icon.svg" alt="BugSnap" className="w-7 h-7 object-contain" />
             <span className="text-base font-bold tracking-tight">BugSnap</span>
           </a>
