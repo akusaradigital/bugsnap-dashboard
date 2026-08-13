@@ -106,9 +106,13 @@ declare
   v_view_count bigint;
   v_rec record;
 begin
-  -- Fetch client IP from Supabase request headers
+  -- Fetch client IP from Supabase request headers safely (prefer cf-connecting-ip / x-real-ip)
   begin
-    v_client_ip := split_part(coalesce(current_setting('request.headers', true)::jsonb ->> 'x-forwarded-for', ''), ',', 1);
+    v_client_ip := coalesce(
+      current_setting('request.headers', true)::jsonb ->> 'cf-connecting-ip',
+      current_setting('request.headers', true)::jsonb ->> 'x-real-ip',
+      split_part(coalesce(current_setting('request.headers', true)::jsonb ->> 'x-forwarded-for', ''), ',', 1)
+    );
   exception when others then
     v_client_ip := '';
   end;

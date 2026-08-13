@@ -18,8 +18,8 @@ export function StaticShell({
   children: ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-white text-foreground font-sans flex flex-col">
-      <header className="sticky top-0 z-10 border-b border-border bg-white/90 backdrop-blur">
+    <div className="min-h-screen bg-subtle text-foreground font-sans flex flex-col">
+      <header className="sticky top-0 z-10 border-b border-border bg-background/90 backdrop-blur">
         <div className="mx-auto max-w-5xl px-6 py-4 flex items-center justify-between">
           <a href="/" className="flex items-center gap-2.5">
             <img src="/icon.svg" alt="BugSnap" className="w-7 h-7 object-contain" />
@@ -44,7 +44,7 @@ export function StaticShell({
         {children}
       </main>
 
-      <footer className="border-t border-border bg-white py-8">
+      <footer className="border-t border-border bg-subtle py-8">
         <div className="mx-auto max-w-5xl px-6 text-center">
           <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-xs text-muted">
             <span>BugSnap — From Click to Fix</span>

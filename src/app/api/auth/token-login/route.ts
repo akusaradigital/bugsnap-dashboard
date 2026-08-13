@@ -28,14 +28,20 @@ export async function POST(request: Request) {
     const supabaseAdmin = createServiceClient();
 
     // 3. Ensure user exists in Supabase Auth
-    // ponytail: perPage 1000 avoids the default 50-user cap on listUsers()
-    const { data: userSearch, error: searchErr } = await supabaseAdmin.auth.admin.listUsers({
-      page: 1,
-      perPage: 1000,
-    });
-    if (searchErr) throw searchErr;
+    let page = 1;
+    let targetUser: any = null;
 
-    let targetUser = userSearch.users.find(u => u.email?.toLowerCase() === email.toLowerCase());
+    while (!targetUser) {
+      const { data: userSearch, error: searchErr } = await supabaseAdmin.auth.admin.listUsers({
+        page,
+        perPage: 1000
+      });
+      if (searchErr) throw searchErr;
+
+      targetUser = userSearch.users.find(u => u.email?.toLowerCase() === email.toLowerCase()) || null;
+      if (!userSearch.users.length || userSearch.users.length < 1000 || targetUser) break;
+      page++;
+    }
 
     if (!targetUser) {
       // Create user if they don't exist yet (auto-confirmed)

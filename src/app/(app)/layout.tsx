@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
 import { normalizePlan, seatLimit, tierLabel, type Plan } from "@/lib/tiers";
+import { AuthRequiredCard } from "@/components/AuthRequiredCard";
 
 const navItems = [
   { labelKey: "nav.dashboard", href: "/dashboard", icon: "📊" },
@@ -233,30 +234,8 @@ export default function DashboardLayout({
           }
         }
 
-        // Members per workspace (emails joined from auth.users via RPC).
-        const memberMap: Record<string, string[]> = {};
-        rows.forEach((w) => {
-          memberMap[w.id] = [];
-        });
-        await Promise.all(
-          rows.map(async (w) => {
-            const { data: mem, error: memErr } = await supabase.rpc(
-              "get_workspace_members",
-              { p_workspace_id: w.id }
-            );
-            if (memErr) throw memErr;
-            (mem ?? []).forEach((m: { user_id: string; email: string; role: string }) => {
-              // Skip the owner - they're rendered separately as "Owner".
-              if (m.role !== "owner" && m.email) {
-                memberMap[w.id].push(m.email);
-              }
-            });
-          })
-        );
-
         if (!active) return;
         setWorkspaces(rows);
-        setMembers(memberMap);
         // Initialize from the URL ?ws= param when valid, else first workspace.
         const initialWs =
           wsParam && rows.some((w) => w.id === wsParam)
@@ -276,7 +255,36 @@ export default function DashboardLayout({
     return () => {
       active = false;
     };
-  }, [session.user?.id, wsParam, router, pathname]);
+  }, [session.user?.id, wsParam]);
+
+  // Fetch members only for the active workspace to prevent menu navigation delay
+  useEffect(() => {
+    if (!activeWsId) return;
+    let active = true;
+    (async () => {
+      try {
+        const { data: mem, error: memErr } = await supabase.rpc(
+          "get_workspace_members",
+          { p_workspace_id: activeWsId }
+        );
+        if (memErr) throw memErr;
+        if (!active) return;
+        
+        const emails: string[] = [];
+        (mem ?? []).forEach((m: { user_id: string; email: string; role: string }) => {
+          if (m.role !== "owner" && m.email) {
+            emails.push(m.email);
+          }
+        });
+        setMembers((prev) => ({ ...prev, [activeWsId]: emails }));
+      } catch (err) {
+        console.warn("Failed to load workspace members:", err);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [activeWsId]);
 
   // Close mobile sidebar drawer on route change
   useEffect(() => {
@@ -390,7 +398,7 @@ export default function DashboardLayout({
   if (!session.user && session.suspended) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-6">
-        <div className="max-w-md w-full bg-white border border-border rounded-xl p-8 text-center shadow-sm">
+        <div className="max-w-md w-full bg-subtle border border-border rounded-xl p-8 text-center shadow-sm">
           <div className="mx-auto mb-4 w-14 h-14 rounded-full bg-red-50 border border-red-200 flex items-center justify-center text-red-600">
             <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
@@ -405,8 +413,11 @@ export default function DashboardLayout({
     );
   }
 
+  if (!session.loading && !session.user) {
+    return <AuthRequiredCard title="404 - Dashboard Access Protected" />;
+  }
+
   if (!session.user) {
-    // router.replace("/") is in-flight; render nothing to avoid flicker.
     return null;
   }
 
@@ -618,7 +629,7 @@ export default function DashboardLayout({
         </div>
       )}
       {/* Mobile top bar */}
-      <header className="lg:hidden shrink-0 border-b border-border bg-white flex items-center justify-between px-4 py-3">
+      <header className="lg:hidden shrink-0 border-b border-border bg-subtle flex items-center justify-between px-4 py-3">
         <button
           onClick={() => setSidebarOpen(true)}
           className="p-2.5 rounded-lg text-muted hover:text-foreground hover:bg-subtle transition-colors"
@@ -657,12 +668,13 @@ export default function DashboardLayout({
       )}
 
     <div className="flex flex-1 min-h-0 bg-background overflow-hidden">
-      {/* Sidebar - inline on desktop, drawer on mobile */}
-      <aside
-        className={`w-60 border-r border-border bg-white shrink-0 flex flex-col h-full overflow-visible max-h-screen lg:relative lg:translate-x-0 fixed inset-y-0 left-0 z-50 transform transition-transform duration-200 ${
-          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-        }`}
-      >
+      {/* Sidebar - hidden on settings route so settings page can render its own 2-panel layout with its own sidebar */}
+      {!pathname.startsWith("/settings") && (
+        <aside
+          className={`w-60 border-r border-border bg-subtle shrink-0 flex flex-col h-full overflow-visible max-h-screen lg:relative lg:translate-x-0 fixed inset-y-0 left-0 z-50 transform transition-transform duration-200 ${
+            sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          }`}
+        >
         <div className="px-5 py-5 border-b border-border flex items-center gap-2.5">
           <img src="/icon.svg" alt="BugSnap" className="w-7 h-7 shrink-0 object-contain" />
           <div>
@@ -693,7 +705,7 @@ export default function DashboardLayout({
               <>
                 {/* Click-catcher that closes the dropdown without blocking page scroll */}
                 <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} onWheel={() => setNotifOpen(false)} />
-                <div className="fixed left-4 top-16 z-50 w-64 rounded-xl border border-border bg-white shadow-xl py-2 px-1">
+                <div className="fixed left-4 top-16 z-50 w-64 rounded-xl border border-border bg-subtle shadow-xl py-2 px-1">
                   <div className="flex items-center justify-between px-3 py-1 mb-1">
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">{t("layout.notifications")}</p>
                     {newCommentCount > 0 && (
@@ -733,7 +745,7 @@ export default function DashboardLayout({
           </p>
           <button
             onClick={() => setWsOpen((o) => !o)}
-            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium rounded-lg border border-border bg-white hover:bg-subtle transition-colors text-left"
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium rounded-lg border border-border bg-subtle hover:bg-subtle transition-colors text-left"
           >
             <span className="w-6 h-6 rounded-md bg-indigo-600 text-white text-[11px] font-semibold flex items-center justify-center shrink-0">
               {activeWsName.charAt(0)}
@@ -747,7 +759,7 @@ export default function DashboardLayout({
           {wsOpen && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setWsOpen(false)} />
-              <div className="absolute left-3 right-3 top-[calc(100%+4px)] z-50 rounded-xl border border-border bg-white shadow-xl py-2 px-1">
+              <div className="absolute left-3 right-3 top-[calc(100%+4px)] z-50 rounded-xl border border-border bg-subtle shadow-xl py-2 px-1">
                 <div className="px-3 py-1 mb-1">
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">{t("layout.workspaces")}</p>
                 </div>
@@ -761,7 +773,7 @@ export default function DashboardLayout({
                         router.replace(`?ws=${ws.id}`, { scroll: false });
                       }}
                       className={`w-full flex items-center gap-3 px-3 py-2 text-sm text-left rounded-lg transition-colors ${
-                        activeWsId === ws.id ? "bg-indigo-50 text-indigo-600 font-semibold" : "text-foreground hover:bg-subtle"
+                        activeWsId === ws.id ? "bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 font-semibold" : "text-foreground hover:bg-subtle"
                       }`}
                     >
                       <span className={`w-6 h-6 rounded-md text-[11px] font-semibold flex items-center justify-center shrink-0 ${
@@ -790,7 +802,7 @@ export default function DashboardLayout({
                         setWsOpen(false);
                         setInviteModalOpen(true);
                       }}
-                      className="rounded-lg border border-border px-2 py-1.5 text-xs font-semibold text-indigo-600 hover:bg-indigo-50 transition-colors"
+                      className="rounded-lg border border-border px-2 py-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition-colors"
                     >
                       {t("layout.invite")}
                     </button>
@@ -881,7 +893,7 @@ export default function DashboardLayout({
                 href={activeWsId ? `/captures?ws=${activeWsId}` : "/captures"}
                 className={`flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-xs transition-colors ${
                   pathname === "/captures" && typeof window !== "undefined" && !new URL(window.location.href).searchParams.get("folder")
-                    ? "bg-indigo-50 font-semibold text-indigo-600"
+                    ? "bg-indigo-50 dark:bg-indigo-950/30 font-semibold text-indigo-600 dark:text-indigo-400"
                     : "text-muted hover:bg-subtle hover:text-foreground"
                 }`}
               >
@@ -895,7 +907,7 @@ export default function DashboardLayout({
                   <div
                     key={folder}
                     className={`relative w-full flex items-center justify-between gap-1 px-1 rounded-lg group/folder transition-colors ${
-                      isActiveFolder ? "bg-indigo-50 font-semibold" : "hover:bg-subtle"
+                      isActiveFolder ? "bg-indigo-50 dark:bg-indigo-950/30 font-semibold" : "hover:bg-subtle"
                     }`}
                   >
                     <Link
@@ -919,14 +931,14 @@ export default function DashboardLayout({
                             setFolderMenuOpen((open) => (open === folder ? null : folder));
                           }}
                           aria-label={`${folder} actions`}
-                          className="flex h-6 w-6 items-center justify-center rounded-md text-muted hover:bg-white hover:text-foreground transition-colors"
+                          className="flex h-6 w-6 items-center justify-center rounded-md text-muted hover:bg-subtle hover:text-foreground transition-colors"
                         >
                           <span aria-hidden="true">⋯</span>
                         </button>
                         {folderMenuOpen === folder && (
                           <>
                             <div className="fixed inset-0 z-40" onClick={() => setFolderMenuOpen(null)} />
-                            <div className="absolute right-1 top-full z-50 mt-1 w-28 overflow-hidden rounded-lg border border-border bg-white py-1 text-xs shadow-lg">
+                            <div className="absolute right-1 top-full z-50 mt-1 w-28 overflow-hidden rounded-lg border border-border bg-subtle py-1 text-xs shadow-lg">
                               <button
                                 type="button"
                                 onClick={() => {
@@ -943,7 +955,7 @@ export default function DashboardLayout({
                                   setFolderMenuOpen(null);
                                   handleDeleteFolder(folder);
                                 }}
-                                className="block w-full px-3 py-2 text-left text-red-600 hover:bg-red-50"
+                                className="block w-full px-3 py-2 text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
                               >
                                 Delete
                               </button>
@@ -974,18 +986,18 @@ export default function DashboardLayout({
         <div className="mt-auto shrink-0">
         {/* SaaS Upgrade CTA (Free tier only) */}
         {currentUser.plan === "free" && !upgradeCardDismissed && (
-          <div className="relative px-4 py-3 mx-3 mb-3 bg-indigo-50 border border-indigo-100 rounded-xl">
+          <div className="relative px-4 py-3 mx-3 mb-3 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-800/40 rounded-xl">
             <button
               type="button"
               onClick={() => setUpgradeCardDismissed(true)}
               aria-label="Close upgrade offer"
               title="Close"
-              className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-md text-indigo-500 hover:bg-indigo-100 hover:text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-md text-indigo-500 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 hover:text-indigo-900 dark:hover:text-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
             >
               <span aria-hidden="true">×</span>
             </button>
-            <h5 className="pr-7 text-[11px] font-bold text-indigo-900 tracking-wide uppercase">{t("layout.upgradeToPro")}</h5>
-            <p className="text-[10px] text-indigo-700 leading-tight mt-1 mb-2.5">{t("layout.upgradeDesc")}</p>
+            <h5 className="pr-7 text-[11px] font-bold text-indigo-900 dark:text-indigo-200 tracking-wide uppercase">{t("layout.upgradeToPro")}</h5>
+            <p className="text-[10px] text-indigo-700 dark:text-indigo-300 leading-tight mt-1 mb-2.5">{t("layout.upgradeDesc")}</p>
             <button
               onClick={() => setBillingModalOpen(true)}
               className="w-full py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition-colors text-center block"
@@ -1024,9 +1036,9 @@ export default function DashboardLayout({
           {userMenuOpen && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
-              <div className="absolute bottom-full left-3 right-3 mb-1 z-50 rounded-lg border border-border bg-white shadow-lg py-1">
+              <div className="absolute bottom-full left-3 right-3 mb-1 z-50 rounded-lg border border-border bg-subtle shadow-lg py-1">
                 <Link
-                  href="/settings"
+                  href={activeWsId ? `/settings?ws=${activeWsId}` : "/settings"}
                   onClick={() => setUserMenuOpen(false)}
                   className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-subtle transition-colors"
                 >
@@ -1054,6 +1066,7 @@ export default function DashboardLayout({
         </div>
         </div>
       </aside>
+      )}
 
       {/* Main content */}
       <main className="flex-1 h-full overflow-y-auto">{children}</main>
@@ -1062,7 +1075,7 @@ export default function DashboardLayout({
       {inviteModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setInviteModalOpen(false)} />
-          <div className="relative w-full max-w-sm rounded-xl bg-white shadow-xl border border-border p-6">
+          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-6">
             <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.inviteToWorkspace")}</h2>
             <p className="text-sm text-muted mb-5">
               {t("layout.inviteDescPre")} <span className="font-semibold text-foreground">{activeWsName}</span> {t("layout.inviteDescPost")}
@@ -1075,7 +1088,7 @@ export default function DashboardLayout({
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   placeholder="colleague@example.com"
-                  className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-white"
+                  className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-subtle"
                   autoFocus
                 />
               </div>
@@ -1106,7 +1119,7 @@ export default function DashboardLayout({
       {createWsModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setCreateWsModalOpen(false)} />
-          <div className="relative w-full max-w-sm rounded-xl bg-white shadow-xl border border-border p-6">
+          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-6">
             <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.createWorkspace")}</h2>
             <p className="text-sm text-muted mb-5">
               {t("layout.createWorkspaceDesc")}
@@ -1118,7 +1131,7 @@ export default function DashboardLayout({
                 value={newWsName}
                 onChange={(e) => setNewWsName(e.target.value)}
                 placeholder="e.g. QA Team"
-                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-white"
+                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-subtle"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && newWsName.trim()) {
@@ -1157,7 +1170,7 @@ export default function DashboardLayout({
       {billingModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setBillingModalOpen(false)} />
-          <div className="relative w-full max-w-md max-h-[85vh] overflow-y-auto rounded-xl bg-white shadow-xl border border-border p-6 text-center">
+          <div className="relative w-full max-w-md max-h-[85vh] overflow-y-auto rounded-xl bg-subtle shadow-xl border border-border p-6 text-center">
             <h2 className="text-xl font-bold text-foreground mb-1">{t("layout.upgradeTitle")}</h2>
             <p className="text-sm text-muted mb-6">
               {t("layout.upgradeSub")}
@@ -1181,7 +1194,7 @@ export default function DashboardLayout({
       {createFolderModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setCreateFolderModalOpen(false)} />
-          <div className="relative w-full max-w-sm rounded-xl bg-white shadow-xl border border-border p-6">
+          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-6">
             <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.createFolderTitle")}</h2>
             <p className="text-sm text-muted mb-5">
               {t("layout.createFolderDesc")}
@@ -1193,7 +1206,7 @@ export default function DashboardLayout({
                 value={newFolderName}
                 onChange={(e) => setNewFolderName(e.target.value)}
                 placeholder="e.g. Eyden - Quaker"
-                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-white"
+                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-subtle"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && newFolderName.trim()) {
@@ -1228,7 +1241,7 @@ export default function DashboardLayout({
       {renameFolderModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setRenameFolderModalOpen(false)} />
-          <div className="relative w-full max-w-sm rounded-xl bg-white shadow-xl border border-border p-6">
+          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-6">
             <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.renameFolder")}</h2>
             <p className="text-sm text-muted mb-5">
               {t("layout.renameFolderDesc")}
@@ -1240,7 +1253,7 @@ export default function DashboardLayout({
                 value={renameFolderNameInput}
                 onChange={(e) => setRenameFolderNameInput(e.target.value)}
                 placeholder="e.g. Eyden - Quaker"
-                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-white"
+                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-subtle"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && renameFolderNameInput.trim()) {
@@ -1272,7 +1285,7 @@ export default function DashboardLayout({
       {deleteFolderModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setDeleteFolderModalOpen(false)} />
-          <div className="relative w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-xl bg-white shadow-xl border border-border p-6 text-center">
+          <div className="relative w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-xl bg-subtle shadow-xl border border-border p-6 text-center">
             <div className="mx-auto mb-4 w-12 h-12 rounded-full bg-red-50 border border-red-200 flex items-center justify-center text-red-600">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

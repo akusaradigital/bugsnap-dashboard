@@ -4,8 +4,8 @@ import { useState } from "react";
 import { useT } from "@/components/I18nProvider";
 
 interface TimedLog {
-  time?: string;
-  timestamp?: string;
+  time?: string | number;
+  timestamp?: string | number;
   count?: number;
 }
 
@@ -36,6 +36,16 @@ export interface ActionLog extends TimedLog {
   message?: string;
 }
 
+const ACTION_LABELS: Record<string, string> = {
+  click: "Click",
+  typing: "Typing",
+  type: "Typing",
+  input: "Input",
+  navigate: "Navigation",
+  navigation: "Navigation",
+  screenshot: "Screenshot",
+};
+
 export interface NavigationLog extends TimedLog {
   type: "navigation";
   message?: string;
@@ -49,6 +59,40 @@ export interface ScreenshotLog extends TimedLog {
 }
 
 export type DevLog = ConsoleLog | NetworkLog | ActionLog | NavigationLog | ScreenshotLog;
+
+function normalizeDevLog(log: Record<string, unknown>): DevLog {
+  const type = typeof log.type === "string" ? log.type.toLowerCase() : "";
+  const level = typeof log.level === "string" ? log.level : undefined;
+  const message = typeof log.message === "string" ? log.message : undefined;
+  const text = typeof log.text === "string" ? log.text : undefined;
+  const stack = typeof log.stack === "string" || log.stack === null ? log.stack : undefined;
+  const method = typeof log.method === "string" ? log.method : undefined;
+  const status = typeof log.status === "number" ? log.status : undefined;
+  const resourceType = typeof log.resourceType === "string" ? log.resourceType : undefined;
+  const url = typeof log.url === "string" ? log.url : undefined;
+  const statusText = typeof log.statusText === "string" ? log.statusText : undefined;
+  const duration = typeof log.duration === "number" ? log.duration : undefined;
+  const requestBody = typeof log.requestBody === "string" || log.requestBody === null ? log.requestBody : undefined;
+  const responseBody = typeof log.responseBody === "string" ? log.responseBody : undefined;
+  const error = typeof log.error === "string" ? log.error : undefined;
+  const time = typeof log.time === "string" || typeof log.time === "number" ? log.time : undefined;
+  const timestamp = typeof log.timestamp === "string" || typeof log.timestamp === "number" ? log.timestamp : undefined;
+  const count = typeof log.count === "number" ? log.count : undefined;
+
+  if (type === "console" || (type === "" && (level !== undefined || stack !== undefined || text !== undefined))) {
+    return { type: "console", level, message, text, stack, time, timestamp, count };
+  }
+  if (type === "network" || (type === "" && (method !== undefined || status !== undefined || requestBody !== undefined || responseBody !== undefined))) {
+    return { type: "network", level, method, status, resourceType, url, statusText, duration, requestBody, responseBody, error, time, timestamp, count };
+  }
+  if (type === "navigation") {
+    return { type: "navigation", message, url, time, timestamp, count };
+  }
+  if (type === "screenshot") {
+    return { type: "screenshot", message, url, time, timestamp, count };
+  }
+  return { type: "step", message: message || text || "", time, timestamp, count };
+}
 
 export interface DevLogSummary {
   version: number;
@@ -166,9 +210,9 @@ function FormattedErrorMessage({ msg }: { msg: string }) {
     const method = lines[0].toUpperCase();
     const url = lines[1];
     return (
-      <div className="rounded-lg border border-red-200/80 bg-white p-2.5 shadow-sm space-y-1.5">
+      <div className="rounded-lg border border-red-200/80 dark:border-red-800/40 bg-subtle p-2.5 shadow-sm space-y-1.5">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide uppercase bg-red-100 text-red-700 border border-red-200 shrink-0">
+          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide uppercase bg-red-100 dark:bg-red-950/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800/40 shrink-0">
             {method}
           </span>
           <span className="text-[11px] font-mono text-foreground font-medium truncate min-w-0 flex-1" title={url}>
@@ -185,7 +229,7 @@ function FormattedErrorMessage({ msg }: { msg: string }) {
   }
 
   return (
-    <div className="rounded-lg border border-red-100 bg-white p-2.5 shadow-sm">
+    <div className="rounded-lg border border-red-100 dark:border-red-800/40 bg-subtle p-2.5 shadow-sm">
       <p className="text-[11px] font-mono text-foreground/90 break-words leading-relaxed whitespace-pre-wrap">
         {msg}
       </p>
@@ -200,7 +244,9 @@ export default function DevToolsPanel({ capture }: Props) {
   const [showErrorsOnly, setShowErrorsOnly] = useState(false);
 
   const summaryOnly = !Array.isArray(capture.dev_logs) && isSummary(capture.dev_logs);
-  const logs: DevLog[] = Array.isArray(capture.dev_logs) ? capture.dev_logs : [];
+  const logs: DevLog[] = Array.isArray(capture.dev_logs)
+    ? (capture.dev_logs as unknown[]).map((log) => normalizeDevLog((log || {}) as Record<string, unknown>))
+    : [];
   const summary = summaryOnly ? (capture.dev_logs as DevLogSummary) : null;
 
   const earliestTimestamp = logs.reduce<number>((min, log) => {
@@ -218,8 +264,8 @@ export default function DevToolsPanel({ capture }: Props) {
     const value = log.time || log.timestamp;
     if (!value) return "-";
     if (typeof value === "string" && /^\d{1,2}:\d{2}$/.test(value)) return value;
-    if (/^[+\d].*(?:ms|s|m|h)$/i.test(value)) return value;
-    const ts = new Date(value).getTime();
+    if (typeof value === "string" && /^[+\d].*(?:ms|s|m|h)$/i.test(value)) return value;
+    const ts = typeof value === "number" ? value : new Date(value).getTime();
     if (!Number.isFinite(ts) || earliestTimestamp === 0) return "-";
     const elapsed = ts - earliestTimestamp;
     if (elapsed < 1000) return `${Math.max(0, elapsed)}ms`;
@@ -337,11 +383,11 @@ export default function DevToolsPanel({ capture }: Props) {
   };
 
   return (
-    <div className="w-full lg:w-[360px] border-t lg:border-t-0 lg:border-l border-border bg-white flex flex-col shrink-0 h-[450px] lg:h-auto min-h-0 max-h-full">
+    <div className="w-full lg:w-[360px] border-t lg:border-t-0 lg:border-l border-border bg-subtle flex flex-col shrink-0 h-[450px] lg:h-auto min-h-0 max-h-full">
       {/* Header */}
       <div className="h-11 border-b border-border px-4 flex items-center justify-between shrink-0">
         <span className="text-sm font-semibold text-foreground">{t("v.devTools")}</span>
-        <span className="text-[10px] font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">
+        <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30 px-2 py-0.5 rounded-full border border-indigo-100 dark:border-indigo-800/40">
           {summary
             ? summary.errors === 0 && summary.warnings === 0 && summary.failedRequests === 0
               ? t("dt.clean", { n: 0 })
@@ -382,7 +428,7 @@ export default function DevToolsPanel({ capture }: Props) {
                 placeholder={t("dt.search", { tab: tabLabel(activeTab) })}
                 value={logSearch}
                 onChange={(e) => setLogSearch(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-border text-xs bg-white outline-none focus:border-indigo-500 shadow-sm"
+                className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-border text-xs bg-subtle outline-none focus:border-indigo-500 shadow-sm"
               />
             </div>
             {(activeTab === "Console" || activeTab === "Network") && (
@@ -391,7 +437,7 @@ export default function DevToolsPanel({ capture }: Props) {
                   type="button"
                   onClick={() => setShowErrorsOnly(false)}
                   className={`flex-1 px-3 py-1 text-[10px] font-semibold rounded-md transition-colors ${
-                    !showErrorsOnly ? "bg-white text-foreground shadow-sm" : "text-muted hover:text-foreground"
+                    !showErrorsOnly ? "bg-subtle text-foreground shadow-sm" : "text-muted hover:text-foreground"
                   }`}
                 >
                   {t("dt.all")}
@@ -400,7 +446,7 @@ export default function DevToolsPanel({ capture }: Props) {
                   type="button"
                   onClick={() => setShowErrorsOnly(true)}
                   className={`flex-1 px-3 py-1 text-[10px] font-semibold rounded-md transition-colors flex items-center justify-center gap-1 ${
-                    showErrorsOnly ? "bg-red-50 text-red-600 shadow-sm border border-red-100" : "text-muted hover:text-red-500"
+                    showErrorsOnly ? "bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 shadow-sm border border-red-100 dark:border-red-800/40" : "text-muted hover:text-red-500 dark:hover:text-red-400"
                   }`}
                 >
                   {t("dt.errorsOnly")}
@@ -427,7 +473,7 @@ export default function DevToolsPanel({ capture }: Props) {
               </div>
             )}
 
-            <div className="rounded-xl border border-border overflow-hidden bg-white shadow-sm">
+            <div className="rounded-xl border border-border overflow-hidden bg-subtle shadow-sm">
               {[
                 {
                   icon: (
@@ -500,7 +546,7 @@ export default function DevToolsPanel({ capture }: Props) {
               </button>
               <button
                 onClick={downloadJson}
-                className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-border bg-white hover:bg-subtle text-foreground text-xs font-semibold shadow-sm transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-border bg-subtle hover:bg-subtle text-foreground text-xs font-semibold shadow-sm transition-colors"
               >
                 <svg className="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
@@ -522,22 +568,22 @@ export default function DevToolsPanel({ capture }: Props) {
                   {summary.errors === 0 && summary.warnings === 0 ? (
                     <div className="py-10 flex flex-col items-center gap-2 text-center text-xs text-muted">
                       <svg className="w-8 h-8 text-emerald-500/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                      <p className="font-medium text-emerald-700">{t("dt.pageRanClean")}</p>
+                      <p className="font-medium text-emerald-700 dark:text-emerald-400">{t("dt.pageRanClean")}</p>
                       <p className="text-[11px]">{t("dt.noConsoleErrors")}</p>
                     </div>
                   ) : (
                     <>
                       {/* Summary alert banner */}
-                      <div className="flex items-center gap-2.5 rounded-xl bg-red-50 border border-red-200/80 px-3.5 py-2.5 shadow-sm">
-                        <div className="w-7 h-7 rounded-full bg-red-100 border border-red-200 flex items-center justify-center shrink-0 text-red-600 text-xs font-bold">
+                      <div className="flex items-center gap-2.5 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200/80 dark:border-red-800/40 px-3.5 py-2.5 shadow-sm">
+                        <div className="w-7 h-7 rounded-full bg-red-100 dark:bg-red-950/40 border border-red-200 dark:border-red-800/40 flex items-center justify-center shrink-0 text-red-600 dark:text-red-400 text-xs font-bold">
                           {summary.errors}
                         </div>
                         <div className="min-w-0 flex-1">
-                          <p className="text-xs font-semibold text-red-800 leading-tight">
+                          <p className="text-xs font-semibold text-red-800 dark:text-red-300 leading-tight">
                             {summary.errors === 1 ? t("dt.consoleErrOne") : t("dt.consoleErr")}
                           </p>
                           {summary.warnings > 0 && (
-                            <p className="text-[10px] text-amber-700 font-medium leading-tight mt-0.5">
+                            <p className="text-[10px] text-amber-700 dark:text-amber-400 font-medium leading-tight mt-0.5">
                               {t("dt.warnSuffix", { n: summary.warnings })}
                             </p>
                           )}
@@ -569,7 +615,7 @@ export default function DevToolsPanel({ capture }: Props) {
                     <div
                       key={i}
                       className={`p-3 text-xs transition-colors ${
-                        isWarn ? "bg-amber-50/40 hover:bg-amber-50/70" : isErr ? "bg-red-50/40 hover:bg-red-50/70" : "hover:bg-subtle/50"
+                        isWarn ? "bg-amber-50/40 dark:bg-amber-950/20 hover:bg-amber-50/70 dark:hover:bg-amber-950/30" : isErr ? "bg-red-50/40 dark:bg-red-950/20 hover:bg-red-50/70 dark:hover:bg-red-950/30" : "hover:bg-subtle/50"
                       }`}
                     >
                       <div className="flex items-start gap-2.5 min-w-0">
@@ -579,9 +625,9 @@ export default function DevToolsPanel({ capture }: Props) {
                         <span
                           className={`px-1.5 py-0.2 rounded text-[9px] font-bold uppercase shrink-0 ${
                             isWarn
-                              ? "bg-amber-100 text-amber-700 border border-amber-200"
+                              ? "bg-amber-100 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800/40"
                               : isErr
-                              ? "bg-red-100 text-red-700 border border-red-200"
+                              ? "bg-red-100 dark:bg-red-950/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800/40"
                               : "bg-subtle text-muted border border-border"
                           }`}
                         >
@@ -624,23 +670,23 @@ export default function DevToolsPanel({ capture }: Props) {
                   {summary.failedRequests === 0 ? (
                     <div className="py-10 flex flex-col items-center gap-2 text-center text-xs text-muted">
                       <svg className="w-8 h-8 text-emerald-500/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-                      <p className="font-medium text-emerald-700">{t("dt.noFailedRequests")}</p>
+                      <p className="font-medium text-emerald-700 dark:text-emerald-400">{t("dt.noFailedRequests")}</p>
                       <p className="text-[11px]">{t("dt.allNetworkOk")}</p>
                     </div>
                   ) : (
                     <>
-                      <div className="flex items-center gap-2.5 rounded-xl bg-red-50 border border-red-200/80 px-3.5 py-2.5 shadow-sm">
-                        <div className="w-7 h-7 rounded-full bg-red-100 border border-red-200 flex items-center justify-center shrink-0 text-red-600 text-xs font-bold">
+                      <div className="flex items-center gap-2.5 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200/80 dark:border-red-800/40 px-3.5 py-2.5 shadow-sm">
+                        <div className="w-7 h-7 rounded-full bg-red-100 dark:bg-red-950/40 border border-red-200 dark:border-red-800/40 flex items-center justify-center shrink-0 text-red-600 dark:text-red-400 text-xs font-bold">
                           {summary.failedRequests}
                         </div>
-                        <p className="text-xs font-semibold text-red-800 leading-tight">
+                        <p className="text-xs font-semibold text-red-800 dark:text-red-300 leading-tight">
                           {summary.failedRequests === 1 ? t("dt.failedReqOne") : t("dt.failedReq")}
                         </p>
                       </div>
                       <div className="space-y-2 pt-1">
                         {(summary.failedUrls || []).map((url, i) => (
-                          <div key={i} className="rounded-lg border border-red-100 bg-white p-2.5 shadow-sm">
-                            <p className="text-[11px] font-mono text-red-700 break-all leading-tight">
+                          <div key={i} className="rounded-lg border border-red-100 dark:border-red-800/40 bg-subtle p-2.5 shadow-sm">
+                            <p className="text-[11px] font-mono text-red-700 dark:text-red-400 break-all leading-tight">
                               {url}
                             </p>
                           </div>
@@ -668,10 +714,10 @@ export default function DevToolsPanel({ capture }: Props) {
                           <span
                             className={`px-1.5 py-0.5 rounded text-[10px] font-bold font-mono shrink-0 ${
                               isFailed
-                                ? "bg-red-100 text-red-700 border border-red-200"
+                                ? "bg-red-100 dark:bg-red-950/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800/40"
                                 : isOk
-                                ? "bg-emerald-100 text-emerald-700 border border-emerald-200"
-                                : "bg-amber-100 text-amber-800 border border-amber-200"
+                                ? "bg-emerald-100 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40"
+                                : "bg-amber-100 dark:bg-amber-950/30 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-800/40"
                             }`}
                           >
                             {log.status || "FAIL"}
@@ -713,7 +759,7 @@ export default function DevToolsPanel({ capture }: Props) {
                         {log.requestBody != null && (
                           <div>
                             <p className="text-[10px] font-semibold uppercase tracking-wider text-muted mb-1">{t("dt.requestBody")}</p>
-                            <pre className="p-2 rounded-lg bg-white border border-border font-mono text-[10px] leading-relaxed whitespace-pre-wrap break-all max-h-32 overflow-y-auto">
+                            <pre className="p-2 rounded-lg bg-subtle border border-border font-mono text-[10px] leading-relaxed whitespace-pre-wrap break-all max-h-32 overflow-y-auto">
                               {log.requestBody}
                             </pre>
                           </div>
@@ -721,7 +767,7 @@ export default function DevToolsPanel({ capture }: Props) {
                         {log.responseBody && (
                           <div>
                             <p className="text-[10px] font-semibold uppercase tracking-wider text-muted mb-1">{t("dt.responseBody")}</p>
-                            <pre className="p-2 rounded-lg bg-white border border-border font-mono text-[10px] leading-relaxed whitespace-pre-wrap break-all max-h-32 overflow-y-auto">
+                            <pre className="p-2 rounded-lg bg-subtle border border-border font-mono text-[10px] leading-relaxed whitespace-pre-wrap break-all max-h-32 overflow-y-auto">
                               {log.responseBody}
                             </pre>
                           </div>
@@ -750,14 +796,15 @@ export default function DevToolsPanel({ capture }: Props) {
                 <div className="absolute left-[19px] top-3 bottom-3 w-px bg-border/80" />
                 <div className="space-y-3">
                   {actionLogs.map((log, i) => {
-                    const isClick = (log.message || "").toLowerCase().includes("click");
-                    const isType = (log.message || "").toLowerCase().includes("type") || (log.message || "").toLowerCase().includes("input");
+                    const label = ACTION_LABELS[(log.message || "").toLowerCase().split(/\s+/)[0]] || ACTION_LABELS[log.type] || "Action";
+                    const isClick = label === "Click" || (log.message || "").toLowerCase().includes("click");
+                    const isType = label === "Typing" || (log.message || "").toLowerCase().includes("type") || (log.message || "").toLowerCase().includes("input");
                     const isScreenshot = log.type === "screenshot";
                     return (
                       <div key={i} className="flex items-start gap-3 relative">
                         <div
-                          className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 z-10 border-2 border-white shadow-sm ${
-                            isScreenshot ? "bg-rose-100 text-rose-600" : isClick ? "bg-indigo-100 text-indigo-600" : isType ? "bg-emerald-100 text-emerald-600" : "bg-subtle text-muted"
+                          className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 z-10 border-2 border-white dark:border-background shadow-sm ${
+                            isScreenshot ? "bg-rose-100 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400" : isClick ? "bg-indigo-100 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400" : isType ? "bg-emerald-100 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400" : "bg-subtle text-muted"
                           }`}
                         >
                           {isScreenshot ? (
@@ -782,6 +829,7 @@ export default function DevToolsPanel({ capture }: Props) {
                           {eventTime(log) && (
                             <span className="text-[10px] text-muted font-mono block mb-0.5">{getRelativeTime(log)}</span>
                           )}
+                          <p className="text-[10px] uppercase tracking-wide text-muted font-semibold mb-0.5">{label}</p>
                           <p className="text-xs text-foreground font-medium leading-normal break-words">
                             {log.type === "navigation" ? t("dt.navigateTo", { url: log.url || log.message || "" }) : log.type === "screenshot" ? t("dt.screenshotTaken") : log.message || ""}
                           </p>

@@ -163,7 +163,7 @@ function DashboardContent() {
       <div className="p-8 max-w-6xl mx-auto space-y-6">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {[1, 2, 3, 4].map((i) => (
-            <div key={i} className="rounded-2xl border border-border bg-white p-5 animate-pulse flex flex-col gap-3">
+            <div key={i} className="rounded-2xl border border-border bg-subtle p-5 animate-pulse flex flex-col gap-3">
               <div className="w-12 h-12 bg-subtle rounded-xl" />
               <div className="w-1/2 h-3 bg-subtle rounded mt-2" />
               <div className="w-2/3 h-8 bg-subtle rounded" />
@@ -171,11 +171,11 @@ function DashboardContent() {
           ))}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
-          <div className="lg:col-span-3 rounded-2xl border border-border bg-white p-6 animate-pulse space-y-4">
+          <div className="lg:col-span-3 rounded-2xl border border-border bg-subtle p-6 animate-pulse space-y-4">
             <div className="w-1/3 h-4 bg-subtle rounded" />
             <div className="h-44 bg-subtle rounded-xl" />
           </div>
-          <div className="lg:col-span-2 rounded-2xl border border-border bg-white p-6 animate-pulse space-y-4">
+          <div className="lg:col-span-2 rounded-2xl border border-border bg-subtle p-6 animate-pulse space-y-4">
             <div className="w-1/3 h-4 bg-subtle rounded" />
             <div className="h-44 bg-subtle rounded-xl" />
           </div>
@@ -216,7 +216,7 @@ function DashboardContent() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
               </svg>
             ),
-            accent: "bg-indigo-50 text-indigo-600 border-indigo-200",
+            accent: "bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800/40",
             hoverAccent: "hover:border-indigo-400 hover:shadow-indigo-50/50",
           },
           {
@@ -227,7 +227,7 @@ function DashboardContent() {
                 <path d="M8 5v14l11-7z" />
               </svg>
             ),
-            accent: "bg-rose-50 text-rose-500 border-rose-200",
+            accent: "bg-rose-50 dark:bg-rose-950/30 text-rose-500 dark:text-rose-400 border-rose-200 dark:border-rose-800/40",
             hoverAccent: "hover:border-rose-400 hover:shadow-rose-50/50",
           },
           {
@@ -238,7 +238,7 @@ function DashboardContent() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
             ),
-            accent: "bg-emerald-50 text-emerald-600 border-emerald-200",
+            accent: "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40",
             hoverAccent: "hover:border-emerald-400 hover:shadow-emerald-50/50",
           },
           {
@@ -249,13 +249,13 @@ function DashboardContent() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
               </svg>
             ),
-            accent: "bg-amber-50 text-amber-600 border-amber-200",
+            accent: "bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800/40",
             hoverAccent: "hover:border-amber-400 hover:shadow-amber-50/50",
           },
         ].map((stat) => (
           <div
             key={stat.labelKey}
-            className={`rounded-2xl border border-border bg-white p-5 flex flex-col justify-between hover:shadow-lg transition-all duration-300 ${stat.hoverAccent}`}
+            className={`rounded-2xl border border-border bg-subtle p-5 flex flex-col justify-between hover:shadow-lg transition-all duration-300 ${stat.hoverAccent}`}
           >
             <div className="flex items-center justify-between mb-4">
               <span className="text-xs font-semibold uppercase tracking-wider text-muted">{t(stat.labelKey)}</span>
@@ -272,7 +272,7 @@ function DashboardContent() {
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
         {/* Activity Chart */}
-        <div className="lg:col-span-3 rounded-2xl border border-border bg-white p-6 flex flex-col justify-between shadow-sm">
+        <div className="lg:col-span-3 rounded-2xl border border-border bg-subtle p-6 flex flex-col justify-between shadow-sm">
           <div className="flex items-center justify-between mb-6">
             <div>
               <h2 className="text-base font-bold text-foreground">{t("dash.weekly")}</h2>
@@ -305,7 +305,7 @@ function DashboardContent() {
                       style={{ height: `${Math.max(8, (d.count / maxDayCount) * 110)}px` }}
                     />
                   ) : (
-                    <div className="w-full max-w-[36px] rounded-t-lg bg-neutral-100 h-1" />
+                    <div className="w-full max-w-[36px] rounded-t-lg bg-neutral-100 dark:bg-neutral-800 h-1" />
                   )}
                   <span className="text-[11px] text-muted font-medium mt-1">{d.label}</span>
                 </div>
@@ -315,7 +315,7 @@ function DashboardContent() {
         </div>
 
         {/* Recent Activity */}
-        <div className="lg:col-span-2 rounded-2xl border border-border bg-white p-6 shadow-sm flex flex-col justify-between">
+        <div className="lg:col-span-2 rounded-2xl border border-border bg-subtle p-6 shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h2 className="text-base font-bold text-foreground">{t("dash.recent")}</h2>
@@ -361,7 +361,7 @@ function DashboardContent() {
                           />
                           {c.type === "video" && (
                             <div className="absolute inset-0 bg-black/15 flex items-center justify-center">
-                              <span className="w-4 h-4 rounded-full bg-white/95 flex items-center justify-center shadow-sm">
+                              <span className="w-4 h-4 rounded-full bg-background/95 flex items-center justify-center shadow-sm">
                                 <svg className="w-2.5 h-2.5 text-indigo-600 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
                                   <path d="M8 5v14l11-7z" />
                                 </svg>
@@ -396,13 +396,13 @@ function DashboardContent() {
 
       {/* Team Analytics */}
       {recent.length > 0 && (
-        <div className="rounded-2xl border border-border bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border border-border bg-subtle p-6 shadow-sm">
           <div className="flex items-center justify-between mb-6 pb-4 border-b border-border/60">
             <div>
               <h2 className="text-base font-bold text-foreground">{t("dash.team")}</h2>
               <p className="text-xs text-muted mt-0.5">Workspace-wide collaborations</p>
             </div>
-            <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30 px-2.5 py-1 rounded-lg border border-indigo-100 dark:border-indigo-800/40">
               {t("dash.allTime")}
             </span>
           </div>
@@ -442,7 +442,7 @@ function DashboardContent() {
 
                 <div className="flex items-center justify-between text-xs pt-3 border-t border-dashed border-border/60">
                   <span className="font-semibold text-foreground">{t("dash.totalCaptures")}</span>
-                  <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
+                  <span className="font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30 px-2 py-0.5 rounded border border-indigo-100 dark:border-indigo-800/40">
                     {totalCount}
                   </span>
                 </div>
@@ -457,13 +457,13 @@ function DashboardContent() {
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-xs border border-border p-2.5 rounded-xl bg-subtle/30">
                   <span className="text-muted">{t("dash.newThisWeek")}</span>
-                  <span className="font-bold text-foreground bg-white px-2 py-0.5 rounded border border-border shadow-sm">
+                  <span className="font-bold text-foreground bg-subtle px-2 py-0.5 rounded border border-border shadow-sm">
                     {thisWeekCount}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-xs border border-border p-2.5 rounded-xl bg-subtle/30">
                   <span className="text-muted">{t("dash.busiest")}</span>
-                  <span className="font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
+                  <span className="font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30 px-2 py-0.5 rounded border border-indigo-100 dark:border-indigo-800/40">
                     {days.reduce((a, b) => (b.count > a.count ? b : a), days[0])?.label || "None"}
                   </span>
                 </div>
@@ -486,7 +486,7 @@ function DashboardContent() {
                         {c.email.split("@")[0]}
                       </span>
                     </div>
-                    <span className="text-[10px] font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100 shrink-0">
+                    <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30 px-2 py-0.5 rounded border border-indigo-100 dark:border-indigo-800/40 shrink-0">
                       {t("dash.caps", { count: c.count })}
                     </span>
                   </div>

@@ -12,6 +12,19 @@
   --accent-hover: #4f46e5;
 }
 
+/* Dark mode overrides - toggled via .dark class on <html> by ThemeProvider.
+   Every semantic token keeps the same name so components never need dark:
+   variants; switching the class alone recolors the whole app. */
+.dark {
+  --background: #0b0f16;
+  --foreground: #f3f4f6;
+  --border: #263041;
+  --subtle: #151b26;
+  --muted: #9aa4b2;
+  --accent: #818cf8;
+  --accent-hover: #a5b4fc;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;

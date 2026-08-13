@@ -196,7 +196,7 @@ export default function AdminDashboardPage() {
   if (error) {
     return (
       <div className="p-6 md:p-8 max-w-7xl mx-auto">
-        <div className="bg-red-50 text-red-600 border border-red-200 p-6 rounded-xl text-center">
+        <div className="bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/40 p-6 rounded-xl text-center">
           <svg className="w-10 h-10 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
           </svg>
@@ -234,7 +234,7 @@ export default function AdminDashboardPage() {
           { label: t("admin.totalViews"), value: data.stats.totalViews },
           { label: t("admin.comments"), value: data.stats.totalComments },
         ].map((s) => (
-          <div key={s.label} className="bg-white border border-border rounded-xl p-4 shadow-sm flex flex-col justify-center">
+          <div key={s.label} className="bg-subtle border border-border rounded-xl p-4 shadow-sm flex flex-col justify-center">
             <p className="text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">{s.label}</p>
             <p className="text-2xl font-bold text-foreground">{s.value}</p>
           </div>
@@ -243,7 +243,7 @@ export default function AdminDashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* PROMO BANNER */}
-        <div className="bg-white border border-border rounded-xl p-5 shadow-sm space-y-4">
+        <div className="bg-subtle border border-border rounded-xl p-5 shadow-sm space-y-4">
           <div>
             <h2 className="text-sm font-bold text-foreground">{t("admin.promoTitle")}</h2>
             <p className="text-[11px] text-muted mt-0.5">{t("admin.promoHint")}</p>
@@ -277,7 +277,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* EMAIL BROADCAST */}
-        <div className="bg-white border border-border rounded-xl p-5 shadow-sm space-y-4">
+        <div className="bg-subtle border border-border rounded-xl p-5 shadow-sm space-y-4">
           <div>
             <h2 className="text-sm font-bold text-foreground">{t("admin.broadcastTitle")}</h2>
             <p className="text-[11px] text-muted mt-0.5">{t("admin.broadcastHint", { count: data.stats.totalUsers })}</p>
@@ -312,7 +312,7 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* TOP WORKSPACES */}
-        <div className="bg-white border border-border rounded-xl p-0 shadow-sm flex flex-col overflow-hidden">
+        <div className="bg-subtle border border-border rounded-xl p-0 shadow-sm flex flex-col overflow-hidden">
           <div className="p-4 border-b border-border bg-subtle/30">
             <h2 className="text-sm font-bold text-foreground">{t("admin.topWorkspaces")}</h2>
             <p className="text-[11px] text-muted mt-0.5">{t("admin.byCaptures")}</p>
@@ -338,13 +338,13 @@ export default function AdminDashboardPage() {
       </div>
 
       {actionError && (
-        <div className="bg-red-50 text-red-600 border border-red-200 rounded-xl p-3 text-sm">
+        <div className="bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/40 rounded-xl p-3 text-sm">
           {actionError}
         </div>
       )}
 
       {/* USERS TABLE */}
-      <div className="bg-white border border-border rounded-xl shadow-sm overflow-hidden flex flex-col">
+      <div className="bg-subtle border border-border rounded-xl shadow-sm overflow-hidden flex flex-col">
         <div className="p-4 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-subtle/30">
           <h2 className="text-sm font-semibold text-foreground">{t("admin.registeredUsers")}</h2>
           <div className="relative w-full sm:w-64">
@@ -390,14 +390,14 @@ export default function AdminDashboardPage() {
                     </td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border ${
-                        user.plan === 'pro' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-subtle text-muted border-border'
+                        user.plan === 'pro' ? 'bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800/40' : 'bg-subtle text-muted border-border'
                       }`}>
                         {(user.plan || "free").toUpperCase()}
                       </span>
                     </td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold border ${
-                        user.suspended ? 'bg-red-50 text-red-600 border-red-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        user.suspended ? 'bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800/40' : 'bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40'
                       }`}>
                         {user.suspended ? t("admin.suspended") : t("admin.active")}
                       </span>
@@ -414,7 +414,7 @@ export default function AdminDashboardPage() {
                         className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-colors disabled:opacity-50 ${
                           user.suspended
                             ? 'bg-emerald-500 text-white border-emerald-500 hover:bg-emerald-600'
-                            : 'text-red-600 border-red-200 bg-white hover:bg-red-50'
+                            : 'text-red-600 dark:text-red-400 border-red-200 dark:border-red-800/40 bg-subtle hover:bg-red-50 dark:hover:bg-red-950/30'
                         }`}
                       >
                         {actingUserId === user.id ? t("admin.updating") : (user.suspended ? t("admin.activate") : t("admin.suspend"))}

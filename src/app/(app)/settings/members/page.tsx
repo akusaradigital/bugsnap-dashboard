@@ -161,7 +161,7 @@ export default function TeamManagementPage() {
         <select
           value={activeWsId ?? ""}
           onChange={(e) => setActiveWsId(e.target.value)}
-          className="w-full sm:w-64 text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-white"
+          className="w-full sm:w-64 text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-subtle"
         >
           {workspaces.map((w) => (
             <option key={w.id} value={w.id}>{w.name}</option>
@@ -170,7 +170,7 @@ export default function TeamManagementPage() {
       </div>
 
       {/* Invite box */}
-      <div className="rounded-xl border border-border bg-white p-5">
+      <div className="rounded-xl border border-border bg-subtle p-5">
         <h2 className="text-sm font-semibold text-foreground mb-1">{t("members.inviteTitle")}</h2>
         <p className="text-xs text-muted mb-3">{t("members.inviteHint")}</p>
         <p className="text-[11px] text-muted mb-3">Invited teammates will receive an email to join the workspace and download the extension.</p>
@@ -182,7 +182,7 @@ export default function TeamManagementPage() {
             placeholder="teammate@company.com"
             onKeyDown={(e) => e.key === "Enter" && handleInvite()}
             disabled={cap !== null && members.length >= cap}
-            className="flex-1 text-sm rounded-lg border border-border px-3.5 py-2.5 outline-none focus:border-indigo-500 bg-white disabled:bg-subtle disabled:cursor-not-allowed"
+            className="flex-1 text-sm rounded-lg border border-border px-3.5 py-2.5 outline-none focus:border-indigo-500 bg-subtle disabled:bg-subtle disabled:cursor-not-allowed"
           />
           <button
             onClick={handleInvite}
@@ -199,7 +199,7 @@ export default function TeamManagementPage() {
       </div>
 
       {/* Member list */}
-      <div className="rounded-xl border border-border bg-white overflow-hidden">
+      <div className="rounded-xl border border-border bg-subtle overflow-hidden">
         <div className="px-5 py-3 border-b border-border bg-subtle/50">
           <h2 className="text-sm font-semibold text-foreground">{t("members.count", { count: members.length })}</h2>
         </div>
@@ -233,7 +233,7 @@ export default function TeamManagementPage() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={m.avatar_url} alt="" referrerPolicy="no-referrer" className="w-9 h-9 rounded-full object-cover shrink-0" />
                 ) : (
-                  <div className="w-9 h-9 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold flex items-center justify-center shrink-0">
+                  <div className="w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 text-xs font-bold flex items-center justify-center shrink-0">
                     {(m.full_name || m.email || "?").charAt(0).toUpperCase()}
                   </div>
                 )}
@@ -241,15 +241,15 @@ export default function TeamManagementPage() {
                   <p className="text-sm font-medium text-foreground truncate">
                     {m.full_name || m.email}
                     {m.role === "owner" && <span className="ml-2 text-[10px] font-semibold text-muted bg-subtle px-1.5 py-0.5 rounded">{t("members.owner")}</span>}
-                    {m.role === "admin" && <span className="ml-2 text-[10px] font-semibold text-indigo-600 bg-indigo-50 px-1.5 py-0.5 rounded">{t("members.admin")}</span>}
-                    {m.role === "member" && <span className="ml-2 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">{t("members.member")}</span>}
+                    {m.role === "admin" && <span className="ml-2 text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30 px-1.5 py-0.5 rounded">{t("members.admin")}</span>}
+                    {m.role === "member" && <span className="ml-2 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-1.5 py-0.5 rounded">{t("members.member")}</span>}
                   </p>
                   <p className="text-xs text-muted truncate">{m.email}</p>
                 </div>
                 {m.role !== "owner" && (
                   <button
                     onClick={() => handleRemove(m)}
-                    className="text-xs font-medium text-red-600 hover:bg-red-50 px-2.5 py-1.5 rounded-lg transition-colors"
+                    className="text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 px-2.5 py-1.5 rounded-lg transition-colors"
                   >
                     {t("members.remove")}
                   </button>

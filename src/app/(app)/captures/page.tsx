@@ -182,12 +182,12 @@ function EditModal({ capture, onClose, onSaved, userPlan }: EditModalProps) {
   }
 
   const inputClasses =
-    "w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-white";
+    "w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-subtle";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative w-full max-w-md rounded-xl bg-white shadow-xl border border-border flex flex-col max-h-[85vh] overflow-hidden">
+      <div className="relative w-full max-w-md rounded-xl bg-subtle shadow-xl border border-border flex flex-col max-h-[85vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
           <h2 className="text-base font-bold text-foreground">{t("cap.editTitle")}</h2>
@@ -288,7 +288,7 @@ function EditModal({ capture, onClose, onSaved, userPlan }: EditModalProps) {
                       onClick={() => setExpiry(opt.value)}
                       className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                         expiry === opt.value
-                          ? "bg-white text-foreground shadow-sm"
+                          ? "bg-subtle text-foreground shadow-sm"
                           : "text-muted hover:text-foreground"
                       }`}
                     >
@@ -310,7 +310,7 @@ function EditModal({ capture, onClose, onSaved, userPlan }: EditModalProps) {
                 <div className="flex items-center gap-2">
                   <h4 className="text-xs font-semibold text-foreground">{t("cap.advancedProtection")}</h4>
                   {!hasAdvancedAccess(userPlan) && (
-                    <span className="bg-indigo-100 text-indigo-700 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">{t("cap.proPlusOnly")}</span>
+                    <span className="bg-indigo-100 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">{t("cap.proPlusOnly")}</span>
                   )}
                 </div>
 
@@ -371,7 +371,7 @@ function EditModal({ capture, onClose, onSaved, userPlan }: EditModalProps) {
           {error && <p className="mr-auto text-xs text-red-600">{error}</p>}
           <button
             onClick={onClose}
-            className="rounded-lg border border-border bg-white px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle transition-colors"
+            className="rounded-lg border border-border bg-subtle px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle transition-colors"
           >
             {t("common.cancel")}
           </button>
@@ -703,7 +703,7 @@ function CapturesContent() {
               placeholder={t("cap.search")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 pr-3 py-2 text-sm rounded-lg border border-border bg-white focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 w-full min-w-0 lg:w-64"
+              className="pl-9 pr-3 py-2 text-sm rounded-lg border border-border bg-subtle focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 w-full min-w-0 lg:w-64"
             />
           </div>
           {!selectMode ? (
@@ -711,7 +711,7 @@ function CapturesContent() {
               <button
                 onClick={() => setSelectMode(true)}
                 disabled={filteredCaptures.length === 0}
-                className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-border bg-white text-sm font-medium text-muted hover:text-foreground hover:bg-subtle transition-colors disabled:opacity-40 min-w-0"
+                className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-border bg-subtle text-sm font-medium text-muted hover:text-foreground hover:bg-subtle transition-colors disabled:opacity-40 min-w-0"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                 {t("cap.select")}
@@ -743,7 +743,7 @@ function CapturesContent() {
                       )
                   )
                 }
-                className="px-3 py-2 rounded-lg border border-border bg-white text-xs font-medium text-muted hover:text-foreground hover:bg-subtle transition-colors"
+                className="px-3 py-2 rounded-lg border border-border bg-subtle text-xs font-medium text-muted hover:text-foreground hover:bg-subtle transition-colors"
               >
                 {selectedIds.size === filteredCaptures.length && selectedIds.size > 0
                   ? t("cap.deselectAll")
@@ -758,7 +758,7 @@ function CapturesContent() {
               </button>
               <button
                 onClick={exitSelectMode}
-                className="px-3 py-2 rounded-lg border border-border bg-white text-xs font-medium text-muted hover:text-foreground hover:bg-subtle transition-colors"
+                className="px-3 py-2 rounded-lg border border-border bg-subtle text-xs font-medium text-muted hover:text-foreground hover:bg-subtle transition-colors"
               >
                 {t("common.cancel")}
               </button>
@@ -775,7 +775,7 @@ function CapturesContent() {
             className={`w-full min-[430px]:w-auto flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors ${
               typeMenuOpen || showVideo || showScreenshot
                 ? "bg-subtle border-indigo-200 text-foreground"
-                : "bg-white border-border text-muted hover:text-foreground hover:bg-subtle"
+                : "bg-subtle border-border text-muted hover:text-foreground hover:bg-subtle"
             }`}
           >
             <span>{t("cap.type")}</span>
@@ -790,7 +790,7 @@ function CapturesContent() {
           {typeMenuOpen && (
             <>
               <div className="fixed inset-0 z-20" onClick={() => setTypeMenuOpen(false)} />
-              <div className="absolute top-full left-0 mt-1.5 w-[min(16rem,calc(100vw-1.5rem))] z-30 bg-white border border-border rounded-xl shadow-xl overflow-hidden">
+              <div className="absolute top-full left-0 mt-1.5 w-[min(16rem,calc(100vw-1.5rem))] z-30 bg-subtle border border-border rounded-xl shadow-xl overflow-hidden">
                 <div className="px-3 pt-3 pb-1">
                   <p className="text-[10px] font-semibold uppercase tracking-widest text-muted">{t("cap.type")}</p>
                 </div>
@@ -801,8 +801,8 @@ function CapturesContent() {
                     onClick={() => setShowScreenshot((v) => !v)}>
                     {showScreenshot && <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>}
                   </div>
-                  <div className="w-7 h-7 rounded-md bg-rose-100 flex items-center justify-center shrink-0">
-                    <svg className="w-4 h-4 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <div className="w-7 h-7 rounded-md bg-rose-100 dark:bg-rose-950/30 flex items-center justify-center shrink-0">
+                    <svg className="w-4 h-4 text-rose-500 dark:text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                     </svg>
                   </div>
@@ -819,8 +819,8 @@ function CapturesContent() {
                     onClick={() => setShowVideo((v) => !v)}>
                     {showVideo && <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>}
                   </div>
-                  <div className="w-7 h-7 rounded-md bg-indigo-100 flex items-center justify-center shrink-0">
-                    <svg className="w-4 h-4 text-indigo-500" fill="currentColor" viewBox="0 0 24 24">
+                  <div className="w-7 h-7 rounded-md bg-indigo-100 dark:bg-indigo-950/30 flex items-center justify-center shrink-0">
+                    <svg className="w-4 h-4 text-indigo-500 dark:text-indigo-400" fill="currentColor" viewBox="0 0 24 24">
                       <path d="M8 5v14l11-7z" />
                     </svg>
                   </div>
@@ -845,7 +845,7 @@ function CapturesContent() {
         </div>
 
         {/* Tag Filter */}
-        <div className="flex min-w-0 items-center gap-1.5 text-xs border border-border bg-white rounded-lg px-2 py-1.5 text-muted hover:text-foreground hover:bg-subtle transition-colors">
+        <div className="flex min-w-0 items-center gap-1.5 text-xs border border-border bg-subtle rounded-lg px-2 py-1.5 text-muted hover:text-foreground hover:bg-subtle transition-colors">
           <span>{t("cap.tagFilter")}</span>
           <select
             value={filterTag}
@@ -860,7 +860,7 @@ function CapturesContent() {
         </div>
 
         {/* Status Filter */}
-        <div className="flex min-w-0 items-center gap-1.5 text-xs border border-border bg-white rounded-lg px-2 py-1.5 text-muted hover:text-foreground hover:bg-subtle transition-colors">
+        <div className="flex min-w-0 items-center gap-1.5 text-xs border border-border bg-subtle rounded-lg px-2 py-1.5 text-muted hover:text-foreground hover:bg-subtle transition-colors">
           <span>{t("cap.statusFilter")}</span>
           <select
             value={filterStatus}
@@ -876,7 +876,7 @@ function CapturesContent() {
       </div>
 
       {deleteError && (
-        <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-600">
+        <div className="mb-6 rounded-lg border border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-950/20 px-4 py-3 text-xs text-red-600 dark:text-red-400">
           {deleteError}
         </div>
       )}
@@ -885,7 +885,7 @@ function CapturesContent() {
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="rounded-xl border border-border bg-white overflow-hidden animate-pulse">
+            <div key={i} className="rounded-xl border border-border bg-subtle overflow-hidden animate-pulse">
               <div className="aspect-[16/10] bg-subtle" />
               <div className="p-4 flex justify-between">
                 <div className="w-1/2 h-4 bg-subtle rounded" />
@@ -896,8 +896,8 @@ function CapturesContent() {
         </div>
       ) : filteredCaptures.length === 0 ? (
         <div className="px-4 py-14 sm:py-20 text-center rounded-xl border border-dashed border-border bg-subtle/50 flex flex-col items-center gap-3">
-          <div className="w-16 h-16 rounded-2xl bg-indigo-50 border border-indigo-100 flex items-center justify-center">
-            <svg className="w-8 h-8 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+          <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-800/40 flex items-center justify-center">
+            <svg className="w-8 h-8 text-indigo-400 dark:text-indigo-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
@@ -936,7 +936,7 @@ function CapturesContent() {
               key={item.id}
               onMouseEnter={() => setActiveHoverId(item.id)}
               onMouseLeave={() => setActiveHoverId((prev) => (prev === item.id ? null : prev))}
-              className={`relative rounded-xl border bg-white hover:shadow-sm transition-all flex flex-col ${
+              className={`relative rounded-xl border bg-subtle hover:shadow-sm transition-all flex flex-col ${
                 isSelected ? "border-indigo-600 ring-2 ring-indigo-600/20" : "border-border"
               }`}
             >
@@ -956,7 +956,7 @@ function CapturesContent() {
                       {/* Play overlay for videos so the grid clearly shows what's a recording */}
                       {item.type === "video" ? (
                         <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/40 transition-colors">
-                          <div className="w-10 h-10 rounded-full bg-white/90 flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+                          <div className="w-10 h-10 rounded-full bg-background/90 flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
                             <svg className="w-5 h-5 text-indigo-600 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
                               <path d="M8 5v14l11-7z" />
                             </svg>
@@ -987,7 +987,7 @@ function CapturesContent() {
                         className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
                           isSelected
                             ? "bg-indigo-600 border-indigo-600"
-                            : "bg-white/90 border-indigo-400"
+                            : "bg-background/90 border-indigo-400"
                         }`}
                       >
                         {isSelected && (
@@ -1079,7 +1079,7 @@ function CapturesContent() {
                     aria-label={t("cap.copyLink")}
                     title={t("cap.copyLink")}
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleCopyLink(item.id); }}
-                    className="w-7 h-7 rounded-md bg-white/90 border border-border text-muted hover:text-emerald-600 hover:bg-emerald-50 flex items-center justify-center shadow-sm transition-colors"
+                    className="w-7 h-7 rounded-md bg-background/90 border border-border text-muted hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 flex items-center justify-center shadow-sm transition-colors"
                   >
                     {copiedId === item.id ? (
                       <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
@@ -1090,7 +1090,7 @@ function CapturesContent() {
                   <button
                     aria-label="Capture actions"
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpenMenuId(openMenuId === item.id ? null : item.id); }}
-                    className="w-7 h-7 rounded-md bg-white/90 border border-border text-muted hover:text-foreground hover:bg-white flex items-center justify-center shadow-sm transition-colors"
+                    className="w-7 h-7 rounded-md bg-background/90 border border-border text-muted hover:text-foreground hover:bg-subtle flex items-center justify-center shadow-sm transition-colors"
                   >
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                       <circle cx="12" cy="5" r="1.8" />
@@ -1104,7 +1104,7 @@ function CapturesContent() {
               {openMenuId === item.id && (
                 <>
                   <div className="fixed inset-0 z-40" onClick={() => setOpenMenuId(null)} />
-                  <div className="absolute right-2.5 top-10 z-50 w-36 rounded-lg border border-border bg-white shadow-lg py-1">
+                  <div className="absolute right-2.5 top-10 z-50 w-36 rounded-lg border border-border bg-subtle shadow-lg py-1">
                     <button
                       onClick={() => {
                         handleCopyLink(item.id);
@@ -1130,7 +1130,7 @@ function CapturesContent() {
                     <button
                       onClick={() => openDeleteConfirmation([item.id], item.title)}
                       disabled={deleting}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50 transition-colors"
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 disabled:opacity-50 transition-colors"
                     >
                       <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" /></svg>
                       {t("cap.delete")}
@@ -1163,8 +1163,8 @@ function CapturesContent() {
       {deleteRequest && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="delete-captures-title">
           <button className="absolute inset-0 bg-black/40" aria-label="Close confirmation" onClick={() => !deleting && setDeleteRequest(null)} />
-          <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-xl bg-white shadow-xl border border-border p-6">
-            <div className="mb-4 w-12 h-12 rounded-full bg-red-50 border border-red-200 flex items-center justify-center text-red-600">
+          <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-xl bg-subtle shadow-xl border border-border p-6">
+            <div className="mb-4 w-12 h-12 rounded-full bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/40 flex items-center justify-center text-red-600 dark:text-red-400">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
             </div>
             <h2 id="delete-captures-title" className="text-lg font-bold text-foreground mb-1">
@@ -1175,13 +1175,13 @@ function CapturesContent() {
             </p>
 
             <div className="space-y-2">
-              <label className={`block rounded-lg border p-3 cursor-pointer ${deleteMode === "drive_trash" ? "border-indigo-500 bg-indigo-50/50" : "border-border"}`}>
+              <label className={`block rounded-lg border p-3 cursor-pointer ${deleteMode === "drive_trash" ? "border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/30" : "border-border"}`}>
                 <span className="flex gap-3">
                   <input type="radio" name="delete-mode" value="drive_trash" checked={deleteMode === "drive_trash"} onChange={() => { setDeleteMode("drive_trash"); setDeleteRequest((request) => request ? { ...request, operationId: crypto.randomUUID() } : request); }} disabled={deleting} className="mt-1" />
                   <span><span className="block text-sm font-semibold text-foreground">{t("cap.moveToTrash")}</span><span className="block text-xs text-muted mt-0.5">{t("cap.trashHint")}</span></span>
                 </span>
               </label>
-              <label className={`block rounded-lg border p-3 cursor-pointer ${deleteMode === "app_only" ? "border-indigo-500 bg-indigo-50/50" : "border-border"}`}>
+              <label className={`block rounded-lg border p-3 cursor-pointer ${deleteMode === "app_only" ? "border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/30" : "border-border"}`}>
                 <span className="flex gap-3">
                   <input type="radio" name="delete-mode" value="app_only" checked={deleteMode === "app_only"} onChange={() => { setDeleteMode("app_only"); setDeleteRequest((request) => request ? { ...request, operationId: crypto.randomUUID() } : request); setDriveNotConnected(false); setDeleteError(null); }} disabled={deleting} className="mt-1" />
                   <span><span className="block text-sm font-semibold text-foreground">{t("cap.BugSnapOnly")}</span><span className="block text-xs text-muted mt-0.5">{t("cap.BugSnapOnlyHint")}</span></span>
@@ -1189,7 +1189,7 @@ function CapturesContent() {
               </label>
             </div>
 
-            {deleteError && <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">{deleteError}</div>}
+            {deleteError && <div className="mt-4 rounded-lg border border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-950/20 px-3 py-2 text-xs text-red-700 dark:text-red-400">{deleteError}</div>}
             {driveNotConnected && (
               <div className="mt-3 flex items-center gap-3">
                 <Link href="/settings" className="text-sm font-semibold text-indigo-600 hover:underline">{t("cap.connectDrive")}</Link>
