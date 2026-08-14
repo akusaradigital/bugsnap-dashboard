@@ -137,7 +137,8 @@ export default function DashboardLayout({
       const u = data.session?.user;
       if (!u) {
         setSession({ loading: false, user: null });
-        router.replace("/");
+        const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+        router.replace(`/login?redirectTo=${encodeURIComponent(current || "/dashboard")}`);
         return;
       }
       const meta = u.user_metadata || {};
@@ -180,7 +181,8 @@ export default function DashboardLayout({
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
       if (!active) return;
       if (!s) {
-        router.replace("/");
+        const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
+        router.replace(`/login?redirectTo=${encodeURIComponent(current || "/dashboard")}`);
       }
     });
     return () => {

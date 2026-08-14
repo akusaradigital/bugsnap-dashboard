@@ -18,7 +18,7 @@ export default function ContactPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <div className="space-y-6">
-            <div className="border border-border rounded-xl p-5 bg-subtle/30 space-y-2">
+            <div className="creative-surface rounded-2xl p-5 space-y-2">
               <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-600">Email Support</h3>
               <p className="text-sm font-semibold">
                 <a href="mailto:support@akusaradigital.com" className="hover:underline text-indigo-600">
@@ -30,7 +30,7 @@ export default function ContactPage() {
               </p>
             </div>
 
-            <div className="border border-border rounded-xl p-5 bg-subtle/30 space-y-2">
+            <div className="creative-surface rounded-2xl p-5 space-y-2">
               <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-600">Company &amp; Publisher</h3>
               <p className="text-sm font-semibold">Akusara Digital</p>
               <p className="text-xs text-muted leading-relaxed">
@@ -39,7 +39,7 @@ export default function ContactPage() {
               </p>
             </div>
 
-            <div className="border border-border rounded-xl p-5 bg-subtle/30 space-y-2">
+            <div className="creative-surface rounded-2xl p-5 space-y-2">
               <h3 className="text-xs font-bold uppercase tracking-wider text-indigo-600">Enterprise &amp; Sales</h3>
               <p className="text-sm font-semibold">Custom Deployment</p>
               <p className="text-xs text-muted leading-relaxed">
@@ -49,7 +49,7 @@ export default function ContactPage() {
           </div>
 
           {/* Useful Quick Links */}
-          <div className="border border-indigo-200 bg-indigo-50/50 rounded-xl p-6 space-y-4">
+          <div className="creative-surface rounded-2xl p-6 space-y-4">
             <h3 className="text-base font-bold text-foreground">Start capturing with BugSnap</h3>
             <a
               href="https://chrome.google.com/webstore"
@@ -67,7 +67,7 @@ export default function ContactPage() {
             </a>
           </div>
 
-          <div className="border border-border rounded-xl p-6 bg-white space-y-4">
+          <div className="creative-surface rounded-2xl p-6 space-y-4">
             <h3 className="text-base font-bold text-foreground">Useful Resources</h3>
             <ul className="space-y-3 text-xs">
               <li className="flex flex-col gap-0.5">

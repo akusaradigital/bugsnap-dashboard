@@ -159,6 +159,9 @@ function SettingsContent() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileSaved, setProfileSaved] = useState(false);
+  const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
   const [userPlan, setUserPlan] = useState<Plan>("free");
   const [userEmail, setUserEmail] = useState("");
   const [userName, setUserName] = useState("");
@@ -290,6 +293,7 @@ function SettingsContent() {
         hide_watermark: canBrand ? hideWatermark : false,
         custom_domain: canBrand ? customDomain.trim() : "",
         auto_delete_months: [0,3,6,12].includes(autoDeleteMonths) ? autoDeleteMonths : 3,
+        updated_at: new Date().toISOString(),
       });
       if (error) throw error;
       setSaved(true); setTimeout(() => setSaved(false), 3000);
@@ -301,6 +305,43 @@ function SettingsContent() {
       }
     } catch (e) { setSaveError(e instanceof Error ? e.message : t("settings.failedSave")); }
     finally { setSaving(false); }
+  }
+
+  async function handleSaveProfile(e: React.FormEvent) {
+    e.preventDefault();
+    setProfileSaving(true);
+    setProfileSaveError(null);
+    setProfileSaved(false);
+    try {
+      const fullName = userName.trim();
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) throw new Error("Session expired");
+
+      const { error: authError } = await supabase.auth.updateUser({
+        data: { full_name: fullName },
+      });
+      if (authError) throw authError;
+
+      const response = await fetch("/api/account/profile", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ fullName }),
+      });
+      const result = await response.json().catch(() => ({})) as { fullName?: string; error?: string };
+      if (!response.ok) throw new Error(result.error || "Failed to save profile");
+
+      setUserName(result.fullName ?? fullName);
+      setProfileSaved(true);
+      setTimeout(() => setProfileSaved(false), 3000);
+    } catch (e) {
+      setProfileSaveError(e instanceof Error ? e.message : "Failed to save profile");
+    } finally {
+      setProfileSaving(false);
+    }
   }
 
   async function handleInvite() {
@@ -650,13 +691,16 @@ function SettingsContent() {
 
         {/* ── Account ────────────────────────────────────────────────────── */}
         {activeTab === "account" && (
-          <div className="space-y-6">
+          <form onSubmit={handleSaveProfile} className="space-y-6">
             <div>
               <h1 className="text-xl font-bold text-foreground">Account</h1>
               <p className="text-sm text-muted mt-0.5">Your personal profile information.</p>
             </div>
             <div className="rounded-xl border border-border bg-subtle p-4 space-y-4">
-              <h2 className="text-sm font-semibold text-foreground border-b border-border pb-2">Profile</h2>
+              <div className="flex items-center justify-between gap-3 border-b border-border pb-2">
+                <h2 className="text-sm font-semibold text-foreground">Profile</h2>
+                {profileSaved && <span className="text-xs text-emerald-600 font-medium">✓ Saved</span>}
+              </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Full Name</label>
@@ -712,6 +756,14 @@ function SettingsContent() {
               </div>
             </div>
 
+            {profileSaveError && <p className="text-xs text-red-600">{profileSaveError}</p>}
+            <div className="flex items-center gap-3">
+              <button type="submit" disabled={profileSaving} className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60 transition-colors">
+                {profileSaving ? "Saving…" : "Save profile"}
+              </button>
+              {profileSaved && <span className="text-xs text-emerald-600 font-medium">✓ Saved</span>}
+            </div>
+
             <div className="rounded-xl border border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-950/20 p-4 space-y-3">
               <h2 className="text-sm font-semibold text-red-700 dark:text-red-400 border-b border-red-200 dark:border-red-800/40 pb-2">Danger zone</h2>
               <p className="text-xs text-red-600 dark:text-red-400">Permanently delete your BugSnap account and all associated data. This cannot be undone.</p>
@@ -721,7 +773,7 @@ function SettingsContent() {
                 Delete Account
               </button>
             </div>
-          </div>
+          </form>
         )}
       </main>
 

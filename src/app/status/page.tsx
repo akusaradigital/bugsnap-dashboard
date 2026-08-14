@@ -39,7 +39,7 @@ export default function StatusPage() {
         </div>
 
         {/* System Component Breakdown */}
-        <div className="border border-border rounded-xl bg-white overflow-hidden shadow-sm">
+        <div className="creative-surface rounded-2xl overflow-hidden">
           <div className="bg-subtle/50 px-5 py-3 border-b border-border text-xs font-bold uppercase tracking-wider text-muted">
             Service Components
           </div>
@@ -57,7 +57,7 @@ export default function StatusPage() {
         </div>
 
         {/* Historical bar */}
-        <div className="border border-border rounded-xl p-6 bg-white space-y-4">
+        <div className="creative-surface rounded-2xl p-6 space-y-4">
           <div className="flex items-center justify-between text-xs text-muted">
             <span>Uptime History (Last 90 Days)</span>
             <span className="font-semibold text-foreground">99.98%</span>
@@ -78,7 +78,7 @@ export default function StatusPage() {
         </div>
 
         {/* CTA */}
-        <div className="border border-indigo-100 bg-indigo-50/50 rounded-xl p-8 text-center space-y-4">
+        <div className="creative-surface rounded-2xl p-8 text-center space-y-4">
           <h3 className="text-lg font-bold text-foreground">All systems ready for your bug reports</h3>
           <p className="text-sm text-muted max-w-md mx-auto">
             Install the BugSnap extension free - captures are saved to your own Google Drive.

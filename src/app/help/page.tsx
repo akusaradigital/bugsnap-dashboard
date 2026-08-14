@@ -38,7 +38,7 @@ export default function HelpPage() {
           <h2 className="text-xl font-bold text-foreground">Frequently Asked Questions</h2>
           <div className="space-y-4">
             {faqs.map((faq, i) => (
-              <div key={i} className="border border-border rounded-xl p-5 bg-white shadow-sm space-y-2">
+              <div key={i} className="creative-surface rounded-2xl p-5 space-y-2">
                 <h4 className="text-sm font-bold text-indigo-600">{faq.q}</h4>
                 <p className="text-xs text-muted leading-relaxed">{faq.a}</p>
               </div>
@@ -48,7 +48,7 @@ export default function HelpPage() {
 
         {/* Contact/Support Box Right Column */}
         <div className="space-y-6">
-          <div className="border border-indigo-200 bg-indigo-50/50 rounded-xl p-6 space-y-4">
+          <div className="creative-surface rounded-2xl p-6 space-y-4">
             <div className="w-10 h-10 bg-indigo-100 rounded flex items-center justify-center text-xl text-indigo-600">
               💬
             </div>
@@ -64,7 +64,7 @@ export default function HelpPage() {
             </a>
           </div>
 
-          <div className="border border-indigo-200 bg-indigo-50/50 rounded-xl p-6 space-y-3">
+          <div className="creative-surface rounded-2xl p-6 space-y-3">
             <h3 className="text-sm font-bold text-foreground">Get started</h3>
             <a
               href="https://chrome.google.com/webstore"

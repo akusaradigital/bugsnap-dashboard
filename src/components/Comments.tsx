@@ -442,7 +442,7 @@ export default function Comments({
           }}
           placeholder={t("cm.writePlaceholder")}
           rows={2}
-          className="w-full text-xs rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-subtle/50 resize-none placeholder:text-muted/70"
+          className="w-full text-xs rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-subtle/50 dark:bg-zinc-950 resize-none placeholder:text-muted/70"
         />
         <div className="flex items-center justify-between gap-2">
           {error && (

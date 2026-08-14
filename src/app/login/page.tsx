@@ -3,6 +3,15 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 
+function getSafeRedirectPath(): string {
+  if (typeof window === "undefined") return "/dashboard";
+  const raw = new URLSearchParams(window.location.search).get("redirectTo") || "/dashboard";
+  if (!raw.startsWith("/")) return "/dashboard";
+  if (raw.startsWith("//")) return "/dashboard";
+  if (raw.startsWith("/login")) return "/dashboard";
+  return raw;
+}
+
 // Official Google "G" logo (4-color)
 function GoogleLogo({ className = "w-5 h-5" }: { className?: string }) {
   return (
@@ -19,11 +28,14 @@ export default function LoginPage() {
   const [signingIn, setSigningIn] = useState(false);
   const [loadingSession, setLoadingSession] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [redirectPath, setRedirectPath] = useState("/dashboard");
 
   useEffect(() => {
+    const target = getSafeRedirectPath();
+    setRedirectPath(target);
     supabase.auth.getSession().then(({ data }) => {
       setLoadingSession(false);
-      if (data.session?.user) window.location.assign("/dashboard");
+      if (data.session?.user) window.location.assign(target);
     });
   }, []);
 
@@ -31,7 +43,7 @@ export default function LoginPage() {
     setSigningIn(true);
     setError(null);
     try {
-      const redirectTo = `${window.location.origin}/dashboard`;
+      const redirectTo = `${window.location.origin}/login?redirectTo=${encodeURIComponent(redirectPath)}`;
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: { redirectTo },

@@ -7,6 +7,7 @@
 1. **Do NOT call legacy, nonexistent tools** such as `Bash_ide` or `Agent_ide`. Always use the officially declared tools: `Bash` (capital B) for shell commands and `Agent` (capital A) for creating subagents. Usage of `Bash_ide` or `Agent_ide` will fail with "Tool not found".
 2. **Do NOT use shell command `cat`** to read files. Always use the dedicated `Read` tool (which handles line numbers, pagination, and caching correctly).
 3. **NEVER run `git push`** unless the user explicitly asks in that exact turn.
+4. **After applying fixes, restart the local dev server** so Next.js does not stay stuck on stale loading/HMR state (for example a plain "Loading your dashboard..." page). Restart only the BugSnap dev process, not unrelated Node.js processes.
 
 ## Versioning (SemVer - bump before every production deploy)
 

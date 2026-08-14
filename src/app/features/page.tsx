@@ -37,8 +37,8 @@ export default function FeaturesPage() {
               </li>
             </ul>
           </div>
-          <div className="border border-border rounded-xl bg-subtle/50 p-6 flex flex-col items-center justify-center min-h-[220px]">
-            <div className="w-full bg-white rounded-lg border border-border p-4 shadow-sm space-y-3">
+          <div className="creative-surface rounded-2xl p-6 flex flex-col items-center justify-center min-h-[220px]">
+            <div className="w-full rounded-xl border border-border bg-subtle/75 p-4 shadow-lg space-y-3">
               <div className="flex items-center justify-between border-b border-border pb-2">
                 <span className="text-xs font-bold">Screen Recorder</span>
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-red-100 text-red-700 font-mono">● REC 00:42</span>
@@ -52,8 +52,8 @@ export default function FeaturesPage() {
 
         {/* Feature 2: DevTools Capture */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
-          <div className="order-2 md:order-1 border border-border rounded-xl bg-subtle/50 p-6">
-            <div className="w-full bg-white rounded-lg border border-border p-4 shadow-sm font-mono text-[11px] space-y-2">
+          <div className="order-2 md:order-1 creative-surface rounded-2xl p-6">
+            <div className="w-full rounded-xl border border-border bg-subtle/75 p-4 shadow-lg font-mono text-[11px] space-y-2">
               <div className="text-muted text-[10px] uppercase font-sans border-b border-border pb-1">Automated DevLogs Captured</div>
               <div className="text-red-600 bg-red-50 p-2 rounded">
                 ✖ POST /api/v1/auth 500 Internal Server Error (142ms)
@@ -84,8 +84,8 @@ export default function FeaturesPage() {
               Unlike other platforms that store your files on their servers, BugSnap uploads video &amp; image files directly to <strong>your personal Google Drive account</strong>. You retain 100% ownership and control of your files, your privacy, and your storage limits - on every plan, free or paid.
             </p>
           </div>
-          <div className="border border-border rounded-xl bg-subtle/50 p-6">
-            <div className="bg-white rounded-lg border border-border p-4 shadow-sm space-y-3 text-center">
+          <div className="creative-surface rounded-2xl p-6">
+            <div className="rounded-xl border border-border bg-subtle/75 p-4 shadow-lg space-y-3 text-center">
               <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-600 mx-auto flex items-center justify-center font-bold text-xl">
                 🔒
               </div>
@@ -98,7 +98,7 @@ export default function FeaturesPage() {
         </div>
 
         {/* CTA */}
-        <div className="border border-indigo-100 bg-indigo-50/50 rounded-xl p-8 text-center space-y-4">
+        <div className="creative-surface rounded-2xl p-8 text-center space-y-4">
           <h3 className="text-xl font-bold text-foreground">Ready to streamline your bug reports?</h3>
           <p className="text-sm text-muted max-w-md mx-auto">
             Install the BugSnap extension and start capturing screen recordings, audio, and DevTools logs in seconds - saved directly to your own Google Drive, free, no credit card required.

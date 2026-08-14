@@ -885,11 +885,11 @@ function CapturesContent() {
       {loading ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div key={i} className="rounded-xl border border-border bg-subtle overflow-hidden animate-pulse">
-              <div className="aspect-[16/10] bg-subtle" />
+            <div key={i} className="rounded-xl border border-border bg-white dark:bg-subtle overflow-hidden animate-pulse shadow-sm">
+              <div className="aspect-[16/10] bg-slate-200 dark:bg-background" />
               <div className="p-4 flex justify-between">
-                <div className="w-1/2 h-4 bg-subtle rounded" />
-                <div className="w-16 h-4 bg-subtle rounded" />
+                <div className="w-1/2 h-4 bg-slate-200 dark:bg-border rounded" />
+                <div className="w-16 h-4 bg-slate-200 dark:bg-border rounded" />
               </div>
             </div>
           ))}
@@ -936,13 +936,13 @@ function CapturesContent() {
               key={item.id}
               onMouseEnter={() => setActiveHoverId(item.id)}
               onMouseLeave={() => setActiveHoverId((prev) => (prev === item.id ? null : prev))}
-              className={`relative rounded-xl border bg-subtle hover:shadow-sm transition-all flex flex-col ${
+              className={`group relative rounded-xl border bg-white dark:bg-subtle shadow-sm hover:shadow-md transition-all flex flex-col ${
                 isSelected ? "border-indigo-600 ring-2 ring-indigo-600/20" : "border-border"
               }`}
             >
               <CardWrapper {...cardProps}>
                 {/* Thumbnail Container */}
-                <div className="aspect-[16/10] rounded-t-xl overflow-hidden bg-subtle flex items-center justify-center text-muted text-sm relative group-hover:bg-subtle/80 transition-colors">
+                <div className="aspect-[16/10] rounded-t-xl overflow-hidden bg-slate-100 dark:bg-background flex items-center justify-center text-muted text-sm relative group-hover:bg-slate-200 dark:group-hover:bg-background/80 transition-colors">
                   {driveThumbUrl(item.drive_url) && !thumbFailed[item.id] ? (
                     <>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1072,25 +1072,25 @@ function CapturesContent() {
                   </div>
               </CardWrapper>
 
-              {/* 3-dot menu - hidden in select mode */}
+              {/* Action menu - hidden until the card is hovered/focused */}
               {!selectMode && (
-                <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5">
+                <div className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1.5 opacity-0 translate-y-1 pointer-events-none transition-all duration-150 group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto focus-within:opacity-100 focus-within:translate-y-0 focus-within:pointer-events-auto">
                   <button
                     aria-label={t("cap.copyLink")}
                     title={t("cap.copyLink")}
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleCopyLink(item.id); }}
-                    className="w-7 h-7 rounded-md bg-background/90 border border-border text-muted hover:text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/30 flex items-center justify-center shadow-sm transition-colors"
+                    className="w-9 h-9 rounded-xl bg-white text-slate-700 border border-slate-200 hover:text-emerald-700 hover:bg-emerald-50 hover:border-emerald-200 dark:bg-zinc-900 dark:text-slate-100 dark:border-zinc-700 dark:hover:text-emerald-300 dark:hover:bg-emerald-950/40 dark:hover:border-emerald-700 flex items-center justify-center shadow-lg shadow-black/10 transition-colors"
                   >
                     {copiedId === item.id ? (
-                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
                     ) : (
-                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.1-1.1m-.758-4.9a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.1-1.1m-.758-4.9a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
                     )}
                   </button>
                   <button
                     aria-label="Capture actions"
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpenMenuId(openMenuId === item.id ? null : item.id); }}
-                    className="w-7 h-7 rounded-md bg-background/90 border border-border text-muted hover:text-foreground hover:bg-subtle flex items-center justify-center shadow-sm transition-colors"
+                    className="w-9 h-9 rounded-xl bg-white text-slate-700 border border-slate-200 hover:text-indigo-700 hover:bg-indigo-50 hover:border-indigo-200 dark:bg-zinc-900 dark:text-slate-100 dark:border-zinc-700 dark:hover:text-indigo-300 dark:hover:bg-indigo-950/40 dark:hover:border-indigo-700 flex items-center justify-center shadow-lg shadow-black/10 transition-colors"
                   >
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                       <circle cx="12" cy="5" r="1.8" />

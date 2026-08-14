@@ -48,7 +48,7 @@ export default function SecurityPage() {
       <div className="mx-auto max-w-5xl px-6 py-12 space-y-10">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {highlights.map((h) => (
-            <div key={h.title} className="border border-border rounded-xl p-5 bg-subtle/30 space-y-3">
+            <div key={h.title} className="creative-surface rounded-2xl p-5 space-y-3">
               <div className="w-10 h-10 rounded-lg bg-white border border-border flex items-center justify-center text-lg">
                 {h.icon}
               </div>
@@ -68,7 +68,7 @@ export default function SecurityPage() {
           </div>
         </div>
 
-        <div className="border border-indigo-100 bg-indigo-50/50 rounded-xl p-8 text-center space-y-4">
+        <div className="creative-surface rounded-2xl p-8 text-center space-y-4">
           <h3 className="text-xl font-bold text-foreground">Trust BugSnap with your bug reports</h3>
           <p className="text-sm text-muted max-w-md mx-auto">
             Install the extension free - your captures stay in your own Google Drive, and paid plans unlock advanced team security.

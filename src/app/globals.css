@@ -3,13 +3,16 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #0f0f0f;
-  --border: #e5e7eb;
-  --subtle: #f9fafb;
-  --muted: #6b7280;
+  --background: #f3f4f6;
+  --foreground: #0f172a;
+  --border: #e2e8f0;
+  --subtle: #ffffff;
+  --muted: #64748b;
   --accent: #6366f1;
   --accent-hover: #4f46e5;
+  --glow-primary: rgba(99, 102, 241, 0.22);
+  --glow-secondary: rgba(16, 185, 129, 0.18);
+  --glow-tertiary: rgba(217, 70, 239, 0.14);
 }
 
 /* Dark mode overrides - toggled via .dark class on <html> by ThemeProvider.
@@ -23,6 +26,9 @@
   --muted: #9aa4b2;
   --accent: #818cf8;
   --accent-hover: #a5b4fc;
+  --glow-primary: rgba(129, 140, 248, 0.22);
+  --glow-secondary: rgba(52, 211, 153, 0.16);
+  --glow-tertiary: rgba(232, 121, 249, 0.12);
 }
 
 * {
@@ -33,10 +39,58 @@
 
 body {
   color: var(--foreground);
-  background: var(--background);
+  background:
+    radial-gradient(circle at 12% 8%, var(--glow-primary), transparent 28rem),
+    radial-gradient(circle at 86% 18%, var(--glow-secondary), transparent 26rem),
+    radial-gradient(circle at 48% 92%, var(--glow-tertiary), transparent 30rem),
+    var(--background);
+  background-attachment: fixed;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  accent-color: var(--accent);
+  caret-color: var(--accent);
+}
+
+::selection {
+  background: color-mix(in srgb, var(--accent) 26%, transparent);
+  color: var(--foreground);
+}
+
+a,
+button,
+[role="button"],
+select,
+summary {
+  cursor: pointer;
+}
+
+input,
+textarea {
+  cursor: text;
+}
+
+@layer base {
+  .dark .border-border,
+  .dark .border-border\/40,
+  .dark .border-border\/60,
+  .dark .border-border\/70,
+  .dark .border-border\/80 {
+    border-color: color-mix(in srgb, var(--border) 72%, transparent);
+  }
+
+  input,
+  textarea,
+  select {
+    color: var(--foreground);
+  }
+
+  .dark input,
+  .dark textarea,
+  .dark select {
+    background-color: var(--subtle);
+    border-color: color-mix(in srgb, var(--border) 72%, transparent);
+  }
 }
 
 /* Smooth scrolling for main content */
@@ -101,6 +155,16 @@ a:active {
   }
 }
 
+@keyframes float-slow {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-12px) rotate(1deg); }
+}
+
+@keyframes aurora-shift {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(2rem, -1rem, 0) scale(1.06); }
+}
+
 .shimmer {
   background: linear-gradient(
     90deg,
@@ -110,6 +174,51 @@ a:active {
   );
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
+}
+
+.creative-surface {
+  background: color-mix(in srgb, var(--subtle) 82%, transparent);
+  border: 1px solid color-mix(in srgb, var(--border) 72%, transparent);
+  box-shadow: 0 24px 80px color-mix(in srgb, var(--foreground) 10%, transparent);
+  backdrop-filter: blur(18px);
+}
+
+.creative-mesh {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.creative-mesh::before,
+.creative-mesh::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  border-radius: 999px;
+  filter: blur(64px);
+  opacity: 0.75;
+  animation: aurora-shift 12s ease-in-out infinite;
+}
+
+.creative-mesh::before {
+  width: 22rem;
+  height: 22rem;
+  top: -8rem;
+  left: -6rem;
+  background: var(--glow-primary);
+}
+
+.creative-mesh::after {
+  width: 26rem;
+  height: 26rem;
+  right: -10rem;
+  bottom: -10rem;
+  background: var(--glow-secondary);
+  animation-delay: -4s;
+}
+
+.float-slow {
+  animation: float-slow 7s ease-in-out infinite;
 }
 
 /* Scrollbar styling - thin & subtle */
@@ -123,12 +232,12 @@ a:active {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #d1d5db;
-  border-radius: 4px;
+  background: color-mix(in srgb, var(--muted) 45%, transparent);
+  border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+  background: color-mix(in srgb, var(--muted) 70%, transparent);
 }
 
 /* Prevent text selection on UI chrome (buttons, nav) */
@@ -137,4 +246,24 @@ nav,
 [role="button"] {
   -webkit-tap-highlight-color: transparent;
   user-select: none;
+}
+
+/* Keep outline icons readable in dark mode. Captured screenshots are bitmap
+   content and cannot be recolored here; this only affects BugSnap UI icons. */
+.dark svg:not([class*="text-"]) {
+  color: var(--foreground);
+}
+
+.dark .text-muted svg,
+.dark svg.text-muted,
+.dark button .text-muted,
+.dark a .text-muted,
+.dark [role="button"] .text-muted {
+  color: #cbd5e1;
+}
+
+.dark button:hover svg,
+.dark a:hover svg,
+.dark [role="button"]:hover svg {
+  color: #ffffff;
 }

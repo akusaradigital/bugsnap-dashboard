@@ -18,8 +18,8 @@ export function StaticShell({
   children: ReactNode;
 }) {
   return (
-    <div className="min-h-screen bg-subtle text-foreground font-sans flex flex-col">
-      <header className="sticky top-0 z-10 border-b border-border bg-background/90 backdrop-blur">
+    <div className="creative-mesh min-h-screen bg-background text-foreground font-sans flex flex-col">
+      <header className="sticky top-0 z-10 border-b border-border bg-background/75 backdrop-blur-xl shadow-sm">
         <div className="mx-auto max-w-5xl px-6 py-4 flex items-center justify-between">
           <a href="/" className="flex items-center gap-2.5">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -34,10 +34,11 @@ export function StaticShell({
 
       <main className="flex-1">
         {typeof title !== "undefined" && (
-          <section className="border-b border-border bg-subtle/30">
-            <div className="mx-auto max-w-5xl px-6 py-10">
-              <h1 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground">{title}</h1>
-              {subtitle && <p className="mt-3 text-sm text-muted max-w-2xl leading-relaxed">{subtitle}</p>}
+          <section className="border-b border-border bg-subtle/45 backdrop-blur-sm">
+            <div className="mx-auto max-w-5xl px-6 py-14">
+              <div className="inline-flex rounded-full border border-border bg-subtle/80 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.18em] text-indigo-600 shadow-sm mb-5">BugSnap Studio</div>
+              <h1 className="max-w-3xl text-4xl sm:text-5xl font-black tracking-[-0.035em] text-foreground">{title}</h1>
+              {subtitle && <p className="mt-4 text-sm text-muted max-w-2xl leading-relaxed">{subtitle}</p>}
               {lastUpdated && <p className="mt-3 text-xs text-muted">Last updated: {lastUpdated}</p>}
             </div>
           </section>

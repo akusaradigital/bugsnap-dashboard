@@ -473,8 +473,8 @@ function SingleViewContent() {
   const embedCode = `<iframe src="${embedUrl}" width="640" height="360" frameborder="0" allowfullscreen></iframe>`;
 
   return (
-    <div className="h-screen bg-white flex flex-col font-sans overflow-y-auto lg:overflow-hidden">
-      <header className="h-14 border-b border-border px-3 sm:px-6 flex items-center justify-between shrink-0 bg-white">
+    <div className="h-screen bg-white dark:bg-background flex flex-col font-sans overflow-y-auto lg:overflow-hidden">
+      <header className="h-14 border-b border-border px-3 sm:px-6 flex items-center justify-between shrink-0 bg-white dark:bg-background">
         <div className="flex items-center gap-2">
           {brand.logo ? (
             // eslint-disable-next-line @next/next/no-img-element
@@ -749,7 +749,7 @@ function SingleViewContent() {
             <MediaViewer type={capture.type} driveUrl={capture.drive_url} title={capture.title} />
 
             {/* Title + Comments */}
-            <div className="border border-border/80 rounded-xl p-4 bg-white space-y-4">
+            <div className="rounded-xl p-4 bg-white dark:bg-background space-y-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h2 className="text-base font-semibold text-foreground">{capture.title}</h2>
