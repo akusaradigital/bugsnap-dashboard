@@ -29,6 +29,9 @@ interface Capture {
   allowed_ips?: string[] | null;
   owner_email?: string | null;
   folder_name?: string | null;
+  project_id?: string | null;
+  source?: string | null;
+  project_name?: string | null;
 }
 
 const TAG_OPTIONS = ["bug", "feature-request", "wip", "design", "other"];
@@ -407,11 +410,24 @@ function CapturesContent() {
   const [search, setSearch] = useState("");
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [editing, setEditing] = useState<Capture | null>(null);
+  const [movingCapture, setMovingCapture] = useState<Capture | null>(null);
+  const [moveProjectId, setMoveProjectId] = useState("");
+  const [movingProject, setMovingProject] = useState(false);
+  const [bulkMoveOpen, setBulkMoveOpen] = useState(false);
+  const [bulkMoveProjectId, setBulkMoveProjectId] = useState("");
+  const [bulkMoving, setBulkMoving] = useState(false);
+  const [statusQuickId, setStatusQuickId] = useState<string | null>(null);
   const [deleteRequest, setDeleteRequest] = useState<{ ids: string[]; title?: string; operationId: string } | null>(null);
   const [deleteMode, setDeleteMode] = useState<"drive_trash" | "app_only">("drive_trash");
   const [deleting, setDeleting] = useState(false);
   const [driveNotConnected, setDriveNotConnected] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
+  const [uploadProjectId, setUploadProjectId] = useState<string>("");
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [dragActive, setDragActive] = useState(false);
   const [thumbFailed, setThumbFailed] = useState<Record<string, boolean>>({});
   const [userPlan, setUserPlan] = useState<Plan>("free");
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -482,8 +498,11 @@ function CapturesContent() {
 
   // Explicit column list (no dev_logs) keeps the grid fast - logs are only
   // needed on the detail page.
+  const projectParam = searchParams.get("project");
+  const projectFilter = projectParam ?? "";
+  const workspaceParam = wsParam && wsParam !== "all" ? wsParam : "";
   const CAPTURES_COLUMNS =
-    "id, title, type, drive_url, created_at, window_size, workspace_id, folder_name, tag, status, expires_at, password, duration, owner_email, burn_after_read";
+    "id, title, type, drive_url, created_at, window_size, workspace_id, folder_name, project_id, source, tag, status, expires_at, password, duration, owner_email, burn_after_read";
 
   const loadPage = useCallback(
     async (replace: boolean) => {
@@ -493,11 +512,14 @@ function CapturesContent() {
         .select(CAPTURES_COLUMNS)
         .order("created_at", { ascending: false })
         .limit(PAGE_SIZE);
-      if (wsParam && wsParam !== "all") {
-        query = query.eq("workspace_id", wsParam);
+      if (workspaceParam) {
+        query = query.eq("workspace_id", workspaceParam);
       }
       if (folderParam) {
         query = query.eq("folder_name", folderParam);
+      }
+      if (projectFilter) {
+        query = query.eq("project_id", projectFilter);
       }
       const cursor = cursorRef.current;
       if (cursor) {
@@ -521,7 +543,7 @@ function CapturesContent() {
       }
       setHasMore(items.length === PAGE_SIZE);
     },
-    [wsParam, folderParam]
+    [folderParam, projectFilter, workspaceParam]
   );
 
   // Initial load + reload on workspace / folder change
@@ -537,7 +559,7 @@ function CapturesContent() {
     return () => {
       cancelled = true;
     };
-  }, [wsParam, folderParam, loadPage]);
+  }, [wsParam, folderParam, searchParams, loadPage]);
 
   // IntersectionObserver: Callback Ref to safely load more when the sentinel enters the viewport
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -665,6 +687,99 @@ function CapturesContent() {
     setSelectedIds(new Set());
   }
 
+  async function uploadSelectedFile(file: File) {
+    if (!file || uploading) return;
+    const title = file.name.replace(/\.[^.]+$/, "") || "Untitled";
+    setUploadFile(file);
+    setUploading(true);
+    setUploadError(null);
+    setUploadSuccess(null);
+    try {
+      const form = new FormData();
+      form.append("file", file);
+      form.append("title", title);
+      form.append("type", file.type.startsWith("video/") ? "video" : "screenshot");
+      form.append("workspaceId", workspaceParam);
+      if (uploadProjectId || projectFilter) form.append("projectId", uploadProjectId || projectFilter);
+      const { data: sessionData } = await supabase.auth.getSession();
+      const response = await fetch("/api/captures/upload", {
+        method: "POST",
+        headers: sessionData.session?.access_token ? { Authorization: `Bearer ${sessionData.session.access_token}` } : undefined,
+        body: form,
+      });
+      const json = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(json.error || "Upload failed");
+      setUploadSuccess(`Uploaded ${file.name}`);
+      loadPage(true);
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : "Upload failed");
+    } finally {
+      setUploading(false);
+    }
+  }
+
+  async function handleManualUpload(event: React.ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    await uploadSelectedFile(file);
+  }
+
+  async function submitMoveProject() {
+    if (!movingCapture || movingProject) return;
+    setMovingProject(true);
+    try {
+      const { data, error } = await supabase
+        .from("captures")
+        .update({ project_id: moveProjectId || null })
+        .eq("id", movingCapture.id)
+        .select()
+        .single();
+      if (error) throw error;
+      setCaptures((prev) => prev.map((c) => c.id === movingCapture.id ? { ...c, ...(data as Capture), project_id: moveProjectId || null } : c));
+      setMovingCapture(null);
+      setMoveProjectId("");
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : "Failed moving project");
+    } finally {
+      setMovingProject(false);
+    }
+  }
+
+  async function submitBulkMove() {
+    if (bulkMoving || selectedIds.size === 0) return;
+    setBulkMoving(true);
+    try {
+      const ids = Array.from(selectedIds);
+      const { error } = await supabase
+        .from("captures")
+        .update({ project_id: bulkMoveProjectId || null })
+        .in("id", ids);
+      if (error) throw error;
+      setCaptures((prev) => prev.map((c) => ids.includes(c.id) ? { ...c, project_id: bulkMoveProjectId || null } : c));
+      setBulkMoveOpen(false);
+      exitSelectMode();
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : "Failed moving captures");
+    } finally {
+      setBulkMoving(false);
+    }
+  }
+
+  async function submitQuickStatus(captureId: string, nextStatus: string) {
+    if (statusQuickId) return;
+    setStatusQuickId(captureId);
+    try {
+      const { error } = await supabase.from("captures").update({ status: nextStatus || null }).eq("id", captureId);
+      if (error) throw error;
+      setCaptures((prev) => prev.map((c) => c.id === captureId ? { ...c, status: nextStatus || null } : c));
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : "Failed updating status");
+    } finally {
+      setStatusQuickId(null);
+    }
+  }
+
   const filteredCaptures = workspaceCaptures.filter((item) => {
     // No type selected => treat as "All" (don't filter by type).
     const matchesType =
@@ -695,7 +810,7 @@ function CapturesContent() {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 sm:mb-8 gap-4">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">{t("cap.title")}</h1>
 
-        <div className="grid grid-cols-2 min-[430px]:grid-cols-[minmax(0,1fr)_auto_auto] lg:flex items-center gap-3 w-full lg:w-auto">
+        <div className="grid grid-cols-1 min-[430px]:grid-cols-[minmax(0,1fr)_auto_auto_auto_auto] lg:flex items-center gap-3 w-full lg:w-auto">
           <div className="relative col-span-2 min-[430px]:col-span-1 min-w-0">
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             <input
@@ -708,6 +823,44 @@ function CapturesContent() {
           </div>
           {!selectMode ? (
             <>
+              <label
+                onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
+                onDragLeave={() => setDragActive(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setDragActive(false);
+                  const file = e.dataTransfer.files?.[0];
+                  if (file) void uploadSelectedFile(file);
+                }}
+                className={`col-span-2 min-[430px]:col-span-1 flex items-center justify-between gap-3 rounded-xl border px-3 py-3 text-sm cursor-pointer transition-colors ${dragActive ? "border-indigo-500 bg-indigo-50" : "border-border bg-subtle"}`}
+              >
+                <input type="file" className="hidden" onChange={handleManualUpload} accept="image/*,video/*" />
+                <div className="min-w-0">
+                  <p className="font-medium text-foreground">{uploadFile ? uploadFile.name : "Upload manually"}</p>
+                  <p className="text-xs text-muted">{uploadFile ? `${uploadFile.type || "file"}` : "Drop image/video here or click to choose"}</p>
+                </div>
+                <span className="text-xs font-semibold text-indigo-600">{uploading ? "Uploading..." : "Choose"}</span>
+              </label>
+              <select
+                value={uploadProjectId}
+                onChange={(e) => setUploadProjectId(e.target.value)}
+                className="min-w-0 rounded-lg border border-border bg-subtle px-3 py-2 text-sm text-foreground"
+              >
+                <option value="">Project</option>
+                {(() => {
+                  const seen = new Set<string>();
+                  return workspaceCaptures
+                    .map((c) => ({ id: c.project_id || "", name: c.project_name || c.folder_name || "Unassigned" }))
+                    .filter((item) => item.id && !seen.has(item.id) && seen.add(item.id))
+                    .map((item) => (
+                      <option key={item.id} value={item.id}>{item.name}</option>
+                    ));
+                })()}
+              </select>
+              <label className="flex items-center justify-center gap-2 px-3 min-[430px]:px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors whitespace-nowrap min-w-0 cursor-pointer">
+                <input type="file" className="hidden" onChange={handleManualUpload} accept="image/*,video/*" />
+                {uploading ? "Uploading..." : "Upload"}
+              </label>
               <button
                 onClick={() => setSelectMode(true)}
                 disabled={filteredCaptures.length === 0}
@@ -729,6 +882,13 @@ function CapturesContent() {
             </>
           ) : (
             <div className="col-span-2 min-[430px]:col-span-3 flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => { setBulkMoveOpen(true); setBulkMoveProjectId(""); }}
+                disabled={selectedIds.size === 0}
+                className="px-3 py-2 rounded-lg border border-border bg-subtle text-xs font-medium text-muted hover:text-foreground hover:bg-subtle transition-colors disabled:opacity-40"
+              >
+                Move project
+              </button>
               <span className="text-xs text-muted mr-1">
                 {t("cap.selected", { count: selectedIds.size })}
               </span>
@@ -875,9 +1035,9 @@ function CapturesContent() {
         </div>
       </div>
 
-      {deleteError && (
-        <div className="mb-6 rounded-lg border border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-950/20 px-4 py-3 text-xs text-red-600 dark:text-red-400">
-          {deleteError}
+      {(deleteError || uploadError || uploadSuccess) && (
+        <div className={`mb-6 rounded-lg px-4 py-3 text-xs ${deleteError || uploadError ? "border border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400" : "border border-emerald-200 bg-emerald-50 text-emerald-700"}`}>
+          {deleteError || uploadError || uploadSuccess}
         </div>
       )}
 
@@ -1047,25 +1207,37 @@ function CapturesContent() {
                     </span>
                   )}
                   {item.status && item.status !== "open" && (
-                    <span className={`absolute bottom-2.5 ${item.tag ? "left-[2.75rem]" : "left-2.5"} text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded backdrop-blur-sm shadow-sm ${
-                      item.status === "fixed"
-                        ? "bg-emerald-600/90 text-white"
-                        : item.status === "in-progress"
-                        ? "bg-amber-500/90 text-white"
-                        : item.status === "closed"
-                        ? "bg-gray-600/90 text-white"
-                        : "bg-rose-600/90 text-white"
-                    }`}>
-                      {item.status}
-                    </span>
+                    <select
+                      value={item.status}
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
+                      onChange={(e) => { e.preventDefault(); e.stopPropagation(); void submitQuickStatus(item.id, e.target.value); }}
+                      className={`absolute bottom-2.5 ${item.tag ? "left-[2.75rem]" : "left-2.5"} text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded backdrop-blur-sm shadow-sm border-0 ${
+                        item.status === "fixed"
+                          ? "bg-emerald-600/90 text-white"
+                          : item.status === "in-progress"
+                          ? "bg-amber-500/90 text-white"
+                          : item.status === "closed"
+                          ? "bg-gray-600/90 text-white"
+                          : "bg-rose-600/90 text-white"
+                      }`}
+                    >
+                      {STATUS_OPTIONS.map((status) => (
+                        <option key={status} value={status}>{status}</option>
+                      ))}
+                    </select>
                   )}
                 </div>
 
                 {/* Meta Footer */}
                 <div className="p-3.5 flex items-center justify-between text-xs">
-                  <h3 className="font-medium text-foreground truncate max-w-[190px] group-hover:text-indigo-600 transition-colors">
-                    {item.title}
-                  </h3>
+                  <div className="min-w-0">
+                    <h3 className="font-medium text-foreground truncate max-w-[190px] group-hover:text-indigo-600 transition-colors">
+                      {item.title}
+                    </h3>
+                    {(item.project_name || item.folder_name) && (
+                      <p className="text-[11px] text-muted truncate mt-0.5">{item.project_name || item.folder_name}</p>
+                    )}
+                  </div>
                   <span className="text-muted shrink-0">
                     {timeAgo(item.created_at, t)}
                   </span>
@@ -1128,6 +1300,17 @@ function CapturesContent() {
                       {t("cap.edit")}
                     </button>
                     <button
+                      onClick={() => {
+                        setMovingCapture(item);
+                        setMoveProjectId(item.project_id || "");
+                        setOpenMenuId(null);
+                      }}
+                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-subtle transition-colors"
+                    >
+                      <svg className="w-3.5 h-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7h18M3 12h18M3 17h18" /></svg>
+                      Move project
+                    </button>
+                    <button
                       onClick={() => openDeleteConfirmation([item.id], item.title)}
                       disabled={deleting}
                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 disabled:opacity-50 transition-colors"
@@ -1159,6 +1342,64 @@ function CapturesContent() {
       )}
 
       {editing && <EditModal capture={editing} userPlan={userPlan} onClose={() => setEditing(null)} onSaved={(updated) => setCaptures((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))} />}
+
+      {bulkMoveOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setBulkMoveOpen(false)} />
+          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-6">
+            <h2 className="text-lg font-bold text-foreground mb-1">Move selected captures</h2>
+            <p className="text-sm text-muted mb-5">Move {selectedIds.size} selected captures to a project.</p>
+            <select value={bulkMoveProjectId} onChange={(e) => setBulkMoveProjectId(e.target.value)} className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-subtle">
+              <option value="">Unassigned</option>
+              {(() => {
+                const seen = new Set<string>();
+                return captures
+                  .map((c) => ({ id: c.project_id || "", name: c.project_name || c.folder_name || "Unassigned" }))
+                  .filter((item) => item.id && !seen.has(item.id) && seen.add(item.id))
+                  .map((item) => <option key={item.id} value={item.id}>{item.name}</option>);
+              })()}
+            </select>
+            <div className="flex items-center justify-end gap-3 mt-6">
+              <button onClick={() => setBulkMoveOpen(false)} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors">{t("common.cancel")}</button>
+              <button onClick={submitBulkMove} disabled={bulkMoving || selectedIds.size === 0} className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+                {bulkMoving ? "Moving..." : "Move"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {movingCapture && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setMovingCapture(null)} />
+          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-6">
+            <h2 className="text-lg font-bold text-foreground mb-1">Move to project</h2>
+            <p className="text-sm text-muted mb-5">Choose a project for {movingCapture.title}.</p>
+            <select
+              value={moveProjectId}
+              onChange={(e) => setMoveProjectId(e.target.value)}
+              className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-subtle"
+            >
+              <option value="">Unassigned</option>
+              {(() => {
+                const seen = new Set<string>();
+                return captures
+                  .map((c) => ({ id: c.project_id || "", name: c.project_name || c.folder_name || "Unassigned" }))
+                  .filter((item) => item.id && !seen.has(item.id) && seen.add(item.id))
+                  .map((item) => (
+                    <option key={item.id} value={item.id}>{item.name}</option>
+                  ));
+              })()}
+            </select>
+            <div className="flex items-center justify-end gap-3 mt-6">
+              <button onClick={() => setMovingCapture(null)} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors">{t("common.cancel")}</button>
+              <button onClick={submitMoveProject} disabled={movingProject} className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+                {movingProject ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {deleteRequest && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="delete-captures-title">

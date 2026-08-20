@@ -35,11 +35,29 @@ interface Promo {
   message: string;
 }
 
+interface DriftReport {
+  ok: boolean;
+  missing_projects_table?: boolean;
+  missing_capture_source_column?: boolean;
+  missing_capture_project_id_column?: boolean;
+  missing_integrity_rpc?: boolean;
+}
+
+interface IntegrityReport {
+  ok: boolean;
+  orphan_captures_count: number;
+  orphan_comments_count: number;
+  orphan_projects_count: number;
+  missing_sources_count: number;
+  broken_drive_links_count: number;
+  missing_default_projects_count: number;
+}
+
 export default function AdminDashboardPage() {
   const { t } = useT();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [data, setData] = useState<{ stats: AdminStats; users: AdminUser[]; topWorkspaces: TopWorkspace[]; promo: Promo } | null>(null);
+  const [data, setData] = useState<{ stats: AdminStats; users: AdminUser[]; topWorkspaces: TopWorkspace[]; promo: Promo; drift?: DriftReport | null; integrity?: IntegrityReport | null } | null>(null);
   const [search, setSearch] = useState("");
 
   // Promo Banner state
@@ -242,6 +260,20 @@ export default function AdminDashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {(data as { drift?: DriftReport | null; integrity?: IntegrityReport | null } | null)?.drift && (
+          <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-subtle border border-border rounded-xl p-4 shadow-sm space-y-2">
+              <h2 className="text-sm font-bold text-foreground">Schema drift</h2>
+              <p className="text-xs text-muted">{(data?.drift?.ok ? 'OK' : 'Needs attention')}</p>
+              <pre className="text-[10px] text-muted whitespace-pre-wrap">{JSON.stringify(data?.drift, null, 2)}</pre>
+            </div>
+            <div className="bg-subtle border border-border rounded-xl p-4 shadow-sm space-y-2">
+              <h2 className="text-sm font-bold text-foreground">Integrity audit</h2>
+              <p className="text-xs text-muted">{(data?.integrity?.ok ? 'OK' : 'Needs attention')}</p>
+              <pre className="text-[10px] text-muted whitespace-pre-wrap">{JSON.stringify(data?.integrity, null, 2)}</pre>
+            </div>
+          </div>
+        )}
         {/* PROMO BANNER */}
         <div className="bg-subtle border border-border rounded-xl p-5 shadow-sm space-y-4">
           <div>

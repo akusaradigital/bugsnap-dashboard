@@ -74,6 +74,8 @@ export async function insertTestCapture(overrides = {}) {
     p_os: overrides.p_os ?? "Windows",
     p_browser: overrides.p_browser ?? "Chrome 149.0.7827.201",
     p_site_url: overrides.p_site_url ?? "https://example.com",
+    p_project_id: overrides.p_project_id ?? null,
+    p_source: overrides.p_source ?? "chrome_extension",
   });
   return { data, error };
 }

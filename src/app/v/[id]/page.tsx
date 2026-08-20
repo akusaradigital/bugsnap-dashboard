@@ -30,6 +30,9 @@ interface Capture {
   allowed_ips?: string[] | null;
   burn_after_read?: boolean;
   expires_at?: string | null;
+  project_id?: string | null;
+  project_name?: string | null;
+  source?: string | null;
 }
 
 const TAG_OPTIONS = ["bug", "feature-request", "wip", "design", "other"];
@@ -224,7 +227,7 @@ function SingleViewContent() {
           const { data: directData } = await supabase
             .from("captures")
             .select(
-              "id, title, type, drive_url, description, dev_logs, os, browser, site_url, window_size, created_at, workspace_id, tag, status, allowed_domains, allowed_ips, burn_after_read, expires_at"
+              "id, title, type, drive_url, description, dev_logs, os, browser, site_url, window_size, created_at, workspace_id, tag, status, allowed_domains, allowed_ips, burn_after_read, expires_at, project_id, source, project_name"
             )
             .eq("id", id)
             .single();
@@ -751,6 +754,11 @@ function SingleViewContent() {
             {/* Title + Comments */}
             <div className="rounded-xl p-4 bg-white dark:bg-background space-y-4">
               <div className="flex items-start justify-between gap-3">
+                <div className="flex items-center gap-2 text-[10px] text-muted flex-wrap mb-2">
+                  <span className="px-2 py-0.5 rounded-full bg-subtle border border-border">{capture.source || "chrome_extension"}</span>
+                  {capture.project_name && <span className="px-2 py-0.5 rounded-full bg-subtle border border-border">Project: {capture.project_name}</span>}
+                  {!capture.project_name && capture.project_id && <span className="px-2 py-0.5 rounded-full bg-subtle border border-border">Project ID: {capture.project_id}</span>}
+                </div>
                 <div>
                   <h2 className="text-base font-semibold text-foreground">{capture.title}</h2>
                   {capture.description && <p className="text-xs text-muted mt-0.5">{capture.description}</p>}

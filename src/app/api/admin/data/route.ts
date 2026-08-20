@@ -39,6 +39,8 @@ export async function GET(req: Request) {
       { global: { headers: { Authorization: `Bearer ${token}` } }, auth: { persistSession: false } }
     );
     const { data, error } = await userClient.rpc("admin_stats");
+    const { data: driftData } = await userClient.rpc("run_schema_drift_check");
+    const { data: integrityData } = await userClient.rpc("run_integrity_audit");
     if (error) {
       if (error.message?.includes("forbidden")) {
         return NextResponse.json({ error: "Forbidden: Super Admin only" }, { status: 403 });
@@ -80,6 +82,8 @@ export async function GET(req: Request) {
         capture_count: Number(w.capture_count),
       })),
       promo: raw?.promo ?? { enabled: false, message: "" },
+      drift: driftData ?? null,
+      integrity: integrityData ?? null,
     });
   } catch (err) {
     console.error("Admin data fetch error:", err);

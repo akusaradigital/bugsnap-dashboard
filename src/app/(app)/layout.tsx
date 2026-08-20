@@ -52,11 +52,23 @@ export default function DashboardLayout({
   const [creating, setCreating] = useState(false);
   const [members, setMembers] = useState<Record<string, string[]>>({});
   const [folders, setFolders] = useState<string[]>([]);
+  const [projects, setProjects] = useState<{ id: string; name: string; description: string; is_default: boolean }[]>([]);
+  const [projectMenuOpen, setProjectMenuOpen] = useState<string | null>(null);
   const [folderMenuOpen, setFolderMenuOpen] = useState<string | null>(null);
   const [createFolderModalOpen, setCreateFolderModalOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [createFolderError, setCreateFolderError] = useState<string | null>(null);
   const [creatingFolder, setCreatingFolder] = useState(false);
+  const [createProjectModalOpen, setCreateProjectModalOpen] = useState(false);
+  const [newProjectName, setNewProjectName] = useState("");
+  const [createProjectError, setCreateProjectError] = useState<string | null>(null);
+  const [creatingProject, setCreatingProject] = useState(false);
+  const [projectToRename, setProjectToRename] = useState<{ id: string; name: string } | null>(null);
+  const [renameProjectName, setRenameProjectName] = useState("");
+  const [renameProjectError, setRenameProjectError] = useState<string | null>(null);
+  const [renamingProject, setRenamingProject] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<{ id: string; name: string } | null>(null);
+  const [deletingProject, setDeletingProject] = useState(false);
   
   // Custom Rename & Delete Folder Modal states
   const [renameFolderModalOpen, setRenameFolderModalOpen] = useState(false);
@@ -356,13 +368,18 @@ export default function DashboardLayout({
 
         if (capturesErr) throw capturesErr;
 
-        // 2. Fetch custom created folders in workspace
+        // 2. Fetch custom created folders in workspace (legacy surface)
         const { data: customFoldersData, error: customFoldersErr } = await supabase
           .from("workspace_folders")
           .select("name, is_default")
           .eq("workspace_id", activeWsId);
 
         if (customFoldersErr) throw customFoldersErr;
+
+        // 3. Fetch projects in workspace (new surface)
+        const { data: projectsData, error: projectsErr } = await supabase
+          .rpc("get_workspace_projects", { p_workspace_id: activeWsId });
+        if (projectsErr) throw projectsErr;
         
         // Deduplicate folder names from both sources
         const allFolderNames = [
@@ -374,6 +391,8 @@ export default function DashboardLayout({
         const defaultName = (customFoldersData || []).find((folder) => folder.is_default)?.name;
 
         if (active) {
+          const typedProjects = (projectsData || []) as { id: string; name: string; description?: string | null; is_default?: boolean }[];
+          setProjects(typedProjects.map((p) => ({ id: p.id, name: p.name, description: p.description || "", is_default: !!p.is_default })));
           setFolders(uniqueFolders.sort((a, b) => a === defaultName ? -1 : b === defaultName ? 1 : a.localeCompare(b)));
         }
       } catch (err) {
@@ -452,6 +471,73 @@ export default function DashboardLayout({
       setCreatingFolder(false);
     }
   };
+
+  const handleCreateProject = async (name: string) => {
+    if (!name || !activeWsId || creatingProject) return;
+    setCreatingProject(true);
+    setCreateProjectError(null);
+    try {
+      const { data, error } = await supabase.rpc("create_project", {
+        p_workspace_id: activeWsId,
+        p_name: name,
+        p_description: "",
+      });
+      if (error) throw error;
+      const created = Array.isArray(data) ? data[0] : data;
+      if (created?.id) {
+        setProjects((prev) => [...prev, { id: created.id, name: created.name, description: created.description || "", is_default: !!created.is_default }].sort((a, b) => (a.is_default ? -1 : b.is_default ? 1 : a.name.localeCompare(b.name))));
+      }
+      setNewProjectName("");
+      setCreateProjectModalOpen(false);
+    } catch (err) {
+      console.warn("Failed to create project:", err);
+      setCreateProjectError("Could not create project. Maybe it already exists?");
+    } finally {
+      setCreatingProject(false);
+    }
+  };
+
+  const submitRenameProject = async () => {
+    if (!projectToRename || renamingProject) return;
+    const name = renameProjectName.trim();
+    if (!name || name === projectToRename.name) return;
+    setRenamingProject(true);
+    setRenameProjectError(null);
+    try {
+      const { error } = await supabase.rpc("rename_project", {
+        p_project_id: projectToRename.id,
+        p_name: name,
+        p_description: null,
+      });
+      if (error) throw error;
+      setProjects((prev) => prev.map((p) => p.id === projectToRename.id ? { ...p, name } : p).sort((a, b) => (a.is_default ? -1 : b.is_default ? 1 : a.name.localeCompare(b.name))));
+      setProjectToRename(null);
+      setRenameProjectName("");
+    } catch (err) {
+      console.warn("Failed to rename project:", err);
+      setRenameProjectError("Could not rename project.");
+    } finally {
+      setRenamingProject(false);
+    }
+  };
+
+  const submitDeleteProject = async () => {
+    if (!projectToDelete || deletingProject) return;
+    setDeletingProject(true);
+    try {
+      const { error } = await supabase.rpc("delete_project", { p_project_id: projectToDelete.id });
+      if (error) throw error;
+      setProjects((prev) => prev.filter((p) => p.id !== projectToDelete.id));
+      setProjectToDelete(null);
+    } catch (err) {
+      console.warn("Failed to delete project:", err);
+      showToast("Could not delete project", "error");
+    } finally {
+      setDeletingProject(false);
+    }
+  };
+
+
 
   const handleRenameFolder = (currentName: string) => {
     setFolderToRename(currentName);
@@ -875,6 +961,90 @@ export default function DashboardLayout({
             </Link>
           )}
 
+          {/* Projects */}
+          <div className="pt-4 space-y-1">
+            <div className="flex items-center justify-between px-3 pb-1">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted flex items-center gap-1.5">
+                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M4 12h16M4 17h16"/>
+                </svg>
+                {t("layout.projects")}
+              </p>
+              <button
+                onClick={() => setCreateProjectModalOpen(true)}
+                className="text-[10px] font-bold text-indigo-600 hover:underline"
+              >
+                {t("layout.create")}
+              </button>
+            </div>
+            <div className="max-h-40 overflow-visible space-y-0.5">
+              {projects.map((project) => (
+                <div
+                  key={project.id}
+                  className="relative w-full flex items-center justify-between gap-1 px-1 rounded-lg group/project transition-colors hover:bg-subtle"
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setWsOpen(false);
+                      router.replace(`/captures?ws=${activeWsId}&project=${project.id}`, { scroll: false });
+                    }}
+                    className="flex-1 flex items-center gap-2.5 px-2 py-1.5 text-xs truncate text-muted hover:text-foreground"
+                  >
+                    <span className="text-xs shrink-0">🧩</span>
+                    <span className="truncate flex-1 text-left">{project.name}</span>
+                    {project.is_default && <span className="text-[10px] uppercase tracking-wide">Default</span>}
+                  </button>
+                  {activeWs?.role === "owner" && !project.is_default && (
+                    <div className="shrink-0 pr-1">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setProjectMenuOpen((open) => (open === project.id ? null : project.id));
+                        }}
+                        aria-label={`${project.name} actions`}
+                        className="flex h-6 w-6 items-center justify-center rounded-md text-muted hover:bg-subtle hover:text-foreground transition-colors"
+                      >
+                        <span aria-hidden="true">⋯</span>
+                      </button>
+                      {projectMenuOpen === project.id && (
+                        <>
+                          <div className="fixed inset-0 z-40" onClick={() => setProjectMenuOpen(null)} />
+                          <div className="absolute right-1 top-full z-50 mt-1 w-28 overflow-hidden rounded-lg border border-border bg-subtle py-1 text-xs shadow-lg">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setProjectMenuOpen(null);
+                                setProjectToRename({ id: project.id, name: project.name });
+                                setRenameProjectName(project.name);
+                              }}
+                              className="block w-full px-3 py-2 text-left text-foreground hover:bg-subtle"
+                            >
+                              Rename
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setProjectMenuOpen(null);
+                                setProjectToDelete({ id: project.id, name: project.name });
+                              }}
+                              className="block w-full px-3 py-2 text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+              {projects.length === 0 && <div className="px-3 py-2 text-xs text-muted">No projects yet</div>}
+            </div>
+          </div>
+
           {/* Google Drive Folders List (Sync Bridge) */}
           <div className="pt-4 space-y-1">
             <div className="flex items-center justify-between px-3 pb-1">
@@ -1190,6 +1360,99 @@ export default function DashboardLayout({
             <p className="text-[11px] text-muted mt-3">
               {t("layout.upgradeViaStripe")}
             </p>
+          </div>
+        </div>
+      )}
+
+      {/* Create Project Modal */}
+      {createProjectModalOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setCreateProjectModalOpen(false)} />
+          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-6">
+            <h2 className="text-lg font-bold text-foreground mb-1">Create Project</h2>
+            <p className="text-sm text-muted mb-5">Organize captures inside this workspace.</p>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">Project name</label>
+              <input
+                type="text"
+                value={newProjectName}
+                onChange={(e) => setNewProjectName(e.target.value)}
+                placeholder="e.g. Checkout Flow"
+                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-subtle"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && newProjectName.trim()) {
+                    handleCreateProject(newProjectName.trim());
+                  }
+                }}
+              />
+              {createProjectError && (
+                <p className="text-xs text-red-600 mt-1.5">{createProjectError}</p>
+              )}
+            </div>
+            <div className="flex items-center justify-end gap-3 mt-6">
+              <button
+                onClick={() => setCreateProjectModalOpen(false)}
+                className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors"
+              >
+                {t("common.cancel")}
+              </button>
+              <button
+                onClick={() => handleCreateProject(newProjectName.trim())}
+                disabled={!newProjectName.trim() || creatingProject}
+                className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+              >
+                {creatingProject ? "Creating..." : "Create Project"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Rename Project Modal */}
+      {projectToRename && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setProjectToRename(null)} />
+          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-6">
+            <h2 className="text-lg font-bold text-foreground mb-1">Rename Project</h2>
+            <p className="text-sm text-muted mb-5">Update the project name for this workspace.</p>
+            <div>
+              <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">Project name</label>
+              <input
+                type="text"
+                value={renameProjectName}
+                onChange={(e) => setRenameProjectName(e.target.value)}
+                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-subtle"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && renameProjectName.trim()) submitRenameProject();
+                }}
+              />
+              {renameProjectError && <p className="text-xs text-red-600 mt-1.5">{renameProjectError}</p>}
+            </div>
+            <div className="flex items-center justify-end gap-3 mt-6">
+              <button onClick={() => setProjectToRename(null)} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors">{t("common.cancel")}</button>
+              <button onClick={submitRenameProject} disabled={!renameProjectName.trim() || renamingProject} className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+                {renamingProject ? "Saving..." : "Save"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Project Modal */}
+      {projectToDelete && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setProjectToDelete(null)} />
+          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-6 text-center">
+            <h2 className="text-lg font-bold text-foreground mb-2">Delete Project?</h2>
+            <p className="text-xs text-muted leading-relaxed mb-6">{projectToDelete.name} will be removed and captures will stay unassigned.</p>
+            <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
+              <button onClick={() => setProjectToDelete(null)} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors">{t("common.cancel")}</button>
+              <button onClick={submitDeleteProject} disabled={deletingProject} className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 disabled:opacity-50 transition-colors">
+                {deletingProject ? "Deleting..." : "Delete"}
+              </button>
+            </div>
           </div>
         </div>
       )}

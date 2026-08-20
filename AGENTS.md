@@ -162,6 +162,8 @@ const CONFIG = {
 
 ## Next Development Ideas (pick 1, don't repeat past choices)
 
+> After every completed task, always propose exactly 5 development ideas. If the user skips, rejects, or does not choose an idea, do not repeat those same ideas in later turns. Once an idea is proposed and not chosen, retire it and propose different ones next time.
+>
 > Pick any ONE of these as the next feature. Once picked, it's off the table - never propose the same idea twice.
 
 1. **Auto-Record Rules Engine** - extension auto-starts a recording when a configurable trigger fires (console error of a certain type, URL pattern match, network failure). Useful for reproducing intermittent bugs without a tester present. Touches: `content.js` (triggers), `background.js` (recording start), `options.html` (rules UI), Supabase `user_rules` table.
