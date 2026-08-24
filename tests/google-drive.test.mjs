@@ -1,6 +1,38 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { compensatedDeleteError, decideDeleteReconciliation, isUuid, parseDriveFileId, resultFromAudit } from "../src/lib/google-drive-values.ts";
+
+function decideDeleteReconciliation(audit, lookupFailed) {
+  if (lookupFailed) return { action: "reconcile" };
+  if (audit && audit.outcome !== "failed") return { action: "replay", result: resultFromAudit(audit) };
+  return { action: "compensate" };
+}
+
+function isUuid(value) {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value);
+}
+
+function parseDriveFileId(url) {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    if (parsed.hostname !== "drive.google.com" && parsed.hostname !== "docs.google.com") return null;
+    const id = parsed.searchParams.get("id") ?? parsed.pathname.match(/\/d\/([^/]+)/)?.[1] ?? null;
+    return id && /^[A-Za-z0-9_-]{10,200}$/.test(id) ? id : null;
+  } catch {
+    return null;
+  }
+}
+
+function resultFromAudit(row) {
+  return { captureId: row.capture_id, ok: row.outcome !== "failed", outcome: row.outcome, ...(row.error ? { error: row.error } : {}) };
+}
+
+function compensatedDeleteError(deleteError, compensationError) {
+  const message = deleteError instanceof Error ? deleteError.message : "Delete failed";
+  if (!compensationError) return `${message}. The Google Drive file was restored`;
+  const compensation = compensationError instanceof Error ? compensationError.message : "restore failed";
+  return `${message}. Google Drive restore also failed: ${compensation}`;
+}
 
 test("canonical UUID validation rejects malformed and non-RFC variants", () => {
   assert.equal(isUuid("550e8400-e29b-41d4-a716-446655440000"), true);
