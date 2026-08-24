@@ -43,55 +43,64 @@ export async function POST(request: Request) {
   }
 
   const results: Result[] = [];
-  for (const captureId of ids as string[]) {
-    const replay = replayed.get(captureId);
-    if (replay) { results.push(replay); continue; }
+  const captureIdList = ids as string[];
 
-    let fileId: string | null = null;
-    let trashed = false;
-    try {
-      if (mode === "drive_trash") {
-        const { data, error } = await db.from("captures").select("id,workspace_id,drive_file_id,drive_url,workspaces!inner(owner_user_id)").eq("id", captureId).eq("workspaces.owner_user_id", user.id).maybeSingle();
-        if (error) throw error;
-        const capture = data as Capture | null;
-        if (!capture) throw new Error("Not found or not owned");
-        fileId = capture.drive_file_id ?? parseDriveFileId(capture.drive_url);
-        if (!fileId) throw new Error("Capture has no exact Google Drive file ID");
-        await trashDriveFile(accessToken!, fileId);
-        trashed = true;
-      }
+  // Process captures concurrently in chunks of 5 to balance performance and serverless resource safety
+  const CHUNK_SIZE = 5;
+  for (let i = 0; i < captureIdList.length; i += CHUNK_SIZE) {
+    const chunk = captureIdList.slice(i, i + CHUNK_SIZE);
+    const chunkPromises = chunk.map(async (captureId) => {
+      const replay = replayed.get(captureId);
+      if (replay) return replay;
 
-      const { data, error } = await db.rpc("delete_capture_with_audit", {
-        p_operation_id: operationId,
-        p_capture_id: captureId,
-        p_user_id: user.id,
-        p_mode: mode,
-        p_drive_file_id: fileId,
-      }).single();
-      if (error || !data) throw error ?? new Error("Delete did not return a result");
-      const result = resultFromAudit(data as DeleteAuditResult);
-      const enriched: Result = { ...result, driveOutcome: mode === "drive_trash" ? (trashed ? "trashed" : "kept") : "kept" };
-      if (!enriched.ok && trashed) {
-        const deleteError = new Error(enriched.error ?? "Database deletion failed");
-        try { await untrashDriveFile(accessToken!, fileId!); enriched.error = compensatedDeleteError(deleteError); enriched.driveOutcome = "kept"; }
-        catch (compensationError) { enriched.error = compensatedDeleteError(deleteError, compensationError); enriched.driveOutcome = "unknown"; }
-      }
-      results.push(enriched);
-    } catch (caught) {
-      let message = caught instanceof Error ? caught.message : "Delete failed";
-      if (trashed) {
-        const { data: audit, error: lookupError } = await db.from("capture_delete_audit").select("capture_id,outcome,error").eq("operation_id", operationId).eq("capture_id", captureId).eq("user_id", user.id).maybeSingle();
-        const decision = decideDeleteReconciliation(audit as DeleteAuditResult | null, Boolean(lookupError));
-        if (decision.action === "replay") { results.push(decision.result); continue; }
-        if (decision.action === "reconcile") {
-          results.push({ captureId, ok: false, outcome: "reconciliation_needed", driveOutcome: "unknown", error: "Deletion status could not be confirmed; the Google Drive file remains trashed and reconciliation is required" });
-          continue;
+      let fileId: string | null = null;
+      let trashed = false;
+      try {
+        if (mode === "drive_trash") {
+          const { data, error } = await db.from("captures").select("id,workspace_id,drive_file_id,drive_url,workspaces!inner(owner_user_id)").eq("id", captureId).eq("workspaces.owner_user_id", user.id).maybeSingle();
+          if (error) throw error;
+          const capture = data as Capture | null;
+          if (!capture) throw new Error("Not found or not owned");
+          fileId = capture.drive_file_id ?? parseDriveFileId(capture.drive_url);
+          if (!fileId) throw new Error("Capture has no exact Google Drive file ID");
+          await trashDriveFile(accessToken!, fileId);
+          trashed = true;
         }
-        try { await untrashDriveFile(accessToken!, fileId!); message = compensatedDeleteError(caught); }
-        catch (compensationError) { message = compensatedDeleteError(caught, compensationError); }
+
+        const { data, error } = await db.rpc("delete_capture_with_audit", {
+          p_operation_id: operationId,
+          p_capture_id: captureId,
+          p_user_id: user.id,
+          p_mode: mode,
+          p_drive_file_id: fileId,
+        }).single();
+        if (error || !data) throw error ?? new Error("Delete did not return a result");
+        const result = resultFromAudit(data as DeleteAuditResult);
+        const enriched: Result = { ...result, driveOutcome: mode === "drive_trash" ? (trashed ? "trashed" : "kept") : "kept" };
+        if (!enriched.ok && trashed) {
+          const deleteError = new Error(enriched.error ?? "Database deletion failed");
+          try { await untrashDriveFile(accessToken!, fileId!); enriched.error = compensatedDeleteError(deleteError); enriched.driveOutcome = "kept"; }
+          catch (compensationError) { enriched.error = compensatedDeleteError(deleteError, compensationError); enriched.driveOutcome = "unknown"; }
+        }
+        return enriched;
+      } catch (caught) {
+        let message = caught instanceof Error ? caught.message : "Delete failed";
+        if (trashed) {
+          const { data: audit, error: lookupError } = await db.from("capture_delete_audit").select("capture_id,outcome,error").eq("operation_id", operationId).eq("capture_id", captureId).eq("user_id", user.id).maybeSingle();
+          const decision = decideDeleteReconciliation(audit as DeleteAuditResult | null, Boolean(lookupError));
+          if (decision.action === "replay") return decision.result;
+          if (decision.action === "reconcile") {
+            return { captureId, ok: false, outcome: "reconciliation_needed", driveOutcome: "unknown" as const, error: "Deletion status could not be confirmed; the Google Drive file remains trashed and reconciliation is required" };
+          }
+          try { await untrashDriveFile(accessToken!, fileId!); message = compensatedDeleteError(caught); }
+          catch (compensationError) { message = compensatedDeleteError(caught, compensationError); }
+        }
+        return { captureId, ok: false, outcome: "failed", driveOutcome: trashed ? ("unknown" as const) : (mode === "drive_trash" ? ("kept" as const) : ("kept" as const)), error: message.slice(0, 500) };
       }
-      results.push({ captureId, ok: false, outcome: "failed", driveOutcome: trashed ? "unknown" : (mode === "drive_trash" ? "kept" : "kept"), error: message.slice(0, 500) });
-    }
+    });
+
+    const chunkResults = await Promise.all(chunkPromises);
+    results.push(...chunkResults);
   }
 
   return NextResponse.json({ operationId, results, succeeded: results.filter(r => r.ok).length, failed: results.filter(r => !r.ok).length }, { status: results.some(r => r.ok) ? 200 : 422 });

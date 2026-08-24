@@ -6,14 +6,13 @@ on:
   pull_request:
     branches: [ main ]
 
-# 1. Auto-cancel redundant workflow runs on new commits
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
   validate:
-    name: Typecheck, Lint, Test & Build
+    name: Typecheck, Lint, Test, Build, Browser Smoke & Lighthouse
     runs-on: ubuntu-latest
 
     steps:
@@ -30,6 +29,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps chromium
 
       - name: Typecheck
         run: npm run typecheck
@@ -51,16 +53,26 @@ jobs:
           GOOGLE_DRIVE_REDIRECT_URI: "http://localhost:3000/api/google-drive/callback"
           GOOGLE_DRIVE_ENCRYPTION_KEY: "12345678901234567890123456789012"
 
-      # 5. E2E Smoke test via Next.js server & Node fetch assertions
-      - name: E2E Smoke Test
+      - name: Start App
         run: |
           npm start &
-          npx wait-on http://localhost:3000/api/health --timeout 60000
-          node tests/smoke.e2e.mjs
+          npx wait-on http://127.0.0.1:3000/api/health --timeout 60000
         env:
           PORT: 3000
 
-      # 4. Auto-release tag generator on package.json version bump (main branch only)
+      - name: E2E Smoke Test
+        run: node tests/smoke.e2e.mjs
+        env:
+          BASE_URL: http://127.0.0.1:3000
+
+      - name: Playwright Smoke Test
+        run: npx playwright test
+        env:
+          BASE_URL: http://127.0.0.1:3000
+
+      - name: Lighthouse CI Summary
+        run: node scripts/lighthouse-ci.mjs
+
       - name: Auto-tag Release
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |

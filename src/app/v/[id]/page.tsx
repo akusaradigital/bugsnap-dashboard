@@ -1,15 +1,21 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import DevToolsPanel, { CapturedLogs } from "@/components/DevToolsPanel";
+import type { CapturedLogs } from "@/components/DevToolsPanel";
 import Comments from "@/components/Comments";
 import MediaViewer from "@/components/MediaViewer";
 import { useT } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
 import { hasAiSummary, normalizePlan, type Plan } from "@/lib/tiers";
+
+const DevToolsPanel = dynamic(() => import("@/components/DevToolsPanel"), {
+  ssr: false,
+  loading: () => <div className="w-full lg:w-[360px] border-t lg:border-t-0 lg:border-l border-border bg-subtle animate-pulse h-[450px] lg:h-auto" />
+});
 
 interface Capture {
   id: string;
@@ -37,6 +43,8 @@ interface Capture {
 
 const TAG_OPTIONS = ["bug", "feature-request", "wip", "design", "other"];
 const STATUS_OPTIONS = ["open", "in-progress", "fixed", "closed"];
+
+const viewCountCache = new Map<string, { value: number; expiresAt: number }>();
 
 function getExpiryCountdown(expiresAt: string, t: (k: string, vars?: Record<string, string | number>) => string): string {
   const diff = new Date(expiresAt).getTime() - Date.now();
@@ -272,9 +280,18 @@ function SingleViewContent() {
         }
       });
 
-    supabase.rpc("get_view_count", { p_capture_id: id }).then(({ data }) => {
-      if (!cancelled && data != null) setViewCount(Number(data));
-    });
+    const cachedView = viewCountCache.get(id);
+    if (cachedView && cachedView.expiresAt > Date.now()) {
+      setViewCount(cachedView.value);
+    } else {
+      supabase.rpc("get_view_count", { p_capture_id: id }).then(({ data }) => {
+        if (!cancelled && data != null) {
+          const value = Number(data);
+          setViewCount(value);
+          viewCountCache.set(id, { value, expiresAt: Date.now() + 60_000 });
+        }
+      });
+    }
 
     return () => {
       cancelled = true;
@@ -306,7 +323,10 @@ function SingleViewContent() {
     (async () => {
       try {
         const { data } = await supabase.rpc("get_view_count", { p_capture_id: id });
-        if (!cancelled && typeof data === "number") setViewCount(data);
+        if (!cancelled && typeof data === "number") {
+          setViewCount(data);
+          viewCountCache.set(id, { value: data, expiresAt: Date.now() + 60_000 });
+        }
       } catch {}
     })();
 

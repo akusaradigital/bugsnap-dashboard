@@ -114,13 +114,24 @@ export async function getDriveConnectionHealth(userId: string): Promise<DriveCon
   }
 }
 
+// In-memory access token cache with 50-minute TTL to reduce Google OAuth roundtrips
+const tokenCache = new Map<string, { token: string; expiresAt: number }>();
+
 export async function driveAccessToken(userId: string) {
+  const cached = tokenCache.get(userId);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.token;
+  }
+
   const connection = await getDriveConnection(userId);
   if (!connection) throw new Error("Google Drive is not connected");
   try {
     const tokens = await tokenRequest({ refresh_token: decrypt(connection.refresh_token), grant_type: "refresh_token" });
+    const ttlMs = (tokens.expires_in ? Math.max(tokens.expires_in - 300, 300) : 3000) * 1000;
+    tokenCache.set(userId, { token: tokens.access_token, expiresAt: Date.now() + ttlMs });
     return tokens.access_token;
   } catch {
+    tokenCache.delete(userId);
     throw new Error("Google Drive needs to be reconnected");
   }
 }
