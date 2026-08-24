@@ -6,6 +6,11 @@ on:
   pull_request:
     branches: [ main ]
 
+# 1. Auto-cancel redundant workflow runs on new commits
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validate:
     name: Typecheck, Lint, Test & Build
@@ -14,6 +19,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -43,3 +50,30 @@ jobs:
           GOOGLE_DRIVE_CLIENT_SECRET: "dummy"
           GOOGLE_DRIVE_REDIRECT_URI: "http://localhost:3000/api/google-drive/callback"
           GOOGLE_DRIVE_ENCRYPTION_KEY: "12345678901234567890123456789012"
+
+      # 5. E2E Smoke test via Next.js server & Node fetch assertions
+      - name: E2E Smoke Test
+        run: |
+          npm start &
+          npx wait-on http://localhost:3000/api/health --timeout 60000
+          node tests/smoke.e2e.mjs
+        env:
+          PORT: 3000
+
+      # 4. Auto-release tag generator on package.json version bump (main branch only)
+      - name: Auto-tag Release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          TAG="v$VERSION"
+          if git rev-parse "$TAG" >/dev/null 2>&1; then
+            echo "Tag $TAG already exists, skipping."
+          else
+            echo "Creating and pushing tag $TAG"
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git tag -a "$TAG" -m "Release $TAG"
+            git push origin "$TAG"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
