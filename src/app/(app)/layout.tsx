@@ -446,6 +446,8 @@ export default function DashboardLayout({
   const activeWs = workspaces.find((w) => w.id === activeWsId) ?? null;
   const activeWsName = activeWs?.name ?? "Personal Workspace";
   const activeMembers = members[activeWs?.id ?? ""] ?? [];
+  const defaultProject = projects.find((project) => project.is_default) ?? null;
+  const defaultFolder = folders[0] ?? null;
 
   const initials = (currentUser.name || currentUser.email || "U")
     .trim()
@@ -853,6 +855,28 @@ export default function DashboardLayout({
                 <div className="px-3 py-1 mb-1">
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">{t("layout.workspaces")}</p>
                 </div>
+
+                <div className="mx-2 mb-2 rounded-xl border border-border bg-white dark:bg-background p-3 space-y-2">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">Active workspace</p>
+                      <p className="text-sm font-semibold text-foreground truncate">{activeWsName}</p>
+                      <p className="text-[11px] text-muted truncate">{activeWs?.role === 'owner' ? t('layout.owner') : t('layout.member')}</p>
+                    </div>
+                    <span className="w-8 h-8 rounded-lg bg-indigo-600 text-white text-xs font-bold flex items-center justify-center shrink-0">{activeWsName.charAt(0)}</span>
+                  </div>
+                  <div className="grid grid-cols-1 gap-2 pt-1">
+                    <div className="rounded-lg border border-border bg-subtle px-2.5 py-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">Default Project</p>
+                      <p className="text-xs font-medium text-foreground mt-0.5 truncate">{defaultProject?.name || 'General'}</p>
+                    </div>
+                    <div className="rounded-lg border border-border bg-subtle px-2.5 py-2">
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">Save to Folder</p>
+                      <p className="text-xs font-medium text-foreground mt-0.5 truncate">{defaultFolder || 'No folder'}</p>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="space-y-1">
                   {workspaces.map((ws) => (
                     <button
@@ -904,6 +928,28 @@ export default function DashboardLayout({
                       Manage
                     </Link>
                   </div>
+                  {activeWs?.role === 'owner' && (
+                    <div className="grid grid-cols-2 gap-2 pt-1">
+                      <button
+                        onClick={() => {
+                          setWsOpen(false);
+                          setCreateProjectModalOpen(true);
+                        }}
+                        className="rounded-lg border border-border px-2 py-1.5 text-xs font-semibold text-foreground hover:bg-subtle transition-colors"
+                      >
+                        Change Project
+                      </button>
+                      <button
+                        onClick={() => {
+                          setWsOpen(false);
+                          setCreateFolderModalOpen(true);
+                        }}
+                        className="rounded-lg border border-border px-2 py-1.5 text-xs font-semibold text-foreground hover:bg-subtle transition-colors"
+                      >
+                        Change Folder
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="border-t border-border pt-1">
