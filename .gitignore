@@ -40,3 +40,8 @@ next-env.d.ts
 
 # Supabase CLI generated state
 supabase/.temp/
+
+# Local agent / test artifacts
+.zcode/
+test-results/
+playwright-report/
