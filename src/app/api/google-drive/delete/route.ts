@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { authenticatedUser, driveAccessToken, trashDriveFile, untrashDriveFile } from "@/lib/google-drive";
+import { authenticatedUser, driveAccessToken, getDriveConnectionHealth, trashDriveFile, untrashDriveFile } from "@/lib/google-drive";
 import { compensatedDeleteError, decideDeleteReconciliation, isUuid, parseDriveFileId, resultFromAudit, type DeleteAuditResult } from "@/lib/google-drive-values";
 import { createServiceClient } from "@/lib/supabase-server";
 export const runtime = "nodejs";
 
 type Mode = "drive_trash" | "app_only";
 type Capture = { id: string; workspace_id: string | null; drive_file_id: string | null; drive_url: string | null };
-type Result = { captureId: string; ok: boolean; outcome: string; error?: string };
+type Result = { captureId: string; ok: boolean; outcome: string; driveOutcome?: "trashed" | "kept" | "unknown"; error?: string };
 
 export async function POST(request: Request) {
   const user = await authenticatedUser(request);
@@ -31,7 +31,15 @@ export async function POST(request: Request) {
   let accessToken: string | null = null;
   if (mode === "drive_trash" && pendingIds.length) {
     try { accessToken = await driveAccessToken(user.id); }
-    catch { return NextResponse.json({ error: "Google Drive is not connected" }, { status: 409 }); }
+    catch {
+      const drive = await getDriveConnectionHealth(user.id).catch(() => ({ status: "not_connected" as const }));
+      const reconnectRequired = drive.status === "reconnect_required";
+      return NextResponse.json({
+        error: reconnectRequired ? "Google Drive needs to be reconnected" : "Google Drive is not connected",
+        code: reconnectRequired ? "DRIVE_RECONNECT_REQUIRED" : "DRIVE_NOT_CONNECTED",
+        driveStatus: drive.status,
+      }, { status: 409 });
+    }
   }
 
   const results: Result[] = [];
@@ -62,12 +70,13 @@ export async function POST(request: Request) {
       }).single();
       if (error || !data) throw error ?? new Error("Delete did not return a result");
       const result = resultFromAudit(data as DeleteAuditResult);
-      if (!result.ok && trashed) {
-        const deleteError = new Error(result.error ?? "Database deletion failed");
-        try { await untrashDriveFile(accessToken!, fileId!); result.error = compensatedDeleteError(deleteError); }
-        catch (compensationError) { result.error = compensatedDeleteError(deleteError, compensationError); }
+      const enriched: Result = { ...result, driveOutcome: mode === "drive_trash" ? (trashed ? "trashed" : "kept") : "kept" };
+      if (!enriched.ok && trashed) {
+        const deleteError = new Error(enriched.error ?? "Database deletion failed");
+        try { await untrashDriveFile(accessToken!, fileId!); enriched.error = compensatedDeleteError(deleteError); enriched.driveOutcome = "kept"; }
+        catch (compensationError) { enriched.error = compensatedDeleteError(deleteError, compensationError); enriched.driveOutcome = "unknown"; }
       }
-      results.push(result);
+      results.push(enriched);
     } catch (caught) {
       let message = caught instanceof Error ? caught.message : "Delete failed";
       if (trashed) {
@@ -75,13 +84,13 @@ export async function POST(request: Request) {
         const decision = decideDeleteReconciliation(audit as DeleteAuditResult | null, Boolean(lookupError));
         if (decision.action === "replay") { results.push(decision.result); continue; }
         if (decision.action === "reconcile") {
-          results.push({ captureId, ok: false, outcome: "reconciliation_needed", error: "Deletion status could not be confirmed; the Google Drive file remains trashed and reconciliation is required" });
+          results.push({ captureId, ok: false, outcome: "reconciliation_needed", driveOutcome: "unknown", error: "Deletion status could not be confirmed; the Google Drive file remains trashed and reconciliation is required" });
           continue;
         }
         try { await untrashDriveFile(accessToken!, fileId!); message = compensatedDeleteError(caught); }
         catch (compensationError) { message = compensatedDeleteError(caught, compensationError); }
       }
-      results.push({ captureId, ok: false, outcome: "failed", error: message.slice(0, 500) });
+      results.push({ captureId, ok: false, outcome: "failed", driveOutcome: trashed ? "unknown" : (mode === "drive_trash" ? "kept" : "kept"), error: message.slice(0, 500) });
     }
   }
 

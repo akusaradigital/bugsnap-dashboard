@@ -83,7 +83,7 @@ function SingleViewContent() {
   const [deleteMode, setDeleteMode] = useState<"drive_trash" | "app_only">("drive_trash");
   const [deletingCapture, setDeletingCapture] = useState(false);
   const [deleteCaptureError, setDeleteCaptureError] = useState<string | null>(null);
-  const [driveNotConnected, setDriveNotConnected] = useState(false);
+  const [driveIssue, setDriveIssue] = useState<"not_connected" | "reconnect_required" | null>(null);
   const [deleteOperationId, setDeleteOperationId] = useState<string | null>(null);
 
   // Edit / Delete for internal workspace members
@@ -182,7 +182,12 @@ function SingleViewContent() {
       .rpc("get_public_capture", { p_id: id, p_password: null })
       .then(async ({ data, error }) => {
         if (cancelled) return;
-        if (error || !data || data.length === 0) { setStatus("notfound"); return; }
+        if (error) {
+          showToast(error.message || "Failed to load capture", "error");
+          setStatus("notfound");
+          return;
+        }
+        if (!data || data.length === 0) { setStatus("notfound"); return; }
 
         const row = data[0] as Capture & { status: string };
         
@@ -227,7 +232,7 @@ function SingleViewContent() {
           const { data: directData } = await supabase
             .from("captures")
             .select(
-              "id, title, type, drive_url, description, dev_logs, os, browser, site_url, window_size, created_at, workspace_id, tag, status, allowed_domains, allowed_ips, burn_after_read, expires_at, project_id, source, project_name"
+              "id, title, type, drive_url, description, dev_logs, os, browser, site_url, window_size, created_at, workspace_id, tag, status, allowed_domains, allowed_ips, burn_after_read, expires_at, project_id, source"
             )
             .eq("id", id)
             .single();
@@ -275,7 +280,7 @@ function SingleViewContent() {
       cancelled = true;
       authListener.subscription.unsubscribe();
     };
-  }, [id]);
+  }, [id, showToast]);
 
   // 2. View Tracking Effect
   useEffect(() => {
@@ -425,11 +430,21 @@ function SingleViewContent() {
     }
   }
 
+  async function startDriveConnect() {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) throw new Error(t("v.signInToDelete"));
+    const response = await fetch("/api/google-drive/connect", { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+    const result = await response.json().catch(() => ({})) as { url?: string; error?: string };
+    if (!response.ok || !result.url) throw new Error(result.error || "Could not start Google Drive connection");
+    window.location.assign(result.url);
+  }
+
   function handleDeleteCapture() {
     if (!capture || !isWorkspaceOwner) return;
     setDeleteMode("drive_trash");
     setDeleteCaptureError(null);
-    setDriveNotConnected(false);
+    setDriveIssue(null);
     setDeleteOperationId(crypto.randomUUID());
     setDeleteCaptureModalOpen(true);
   }
@@ -438,7 +453,7 @@ function SingleViewContent() {
     if (!capture || !isWorkspaceOwner || deletingCapture || !deleteOperationId) return;
     setDeletingCapture(true);
     setDeleteCaptureError(null);
-    setDriveNotConnected(false);
+    setDriveIssue(null);
     try {
       const { data, error } = await supabase.auth.getSession();
       const token = data.session?.access_token;
@@ -450,8 +465,9 @@ function SingleViewContent() {
         body: JSON.stringify({ captureIds: [capture.id], mode: deleteMode, operationId: deleteOperationId }),
       });
       const result = await response.json().catch(() => ({})) as {
-        results?: Array<{ captureId: string; ok: boolean; error?: string }>;
+        results?: Array<{ captureId: string; ok: boolean; outcome?: string; driveOutcome?: "trashed" | "kept" | "unknown"; error?: string }>;
         error?: string;
+        code?: string;
       };
       const captureResult = result.results?.find((item) => item.captureId === capture.id);
       if (captureResult?.ok) {
@@ -461,9 +477,19 @@ function SingleViewContent() {
         return;
       }
 
-      const isDriveNotConnected = response.status === 409 || /drive.*not connected/i.test(result.error || "");
-      if (isDriveNotConnected) setDriveNotConnected(true);
-      throw new Error(captureResult?.error || result.error || t("v.deleteFailed"));
+      const issue = result.code === "DRIVE_RECONNECT_REQUIRED"
+        ? "reconnect_required"
+        : response.status === 409 || /drive.*not connected/i.test(result.error || "")
+        ? "not_connected"
+        : null;
+      if (issue) {
+        setDriveIssue(issue);
+        throw new Error(issue === "reconnect_required" ? t("cap.driveReconnectRequired") : t("v.driveNotConnected"));
+      }
+      const detail = captureResult?.error
+        ? `${captureResult.error}${captureResult.driveOutcome ? ` (${captureResult.driveOutcome === "trashed" ? "Drive file trashed" : captureResult.driveOutcome === "kept" ? "Drive file kept" : "Drive state unknown"})` : ""}`
+        : null;
+      throw new Error(detail || result.error || t("v.deleteFailed"));
     } catch (err) {
       console.warn("Failed to delete capture:", err);
       setDeleteCaptureError(err instanceof Error ? err.message : t("v.deleteFailed"));
@@ -754,12 +780,7 @@ function SingleViewContent() {
             {/* Title + Comments */}
             <div className="rounded-xl p-4 bg-white dark:bg-background space-y-4">
               <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-2 text-[10px] text-muted flex-wrap mb-2">
-                  <span className="px-2 py-0.5 rounded-full bg-subtle border border-border">{capture.source || "chrome_extension"}</span>
-                  {capture.project_name && <span className="px-2 py-0.5 rounded-full bg-subtle border border-border">Project: {capture.project_name}</span>}
-                  {!capture.project_name && capture.project_id && <span className="px-2 py-0.5 rounded-full bg-subtle border border-border">Project ID: {capture.project_id}</span>}
-                </div>
-                <div>
+                <div className="flex-1 min-w-0">
                   <h2 className="text-base font-semibold text-foreground">{capture.title}</h2>
                   {capture.description && <p className="text-xs text-muted mt-0.5">{capture.description}</p>}
                   {capture.expires_at && (
@@ -769,19 +790,17 @@ function SingleViewContent() {
                   )}
                   {capture.drive_url && (
                     <div className="flex items-center gap-3 mt-2 flex-wrap">
-                      {capture.drive_url && (
-                        <a
-                          href={capture.drive_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1.5 text-[11px] text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
-                        >
-                          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6v6M10 14L20 4" />
-                          </svg>
-                          {t("v.driveLink")}
-                        </a>
-                      )}
+                      <a
+                        href={capture.drive_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 text-[11px] text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
+                      >
+                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6v6M10 14L20 4" />
+                        </svg>
+                        {t("v.driveLink")}
+                      </a>
                     </div>
                   )}
                 </div>
@@ -985,11 +1004,11 @@ function SingleViewContent() {
                 <span><span className="block text-xs font-semibold text-foreground">{t("v.moveToTrash")}</span><span className="block text-[11px] text-muted mt-0.5">{t("v.trashHint")}</span></span>
               </label>
               <label className="flex items-start gap-2 rounded-lg border border-border p-3 cursor-pointer">
-                <input type="radio" name="delete-mode" value="app_only" checked={deleteMode === "app_only"} onChange={() => { setDeleteMode("app_only"); setDeleteOperationId(crypto.randomUUID()); setDriveNotConnected(false); setDeleteCaptureError(null); }} className="mt-0.5" />
+                <input type="radio" name="delete-mode" value="app_only" checked={deleteMode === "app_only"} onChange={() => { setDeleteMode("app_only"); setDeleteOperationId(crypto.randomUUID()); setDriveIssue(null); setDeleteCaptureError(null); }} className="mt-0.5" />
                 <span><span className="block text-xs font-semibold text-foreground">{t("v.BugSnapOnly")}</span><span className="block text-[11px] text-muted mt-0.5">{t("v.BugSnapOnlyHint")}</span></span>
               </label>
             </fieldset>
-            {driveNotConnected && <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2 mb-3">{t("v.driveNotConnected")}</p>}
+            {driveIssue && <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2 mb-3 flex items-center justify-between gap-3"><span>{driveIssue === "reconnect_required" ? t("cap.driveReconnectRequired") : t("v.driveNotConnected")}</span><button type="button" onClick={() => void startDriveConnect()} className="font-semibold text-indigo-600 hover:underline">{driveIssue === "reconnect_required" ? t("cap.reconnectDrive") : t("cap.connectDrive")}</button></div>}
             {deleteCaptureError && <p role="alert" className="text-xs text-red-600 mb-3">{deleteCaptureError}</p>}
             
             <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">

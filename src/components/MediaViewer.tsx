@@ -10,7 +10,10 @@ interface MediaViewerProps {
 }
 
 function driveFileId(url: string): string | null {
-  const match = url.match(/[?&]id=([^&]+)/) || url.match(/\/d\/([^/?#]+)/);
+  const match =
+    url.match(/[?&]id=([A-Za-z0-9_-]{10,200})/) ||
+    url.match(/\/d\/([A-Za-z0-9_-]{10,200})/) ||
+    url.match(/\/file\/d\/([A-Za-z0-9_-]{10,200})/);
   if (!match) return null;
   try {
     return decodeURIComponent(match[1]);
@@ -32,6 +35,7 @@ export default function MediaViewer({ type, driveUrl, title }: MediaViewerProps)
   const [videoFailed, setVideoFailed] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
   const [zoom, setZoom] = useState(MIN_ZOOM);
   const [pan, setPan] = useState({ x: 0, y: 0 });
   const dragRef = useRef<{ startX: number; startY: number; panX: number; panY: number; dragging: boolean }>({
@@ -44,11 +48,21 @@ export default function MediaViewer({ type, driveUrl, title }: MediaViewerProps)
   const directUrl = fileId ? `https://drive.google.com/uc?export=download&id=${fileId}` : null;
   const previewUrl = fileId ? `https://drive.google.com/file/d/${fileId}/preview` : null;
 
+  // Reset and verify image loading
   useEffect(() => {
     setVideoFailed(false);
     setImageFailed(false);
+    setImageLoaded(false);
     setLightboxOpen(false);
-  }, [driveUrl, type]);
+
+    if (type === "screenshot" && imageUrl) {
+      const probe = new Image();
+      probe.referrerPolicy = "no-referrer";
+      probe.src = imageUrl;
+      probe.onload = () => setImageLoaded(true);
+      probe.onerror = () => setImageFailed(true);
+    }
+  }, [driveUrl, type, imageUrl]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -154,7 +168,7 @@ export default function MediaViewer({ type, driveUrl, title }: MediaViewerProps)
         {unavailable ? (
           <div className="px-6 text-center text-sm text-white/70" role="status">{t("mv.unavailable")}</div>
         ) : type === "video" ? (
-          videoFailed && previewUrl ? (
+          previewUrl ? (
             <iframe
               src={previewUrl}
               className="h-full w-full border-0"
@@ -162,29 +176,51 @@ export default function MediaViewer({ type, driveUrl, title }: MediaViewerProps)
               allowFullScreen
               title={`${title} video preview`}
             />
-          ) : (
+          ) : !videoFailed && directUrl ? (
             <video
               controls
               preload="metadata"
-              src={directUrl || undefined}
+              src={directUrl}
               onError={() => setVideoFailed(true)}
               className="h-full w-full object-contain"
               aria-label={title}
             >
               {t("mv.noVideoSupport")}
             </video>
+          ) : (
+            <div className="px-6 text-center text-sm text-white/70" role="status">{t("mv.unavailable")}</div>
           )
         ) : imageUrl && !imageFailed ? (
           <button
             ref={lightboxTriggerRef}
             type="button"
             onClick={() => setLightboxOpen(true)}
-            className="flex h-full w-full cursor-zoom-in items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-white"
+            className="flex h-full w-full cursor-zoom-in items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-white relative"
             aria-label={t("mv.openViewer", { name: title })}
           >
+            {!imageLoaded && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <div className="w-6 h-6 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
+              </div>
+            )}
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={imageUrl} alt={title} referrerPolicy="no-referrer" onError={() => setImageFailed(true)} className="h-full w-full object-contain" />
+            <img
+              src={imageUrl}
+              alt={title}
+              referrerPolicy="no-referrer"
+              onLoad={() => setImageLoaded(true)}
+              onError={() => setImageFailed(true)}
+              className={`h-full w-full object-contain transition-opacity duration-150 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
+            />
           </button>
+        ) : previewUrl ? (
+          <iframe
+            src={previewUrl}
+            className="h-full w-full border-0"
+            allow="autoplay; fullscreen; encrypted-media"
+            allowFullScreen
+            title={`${title} media preview`}
+          />
         ) : (
           <div className="px-6 text-center text-sm text-white/70" role="status">{t("mv.unavailable")}</div>
         )}

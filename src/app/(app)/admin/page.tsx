@@ -53,6 +53,13 @@ interface IntegrityReport {
   missing_default_projects_count: number;
 }
 
+interface DriveOrphanPreview {
+  id: string;
+  name: string;
+  webViewLink: string | null;
+  createdTime: string | null;
+}
+
 export default function AdminDashboardPage() {
   const { t } = useT();
   const [loading, setLoading] = useState(true);
@@ -71,6 +78,12 @@ export default function AdminDashboardPage() {
   const [broadcastBody, setBroadcastBody] = useState("");
   const [sendingBroadcast, setSendingBroadcast] = useState(false);
   const [broadcastResult, setBroadcastResult] = useState<string | null>(null);
+  const [orphanLoading, setOrphanLoading] = useState(false);
+  const [orphanCleaning, setOrphanCleaning] = useState(false);
+  const [orphanResult, setOrphanResult] = useState<string | null>(null);
+  const [orphanSummary, setOrphanSummary] = useState<{ totalDriveFiles: number; linkedCaptureFiles: number; orphanCount: number } | null>(null);
+  const [orphanFiles, setOrphanFiles] = useState<DriveOrphanPreview[]>([]);
+  const [dbHealth, setDbHealth] = useState<{ status: string; latencyMs: number } | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -97,6 +110,13 @@ export default function AdminDashboardPage() {
           setPromoMessage(json.promo?.message || "");
           setPromoEnabled(!!json.promo?.enabled);
         }
+
+        fetch("/api/health")
+          .then((r) => r.json())
+          .then((h) => {
+            if (!cancelled && h.status) setDbHealth({ status: h.status, latencyMs: h.latencyMs });
+          })
+          .catch(() => {});
       } catch (err: unknown) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : t("common.error"));
@@ -194,6 +214,53 @@ export default function AdminDashboardPage() {
       setBroadcastResult(err instanceof Error ? err.message : t("admin.broadcastFailed"));
     } finally {
       setSendingBroadcast(false);
+    }
+  }
+
+  async function scanDriveOrphans() {
+    setOrphanLoading(true);
+    setOrphanResult(null);
+    try {
+      const { data: authData } = await supabase.auth.getSession();
+      const token = authData.session?.access_token;
+      if (!token) throw new Error(t("admin.notLoggedIn"));
+      const res = await fetch("/api/admin/drive-orphans", { headers: { Authorization: `Bearer ${token}` } });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Drive scan failed");
+      setOrphanSummary({ totalDriveFiles: json.totalDriveFiles, linkedCaptureFiles: json.linkedCaptureFiles, orphanCount: json.orphanCount });
+      setOrphanFiles((json.orphans || []) as DriveOrphanPreview[]);
+      setOrphanResult(`Found ${json.orphanCount} orphaned Drive files.`);
+    } catch (err: unknown) {
+      setOrphanResult(err instanceof Error ? err.message : "Drive scan failed");
+    } finally {
+      setOrphanLoading(false);
+    }
+  }
+
+  async function trashDriveOrphans() {
+    if (!orphanFiles.length) return;
+    const confirmed = window.confirm(`Trash ${orphanFiles.length} orphaned Drive files?`);
+    if (!confirmed) return;
+    setOrphanCleaning(true);
+    setOrphanResult(null);
+    try {
+      const { data: authData } = await supabase.auth.getSession();
+      const token = authData.session?.access_token;
+      if (!token) throw new Error(t("admin.notLoggedIn"));
+      const res = await fetch("/api/admin/drive-orphans", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ fileIds: orphanFiles.map((file) => file.id) }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Drive cleanup failed");
+      setOrphanResult(`Trashed ${json.trashed} orphaned Drive files. ${json.failed} failed.`);
+      setOrphanFiles((prev) => prev.filter((file) => !(json.results as Array<{ id: string; ok: boolean }>).some((item) => item.ok && item.id === file.id)));
+      setOrphanSummary((prev) => prev ? { ...prev, orphanCount: Math.max(0, prev.orphanCount - Number(json.trashed || 0)) } : prev);
+    } catch (err: unknown) {
+      setOrphanResult(err instanceof Error ? err.message : "Drive cleanup failed");
+    } finally {
+      setOrphanCleaning(false);
     }
   }
 
@@ -369,6 +436,43 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
+      <div className="bg-subtle border border-border rounded-xl p-5 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-bold text-foreground">Drive orphan cleanup</h2>
+            <p className="text-[11px] text-muted mt-0.5">Preview Drive files that are no longer linked to any BugSnap capture, then move them to Drive trash manually.</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button onClick={scanDriveOrphans} disabled={orphanLoading || orphanCleaning} className="px-4 py-1.5 text-xs font-semibold bg-subtle border border-border text-foreground rounded-lg hover:bg-subtle disabled:opacity-50 transition-colors">{orphanLoading ? "Scanning..." : "Scan Drive"}</button>
+            <button onClick={trashDriveOrphans} disabled={orphanCleaning || orphanFiles.length === 0} className="px-4 py-1.5 text-xs font-semibold bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors">{orphanCleaning ? "Trashing..." : "Trash orphans"}</button>
+          </div>
+        </div>
+        {orphanSummary && (
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="rounded-lg border border-border bg-white dark:bg-background p-3"><p className="text-[10px] font-semibold uppercase tracking-wider text-muted">Drive files</p><p className="text-lg font-bold text-foreground mt-1">{orphanSummary.totalDriveFiles}</p></div>
+            <div className="rounded-lg border border-border bg-white dark:bg-background p-3"><p className="text-[10px] font-semibold uppercase tracking-wider text-muted">Linked captures</p><p className="text-lg font-bold text-foreground mt-1">{orphanSummary.linkedCaptureFiles}</p></div>
+            <div className="rounded-lg border border-border bg-white dark:bg-background p-3"><p className="text-[10px] font-semibold uppercase tracking-wider text-muted">Orphans</p><p className="text-lg font-bold text-foreground mt-1">{orphanSummary.orphanCount}</p></div>
+          </div>
+        )}
+        {orphanResult && <div className="text-xs text-muted">{orphanResult}</div>}
+        <div className="rounded-xl border border-border overflow-hidden">
+          <div className="max-h-72 overflow-y-auto divide-y divide-border/60 bg-white dark:bg-background">
+            {orphanFiles.length === 0 ? (
+              <div className="px-4 py-8 text-sm text-muted text-center">No orphan files loaded.</div>
+            ) : orphanFiles.map((file) => (
+              <div key={file.id} className="px-4 py-3 flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
+                  <p className="text-[11px] text-muted break-all">{file.id}</p>
+                  {file.createdTime && <p className="text-[11px] text-muted mt-0.5">{new Date(file.createdTime).toLocaleString()}</p>}
+                </div>
+                {file.webViewLink && <a href={file.webViewLink} target="_blank" rel="noopener noreferrer" className="shrink-0 text-xs font-semibold text-indigo-600 hover:underline">Open</a>}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
       {actionError && (
         <div className="bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/40 rounded-xl p-3 text-sm">
           {actionError}
@@ -458,6 +562,16 @@ export default function AdminDashboardPage() {
             </tbody>
           </table>
         </div>
+      </div>
+
+      {/* FOOTER DB HEALTH */}
+      <div className="flex items-center justify-between text-xs text-muted pt-2 border-t border-border/60">
+        <div className="flex items-center gap-2">
+          <span className={`w-2 h-2 rounded-full ${dbHealth?.status === "healthy" ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`} />
+          <span>Live Database: <strong className="text-foreground">{dbHealth?.status === "healthy" ? "Connected" : "Checking..."}</strong></span>
+          {dbHealth && <span className="text-[11px] font-mono text-muted">({dbHealth.latencyMs}ms)</span>}
+        </div>
+        <span>BugSnap Admin Engine v0.3.2</span>
       </div>
     </main>
   );

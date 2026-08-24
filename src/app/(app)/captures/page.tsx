@@ -420,7 +420,7 @@ function CapturesContent() {
   const [deleteRequest, setDeleteRequest] = useState<{ ids: string[]; title?: string; operationId: string } | null>(null);
   const [deleteMode, setDeleteMode] = useState<"drive_trash" | "app_only">("drive_trash");
   const [deleting, setDeleting] = useState(false);
-  const [driveNotConnected, setDriveNotConnected] = useState(false);
+  const [driveIssue, setDriveIssue] = useState<"not_connected" | "reconnect_required" | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -598,10 +598,20 @@ function CapturesContent() {
     }
   };
 
+  async function startDriveConnect() {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) throw new Error(t("cap.sessionExpired"));
+    const res = await fetch("/api/google-drive/connect", { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+    const result = await res.json().catch(() => ({})) as { url?: string; error?: string };
+    if (!res.ok || !result.url) throw new Error(result.error || "Could not start Google Drive connection");
+    window.location.assign(result.url);
+  }
+
   function openDeleteConfirmation(ids: string[], title?: string) {
     if (ids.length === 0 || deleting) return;
     setDeleteMode("drive_trash");
-    setDriveNotConnected(false);
+    setDriveIssue(null);
     setDeleteError(null);
     setDeleteRequest({ ids, title, operationId: crypto.randomUUID() });
     setOpenMenuId(null);
@@ -610,7 +620,7 @@ function CapturesContent() {
   async function submitDelete() {
     if (!deleteRequest || deleting) return;
     setDeleting(true);
-    setDriveNotConnected(false);
+    setDriveIssue(null);
     setDeleteError(null);
 
     try {
@@ -631,27 +641,36 @@ function CapturesContent() {
         deleted_ids?: string[];
         failedIds?: string[];
         failed_ids?: string[];
-        results?: Array<{ captureId: string; ok: boolean; error?: string }>;
+        results?: Array<{ captureId: string; ok: boolean; outcome?: string; driveOutcome?: "trashed" | "kept" | "unknown"; error?: string }>;
         error?: string;
         message?: string;
         code?: string;
+        driveStatus?: "connected" | "reconnect_required" | "not_connected";
       };
       const deletedIds = result.deletedIds ?? result.deleted_ids ?? result.results?.filter((item) => item.ok).map((item) => item.captureId) ?? [];
       const failedIds = result.failedIds ?? result.failed_ids ?? result.results?.filter((item) => !item.ok).map((item) => item.captureId) ?? [];
-      const disconnected = response.status === 409 || result.code === "DRIVE_NOT_CONNECTED" || /drive.*not connected/i.test(result.error ?? result.message ?? "");
+      const driveIssue = result.code === "DRIVE_RECONNECT_REQUIRED"
+        ? "reconnect_required"
+        : response.status === 409 || result.code === "DRIVE_NOT_CONNECTED" || /drive.*not connected/i.test(result.error ?? result.message ?? "")
+        ? "not_connected"
+        : null;
 
       if (deletedIds.length > 0) {
         const removed = new Set(deletedIds);
         setCaptures((prev) => prev.filter((capture) => !removed.has(capture.id)));
         setSelectedIds((prev) => new Set(Array.from(prev).filter((id) => !removed.has(id))));
       }
-      if (disconnected) {
-        setDriveNotConnected(true);
-        setDeleteError(t("cap.driveNotConnected"));
+      if (driveIssue) {
+        setDriveIssue(driveIssue);
+        setDeleteError(driveIssue === "reconnect_required" ? t("cap.driveReconnectRequired") : t("cap.driveNotConnected"));
         return;
       }
       if (!response.ok || failedIds.length > 0) {
-        setDeleteError(result.error ?? result.message ?? t("cap.deleteFailed"));
+        const firstFailure = result.results?.find((item) => !item.ok);
+        const details = firstFailure?.error
+          ? `${firstFailure.error}${firstFailure.driveOutcome ? ` (${firstFailure.driveOutcome === "trashed" ? "Drive file trashed" : firstFailure.driveOutcome === "kept" ? "Drive file kept" : "Drive state unknown"})` : ""}`
+          : null;
+        setDeleteError(details ?? result.error ?? result.message ?? t("cap.deleteFailed"));
         if (deletedIds.length > 0) setDeleteRequest({
           ids: failedIds.length ? failedIds : deleteRequest.ids.filter((id) => !deletedIds.includes(id)),
           operationId: deleteRequest.operationId,
@@ -1424,17 +1443,17 @@ function CapturesContent() {
               </label>
               <label className={`block rounded-lg border p-3 cursor-pointer ${deleteMode === "app_only" ? "border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/30" : "border-border"}`}>
                 <span className="flex gap-3">
-                  <input type="radio" name="delete-mode" value="app_only" checked={deleteMode === "app_only"} onChange={() => { setDeleteMode("app_only"); setDeleteRequest((request) => request ? { ...request, operationId: crypto.randomUUID() } : request); setDriveNotConnected(false); setDeleteError(null); }} disabled={deleting} className="mt-1" />
+                  <input type="radio" name="delete-mode" value="app_only" checked={deleteMode === "app_only"} onChange={() => { setDeleteMode("app_only"); setDeleteRequest((request) => request ? { ...request, operationId: crypto.randomUUID() } : request); setDriveIssue(null); setDeleteError(null); }} disabled={deleting} className="mt-1" />
                   <span><span className="block text-sm font-semibold text-foreground">{t("cap.BugSnapOnly")}</span><span className="block text-xs text-muted mt-0.5">{t("cap.BugSnapOnlyHint")}</span></span>
                 </span>
               </label>
             </div>
 
             {deleteError && <div className="mt-4 rounded-lg border border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-950/20 px-3 py-2 text-xs text-red-700 dark:text-red-400">{deleteError}</div>}
-            {driveNotConnected && (
+            {driveIssue && (
               <div className="mt-3 flex items-center gap-3">
-                <Link href="/settings" className="text-sm font-semibold text-indigo-600 hover:underline">{t("cap.connectDrive")}</Link>
-                <button onClick={() => { setDeleteMode("app_only"); setDriveNotConnected(false); setDeleteError(null); }} className="text-sm font-medium text-foreground hover:underline">{t("cap.useBugSnapOnly")}</button>
+                <button onClick={() => void startDriveConnect()} className="text-sm font-semibold text-indigo-600 hover:underline">{driveIssue === "reconnect_required" ? t("cap.reconnectDrive") : t("cap.connectDrive")}</button>
+                <button onClick={() => { setDeleteMode("app_only"); setDriveIssue(null); setDeleteError(null); }} className="text-sm font-medium text-foreground hover:underline">{t("cap.useBugSnapOnly")}</button>
               </div>
             )}
 

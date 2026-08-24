@@ -238,9 +238,17 @@ export default function Comments({
     load();
     timer = setInterval(load, 30_000);
 
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        load();
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
     return () => {
       cancelled = true;
       if (timer) clearInterval(timer);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, [captureId, t]);
 

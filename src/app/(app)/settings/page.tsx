@@ -168,13 +168,19 @@ function SettingsContent() {
   const activeWsId = searchParams.get("ws");
 
   // Drive tab
-  const [driveConnected, setDriveConnected] = useState(false);
+  const [driveStatus, setDriveStatus] = useState<"connected" | "reconnect_required" | "not_connected">("not_connected");
   const [driveEmail, setDriveEmail] = useState<string | null>(null);
   const [driveLoading, setDriveLoading] = useState(true);
   const [driveActionLoading, setDriveActionLoading] = useState(false);
   const [driveError, setDriveError] = useState<string | null>(null);
   const [driveSuccess, setDriveSuccess] = useState<string | null>(null);
   const [connectDriveModalOpen, setConnectDriveModalOpen] = useState(false);
+  const [integrationsHealth, setIntegrationsHealth] = useState<{
+    drive: { state: "healthy" | "action_required" | "not_configured"; status: "connected" | "reconnect_required" | "not_connected"; email: string | null; message: string };
+    email: { state: "healthy" | "action_required" | "not_configured"; provider: string | null; message: string };
+    ai: { state: "healthy" | "action_required" | "not_configured"; provider: string | null; message: string };
+  } | null>(null);
+  const [integrationsLoading, setIntegrationsLoading] = useState(true);
 
   // Webhook
   const [webhookUrl, setWebhookUrl] = useState("");
@@ -253,9 +259,26 @@ function SettingsContent() {
   useEffect(() => {
     let c = false;
     driveRequest("/api/google-drive/status")
-      .then(r => { if (!c) { setDriveConnected(Boolean(r.connected)); setDriveEmail(r.email || null); } })
+      .then(r => {
+        if (!c) {
+          setDriveStatus((r.status as "connected" | "reconnect_required" | "not_connected") || (r.connected ? "connected" : "not_connected"));
+          setDriveEmail(r.email || null);
+        }
+      })
       .catch(() => {})
       .finally(() => { if (!c) setDriveLoading(false); });
+    return () => { c = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    let c = false;
+    driveRequest("/api/integrations/health")
+      .then((r) => {
+        if (!c) setIntegrationsHealth(r as typeof integrationsHealth);
+      })
+      .catch(() => {})
+      .finally(() => { if (!c) setIntegrationsLoading(false); });
     return () => { c = true; };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -275,7 +298,8 @@ function SettingsContent() {
     setDriveActionLoading(true); setDriveError(null);
     try {
       await driveRequest("/api/google-drive/disconnect", { method: "DELETE" });
-      setDriveConnected(false); setDriveEmail(null);
+      setDriveStatus("not_connected"); setDriveEmail(null);
+      setIntegrationsHealth((prev) => prev ? { ...prev, drive: { state: "not_configured", status: "not_connected", email: null, message: "Google Drive is not connected" } } : prev);
     } catch (e) { setDriveError(e instanceof Error ? e.message : t("settings.disconnectError")); }
     finally { setDriveActionLoading(false); }
   }
@@ -465,15 +489,15 @@ function SettingsContent() {
                 <div>
                   <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
                     Google Drive
-                    {!driveLoading && <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${driveConnected ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/40" : "text-muted bg-subtle border-border"}`}>{driveConnected ? "Connected" : "Not connected"}</span>}
+                    {!driveLoading && <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${driveStatus === "connected" ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/40" : driveStatus === "reconnect_required" ? "text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/40" : "text-muted bg-subtle border-border"}`}>{driveStatus === "connected" ? t("settings.connected") : driveStatus === "reconnect_required" ? t("settings.reconnectRequired") : t("settings.notConnected")}</span>}
                   </h2>
-                  <p className="text-xs text-muted mt-0.5">{driveLoading ? "Checking..." : driveConnected ? `Dashboard actions using ${driveEmail || "connected account"}` : "Connect for server-side Drive actions."}</p>
+                  <p className="text-xs text-muted mt-0.5">{driveLoading ? "Checking..." : driveStatus === "connected" ? `Dashboard actions using ${driveEmail || "connected account"}` : driveStatus === "reconnect_required" ? "Reconnect Drive for server-side actions." : "Connect for server-side Drive actions."}</p>
                   <p className="text-[11px] text-muted">Extension connection is managed separately.</p>
                 </div>
-                {driveConnected ? (
+                {driveStatus === "connected" ? (
                   <button type="button" onClick={disconnectDrive} disabled={driveActionLoading} className="text-xs font-semibold text-red-600 hover:underline disabled:opacity-50">{driveActionLoading ? "Disconnecting…" : "Disconnect"}</button>
                 ) : (
-                  <button type="button" onClick={() => setConnectDriveModalOpen(true)} disabled={driveLoading || driveActionLoading} className="text-xs font-semibold text-indigo-600 hover:underline disabled:opacity-50">Connect</button>
+                  <button type="button" onClick={() => setConnectDriveModalOpen(true)} disabled={driveLoading || driveActionLoading} className="text-xs font-semibold text-indigo-600 hover:underline disabled:opacity-50">{driveStatus === "reconnect_required" ? "Reconnect" : "Connect"}</button>
                 )}
               </div>
               {driveSuccess && <p className="text-xs text-emerald-600">{driveSuccess}</p>}
@@ -637,6 +661,45 @@ function SettingsContent() {
             </div>
             <input type="text" placeholder="Search integrations…" value={intSearch} onChange={e=>setIntSearch(e.target.value)}
               className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-subtle" />
+            <div className="rounded-xl border border-border bg-subtle p-4 space-y-3">
+              <div>
+                <h2 className="text-sm font-semibold text-foreground">{t("settings.integrationsHealth")}</h2>
+                <p className="text-xs text-muted mt-0.5">{t("settings.integrationsHealthHint")}</p>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {[
+                  { label: "Google Drive", item: integrationsHealth?.drive, meta: integrationsHealth?.drive?.email || null },
+                  { label: "Email delivery", item: integrationsHealth?.email, meta: integrationsHealth?.email?.provider || null },
+                  { label: "AI summaries", item: integrationsHealth?.ai, meta: integrationsHealth?.ai?.provider || null },
+                ].map(({ label, item, meta }) => {
+                  const state = item?.state;
+                  const badge = integrationsLoading
+                    ? "Checking..."
+                    : state === "healthy"
+                    ? t("settings.healthHealthy")
+                    : state === "action_required"
+                    ? t("settings.healthActionRequired")
+                    : t("settings.healthNotConfigured");
+                  const badgeClass = integrationsLoading
+                    ? "text-muted bg-subtle border-border"
+                    : state === "healthy"
+                    ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/40"
+                    : state === "action_required"
+                    ? "text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/40"
+                    : "text-muted bg-subtle border-border";
+                  return (
+                    <div key={label} className="rounded-lg border border-border bg-white dark:bg-background p-3 space-y-2">
+                      <div className="flex items-start justify-between gap-3">
+                        <p className="text-sm font-semibold text-foreground">{label}</p>
+                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${badgeClass}`}>{badge}</span>
+                      </div>
+                      <p className="text-xs text-muted leading-snug">{integrationsLoading ? "Checking integration health..." : item?.message || "No status available."}</p>
+                      {meta && <p className="text-[11px] text-foreground/80 font-medium break-all">{meta}</p>}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {filteredIntegrations.map(int => (
                 <div key={int.id} className="rounded-xl border border-border bg-subtle p-4 flex items-start gap-3 hover:border-indigo-200 transition-colors">
@@ -787,7 +850,7 @@ function SettingsContent() {
             {driveError && <p className="text-xs text-red-600 mt-3">{driveError}</p>}
             <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-border">
               <button type="button" onClick={() => setConnectDriveModalOpen(false)} disabled={driveActionLoading} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg disabled:opacity-50">{t("common.cancel")}</button>
-              <button type="button" onClick={connectDrive} disabled={driveActionLoading} className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50">{driveActionLoading ? t("settings.connecting") : t("settings.continueToGoogle")}</button>
+              <button type="button" onClick={connectDrive} disabled={driveActionLoading} className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50">{driveActionLoading ? t("settings.connecting") : driveStatus === "reconnect_required" ? "Reconnect with Google" : t("settings.continueToGoogle")}</button>
             </div>
           </div>
         </div>

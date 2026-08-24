@@ -8,10 +8,13 @@ import { isUuid } from "@/lib/google-drive-values";
 const GOOGLE_AUTH = "https://accounts.google.com/o/oauth2/v2/auth";
 const GOOGLE_TOKEN = "https://oauth2.googleapis.com/token";
 const DRIVE_FILES = "https://www.googleapis.com/drive/v3/files";
+const DRIVE_LIST_FIELDS = "files(id,name,webViewLink,createdTime,trashed),nextPageToken";
 const STATE_TTL_MS = 10 * 60_000;
 
 type State = { userId: string; nonce: string; exp: number };
-type Connection = { user_id: string; refresh_token: string; google_email: string | null };
+type Connection = { user_id: string; refresh_token: string; google_email: string | null; updated_at?: string | null };
+export type DriveConnectionStatus = "connected" | "reconnect_required" | "not_connected";
+export type DriveConnectionHealth = { status: DriveConnectionStatus; email: string | null; updatedAt: string | null; message: string };
 
 function env(name: string) {
   const value = process.env[name];
@@ -82,12 +85,44 @@ export async function finishConnection(userId: string, code: string) {
   if (error) throw error;
 }
 
+async function getDriveConnection(userId: string) {
+  const { data, error } = await createServiceClient().from("google_drive_connections").select("user_id,refresh_token,google_email,updated_at").eq("user_id", userId).maybeSingle();
+  if (error) throw error;
+  return (data as Connection | null) ?? null;
+}
+
+export async function getDriveConnectionHealth(userId: string): Promise<DriveConnectionHealth> {
+  const connection = await getDriveConnection(userId);
+  if (!connection) {
+    return { status: "not_connected", email: null, updatedAt: null, message: "Google Drive is not connected" };
+  }
+  try {
+    await tokenRequest({ refresh_token: decrypt(connection.refresh_token), grant_type: "refresh_token" });
+    return {
+      status: "connected",
+      email: connection.google_email ?? null,
+      updatedAt: connection.updated_at ?? null,
+      message: "Google Drive is connected",
+    };
+  } catch {
+    return {
+      status: "reconnect_required",
+      email: connection.google_email ?? null,
+      updatedAt: connection.updated_at ?? null,
+      message: "Google Drive needs to be reconnected",
+    };
+  }
+}
+
 export async function driveAccessToken(userId: string) {
-  const { data, error } = await createServiceClient().from("google_drive_connections").select("user_id,refresh_token,google_email").eq("user_id", userId).maybeSingle();
-  if (error || !data) throw new Error("Google Drive is not connected");
-  const connection = data as Connection;
-  const tokens = await tokenRequest({ refresh_token: decrypt(connection.refresh_token), grant_type: "refresh_token" });
-  return tokens.access_token;
+  const connection = await getDriveConnection(userId);
+  if (!connection) throw new Error("Google Drive is not connected");
+  try {
+    const tokens = await tokenRequest({ refresh_token: decrypt(connection.refresh_token), grant_type: "refresh_token" });
+    return tokens.access_token;
+  } catch {
+    throw new Error("Google Drive needs to be reconnected");
+  }
 }
 
 async function setDriveFileTrashed(accessToken: string, fileId: string, trashed: boolean) {
@@ -102,4 +137,38 @@ export function trashDriveFile(accessToken: string, fileId: string) {
 
 export function untrashDriveFile(accessToken: string, fileId: string) {
   return setDriveFileTrashed(accessToken, fileId, false);
+}
+
+export async function listAccessibleDriveFiles(accessToken: string) {
+  const files: Array<{ id: string; name: string; webViewLink: string | null; createdTime: string | null; trashed: boolean | null }> = [];
+  let pageToken: string | null = null;
+  for (;;) {
+    const params = new URLSearchParams({
+      pageSize: "100",
+      fields: DRIVE_LIST_FIELDS,
+      supportsAllDrives: "true",
+      includeItemsFromAllDrives: "true",
+      q: "trashed=false",
+      ...(pageToken ? { pageToken } : {}),
+    });
+    const response = await fetch(`${DRIVE_FILES}?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+      cache: "no-store",
+    });
+    const body = await response.json().catch(() => ({})) as { files?: Array<{ id?: string; name?: string; webViewLink?: string | null; createdTime?: string | null; trashed?: boolean | null }>; nextPageToken?: string };
+    if (!response.ok) throw new Error(`Google Drive list request failed (${response.status})`);
+    for (const file of body.files ?? []) {
+      if (!file.id) continue;
+      files.push({
+        id: file.id,
+        name: file.name || "Untitled",
+        webViewLink: file.webViewLink ?? null,
+        createdTime: file.createdTime ?? null,
+        trashed: file.trashed ?? null,
+      });
+    }
+    if (!body.nextPageToken) break;
+    pageToken = body.nextPageToken;
+  }
+  return files;
 }
