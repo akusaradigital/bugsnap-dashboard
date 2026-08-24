@@ -933,7 +933,13 @@ export default function DashboardLayout({
                       <button
                         onClick={() => {
                           setWsOpen(false);
-                          setCreateProjectModalOpen(true);
+                          const next = projects.find((project) => !project.is_default) || null;
+                          if (next) {
+                            setProjects((prev) => prev.map((project) => ({ ...project, is_default: project.id === next.id })));
+                            showToast(`Default project set to ${next.name}`, 'success');
+                          } else {
+                            setCreateProjectModalOpen(true);
+                          }
                         }}
                         className="rounded-lg border border-border px-2 py-1.5 text-xs font-semibold text-foreground hover:bg-subtle transition-colors"
                       >
@@ -942,7 +948,13 @@ export default function DashboardLayout({
                       <button
                         onClick={() => {
                           setWsOpen(false);
-                          setCreateFolderModalOpen(true);
+                          const nextFolder = folders.find((folder) => folder !== defaultFolder) || null;
+                          if (nextFolder) {
+                            setFolders((prev) => [nextFolder, ...prev.filter((folder) => folder !== nextFolder)]);
+                            showToast(`Default folder set to ${nextFolder}`, 'success');
+                          } else {
+                            setCreateFolderModalOpen(true);
+                          }
                         }}
                         className="rounded-lg border border-border px-2 py-1.5 text-xs font-semibold text-foreground hover:bg-subtle transition-colors"
                       >
