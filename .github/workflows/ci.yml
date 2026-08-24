@@ -1,0 +1,45 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    name: Typecheck, Lint, Test & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Unit Tests
+        run: npm test
+
+      - name: Production Build
+        run: npm run build
+        env:
+          NEXT_PUBLIC_SUPABASE_URL: "https://kkmvanwgywrqsudvspge.supabase.co"
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummy"
+          SUPABASE_SERVICE_ROLE_KEY: "dummy"
+          GOOGLE_DRIVE_CLIENT_ID: "dummy"
+          GOOGLE_DRIVE_CLIENT_SECRET: "dummy"
+          GOOGLE_DRIVE_REDIRECT_URI: "http://localhost:3000/api/google-drive/callback"
+          GOOGLE_DRIVE_ENCRYPTION_KEY: "12345678901234567890123456789012"
