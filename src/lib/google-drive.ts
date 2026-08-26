@@ -14,7 +14,8 @@ const STATE_TTL_MS = 10 * 60_000;
 type State = { userId: string; nonce: string; exp: number };
 type Connection = { user_id: string; refresh_token: string; google_email: string | null; updated_at?: string | null };
 export type DriveConnectionStatus = "connected" | "reconnect_required" | "not_connected";
-export type DriveConnectionHealth = { status: DriveConnectionStatus; email: string | null; updatedAt: string | null; message: string };
+export type DriveQuota = { usedBytes: number | null; totalBytes: number | null };
+export type DriveConnectionHealth = { status: DriveConnectionStatus; email: string | null; updatedAt: string | null; message: string; quota?: DriveQuota | null };
 
 function env(name: string) {
   const value = process.env[name];
@@ -94,15 +95,27 @@ async function getDriveConnection(userId: string) {
 export async function getDriveConnectionHealth(userId: string): Promise<DriveConnectionHealth> {
   const connection = await getDriveConnection(userId);
   if (!connection) {
-    return { status: "not_connected", email: null, updatedAt: null, message: "Google Drive is not connected" };
+    return { status: "not_connected", email: null, updatedAt: null, message: "Google Drive is not connected", quota: null };
   }
   try {
-    await tokenRequest({ refresh_token: decrypt(connection.refresh_token), grant_type: "refresh_token" });
+    const accessToken = await tokenRequest({ refresh_token: decrypt(connection.refresh_token), grant_type: "refresh_token" });
+    const aboutRes = await fetch("https://www.googleapis.com/drive/v3/about?fields=storageQuota", {
+      headers: { Authorization: `Bearer ${accessToken.access_token}` },
+      cache: "no-store",
+    });
+    const about = await aboutRes.json().catch(() => ({})) as { storageQuota?: { limit?: string; usage?: string } };
+    const quota = aboutRes.ok
+      ? {
+          usedBytes: about.storageQuota?.usage ? Number(about.storageQuota.usage) : null,
+          totalBytes: about.storageQuota?.limit ? Number(about.storageQuota.limit) : null,
+        }
+      : null;
     return {
       status: "connected",
       email: connection.google_email ?? null,
       updatedAt: connection.updated_at ?? null,
       message: "Google Drive is connected",
+      quota,
     };
   } catch {
     return {
@@ -110,6 +123,7 @@ export async function getDriveConnectionHealth(userId: string): Promise<DriveCon
       email: connection.google_email ?? null,
       updatedAt: connection.updated_at ?? null,
       message: "Google Drive needs to be reconnected",
+      quota: null,
     };
   }
 }
