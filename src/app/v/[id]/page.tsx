@@ -10,7 +10,6 @@ import Comments from "@/components/Comments";
 import MediaViewer from "@/components/MediaViewer";
 import { useT } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
-import { hasAiSummary, normalizePlan, type Plan } from "@/lib/tiers";
 
 const DevToolsPanel = dynamic(() => import("@/components/DevToolsPanel"), {
   ssr: false,
@@ -109,7 +108,6 @@ function SingleViewContent() {
 
   const [viewerEmail, setViewerEmail] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
-  const [plan, setPlan] = useState<Plan>("free");
   const [brand, setBrand] = useState({ name: "BugSnap", logo: "", hideWatermark: false });
 
   // 1. Initial Access Check (Non-Login default)
@@ -138,20 +136,11 @@ function SingleViewContent() {
       return;
     }
 
-    supabase.auth.getSession().then(async ({ data }) => {
+    supabase.auth.getSession().then(({ data }) => {
       if (cancelled) return;
       const u = data.session?.user;
       setIsAuthenticated(!!u);
       setViewerEmail(u?.email ?? null);
-      // Plan drives the AI button visibility; users.plan is the source of truth.
-      if (u?.email) {
-        const { data: row } = await supabase
-          .from("users")
-          .select("plan")
-          .ilike("email", u.email)
-          .maybeSingle();
-        if (!cancelled) setPlan(normalizePlan(row?.plan ?? u.user_metadata?.plan));
-      }
     });
 
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -549,21 +538,12 @@ function SingleViewContent() {
           )}
 
           {status === "ready" && (
-            hasAiSummary(plan) ? (
-              <button
-                onClick={handleGenerateAiReport}
-                className="px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold hover:bg-indigo-100 transition-colors flex items-center gap-1.5 shadow-sm"
-              >
-                <span>✨ <span className="hidden sm:inline">{t("v.aiBugReport")}</span><span className="sm:hidden">AI</span></span>
-              </button>
-            ) : (
-              <Link
-                href="/pricing"
-                className="px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold hover:bg-indigo-100 transition-colors flex items-center gap-1.5 shadow-sm"
-              >
-                <span>✨ <span className="hidden sm:inline">{t("v.aiProPlus")}</span><span className="sm:hidden">AI</span></span>
-              </Link>
-            )
+            <button
+              onClick={handleGenerateAiReport}
+              className="px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold hover:bg-indigo-100 transition-colors flex items-center gap-1.5 shadow-sm"
+            >
+              <span>✨ <span className="hidden sm:inline">{t("v.aiBugReport")}</span><span className="sm:hidden">AI</span></span>
+            </button>
           )}
 
           {/* More Actions Dropdown */}

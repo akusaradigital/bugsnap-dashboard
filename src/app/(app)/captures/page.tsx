@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
-import { hasAdvancedAccess, normalizePlan, type Plan } from "@/lib/tiers";
 
 export type CaptureFilter = "all" | "video" | "screenshot";
 
@@ -42,7 +41,6 @@ interface EditModalProps {
   capture: Capture;
   onClose: () => void;
   onSaved: (updated: Capture) => void;
-  userPlan: Plan;
 }
 
 const EXPIRY_OPTIONS: { value: "never" | "24h" | "7d"; labelKey: string }[] = [
@@ -124,7 +122,7 @@ function expiryToOption(expiresAt: string | null | undefined, createdAt: string)
   return "never";
 }
 
-function EditModal({ capture, onClose, onSaved, userPlan }: EditModalProps) {
+function EditModal({ capture, onClose, onSaved }: EditModalProps) {
   const { t } = useT();
   const [title, setTitle] = useState(capture.title);
   const [description, setDescription] = useState(capture.description || "");
@@ -308,23 +306,19 @@ function EditModal({ capture, onClose, onSaved, userPlan }: EditModalProps) {
                 </p>
               </div>
 
-              {/* Advanced Security (Pro+ and above) */}
+              {/* Advanced Security */}
               <div className="border-t border-border pt-4 space-y-4">
                 <div className="flex items-center gap-2">
                   <h4 className="text-xs font-semibold text-foreground">{t("cap.advancedProtection")}</h4>
-                  {!hasAdvancedAccess(userPlan) && (
-                    <span className="bg-indigo-100 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 text-[9px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider">{t("cap.proPlusOnly")}</span>
-                  )}
                 </div>
 
                 {/* Burn after reading */}
-                <label className={`flex items-center gap-2.5 text-xs text-foreground select-none ${hasAdvancedAccess(userPlan) ? "cursor-pointer" : "opacity-50 cursor-not-allowed"}`}>
+                <label className="flex items-center gap-2.5 text-xs text-foreground select-none cursor-pointer">
                   <input
                     type="checkbox"
                     checked={burnAfterRead}
-                    disabled={!hasAdvancedAccess(userPlan)}
                     onChange={(e) => setBurnAfterRead(e.target.checked)}
-                    className="w-4 h-4 rounded border-border text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
+                    className="w-4 h-4 rounded border-border text-indigo-600 focus:ring-indigo-500"
                   />
                   <div>
                     <p className="font-medium">{t("cap.burnAfterRead")}</p>
@@ -340,10 +334,9 @@ function EditModal({ capture, onClose, onSaved, userPlan }: EditModalProps) {
                   <input
                     type="text"
                     value={allowedDomainsText}
-                    disabled={!hasAdvancedAccess(userPlan)}
                     onChange={(e) => setAllowedDomainsText(e.target.value)}
-                    placeholder={hasAdvancedAccess(userPlan) ? t("cap.domainPlaceholder") : t("cap.domainPlaceholderFree")}
-                    className={`${inputClasses} disabled:bg-subtle disabled:text-muted/60 disabled:cursor-not-allowed`}
+                    placeholder={t("cap.domainPlaceholder")}
+                    className={inputClasses}
                   />
                   <p className="text-[9px] text-muted leading-tight mt-1">{t("cap.domainHint")}</p>
                 </div>
@@ -356,10 +349,9 @@ function EditModal({ capture, onClose, onSaved, userPlan }: EditModalProps) {
                   <input
                     type="text"
                     value={allowedIpsText}
-                    disabled={!hasAdvancedAccess(userPlan)}
                     onChange={(e) => setAllowedIpsText(e.target.value)}
-                    placeholder={hasAdvancedAccess(userPlan) ? t("cap.ipPlaceholder") : t("cap.ipPlaceholderFree")}
-                    className={`${inputClasses} disabled:bg-subtle disabled:text-muted/60 disabled:cursor-not-allowed`}
+                    placeholder={t("cap.ipPlaceholder")}
+                    className={inputClasses}
                   />
                   <p className="text-[9px] text-muted leading-tight mt-1">{t("cap.ipHint")}</p>
                 </div>
@@ -427,7 +419,6 @@ function CapturesContent() {
   const [moveFolders, setMoveFolders] = useState<string[]>([]);
   const [dragActive, setDragActive] = useState(false);
   const [thumbFailed, setThumbFailed] = useState<Record<string, boolean>>({});
-  const [userPlan, setUserPlan] = useState<Plan>("free");
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [activeHoverId, setActiveHoverId] = useState<string | null>(null);
   const [shortcutCopied, setShortcutCopied] = useState(false);
@@ -453,24 +444,6 @@ function CapturesContent() {
       if (shortcutToastRef.current) clearTimeout(shortcutToastRef.current);
     };
   }, [activeHoverId, t]);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(async ({ data }) => {
-      const u = data.session?.user;
-      if (!u) return;
-      let plan: Plan = normalizePlan(u.user_metadata?.plan);
-      // Prefer plan from public.users (source of truth via Stripe webhook)
-      if (u.email) {
-        const { data: userRow } = await supabase
-          .from("users")
-          .select("plan")
-          .ilike("email", u.email)
-          .maybeSingle();
-        if (userRow?.plan) plan = normalizePlan(userRow.plan);
-      }
-      setUserPlan(plan);
-    });
-  }, []);
 
   // Dropdown states: false = not actively filtering by this type.
   // If BOTH are false, we show ALL (no filter applied).
@@ -1332,7 +1305,7 @@ function CapturesContent() {
         </div>
       )}
 
-      {editing && <EditModal capture={editing} userPlan={userPlan} onClose={() => setEditing(null)} onSaved={(updated) => setCaptures((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))} />}
+      {editing && <EditModal capture={editing} onClose={() => setEditing(null)} onSaved={(updated) => setCaptures((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))} />}
 
       {moveToOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">

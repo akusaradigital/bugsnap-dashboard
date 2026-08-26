@@ -30,14 +30,14 @@ export const FREE_WEEKLY_CAPTURES = 5;
 /** Free workspace seats (1 owner + up to this many additional members). */
 export const FREE_SEATS = 4;
 
-// Feature entitlements -------------------------------------------------------
+// Feature entitlements (all free / unlocked) ---------------------------------
 
-export const hasBranding = (plan: Plan): boolean => planAtLeast(plan, PLAN_PRO);
-export const hasAiSummary = (plan: Plan): boolean => planAtLeast(plan, PLAN_PRO_PLUS);
-export const hasWebhooks = (plan: Plan): boolean => planAtLeast(plan, PLAN_PRO);
-export const hasAdvancedAccess = (plan: Plan): boolean => planAtLeast(plan, PLAN_PRO_PLUS);
-/** Unlimited seats for PRO and above. */
-export const seatLimit = (plan: Plan): number | null => (planAtLeast(plan, PLAN_PRO) ? null : FREE_SEATS);
+export const hasBranding = (_plan?: Plan): boolean => { void _plan; return true; };
+export const hasAiSummary = (_plan?: Plan): boolean => { void _plan; return true; };
+export const hasWebhooks = (_plan?: Plan): boolean => { void _plan; return true; };
+export const hasAdvancedAccess = (_plan?: Plan): boolean => { void _plan; return true; };
+/** Unlimited seats for all workspaces. */
+export const seatLimit = (_plan?: Plan): number | null => { void _plan; return null; };
 
 export const tierLabel = (plan: Plan): string => {
   switch (normalizePlan(plan)) {

@@ -544,28 +544,28 @@ function SettingsContent() {
             </div>
 
             {/* Branding */}
-            <div className={`rounded-xl border border-border bg-subtle p-4 space-y-3 ${userPlan === "free" ? "opacity-60" : ""}`}>
+            <div className="rounded-xl border border-border bg-subtle p-4 space-y-3">
               <div className="flex items-center justify-between border-b border-border pb-2">
                 <h2 className="text-sm font-semibold text-foreground">Custom Branding</h2>
-                <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-800/40 px-2 py-0.5 rounded-full">{userPlan === "free" ? "Pro Only" : tierLabel(userPlan)}</span>
+                <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 px-2 py-0.5 rounded-full">Included</span>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Brand Name</label>
-                  <input type="text" value={brandName} disabled={userPlan==="free"} onChange={e=>setBrandName(e.target.value)} placeholder={userPlan==="free" ? "Upgrade to Pro" : "Acme Corp"} className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-subtle disabled:bg-subtle disabled:cursor-not-allowed" />
+                  <input type="text" value={brandName} onChange={e=>setBrandName(e.target.value)} placeholder="Acme Corp" className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-subtle" />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Logo URL</label>
-                  <input type="url" value={logoUrl} disabled={userPlan==="free"} onChange={e=>setLogoUrl(e.target.value)} placeholder={userPlan==="free" ? "Upgrade to Pro" : "https://logo.png"} className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-subtle disabled:bg-subtle disabled:cursor-not-allowed" />
+                  <input type="url" value={logoUrl} onChange={e=>setLogoUrl(e.target.value)} placeholder="https://logo.png" className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-subtle" />
                 </div>
               </div>
-              <label className={`flex items-center gap-3 ${userPlan==="free" ? "cursor-not-allowed" : "cursor-pointer"}`}>
-                <input type="checkbox" checked={hideWatermark} disabled={userPlan==="free"} onChange={e=>setHideWatermark(e.target.checked)} className="w-4 h-4 rounded border-border text-indigo-600 focus:ring-indigo-500 disabled:opacity-50" />
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input type="checkbox" checked={hideWatermark} onChange={e=>setHideWatermark(e.target.checked)} className="w-4 h-4 rounded border-border text-indigo-600 focus:ring-indigo-500" />
                 <span className="text-xs font-medium text-foreground">Hide &quot;Powered by BugSnap&quot; watermark</span>
               </label>
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Custom Domain</label>
-                <input type="text" value={customDomain} disabled={userPlan==="free"} onChange={e=>setCustomDomain(e.target.value)} placeholder={userPlan==="free" ? "Upgrade to Pro" : "captures.yourcompany.com"} className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-subtle font-mono disabled:bg-subtle disabled:cursor-not-allowed" />
+                <input type="text" value={customDomain} onChange={e=>setCustomDomain(e.target.value)} placeholder="captures.yourcompany.com" className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-subtle font-mono" />
               </div>
             </div>
 
