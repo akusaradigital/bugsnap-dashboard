@@ -737,6 +737,72 @@ function CapturesContent() {
     await uploadSelectedFile(file);
   }
 
+  async function openMoveToModal() {
+    const { data: wsRows, error: wsError } = await supabase.rpc("get_my_workspaces");
+    if (wsError) {
+      setUploadError(wsError.message);
+      return;
+    }
+    const wsList = ((wsRows ?? []) as Array<{ id: string; name: string }>).map((ws) => ({ id: ws.id, name: ws.name }));
+    setMoveWorkspaces(wsList);
+    const initialWorkspaceId = workspaceParam || wsList[0]?.id || "";
+    setMoveTargetWorkspaceId(initialWorkspaceId);
+    if (initialWorkspaceId) {
+      const { data: folderRows, error: folderError } = await supabase
+        .from("workspace_folders")
+        .select("name")
+        .eq("workspace_id", initialWorkspaceId)
+        .order("name", { ascending: true });
+      if (folderError) {
+        setUploadError(folderError.message);
+        return;
+      }
+      const folderList = ((folderRows ?? []) as Array<{ name: string }>).map((f) => f.name);
+      setMoveFolders(folderList);
+      setMoveTargetFolderName(folderList[0] || "");
+    }
+    setMoveToOpen(true);
+  }
+
+  async function loadMoveFolders(workspaceId: string) {
+    setMoveTargetWorkspaceId(workspaceId);
+    const { data: folderRows, error: folderError } = await supabase
+      .from("workspace_folders")
+      .select("name")
+      .eq("workspace_id", workspaceId)
+      .order("name", { ascending: true });
+    if (folderError) {
+      setUploadError(folderError.message);
+      return;
+    }
+    const folderList = ((folderRows ?? []) as Array<{ name: string }>).map((f) => f.name);
+    setMoveFolders(folderList);
+    setMoveTargetFolderName(folderList[0] || "");
+  }
+
+  async function submitMoveTo() {
+    if (moving || selectedIds.size === 0 || !moveTargetWorkspaceId) return;
+    setMoving(true);
+    setUploadError(null);
+    try {
+      const ids = Array.from(selectedIds);
+      for (const captureId of ids) {
+        const { error } = await supabase.rpc("move_capture_to_workspace_folder", {
+          p_capture_id: captureId,
+          p_target_workspace_id: moveTargetWorkspaceId,
+          p_target_folder_name: moveTargetFolderName || null,
+        });
+        if (error) throw error;
+      }
+      setMoveToOpen(false);
+      clearSelection();
+      await loadPage(true);
+    } catch (error) {
+      setUploadError(error instanceof Error ? error.message : "Failed moving captures");
+    } finally {
+      setMoving(false);
+    }
+  }
 
   async function submitQuickStatus(captureId: string, nextStatus: string) {
     if (statusQuickId) return;
@@ -824,7 +890,7 @@ function CapturesContent() {
               className="h-10 pl-9 pr-3 text-sm rounded-lg border border-border bg-subtle focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 w-full"
             />
           </div>
-          {!selectMode ? (
+          {selectedIds.size === 0 ? (
             <>
               <label className="h-10 flex items-center justify-center gap-2 px-4 border border-border bg-subtle text-muted hover:text-foreground hover:bg-subtle/80 text-sm font-medium rounded-lg transition-colors cursor-pointer whitespace-nowrap">
                 <input type="file" className="hidden" onChange={handleManualUpload} accept="image/*,video/*" />
@@ -833,14 +899,6 @@ function CapturesContent() {
                 </svg>
                 {uploading ? "Uploading..." : "Upload file"}
               </label>
-              <button
-                onClick={() => setSelectMode(true)}
-                disabled={filteredCaptures.length === 0}
-                className="h-10 flex items-center justify-center gap-2 px-4 rounded-lg border border-border bg-subtle text-sm font-medium text-muted hover:text-foreground hover:bg-subtle transition-colors disabled:opacity-40 whitespace-nowrap"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-                {t("cap.select")}
-              </button>
               <a
                 href={CHROME_WEB_STORE_URL}
                 target="_blank"
@@ -853,40 +911,27 @@ function CapturesContent() {
               </a>
             </>
           ) : (
-            <div className="flex flex-wrap items-center gap-2">
-                <span className="text-sm text-muted mr-1">
-                {t("cap.selected", { count: selectedIds.size })}
-              </span>
-              <button
-                onClick={() =>
-                  setSelectedIds(
-                    (prev) =>
-                      new Set(
-                        prev.size === filteredCaptures.length
-                          ? []
-                          : filteredCaptures.map((c) => c.id)
-                      )
-                  )
-                }
-                className="h-10 px-4 rounded-lg border border-border bg-subtle text-sm font-medium text-muted hover:text-foreground hover:bg-subtle transition-colors"
-              >
-                {selectedIds.size === filteredCaptures.length && selectedIds.size > 0
-                  ? t("cap.deselectAll")
-                  : t("cap.selectAll")}
-              </button>
-              <button
-                onClick={() => openDeleteConfirmation(Array.from(selectedIds))}
-                disabled={selectedIds.size === 0 || deleting}
-                className="h-10 px-4 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 disabled:opacity-40 transition-colors"
-              >
-                {t("cap.deleteSelected", { count: selectedIds.size || "" })}
-              </button>
-              <button
-                onClick={exitSelectMode}
-                className="h-10 px-4 rounded-lg border border-border bg-subtle text-sm font-medium text-muted hover:text-foreground hover:bg-subtle transition-colors"
-              >
-                {t("common.cancel")}
-              </button>
+            <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 w-full lg:w-auto lg:min-w-[420px] justify-between">
+              <div className="flex items-center gap-3 text-foreground font-medium">
+                <span className="w-7 h-7 rounded-lg bg-foreground text-background flex items-center justify-center">✓</span>
+                <span>{selectedIds.size} selected</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => void openMoveToModal()}
+                  disabled={moving || deleting}
+                  className="h-10 px-4 rounded-xl border border-border bg-subtle text-sm font-medium text-foreground hover:bg-subtle/80 disabled:opacity-40 transition-colors"
+                >
+                  Move to
+                </button>
+                <button
+                  onClick={() => openDeleteConfirmation(Array.from(selectedIds))}
+                  disabled={selectedIds.size === 0 || deleting}
+                  className="h-10 px-4 rounded-xl border border-red-200 bg-red-50 text-red-600 text-sm font-semibold hover:bg-red-100 disabled:opacity-40 transition-colors"
+                >
+                  Delete
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -1051,11 +1096,8 @@ function CapturesContent() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredCaptures.map((item) => {
             const isSelected = selectedIds.has(item.id);
-            // In select mode the card becomes a clickable div; otherwise a Link.
-            const CardWrapper = (selectMode ? "div" : Link) as React.ElementType;
-            const cardProps = selectMode
-              ? { onClick: () => toggleSelect(item.id), className: "flex flex-col flex-1 cursor-pointer group select-none" }
-              : { href: `/v/${item.id}`, className: "flex flex-col flex-1 group" };
+            const CardWrapper = Link as React.ElementType;
+            const cardProps = { href: `/v/${item.id}`, className: "flex flex-col flex-1 group" };
             return (
             <div
               key={item.id}
@@ -1105,24 +1147,19 @@ function CapturesContent() {
                     </div>
                   )}
 
-                  {/* Selection checkbox (visible only in select mode) */}
-                  {selectMode && (
-                    <div className="absolute top-2.5 left-2.5 z-10 pointer-events-none">
-                      <div
-                        className={`w-5 h-5 rounded-md border-2 flex items-center justify-center transition-colors ${
-                          isSelected
-                            ? "bg-indigo-600 border-indigo-600"
-                            : "bg-background/90 border-indigo-400"
-                        }`}
-                      >
-                        {isSelected && (
-                          <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                          </svg>
-                        )}
-                      </div>
-                    </div>
-                  )}
+                  <button
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleSelect(item.id); }}
+                    className={`absolute top-2.5 left-2.5 z-10 w-7 h-7 rounded-xl border-2 flex items-center justify-center transition-all ${
+                      isSelected
+                        ? "bg-emerald-700 border-emerald-700 text-white opacity-100"
+                        : "bg-background/90 border-white/80 text-transparent opacity-0 group-hover:opacity-100"
+                    }`}
+                  >
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </button>
 
                   {/* Gradient Overlay for Top Left Avatar */}
                   <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/30 opacity-80 pointer-events-none" />
@@ -1210,7 +1247,7 @@ function CapturesContent() {
               </CardWrapper>
 
               {/* Action menu - hidden until the card is hovered/focused */}
-              {!selectMode && (
+              {selectedIds.size === 0 && (
                 <div className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1.5 opacity-0 translate-y-1 pointer-events-none transition-all duration-150 group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto focus-within:opacity-100 focus-within:translate-y-0 focus-within:pointer-events-auto">
                   <button
                     aria-label={t("cap.copyLink")}
@@ -1297,6 +1334,60 @@ function CapturesContent() {
 
       {editing && <EditModal capture={editing} userPlan={userPlan} onClose={() => setEditing(null)} onSaved={(updated) => setCaptures((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))} />}
 
+      {moveToOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => !moving && setMoveToOpen(false)} />
+          <div className="relative w-full max-w-2xl rounded-2xl bg-subtle shadow-xl border border-border p-6">
+            <h2 className="text-2xl font-semibold text-foreground mb-4">Move {selectedIds.size} capture{selectedIds.size > 1 ? "s" : ""} to</h2>
+            <div className="grid grid-cols-[1fr_220px] gap-4 items-start">
+              <div className="space-y-2">
+                {moveFolders.map((folder) => {
+                  const isCurrent = filteredCaptures.some((c) => selectedIds.has(c.id) && c.workspace_id === moveTargetWorkspaceId && (c.folder_name || "") === folder);
+                  return (
+                    <button
+                      key={folder}
+                      type="button"
+                      onClick={() => setMoveTargetFolderName(folder)}
+                      className={`w-full flex items-center justify-between rounded-xl border px-4 py-3 text-left transition-colors ${moveTargetFolderName === folder ? "border-indigo-500 bg-subtle" : "border-border hover:bg-subtle"}`}
+                    >
+                      <span className="flex items-center gap-3 text-foreground">
+                        <svg className="w-5 h-5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
+                        <span>{folder}</span>
+                      </span>
+                      {isCurrent && <span className="text-xs px-2 py-1 rounded-lg border border-border text-muted">Current location</span>}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="rounded-xl border border-border bg-white dark:bg-background overflow-hidden">
+                <button type="button" className="w-full flex items-center justify-between gap-2 px-3 py-3 text-left border-b border-border">
+                  <span className="flex items-center gap-3">
+                    <span className="w-8 h-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center font-semibold">{(moveWorkspaces.find((ws) => ws.id === moveTargetWorkspaceId)?.name || "W").charAt(0)}</span>
+                    <span className="font-medium text-foreground truncate">{moveWorkspaces.find((ws) => ws.id === moveTargetWorkspaceId)?.name || "Workspace"}</span>
+                  </span>
+                </button>
+                {moveWorkspaces.map((ws) => (
+                  <button
+                    key={ws.id}
+                    type="button"
+                    onClick={() => void loadMoveFolders(ws.id)}
+                    className={`w-full flex items-center gap-3 px-3 py-3 text-left transition-colors ${moveTargetWorkspaceId === ws.id ? "bg-subtle text-foreground font-semibold" : "text-foreground hover:bg-subtle"}`}
+                  >
+                    <span className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-semibold">{ws.name.charAt(0)}</span>
+                    <span className="truncate">{ws.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 mt-6">
+              <button onClick={() => setMoveToOpen(false)} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors">{t("common.cancel")}</button>
+              <button onClick={() => void submitMoveTo()} disabled={moving || !moveTargetWorkspaceId} className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+                {moving ? "Moving..." : "Move"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {deleteRequest && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="delete-captures-title">
