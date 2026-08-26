@@ -1150,10 +1150,10 @@ function CapturesContent() {
                   <button
                     type="button"
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleSelect(item.id); }}
-                    className={`absolute top-2.5 left-2.5 z-10 w-7 h-7 rounded-xl border-2 flex items-center justify-center transition-all ${
+                    className={`absolute top-3 left-3 z-20 w-7 h-7 rounded-xl border-2 flex items-center justify-center transition-all ${
                       isSelected
                         ? "bg-emerald-700 border-emerald-700 text-white opacity-100"
-                        : "bg-background/90 border-white/80 text-transparent opacity-0 group-hover:opacity-100"
+                        : "bg-background/95 border-white/90 text-transparent opacity-0 group-hover:opacity-100"
                     }`}
                   >
                     <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
@@ -1165,11 +1165,11 @@ function CapturesContent() {
                   <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/30 opacity-80 pointer-events-none" />
 
                   {/* Top-Left Avatar / Initial Badge (Jam.dev style) */}
-                  <div className="absolute top-3 left-3 flex items-center gap-2">
-                    <div className={`w-7 h-7 rounded-full ${getAvatarColor(item.owner_email)} text-white text-xs font-bold flex items-center justify-center shadow-sm border border-white/20`}>
+                  <div className="absolute top-3 left-12 right-16 flex items-center gap-2 z-10">
+                    <div className={`w-7 h-7 rounded-full ${getAvatarColor(item.owner_email)} text-white text-xs font-bold flex items-center justify-center shadow-sm border border-white/20 shrink-0`}>
                       {getOwnerInitial(item.owner_email)}
                     </div>
-                    <span className="text-xs font-medium text-white drop-shadow-sm truncate max-w-[120px]">
+                    <span className="text-xs font-medium text-white drop-shadow-sm truncate flex-1 min-w-0">
                       {item.title}
                     </span>
                   </div>

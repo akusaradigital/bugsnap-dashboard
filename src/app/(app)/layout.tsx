@@ -839,7 +839,7 @@ export default function DashboardLayout({
           {wsOpen && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setWsOpen(false)} />
-              <div className="absolute left-3 right-3 top-[calc(100%+8px)] z-50 rounded-2xl border border-border bg-subtle shadow-xl overflow-hidden">
+              <div className="absolute left-3 right-3 top-[calc(100%+8px)] z-50 rounded-2xl border border-border bg-subtle shadow-xl overflow-visible">
                 <div className="p-4 flex items-center gap-3 border-b border-border">
                   <span className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 text-lg font-semibold flex items-center justify-center shrink-0">
                     {activeWsName.charAt(0)}
@@ -886,7 +886,9 @@ export default function DashboardLayout({
                     </svg>
                   </button>
                   {workspacePickerOpen && (
-                    <div className="absolute left-full top-0 ml-2 w-72 rounded-2xl border border-border bg-white dark:bg-background shadow-xl overflow-hidden z-[60]">
+                    <>
+                      <div className="absolute left-full top-0 ml-0 w-3 h-full z-[55]" />
+                      <div className="absolute left-full top-0 ml-2 w-72 rounded-2xl border border-border bg-white dark:bg-background shadow-xl overflow-hidden z-[60]">
                       {workspaces.map((ws) => (
                         <button
                           key={ws.id}
@@ -915,6 +917,7 @@ export default function DashboardLayout({
                         Join or create workspace
                       </button>
                     </div>
+                    </>
                   )}
                 </div>
 
