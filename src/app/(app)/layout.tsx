@@ -35,13 +35,13 @@ export default function DashboardLayout({
   const { showToast } = useToast();
   const [wsParam, setWsParam] = useState<string | null>(null);
   const [wsOpen, setWsOpen] = useState(false);
+  const [workspacePickerOpen, setWorkspacePickerOpen] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [promoBanner, setPromoBanner] = useState<{ enabled: boolean; message: string } | null>(null);
   const [promoDismissed, setPromoDismissed] = useState(false);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [activeWsId, setActiveWsId] = useState<string | null>(null);
-  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const [inviteModalOpen, setInviteModalOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
   const [inviteError, setInviteError] = useState<string | null>(null);
@@ -52,8 +52,7 @@ export default function DashboardLayout({
   const [creating, setCreating] = useState(false);
   const [members, setMembers] = useState<Record<string, string[]>>({});
   const [folders, setFolders] = useState<string[]>([]);
-  const [projects, setProjects] = useState<{ id: string; name: string; description: string; is_default: boolean }[]>([]);
-  const [projectMenuOpen, setProjectMenuOpen] = useState<string | null>(null);
+  const [, setProjects] = useState<{ id: string; name: string; description: string; is_default: boolean }[]>([]);
   const [folderMenuOpen, setFolderMenuOpen] = useState<string | null>(null);
   const [createFolderModalOpen, setCreateFolderModalOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
@@ -87,7 +86,6 @@ export default function DashboardLayout({
     suspended?: boolean;
   }>({ loading: true, user: null });
   const [billingModalOpen, setBillingModalOpen] = useState(false);
-  const [upgradeCardDismissed, setUpgradeCardDismissed] = useState(false);
   const [newCommentCount, setNewCommentCount] = useState(0);
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifLastSeen, setNotifLastSeen] = useState<number>(() => {
@@ -446,13 +444,6 @@ export default function DashboardLayout({
   const activeWs = workspaces.find((w) => w.id === activeWsId) ?? null;
   const activeWsName = activeWs?.name ?? "Personal Workspace";
   const activeMembers = members[activeWs?.id ?? ""] ?? [];
-  const defaultProject = projects.find((project) => project.is_default) ?? null;
-  const defaultFolder = folders[0] ?? null;
-
-  const initials = (currentUser.name || currentUser.email || "U")
-    .trim()
-    .charAt(0)
-    .toUpperCase();
 
   const handleCreateFolder = async (name: string) => {
     if (!name || !activeWsId || creatingFolder) return;
@@ -832,12 +823,9 @@ export default function DashboardLayout({
 
         {/* Workspace Switcher */}
         <div className="px-3 pt-4 relative">
-          <p className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
-            {t("layout.workspace")}
-          </p>
           <button
             onClick={() => setWsOpen((o) => !o)}
-            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium rounded-lg border border-border bg-subtle hover:bg-subtle transition-colors text-left"
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium rounded-xl border border-border bg-subtle hover:bg-subtle transition-colors text-left"
           >
             <span className="w-6 h-6 rounded-md bg-indigo-600 text-white text-[11px] font-semibold flex items-center justify-center shrink-0">
               {activeWsName.charAt(0)}
@@ -851,133 +839,97 @@ export default function DashboardLayout({
           {wsOpen && (
             <>
               <div className="fixed inset-0 z-40" onClick={() => setWsOpen(false)} />
-              <div className="absolute left-3 right-3 top-[calc(100%+4px)] z-50 rounded-xl border border-border bg-subtle shadow-xl py-2 px-1">
-                <div className="px-3 py-1 mb-1">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">{t("layout.workspaces")}</p>
-                </div>
-
-                <div className="mx-2 mb-2 rounded-xl border border-border bg-white dark:bg-background p-3 space-y-2">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">Active workspace</p>
-                      <p className="text-sm font-semibold text-foreground truncate">{activeWsName}</p>
-                      <p className="text-[11px] text-muted truncate">{activeWs?.role === 'owner' ? t('layout.owner') : t('layout.member')}</p>
+              <div className="absolute left-3 right-3 top-[calc(100%+8px)] z-50 rounded-2xl border border-border bg-subtle shadow-xl overflow-hidden">
+                <div className="p-4 flex items-center gap-3 border-b border-border">
+                  <span className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 text-lg font-semibold flex items-center justify-center shrink-0">
+                    {activeWsName.charAt(0)}
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center justify-between gap-2">
+                      <p className="text-base font-semibold text-foreground truncate">{activeWsName}</p>
+                      <span className="text-[11px] px-2 py-0.5 rounded-md border border-border text-muted shrink-0">{tierLabel(currentUser.plan)}</span>
                     </div>
-                    <span className="w-8 h-8 rounded-lg bg-indigo-600 text-white text-xs font-bold flex items-center justify-center shrink-0">{activeWsName.charAt(0)}</span>
-                  </div>
-                  <div className="grid grid-cols-1 gap-2 pt-1">
-                    <div className="rounded-lg border border-border bg-subtle px-2.5 py-2">
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">Default Project</p>
-                      <p className="text-xs font-medium text-foreground mt-0.5 truncate">{defaultProject?.name || 'General'}</p>
-                    </div>
-                    <div className="rounded-lg border border-border bg-subtle px-2.5 py-2">
-                      <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">Save to Folder</p>
-                      <p className="text-xs font-medium text-foreground mt-0.5 truncate">{defaultFolder || 'No folder'}</p>
-                    </div>
+                    <p className="text-xs text-muted truncate">{currentUser.email}</p>
                   </div>
                 </div>
 
-                <div className="space-y-1">
-                  {workspaces.map((ws) => (
-                    <button
-                      key={ws.id}
-                      onClick={() => {
-                        setActiveWsId(ws.id);
-                        setWsOpen(false);
-                        router.replace(`?ws=${ws.id}`, { scroll: false });
-                      }}
-                      className={`w-full flex items-center gap-3 px-3 py-2 text-sm text-left rounded-lg transition-colors ${
-                        activeWsId === ws.id ? "bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 font-semibold" : "text-foreground hover:bg-subtle"
-                      }`}
-                    >
-                      <span className={`w-6 h-6 rounded-md text-[11px] font-semibold flex items-center justify-center shrink-0 ${
-                        activeWsId === ws.id ? "bg-indigo-600 text-white" : "bg-subtle text-muted"
-                      }`}>
-                        {ws.name.charAt(0)}
-                      </span>
-                      <span className="truncate flex-1">{ws.name}</span>
-                      {activeWsId === ws.id && (
-                        <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      )}
-                    </button>
-                  ))}
-                </div>
+                <Link
+                  href={activeWsId ? `/settings?ws=${activeWsId}` : "/settings"}
+                  onClick={() => setWsOpen(false)}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-subtle transition-colors border-b border-border"
+                >
+                  <svg className="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                  </svg>
+                  {t("nav.settings")}
+                </Link>
 
-                <div className="border-t border-border mt-2 p-3 space-y-2">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold uppercase tracking-wider text-muted">Team</span>
-                    <span className="text-muted">{t("layout.membersCount", { count: 1 + activeMembers.length })}</span>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      onClick={() => {
-                        setWsOpen(false);
-                        setInviteModalOpen(true);
-                      }}
-                      className="rounded-lg border border-border px-2 py-1.5 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/30 transition-colors"
-                    >
-                      {t("layout.invite")}
-                    </button>
-                    <Link
-                      href="/settings/members"
-                      onClick={() => setWsOpen(false)}
-                      className="rounded-lg border border-border px-2 py-1.5 text-center text-xs font-semibold text-muted hover:bg-subtle hover:text-foreground transition-colors"
-                    >
-                      Manage
-                    </Link>
-                  </div>
-                  {activeWs?.role === 'owner' && (
-                    <div className="grid grid-cols-2 gap-2 pt-1">
+                <div
+                  className="px-4 py-3 border-b border-border relative"
+                  onMouseEnter={() => setWorkspacePickerOpen(true)}
+                  onMouseLeave={() => setWorkspacePickerOpen(false)}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setWorkspacePickerOpen((o) => !o)}
+                    className="w-full flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium text-foreground hover:bg-subtle transition-colors"
+                  >
+                    <span className="flex items-center gap-3">
+                      <svg className="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                      </svg>
+                      Switch workspace
+                    </span>
+                    <svg className={`w-4 h-4 text-muted transition-transform ${workspacePickerOpen ? "rotate-90" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                  </button>
+                  {workspacePickerOpen && (
+                    <div className="absolute left-full top-0 ml-2 w-72 rounded-2xl border border-border bg-white dark:bg-background shadow-xl overflow-hidden z-[60]">
+                      {workspaces.map((ws) => (
+                        <button
+                          key={ws.id}
+                          onClick={() => {
+                            setActiveWsId(ws.id);
+                            setWorkspacePickerOpen(false);
+                            setWsOpen(false);
+                            router.replace(`?ws=${ws.id}`, { scroll: false });
+                          }}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm text-left transition-colors ${activeWsId === ws.id ? "bg-subtle text-foreground font-semibold" : "text-foreground hover:bg-subtle"}`}
+                        >
+                          <span className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 text-sm font-semibold flex items-center justify-center shrink-0">{ws.name.charAt(0)}</span>
+                          <span className="truncate flex-1">{ws.name}</span>
+                          <span className="text-[11px] px-2 py-0.5 rounded-md border border-border text-muted shrink-0">{tierLabel(currentUser.plan)}</span>
+                        </button>
+                      ))}
                       <button
                         onClick={() => {
+                          setWorkspacePickerOpen(false);
                           setWsOpen(false);
-                          const next = projects.find((project) => !project.is_default) || null;
-                          if (next) {
-                            setProjects((prev) => prev.map((project) => ({ ...project, is_default: project.id === next.id })));
-                            showToast(`Default project set to ${next.name}`, 'success');
-                          } else {
-                            setCreateProjectModalOpen(true);
-                          }
+                          setCreateWsModalOpen(true);
                         }}
-                        className="rounded-lg border border-border px-2 py-1.5 text-xs font-semibold text-foreground hover:bg-subtle transition-colors"
+                        className="w-full flex items-center gap-3 px-3 py-3 text-sm text-left text-foreground hover:bg-subtle transition-colors border-t border-border"
                       >
-                        Change Project
-                      </button>
-                      <button
-                        onClick={() => {
-                          setWsOpen(false);
-                          const nextFolder = folders.find((folder) => folder !== defaultFolder) || null;
-                          if (nextFolder) {
-                            setFolders((prev) => [nextFolder, ...prev.filter((folder) => folder !== nextFolder)]);
-                            showToast(`Default folder set to ${nextFolder}`, 'success');
-                          } else {
-                            setCreateFolderModalOpen(true);
-                          }
-                        }}
-                        className="rounded-lg border border-border px-2 py-1.5 text-xs font-semibold text-foreground hover:bg-subtle transition-colors"
-                      >
-                        Change Folder
+                        <span className="text-xl leading-none">+</span>
+                        Join or create workspace
                       </button>
                     </div>
                   )}
                 </div>
 
-                <div className="border-t border-border pt-1">
-                  <button
-                    onClick={() => {
-                      setWsOpen(false);
-                      setCreateWsModalOpen(true);
-                    }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 text-xs text-muted hover:bg-subtle hover:text-foreground transition-colors group"
-                  >
-                    <span className="w-5 h-5 rounded border border-dashed border-muted/40 text-muted group-hover:border-indigo-400 group-hover:text-indigo-600 text-xs leading-none flex items-center justify-center shrink-0">
-                      +
-                    </span>
-                    {t("layout.createNewWorkspace")}
-                  </button>
-                </div>
+                <button
+                  onClick={async () => {
+                    await supabase.auth.signOut();
+                    router.replace("/");
+                  }}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-subtle transition-colors"
+                >
+                  <svg className="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  {t("nav.signOut")}
+                </button>
               </div>
             </>
           )}
@@ -1018,90 +970,6 @@ export default function DashboardLayout({
               {t("nav.admin")}
             </Link>
           )}
-
-          {/* Projects */}
-          <div className="pt-4 space-y-1">
-            <div className="flex items-center justify-between px-3 pb-1">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted flex items-center gap-1.5">
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 7h16M4 12h16M4 17h16"/>
-                </svg>
-                {t("layout.projects")}
-              </p>
-              <button
-                onClick={() => setCreateProjectModalOpen(true)}
-                className="text-[10px] font-bold text-indigo-600 hover:underline"
-              >
-                {t("layout.create")}
-              </button>
-            </div>
-            <div className="max-h-40 overflow-visible space-y-0.5">
-              {projects.map((project) => (
-                <div
-                  key={project.id}
-                  className="relative w-full flex items-center justify-between gap-1 px-1 rounded-lg group/project transition-colors hover:bg-subtle"
-                >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setWsOpen(false);
-                      router.replace(`/captures?ws=${activeWsId}&project=${project.id}`, { scroll: false });
-                    }}
-                    className="flex-1 flex items-center gap-2.5 px-2 py-1.5 text-xs truncate text-muted hover:text-foreground"
-                  >
-                    <span className="text-xs shrink-0">🧩</span>
-                    <span className="truncate flex-1 text-left">{project.name}</span>
-                    {project.is_default && <span className="text-[10px] uppercase tracking-wide">Default</span>}
-                  </button>
-                  {activeWs?.role === "owner" && !project.is_default && (
-                    <div className="shrink-0 pr-1">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setProjectMenuOpen((open) => (open === project.id ? null : project.id));
-                        }}
-                        aria-label={`${project.name} actions`}
-                        className="flex h-6 w-6 items-center justify-center rounded-md text-muted hover:bg-subtle hover:text-foreground transition-colors"
-                      >
-                        <span aria-hidden="true">⋯</span>
-                      </button>
-                      {projectMenuOpen === project.id && (
-                        <>
-                          <div className="fixed inset-0 z-40" onClick={() => setProjectMenuOpen(null)} />
-                          <div className="absolute right-1 top-full z-50 mt-1 w-28 overflow-hidden rounded-lg border border-border bg-subtle py-1 text-xs shadow-lg">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setProjectMenuOpen(null);
-                                setProjectToRename({ id: project.id, name: project.name });
-                                setRenameProjectName(project.name);
-                              }}
-                              className="block w-full px-3 py-2 text-left text-foreground hover:bg-subtle"
-                            >
-                              Rename
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setProjectMenuOpen(null);
-                                setProjectToDelete({ id: project.id, name: project.name });
-                              }}
-                              className="block w-full px-3 py-2 text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
-                            >
-                              Delete
-                            </button>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </div>
-              ))}
-              {projects.length === 0 && <div className="px-3 py-2 text-xs text-muted">No projects yet</div>}
-            </div>
-          </div>
 
           {/* Google Drive Folders List (Sync Bridge) */}
           <div className="pt-4 space-y-1">
@@ -1215,88 +1083,7 @@ export default function DashboardLayout({
           </div>
         </nav>
 
-        <div className="mt-auto shrink-0">
-        {/* SaaS Upgrade CTA (Free tier only) */}
-        {currentUser.plan === "free" && !upgradeCardDismissed && (
-          <div className="relative px-4 py-3 mx-3 mb-3 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-800/40 rounded-xl">
-            <button
-              type="button"
-              onClick={() => setUpgradeCardDismissed(true)}
-              aria-label="Close upgrade offer"
-              title="Close"
-              className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-md text-indigo-500 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 hover:text-indigo-900 dark:hover:text-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            >
-              <span aria-hidden="true">×</span>
-            </button>
-            <h5 className="pr-7 text-[11px] font-bold text-indigo-900 dark:text-indigo-200 tracking-wide uppercase">{t("layout.upgradeToPro")}</h5>
-            <p className="text-[10px] text-indigo-700 dark:text-indigo-300 leading-tight mt-1 mb-2.5">{t("layout.upgradeDesc")}</p>
-            <button
-              onClick={() => setBillingModalOpen(true)}
-              className="w-full py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition-colors text-center block"
-            >
-              {t("layout.upgradeNow")}
-            </button>
-          </div>
-        )}
-
-        <div className="relative px-3 py-4 border-t border-border">
-          <button
-            onClick={() => setUserMenuOpen(!userMenuOpen)}
-            className="w-full flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-subtle transition-colors text-left"
-          >
-            {currentUser.avatar ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={currentUser.avatar} alt="" referrerPolicy="no-referrer" className="w-8 h-8 rounded-full object-cover shrink-0" />
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-indigo-600 text-white text-xs font-semibold flex items-center justify-center shrink-0">
-                {initials}
-              </div>
-            )}
-            <div className="text-sm min-w-0 flex-1">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <p className="font-medium text-foreground truncate">{currentUser.name}</p>
-                {currentUser.plan !== "free" && (
-                  <span className="bg-indigo-600 text-white text-[9px] font-bold px-1.5 py-0 rounded inline-flex items-center justify-center leading-none h-[15px] shrink-0 uppercase tracking-wide">
-                    {tierLabel(currentUser.plan)}
-                  </span>
-                )}
-              </div>
-              <p className="text-muted text-xs truncate">{currentUser.email}</p>
-            </div>
-          </button>
-
-          {userMenuOpen && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} />
-              <div className="absolute bottom-full left-3 right-3 mb-1 z-50 rounded-lg border border-border bg-subtle shadow-lg py-1">
-                <Link
-                  href={activeWsId ? `/settings?ws=${activeWsId}` : "/settings"}
-                  onClick={() => setUserMenuOpen(false)}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-foreground hover:bg-subtle transition-colors"
-                >
-                  <svg className="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
-                  {t("nav.settings")}
-                </Link>
-                <button
-                  onClick={async () => {
-                    await supabase.auth.signOut();
-                    router.replace("/");
-                  }}
-                  className="w-full flex items-center gap-2.5 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                >
-                  <svg className="w-4 h-4 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                  </svg>
-                  {t("nav.signOut")}
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-        </div>
+        <div className="mt-auto shrink-0" />
       </aside>
       )}
 

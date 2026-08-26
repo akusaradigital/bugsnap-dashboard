@@ -12,6 +12,7 @@ export async function GET(request: Request) {
       email: result.email,
       updatedAt: result.updatedAt,
       message: result.message,
+      quota: result.quota ?? null,
     });
   } catch {
     return NextResponse.json({ error: "Unable to read connection" }, { status: 500 });

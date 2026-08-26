@@ -170,6 +170,7 @@ function SettingsContent() {
   // Drive tab
   const [driveStatus, setDriveStatus] = useState<"connected" | "reconnect_required" | "not_connected">("not_connected");
   const [driveEmail, setDriveEmail] = useState<string | null>(null);
+  const [driveQuota, setDriveQuota] = useState<{ usedBytes: number | null; totalBytes: number | null } | null>(null);
   const [driveLoading, setDriveLoading] = useState(true);
   const [driveActionLoading, setDriveActionLoading] = useState(false);
   const [driveError, setDriveError] = useState<string | null>(null);
@@ -246,6 +247,19 @@ function SettingsContent() {
     })();
   }, [activeWsId, activeTab]);
 
+  function formatDriveBytes(bytes: number | null) {
+    if (!Number.isFinite(bytes) || bytes == null || bytes < 0) return null;
+    const units = ["B", "KB", "MB", "GB", "TB", "PB"];
+    let value = bytes;
+    let idx = 0;
+    while (value >= 1024 && idx < units.length - 1) {
+      value /= 1024;
+      idx++;
+    }
+    const fixed = value >= 100 || idx === 0 ? 0 : value >= 10 ? 1 : 2;
+    return `${value.toFixed(fixed)} ${units[idx]}`;
+  }
+
   async function driveRequest(path: string, init?: RequestInit) {
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
@@ -263,6 +277,7 @@ function SettingsContent() {
         if (!c) {
           setDriveStatus((r.status as "connected" | "reconnect_required" | "not_connected") || (r.connected ? "connected" : "not_connected"));
           setDriveEmail(r.email || null);
+          setDriveQuota(r.quota || null);
         }
       })
       .catch(() => {})
@@ -298,7 +313,7 @@ function SettingsContent() {
     setDriveActionLoading(true); setDriveError(null);
     try {
       await driveRequest("/api/google-drive/disconnect", { method: "DELETE" });
-      setDriveStatus("not_connected"); setDriveEmail(null);
+      setDriveStatus("not_connected"); setDriveEmail(null); setDriveQuota(null);
       setIntegrationsHealth((prev) => prev ? { ...prev, drive: { state: "not_configured", status: "not_connected", email: null, message: "Google Drive is not connected" } } : prev);
     } catch (e) { setDriveError(e instanceof Error ? e.message : t("settings.disconnectError")); }
     finally { setDriveActionLoading(false); }
@@ -492,6 +507,17 @@ function SettingsContent() {
                     {!driveLoading && <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${driveStatus === "connected" ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/40" : driveStatus === "reconnect_required" ? "text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/40" : "text-muted bg-subtle border-border"}`}>{driveStatus === "connected" ? t("settings.connected") : driveStatus === "reconnect_required" ? t("settings.reconnectRequired") : t("settings.notConnected")}</span>}
                   </h2>
                   <p className="text-xs text-muted mt-0.5">{driveLoading ? "Checking..." : driveStatus === "connected" ? `Dashboard actions using ${driveEmail || "connected account"}` : driveStatus === "reconnect_required" ? "Reconnect Drive for server-side actions." : "Connect for server-side Drive actions."}</p>
+                  {!driveLoading && driveStatus === "connected" && driveQuota?.usedBytes != null && driveQuota?.totalBytes != null && driveQuota.totalBytes > 0 && (
+                    <div className="mt-2 space-y-1.5">
+                      <p className="text-[11px] text-muted">Using {formatDriveBytes(driveQuota.usedBytes)} of {formatDriveBytes(driveQuota.totalBytes)} used</p>
+                      <div className="h-2 rounded-full bg-border overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-indigo-500"
+                          style={{ width: `${Math.max(0, Math.min(100, (driveQuota.usedBytes / driveQuota.totalBytes) * 100))}%` }}
+                        />
+                      </div>
+                    </div>
+                  )}
                   <p className="text-[11px] text-muted">Extension connection is managed separately.</p>
                 </div>
                 {driveStatus === "connected" ? (

@@ -410,12 +410,6 @@ function CapturesContent() {
   const [search, setSearch] = useState("");
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [editing, setEditing] = useState<Capture | null>(null);
-  const [movingCapture, setMovingCapture] = useState<Capture | null>(null);
-  const [moveProjectId, setMoveProjectId] = useState("");
-  const [movingProject, setMovingProject] = useState(false);
-  const [bulkMoveOpen, setBulkMoveOpen] = useState(false);
-  const [bulkMoveProjectId, setBulkMoveProjectId] = useState("");
-  const [bulkMoving, setBulkMoving] = useState(false);
   const [statusQuickId, setStatusQuickId] = useState<string | null>(null);
   const [deleteRequest, setDeleteRequest] = useState<{ ids: string[]; title?: string; operationId: string } | null>(null);
   const [deleteMode, setDeleteMode] = useState<"drive_trash" | "app_only">("drive_trash");
@@ -425,8 +419,12 @@ function CapturesContent() {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
-  const [uploadProjectId, setUploadProjectId] = useState<string>("");
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [moveToOpen, setMoveToOpen] = useState(false);
+  const [moving, setMoving] = useState(false);
+  const [moveTargetWorkspaceId, setMoveTargetWorkspaceId] = useState<string>("");
+  const [moveTargetFolderName, setMoveTargetFolderName] = useState<string>("");
+  const [moveWorkspaces, setMoveWorkspaces] = useState<Array<{ id: string; name: string }>>([]);
+  const [moveFolders, setMoveFolders] = useState<string[]>([]);
   const [dragActive, setDragActive] = useState(false);
   const [thumbFailed, setThumbFailed] = useState<Record<string, boolean>>({});
   const [userPlan, setUserPlan] = useState<Plan>("free");
@@ -679,7 +677,7 @@ function CapturesContent() {
       }
 
       setDeleteRequest(null);
-      if (selectMode) exitSelectMode();
+      clearSelection();
     } catch (error) {
       console.warn("Error deleting captures:", error);
       setDeleteError(error instanceof Error ? error.message : "Could not delete the selected captures. Please try again.");
@@ -688,8 +686,6 @@ function CapturesContent() {
     }
   }
 
-  // Bulk-select mode for deleting many captures at once.
-  const [selectMode, setSelectMode] = useState(false);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   function toggleSelect(id: string) {
@@ -701,15 +697,13 @@ function CapturesContent() {
     });
   }
 
-  function exitSelectMode() {
-    setSelectMode(false);
+  function clearSelection() {
     setSelectedIds(new Set());
   }
 
   async function uploadSelectedFile(file: File) {
     if (!file || uploading) return;
     const title = file.name.replace(/\.[^.]+$/, "") || "Untitled";
-    setUploadFile(file);
     setUploading(true);
     setUploadError(null);
     setUploadSuccess(null);
@@ -719,7 +713,6 @@ function CapturesContent() {
       form.append("title", title);
       form.append("type", file.type.startsWith("video/") ? "video" : "screenshot");
       form.append("workspaceId", workspaceParam);
-      if (uploadProjectId || projectFilter) form.append("projectId", uploadProjectId || projectFilter);
       const { data: sessionData } = await supabase.auth.getSession();
       const response = await fetch("/api/captures/upload", {
         method: "POST",
@@ -744,46 +737,6 @@ function CapturesContent() {
     await uploadSelectedFile(file);
   }
 
-  async function submitMoveProject() {
-    if (!movingCapture || movingProject) return;
-    setMovingProject(true);
-    try {
-      const { data, error } = await supabase
-        .from("captures")
-        .update({ project_id: moveProjectId || null })
-        .eq("id", movingCapture.id)
-        .select()
-        .single();
-      if (error) throw error;
-      setCaptures((prev) => prev.map((c) => c.id === movingCapture.id ? { ...c, ...(data as Capture), project_id: moveProjectId || null } : c));
-      setMovingCapture(null);
-      setMoveProjectId("");
-    } catch (error) {
-      setUploadError(error instanceof Error ? error.message : "Failed moving project");
-    } finally {
-      setMovingProject(false);
-    }
-  }
-
-  async function submitBulkMove() {
-    if (bulkMoving || selectedIds.size === 0) return;
-    setBulkMoving(true);
-    try {
-      const ids = Array.from(selectedIds);
-      const { error } = await supabase
-        .from("captures")
-        .update({ project_id: bulkMoveProjectId || null })
-        .in("id", ids);
-      if (error) throw error;
-      setCaptures((prev) => prev.map((c) => ids.includes(c.id) ? { ...c, project_id: bulkMoveProjectId || null } : c));
-      setBulkMoveOpen(false);
-      exitSelectMode();
-    } catch (error) {
-      setUploadError(error instanceof Error ? error.message : "Failed moving captures");
-    } finally {
-      setBulkMoving(false);
-    }
-  }
 
   async function submitQuickStatus(captureId: string, nextStatus: string) {
     if (statusQuickId) return;
@@ -819,7 +772,38 @@ function CapturesContent() {
   const screenshotCount = workspaceCaptures.filter((c) => c.type === "screenshot").length;
 
   return (
-    <div className="w-full min-w-0 p-3 sm:p-8 max-w-6xl mx-auto">
+    <div
+      className="w-full min-w-0 p-3 sm:p-8 max-w-6xl mx-auto"
+      onDragEnter={(e) => {
+        e.preventDefault();
+        setDragActive(true);
+      }}
+    >
+      {dragActive && (
+        <div
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-indigo-600/10 backdrop-blur-sm border-4 border-dashed border-indigo-600 m-4 rounded-2xl transition-all"
+          onDragOver={(e) => e.preventDefault()}
+          onDragLeave={() => setDragActive(false)}
+          onDrop={(e) => {
+            e.preventDefault();
+            setDragActive(false);
+            const file = e.dataTransfer.files?.[0];
+            if (file) void uploadSelectedFile(file);
+          }}
+        >
+          <div className="bg-white dark:bg-zinc-950 p-6 rounded-2xl shadow-xl flex flex-col items-center gap-3 max-w-sm text-center">
+            <div className="w-12 h-12 rounded-full bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+              <svg className="w-6 h-6 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              </svg>
+            </div>
+            <div>
+              <p className="font-semibold text-foreground text-sm">Drop file to upload</p>
+              <p className="text-xs text-muted mt-1">Upload your screenshot or video to BugSnap</p>
+            </div>
+          </div>
+        </div>
+      )}
       {shortcutCopied && activeHoverId && (
         <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-neutral-900 text-white text-xs font-medium px-3 py-2 rounded-lg shadow-lg">
           {t("cap.copiedShortcut")}
@@ -829,61 +813,30 @@ function CapturesContent() {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 sm:mb-8 gap-4">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">{t("cap.title")}</h1>
 
-        <div className="grid grid-cols-1 min-[430px]:grid-cols-[minmax(0,1fr)_auto_auto_auto_auto] lg:flex items-center gap-3 w-full lg:w-auto">
-          <div className="relative col-span-2 min-[430px]:col-span-1 min-w-0">
+        <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+          <div className="relative flex-1 min-w-[200px] lg:flex-none lg:w-64">
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             <input
               type="text"
               placeholder={t("cap.search")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 pr-3 py-2 text-sm rounded-lg border border-border bg-subtle focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 w-full min-w-0 lg:w-64"
+              className="h-10 pl-9 pr-3 text-sm rounded-lg border border-border bg-subtle focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 w-full"
             />
           </div>
           {!selectMode ? (
             <>
-              <label
-                onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
-                onDragLeave={() => setDragActive(false)}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  setDragActive(false);
-                  const file = e.dataTransfer.files?.[0];
-                  if (file) void uploadSelectedFile(file);
-                }}
-                className={`col-span-2 min-[430px]:col-span-1 flex items-center justify-between gap-3 rounded-xl border px-3 py-3 text-sm cursor-pointer transition-colors ${dragActive ? "border-indigo-500 bg-indigo-50" : "border-border bg-subtle"}`}
-              >
+              <label className="h-10 flex items-center justify-center gap-2 px-4 border border-border bg-subtle text-muted hover:text-foreground hover:bg-subtle/80 text-sm font-medium rounded-lg transition-colors cursor-pointer whitespace-nowrap">
                 <input type="file" className="hidden" onChange={handleManualUpload} accept="image/*,video/*" />
-                <div className="min-w-0">
-                  <p className="font-medium text-foreground">{uploadFile ? uploadFile.name : "Upload manually"}</p>
-                  <p className="text-xs text-muted">{uploadFile ? `${uploadFile.type || "file"}` : "Drop image/video here or click to choose"}</p>
-                </div>
-                <span className="text-xs font-semibold text-indigo-600">{uploading ? "Uploading..." : "Choose"}</span>
-              </label>
-              <select
-                value={uploadProjectId}
-                onChange={(e) => setUploadProjectId(e.target.value)}
-                className="min-w-0 rounded-lg border border-border bg-subtle px-3 py-2 text-sm text-foreground"
-              >
-                <option value="">Project</option>
-                {(() => {
-                  const seen = new Set<string>();
-                  return workspaceCaptures
-                    .map((c) => ({ id: c.project_id || "", name: c.project_name || c.folder_name || "Unassigned" }))
-                    .filter((item) => item.id && !seen.has(item.id) && seen.add(item.id))
-                    .map((item) => (
-                      <option key={item.id} value={item.id}>{item.name}</option>
-                    ));
-                })()}
-              </select>
-              <label className="flex items-center justify-center gap-2 px-3 min-[430px]:px-4 py-2 bg-indigo-600 text-white text-sm font-medium rounded-lg hover:bg-indigo-700 transition-colors whitespace-nowrap min-w-0 cursor-pointer">
-                <input type="file" className="hidden" onChange={handleManualUpload} accept="image/*,video/*" />
-                {uploading ? "Uploading..." : "Upload"}
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                {uploading ? "Uploading..." : "Upload file"}
               </label>
               <button
                 onClick={() => setSelectMode(true)}
                 disabled={filteredCaptures.length === 0}
-                className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-border bg-subtle text-sm font-medium text-muted hover:text-foreground hover:bg-subtle transition-colors disabled:opacity-40 min-w-0"
+                className="h-10 flex items-center justify-center gap-2 px-4 rounded-lg border border-border bg-subtle text-sm font-medium text-muted hover:text-foreground hover:bg-subtle transition-colors disabled:opacity-40 whitespace-nowrap"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
                 {t("cap.select")}
@@ -893,22 +846,15 @@ function CapturesContent() {
                 target="_blank"
                 rel="noopener noreferrer"
                 title="Install BugSnap from the Chrome Web Store"
-                className="flex items-center justify-center gap-2 px-3 min-[430px]:px-4 py-2 bg-emerald-400 text-white text-sm font-medium rounded-lg hover:bg-emerald-500 transition-colors whitespace-nowrap min-w-0"
+                className="h-10 flex items-center justify-center gap-2 px-4 bg-emerald-400 text-white text-sm font-medium rounded-lg hover:bg-emerald-500 transition-colors whitespace-nowrap"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
                 {t("cap.newCapture")}
               </a>
             </>
           ) : (
-            <div className="col-span-2 min-[430px]:col-span-3 flex flex-wrap items-center gap-2">
-              <button
-                onClick={() => { setBulkMoveOpen(true); setBulkMoveProjectId(""); }}
-                disabled={selectedIds.size === 0}
-                className="px-3 py-2 rounded-lg border border-border bg-subtle text-xs font-medium text-muted hover:text-foreground hover:bg-subtle transition-colors disabled:opacity-40"
-              >
-                Move project
-              </button>
-              <span className="text-xs text-muted mr-1">
+            <div className="flex flex-wrap items-center gap-2">
+                <span className="text-sm text-muted mr-1">
                 {t("cap.selected", { count: selectedIds.size })}
               </span>
               <button
@@ -922,7 +868,7 @@ function CapturesContent() {
                       )
                   )
                 }
-                className="px-3 py-2 rounded-lg border border-border bg-subtle text-xs font-medium text-muted hover:text-foreground hover:bg-subtle transition-colors"
+                className="h-10 px-4 rounded-lg border border-border bg-subtle text-sm font-medium text-muted hover:text-foreground hover:bg-subtle transition-colors"
               >
                 {selectedIds.size === filteredCaptures.length && selectedIds.size > 0
                   ? t("cap.deselectAll")
@@ -931,13 +877,13 @@ function CapturesContent() {
               <button
                 onClick={() => openDeleteConfirmation(Array.from(selectedIds))}
                 disabled={selectedIds.size === 0 || deleting}
-                className="px-3 py-2 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700 disabled:opacity-40 transition-colors"
+                className="h-10 px-4 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 disabled:opacity-40 transition-colors"
               >
                 {t("cap.deleteSelected", { count: selectedIds.size || "" })}
               </button>
               <button
                 onClick={exitSelectMode}
-                className="px-3 py-2 rounded-lg border border-border bg-subtle text-xs font-medium text-muted hover:text-foreground hover:bg-subtle transition-colors"
+                className="h-10 px-4 rounded-lg border border-border bg-subtle text-sm font-medium text-muted hover:text-foreground hover:bg-subtle transition-colors"
               >
                 {t("common.cancel")}
               </button>
@@ -1253,8 +1199,8 @@ function CapturesContent() {
                     <h3 className="font-medium text-foreground truncate max-w-[190px] group-hover:text-indigo-600 transition-colors">
                       {item.title}
                     </h3>
-                    {(item.project_name || item.folder_name) && (
-                      <p className="text-[11px] text-muted truncate mt-0.5">{item.project_name || item.folder_name}</p>
+                    {item.folder_name && (
+                      <p className="text-[11px] text-muted truncate mt-0.5">{item.folder_name}</p>
                     )}
                   </div>
                   <span className="text-muted shrink-0">
@@ -1319,17 +1265,6 @@ function CapturesContent() {
                       {t("cap.edit")}
                     </button>
                     <button
-                      onClick={() => {
-                        setMovingCapture(item);
-                        setMoveProjectId(item.project_id || "");
-                        setOpenMenuId(null);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-subtle transition-colors"
-                    >
-                      <svg className="w-3.5 h-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 7h18M3 12h18M3 17h18" /></svg>
-                      Move project
-                    </button>
-                    <button
                       onClick={() => openDeleteConfirmation([item.id], item.title)}
                       disabled={deleting}
                       className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 disabled:opacity-50 transition-colors"
@@ -1362,63 +1297,6 @@ function CapturesContent() {
 
       {editing && <EditModal capture={editing} userPlan={userPlan} onClose={() => setEditing(null)} onSaved={(updated) => setCaptures((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))} />}
 
-      {bulkMoveOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setBulkMoveOpen(false)} />
-          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-6">
-            <h2 className="text-lg font-bold text-foreground mb-1">Move selected captures</h2>
-            <p className="text-sm text-muted mb-5">Move {selectedIds.size} selected captures to a project.</p>
-            <select value={bulkMoveProjectId} onChange={(e) => setBulkMoveProjectId(e.target.value)} className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-subtle">
-              <option value="">Unassigned</option>
-              {(() => {
-                const seen = new Set<string>();
-                return captures
-                  .map((c) => ({ id: c.project_id || "", name: c.project_name || c.folder_name || "Unassigned" }))
-                  .filter((item) => item.id && !seen.has(item.id) && seen.add(item.id))
-                  .map((item) => <option key={item.id} value={item.id}>{item.name}</option>);
-              })()}
-            </select>
-            <div className="flex items-center justify-end gap-3 mt-6">
-              <button onClick={() => setBulkMoveOpen(false)} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors">{t("common.cancel")}</button>
-              <button onClick={submitBulkMove} disabled={bulkMoving || selectedIds.size === 0} className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors">
-                {bulkMoving ? "Moving..." : "Move"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {movingCapture && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setMovingCapture(null)} />
-          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-6">
-            <h2 className="text-lg font-bold text-foreground mb-1">Move to project</h2>
-            <p className="text-sm text-muted mb-5">Choose a project for {movingCapture.title}.</p>
-            <select
-              value={moveProjectId}
-              onChange={(e) => setMoveProjectId(e.target.value)}
-              className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-subtle"
-            >
-              <option value="">Unassigned</option>
-              {(() => {
-                const seen = new Set<string>();
-                return captures
-                  .map((c) => ({ id: c.project_id || "", name: c.project_name || c.folder_name || "Unassigned" }))
-                  .filter((item) => item.id && !seen.has(item.id) && seen.add(item.id))
-                  .map((item) => (
-                    <option key={item.id} value={item.id}>{item.name}</option>
-                  ));
-              })()}
-            </select>
-            <div className="flex items-center justify-end gap-3 mt-6">
-              <button onClick={() => setMovingCapture(null)} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors">{t("common.cancel")}</button>
-              <button onClick={submitMoveProject} disabled={movingProject} className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors">
-                {movingProject ? "Saving..." : "Save"}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {deleteRequest && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="delete-captures-title">
