@@ -103,17 +103,6 @@ function driveThumbUrl(driveUrl: string, size = 400): string | null {
   return id ? `https://drive.google.com/thumbnail?id=${id}&sz=w${size}` : null;
 }
 
-function consoleErrorCount(item: Capture): number {
-  if (!Array.isArray(item.dev_logs)) {
-    // Compact health summary shape (v1): count its errors directly.
-    const s = item.dev_logs as { version?: number; errors?: number } | null | undefined;
-    return typeof s?.errors === "number" ? s.errors : 0;
-  }
-  return item.dev_logs
-    .filter((l) => l.type === "console" && l.level !== "warn" && l.level !== "warning")
-    .reduce((total, log) => total + Math.max(1, Number(log.count) || 1), 0);
-}
-
 function expiryToOption(expiresAt: string | null | undefined, createdAt: string): string {
   if (!expiresAt) return "never";
   const diffMs = new Date(expiresAt).getTime() - new Date(createdAt).getTime();
@@ -400,9 +389,7 @@ function CapturesContent() {
   const [captures, setCaptures] = useState<Capture[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
-  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [editing, setEditing] = useState<Capture | null>(null);
-  const [statusQuickId, setStatusQuickId] = useState<string | null>(null);
   const [deleteRequest, setDeleteRequest] = useState<{ ids: string[]; title?: string; operationId: string } | null>(null);
   const [deleteMode, setDeleteMode] = useState<"drive_trash" | "app_only">("drive_trash");
   const [deleting, setDeleting] = useState(false);
@@ -585,7 +572,6 @@ function CapturesContent() {
     setDriveIssue(null);
     setDeleteError(null);
     setDeleteRequest({ ids, title, operationId: crypto.randomUUID() });
-    setOpenMenuId(null);
   }
 
   async function submitDelete() {
@@ -774,20 +760,6 @@ function CapturesContent() {
       setUploadError(error instanceof Error ? error.message : "Failed moving captures");
     } finally {
       setMoving(false);
-    }
-  }
-
-  async function submitQuickStatus(captureId: string, nextStatus: string) {
-    if (statusQuickId) return;
-    setStatusQuickId(captureId);
-    try {
-      const { error } = await supabase.from("captures").update({ status: nextStatus || null }).eq("id", captureId);
-      if (error) throw error;
-      setCaptures((prev) => prev.map((c) => c.id === captureId ? { ...c, status: nextStatus || null } : c));
-    } catch (error) {
-      setUploadError(error instanceof Error ? error.message : "Failed updating status");
-    } finally {
-      setStatusQuickId(null);
     }
   }
 
@@ -1069,8 +1041,19 @@ function CapturesContent() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredCaptures.map((item) => {
             const isSelected = selectedIds.has(item.id);
-            const CardWrapper = Link as React.ElementType;
-            const cardProps = { href: `/v/${item.id}`, className: "flex flex-col flex-1 group" };
+            const isSelectionActive = selectedIds.size > 0;
+            // When in selection mode (at least 1 item selected), clicking anywhere on the card toggles selection instead of opening the link
+            const CardWrapper = (isSelectionActive ? "div" : Link) as React.ElementType;
+            const cardProps = isSelectionActive
+              ? {
+                  onClick: (e: React.MouseEvent) => {
+                    e.preventDefault();
+                    toggleSelect(item.id);
+                  },
+                  className: "flex flex-col flex-1 cursor-pointer select-none",
+                }
+              : { href: `/v/${item.id}`, className: "flex flex-col flex-1 group" };
+
             return (
             <div
               key={item.id}
@@ -1120,35 +1103,67 @@ function CapturesContent() {
                     </div>
                   )}
 
-                  <button
-                    type="button"
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleSelect(item.id); }}
-                    className={`absolute top-3 left-3 z-20 w-7 h-7 rounded-xl border-2 flex items-center justify-center transition-all ${
-                      isSelected
-                        ? "bg-emerald-700 border-emerald-700 text-white opacity-100"
-                        : "bg-background/95 border-white/90 text-transparent opacity-0 group-hover:opacity-100"
-                    }`}
-                  >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                    </svg>
-                  </button>
-
-                  {/* Gradient Overlay for Top Left Avatar */}
+                  {/* Gradient Overlay for Top Badges */}
                   <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-transparent to-black/30 opacity-80 pointer-events-none" />
 
-                  {/* Top-Left Avatar / Initial Badge (Jam.dev style) */}
-                  <div className="absolute top-3 left-12 right-16 flex items-center gap-2 z-10">
-                    <div className={`w-7 h-7 rounded-full ${getAvatarColor(item.owner_email)} text-white text-xs font-bold flex items-center justify-center shadow-sm border border-white/20 shrink-0`}>
-                      {getOwnerInitial(item.owner_email)}
+                  {/* Top-Left: Normal = Author Avatar & Name; Hover / Selected = Checkbox */}
+                  <div className="absolute top-3 left-3 z-20 flex items-center">
+                    {/* Checkbox: visible when selected OR on hover */}
+                    <button
+                      type="button"
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleSelect(item.id); }}
+                      aria-label="Select capture"
+                      className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center transition-all shadow-sm ${
+                        isSelected
+                          ? "bg-indigo-600 border-indigo-600 text-white opacity-100 flex"
+                          : "bg-white/90 dark:bg-zinc-900/90 border-slate-300 dark:border-zinc-600 text-transparent opacity-0 group-hover:opacity-100 hidden group-hover:flex"
+                      }`}
+                    >
+                      <svg className={`w-4 h-4 ${isSelected ? "text-white" : "text-transparent group-hover:text-transparent"}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                      </svg>
+                    </button>
+
+                    {/* Author Badge: hidden when selected OR on hover */}
+                    <div className={`items-center gap-2 transition-opacity ${isSelected ? "hidden" : "flex group-hover:hidden"}`}>
+                      <div className={`w-7 h-7 rounded-full ${getAvatarColor(item.owner_email)} text-white text-xs font-bold flex items-center justify-center shadow-sm border border-white/20 shrink-0`}>
+                        {getOwnerInitial(item.owner_email)}
+                      </div>
+                      <span className="text-xs font-medium text-white drop-shadow-sm truncate max-w-[140px]">
+                        {item.owner_email ? item.owner_email.split("@")[0] : item.title}
+                      </span>
                     </div>
-                    <span className="text-xs font-medium text-white drop-shadow-sm truncate flex-1 min-w-0">
-                      {item.title}
-                    </span>
                   </div>
 
-                  {/* Status badges - top right, non-overlapping */}
-                  <div className="absolute top-3 right-10 flex items-center gap-1.5 z-10">
+                  {/* Top-Right: Quick Copy Link on Hover (hidden when selection active) */}
+                  {!isSelectionActive && (
+                    <div className="absolute top-3 right-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <button
+                        type="button"
+                        aria-label={t("cap.copyLink")}
+                        title={t("cap.copyLink")}
+                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleCopyLink(item.id); }}
+                        className="w-8 h-8 rounded-lg bg-white/90 hover:bg-white text-slate-700 dark:bg-zinc-900/90 dark:hover:bg-zinc-900 dark:text-slate-200 border border-slate-200/80 dark:border-zinc-700 flex items-center justify-center shadow-md transition-colors"
+                      >
+                        {copiedId === item.id ? (
+                          <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                        ) : (
+                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
+                        )}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Bottom Right Duration (Jam.dev style) - Only shows for video */}
+                  {item.type === "video" && (
+                    <div className="absolute bottom-2.5 right-2.5 bg-black/70 backdrop-blur-sm text-white text-[11px] font-medium px-2 py-1 rounded flex items-center gap-1.5 shadow-sm">
+                      <svg className="w-3.5 h-3.5 text-white fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+                      <span>{formatDuration(item.duration)}</span>
+                    </div>
+                  )}
+
+                  {/* Status badges - top right when not hovered */}
+                  <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10 group-hover:opacity-0 transition-opacity">
                     {item.expires_at && new Date(item.expires_at).getTime() < Date.now() && (
                       <span className="text-[10px] font-semibold uppercase tracking-wider text-red-100 bg-red-600/80 px-2 py-0.5 rounded backdrop-blur-sm shadow-sm">
                         {t("cap.expired")}
@@ -1160,53 +1175,13 @@ function CapturesContent() {
                         {t("cap.locked")}
                       </span>
                     )}
-                    {consoleErrorCount(item) > 0 && (
-                      <span className="text-[10px] font-semibold text-red-100 bg-red-600/80 px-2 py-0.5 rounded backdrop-blur-sm shadow-sm">
-                        🔴 {t("cap.errors", { count: consoleErrorCount(item) })}
-                      </span>
-                    )}
                   </div>
-
-                  {/* Bottom Right Duration (Jam.dev style) - Only shows for video */}
-                  {item.type === "video" && (
-                    <div className="absolute bottom-2.5 right-2.5 bg-black/70 backdrop-blur-sm text-white text-[11px] font-medium px-2 py-1 rounded flex items-center gap-1.5 shadow-sm">
-                      <svg className="w-3.5 h-3.5 text-white fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
-                      <span>{formatDuration(item.duration)}</span>
-                    </div>
-                  )}
-
-                  {/* Tag & Status badges (bottom left) */}
-                  {item.tag && (
-                    <span className="absolute bottom-2.5 left-2.5 text-[10px] font-semibold uppercase tracking-wide bg-indigo-600/90 text-white px-2 py-0.5 rounded backdrop-blur-sm shadow-sm">
-                      {item.tag}
-                    </span>
-                  )}
-                  {item.status && item.status !== "open" && (
-                    <select
-                      value={item.status}
-                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                      onChange={(e) => { e.preventDefault(); e.stopPropagation(); void submitQuickStatus(item.id, e.target.value); }}
-                      className={`absolute bottom-2.5 ${item.tag ? "left-[2.75rem]" : "left-2.5"} text-[10px] font-semibold uppercase tracking-wide px-2 py-0.5 rounded backdrop-blur-sm shadow-sm border-0 ${
-                        item.status === "fixed"
-                          ? "bg-emerald-600/90 text-white"
-                          : item.status === "in-progress"
-                          ? "bg-amber-500/90 text-white"
-                          : item.status === "closed"
-                          ? "bg-gray-600/90 text-white"
-                          : "bg-rose-600/90 text-white"
-                      }`}
-                    >
-                      {STATUS_OPTIONS.map((status) => (
-                        <option key={status} value={status}>{status}</option>
-                      ))}
-                    </select>
-                  )}
                 </div>
 
                 {/* Meta Footer */}
                 <div className="p-3.5 flex items-center justify-between text-xs">
-                  <div className="min-w-0">
-                    <h3 className="font-medium text-foreground truncate max-w-[190px] group-hover:text-indigo-600 transition-colors">
+                  <div className="min-w-0 flex-1 pr-2">
+                    <h3 className="font-medium text-foreground truncate group-hover:text-indigo-600 transition-colors">
                       {item.title}
                     </h3>
                     {item.folder_name && (
@@ -1216,75 +1191,8 @@ function CapturesContent() {
                   <span className="text-muted shrink-0">
                     {timeAgo(item.created_at, t)}
                   </span>
-                  </div>
-              </CardWrapper>
-
-              {/* Action menu - hidden until the card is hovered/focused */}
-              {selectedIds.size === 0 && (
-                <div className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1.5 opacity-0 translate-y-1 pointer-events-none transition-all duration-150 group-hover:opacity-100 group-hover:translate-y-0 group-hover:pointer-events-auto focus-within:opacity-100 focus-within:translate-y-0 focus-within:pointer-events-auto">
-                  <button
-                    aria-label={t("cap.copyLink")}
-                    title={t("cap.copyLink")}
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleCopyLink(item.id); }}
-                    className="w-9 h-9 rounded-xl bg-white text-slate-700 border border-slate-200 hover:text-emerald-700 hover:bg-emerald-50 hover:border-emerald-200 dark:bg-zinc-900 dark:text-slate-100 dark:border-zinc-700 dark:hover:text-emerald-300 dark:hover:bg-emerald-950/40 dark:hover:border-emerald-700 flex items-center justify-center shadow-lg shadow-black/10 transition-colors"
-                  >
-                    {copiedId === item.id ? (
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
-                    ) : (
-                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.1-1.1m-.758-4.9a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
-                    )}
-                  </button>
-                  <button
-                    aria-label="Capture actions"
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpenMenuId(openMenuId === item.id ? null : item.id); }}
-                    className="w-9 h-9 rounded-xl bg-white text-slate-700 border border-slate-200 hover:text-indigo-700 hover:bg-indigo-50 hover:border-indigo-200 dark:bg-zinc-900 dark:text-slate-100 dark:border-zinc-700 dark:hover:text-indigo-300 dark:hover:bg-indigo-950/40 dark:hover:border-indigo-700 flex items-center justify-center shadow-lg shadow-black/10 transition-colors"
-                  >
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                      <circle cx="12" cy="5" r="1.8" />
-                      <circle cx="12" cy="12" r="1.8" />
-                      <circle cx="12" cy="19" r="1.8" />
-                    </svg>
-                  </button>
                 </div>
-              )}
-
-              {openMenuId === item.id && (
-                <>
-                  <div className="fixed inset-0 z-40" onClick={() => setOpenMenuId(null)} />
-                  <div className="absolute right-2.5 top-10 z-50 w-36 rounded-lg border border-border bg-subtle shadow-lg py-1">
-                    <button
-                      onClick={() => {
-                        handleCopyLink(item.id);
-                        setOpenMenuId(null);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-subtle transition-colors"
-                    >
-                      <svg className="w-3.5 h-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.1-1.1m-.758-4.9a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
-                      </svg>
-                      {copiedId === item.id ? t("cap.copied") : t("cap.copyLink")}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setEditing(item);
-                        setOpenMenuId(null);
-                      }}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-foreground hover:bg-subtle transition-colors"
-                    >
-                      <svg className="w-3.5 h-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z" /></svg>
-                      {t("cap.edit")}
-                    </button>
-                    <button
-                      onClick={() => openDeleteConfirmation([item.id], item.title)}
-                      disabled={deleting}
-                      className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 disabled:opacity-50 transition-colors"
-                    >
-                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="3 6 5 6 21 6" /><path d="M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6m3 0V4a2 2 0 012-2h4a2 2 0 012 2v2" /></svg>
-                      {t("cap.delete")}
-                    </button>
-                  </div>
-                </>
-              )}
+              </CardWrapper>
             </div>
             );
           })}
