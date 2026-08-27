@@ -86,8 +86,18 @@ export default function DashboardLayout({
     suspended?: boolean;
   }>({ loading: true, user: null });
   const [billingModalOpen, setBillingModalOpen] = useState(false);
-  const [newCommentCount, setNewCommentCount] = useState(0);
   const [notifOpen, setNotifOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Array<{
+    comment_id: string; capture_id: string; capture_title: string;
+    author_email: string; body: string; created_at: string;
+  }>>([]);
+  // Track which capture_ids have been clicked/read this session.
+  const [readIds, setReadIds] = useState<Set<string>>(() => {
+    try {
+      const stored = localStorage.getItem("BugSnap_notif_read_ids");
+      return new Set(stored ? JSON.parse(stored) : []);
+    } catch { return new Set(); }
+  });
 
   function closeWorkspaceMenus() {
     setWorkspacePickerOpen(false);
@@ -107,29 +117,22 @@ export default function DashboardLayout({
   const [notifLastSeen, setNotifLastSeen] = useState<number>(() => {
     try {
       return Number(localStorage.getItem("BugSnap_notif_last_seen") || 0);
-    } catch {
-      return 0;
-    }
+    } catch { return 0; }
   });
 
-  // In-app notification: count comments on this user's captures posted
-  // after last-seen (or within the last 7 days if never seen).
+  // Poll notifications — returns per-capture items within the last 7 days.
   useEffect(() => {
     const email = session.user?.email;
     if (!email) return;
     let cancelled = false;
     const poll = async () => {
       try {
-        const lastSeenMs = notifLastSeen || Date.now() - 7 * 24 * 60 * 60 * 1000;
-        const since = new Date(lastSeenMs).toISOString();
-        // One SECURITY DEFINER RPC joins comments to the caller's captures and
-        // checks EXISTS() for rows newer than `since` - no unbounded
-        // fetch-every-id + oversized .in() on every 60s tick (T-022). The
-        // badge only needs "new or not", so the RPC returns boolean and the
-        // index scan stops at the first match.
-        const { data: hasNew, error } = await supabase.rpc("count_unseen_comments", { p_since: since });
+        const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+        const lastSeenMs = notifLastSeen || Date.now() - SEVEN_DAYS_MS;
+        const since = new Date(Math.max(lastSeenMs, Date.now() - SEVEN_DAYS_MS)).toISOString();
+        const { data, error } = await supabase.rpc("get_unseen_notifications", { p_since: since });
         if (error) throw error;
-        if (!cancelled) setNewCommentCount(hasNew ? 1 : 0);
+        if (!cancelled) setNotifications((data as typeof notifications) ?? []);
       } catch (error) {
         console.warn("Failed to load notifications:", error);
       }
@@ -139,14 +142,28 @@ export default function DashboardLayout({
     return () => { cancelled = true; clearInterval(t); };
   }, [session.user?.email, notifLastSeen]);
 
-  // Mark all notifications as read
+  const newCommentCount = notifications.filter(n => !readIds.has(n.capture_id)).length;
+
+  // Mark a single notification as read (grey out, not deleted).
+  const markRead = (captureId: string) => {
+    setReadIds(prev => {
+      const next = new Set(prev);
+      next.add(captureId);
+      try { localStorage.setItem("BugSnap_notif_read_ids", JSON.stringify(Array.from(next))); } catch { /* ignore */ }
+      return next;
+    });
+  };
+
+  // Mark all as read.
   const handleClearNotifications = () => {
     const now = Date.now();
     setNotifLastSeen(now);
-    setNewCommentCount(0);
+    setNotifications([]);
+    setReadIds(new Set());
     setNotifOpen(false);
     try {
       localStorage.setItem("BugSnap_notif_last_seen", String(now));
+      localStorage.removeItem("BugSnap_notif_read_ids");
     } catch { /* ignore */ }
   };
 
@@ -808,10 +825,10 @@ export default function DashboardLayout({
               <>
                 {/* Click-catcher that closes the dropdown without blocking page scroll */}
                 <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} onWheel={() => setNotifOpen(false)} />
-                <div className="fixed left-4 top-16 z-50 w-64 rounded-xl border border-border bg-subtle shadow-xl py-2 px-1">
-                  <div className="flex items-center justify-between px-3 py-1 mb-1">
+                <div className="fixed left-4 top-16 z-50 w-72 rounded-xl border border-border bg-subtle shadow-xl py-2 px-1 max-h-80 overflow-y-auto">
+                  <div className="flex items-center justify-between px-3 py-1 mb-1 border-b border-border/50 pb-1.5">
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">{t("layout.notifications")}</p>
-                    {newCommentCount > 0 && (
+                    {notifications.length > 0 && (
                       <button
                         onClick={handleClearNotifications}
                         className="text-[10px] font-semibold text-indigo-600 hover:underline"
@@ -820,15 +837,39 @@ export default function DashboardLayout({
                       </button>
                     )}
                   </div>
-                  {newCommentCount > 0 ? (
-                    <div
-                      className="px-3 py-2 text-xs text-foreground cursor-pointer hover:bg-subtle rounded-lg transition-colors"
-                      onClick={() => {
-                        handleClearNotifications();
-                        router.push("/captures");
-                      }}
-                    >
-                      <p className="font-medium">💬 {t(newCommentCount > 1 ? "notif.newComments" : "notif.newComment", { count: newCommentCount })}</p>
+                  {notifications.length > 0 ? (
+                    <div className="space-y-0.5">
+                      {notifications.map((n) => {
+                        const isRead = readIds.has(n.capture_id);
+                        return (
+                          <div
+                            key={n.comment_id}
+                            className={`px-3 py-2 text-xs rounded-lg transition-colors cursor-pointer ${
+                              isRead
+                                ? "text-muted/60 hover:bg-subtle/50 opacity-60"
+                                : "text-foreground bg-indigo-50/40 dark:bg-indigo-950/20 hover:bg-indigo-50/80 font-medium"
+                            }`}
+                            onClick={() => {
+                              markRead(n.capture_id);
+                              setNotifOpen(false);
+                              router.push(`/v/${n.capture_id}`);
+                            }}
+                          >
+                            <div className="flex items-center gap-1.5 min-w-0">
+                              <span className="shrink-0">{isRead ? "💬" : "🔵"}</span>
+                              <p className="truncate font-semibold text-[11px] flex-1">
+                                {n.capture_title || "Untitled capture"}
+                              </p>
+                              <span className="text-[9px] text-muted/70 shrink-0">
+                                {new Date(n.created_at).toLocaleDateString([], { month: "short", day: "numeric" })}
+                              </span>
+                            </div>
+                            <p className="truncate text-[10px] text-muted pl-4 mt-0.5">
+                              {n.body || "New comment"}
+                            </p>
+                          </div>
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="px-3 py-4 text-center">
