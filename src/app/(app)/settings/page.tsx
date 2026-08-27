@@ -165,6 +165,7 @@ function SettingsContent() {
   const [userPlan, setUserPlan] = useState<Plan>("free");
   const [userEmail, setUserEmail] = useState("");
   const [userName, setUserName] = useState("");
+  const [userAvatar, setUserAvatar] = useState("https://bugsnap.akusaraproject.my.id/icon.svg");
   const activeWsId = searchParams.get("ws");
 
   // Drive tab
@@ -214,10 +215,13 @@ function SettingsContent() {
       if (!u) return;
       setUserEmail(u.email ?? "");
       setUserName(u.user_metadata?.full_name || u.user_metadata?.name || u.email?.split("@")[0] || "");
+      setUserAvatar(u.user_metadata?.avatar_url || u.user_metadata?.picture || "https://bugsnap.akusaraproject.my.id/icon.svg");
       let plan: Plan = normalizePlan(u.user_metadata?.plan);
       if (u.email) {
-        const { data: row } = await supabase.from("users").select("plan").ilike("email", u.email).maybeSingle();
+        const { data: row } = await supabase.from("users").select("plan, avatar_url, full_name").ilike("email", u.email).maybeSingle();
         if (row?.plan) plan = normalizePlan(row.plan);
+        if (row?.avatar_url) setUserAvatar(row.avatar_url);
+        if (row?.full_name) setUserName(row.full_name);
       }
       setUserPlan(plan);
       if (activeWsId) {
@@ -353,12 +357,13 @@ function SettingsContent() {
     setProfileSaved(false);
     try {
       const fullName = userName.trim();
+      const avatarUrl = userAvatar.trim();
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
       if (!token) throw new Error("Session expired");
 
       const { error: authError } = await supabase.auth.updateUser({
-        data: { full_name: fullName },
+        data: { full_name: fullName, avatar_url: avatarUrl },
       });
       if (authError) throw authError;
 
@@ -368,12 +373,13 @@ function SettingsContent() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ fullName }),
+        body: JSON.stringify({ fullName, avatarUrl }),
       });
-      const result = await response.json().catch(() => ({})) as { fullName?: string; error?: string };
+      const result = await response.json().catch(() => ({})) as { full_name?: string; avatar_url?: string; error?: string };
       if (!response.ok) throw new Error(result.error || "Failed to save profile");
 
-      setUserName(result.fullName ?? fullName);
+      if (result.full_name) setUserName(result.full_name);
+      if (result.avatar_url) setUserAvatar(result.avatar_url);
       setProfileSaved(true);
       setTimeout(() => setProfileSaved(false), 3000);
     } catch (e) {
@@ -790,6 +796,62 @@ function SettingsContent() {
                 <h2 className="text-sm font-semibold text-foreground">Profile</h2>
                 {profileSaved && <span className="text-xs text-emerald-600 font-medium">✓ Saved</span>}
               </div>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4 pb-2">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={userAvatar || "https://bugsnap.akusaraproject.my.id/icon.svg"}
+                  alt="Profile Avatar"
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    (e.currentTarget as HTMLImageElement).src = "https://bugsnap.akusaraproject.my.id/icon.svg";
+                  }}
+                  className="w-14 h-14 rounded-full object-cover border-2 border-border bg-subtle shrink-0 shadow-sm"
+                />
+                <div className="flex-1 min-w-0 space-y-2">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted">Profile Avatar</label>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <input
+                      type="url"
+                      value={userAvatar}
+                      onChange={(e) => setUserAvatar(e.target.value)}
+                      placeholder="https://example.com/photo.jpg or upload file"
+                      className="flex-1 min-w-[200px] text-xs rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-subtle font-mono text-foreground"
+                    />
+                    <label className="px-3 py-2 rounded-lg border border-border bg-subtle text-xs font-semibold text-foreground hover:bg-neutral-200/60 dark:hover:bg-neutral-800/60 transition-colors cursor-pointer shrink-0">
+                      <span>Upload File</span>
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          if (file.size > 2 * 1024 * 1024) {
+                            setProfileSaveError("Image file size must be less than 2MB");
+                            return;
+                          }
+                          const reader = new FileReader();
+                          reader.onload = () => {
+                            if (typeof reader.result === "string") {
+                              setUserAvatar(reader.result);
+                            }
+                          };
+                          reader.readAsDataURL(file);
+                        }}
+                      />
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() => setUserAvatar("https://bugsnap.akusaraproject.my.id/icon.svg")}
+                      className="px-3 py-2 rounded-lg border border-border bg-subtle text-xs font-semibold text-muted hover:text-foreground transition-colors shrink-0"
+                    >
+                      Reset Default
+                    </button>
+                  </div>
+                  <p className="text-[11px] text-muted">Defaults to official BugSnap logo. You can paste an image URL or upload a custom avatar file (PNG, JPG, SVG).</p>
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Full Name</label>

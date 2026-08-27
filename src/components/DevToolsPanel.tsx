@@ -60,7 +60,7 @@ export interface ScreenshotLog extends TimedLog {
 
 export type DevLog = ConsoleLog | NetworkLog | ActionLog | NavigationLog | ScreenshotLog;
 
-function normalizeDevLog(log: Record<string, unknown>): DevLog {
+export function normalizeDevLog(log: Record<string, unknown>): DevLog {
   const type = typeof log.type === "string" ? log.type.toLowerCase() : "";
   const level = typeof log.level === "string" ? log.level : undefined;
   const message = typeof log.message === "string" ? log.message : undefined;

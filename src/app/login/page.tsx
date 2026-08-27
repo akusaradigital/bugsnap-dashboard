@@ -43,7 +43,8 @@ export default function LoginPage() {
     setSigningIn(true);
     setError(null);
     try {
-      const redirectTo = `${window.location.origin}/login?redirectTo=${encodeURIComponent(redirectPath)}`;
+      const target = redirectPath.startsWith("/") ? redirectPath : "/dashboard";
+      const redirectTo = `${window.location.origin}${target}`;
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: { redirectTo },

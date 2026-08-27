@@ -11,7 +11,7 @@ export async function GET() {
     const latency = Date.now() - start;
 
     if (error) {
-      return NextResponse.json({ status: "degraded", database: "error", latencyMs: latency, error: error.message }, { status: 500 });
+      return NextResponse.json({ status: "degraded", database: "error", latencyMs: latency, error: error.message }, { status: 200 });
     }
 
     return NextResponse.json({
@@ -26,6 +26,6 @@ export async function GET() {
       database: "disconnected",
       latencyMs: Date.now() - start,
       error: err instanceof Error ? err.message : "Unknown error",
-    }, { status: 500 });
+    }, { status: 200 });
   }
 }

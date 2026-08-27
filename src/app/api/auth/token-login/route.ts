@@ -59,6 +59,31 @@ export async function POST(request: Request) {
       targetUser = newUser.user;
     }
 
+    // 3.5. Accept pending workspace invites for this user's email
+    const emailNorm = email.toLowerCase().trim();
+    const { data: invites, error: invitesErr } = await supabaseAdmin
+      .from("workspace_invites")
+      .select("workspace_id, role")
+      .eq("email", emailNorm)
+      .is("accepted_at", null);
+
+    if (!invitesErr && invites && invites.length > 0) {
+      const memberRows = invites.map((inv) => ({
+        workspace_id: inv.workspace_id,
+        user_id: targetUser.id,
+        role: inv.role || "member",
+        joined_at: new Date().toISOString(),
+      }));
+
+      await supabaseAdmin.from("workspace_members").upsert(memberRows, { onConflict: "workspace_id,user_id" });
+
+      await supabaseAdmin
+        .from("workspace_invites")
+        .update({ accepted_at: new Date().toISOString() })
+        .eq("email", emailNorm)
+        .is("accepted_at", null);
+    }
+
     // 4. Generate a one-time login link (magic link) for this email
     const origin = new URL(request.url).origin;
     const { data: linkData, error: linkErr } = await supabaseAdmin.auth.admin.generateLink({

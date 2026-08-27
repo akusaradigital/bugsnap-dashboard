@@ -11,7 +11,6 @@ import { AuthRequiredCard } from "@/components/AuthRequiredCard";
 
 const navItems = [
   { labelKey: "nav.dashboard", href: "/dashboard", icon: "📊" },
-  { labelKey: "nav.captures", href: "/captures", icon: "▦" },
 ];
 
 type Workspace = {
@@ -31,6 +30,7 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [currentFolder, setCurrentFolder] = useState<string | null>(null);
   const { t } = useT();
   const { showToast } = useToast();
   const [wsParam, setWsParam] = useState<string | null>(null);
@@ -88,6 +88,22 @@ export default function DashboardLayout({
   const [billingModalOpen, setBillingModalOpen] = useState(false);
   const [newCommentCount, setNewCommentCount] = useState(0);
   const [notifOpen, setNotifOpen] = useState(false);
+
+  function closeWorkspaceMenus() {
+    setWorkspacePickerOpen(false);
+    setWsOpen(false);
+  }
+
+  useEffect(() => {
+    const updateFolder = () => {
+      if (typeof window === "undefined") return;
+      const params = new URLSearchParams(window.location.search);
+      setCurrentFolder(params.get("folder"));
+    };
+    updateFolder();
+    window.addEventListener("popstate", updateFolder);
+    return () => window.removeEventListener("popstate", updateFolder);
+  }, [pathname]);
   const [notifLastSeen, setNotifLastSeen] = useState<number>(() => {
     try {
       return Number(localStorage.getItem("BugSnap_notif_last_seen") || 0);
@@ -188,9 +204,9 @@ export default function DashboardLayout({
       });
     });
 
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (!active) return;
-      if (!s) {
+      if (event === "SIGNED_OUT") {
         const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
         router.replace(`/login?redirectTo=${encodeURIComponent(current || "/dashboard")}`);
       }
@@ -305,7 +321,8 @@ export default function DashboardLayout({
 
   // Check if current user is a super admin
   useEffect(() => {
-    if (!session.user?.id) {
+    const email = session.user?.email?.trim().toLowerCase();
+    if (!session.user?.id || !email) {
       setIsSuperAdmin(false);
       return;
     }
@@ -314,7 +331,10 @@ export default function DashboardLayout({
       try {
         const { data: authData } = await supabase.auth.getSession();
         const token = authData.session?.access_token;
-        if (!token) return;
+        if (!token) {
+          if (active) setIsSuperAdmin(false);
+          return;
+        }
         const res = await fetch("/api/admin/check", {
           headers: { Authorization: `Bearer ${token}` }
         });
@@ -323,7 +343,7 @@ export default function DashboardLayout({
           setIsSuperAdmin(Boolean(json.isAdmin));
         }
       } catch {
-        // ignore - admin link simply won't show
+        if (active) setIsSuperAdmin(false);
       }
     })();
     return () => { active = false; };
@@ -838,7 +858,7 @@ export default function DashboardLayout({
 
           {wsOpen && (
             <>
-              <div className="fixed inset-0 z-40" onClick={() => setWsOpen(false)} />
+              <div className="fixed inset-0 z-40" onClick={closeWorkspaceMenus} />
               <div className="absolute left-3 right-3 top-[calc(100%+8px)] z-50 rounded-2xl border border-border bg-subtle shadow-xl overflow-visible">
                 <div className="p-4 flex items-center gap-3 border-b border-border">
                   <span className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 text-lg font-semibold flex items-center justify-center shrink-0">
@@ -995,7 +1015,7 @@ export default function DashboardLayout({
               <Link
                 href={activeWsId ? `/captures?ws=${activeWsId}` : "/captures"}
                 className={`flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-xs transition-colors ${
-                  pathname === "/captures" && typeof window !== "undefined" && !new URL(window.location.href).searchParams.get("folder")
+                  pathname === "/captures" && !currentFolder
                     ? "bg-indigo-50 dark:bg-indigo-950/30 font-semibold text-indigo-600 dark:text-indigo-400"
                     : "text-muted hover:bg-subtle hover:text-foreground"
                 }`}
@@ -1004,7 +1024,7 @@ export default function DashboardLayout({
                 <span className="truncate">All Captures</span>
               </Link>
               {folders.map((folder) => {
-                const isActiveFolder = typeof window !== "undefined" && new URL(window.location.href).searchParams.get("folder") === folder;
+                const isActiveFolder = pathname === "/captures" && currentFolder === folder;
                 const activeWsRole = workspaces.find(w => w.id === activeWsId)?.role;
                 return (
                   <div

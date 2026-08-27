@@ -510,14 +510,13 @@ function CapturesContent() {
     cursorRef.current = null;
     loadGenRef.current += 1;
     setLoadingMore(false);
-    setLoading(true);
     loadPage(true).finally(() => {
       if (!cancelled) setLoading(false);
     });
     return () => {
       cancelled = true;
     };
-  }, [wsParam, folderParam, searchParams, loadPage]);
+  }, [wsParam, folderParam, loadPage]);
 
   // IntersectionObserver: Callback Ref to safely load more when the sentinel enters the viewport
   const observerRef = useRef<IntersectionObserver | null>(null);

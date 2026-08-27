@@ -59,6 +59,13 @@ jobs:
           npx wait-on http://127.0.0.1:3000/api/health --timeout 60000
         env:
           PORT: 3000
+          NEXT_PUBLIC_SUPABASE_URL: "https://kkmvanwgywrqsudvspge.supabase.co"
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.dummy"
+          SUPABASE_SERVICE_ROLE_KEY: "dummy"
+          GOOGLE_DRIVE_CLIENT_ID: "dummy"
+          GOOGLE_DRIVE_CLIENT_SECRET: "dummy"
+          GOOGLE_DRIVE_REDIRECT_URI: "http://localhost:3000/api/google-drive/callback"
+          GOOGLE_DRIVE_ENCRYPTION_KEY: "12345678901234567890123456789012"
 
       - name: E2E Smoke Test
         run: node tests/smoke.e2e.mjs
