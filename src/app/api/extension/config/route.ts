@@ -20,7 +20,7 @@ export async function GET() {
     {
       supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
       supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      apiVersion: "1.0.20",
+      apiVersion: "1.0.21",
       features: {
         watermark: true,
         aiSummary: true,

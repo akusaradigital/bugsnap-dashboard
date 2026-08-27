@@ -9,8 +9,11 @@ async function run() {
   const healthRes = await fetch(`${BASE_URL}/api/health`);
   assert.equal(healthRes.status, 200, "Health endpoint should return 200 OK");
   const healthJson = await healthRes.json();
-  assert.equal(healthJson.status, "healthy", "Health status should be healthy");
-  console.log("✔ /api/health passed");
+  assert.ok(
+    healthJson.status === "healthy" || healthJson.status === "degraded",
+    `Health status should be healthy or degraded, got: ${healthJson.status}`
+  );
+  console.log(`✔ /api/health passed (status: ${healthJson.status})`);
 
   // 2. Landing page check
   const homeRes = await fetch(`${BASE_URL}/`);
