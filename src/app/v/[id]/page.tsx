@@ -45,6 +45,17 @@ const STATUS_OPTIONS = ["open", "in-progress", "fixed", "closed"];
 
 const viewCountCache = new Map<string, { value: number; expiresAt: number }>();
 
+function driveFileId(url: string | null): string | null {
+  if (!url) return null;
+  const match = url.match(/[?&]id=([A-Za-z0-9_-]{10,200})/) || url.match(/\/d\/([A-Za-z0-9_-]{10,200})/);
+  if (!match) return null;
+  try {
+    return decodeURIComponent(match[1]);
+  } catch {
+    return match[1];
+  }
+}
+
 function getExpiryCountdown(expiresAt: string, t: (k: string, vars?: Record<string, string | number>) => string): string {
   const diff = new Date(expiresAt).getTime() - Date.now();
   if (diff <= 0) return t("v.expired");
@@ -565,6 +576,20 @@ function SingleViewContent() {
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setMoreOpen(false)} />
                 <div className="absolute right-0 top-full mt-1.5 w-40 z-50 bg-white border border-border rounded-xl shadow-xl py-1 px-1 flex flex-col gap-0.5">
+                  {status === "ready" && driveFileId(capture?.drive_url || null) && (
+                    <a
+                      href={`https://drive.google.com/uc?export=download&id=${driveFileId(capture?.drive_url || null)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      onClick={() => setMoreOpen(false)}
+                      className="w-full text-left px-3 py-1.5 text-xs text-foreground hover:bg-subtle rounded-lg transition-colors flex items-center gap-1.5"
+                    >
+                      <svg className="w-3.5 h-3.5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      </svg>
+                      Download Media
+                    </a>
+                  )}
                   {status === "ready" && (
                     <button
                       onClick={() => { setEmbedModal(true); setMoreOpen(false); }}

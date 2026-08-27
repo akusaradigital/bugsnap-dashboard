@@ -3,13 +3,31 @@ import { createServiceClient } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
 
+async function emailFromGoogleToken(accessToken: string) {
+  const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    cache: "no-store",
+  });
+  if (!res.ok) throw new Error("Invalid Google token");
+  const user = await res.json() as { email?: unknown };
+  if (typeof user.email !== "string" || !user.email.trim()) throw new Error("Google token has no email");
+  return user.email.trim().toLowerCase();
+}
+
 export async function POST(request: Request) {
   let body: unknown;
   try { body = await request.json(); } catch { return NextResponse.json({ error: "Invalid JSON" }, { status: 400 }); }
-  const input = body as { email?: unknown; workspaceId?: unknown };
-  const email = typeof input.email === "string" ? input.email.trim().toLowerCase() : "";
+  const input = body as { access_token?: unknown; workspaceId?: unknown };
+  const accessToken = typeof input.access_token === "string" ? input.access_token.trim() : "";
   const workspaceId = typeof input.workspaceId === "string" ? input.workspaceId : null;
-  if (!email) return NextResponse.json({ error: "email is required" }, { status: 400 });
+  if (!accessToken) return NextResponse.json({ error: "access_token is required" }, { status: 400 });
+
+  let email: string;
+  try {
+    email = await emailFromGoogleToken(accessToken);
+  } catch (err) {
+    return NextResponse.json({ error: err instanceof Error ? err.message : "Unauthorized" }, { status: 401 });
+  }
 
   const db = createServiceClient();
   const { data: workspaces, error: wsError } = await db.rpc("get_workspaces_by_email", { p_email: email });

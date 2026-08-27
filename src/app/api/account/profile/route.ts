@@ -30,6 +30,14 @@ export async function PATCH(request: Request) {
     if (avatarUrl.length > 1000) {
       return NextResponse.json({ error: "Avatar URL is too long" }, { status: 400 });
     }
+    if (avatarUrl) {
+      try {
+        const parsed = new URL(avatarUrl);
+        if (parsed.protocol !== "https:" && parsed.protocol !== "http:") throw new Error();
+      } catch {
+        return NextResponse.json({ error: "Avatar URL must be a valid HTTP or HTTPS URL" }, { status: 400 });
+      }
+    }
     updates.avatar_url = avatarUrl || "https://bugsnap.akusaraproject.my.id/icon.svg";
   }
 

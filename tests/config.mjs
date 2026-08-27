@@ -72,10 +72,11 @@ export async function insertTestCapture(overrides = {}) {
     p_window_size: overrides.p_window_size ?? "1920x1080",
     p_duration: overrides.p_duration ?? 0,
     p_os: overrides.p_os ?? "Windows",
+    p_description: overrides.p_description ?? null,
     p_browser: overrides.p_browser ?? "Chrome 149.0.7827.201",
     p_site_url: overrides.p_site_url ?? "https://example.com",
-    p_project_id: overrides.p_project_id ?? null,
-    p_source: overrides.p_source ?? "chrome_extension",
+    p_folder_name: overrides.p_folder_name ?? null,
+    p_workspace_id: overrides.p_workspace_id ?? null,
   });
   return { data, error };
 }

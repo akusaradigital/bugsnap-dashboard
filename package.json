@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "node --test tests/helpers.test.mjs tests/google-drive.test.mjs tests/contract.test.mjs",
+    "test": "node --test tests/helpers.test.mjs tests/google-drive.test.mjs tests/contract.test.mjs tests/extension-dashboard-contract.test.mjs",
     "test:integration": "node --test tests/rpc.test.mjs"
   },
   "dependencies": {

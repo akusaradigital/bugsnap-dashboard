@@ -51,12 +51,36 @@ export async function POST(req: Request) {
     const description = String(form.get("description") || "").trim();
     if (!(file instanceof File)) return NextResponse.json({ error: "Missing file" }, { status: 400 });
     if (!workspaceId) return NextResponse.json({ error: "Missing workspaceId" }, { status: 400 });
-
-    const accessToken = await driveAccessToken(user.id);
-    const safeName = `${title || "BugSnap Capture"}.${file.type.startsWith("video/") ? "webm" : "png"}`;
-    const uploaded = await uploadToDrive(accessToken, file, safeName);
+    if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
+      return NextResponse.json({ error: "Only image and video files are supported" }, { status: 415 });
+    }
 
     const supabase = createServiceClient();
+    const { data: membership, error: membershipError } = await supabase
+      .from("workspace_members")
+      .select("workspace_id")
+      .eq("workspace_id", workspaceId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (membershipError) throw membershipError;
+    if (!membership) return NextResponse.json({ error: "Workspace access denied" }, { status: 403 });
+
+    if (projectId) {
+      const { data: project, error: projectError } = await supabase
+        .from("projects")
+        .select("id")
+        .eq("id", projectId)
+        .eq("workspace_id", workspaceId)
+        .maybeSingle();
+      if (projectError) throw projectError;
+      if (!project) return NextResponse.json({ error: "Project does not belong to this workspace" }, { status: 400 });
+    }
+
+    const accessToken = await driveAccessToken(user.id);
+    const safeTitle = (title || "BugSnap Capture").replace(/[\\/:*?"<>|\u0000-\u001F]/g, "-").slice(0, 180);
+    const safeName = `${safeTitle}.${file.type.startsWith("video/") ? "webm" : "png"}`;
+    const uploaded = await uploadToDrive(accessToken, file, safeName);
+
     const { data: inserted, error } = await supabase
       .from("captures")
       .insert({
