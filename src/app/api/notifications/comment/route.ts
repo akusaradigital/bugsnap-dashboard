@@ -66,7 +66,7 @@ export async function POST(req: Request) {
     // 3. Resolve owner's email address
     const { data: owner, error: ownerError } = await supabase
       .from("users")
-      .select("email, id")
+      .select("email, id, notification_prefs")
       .eq("id", workspace.owner_user_id)
       .single();
 
@@ -89,7 +89,7 @@ export async function POST(req: Request) {
       if (memberUserIds.length > 0) {
         const { data: users } = await supabase
           .from("users")
-          .select("email, full_name")
+          .select("email, full_name, notification_prefs")
           .in("id", memberUserIds);
 
         const commenterEmail = comment.author_email ? comment.author_email.toLowerCase() : "";
@@ -97,6 +97,7 @@ export async function POST(req: Request) {
           for (const u of users) {
             const uEmail = (u.email || "").toLowerCase();
             if (!uEmail || uEmail === commenterEmail) continue;
+            if (u.notification_prefs?.mention === false) continue;
             const emailPrefix = uEmail.split("@")[0];
             const nameTokens = (u.full_name || "").toLowerCase().split(/\s+/).filter(Boolean);
             const isMentioned = mentionedTokens.some(
@@ -110,7 +111,7 @@ export async function POST(req: Request) {
 
     const ownerEmailLower = owner.email.toLowerCase();
     const commenterEmail = comment.author_email ? comment.author_email.toLowerCase() : "";
-    const skipOwner = commenterEmail === ownerEmailLower || mentionEmails.has(owner.email) || mentionEmails.has(ownerEmailLower);
+    const skipOwner = commenterEmail === ownerEmailLower || mentionEmails.has(owner.email) || mentionEmails.has(ownerEmailLower) || owner.notification_prefs?.comment === false;
 
     // 5. Send emails via Resend API
     if (!process.env.RESEND_API_KEY) {

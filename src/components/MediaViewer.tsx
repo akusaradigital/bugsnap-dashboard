@@ -2,16 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useT } from "@/components/I18nProvider";
-import type { CommentRow } from "@/components/Comments";
 
 interface MediaViewerProps {
   type: string;
   driveUrl: string | null;
   title: string;
-  comments?: CommentRow[];
-  onPlacePin?: (coords: { x: number; y: number }) => void;
-  activePin?: { x: number; y: number } | null;
-  onSelectComment?: (commentId: string) => void;
 }
 
 function driveFileId(url: string): string | null {
@@ -32,15 +27,7 @@ const MAX_ZOOM = 5;
 const STEP_ZOOM = 0.5;
 const DOUBLE_CLICK_ZOOM = 2.5;
 
-export default function MediaViewer({
-  type,
-  driveUrl,
-  title,
-  comments = [],
-  onPlacePin,
-  activePin,
-  onSelectComment,
-}: MediaViewerProps) {
+export default function MediaViewer({ type, driveUrl, title }: MediaViewerProps) {
   const { t } = useT();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const lightboxTriggerRef = useRef<HTMLButtonElement>(null);
@@ -54,47 +41,16 @@ export default function MediaViewer({
   const dragRef = useRef<{ startX: number; startY: number; panX: number; panY: number; dragging: boolean }>({
     startX: 0, startY: 0, panX: 0, panY: 0, dragging: false,
   });
-  const [isFullscreen, setIsFullscreen] = useState(false);
-
   const fileId = driveUrl ? driveFileId(driveUrl) : null;
   const imageUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w2400` : null;
   const directUrl = fileId ? `https://drive.google.com/uc?export=download&id=${fileId}` : null;
+  const downloadUrl = fileId ? `/api/google-drive/download?id=${encodeURIComponent(fileId)}&type=${type === "video" ? "video" : "screenshot"}&filename=${encodeURIComponent(title || "capture")}` : null;
   const previewUrl = fileId ? `https://drive.google.com/file/d/${fileId}/preview` : null;
 
-  async function handleDownloadMedia(e: React.MouseEvent) {
+  function handleDownloadMedia(e: React.MouseEvent) {
     e.stopPropagation();
-    if (!directUrl && !imageUrl) return;
-    const downloadSrc = directUrl || imageUrl;
-    if (!downloadSrc) return;
-
-    const ext = type === "video" ? ".webm" : ".png";
-    let filename = (title || "capture").trim();
-    if (!filename.toLowerCase().endsWith(ext)) {
-      filename = `${filename}${ext}`;
-    }
-
-    try {
-      const res = await fetch(downloadSrc);
-      if (!res.ok) throw new Error("Fetch failed");
-      const blob = await res.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = blobUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
-    } catch {
-      const a = document.createElement("a");
-      a.href = downloadSrc;
-      a.download = filename;
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }
+    if (!downloadUrl) return;
+    window.location.href = downloadUrl;
   }
 
   // Reset and verify image loading
@@ -127,13 +83,6 @@ export default function MediaViewer({
     setPan({ x: 0, y: 0 });
   }, [lightboxOpen]);
 
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    const onFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
-    dialog?.addEventListener("fullscreenchange", onFullscreenChange);
-    return () => dialog?.removeEventListener("fullscreenchange", onFullscreenChange);
-  }, []);
-
   function closeLightbox() {
     dialogRef.current?.close();
   }
@@ -143,16 +92,6 @@ export default function MediaViewer({
     setPan({ x: 0, y: 0 });
     setZoom(MIN_ZOOM);
     lightboxTriggerRef.current?.focus();
-  }
-
-  function toggleFullscreen() {
-    const dialog = dialogRef.current;
-    if (!dialog) return;
-    if (document.fullscreenElement) {
-      document.exitFullscreen().catch(() => {});
-    } else {
-      dialog.requestFullscreen?.().catch(() => {});
-    }
   }
 
   function resetView() {
@@ -242,18 +181,9 @@ export default function MediaViewer({
         ) : imageUrl && !imageFailed ? (
           <div className="group relative flex h-full w-full items-center justify-center">
             <div
-              className="relative flex h-full w-full items-center justify-center cursor-crosshair select-none"
-              onClick={(e) => {
-                if (onPlacePin) {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
-                  const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
-                  onPlacePin({ x, y });
-                } else {
-                  setLightboxOpen(true);
-                }
-              }}
-              title={onPlacePin ? t("mv.dropPinHint") : t("mv.openFullscreen")}
+              className="relative flex h-full w-full items-center justify-center cursor-zoom-in select-none"
+              onClick={() => setLightboxOpen(true)}
+              title={t("mv.openFullscreen")}
             >
               {!imageLoaded && (
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -269,47 +199,14 @@ export default function MediaViewer({
                 onError={() => setImageFailed(true)}
                 className={`h-full w-full object-contain transition-all duration-200 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
               />
-
-              {/* Render existing persistent comment pins */}
-              {comments
-                .filter((c) => !c.parent_id && c.pin_x != null && c.pin_y != null)
-                .map((c, idx) => (
-                  <button
-                    key={c.id}
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSelectComment?.(c.id);
-                    }}
-                    style={{ left: `${c.pin_x}%`, top: `${c.pin_y}%` }}
-                    className="absolute -translate-x-1/2 -translate-y-1/2 z-20 group/pin flex items-center justify-center cursor-pointer"
-                    title={`${c.author_name || "Guest"}: ${c.body}`}
-                  >
-                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-white font-bold text-[11px] shadow-lg ring-2 ring-white hover:scale-125 transition-transform">
-                      {idx + 1}
-                    </span>
-                    <span className="absolute bottom-full mb-1.5 hidden group-hover/pin:flex whitespace-nowrap rounded bg-black/80 px-2 py-0.5 text-[10px] text-white backdrop-blur-sm shadow z-30 pointer-events-none">
-                      {c.author_name || "Guest"}: {c.body.length > 25 ? `${c.body.slice(0, 25)}…` : c.body}
-                    </span>
-                  </button>
-                ))}
-
-              {/* Active temporary pin waiting for comment submit */}
-              {activePin && (
-                <div
-                  style={{ left: `${activePin.x}%`, top: `${activePin.y}%` }}
-                  className="absolute -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none flex items-center justify-center"
-                >
-                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white font-bold text-[11px] shadow-lg ring-2 ring-white animate-bounce">
-                    +
-                  </span>
-                </div>
-              )}
             </div>
 
-            {/* Quick Action Top-Right Controls */}
-            <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
-              {(directUrl || imageUrl) && (
+            {/* Subtle hover feedback so it's obvious the image is clickable (no center icon per earlier feedback) */}
+            <div className="pointer-events-none absolute inset-0 bg-black/0 transition-colors duration-150 group-hover:bg-black/10" />
+
+            {/* Download stays as a separate explicit action (not implied by the hover affordance above) */}
+            {(directUrl || imageUrl) && (
+              <div className="absolute right-3 top-3 z-10 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
                 <button
                   type="button"
                   onClick={handleDownloadMedia}
@@ -323,19 +220,8 @@ export default function MediaViewer({
                     <line x1="12" y1="15" x2="12" y2="3" />
                   </svg>
                 </button>
-              )}
-              <button
-                type="button"
-                onClick={() => setLightboxOpen(true)}
-                className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-zinc-900/80 text-white backdrop-blur-md hover:bg-zinc-900 transition-all shadow-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
-                aria-label={t("mv.openFullscreen")}
-                title="Expand"
-              >
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
-                </svg>
-              </button>
-            </div>
+              </div>
+            )}
           </div>
         ) : previewUrl ? (
           <iframe
@@ -355,25 +241,14 @@ export default function MediaViewer({
         onClose={handleDialogClose}
         onClick={(event) => { if (event.target === event.currentTarget) closeLightbox(); }}
         aria-label={`${title} image viewer`}
-        className="m-0 h-screen max-h-none w-screen max-w-none bg-zinc-950/95 p-0 text-white backdrop:bg-black/80 backdrop:backdrop-blur-sm"
+        className="m-auto h-[85vh] w-[90vw] max-w-5xl rounded-2xl bg-zinc-950 p-0 text-white shadow-2xl backdrop:bg-black/70 backdrop:backdrop-blur-sm"
       >
         <div
-          className="relative flex h-full w-full items-center justify-center overflow-hidden p-6 sm:p-12 pt-16 sm:pt-16"
+          className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-2xl p-6 sm:p-10"
           onWheel={handleWheel}
         >
           {/* Controls */}
           <div className="absolute right-4 top-4 z-20 flex items-center gap-2">
-            {zoom > MIN_ZOOM && (
-              <button
-                type="button"
-                onClick={resetView}
-                className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg bg-zinc-900/90 hover:bg-zinc-800 text-white border border-white/10 shadow-lg backdrop-blur-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-white transition-colors"
-                aria-label={t("mv.resetZoom")}
-                title={t("mv.resetZoom")}
-              >
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v6h6M20 20v-6h-6M4 10a8 8 0 0114-4.9M20 14a8 8 0 01-14 4.9" /></svg>
-              </button>
-            )}
             {(directUrl || imageUrl) && (
               <button
                 type="button"
@@ -385,19 +260,6 @@ export default function MediaViewer({
                 <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
               </button>
             )}
-            <button
-              type="button"
-              onClick={toggleFullscreen}
-              className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg bg-zinc-900/90 hover:bg-zinc-800 text-white border border-white/10 shadow-lg backdrop-blur-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-white transition-colors"
-              aria-label={isFullscreen ? t("mv.exitFullscreen") : t("mv.openFullscreen")}
-              title={isFullscreen ? t("mv.exitFullscreen") : t("mv.openFullscreen")}
-            >
-              {isFullscreen ? (
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M8 3H5a2 2 0 00-2 2v3m18 0V5a2 2 0 00-2-2h-3m0 18h3a2 2 0 002-2v-3M3 16v3a2 2 0 002 2h3" /></svg>
-              ) : (
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M4 8V5a1 1 0 011-1h3M16 4h3a1 1 0 011 1v3M20 16v3a1 1 0 01-1 1h-3M8 20H5a1 1 0 01-1-1v-3" /></svg>
-              )}
-            </button>
             <button
               ref={closeButtonRef}
               type="button"

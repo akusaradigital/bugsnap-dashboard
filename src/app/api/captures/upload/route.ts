@@ -58,12 +58,13 @@ export async function POST(req: Request) {
     const supabase = createServiceClient();
     const { data: membership, error: membershipError } = await supabase
       .from("workspace_members")
-      .select("workspace_id")
+      .select("workspace_id, role")
       .eq("workspace_id", workspaceId)
       .eq("user_id", user.id)
       .maybeSingle();
     if (membershipError) throw membershipError;
     if (!membership) return NextResponse.json({ error: "Workspace access denied" }, { status: 403 });
+    if (membership.role === "viewer") return NextResponse.json({ error: "Viewers cannot create captures" }, { status: 403 });
 
     if (projectId) {
       const { data: project, error: projectError } = await supabase

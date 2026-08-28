@@ -4,7 +4,9 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
+import { useToast } from "@/components/Toast";
 import { normalizePlan, seatLimit, type Plan } from "@/lib/tiers";
+import { Dropdown } from "@/components/Dropdown";
 
 interface Member {
   user_id: string;
@@ -21,11 +23,14 @@ interface Workspace {
 
 export default function TeamManagementPage() {
   const { t } = useT();
+  const { showToast } = useToast();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [activeWsId, setActiveWsId] = useState<string | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(true);
   const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState<"creator" | "viewer">("creator");
+  const [roleMenuOpen, setRoleMenuOpen] = useState(false);
   const [inviting, setInviting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [plan, setPlan] = useState<Plan>("free");
@@ -102,6 +107,7 @@ export default function TeamManagementPage() {
       const { error: inviteError } = await supabase.rpc("invite_member_by_email", {
         p_workspace_id: activeWsId,
         p_email: email,
+        p_role: inviteRole,
       });
       if (inviteError) throw inviteError;
       const { data: authData } = await supabase.auth.getSession();
@@ -120,8 +126,10 @@ export default function TeamManagementPage() {
       });
       if (membersError) throw membersError;
       setMembers((data as Member[]) ?? []);
+      showToast(`Invite sent to ${email}`, "success");
     } catch (err) {
       setError((err as { message?: string })?.message || t("members.inviteFailed"));
+      showToast("Could not send invite", "error");
     } finally {
       setInviting(false);
     }
@@ -138,8 +146,10 @@ export default function TeamManagementPage() {
         .eq("user_id", member.user_id);
       if (error) throw error;
       setMembers((prev) => prev.filter((m) => m.user_id !== member.user_id));
+      showToast(`${member.email} removed`, "success");
     } catch {
       setError(t("members.removeError"));
+      showToast("Could not remove member", "error");
     }
   }
 
@@ -158,15 +168,13 @@ export default function TeamManagementPage() {
       {/* Workspace selector */}
       <div>
         <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">{t("members.workspaceLabel")}</label>
-        <select
+        <Dropdown
+          variant="field"
+          className="w-full sm:w-64"
           value={activeWsId ?? ""}
-          onChange={(e) => setActiveWsId(e.target.value)}
-          className="w-full sm:w-64 text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-subtle"
-        >
-          {workspaces.map((w) => (
-            <option key={w.id} value={w.id}>{w.name}</option>
-          ))}
-        </select>
+          onChange={setActiveWsId}
+          options={workspaces.map((w) => ({ value: w.id, label: w.name }))}
+        />
       </div>
 
       {/* Invite box */}
@@ -184,6 +192,46 @@ export default function TeamManagementPage() {
             disabled={cap !== null && members.length >= cap}
             className="flex-1 text-sm rounded-lg border border-border px-3.5 py-2.5 outline-none focus:border-indigo-500 bg-subtle disabled:bg-subtle disabled:cursor-not-allowed"
           />
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setRoleMenuOpen((o) => !o)}
+              className="flex items-center gap-1.5 text-sm rounded-lg border border-border px-3.5 py-2.5 bg-subtle hover:bg-border/30 transition-colors"
+            >
+              {inviteRole === "creator" ? "Creator" : "Viewer"}
+              <svg className={`w-3.5 h-3.5 text-muted transition-transform ${roleMenuOpen ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {roleMenuOpen && (
+              <>
+                <div className="fixed inset-0 z-40" onClick={() => setRoleMenuOpen(false)} />
+                <div className="absolute right-0 mt-1 w-64 rounded-lg border border-border bg-background shadow-lg z-50 py-1">
+                  {([
+                    { value: "creator", label: "Creator", hint: "Can create and comment" },
+                    { value: "viewer", label: "Viewer", hint: "Can view and comment" },
+                  ] as const).map((opt) => (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => { setInviteRole(opt.value); setRoleMenuOpen(false); }}
+                      className="w-full flex items-start justify-between gap-2 px-3.5 py-2 text-left hover:bg-subtle transition-colors"
+                    >
+                      <span>
+                        <span className="block text-sm font-medium text-foreground">{opt.label}</span>
+                        <span className="block text-xs text-muted">{opt.hint}</span>
+                      </span>
+                      {inviteRole === opt.value && (
+                        <svg className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
           <button
             onClick={handleInvite}
             disabled={inviting || !inviteEmail.trim() || (cap !== null && members.length >= cap)}
@@ -242,7 +290,8 @@ export default function TeamManagementPage() {
                     {m.full_name || m.email}
                     {m.role === "owner" && <span className="ml-2 text-[10px] font-semibold text-muted bg-subtle px-1.5 py-0.5 rounded">{t("members.owner")}</span>}
                     {m.role === "admin" && <span className="ml-2 text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30 px-1.5 py-0.5 rounded">{t("members.admin")}</span>}
-                    {m.role === "member" && <span className="ml-2 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-1.5 py-0.5 rounded">{t("members.member")}</span>}
+                    {(m.role === "member" || m.role === "creator") && <span className="ml-2 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-1.5 py-0.5 rounded">Creator</span>}
+                    {m.role === "viewer" && <span className="ml-2 text-[10px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 px-1.5 py-0.5 rounded">Viewer</span>}
                   </p>
                   <p className="text-xs text-muted truncate">{m.email}</p>
                 </div>

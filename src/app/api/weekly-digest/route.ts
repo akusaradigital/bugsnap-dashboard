@@ -23,16 +23,17 @@ export async function GET(req: Request) {
     const ownerIds = Array.from(new Set(workspaces.map((w) => w.owner_user_id).filter((id): id is string => !!id)));
     const [ownerResult, ...stats] = await Promise.all([
       ownerIds.length
-        ? supabase.from("users").select("id,email").in("id", ownerIds)
+        ? supabase.from("users").select("id,email,notification_prefs").in("id", ownerIds)
         : Promise.resolve({ data: [], error: null }),
       ...workspaces.map((w) => supabase.rpc("weekly_stats", { p_workspace_id: w.id, p_since: since })),
     ]);
     if (ownerResult.error) throw ownerResult.error;
     const ownerEmails = new Map((ownerResult.data ?? []).map((owner) => [owner.id, owner.email]));
+    const ownerDigestOptIn = new Map((ownerResult.data ?? []).map((owner) => [owner.id, owner.notification_prefs?.digest !== false]));
 
     const digests = workspaces.flatMap((workspace, i) => {
       const email = workspace.owner_user_id ? ownerEmails.get(workspace.owner_user_id) : null;
-      if (!email) return [];
+      if (!email || !ownerDigestOptIn.get(workspace.owner_user_id!)) return [];
       const s = stats[i];
       if (s.error) throw s.error;
       const v = (s.data ?? {}) as { captures?: number; videos?: number; comments?: number; views?: number };

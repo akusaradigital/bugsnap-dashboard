@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
 import { normalizePlan, seatLimit, tierLabel, type Plan } from "@/lib/tiers";
+import { pickAvatar, initialOf } from "@/lib/avatar";
 import { AuthRequiredCard } from "@/components/AuthRequiredCard";
 
 const navItems = [
@@ -58,6 +59,7 @@ export default function DashboardLayout({
   const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
   const [, setProjects] = useState<{ id: string; name: string; description: string; is_default: boolean }[]>([]);
   const [folderMenuOpen, setFolderMenuOpen] = useState<string | null>(null);
+  const [folderMenuPos, setFolderMenuPos] = useState<{ top: number; left: number } | null>(null);
   const [createFolderModalOpen, setCreateFolderModalOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [createFolderError, setCreateFolderError] = useState<string | null>(null);
@@ -220,16 +222,22 @@ export default function DashboardLayout({
       // Stripe webhook) so upgrades take effect immediately without re-login.
       let dbPlan: Plan = normalizePlan(meta.plan);
       let suspended = false;
+      // Same source as Settings > Account (avatar_url/full_name) so the
+      // sidebar profile stays in sync with what the user saved there.
+      let dbAvatar: string | undefined;
+      let dbName: string | undefined;
       if (userEmail) {
         const { data: userRow } = await supabase
           .from("users")
-          .select("plan, suspended")
+          .select("plan, suspended, avatar_url, full_name")
           .ilike("email", userEmail)
           .maybeSingle();
         // users.plan is the source of truth (Stripe webhook writes it). Fall
         // back to auth metadata only as a bootstrap for pre-webhook accounts.
         if (userRow?.plan) dbPlan = normalizePlan(userRow.plan);
         if (userRow?.suspended) suspended = true;
+        if (userRow?.avatar_url) dbAvatar = userRow.avatar_url;
+        if (userRow?.full_name) dbName = userRow.full_name;
       }
 
       // Block suspended users from the app shell.
@@ -243,8 +251,8 @@ export default function DashboardLayout({
         user: {
           id: u.id,
           email: userEmail,
-          name: meta.full_name || meta.name || userEmail?.split("@")[0] || "User",
-          avatar: meta.avatar_url || meta.picture || "",
+          name: dbName || meta.full_name || meta.name || userEmail?.split("@")[0] || "User",
+          avatar: pickAvatar(dbAvatar, meta.avatar_url, meta.picture),
           plan: dbPlan,
         },
       });
@@ -262,6 +270,29 @@ export default function DashboardLayout({
       sub.subscription.unsubscribe();
     };
   }, [router]);
+
+  // Settings saves the profile on a separate page instance of this same
+  // layout — sync in place instead of requiring a reload to see it.
+  useEffect(() => {
+    const onProfileUpdated = (e: Event) => {
+      const detail = (e as CustomEvent<{ fullName?: string; avatarUrl?: string }>).detail;
+      if (!detail) return;
+      setSession((prev) =>
+        prev.user
+          ? {
+              ...prev,
+              user: {
+                ...prev.user,
+                name: detail.fullName?.trim() || prev.user.name,
+                avatar: pickAvatar(detail.avatarUrl, prev.user.avatar),
+              },
+            }
+          : prev
+      );
+    };
+    window.addEventListener("bugsnap:profile-updated", onProfileUpdated);
+    return () => window.removeEventListener("bugsnap:profile-updated", onProfileUpdated);
+  }, []);
 
   // Keep workspace state synchronized with browser back/forward navigation.
   useEffect(() => {
@@ -535,9 +566,11 @@ export default function DashboardLayout({
       setFolders((prev) => Array.from(new Set([...prev, name.trim()])).sort());
       setNewFolderName("");
       setCreateFolderModalOpen(false);
+      showToast(`Folder "${name.trim()}" created`, "success");
     } catch (err) {
       console.warn("Failed to create folder:", err);
       setCreateFolderError("Could not create folder. Maybe it already exists?");
+      showToast("Could not create folder", "error");
     } finally {
       setCreatingFolder(false);
     }
@@ -560,9 +593,11 @@ export default function DashboardLayout({
       }
       setNewProjectName("");
       setCreateProjectModalOpen(false);
+      showToast(`Project "${name}" created`, "success");
     } catch (err) {
       console.warn("Failed to create project:", err);
       setCreateProjectError("Could not create project. Maybe it already exists?");
+      showToast("Could not create project", "error");
     } finally {
       setCreatingProject(false);
     }
@@ -584,9 +619,11 @@ export default function DashboardLayout({
       setProjects((prev) => prev.map((p) => p.id === projectToRename.id ? { ...p, name } : p).sort((a, b) => (a.is_default ? -1 : b.is_default ? 1 : a.name.localeCompare(b.name))));
       setProjectToRename(null);
       setRenameProjectName("");
+      showToast("Project renamed", "success");
     } catch (err) {
       console.warn("Failed to rename project:", err);
       setRenameProjectError("Could not rename project.");
+      showToast("Could not rename project", "error");
     } finally {
       setRenamingProject(false);
     }
@@ -600,6 +637,7 @@ export default function DashboardLayout({
       if (error) throw error;
       setProjects((prev) => prev.filter((p) => p.id !== projectToDelete.id));
       setProjectToDelete(null);
+      showToast("Project deleted", "success");
     } catch (err) {
       console.warn("Failed to delete project:", err);
       showToast("Could not delete project", "error");
@@ -627,6 +665,7 @@ export default function DashboardLayout({
         p_folder_names: reordered,
       });
       if (error) throw error;
+      showToast("Folder order updated", "success");
     } catch (err) {
       console.warn("Failed to persist folder order:", err);
       showToast(t("layout.errReorderFolder"), "error");
@@ -669,6 +708,7 @@ export default function DashboardLayout({
         router.replace(`/captures?ws=${activeWsId}&folder=${encodeURIComponent(newName)}`, { scroll: false });
       }
       setRenameFolderModalOpen(false);
+      showToast("Folder renamed", "success");
     } catch (err) {
       console.warn("Failed to rename folder:", err);
         showToast(t("layout.errRenameFolder"), "error");
@@ -737,9 +777,11 @@ export default function DashboardLayout({
       router.replace(`${pathname}?ws=${created.id}`, { scroll: false });
       setNewWsName("");
       setCreateWsModalOpen(false);
+      showToast(`Workspace "${name}" created`, "success");
     } catch (err) {
       console.warn("Failed to create workspace:", err);
       setCreateWsError("Could not create workspace. Please try again.");
+      showToast("Could not create workspace", "error");
     } finally {
       setCreating(false);
     }
@@ -779,12 +821,14 @@ export default function DashboardLayout({
         ...prev,
         [activeWsId]: [...(prev[activeWsId] || []), email],
       }));
+      showToast(`Invite sent to ${email}`, "success");
     } catch (err) {
       console.warn("Failed to invite member:", err);
       setInviteError(
         (err as { message?: string })?.message ||
           t("layout.errInvite")
       );
+      showToast("Could not send invite", "error");
     } finally {
       setInviting(false);
     }
@@ -949,9 +993,9 @@ export default function DashboardLayout({
             className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium rounded-xl border border-border bg-subtle hover:bg-subtle transition-colors text-left"
           >
             <span className="w-6 h-6 rounded-md bg-indigo-600 text-white text-[11px] font-semibold flex items-center justify-center shrink-0">
-              {activeWsName.charAt(0)}
+              {initialOf(activeWs?.name)}
             </span>
-            <span className="flex-1 truncate">{activeWsName}</span>
+            <span className="flex-1 truncate">{activeWs?.name || "Workspace"}</span>
             <svg className={`w-3.5 h-3.5 text-muted transition-transform ${wsOpen ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M6 9l6 6 6-6" />
             </svg>
@@ -963,14 +1007,13 @@ export default function DashboardLayout({
               <div className="absolute left-3 right-3 top-[calc(100%+8px)] z-50 rounded-2xl border border-border bg-subtle shadow-xl overflow-visible">
                 <div className="p-4 flex items-center gap-3 border-b border-border">
                   <span className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 text-lg font-semibold flex items-center justify-center shrink-0">
-                    {activeWsName.charAt(0)}
+                    {initialOf(activeWs?.name)}
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
-                      <p className="text-base font-semibold text-foreground truncate">{activeWsName}</p>
+                      <p className="text-base font-semibold text-foreground truncate">{activeWs?.name || "Workspace"}</p>
                       <span className="text-[11px] px-2 py-0.5 rounded-md border border-border text-muted shrink-0">{tierLabel(currentUser.plan)}</span>
                     </div>
-                    <p className="text-xs text-muted truncate">{currentUser.email}</p>
                   </div>
                 </div>
 
@@ -994,7 +1037,7 @@ export default function DashboardLayout({
                   <button
                     type="button"
                     onClick={() => setWorkspacePickerOpen((o) => !o)}
-                    className="w-full flex items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm font-medium text-foreground hover:bg-subtle transition-colors"
+                    className="w-full flex items-center justify-between gap-3 rounded-lg py-1 text-left text-sm font-medium text-foreground hover:bg-subtle transition-colors"
                   >
                     <span className="flex items-center gap-3">
                       <svg className="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -1180,6 +1223,8 @@ export default function DashboardLayout({
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            setFolderMenuPos({ top: rect.top, left: rect.right + 4 });
                             setFolderMenuOpen((open) => (open === folder ? null : folder));
                           }}
                           aria-label={`${folder} actions`}
@@ -1187,8 +1232,11 @@ export default function DashboardLayout({
                         >
                           <span aria-hidden="true">⋯</span>
                         </button>
-                        {folderMenuOpen === folder && (
-                          <div className="absolute right-1 top-full z-50 mt-1 w-28 overflow-hidden rounded-lg border border-border bg-subtle py-1 text-xs shadow-lg">
+                        {folderMenuOpen === folder && folderMenuPos && (
+                          <div
+                            style={{ top: folderMenuPos.top, left: folderMenuPos.left }}
+                            className="fixed z-50 w-28 overflow-hidden rounded-lg border border-border bg-subtle py-1 text-xs shadow-lg"
+                          >
                               <button
                                 type="button"
                                 onClick={() => {
@@ -1237,7 +1285,7 @@ export default function DashboardLayout({
       )}
 
       {/* Main content */}
-      <main className="flex-1 h-full overflow-y-auto">{children}</main>
+      <main className={`flex-1 h-full ${pathname.startsWith("/settings") ? "overflow-hidden" : "overflow-y-auto"}`}>{children}</main>
 
       {/* Invite Modal */}
       {inviteModalOpen && (

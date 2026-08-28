@@ -6,10 +6,11 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import type { CapturedLogs } from "@/components/DevToolsPanel";
-import Comments, { CommentRow } from "@/components/Comments";
+import Comments from "@/components/Comments";
 import MediaViewer from "@/components/MediaViewer";
 import { useT } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
+import { Dropdown } from "@/components/Dropdown";
 
 const DevToolsPanel = dynamic(() => import("@/components/DevToolsPanel"), {
   ssr: false,
@@ -38,6 +39,7 @@ interface Capture {
   project_id?: string | null;
   project_name?: string | null;
   source?: string | null;
+  access_mode?: "public" | "members" | null;
 }
 
 const TAG_OPTIONS = ["bug", "feature-request", "wip", "design", "other"];
@@ -88,9 +90,17 @@ function SingleViewContent() {
 
   // Modals & Popovers
   const [moreOpen, setMoreOpen] = useState(false);
+  const [moveSubmenuOpen, setMoveSubmenuOpen] = useState(false);
+  const [capFolders, setCapFolders] = useState<string[]>([]);
+  const [movingCapture, setMovingCapture] = useState(false);
+  const [newFolderMode, setNewFolderMode] = useState(false);
+  const [newFolderName, setNewFolderName] = useState("");
   const [copied, setCopied] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [shareType, setShareType] = useState<"devtools" | "content">("devtools");
+  const [accessMode, setAccessMode] = useState<"public" | "members">("public");
+  const [accessSaving, setAccessSaving] = useState(false);
+  const [accessOpen, setAccessOpen] = useState(false);
   const [aiModal, setAiModal] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiSummary, setAiSummary] = useState("");
@@ -120,11 +130,6 @@ function SingleViewContent() {
   const [viewerEmail, setViewerEmail] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [brand, setBrand] = useState({ name: "BugSnap", logo: "", hideWatermark: false });
-
-  // Pinpoint comments state
-  const [commentsList, setCommentsList] = useState<CommentRow[]>([]);
-  const [activePin, setActivePin] = useState<{ x: number; y: number } | null>(null);
-  const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
 
   // 1. Initial Access Check (Non-Login default)
   useEffect(() => {
@@ -245,16 +250,19 @@ function SingleViewContent() {
           const { data: directData } = await supabase
             .from("captures")
             .select(
-              "id, title, type, drive_url, description, dev_logs, os, browser, site_url, window_size, created_at, workspace_id, tag, status, allowed_domains, allowed_ips, burn_after_read, expires_at, project_id, source"
+              "id, title, type, drive_url, description, dev_logs, os, browser, site_url, window_size, created_at, workspace_id, tag, status, allowed_domains, allowed_ips, burn_after_read, expires_at, project_id, source, access_mode"
             )
             .eq("id", id)
             .single();
           if (directData && !cancelled) {
             setCapture(directData as Capture);
+            setAccessMode(directData.access_mode === "members" ? "members" : "public");
             setStatus("ready");
           }
           return;
         }
+
+        setAccessMode(row.access_mode === "members" ? "members" : "public");
 
         switch (row.status) {
           case "not_found":
@@ -350,6 +358,7 @@ function SingleViewContent() {
         if (error || !data || data.length === 0) { setStatus("notfound"); return; }
 
         const row = data[0] as Capture & { status: string };
+        setAccessMode(row.access_mode === "members" ? "members" : "public");
         if (row.status === "ok") {
           setCapture(row);
           setStatus("ready");
@@ -411,6 +420,26 @@ function SingleViewContent() {
     }
   }
 
+  async function saveAccessMode(nextMode: "public" | "members") {
+    if (!capture || accessSaving || nextMode === accessMode) return;
+    setAccessSaving(true);
+    const previous = accessMode;
+    setAccessMode(nextMode);
+    setCapture({ ...capture, access_mode: nextMode });
+    try {
+      const { error } = await supabase.from("captures").update({ access_mode: nextMode }).eq("id", capture.id);
+      if (error) throw error;
+      showToast(nextMode === "public" ? "Link set to public" : "Link restricted to members", "success");
+    } catch {
+      setAccessMode(previous);
+      setCapture({ ...capture, access_mode: previous });
+      showToast("Only workspace owners can change link access.", "error");
+    } finally {
+      setAccessSaving(false);
+      setAccessOpen(false);
+    }
+  }
+
   // Edit / Delete logic
   function openEditModal() {
     if (!capture) return;
@@ -447,9 +476,11 @@ function SingleViewContent() {
       if (error) throw error;
       setCapture(data as Capture);
       setEditModalOpen(false);
+      showToast("Capture updated", "success");
     } catch (err) {
       console.warn("Failed to save captures changes:", err);
       setEditError(t("v.saveError"));
+      showToast("Could not save capture", "error");
     } finally {
       setSavingEdit(false);
     }
@@ -463,6 +494,53 @@ function SingleViewContent() {
     const result = await response.json().catch(() => ({})) as { url?: string; error?: string };
     if (!response.ok || !result.url) throw new Error(result.error || "Could not start Google Drive connection");
     window.location.assign(result.url);
+  }
+
+  async function loadCapFolders() {
+    if (!capture?.workspace_id) return;
+    const { data } = await supabase
+      .from("workspace_folders")
+      .select("name")
+      .eq("workspace_id", capture.workspace_id)
+      .order("name");
+    setCapFolders((data || []).map((r) => r.name as string));
+  }
+
+  async function handleMoveCapture(folderName: string | null) {
+    if (!capture?.workspace_id || movingCapture) return;
+    setMovingCapture(true);
+    try {
+      const { error } = await supabase.rpc("move_capture_to_workspace_folder", {
+        p_capture_id: capture.id,
+        p_target_workspace_id: capture.workspace_id,
+        p_target_folder_name: folderName,
+      });
+      if (error) throw error;
+      setMoreOpen(false);
+      setMoveSubmenuOpen(false);
+      setNewFolderMode(false);
+      showToast(folderName ? `Moved to "${folderName}"` : "Removed from folder", "success");
+    } catch (err) {
+      console.warn("Failed to move capture:", err);
+      showToast("Could not move capture", "error");
+    } finally {
+      setMovingCapture(false);
+    }
+  }
+
+  async function handleCreateFolderAndMove() {
+    const name = newFolderName.trim();
+    if (!name || !capture?.workspace_id) return;
+    try {
+      const { error } = await supabase.from("workspace_folders").insert({ workspace_id: capture.workspace_id, name });
+      if (error) throw error;
+      setCapFolders((prev) => Array.from(new Set([...prev, name])).sort());
+      setNewFolderName("");
+      await handleMoveCapture(name);
+    } catch (err) {
+      console.warn("Failed to create folder:", err);
+      showToast("Could not create folder", "error");
+    }
   }
 
   function handleDeleteCapture() {
@@ -498,6 +576,7 @@ function SingleViewContent() {
       if (captureResult?.ok) {
         setDeleteCaptureModalOpen(false);
         setDeleteOperationId(null);
+        showToast("Capture deleted", "success");
         router.push("/captures");
         return;
       }
@@ -518,45 +597,17 @@ function SingleViewContent() {
     } catch (err) {
       console.warn("Failed to delete capture:", err);
       setDeleteCaptureError(err instanceof Error ? err.message : t("v.deleteFailed"));
+      showToast("Could not delete capture", "error");
     } finally {
       setDeletingCapture(false);
     }
   }
 
-  async function handleDownloadDirectMedia() {
+  function handleDownloadDirectMedia() {
     if (!capture?.drive_url) return;
     const fileId = driveFileId(capture.drive_url);
     if (!fileId) return;
-
-    const directUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
-    const ext = capture.type === "video" ? ".webm" : ".png";
-    let filename = (capture.title || "capture").trim();
-    if (!filename.toLowerCase().endsWith(ext)) {
-      filename = `${filename}${ext}`;
-    }
-
-    try {
-      const res = await fetch(directUrl);
-      if (!res.ok) throw new Error("Fetch failed");
-      const blob = await res.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = blobUrl;
-      a.download = filename;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
-    } catch {
-      const a = document.createElement("a");
-      a.href = directUrl;
-      a.download = filename;
-      a.target = "_blank";
-      a.rel = "noopener noreferrer";
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-    }
+    window.location.href = `/api/google-drive/download?id=${encodeURIComponent(fileId)}&type=${capture.type === "video" ? "video" : "screenshot"}&filename=${encodeURIComponent(capture.title || "capture")}`;
   }
 
   const embedUrl = typeof window !== "undefined" ? `${window.location.origin}/v/${id}?embed=true` : "";
@@ -656,6 +707,79 @@ function SingleViewContent() {
                     </button>
                   )}
                   {isWorkspaceOwner && (
+                    <div
+                      className="relative"
+                      onMouseEnter={() => { setMoveSubmenuOpen(true); if (capFolders.length === 0) loadCapFolders(); }}
+                      onMouseLeave={() => { setMoveSubmenuOpen(false); setNewFolderMode(false); }}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => { setMoveSubmenuOpen((o) => !o); if (capFolders.length === 0) loadCapFolders(); }}
+                        className="w-full flex items-center justify-between gap-1.5 px-3 py-1.5 text-xs text-foreground hover:bg-subtle rounded-lg transition-colors"
+                      >
+                        <span className="flex items-center gap-1.5">
+                          <svg className="w-3.5 h-3.5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v7a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+                          </svg>
+                          Move to folder
+                        </span>
+                        <svg className="w-3 h-3 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                      {moveSubmenuOpen && (
+                        <div className="absolute right-full top-0 mr-1 w-44 z-50 bg-white border border-border rounded-xl shadow-xl py-1 px-1 flex flex-col gap-0.5">
+                          <button
+                            type="button"
+                            disabled={movingCapture}
+                            onClick={() => handleMoveCapture(null)}
+                            className="w-full text-left px-3 py-1.5 text-xs text-foreground hover:bg-subtle rounded-lg transition-colors disabled:opacity-50"
+                          >
+                            No folder (General)
+                          </button>
+                          {capFolders.map((folder) => (
+                            <button
+                              key={folder}
+                              type="button"
+                              disabled={movingCapture}
+                              onClick={() => handleMoveCapture(folder)}
+                              className="w-full flex items-center gap-1.5 px-3 py-1.5 text-xs text-foreground hover:bg-subtle rounded-lg transition-colors disabled:opacity-50"
+                            >
+                              <svg className="w-3.5 h-3.5 text-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v7a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
+                              </svg>
+                              <span className="truncate">{folder}</span>
+                            </button>
+                          ))}
+                          <div className="my-0.5 border-t border-border" />
+                          {newFolderMode ? (
+                            <form
+                              onSubmit={(e) => { e.preventDefault(); handleCreateFolderAndMove(); }}
+                              className="px-2 py-1"
+                            >
+                              <input
+                                autoFocus
+                                value={newFolderName}
+                                onChange={(e) => setNewFolderName(e.target.value)}
+                                placeholder="Folder name"
+                                className="w-full rounded-md border border-border px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
+                              />
+                            </form>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => setNewFolderMode(true)}
+                              className="w-full text-left px-3 py-1.5 text-xs text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
+                            >
+                              + New folder
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {isWorkspaceOwner && <div className="my-0.5 border-t border-border" />}
+                  {isWorkspaceOwner && (
                     <button
                       onClick={() => { handleDeleteCapture(); setMoreOpen(false); }}
                       className="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 font-semibold rounded-lg transition-colors"
@@ -686,7 +810,7 @@ function SingleViewContent() {
               {copied ? t("v.copied") : t("v.copy")}
             </button>
             <button
-              onClick={() => setShareOpen(!shareOpen)}
+              onClick={() => { setShareOpen(!shareOpen); setAccessOpen(false); }}
               className="px-2 py-1.5 bg-emerald-400 hover:bg-emerald-500 text-white text-xs rounded-r-lg transition-colors flex items-center justify-center self-stretch"
               aria-label={t("v.shareCapture")}
             >
@@ -699,72 +823,88 @@ function SingleViewContent() {
             {shareOpen && (
               <>
                 <div className="fixed inset-0 z-40" onClick={() => setShareOpen(false)} />
-                <div className="absolute right-0 top-full mt-2 w-72 z-50 bg-white border border-border rounded-xl shadow-2xl p-4 flex flex-col gap-4 text-foreground">
-                  <div>
-                    <h3 className="text-[11px] font-bold text-muted uppercase tracking-wider">{t("v.shareCapture")}</h3>
+                <div className="absolute right-0 top-full mt-2 w-[min(26rem,calc(100vw-1rem))] z-50 overflow-hidden rounded-2xl border border-border bg-white text-foreground shadow-2xl dark:bg-background">
+                  <div className="border-b border-border px-5 py-3">
+                    <h3 className="text-lg font-semibold tracking-tight text-foreground">Share BugSnap</h3>
                   </div>
 
                   {/* Share Cards */}
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-7 px-8 py-6 text-center">
                     <button
                       onClick={() => setShareType("devtools")}
-                      className={`p-2.5 rounded-lg border-2 text-left flex flex-col gap-1 transition-all ${
-                        shareType === "devtools"
-                          ? "border-indigo-600 bg-indigo-50/20"
-                          : "border-border hover:border-muted-foreground/30"
-                      }`}
+                      className={`group flex flex-col items-center gap-3 rounded-xl text-sm font-semibold transition-colors ${shareType === "devtools" ? "text-foreground" : "text-muted hover:text-foreground"}`}
                     >
-                      <div className="bg-indigo-100/60 rounded p-1 w-fit">
-                        <svg className="w-3.5 h-3.5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                        </svg>
+                      <div className={`flex h-[5.6rem] w-full items-center justify-center rounded-md border transition-colors ${shareType === "devtools" ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30" : "border-transparent bg-indigo-100/70 dark:bg-indigo-950/20"}`}>
+                        <div className="flex h-16 w-[6.5rem] items-center justify-center rounded-md border border-indigo-200 bg-white shadow-sm dark:border-indigo-800 dark:bg-subtle">
+                          <svg className="h-9 w-9 text-indigo-200 dark:text-indigo-700" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
+                          <div className="ml-2 hidden h-12 w-8 rounded border border-indigo-100 bg-indigo-50 sm:block dark:border-indigo-800 dark:bg-background" />
+                        </div>
                       </div>
-                      <span className="text-[10px] font-bold">{t("v.withDevTools")}</span>
-                      <span className="text-[8px] text-muted leading-tight">{t("v.withDevToolsHint")}</span>
+                      <span>{t("v.withDevTools")}</span>
                     </button>
 
                     <button
                       onClick={() => setShareType("content")}
-                      className={`p-2.5 rounded-lg border-2 text-left flex flex-col gap-1 transition-all ${
-                        shareType === "content"
-                          ? "border-indigo-600 bg-indigo-50/20"
-                          : "border-border hover:border-muted-foreground/30"
-                      }`}
+                      className={`group flex flex-col items-center gap-3 rounded-xl text-sm font-semibold transition-colors ${shareType === "content" ? "text-foreground" : "text-muted hover:text-foreground"}`}
                     >
-                      <div className="bg-emerald-100/60 rounded p-1 w-fit">
-                        <svg className="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                        </svg>
+                      <div className={`flex h-[5.6rem] w-full items-center justify-center rounded-md border transition-colors ${shareType === "content" ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30" : "border-transparent bg-indigo-100/70 dark:bg-indigo-950/20"}`}>
+                        <div className="flex h-16 w-[6.5rem] items-center justify-center rounded-md border border-indigo-200 bg-white shadow-sm dark:border-indigo-800 dark:bg-subtle">
+                          <svg className="h-9 w-9 text-indigo-200 dark:text-indigo-700" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
+                        </div>
                       </div>
-                      <span className="text-[10px] font-bold">{t("v.contentOnly")}</span>
-                      <span className="text-[8px] text-muted leading-tight">{t("v.contentOnlyHint")}</span>
+                      <span>{t("v.contentOnly")}</span>
                     </button>
                   </div>
 
                   {/* General Access Selection */}
-                  <div className="space-y-1">
-                    <label className="text-[9px] font-bold text-muted uppercase tracking-wider">{t("v.generalAccess")}</label>
-                    <div className="relative">
-                      <select 
-                        disabled
-                        className="w-full bg-subtle border border-border rounded-lg pl-2 pr-7 py-1.5 text-xs text-foreground outline-none font-medium appearance-none cursor-not-allowed"
-                      >
-                        <option>{t("v.anyoneWithLink")}</option>
-                      </select>
-                      <div className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-muted">
-                        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m19 9-7 7-7-7"/></svg>
+                  <div className="relative border-t border-border px-5 py-4">
+                    <label className="mb-2 block text-sm font-medium text-muted">General access</label>
+                    <button
+                      type="button"
+                      onClick={() => setAccessOpen((open) => !open)}
+                      className="flex w-full items-center justify-between rounded-xl bg-subtle px-4 py-3 text-left text-base font-medium text-foreground hover:bg-subtle/80"
+                    >
+                      <span className="flex items-center gap-3">
+                        <svg className="h-5 w-5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+                        {accessMode === "members" ? "Workspace members only" : t("v.anyoneWithLink")}
+                      </span>
+                      <svg className={`h-4 w-4 text-muted transition-transform ${accessOpen ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6"/></svg>
+                    </button>
+
+                    {accessOpen && (
+                      <div className="mt-2 overflow-hidden rounded-2xl border border-border bg-white p-2 shadow-xl dark:bg-background">
+                        <button type="button" onClick={() => void saveAccessMode("members")} disabled={accessSaving} className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm disabled:opacity-60 ${accessMode === "members" ? "bg-subtle text-foreground" : "text-muted hover:bg-subtle hover:text-foreground"}`}>
+                          <span className="flex items-center gap-3">
+                            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4M9 9h1M9 13h1M9 17h1"/></svg>
+                            Workspace members only
+                          </span>
+                          {accessMode === "members" && <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m5 12 4 4L19 6"/></svg>}
+                        </button>
+                        <button type="button" onClick={() => void saveAccessMode("public")} disabled={accessSaving} className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm disabled:opacity-60 ${accessMode === "public" ? "bg-subtle text-foreground" : "text-muted hover:bg-subtle hover:text-foreground"}`}>
+                          <span className="flex items-center gap-3">
+                            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
+                            {t("v.anyoneWithLink")}
+                          </span>
+                          {accessMode === "public" && <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m5 12 4 4L19 6"/></svg>}
+                        </button>
+                        <a href="/settings" className="mt-2 flex w-full items-center justify-between border-t border-border px-3 py-3 text-sm text-foreground hover:bg-subtle">
+                          Manage access
+                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 17 17 7M7 7h10v10"/></svg>
+                        </a>
                       </div>
-                    </div>
+                    )}
                   </div>
 
                   {/* Copy Link Button */}
-                  <button
-                    onClick={handleCopyLink}
-                    className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs py-2 rounded-lg transition-colors flex items-center justify-center gap-1.5"
-                  >
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
-                    {copied ? t("v.copiedLink") : t("v.copyLinkBtn")}
-                  </button>
+                  <div className="px-5 pb-4">
+                    <button
+                      onClick={handleCopyLink}
+                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
+                    >
+                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+                      {copied ? t("v.copiedLink") : t("v.copyLinkBtn")}
+                    </button>
+                  </div>
                 </div>
               </>
             )}
@@ -813,7 +953,7 @@ function SingleViewContent() {
           {status === "needs_login" && (
             <div className="text-center max-w-sm">
               <h1 className="text-lg font-semibold text-foreground">{t("v.loginRequired")}</h1>
-              <p className="text-sm text-muted mt-1 mb-6">{t("v.domainRestricted")}</p>
+              <p className="text-sm text-muted mt-1 mb-6">{accessMode === "members" ? "Only workspace members can view this capture." : t("v.domainRestricted")}</p>
               <a href="/" className="px-5 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-semibold">{t("v.signIn")}</a>
             </div>
           )}
@@ -853,10 +993,6 @@ function SingleViewContent() {
               type={capture.type}
               driveUrl={capture.drive_url}
               title={capture.title}
-              comments={commentsList}
-              activePin={activePin}
-              onPlacePin={(coords) => setActivePin(coords)}
-              onSelectComment={(cId) => setHighlightedCommentId(cId)}
             />
 
             {/* Title + Comments */}
@@ -895,10 +1031,6 @@ function SingleViewContent() {
                   isVideo={capture.type === "video"}
                   authorName={viewerEmail ? viewerEmail.split("@")[0] : undefined}
                   authorEmail={viewerEmail || undefined}
-                  pin={activePin}
-                  onClearPin={() => setActivePin(null)}
-                  onCommentsChange={(cList) => setCommentsList(cList)}
-                  highlightedCommentId={highlightedCommentId}
                 />
               </div>
             </div>
@@ -937,16 +1069,21 @@ function SingleViewContent() {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-muted mb-1.5">{t("v.tagLabel")}</label>
-                  <select value={editTag} onChange={(e) => setEditTag(e.target.value)} className="w-full text-sm rounded-lg border border-border px-3 py-2 bg-white">
-                    <option value="">{t("v.noTag")}</option>
-                    {TAG_OPTIONS.map(t => <option key={t} value={t}>{t}</option>)}
-                  </select>
+                  <Dropdown
+                    variant="field"
+                    value={editTag}
+                    onChange={setEditTag}
+                    options={[{ value: "", label: t("v.noTag") }, ...TAG_OPTIONS.map(t => ({ value: t, label: t }))]}
+                  />
                 </div>
                 <div>
                   <label className="block text-xs font-semibold text-muted mb-1.5">{t("v.statusLabel")}</label>
-                  <select value={editStatus} onChange={(e) => setEditStatus(e.target.value)} className="w-full text-sm rounded-lg border border-border px-3 py-2 bg-white">
-                    {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
+                  <Dropdown
+                    variant="field"
+                    value={editStatus}
+                    onChange={setEditStatus}
+                    options={STATUS_OPTIONS.map(s => ({ value: s, label: s }))}
+                  />
                 </div>
               </div>
 
