@@ -19,10 +19,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: `Invalid Google token: ${errText}` }, { status: 401 });
     }
 
-    const googleUser = await googleRes.json();
-    const email = googleUser.email;
-    if (!email) {
-      return NextResponse.json({ error: "Email not returned by Google" }, { status: 400 });
+    const googleUser = await googleRes.json() as { email?: string; email_verified?: boolean; name?: string; picture?: string };
+    const email = googleUser.email?.trim().toLowerCase();
+    if (!email || googleUser.email_verified !== true) {
+      return NextResponse.json({ error: "A verified Google email is required" }, { status: 401 });
     }
 
     // 2. Initialize Supabase Admin Service Client
@@ -45,19 +45,25 @@ export async function POST(request: Request) {
     }
 
     if (!targetUser) {
-      // Create user if they don't exist yet (auto-confirmed)
+      // Create user if they don't exist yet (auto-confirmed). The auth trigger
+      // creates public.users + default workspace atomically.
       const { data: newUser, error: createErr } = await supabaseAdmin.auth.admin.createUser({
         email,
         email_confirm: true,
         user_metadata: {
           full_name: googleUser.name || email.split("@")[0],
-          avatar_url: googleUser.picture || ""
+          avatar_url: googleUser.picture || "https://bugsnap.akusaraproject.my.id/icon.svg"
         }
       });
 
       if (createErr) throw createErr;
       targetUser = newUser.user;
     }
+
+    // Existing auth users may predate provisioning triggers. Repair their
+    // public profile/workspace before returning a login link.
+    const { error: provisionError } = await supabaseAdmin.rpc("ensure_user_and_workspace_by_email", { p_email: email });
+    if (provisionError) throw provisionError;
 
     // 3.5. Accept pending workspace invites for this user's email
     const emailNorm = email.toLowerCase().trim();

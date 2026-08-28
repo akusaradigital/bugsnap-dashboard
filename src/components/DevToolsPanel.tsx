@@ -111,6 +111,7 @@ function isSummary(logs: unknown): logs is DevLogSummary {
 
 interface Props {
   capture: {
+    type?: string;
     drive_url: string;
     site_url?: string | null;
     created_at: string;
@@ -261,6 +262,10 @@ export default function DevToolsPanel({ capture }: Props) {
   }, 0);
 
   const getRelativeTime = (log: TimedLog) => {
+    // If it's a screenshot, there is no "video duration", so we just want absolute wall clock time.
+    if (capture.type === "screenshot" && log.timestamp && Number(log.timestamp)) {
+      return new Date(Number(log.timestamp)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    }
     const value = log.time || log.timestamp;
     if (!value) return "-";
     if (typeof value === "string" && /^\d{1,2}:\d{2}$/.test(value)) return value;
@@ -288,10 +293,6 @@ export default function DevToolsPanel({ capture }: Props) {
   const consoleLogs = logs
     .filter((log) => log.type === "console" || log.type === "navigation" || log.type === "screenshot")
     .filter((log) => {
-      if (log.type === "console") {
-        const level = normalizeLevel(log.level);
-        if (level !== "error" && level !== "warn") return false;
-      }
       const detail = log.type === "console" ? consoleText(log) : log.message || ("url" in log ? log.url : "") || "";
       if (isTracker(detail) || ("url" in log && isTracker(log.url))) return false;
       const isError = log.type === "console" ? normalizeLevel(log.level) === "error" : false;
