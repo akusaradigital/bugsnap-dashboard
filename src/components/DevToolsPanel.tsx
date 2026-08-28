@@ -58,7 +58,21 @@ export interface ScreenshotLog extends TimedLog {
   url?: string;
 }
 
-export type DevLog = ConsoleLog | NetworkLog | ActionLog | NavigationLog | ScreenshotLog;
+export interface PerformanceLog extends TimedLog {
+  type: "performance";
+  metrics?: {
+    domNodes?: number;
+    jsHeapUsedMB?: number | null;
+    jsHeapTotalMB?: number | null;
+    lcpMs?: number | null;
+    cls?: number;
+    inpMs?: number | null;
+    fcpMs?: number | null;
+    ttfbMs?: number | null;
+  };
+}
+
+export type DevLog = ConsoleLog | NetworkLog | ActionLog | NavigationLog | ScreenshotLog | PerformanceLog;
 
 export function normalizeDevLog(log: Record<string, unknown>): DevLog {
   const type = typeof log.type === "string" ? log.type.toLowerCase() : "";
@@ -78,7 +92,11 @@ export function normalizeDevLog(log: Record<string, unknown>): DevLog {
   const time = typeof log.time === "string" || typeof log.time === "number" ? log.time : undefined;
   const timestamp = typeof log.timestamp === "string" || typeof log.timestamp === "number" ? log.timestamp : undefined;
   const count = typeof log.count === "number" ? log.count : undefined;
+  const metrics = typeof log.metrics === "object" && log.metrics !== null ? (log.metrics as PerformanceLog["metrics"]) : undefined;
 
+  if (type === "performance") {
+    return { type: "performance", metrics, time, timestamp, count };
+  }
   if (type === "console" || (type === "" && (level !== undefined || stack !== undefined || text !== undefined))) {
     return { type: "console", level, message, text, stack, time, timestamp, count };
   }
@@ -308,6 +326,9 @@ export default function DevToolsPanel({ capture }: Props) {
     (log) => `${(log.method || "GET").toUpperCase()}\u0000${log.status ?? "FAILED"}\u0000${canonicalUrl(log.url)}`,
     (log) => ({ ...log, url: canonicalUrl(log.url) })
   );
+
+  const performanceLog = logs.findLast((l): l is PerformanceLog => l.type === "performance");
+  const metrics = performanceLog?.metrics;
 
   const [timeZoneMode, setTimeZoneMode] = useState<"capture" | "local" | "utc">("capture");
   const [showTzMenu, setShowTzMenu] = useState(false);
@@ -664,6 +685,38 @@ export default function DevToolsPanel({ capture }: Props) {
                 </div>
               ))}
             </div>
+
+            {metrics && (
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted mb-1.5">Web Vitals & Performance</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <div className="p-2.5 rounded-xl border border-border bg-subtle/80 flex flex-col justify-between">
+                    <span className="text-[10px] text-muted font-medium">LCP (Largest Paint)</span>
+                    <span className={`text-xs font-mono font-bold mt-1 ${metrics.lcpMs && metrics.lcpMs > 2500 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}`}>
+                      {metrics.lcpMs != null ? `${metrics.lcpMs}ms` : "-"}
+                    </span>
+                  </div>
+                  <div className="p-2.5 rounded-xl border border-border bg-subtle/80 flex flex-col justify-between">
+                    <span className="text-[10px] text-muted font-medium">CLS (Layout Shift)</span>
+                    <span className={`text-xs font-mono font-bold mt-1 ${metrics.cls && metrics.cls > 0.1 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}`}>
+                      {metrics.cls != null ? metrics.cls : "0"}
+                    </span>
+                  </div>
+                  <div className="p-2.5 rounded-xl border border-border bg-subtle/80 flex flex-col justify-between">
+                    <span className="text-[10px] text-muted font-medium">JS Heap Memory</span>
+                    <span className="text-xs font-mono font-bold mt-1 text-foreground">
+                      {metrics.jsHeapUsedMB != null ? `${metrics.jsHeapUsedMB} MB` : "-"}
+                    </span>
+                  </div>
+                  <div className="p-2.5 rounded-xl border border-border bg-subtle/80 flex flex-col justify-between">
+                    <span className="text-[10px] text-muted font-medium">DOM Elements</span>
+                    <span className="text-xs font-mono font-bold mt-1 text-foreground">
+                      {metrics.domNodes != null ? `${metrics.domNodes.toLocaleString()}` : "-"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="space-y-2 pt-1">
               <button

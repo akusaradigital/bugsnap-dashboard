@@ -2,11 +2,16 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useT } from "@/components/I18nProvider";
+import { CommentRow } from "@/components/Comments";
 
 interface MediaViewerProps {
   type: string;
   driveUrl: string | null;
   title: string;
+  comments?: CommentRow[];
+  onPlacePin?: (coords: { x: number; y: number }) => void;
+  activePin?: { x: number; y: number } | null;
+  onSelectComment?: (commentId: string) => void;
 }
 
 function driveFileId(url: string): string | null {
@@ -27,7 +32,15 @@ const MAX_ZOOM = 5;
 const STEP_ZOOM = 0.5;
 const DOUBLE_CLICK_ZOOM = 2.5;
 
-export default function MediaViewer({ type, driveUrl, title }: MediaViewerProps) {
+export default function MediaViewer({
+  type,
+  driveUrl,
+  title,
+  comments = [],
+  onPlacePin,
+  activePin,
+  onSelectComment,
+}: MediaViewerProps) {
   const { t } = useT();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const lightboxTriggerRef = useRef<HTMLButtonElement>(null);
@@ -192,12 +205,14 @@ export default function MediaViewer({ type, driveUrl, title }: MediaViewerProps)
           )
         ) : imageUrl && !imageFailed ? (
           <div className="group relative flex h-full w-full items-center justify-center">
-            <button
-              ref={lightboxTriggerRef}
-              type="button"
-              onClick={() => setLightboxOpen(true)}
-              className="flex h-full w-full cursor-zoom-in items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-white relative"
-              aria-label={t("mv.openViewer", { name: title })}
+            <div
+              className="relative flex h-full w-full items-center justify-center cursor-crosshair select-none"
+              onClick={(e) => {
+                const rect = e.currentTarget.getBoundingClientRect();
+                const x = Math.max(0, Math.min(100, ((e.clientX - rect.left) / rect.width) * 100));
+                const y = Math.max(0, Math.min(100, ((e.clientY - rect.top) / rect.height) * 100));
+                onPlacePin?.({ x, y });
+              }}
             >
               {!imageLoaded && (
                 <div className="absolute inset-0 flex items-center justify-center">
@@ -211,8 +226,44 @@ export default function MediaViewer({ type, driveUrl, title }: MediaViewerProps)
                 referrerPolicy="no-referrer"
                 onLoad={() => setImageLoaded(true)}
                 onError={() => setImageFailed(true)}
-                className={`h-full w-full object-contain transition-all duration-200 group-hover:scale-[1.01] ${imageLoaded ? "opacity-100" : "opacity-0"}`}
+                className={`h-full w-full object-contain transition-all duration-200 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
               />
+
+              {/* Render existing persistent comment pins */}
+              {comments
+                .filter((c) => !c.parent_id && c.pin_x != null && c.pin_y != null)
+                .map((c, idx) => (
+                  <button
+                    key={c.id}
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectComment?.(c.id);
+                    }}
+                    style={{ left: `${c.pin_x}%`, top: `${c.pin_y}%` }}
+                    className="absolute -translate-x-1/2 -translate-y-1/2 z-20 group/pin flex items-center justify-center"
+                    title={`${c.author_name || "Guest"}: ${c.body}`}
+                  >
+                    <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-white font-bold text-[11px] shadow-lg ring-2 ring-white hover:scale-125 transition-transform">
+                      {idx + 1}
+                    </span>
+                    <span className="absolute bottom-full mb-1.5 hidden group-hover/pin:flex whitespace-nowrap rounded bg-black/80 px-2 py-0.5 text-[10px] text-white backdrop-blur-sm shadow z-30 pointer-events-none">
+                      {c.author_name || "Guest"}: {c.body.length > 25 ? `${c.body.slice(0, 25)}…` : c.body}
+                    </span>
+                  </button>
+                ))}
+
+              {/* Active temporary pin waiting for comment submit */}
+              {activePin && (
+                <div
+                  style={{ left: `${activePin.x}%`, top: `${activePin.y}%` }}
+                  className="absolute -translate-x-1/2 -translate-y-1/2 z-20 pointer-events-none flex items-center justify-center"
+                >
+                  <span className="flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white font-bold text-[11px] shadow-lg ring-2 ring-white animate-bounce">
+                    +
+                  </span>
+                </div>
+              )}
 
               {/* Hover Badge Indicator */}
               <div className="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 rounded-full bg-black/60 backdrop-blur-sm px-3 py-1 text-xs font-medium text-white/90 opacity-0 transition-all duration-200 group-hover:opacity-100 group-hover:-translate-y-0.5 shadow-sm">
@@ -222,9 +273,9 @@ export default function MediaViewer({ type, driveUrl, title }: MediaViewerProps)
                   <line x1="11" y1="8" x2="11" y2="14" />
                   <line x1="8" y1="11" x2="14" y2="11" />
                 </svg>
-                <span>Click to expand</span>
+                <span>Click image to drop a pin</span>
               </div>
-            </button>
+            </div>
 
             {/* Quick Action Top-Right Controls */}
             <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
