@@ -6,7 +6,7 @@ import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import type { CapturedLogs } from "@/components/DevToolsPanel";
-import Comments from "@/components/Comments";
+import Comments, { CommentRow } from "@/components/Comments";
 import MediaViewer from "@/components/MediaViewer";
 import { useT } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
@@ -120,6 +120,11 @@ function SingleViewContent() {
   const [viewerEmail, setViewerEmail] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [brand, setBrand] = useState({ name: "BugSnap", logo: "", hideWatermark: false });
+
+  // Pinpoint comments state
+  const [commentsList, setCommentsList] = useState<CommentRow[]>([]);
+  const [activePin, setActivePin] = useState<{ x: number; y: number } | null>(null);
+  const [highlightedCommentId, setHighlightedCommentId] = useState<string | null>(null);
 
   // 1. Initial Access Check (Non-Login default)
   useEffect(() => {
@@ -810,7 +815,15 @@ function SingleViewContent() {
       {status === "ready" && capture && (
         <div className="flex-1 flex flex-col lg:flex-row lg:overflow-hidden min-h-0">
           <div className="flex-1 lg:overflow-y-auto p-4 sm:p-6 flex flex-col gap-6">
-            <MediaViewer type={capture.type} driveUrl={capture.drive_url} title={capture.title} />
+            <MediaViewer
+              type={capture.type}
+              driveUrl={capture.drive_url}
+              title={capture.title}
+              comments={commentsList}
+              activePin={activePin}
+              onPlacePin={(coords) => setActivePin(coords)}
+              onSelectComment={(cId) => setHighlightedCommentId(cId)}
+            />
 
             {/* Title + Comments */}
             <div className="rounded-xl p-4 bg-white dark:bg-background space-y-4">
@@ -843,7 +856,16 @@ function SingleViewContent() {
               </div>
 
               <div className="pt-2 border-t border-border/40">
-                <Comments captureId={capture.id} isVideo={capture.type === "video"} authorName={viewerEmail ? viewerEmail.split("@")[0] : undefined} authorEmail={viewerEmail || undefined} />
+                <Comments
+                  captureId={capture.id}
+                  isVideo={capture.type === "video"}
+                  authorName={viewerEmail ? viewerEmail.split("@")[0] : undefined}
+                  authorEmail={viewerEmail || undefined}
+                  pin={activePin}
+                  onClearPin={() => setActivePin(null)}
+                  onCommentsChange={(cList) => setCommentsList(cList)}
+                  highlightedCommentId={highlightedCommentId}
+                />
               </div>
             </div>
           </div>

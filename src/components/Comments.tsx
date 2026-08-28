@@ -25,6 +25,8 @@ export interface CommentRow {
   author_email: string | null;
   body: string;
   video_timestamp: number | null; // seconds into the video; null for screenshots / non-timestamped
+  pin_x?: number | null; // percentage X (0-100) on screenshot
+  pin_y?: number | null; // percentage Y (0-100) on screenshot
   created_at: string;
   parent_id?: string | null; // thread reply support
   tag?: string | null; // e.g. bug / feature-request / wip
@@ -37,6 +39,10 @@ interface CommentsProps {
   isVideo: boolean;
   authorName?: string;
   authorEmail?: string;
+  pin?: { x: number; y: number } | null;
+  onClearPin?: () => void;
+  onCommentsChange?: (comments: CommentRow[]) => void;
+  highlightedCommentId?: string | null;
   /**
    * Returns the video player's current playback position in seconds.
    * Called at submit time. Omit when the player can't be read - the Drive
@@ -94,6 +100,10 @@ export default function Comments({
   isVideo,
   authorName,
   authorEmail,
+  pin,
+  onClearPin,
+  onCommentsChange,
+  highlightedCommentId,
   getCurrentTime,
   onSeek,
 }: CommentsProps) {
@@ -223,7 +233,7 @@ export default function Comments({
     const load = async () => {
       const { data, error } = await supabase
         .from("comments")
-        .select("id, capture_id, parent_id, author_name, body, video_timestamp, created_at")
+        .select("id, capture_id, parent_id, author_name, body, video_timestamp, pin_x, pin_y, created_at")
         .eq("capture_id", captureId)
         .order("created_at", { ascending: true });
       if (cancelled) return;
@@ -232,7 +242,9 @@ export default function Comments({
         setError(t("cm.errorLoad"));
         return;
       }
-      setComments((data as CommentRow[]) ?? []);
+      const loadedComments = (data as CommentRow[]) ?? [];
+      setComments(loadedComments);
+      onCommentsChange?.(loadedComments);
     };
 
     load();
@@ -250,7 +262,7 @@ export default function Comments({
       if (timer) clearInterval(timer);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [captureId, t]);
+  }, [captureId, t, onCommentsChange]);
 
   async function handleSubmit() {
     const text = body.trim();
@@ -280,23 +292,32 @@ export default function Comments({
     const author_name = effAuthorName || null;
     const author_email = authorEmail || null;
     const optimisticId = `local-${Date.now()}`;
-    setComments((prev) => [
-      ...prev,
-      {
-        id: optimisticId,
-        capture_id: captureId,
-        author_name,
-        author_email,
-        body: text,
-        video_timestamp,
-        created_at: new Date().toISOString(),
-      },
-    ]);
+    const p_pin_x = !isVideo && pin ? Math.round(pin.x * 100) / 100 : null;
+    const p_pin_y = !isVideo && pin ? Math.round(pin.y * 100) / 100 : null;
+
+    const nextComment: CommentRow = {
+      id: optimisticId,
+      capture_id: captureId,
+      author_name,
+      author_email,
+      body: text,
+      video_timestamp,
+      pin_x: p_pin_x,
+      pin_y: p_pin_y,
+      created_at: new Date().toISOString(),
+    };
+
+    setComments((prev) => {
+      const updated = [...prev, nextComment];
+      onCommentsChange?.(updated);
+      return updated;
+    });
     setBody("");
     setManualTime("");
     setTimestampOn(false);
     setError("");
     setSubmitting(true);
+    onClearPin?.();
 
     try {
       // Use the rate-limited RPC so anonymous users can't spam comments.
@@ -319,6 +340,9 @@ export default function Comments({
         p_author_name: author_name,
         p_author_email: author_email,
         p_video_timestamp: video_timestamp,
+        p_parent_id: null,
+        p_pin_x,
+        p_pin_y,
       });
       if (error) throw error;
 
@@ -328,16 +352,22 @@ export default function Comments({
         body: JSON.stringify({ comment: data }),
       }).catch((err) => console.error("Failed to send comment notification:", err));
 
-      setComments((prev) =>
-        prev.map((c) => (c.id === optimisticId ? (data as CommentRow) : c))
-      );
+      setComments((prev) => {
+        const updated = prev.map((c) => (c.id === optimisticId ? (data as CommentRow) : c));
+        onCommentsChange?.(updated);
+        return updated;
+      });
       // Consume the token; a fresh one is issued on the next interaction.
       setCfToken(null);
       if (widgetIdRef.current && window.turnstile) {
         try { window.turnstile.reset(widgetIdRef.current); } catch { /* ignore */ }
       }
     } catch (err) {
-      setComments((prev) => prev.filter((c) => c.id !== optimisticId));
+      setComments((prev) => {
+        const updated = prev.filter((c) => c.id !== optimisticId);
+        onCommentsChange?.(updated);
+        return updated;
+      });
       setError(
         (err as { message?: string })?.message ||
           t("cm.errorPost")
@@ -439,6 +469,24 @@ export default function Comments({
             )}
           </div>
         )}
+        {/* Pinpoint Indicator if active */}
+        {!isVideo && pin && (
+          <div className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/50 text-xs text-indigo-700 dark:text-indigo-300">
+            <div className="flex items-center gap-1.5">
+              <span className="flex h-2 w-2 rounded-full bg-indigo-600 animate-pulse" />
+              <span className="font-semibold text-[11px]">Pinpoint location selected ({Math.round(pin.x)}%, {Math.round(pin.y)}%)</span>
+            </div>
+            {onClearPin && (
+              <button
+                type="button"
+                onClick={onClearPin}
+                className="text-[10px] text-muted hover:text-indigo-600 dark:hover:text-indigo-400 font-medium"
+              >
+                Clear pin
+              </button>
+            )}
+          </div>
+        )}
         <textarea
           value={body}
           onChange={(e) => setBody(e.target.value)}
@@ -489,13 +537,14 @@ export default function Comments({
         <ul className="space-y-3">
           {comments
             .filter((c) => !c.parent_id) // top-level threads only
-            .map((c) => {
+            .map((c, idx) => {
               const name = c.author_name || t("cm.guest");
               const seed = c.author_email || c.author_name || c.id;
               const ts = c.video_timestamp;
               const replies = comments.filter((r) => r.parent_id === c.id);
+              const isHighlighted = highlightedCommentId === c.id;
               return (
-                <li key={c.id} className="space-y-2">
+                <li key={c.id} className={`space-y-2 p-2 rounded-lg transition-colors ${isHighlighted ? "bg-indigo-50/80 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800" : ""}`}>
                   <div className="flex gap-3">
                     <div
                       className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 ${avatarColor(seed)}`}
@@ -506,6 +555,12 @@ export default function Comments({
                       <div className="flex items-center gap-2 flex-wrap">
                         <span className="text-xs font-semibold text-foreground">{name}</span>
                         <span className="text-[10px] text-muted">{formatDate(c.created_at)}</span>
+                        {c.pin_x != null && c.pin_y != null && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-medium text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 border border-emerald-200 dark:border-emerald-800 rounded-md px-1.5 py-0.5">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            Pin #{idx + 1}
+                          </span>
+                        )}
                         {ts != null &&
                           (onSeek ? (
                             <button
