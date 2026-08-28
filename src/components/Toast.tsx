@@ -33,8 +33,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   return (
     <ToastContext.Provider value={{ showToast }}>
       {children}
-      {/* Toast container - fixed bottom center, stacks vertically */}
-      <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-[200] flex flex-col-reverse gap-2 w-full max-w-sm px-4 pointer-events-none pb-safe">
+      {/* Toast container - bottom right floating popup (Jam.dev style) */}
+      <div className="fixed bottom-6 right-6 z-[200] flex flex-col-reverse gap-2 pointer-events-none pb-safe">
         {toasts.map((toast) => (
           <Toast key={toast.id} toast={toast} onDismiss={dismiss} />
         ))}
@@ -50,25 +50,32 @@ function Toast({ toast, onDismiss }: { toast: ToastItem; onDismiss: (id: number)
   }, [toast.id, onDismiss]);
 
   const styles: Record<ToastType, string> = {
-    success: "bg-emerald-600 text-white",
-    error: "bg-red-600 text-white",
-    info: "bg-neutral-900 text-white",
-  };
-
-  const icons: Record<ToastType, string> = {
-    success: "✓",
-    error: "✕",
-    info: "ℹ",
+    success: "bg-white text-slate-900 border border-slate-200 dark:bg-zinc-900 dark:text-white dark:border-zinc-800 shadow-xl",
+    error: "bg-red-600 text-white shadow-xl",
+    info: "bg-neutral-900 text-white shadow-xl",
   };
 
   return (
     <div
-      className={`pointer-events-auto flex items-center gap-2.5 rounded-lg px-4 py-3 text-sm font-medium shadow-lg animate-[slideIn_0.2s_ease-out] ${styles[toast.type]}`}
+      className={`pointer-events-auto flex items-center gap-2.5 rounded-xl px-4 py-3 text-sm font-medium shadow-2xl transition-all ${styles[toast.type]}`}
       onClick={() => onDismiss(toast.id)}
       role="alert"
     >
-      <span className="shrink-0 text-base font-bold">{icons[toast.type]}</span>
-      <span className="flex-1 leading-snug">{toast.message}</span>
+      {toast.type === "success" ? (
+        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
+          ✓
+        </span>
+      ) : (
+        <span className="shrink-0 text-base font-bold">{toast.type === "error" ? "✕" : "ℹ"}</span>
+      )}
+      <span className="leading-snug pr-2 text-xs font-semibold">{toast.message}</span>
+      <button
+        type="button"
+        onClick={(e) => { e.stopPropagation(); onDismiss(toast.id); }}
+        className="ml-auto text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xs"
+      >
+        ✕
+      </button>
     </div>
   );
 }

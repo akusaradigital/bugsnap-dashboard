@@ -30,6 +30,9 @@ export async function POST(request: Request) {
   }
 
   const db = createServiceClient();
+  // Auto-provision user & default workspace if they don't exist yet
+  await db.rpc("ensure_user_and_workspace_by_email", { p_email: email });
+
   const { data: workspaces, error: wsError } = await db.rpc("get_workspaces_by_email", { p_email: email });
   if (wsError) return NextResponse.json({ error: wsError.message }, { status: 422 });
   const list = (workspaces ?? []) as Array<{ id: string; name: string; role: string; is_owner: boolean }>;

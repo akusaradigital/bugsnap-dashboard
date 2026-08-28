@@ -5,6 +5,9 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
+import { useToast } from "@/components/Toast";
+import { Dropdown } from "@/components/Dropdown";
+import { pickAvatar, initialOf } from "@/lib/avatar";
 
 export type CaptureFilter = "all" | "video" | "screenshot";
 
@@ -113,6 +116,7 @@ function expiryToOption(expiresAt: string | null | undefined, createdAt: string)
 
 function EditModal({ capture, onClose, onSaved }: EditModalProps) {
   const { t } = useT();
+  const { showToast } = useToast();
   const [title, setTitle] = useState(capture.title);
   const [description, setDescription] = useState(capture.description || "");
   const [password, setPassword] = useState(capture.password || "");
@@ -164,10 +168,12 @@ function EditModal({ capture, onClose, onSaved }: EditModalProps) {
     if (error) {
       console.warn("Error updating capture:", error);
       setError(t("cap.saveError"));
+      showToast("Could not save capture", "error");
       setSaving(false);
       return;
     }
     onSaved(data as Capture);
+    showToast("Capture updated", "success");
     onClose();
   }
 
@@ -226,16 +232,12 @@ function EditModal({ capture, onClose, onSaved }: EditModalProps) {
               <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12.59 2.59A2 2 0 0 0 11.17 2H4a2 2 0 0 0-2 2v7.17c0 .53.21 1.04.59 1.41l8.83 8.83a2 2 0 0 0 2.83 0l7.17-7.17a2 2 0 0 0 0-2.83Z" /><circle cx="7" cy="7" r="1.5" fill="currentColor" stroke="none" /></svg>
               {t("cap.tagLabel")}
             </label>
-                <select
-                  className={inputClasses}
+                <Dropdown
+                  variant="field"
                   value={tag}
-                  onChange={(e) => setTag(e.target.value)}
-                >
-                  <option value="">{t("cap.noTag")}</option>
-                  {TAG_OPTIONS.map((t) => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
-                </select>
+                  onChange={setTag}
+                  options={[{ value: "", label: t("cap.noTag") }, ...TAG_OPTIONS.map((t) => ({ value: t, label: t }))]}
+                />
               </div>
               {/* Status */}
               <div>
@@ -243,15 +245,12 @@ function EditModal({ capture, onClose, onSaved }: EditModalProps) {
               <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v3M12 19v3M22 12h-3M5 12H2" /></svg>
               {t("cap.statusLabel")}
             </label>
-                <select
-                  className={inputClasses}
+                <Dropdown
+                  variant="field"
                   value={status}
-                  onChange={(e) => setStatus(e.target.value)}
-                >
-                  {STATUS_OPTIONS.map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
-                </select>
+                  onChange={setStatus}
+                  options={STATUS_OPTIONS.map((s) => ({ value: s, label: s }))}
+                />
               </div>
               <div>
                 <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">
@@ -383,10 +382,43 @@ export default function CapturesList() {
 
 function CapturesContent() {
   const { t } = useT();
+  const { showToast } = useToast();
   const searchParams = useSearchParams();
   const wsParam = searchParams.get("ws");
   const folderParam = searchParams.get("folder");
   const [captures, setCaptures] = useState<Capture[]>([]);
+  // Same source as Settings > Account, so a card's author badge shows the
+  // real profile name/photo (not the email-derived username) when the
+  // capture belongs to the signed-in user.
+  const [myProfile, setMyProfile] = useState<{ email: string; name: string; avatar: string } | null>(null);
+  useEffect(() => {
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      const u = data.session?.user;
+      const email = u?.email;
+      if (!u || !email) return;
+      const meta = u.user_metadata || {};
+      const { data: row } = await supabase
+        .from("users")
+        .select("full_name, avatar_url")
+        .ilike("email", email)
+        .maybeSingle();
+      setMyProfile({
+        email,
+        name: row?.full_name || meta.full_name || meta.name || email.split("@")[0],
+        avatar: pickAvatar(row?.avatar_url, meta.avatar_url, meta.picture),
+      });
+    })();
+    const onProfileUpdated = (e: Event) => {
+      const detail = (e as CustomEvent<{ fullName?: string; avatarUrl?: string }>).detail;
+      if (!detail) return;
+      setMyProfile((prev) =>
+        prev ? { ...prev, name: detail.fullName?.trim() || prev.name, avatar: pickAvatar(detail.avatarUrl, prev.avatar) } : prev
+      );
+    };
+    window.addEventListener("bugsnap:profile-updated", onProfileUpdated);
+    return () => window.removeEventListener("bugsnap:profile-updated", onProfileUpdated);
+  }, []);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<Capture | null>(null);
@@ -409,8 +441,8 @@ function CapturesContent() {
   const [thumbFailed, setThumbFailed] = useState<Record<string, boolean>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [activeHoverId, setActiveHoverId] = useState<string | null>(null);
-  const [shortcutCopied, setShortcutCopied] = useState(false);
-  const shortcutToastRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -421,17 +453,14 @@ function CapturesContent() {
       if (!activeHoverId) return;
       const shareUrl = `${window.location.origin}/v/${activeHoverId}`;
       navigator.clipboard?.writeText(shareUrl).then(() => {
-        setShortcutCopied(true);
-        if (shortcutToastRef.current) clearTimeout(shortcutToastRef.current);
-        shortcutToastRef.current = setTimeout(() => setShortcutCopied(false), 2000);
-      }).catch(() => setDeleteError(t("cap.copyError")));
+        showToast("Link copied to clipboard", "success");
+      }).catch(() => showToast(t("cap.copyError"), "error"));
     }
     window.addEventListener("keydown", handleKeyDown);
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      if (shortcutToastRef.current) clearTimeout(shortcutToastRef.current);
     };
-  }, [activeHoverId, t]);
+  }, [activeHoverId, showToast, t]);
 
   // Dropdown states: false = not actively filtering by this type.
   // If BOTH are false, we show ALL (no filter applied).
@@ -444,15 +473,17 @@ function CapturesContent() {
 
   // Close type filter dropdown when clicking outside without blocking scroll
   useEffect(() => {
-    if (!typeMenuOpen) return;
     function handleClickOutside(e: MouseEvent) {
-      if (typeMenuRef.current && !typeMenuRef.current.contains(e.target as Node)) {
+      if (typeMenuOpen && typeMenuRef.current && !typeMenuRef.current.contains(e.target as Node)) {
         setTypeMenuOpen(false);
+      }
+      if (activeMenuId && !(e.target as HTMLElement)?.closest?.("[data-capture-menu]")) {
+        setActiveMenuId(null);
       }
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [typeMenuOpen]);
+  }, [typeMenuOpen, activeMenuId]);
 
   // Infinite scroll / pagination state
   const PAGE_SIZE = 12;
@@ -600,8 +631,10 @@ function CapturesContent() {
     try {
       await navigator.clipboard.writeText(`${window.location.origin}/v/${id}`);
       setCopiedId(id);
+      showToast("Link copied to clipboard", "success");
       setTimeout(() => setCopiedId(null), 2000);
     } catch {
+      showToast(t("cap.copyError"), "error");
       setDeleteError(t("cap.copyError"));
     }
   };
@@ -685,11 +718,14 @@ function CapturesContent() {
         return;
       }
 
+      const deletedCount = deletedIds.length || deleteRequest.ids.length;
       setDeleteRequest(null);
       clearSelection();
+      showToast(`${deletedCount} capture${deletedCount === 1 ? "" : "s"} deleted`, "success");
     } catch (error) {
       console.warn("Error deleting captures:", error);
       setDeleteError(error instanceof Error ? error.message : "Could not delete the selected captures. Please try again.");
+      showToast("Could not delete captures", "error");
     } finally {
       setDeleting(false);
     }
@@ -729,9 +765,11 @@ function CapturesContent() {
       const json = await response.json().catch(() => ({}));
       if (!response.ok) throw new Error(json.error || "Upload failed");
       setUploadSuccess(`Uploaded ${file.name}`);
+      showToast(`Uploaded ${file.name}`, "success");
       loadPage(true);
     } catch (error) {
       setUploadError(error instanceof Error ? error.message : "Upload failed");
+      showToast("Upload failed", "error");
     } finally {
       setUploading(false);
     }
@@ -805,11 +843,14 @@ function CapturesContent() {
         });
         if (error) throw error;
       }
+      const movedCount = ids.length;
       setMoveToOpen(false);
       clearSelection();
       await loadPage(true);
+      showToast(`${movedCount} capture${movedCount === 1 ? "" : "s"} moved`, "success");
     } catch (error) {
       setUploadError(error instanceof Error ? error.message : "Failed moving captures");
+      showToast("Could not move captures", "error");
     } finally {
       setMoving(false);
     }
@@ -877,11 +918,6 @@ function CapturesContent() {
           </div>
         </div>
       )}
-      {shortcutCopied && activeHoverId && (
-        <div className="fixed top-5 left-1/2 -translate-x-1/2 z-50 bg-neutral-900 text-white text-xs font-medium px-3 py-2 rounded-lg shadow-lg">
-          {t("cap.copiedShortcut")}
-        </div>
-      )}
       {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 sm:mb-8 gap-4">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">{t("cap.title")}</h1>
@@ -940,7 +976,7 @@ function CapturesContent() {
           </button>
 
           {typeMenuOpen && (
-            <div className="absolute top-full left-0 mt-1.5 w-[min(16rem,calc(100vw-1.5rem))] z-30 bg-subtle border border-border rounded-xl shadow-xl overflow-hidden">
+            <div className="absolute top-full left-0 mt-1.5 w-[min(16rem,calc(100vw-1.5rem))] z-30 bg-subtle border border-border rounded-lg shadow-lg overflow-hidden">
               <div className="px-3 pt-3 pb-1">
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-muted">{t("cap.type")}</p>
               </div>
@@ -996,31 +1032,25 @@ function CapturesContent() {
         {/* Tag Filter */}
         <div className="flex min-w-0 items-center gap-1.5 text-xs border border-border bg-subtle rounded-lg px-2 py-1.5 text-muted hover:text-foreground hover:bg-subtle transition-colors">
           <span>{t("cap.tagFilter")}</span>
-          <select
+          <Dropdown
+            variant="inline"
+            className="flex-1"
             value={filterTag}
-            onChange={(e) => setFilterTag(e.target.value)}
-            className="min-w-0 flex-1 bg-transparent font-medium text-foreground outline-none cursor-pointer"
-          >
-            <option value="">{t("cap.all")}</option>
-            {TAG_OPTIONS.map((t) => (
-              <option key={t} value={t}>{t}</option>
-            ))}
-          </select>
+            onChange={setFilterTag}
+            options={[{ value: "", label: t("cap.all") }, ...TAG_OPTIONS.map((t) => ({ value: t, label: t }))]}
+          />
         </div>
 
         {/* Status Filter */}
         <div className="flex min-w-0 items-center gap-1.5 text-xs border border-border bg-subtle rounded-lg px-2 py-1.5 text-muted hover:text-foreground hover:bg-subtle transition-colors">
           <span>{t("cap.statusFilter")}</span>
-          <select
+          <Dropdown
+            variant="inline"
+            className="flex-1"
             value={filterStatus}
-            onChange={(e) => setFilterStatus(e.target.value)}
-            className="min-w-0 flex-1 bg-transparent font-medium text-foreground outline-none cursor-pointer"
-          >
-            <option value="">{t("cap.all")}</option>
-            {STATUS_OPTIONS.map((s) => (
-              <option key={s} value={s}>{s}</option>
-            ))}
-          </select>
+            onChange={setFilterStatus}
+            options={[{ value: "", label: t("cap.all") }, ...STATUS_OPTIONS.map((s) => ({ value: s, label: s }))]}
+          />
         </div>
 
         {activeFilterCount > 0 && (
@@ -1132,6 +1162,7 @@ function CapturesContent() {
           {filteredCaptures.map((item) => {
             const isSelected = selectedIds.has(item.id);
             const isSelectionActive = selectedIds.size > 0;
+            const isMe = !!myProfile && !!item.owner_email && item.owner_email.toLowerCase() === myProfile.email.toLowerCase();
             // When in selection mode (at least 1 item selected), clicking anywhere on the card toggles selection instead of opening the link
             const CardWrapper = (isSelectionActive ? "div" : Link) as React.ElementType;
             const cardProps = isSelectionActive
@@ -1216,31 +1247,54 @@ function CapturesContent() {
 
                     {/* Author Badge: hidden when selected OR on hover */}
                     <div className={`items-center gap-2 transition-opacity ${isSelected ? "hidden" : "flex group-hover:hidden"}`}>
-                      <div className={`w-7 h-7 rounded-full ${getAvatarColor(item.owner_email)} text-white text-xs font-bold flex items-center justify-center shadow-sm border border-white/20 shrink-0`}>
-                        {getOwnerInitial(item.owner_email)}
-                      </div>
+                      {isMe && myProfile?.avatar ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={myProfile.avatar} alt="" referrerPolicy="no-referrer" className="w-7 h-7 rounded-full object-cover shadow-sm border border-white/20 shrink-0" />
+                      ) : (
+                        <div className={`w-7 h-7 rounded-full ${getAvatarColor(item.owner_email)} text-white text-xs font-bold flex items-center justify-center shadow-sm border border-white/20 shrink-0`}>
+                          {isMe ? initialOf(myProfile?.name) : getOwnerInitial(item.owner_email)}
+                        </div>
+                      )}
                       <span className="text-xs font-medium text-white drop-shadow-sm truncate max-w-[140px]">
-                        {item.owner_email ? item.owner_email.split("@")[0] : item.title}
+                        {isMe ? myProfile?.name : item.owner_email ? item.owner_email.split("@")[0] : item.title}
                       </span>
                     </div>
                   </div>
 
-                  {/* Top-Right: Quick Copy Link on Hover (hidden when selection active) */}
+                  {/* Top-Right: Actions on Hover */}
                   {!isSelectionActive && (
-                    <div className="absolute top-3 right-3 z-20 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute top-3 right-3 z-20 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <button
                         type="button"
                         aria-label={t("cap.copyLink")}
                         title={t("cap.copyLink")}
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleCopyLink(item.id); }}
-                        className="w-8 h-8 rounded-lg bg-white/90 hover:bg-white text-slate-700 dark:bg-zinc-900/90 dark:hover:bg-zinc-900 dark:text-slate-200 border border-slate-200/80 dark:border-zinc-700 flex items-center justify-center shadow-md transition-colors"
+                        className="w-7 h-7 rounded-lg bg-white/90 hover:bg-white text-slate-700 dark:bg-zinc-900/90 dark:hover:bg-zinc-900 dark:text-slate-200 border border-slate-200/80 dark:border-zinc-700 flex items-center justify-center shadow-md transition-colors"
                       >
                         {copiedId === item.id ? (
-                          <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                          <svg className="w-3.5 h-3.5 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
                         ) : (
-                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
+                          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
                         )}
                       </button>
+
+                      <div className="relative" data-capture-menu>
+                        <button
+                          type="button"
+                          aria-label="Capture options"
+                          title="Options"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            const rect = e.currentTarget.getBoundingClientRect();
+                            setMenuPos({ top: rect.bottom + 6, left: Math.max(12, rect.right - 128) });
+                            setActiveMenuId((prev) => (prev === item.id ? null : item.id));
+                          }}
+                          className="w-7 h-7 rounded-lg bg-white/90 hover:bg-white text-slate-700 dark:bg-zinc-900/90 dark:hover:bg-zinc-900 dark:text-slate-200 border border-slate-200/80 dark:border-zinc-700 flex items-center justify-center shadow-md transition-colors"
+                        >
+                          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.75"/><circle cx="12" cy="12" r="1.75"/><circle cx="12" cy="19" r="1.75"/></svg>
+                        </button>
+                      </div>
                     </div>
                   )}
 
@@ -1302,6 +1356,41 @@ function CapturesContent() {
           )}
         </div>
       )}
+
+      {activeMenuId && menuPos && (() => {
+        const item = captures.find((c) => c.id === activeMenuId);
+        if (!item) return null;
+        return (
+          <div
+            data-capture-menu
+            style={{ top: menuPos.top, left: menuPos.left }}
+            className="fixed z-50 w-32 overflow-hidden rounded-xl border border-border bg-white dark:bg-background p-1 shadow-2xl text-xs text-foreground"
+          >
+            <button
+              type="button"
+              onClick={() => {
+                setActiveMenuId(null);
+                setEditing(item);
+              }}
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left font-medium hover:bg-subtle"
+            >
+              <svg className="w-3.5 h-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+              Rename
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setActiveMenuId(null);
+                openDeleteConfirmation([item.id], item.title);
+              }}
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
+            >
+              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+              Delete
+            </button>
+          </div>
+        );
+      })()}
 
       {editing && <EditModal capture={editing} onClose={() => setEditing(null)} onSaved={(updated) => setCaptures((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))} />}
 

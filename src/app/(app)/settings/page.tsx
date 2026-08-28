@@ -5,8 +5,11 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
+import { useToast } from "@/components/Toast";
 import { useTheme, type Theme } from "@/components/ThemeProvider";
 import { hasBranding, normalizePlan, seatLimit, tierLabel, type Plan } from "@/lib/tiers";
+import { pickAvatar, isRealAvatar, initialOf } from "@/lib/avatar";
+import { Dropdown } from "@/components/Dropdown";
 
 // ── Integration catalogue (same order as extension editor.html) ─────────────
 const INTEGRATIONS = [
@@ -134,23 +137,43 @@ const INTEGRATIONS = [
   },
 ];
 
-type Tab = "general" | "members" | "billing" | "integrations" | "webhooks" | "account";
+type Tab = "general" | "members" | "billing" | "integrations" | "webhooks" | "account" | "notifications";
+
+const TAB_TITLES: Record<Tab, { title: string; subtitle: string }> = {
+  general: { title: "General", subtitle: "Manage your workspace name, access, and data controls." },
+  members: { title: "Members", subtitle: "Manage who has access to your workspace captures." },
+  billing: { title: "Billing", subtitle: "Your current plan and usage." },
+  integrations: { title: "Integrations", subtitle: "Connect your bug captures to your favourite tools." },
+  webhooks: { title: "Webhooks", subtitle: "Receive notifications when new captures are saved." },
+  account: { title: "Account", subtitle: "Your personal profile information." },
+  notifications: { title: "Notifications", subtitle: "Choose which emails BugSnap sends you." },
+};
+
+const ROLE_OPTIONS = ["Customer success", "Support", "Engineering", "Design", "Product", "QA", "Sales", "Other"];
 
 function SettingsContent() {
   const { t } = useT();
+  const { showToast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
   const { theme, setTheme } = useTheme();
 
   const wsParam = searchParams.get("ws") || "";
   const rawTab = searchParams.get("tab") as Tab | null;
-  const activeTab: Tab = rawTab && ["general","members","billing","integrations","webhooks","account"].includes(rawTab) ? rawTab : "general";
+  const activeTab: Tab = rawTab && ["general","members","billing","integrations","webhooks","account","notifications"].includes(rawTab) ? rawTab : "general";
 
   useEffect(() => {
     // no-op: referrer-based navigation handled inline in the button
   }, []);
 
-  // General / Drive
+  // General / Workspace
+  const [workspaceName, setWorkspaceName] = useState("My Workspace");
+  const [editingWsName, setEditingWsName] = useState(false);
+  const [ssoRequired, setSsoRequired] = useState(false);
+  const [defaultLinkAccess, setDefaultLinkAccess] = useState<"anyone" | "team" | "private">("anyone");
+  const [allowAi, setAllowAi] = useState(true);
+  const [autoDeleteEnabled, setAutoDeleteEnabled] = useState(false);
+  const [auditLogsEnabled, setAuditLogsEnabled] = useState(false);
   const [brandName, setBrandName] = useState("BugSnap");
   const [logoUrl, setLogoUrl] = useState("");
   const [hideWatermark, setHideWatermark] = useState(false);
@@ -164,8 +187,13 @@ function SettingsContent() {
   const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
   const [userPlan, setUserPlan] = useState<Plan>("free");
   const [userEmail, setUserEmail] = useState("");
-  const [userName, setUserName] = useState("");
-  const [userAvatar, setUserAvatar] = useState("https://bugsnap.akusaraproject.my.id/icon.svg");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [jobRole, setJobRole] = useState("");
+  const [roleMenuOpen, setRoleMenuOpen] = useState(false);
+  const [notifPrefs, setNotifPrefs] = useState<{ comment: boolean; mention: boolean; digest: boolean }>({ comment: true, mention: true, digest: true });
+  const [notifSaving, setNotifSaving] = useState(false);
+  const [userAvatar, setUserAvatar] = useState("");
   const activeWsId = searchParams.get("ws");
 
   // Drive tab
@@ -191,6 +219,8 @@ function SettingsContent() {
   const [members, setMembers] = useState<{ user_id: string; email: string; role: string }[]>([]);
   const [membersLoading, setMembersLoading] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteRole, setInviteRole] = useState<"creator" | "viewer">("creator");
+  const [inviteRoleMenuOpen, setInviteRoleMenuOpen] = useState(false);
   const [inviting, setInviting] = useState(false);
   const [inviteMsg, setInviteMsg] = useState<{type:"ok"|"err"; text:string} | null>(null);
 
@@ -214,25 +244,44 @@ function SettingsContent() {
       const u = data.session?.user;
       if (!u) return;
       setUserEmail(u.email ?? "");
-      setUserName(u.user_metadata?.full_name || u.user_metadata?.name || u.email?.split("@")[0] || "");
-      setUserAvatar(u.user_metadata?.avatar_url || u.user_metadata?.picture || "https://bugsnap.akusaraproject.my.id/icon.svg");
+      const initialName = u.user_metadata?.full_name || u.user_metadata?.name || u.email?.split("@")[0] || "";
+      const [fn, ...rest] = initialName.trim().split(/\s+/);
+      setFirstName(fn || "");
+      setLastName(rest.join(" "));
+      setUserAvatar(pickAvatar(u.user_metadata?.avatar_url, u.user_metadata?.picture));
       let plan: Plan = normalizePlan(u.user_metadata?.plan);
       if (u.email) {
-        const { data: row } = await supabase.from("users").select("plan, avatar_url, full_name").ilike("email", u.email).maybeSingle();
+        const { data: row } = await supabase.from("users").select("plan, avatar_url, full_name, job_role, notification_prefs").ilike("email", u.email).maybeSingle();
         if (row?.plan) plan = normalizePlan(row.plan);
-        if (row?.avatar_url) setUserAvatar(row.avatar_url);
-        if (row?.full_name) setUserName(row.full_name);
+        if (isRealAvatar(row?.avatar_url)) setUserAvatar(row.avatar_url);
+        if (row?.full_name) {
+          const [rfn, ...rrest] = row.full_name.trim().split(/\s+/);
+          setFirstName(rfn || "");
+          setLastName(rrest.join(" "));
+        }
+        if (row?.job_role) setJobRole(row.job_role);
+        if (row?.notification_prefs) setNotifPrefs((prev) => ({ ...prev, ...row.notification_prefs }));
       }
       setUserPlan(plan);
       if (activeWsId) {
-        const { data: ws } = await supabase.from("workspace_settings").select("*").eq("workspace_id", activeWsId).maybeSingle();
-        if (ws) {
-          setWebhookUrl(ws.webhook_url || "");
-          setBrandName(ws.brand_name || "BugSnap");
-          setLogoUrl(ws.custom_logo_url || "");
-          setHideWatermark(!!ws.hide_watermark);
-          setCustomDomain(ws.custom_domain || "");
-          setAutoDeleteMonths(ws.auto_delete_months ?? 3);
+        const [{ data: wsData }, { data: wsSet }] = await Promise.all([
+          supabase.from("workspaces").select("name").eq("id", activeWsId).maybeSingle(),
+          supabase.from("workspace_settings").select("*").eq("workspace_id", activeWsId).maybeSingle()
+        ]);
+        if (wsData?.name) setWorkspaceName(wsData.name);
+        if (wsSet) {
+          setWebhookUrl(wsSet.webhook_url || "");
+          setBrandName(wsSet.brand_name || "BugSnap");
+          setLogoUrl(wsSet.custom_logo_url || "");
+          setHideWatermark(!!wsSet.hide_watermark);
+          setCustomDomain(wsSet.custom_domain || "");
+          setAutoDeleteMonths(wsSet.auto_delete_months ?? 3);
+          setAutoDeleteEnabled(wsSet.auto_delete_months !== 0);
+        }
+      } else {
+        const { data: myWs } = await supabase.rpc("get_my_workspaces");
+        if (myWs && myWs.length > 0) {
+          setWorkspaceName(myWs[0].name || "My Workspace");
         }
       }
     });
@@ -309,7 +358,7 @@ function SettingsContent() {
       const r = await driveRequest("/api/google-drive/connect", { method: "POST" });
       if (!r.url) throw new Error(t("settings.noAuthUrl"));
       window.location.assign(r.url);
-    } catch (e) { setDriveError(e instanceof Error ? e.message : t("settings.connectError")); setDriveActionLoading(false); }
+    } catch (e) { setDriveError(e instanceof Error ? e.message : t("settings.connectError")); showToast("Could not connect Google Drive", "error"); setDriveActionLoading(false); }
   }
 
   async function disconnectDrive() {
@@ -319,7 +368,8 @@ function SettingsContent() {
       await driveRequest("/api/google-drive/disconnect", { method: "DELETE" });
       setDriveStatus("not_connected"); setDriveEmail(null); setDriveQuota(null);
       setIntegrationsHealth((prev) => prev ? { ...prev, drive: { state: "not_configured", status: "not_connected", email: null, message: "Google Drive is not connected" } } : prev);
-    } catch (e) { setDriveError(e instanceof Error ? e.message : t("settings.disconnectError")); }
+      showToast("Google Drive disconnected", "success");
+    } catch (e) { setDriveError(e instanceof Error ? e.message : t("settings.disconnectError")); showToast("Could not disconnect Google Drive", "error"); }
     finally { setDriveActionLoading(false); }
   }
 
@@ -328,6 +378,13 @@ function SettingsContent() {
     try {
       if (!activeWsId) throw new Error(t("settings.noWs"));
       const canBrand = hasBranding(normalizePlan(userPlan));
+
+      // Update workspace name if changed
+      if (workspaceName.trim()) {
+        await supabase.from("workspaces").update({ name: workspaceName.trim() }).eq("id", activeWsId);
+      }
+
+      const effectiveAutoDelete = autoDeleteEnabled ? autoDeleteMonths : 0;
       const { error } = await supabase.from("workspace_settings").upsert({
         workspace_id: activeWsId,
         webhook_url: webhookUrl.trim(),
@@ -335,18 +392,19 @@ function SettingsContent() {
         custom_logo_url: canBrand ? logoUrl.trim() : "",
         hide_watermark: canBrand ? hideWatermark : false,
         custom_domain: canBrand ? customDomain.trim() : "",
-        auto_delete_months: [0,3,6,12].includes(autoDeleteMonths) ? autoDeleteMonths : 3,
+        auto_delete_months: [0,3,6,12].includes(effectiveAutoDelete) ? effectiveAutoDelete : 3,
         updated_at: new Date().toISOString(),
       });
       if (error) throw error;
       setSaved(true); setTimeout(() => setSaved(false), 3000);
-      if (autoDeleteMonths !== 0) {
+      showToast("Settings saved", "success");
+      if (effectiveAutoDelete !== 0) {
         for (let i = 0; i < 20; i++) {
           const { data, error: e2 } = await supabase.rpc("delete_expired_captures", { p_workspace_id: activeWsId, p_batch_limit: 100 });
           if (e2 || !data || Number(data) <= 0) break;
         }
       }
-    } catch (e) { setSaveError(e instanceof Error ? e.message : t("settings.failedSave")); }
+    } catch (e) { setSaveError(e instanceof Error ? e.message : t("settings.failedSave")); showToast("Could not save settings", "error"); }
     finally { setSaving(false); }
   }
 
@@ -356,16 +414,16 @@ function SettingsContent() {
     setProfileSaveError(null);
     setProfileSaved(false);
     try {
-      const fullName = userName.trim();
+      const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
       const avatarUrl = userAvatar.trim();
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
       if (!token) throw new Error("Session expired");
 
-      const { error: authError } = await supabase.auth.updateUser({
-        data: { full_name: fullName, avatar_url: avatarUrl },
-      });
-      if (authError) throw authError;
+      // ponytail: auth metadata is best-effort (large data: avatars can exceed its size limit); public.users below is the source of truth
+      try {
+        await supabase.auth.updateUser({ data: { full_name: fullName } });
+      } catch {}
 
       const response = await fetch("/api/account/profile", {
         method: "PATCH",
@@ -373,17 +431,20 @@ function SettingsContent() {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ fullName, avatarUrl }),
+        body: JSON.stringify({ fullName, avatarUrl, jobRole }),
       });
-      const result = await response.json().catch(() => ({})) as { full_name?: string; avatar_url?: string; error?: string };
+      const result = await response.json().catch(() => ({})) as { full_name?: string; avatar_url?: string; job_role?: string; error?: string };
       if (!response.ok) throw new Error(result.error || "Failed to save profile");
 
-      if (result.full_name) setUserName(result.full_name);
-      if (result.avatar_url) setUserAvatar(result.avatar_url);
+      if (isRealAvatar(result.avatar_url)) setUserAvatar(result.avatar_url);
+      if (result.job_role !== undefined) setJobRole(result.job_role || "");
+      window.dispatchEvent(new CustomEvent("bugsnap:profile-updated", { detail: { fullName, avatarUrl: result.avatar_url ?? avatarUrl } }));
       setProfileSaved(true);
       setTimeout(() => setProfileSaved(false), 3000);
+      showToast("Profile saved", "success");
     } catch (e) {
       setProfileSaveError(e instanceof Error ? e.message : "Failed to save profile");
+      showToast("Could not save profile", "error");
     } finally {
       setProfileSaving(false);
     }
@@ -396,7 +457,7 @@ function SettingsContent() {
     if (cap !== null && members.length >= cap) { setInviteMsg({ type:"err", text: t("members.seatLimit", { cap }) }); return; }
     setInviting(true); setInviteMsg(null);
     try {
-      const { error } = await supabase.rpc("invite_member_by_email", { p_workspace_id: activeWsId, p_email: email });
+      const { error } = await supabase.rpc("invite_member_by_email", { p_workspace_id: activeWsId, p_email: email, p_role: inviteRole });
       if (error) throw error;
       const { data: authData } = await supabase.auth.getSession();
       await fetch("/api/notifications/invite", {
@@ -406,9 +467,10 @@ function SettingsContent() {
       }).catch(() => null);
       setInviteEmail("");
       setInviteMsg({ type:"ok", text: `Invite sent to ${email}` });
+      showToast(`Invite sent to ${email}`, "success");
       const { data: fresh } = await supabase.rpc("get_workspace_members", { p_workspace_id: activeWsId });
       setMembers((fresh as typeof members) ?? []);
-    } catch (e) { setInviteMsg({ type:"err", text: (e as {message?:string})?.message || t("members.inviteFailed") }); }
+    } catch (e) { setInviteMsg({ type:"err", text: (e as {message?:string})?.message || t("members.inviteFailed") }); showToast("Could not send invite", "error"); }
     finally { setInviting(false); }
   }
 
@@ -424,7 +486,7 @@ function SettingsContent() {
       type="button"
       onClick={() => setTab(tab)}
       className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm rounded-lg transition-colors text-left ${
-        activeTab === tab ? "bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 font-semibold" : "text-muted hover:bg-subtle hover:text-foreground"
+        activeTab === tab ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 font-semibold" : "text-muted hover:bg-border/30 hover:text-foreground"
       }`}
     >
       <span className="shrink-0 w-4 h-4 flex items-center justify-center">{icon}</span>
@@ -439,9 +501,9 @@ function SettingsContent() {
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="flex min-h-full">
+    <div className="flex h-full bg-background overflow-hidden">
       {/* Sidebar */}
-      <aside className="w-56 shrink-0 border-r border-border bg-subtle px-3 py-5 flex flex-col gap-5">
+      <aside className="w-64 shrink-0 border-r border-border bg-background px-4 py-7 flex flex-col gap-7 h-full overflow-y-auto">
         <div className="px-3 py-1 flex items-center justify-between">
           <div className="flex items-center gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -455,7 +517,7 @@ function SettingsContent() {
           </div>
         </div>
 
-        <div className="border-t border-border pt-3">
+        <div className="border-t border-border pt-5">
           <button
             type="button"
             onClick={() => {
@@ -465,7 +527,7 @@ function SettingsContent() {
                 router.push(wsParam ? `/captures?ws=${wsParam}` : "/captures");
               }
             }}
-            className="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted hover:text-foreground hover:bg-subtle rounded-lg transition-colors text-left font-medium"
+            className="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted hover:text-foreground hover:bg-border/30 rounded-lg transition-colors text-left font-medium"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
               <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
@@ -490,27 +552,452 @@ function SettingsContent() {
         <div>
           <p className="px-3 mb-1.5 text-[10px] font-bold uppercase tracking-widest text-muted">Account</p>
           {navItem("account","Account",<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>)}
+          {navItem("notifications","Notifications",<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>)}
         </div>
       </aside>
 
       {/* Panel */}
-      <main className="flex-1 min-w-0 overflow-y-auto p-6 lg:p-8 w-full">
+      <main className="flex-1 min-w-0 overflow-y-auto w-full bg-background">
+        <div className="sticky top-0 z-10 bg-background border-b border-border px-8 lg:px-10 py-7">
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">{TAB_TITLES[activeTab].title}</h1>
+          <p className="text-[15px] text-muted mt-2">{TAB_TITLES[activeTab].subtitle}</p>
+        </div>
+        <div className="max-w-5xl mx-auto w-full p-8 lg:p-10">
 
-        {/* ── General ────────────────────────────────────────────────────── */}
+        {/* ── General (Jam.dev styled) ────────────────────────────── */}
         {activeTab === "general" && (
           <form onSubmit={handleSave} className="space-y-6">
-            <div>
-              <h1 className="text-xl font-bold text-foreground">General</h1>
-              <p className="text-sm text-muted mt-0.5">Workspace settings and data management.</p>
+
+            {/* Workspace Name & Avatar Section */}
+            <div className="rounded-xl border border-border bg-background p-5">
+              <h2 className="text-sm font-bold text-foreground mb-3">Workspace name</h2>
+              <div className="flex items-center gap-3.5">
+                <div className="w-11 h-11 rounded-lg bg-indigo-600 text-white font-bold text-lg flex items-center justify-center shadow-sm shrink-0 uppercase select-none">
+                  {(workspaceName || "W").charAt(0)}
+                </div>
+                {editingWsName ? (
+                  <input
+                    autoFocus
+                    type="text"
+                    value={workspaceName}
+                    onChange={(e) => setWorkspaceName(e.target.value)}
+                    onBlur={() => setEditingWsName(false)}
+                    onKeyDown={(e) => e.key === "Enter" && setEditingWsName(false)}
+                    placeholder="My Workspace"
+                    className="flex-1 text-sm font-medium rounded-lg border border-border px-3.5 py-2.5 outline-none focus:border-indigo-500 bg-background text-foreground transition-colors shadow-sm"
+                  />
+                ) : (
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">{workspaceName || "My Workspace"}</p>
+                    <p className="text-xs text-muted mt-0.5">This is the name of your workspace.</p>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setEditingWsName((v) => !v)}
+                  className="text-xs font-semibold rounded-lg border border-border px-3.5 py-2 bg-background hover:bg-border/30 transition-colors shrink-0"
+                >
+                  {editingWsName ? "Done" : "Edit"}
+                </button>
+              </div>
             </div>
 
+            {/* Access Section */}
+            <div className="rounded-xl border border-border bg-background p-5 space-y-4">
+              <h2 className="text-sm font-bold text-foreground border-b border-border pb-2.5">
+                Access
+              </h2>
+
+              {/* Single Sign-On (SSO) */}
+              <div className="flex items-start justify-between gap-4 pt-1">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-foreground">Single Sign-On</span>
+                    <span className="text-[10px] font-semibold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/40 px-1.5 py-0.5 rounded">
+                      Enterprise
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted">
+                    Require workspace members to authenticate using SAML / Okta SSO.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={ssoRequired}
+                  onClick={() => {
+                    if (userPlan !== "enterprise") {
+                      router.push("/upgrade");
+                      return;
+                    }
+                    setSsoRequired(!ssoRequired);
+                  }}
+                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out mt-0.5 ${
+                    ssoRequired ? "bg-indigo-600" : "bg-border"
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-background shadow ring-0 transition duration-200 ease-in-out ${
+                      ssoRequired ? "translate-x-4" : "translate-x-0.5"
+                    } mt-0.5`}
+                  />
+                </button>
+              </div>
+
+              {/* Default Link Access */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-border/60">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-foreground">Default link access</span>
+                    <span className="text-[10px] font-semibold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/40 px-1.5 py-0.5 rounded">
+                      Team
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted">
+                    Default visibility applied when recording links are generated.
+                  </p>
+                </div>
+                <Dropdown
+                  variant="field"
+                  className="w-full sm:w-56"
+                  value={defaultLinkAccess}
+                  onChange={(v) => setDefaultLinkAccess(v as "anyone" | "team" | "private")}
+                  options={[
+                    { value: "anyone", label: "Anyone with link can view" },
+                    { value: "team", label: "Workspace members only" },
+                    { value: "private", label: "Only invited participants" },
+                  ]}
+                />
+              </div>
+            </div>
+
+            {/* Data Section */}
+            <div className="rounded-xl border border-border bg-background p-5 space-y-4">
+              <h2 className="text-sm font-bold text-foreground border-b border-border pb-2.5">
+                Data
+              </h2>
+
+              {/* AI summaries */}
+              <div className="flex items-start justify-between gap-4 pt-1">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-foreground">AI Summaries & Repro Steps</span>
+                  </div>
+                  <p className="text-xs text-muted">
+                    Allow AI generated summaries and repro steps on new captures.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={allowAi}
+                  onClick={() => setAllowAi(!allowAi)}
+                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out mt-0.5 ${
+                    allowAi ? "bg-indigo-600" : "bg-border"
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-background shadow ring-0 transition duration-200 ease-in-out ${
+                      allowAi ? "translate-x-4" : "translate-x-0.5"
+                    } mt-0.5`}
+                  />
+                </button>
+              </div>
+
+              {/* Auto-delete captures */}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-border/60">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-foreground">Auto-delete captures</span>
+                    <span className="text-[10px] font-semibold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/40 px-1.5 py-0.5 rounded">
+                      Enterprise
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted">
+                    Automatically delete captures older than the selected retention window.
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={autoDeleteEnabled}
+                    onClick={() => {
+                      if (userPlan !== "enterprise" && userPlan !== "pro_plus") {
+                        router.push("/upgrade");
+                        return;
+                      }
+                      setAutoDeleteEnabled(!autoDeleteEnabled);
+                    }}
+                    className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out ${
+                      autoDeleteEnabled ? "bg-indigo-600" : "bg-border"
+                    }`}
+                  >
+                    <span
+                      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-background shadow ring-0 transition duration-200 ease-in-out ${
+                        autoDeleteEnabled ? "translate-x-4" : "translate-x-0.5"
+                      } mt-0.5`}
+                    />
+                  </button>
+                  {autoDeleteEnabled && (
+                    <Dropdown
+                      variant="field"
+                      className="w-auto"
+                      value={String(autoDeleteMonths)}
+                      onChange={(v) => setAutoDeleteMonths(Number(v))}
+                      options={[3, 6, 12].map((m) => ({ value: String(m), label: `${m} months` }))}
+                    />
+                  )}
+                </div>
+              </div>
+
+              {/* Audit logs */}
+              <div className="flex items-start justify-between gap-4 pt-3 border-t border-border/60">
+                <div className="space-y-0.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-foreground">Audit logs</span>
+                    <span className="text-[10px] font-semibold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/40 px-1.5 py-0.5 rounded">
+                      Enterprise
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted">
+                    Track workspace events, captures access, exports, and security audits.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={auditLogsEnabled}
+                  onClick={() => {
+                    if (userPlan !== "enterprise") {
+                      router.push("/upgrade");
+                      return;
+                    }
+                    setAuditLogsEnabled(!auditLogsEnabled);
+                  }}
+                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out mt-0.5 ${
+                    auditLogsEnabled ? "bg-indigo-600" : "bg-border"
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-background shadow ring-0 transition duration-200 ease-in-out ${
+                      auditLogsEnabled ? "translate-x-4" : "translate-x-0.5"
+                    } mt-0.5`}
+                  />
+                </button>
+              </div>
+            </div>
+
+            {/* Custom Branding (Integrated) */}
+            <div className="rounded-xl border border-border bg-background p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-border pb-2.5">
+                <h2 className="text-sm font-bold text-foreground">
+                  Custom branding
+                </h2>
+                <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 px-2 py-0.5 rounded-full">
+                  Included
+                </span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-medium text-muted mb-1.5">Brand Name</label>
+                  <input
+                    type="text"
+                    value={brandName}
+                    onChange={(e) => setBrandName(e.target.value)}
+                    placeholder="Acme Corp"
+                    className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-background text-foreground shadow-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-muted mb-1.5">Logo URL</label>
+                  <input
+                    type="url"
+                    value={logoUrl}
+                    onChange={(e) => setLogoUrl(e.target.value)}
+                    placeholder="https://logo.png"
+                    className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-background text-foreground shadow-sm"
+                  />
+                </div>
+              </div>
+              <label className="flex items-center gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={hideWatermark}
+                  onChange={(e) => setHideWatermark(e.target.checked)}
+                  className="w-4 h-4 rounded border-border text-indigo-600 focus:ring-indigo-500"
+                />
+                <span className="text-xs font-medium text-foreground">
+                  Hide &quot;Powered by BugSnap&quot; watermark
+                </span>
+              </label>
+              <div>
+                <label className="block text-xs font-medium text-muted mb-1.5">Custom Domain</label>
+                <input
+                  type="text"
+                  value={customDomain}
+                  onChange={(e) => setCustomDomain(e.target.value)}
+                  placeholder="captures.yourcompany.com"
+                  className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-background text-foreground font-mono shadow-sm"
+                />
+              </div>
+            </div>
+
+            {saveError && <p className="text-xs text-red-600">{saveError}</p>}
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={saving}
+                className="rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60 transition-all shadow-sm active:scale-[0.99] min-w-[130px]"
+              >
+                {saving ? "Saving…" : saved ? "Saved" : "Save changes"}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* ── Members ────────────────────────────────────────────────────── */}
+        {activeTab === "members" && (
+          <div className="space-y-7">
+
+            {/* Invite */}
+            <div className="rounded-xl border border-border bg-background p-6 space-y-5 shadow-sm">
+              <div>
+                <h2 className="text-lg font-bold tracking-tight text-foreground">Invite member</h2>
+                <p className="text-[15px] text-muted mt-3">If they don&apos;t have an account yet, we&apos;ll send them a join link + extension download.</p>
+              </div>
+              <div className="grid grid-cols-[minmax(0,1fr)_190px_96px] gap-3">
+                <input type="email" value={inviteEmail} onChange={e=>setInviteEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleInvite()}
+                  disabled={seatLimit(userPlan) !== null && members.length >= (seatLimit(userPlan) ?? 0)}
+                  placeholder="Enter email address"
+                  className="h-12 min-w-0 text-[15px] rounded-lg border border-border px-4 outline-none focus:border-indigo-500 bg-background disabled:bg-border/30 disabled:cursor-not-allowed" />
+                <div className="relative">
+                  <button type="button" onClick={() => setInviteRoleMenuOpen(o => !o)}
+                    className="h-12 w-full flex items-center justify-between text-[15px] rounded-lg border border-border px-4 bg-background hover:bg-border/30 transition-colors">
+                    {inviteRole === "creator" ? "Creator" : "Viewer"}
+                    <svg className={`w-4 h-4 text-muted transition-transform ${inviteRoleMenuOpen ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {inviteRoleMenuOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setInviteRoleMenuOpen(false)} />
+                      <div className="absolute right-0 mt-1 w-64 rounded-lg border border-border bg-background shadow-lg z-50 py-1">
+                        {([
+                          { value: "creator", label: "Creator", hint: "Can create and comment" },
+                          { value: "viewer", label: "Viewer", hint: "Can view and comment" },
+                        ] as const).map(opt => (
+                          <button key={opt.value} type="button" onClick={() => { setInviteRole(opt.value); setInviteRoleMenuOpen(false); }}
+                            className="w-full flex items-start justify-between gap-2 px-3.5 py-2 text-left hover:bg-border/30 transition-colors">
+                            <span>
+                              <span className="block text-sm font-medium text-foreground">{opt.label}</span>
+                              <span className="block text-xs text-muted">{opt.hint}</span>
+                            </span>
+                            {inviteRole === opt.value && (
+                              <svg className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
+                </div>
+                <button type="button" onClick={handleInvite} disabled={inviting || !inviteEmail.trim()}
+                  className="h-12 rounded-lg bg-indigo-600 text-white text-[15px] font-semibold hover:bg-indigo-700 disabled:opacity-50">
+                  {inviting ? "Sending…" : "Invite"}
+                </button>
+              </div>
+              {inviteMsg && <p className={`text-sm ${inviteMsg.type==="ok" ? "text-emerald-600" : "text-red-600"}`}>{inviteMsg.text}</p>}
+            </div>
+
+            {/* Members list */}
+            <div className="rounded-xl border border-border bg-background overflow-hidden shadow-sm">
+              <div className="px-6 py-4 border-b border-border flex items-center justify-between">
+                <h2 className="text-lg font-bold tracking-tight text-foreground">{membersLoading ? "Loading…" : `${members.length} member${members.length !== 1 ? "s" : ""}`}</h2>
+              </div>
+              {membersLoading ? (
+                <div className="divide-y divide-border/60 animate-pulse">
+                  {[0,1,2].map(i => (
+                    <div key={i} className="flex items-center gap-4 px-6 py-5">
+                      <div className="w-12 h-12 rounded-full bg-border/40" />
+                      <div className="flex-1 space-y-2"><div className="h-4 w-1/3 bg-border/40 rounded" /><div className="h-3 w-1/4 bg-border/40 rounded" /></div>
+                    </div>
+                  ))}
+                </div>
+              ) : members.length === 0 ? (
+                <div className="py-12 text-center text-sm text-muted">No members yet. Invite someone above.</div>
+              ) : (
+                <ul className="divide-y divide-border/60">
+                  {members.map(m => (
+                    <li key={m.user_id} className="flex items-center gap-5 px-6 py-5">
+                      <div className="w-12 h-12 rounded-full bg-indigo-50 text-indigo-700 text-base font-bold flex items-center justify-center shrink-0">
+                        {(m.email || "?").charAt(0).toUpperCase()}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[15px] font-bold text-foreground truncate">{m.email}</p>
+                      </div>
+                      <span className="text-xs font-bold uppercase tracking-wider text-muted">{m.role==="owner" ? "Owner" : m.role==="viewer" ? "Viewer" : "Creator"}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* ── Billing ────────────────────────────────────────────────────── */}
+        {activeTab === "billing" && (
+          <div className="space-y-6">
+            <div className="rounded-xl border border-border bg-background p-6 flex items-center justify-between gap-4">
+              <div>
+                <p className="text-xs text-muted uppercase tracking-widest font-semibold mb-1">Current plan</p>
+                <h2 className="text-2xl font-bold text-foreground capitalize">{tierLabel(userPlan)}</h2>
+                <p className="text-sm text-muted mt-1">
+                  {seatLimit(userPlan) !== null ? `Up to ${seatLimit(userPlan)} team members` : "Unlimited team members"}
+                </p>
+              </div>
+              {userPlan === "free" && (
+                <Link
+                  href="/upgrade"
+                  className="shrink-0 px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors inline-block"
+                >
+                  Upgrade
+                </Link>
+              )}
+            </div>
+
+            <div className="rounded-xl border border-border bg-background p-4 space-y-3">
+              <h2 className="text-sm font-semibold text-foreground border-b border-border pb-2">Plan features</h2>
+              {[
+                { label:"Weekly capture quota", value: userPlan==="free" ? "5 captures/week" : "Unlimited" },
+                { label:"Team seats", value: seatLimit(userPlan) !== null ? `${seatLimit(userPlan)}` : "Unlimited" },
+                { label:"AI bug reports", value: userPlan==="pro_plus"||userPlan==="enterprise" ? "✓ Included" : "Pro+ only" },
+                { label:"Custom branding", value: hasBranding(userPlan) ? "✓ Included" : "Pro+ only" },
+              ].map(r => (
+                <div key={r.label} className="flex items-center justify-between text-sm">
+                  <span className="text-muted">{r.label}</span>
+                  <span className="font-medium text-foreground">{r.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── Integrations ───────────────────────────────────────────────── */}
+        {activeTab === "integrations" && (
+          <div className="space-y-6">
+            <input type="text" placeholder="Search integrations…" value={intSearch} onChange={e=>setIntSearch(e.target.value)}
+              className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-background" />
+
             {/* Drive */}
-            <div className="rounded-xl border border-border bg-subtle p-4 space-y-3">
+            <div className="rounded-xl border border-border bg-background p-4 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
                     Google Drive
-                    {!driveLoading && <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${driveStatus === "connected" ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/40" : driveStatus === "reconnect_required" ? "text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/40" : "text-muted bg-subtle border-border"}`}>{driveStatus === "connected" ? t("settings.connected") : driveStatus === "reconnect_required" ? t("settings.reconnectRequired") : t("settings.notConnected")}</span>}
+                    {!driveLoading && <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${driveStatus === "connected" ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/40" : driveStatus === "reconnect_required" ? "text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/40" : "text-muted bg-background border-border"}`}>{driveStatus === "connected" ? t("settings.connected") : driveStatus === "reconnect_required" ? t("settings.reconnectRequired") : t("settings.notConnected")}</span>}
                   </h2>
                   <p className="text-xs text-muted mt-0.5">{driveLoading ? "Checking..." : driveStatus === "connected" ? `Dashboard actions using ${driveEmail || "connected account"}` : driveStatus === "reconnect_required" ? "Reconnect Drive for server-side actions." : "Connect for server-side Drive actions."}</p>
                   {!driveLoading && driveStatus === "connected" && driveQuota?.usedBytes != null && driveQuota?.totalBytes != null && driveQuota.totalBytes > 0 && (() => {
@@ -540,170 +1027,13 @@ function SettingsContent() {
               {driveError && <p className="text-xs text-red-600">{driveError}</p>}
             </div>
 
-            {/* Retention */}
-            <div className="rounded-xl border border-border bg-subtle p-4 space-y-3">
-              <h2 className="text-sm font-semibold text-foreground border-b border-border pb-2">Data Retention</h2>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
-                <label className="text-sm text-foreground shrink-0">Delete captures older than</label>
-                <select value={autoDeleteMonths} onChange={e => setAutoDeleteMonths(Number(e.target.value))}
-                  className="w-full sm:w-40 text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-subtle">
-                  {[0,3,6,12].map(m => <option key={m} value={m}>{m === 0 ? "Never" : `${m} months`}</option>)}
-                </select>
-              </div>
-              <p className="text-[11px] text-muted">Applies to future captures only. Existing captures are preserved.</p>
-            </div>
-
-            {/* Branding */}
-            <div className="rounded-xl border border-border bg-subtle p-4 space-y-3">
-              <div className="flex items-center justify-between border-b border-border pb-2">
-                <h2 className="text-sm font-semibold text-foreground">Custom Branding</h2>
-                <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 px-2 py-0.5 rounded-full">Included</span>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Brand Name</label>
-                  <input type="text" value={brandName} onChange={e=>setBrandName(e.target.value)} placeholder="Acme Corp" className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-subtle" />
-                </div>
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Logo URL</label>
-                  <input type="url" value={logoUrl} onChange={e=>setLogoUrl(e.target.value)} placeholder="https://logo.png" className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-subtle" />
-                </div>
-              </div>
-              <label className="flex items-center gap-3 cursor-pointer">
-                <input type="checkbox" checked={hideWatermark} onChange={e=>setHideWatermark(e.target.checked)} className="w-4 h-4 rounded border-border text-indigo-600 focus:ring-indigo-500" />
-                <span className="text-xs font-medium text-foreground">Hide &quot;Powered by BugSnap&quot; watermark</span>
-              </label>
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Custom Domain</label>
-                <input type="text" value={customDomain} onChange={e=>setCustomDomain(e.target.value)} placeholder="captures.yourcompany.com" className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-subtle font-mono" />
-              </div>
-            </div>
-
-            {saveError && <p className="text-xs text-red-600">{saveError}</p>}
-            <div>
-              <button type="submit" disabled={saving} className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60 transition-colors min-w-[120px]">
-                {saving ? "Saving…" : saved ? "Saved" : "Save changes"}
-              </button>
-            </div>
-          </form>
-        )}
-
-        {/* ── Members ────────────────────────────────────────────────────── */}
-        {activeTab === "members" && (
-          <div className="space-y-6">
-            <div>
-              <h1 className="text-xl font-bold text-foreground">Members</h1>
-              <p className="text-sm text-muted mt-0.5">Manage who has access to your workspace captures.</p>
-            </div>
-
-            {/* Invite */}
-            <div className="rounded-xl border border-border bg-subtle p-4 space-y-3">
-              <h2 className="text-sm font-semibold text-foreground">Invite member</h2>
-              <p className="text-xs text-muted">If they don&apos;t have an account yet, we&apos;ll send them a join link + extension download.</p>
-              <div className="flex gap-2">
-                <input type="email" value={inviteEmail} onChange={e=>setInviteEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleInvite()}
-                  disabled={seatLimit(userPlan) !== null && members.length >= (seatLimit(userPlan) ?? 0)}
-                  placeholder="teammate@company.com"
-                  className="flex-1 text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-subtle disabled:bg-subtle disabled:cursor-not-allowed" />
-                <button type="button" onClick={handleInvite} disabled={inviting || !inviteEmail.trim()}
-                  className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50">
-                  {inviting ? "Sending…" : "Invite"}
-                </button>
-              </div>
-              {inviteMsg && <p className={`text-xs ${inviteMsg.type==="ok" ? "text-emerald-600" : "text-red-600"}`}>{inviteMsg.text}</p>}
-            </div>
-
-            {/* Members list */}
-            <div className="rounded-xl border border-border bg-subtle overflow-hidden">
-              <div className="px-4 py-3 border-b border-border bg-subtle/40 flex items-center justify-between">
-                <h2 className="text-sm font-semibold text-foreground">{membersLoading ? "Loading…" : `${members.length} member${members.length !== 1 ? "s" : ""}`}</h2>
-              </div>
-              {membersLoading ? (
-                <div className="divide-y divide-border/60 animate-pulse">
-                  {[0,1,2].map(i => (
-                    <div key={i} className="flex items-center gap-3 px-4 py-3">
-                      <div className="w-8 h-8 rounded-full bg-subtle" />
-                      <div className="flex-1 space-y-1.5"><div className="h-3 w-1/3 bg-subtle rounded" /><div className="h-2.5 w-1/4 bg-subtle rounded" /></div>
-                    </div>
-                  ))}
-                </div>
-              ) : members.length === 0 ? (
-                <div className="py-12 text-center text-sm text-muted">No members yet. Invite someone above.</div>
-              ) : (
-                <ul className="divide-y divide-border/60">
-                  {members.map(m => (
-                    <li key={m.user_id} className="flex items-center gap-3 px-4 py-3">
-                      <div className="w-8 h-8 rounded-full bg-indigo-100 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 text-xs font-bold flex items-center justify-center shrink-0">
-                        {(m.email || "?").charAt(0).toUpperCase()}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{m.email}</p>
-                      </div>
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${m.role==="owner" ? "bg-subtle text-muted" : "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400"}`}>{m.role}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* ── Billing ────────────────────────────────────────────────────── */}
-        {activeTab === "billing" && (
-          <div className="space-y-6">
-            <div>
-              <h1 className="text-xl font-bold text-foreground">Billing</h1>
-              <p className="text-sm text-muted mt-0.5">Your current plan and usage.</p>
-            </div>
-            <div className="rounded-xl border border-border bg-subtle p-6 flex items-center justify-between gap-4">
-              <div>
-                <p className="text-xs text-muted uppercase tracking-widest font-semibold mb-1">Current plan</p>
-                <h2 className="text-2xl font-bold text-foreground capitalize">{tierLabel(userPlan)}</h2>
-                <p className="text-sm text-muted mt-1">
-                  {seatLimit(userPlan) !== null ? `Up to ${seatLimit(userPlan)} team members` : "Unlimited team members"}
-                </p>
-              </div>
-              {userPlan === "free" && (
-                <Link href="/pricing" className="shrink-0 px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors">
-                  Upgrade
-                </Link>
-              )}
-            </div>
-
-            <div className="rounded-xl border border-border bg-subtle p-4 space-y-3">
-              <h2 className="text-sm font-semibold text-foreground border-b border-border pb-2">Plan features</h2>
-              {[
-                { label:"Weekly capture quota", value: userPlan==="free" ? "5 captures/week" : "Unlimited" },
-                { label:"Team seats", value: seatLimit(userPlan) !== null ? `${seatLimit(userPlan)}` : "Unlimited" },
-                { label:"AI bug reports", value: userPlan==="pro_plus"||userPlan==="enterprise" ? "✓ Included" : "Pro+ only" },
-                { label:"Custom branding", value: hasBranding(userPlan) ? "✓ Included" : "Pro+ only" },
-              ].map(r => (
-                <div key={r.label} className="flex items-center justify-between text-sm">
-                  <span className="text-muted">{r.label}</span>
-                  <span className="font-medium text-foreground">{r.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* ── Integrations ───────────────────────────────────────────────── */}
-        {activeTab === "integrations" && (
-          <div className="space-y-6">
-            <div>
-              <h1 className="text-xl font-bold text-foreground">Integrations</h1>
-              <p className="text-sm text-muted mt-0.5">Connect your bug captures to your favourite tools.</p>
-            </div>
-            <input type="text" placeholder="Search integrations…" value={intSearch} onChange={e=>setIntSearch(e.target.value)}
-              className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-subtle" />
-            <div className="rounded-xl border border-border bg-subtle p-4 space-y-3">
+            <div className="rounded-xl border border-border bg-background p-4 space-y-3">
               <div>
                 <h2 className="text-sm font-semibold text-foreground">{t("settings.integrationsHealth")}</h2>
                 <p className="text-xs text-muted mt-0.5">{t("settings.integrationsHealthHint")}</p>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[
-                  { label: "Google Drive", item: integrationsHealth?.drive, meta: integrationsHealth?.drive?.email || null },
                   { label: "Email delivery", item: integrationsHealth?.email, meta: integrationsHealth?.email?.provider || null },
                   { label: "AI summaries", item: integrationsHealth?.ai, meta: integrationsHealth?.ai?.provider || null },
                 ].map(({ label, item, meta }) => {
@@ -716,14 +1046,14 @@ function SettingsContent() {
                     ? t("settings.healthActionRequired")
                     : t("settings.healthNotConfigured");
                   const badgeClass = integrationsLoading
-                    ? "text-muted bg-subtle border-border"
+                    ? "text-muted bg-background border-border"
                     : state === "healthy"
                     ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/40"
                     : state === "action_required"
                     ? "text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/40"
-                    : "text-muted bg-subtle border-border";
+                    : "text-muted bg-background border-border";
                   return (
-                    <div key={label} className="rounded-lg border border-border bg-white dark:bg-background p-3 space-y-2">
+                    <div key={label} className="rounded-lg border border-border bg-background dark:bg-background p-3 space-y-2">
                       <div className="flex items-start justify-between gap-3">
                         <p className="text-sm font-semibold text-foreground">{label}</p>
                         <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${badgeClass}`}>{badge}</span>
@@ -737,8 +1067,8 @@ function SettingsContent() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {filteredIntegrations.map(int => (
-                <div key={int.id} className="rounded-xl border border-border bg-subtle p-4 flex items-start gap-3 hover:border-indigo-200 transition-colors">
-                  <div className="shrink-0 w-10 h-10 rounded-lg border border-border bg-subtle flex items-center justify-center">
+                <div key={int.id} className="rounded-xl border border-border bg-background p-4 flex items-start gap-3 hover:border-indigo-200 transition-colors">
+                  <div className="shrink-0 w-10 h-10 rounded-lg border border-border bg-background flex items-center justify-center">
                     {int.icon}
                   </div>
                   <div className="flex-1 min-w-0">
@@ -760,23 +1090,19 @@ function SettingsContent() {
         {/* ── Webhooks ───────────────────────────────────────────────────── */}
         {activeTab === "webhooks" && (
           <form onSubmit={handleSave} className="space-y-6">
-            <div>
-              <h1 className="text-xl font-bold text-foreground">Webhooks</h1>
-              <p className="text-sm text-muted mt-0.5">Receive notifications when new captures are saved.</p>
-            </div>
-            <div className="rounded-xl border border-border bg-subtle p-4 space-y-3">
+            <div className="rounded-xl border border-border bg-background p-4 space-y-3">
               <div className="flex items-center justify-between border-b border-border pb-2">
                 <h2 className="text-sm font-semibold text-foreground">Slack / Discord / Zapier</h2>
                 {webhookUrl.trim() ? (
                   <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-800/40 px-2 py-0.5 rounded-full">Active</span>
                 ) : (
-                  <span className="text-[10px] font-semibold text-muted bg-subtle border border-border px-2 py-0.5 rounded-full">Not configured</span>
+                  <span className="text-[10px] font-semibold text-muted bg-background border border-border px-2 py-0.5 rounded-full">Not configured</span>
                 )}
               </div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Webhook URL</label>
               <input type="url" value={webhookUrl} onChange={e=>setWebhookUrl(e.target.value)}
                 placeholder="https://hooks.slack.com/services/..."
-                className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-subtle font-mono" />
+                className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-background font-mono" />
               <p className="text-[11px] text-muted">We POST a JSON payload with capture URL, thumbnail, and metadata when a new bug is saved.</p>
             </div>
             {saveError && <p className="text-xs text-red-600">{saveError}</p>}
@@ -789,38 +1115,30 @@ function SettingsContent() {
         {/* ── Account ────────────────────────────────────────────────────── */}
         {activeTab === "account" && (
           <form onSubmit={handleSaveProfile} className="space-y-6">
-            <div>
-              <h1 className="text-xl font-bold text-foreground">Account</h1>
-              <p className="text-sm text-muted mt-0.5">Your personal profile information.</p>
-            </div>
-            <div className="rounded-xl border border-border bg-subtle p-4 space-y-4">
+            <div className="rounded-xl border border-border bg-background p-4 space-y-4">
               <div className="flex items-center justify-between gap-3 border-b border-border pb-2">
                 <h2 className="text-sm font-semibold text-foreground">Profile</h2>
                 {profileSaved && <span className="text-xs text-emerald-600 font-medium">✓ Saved</span>}
               </div>
-              <div className="flex flex-col sm:flex-row sm:items-center gap-4 pb-2">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={userAvatar || "https://bugsnap.akusaraproject.my.id/icon.svg"}
-                  alt="Profile Avatar"
-                  referrerPolicy="no-referrer"
-                  onError={(e) => {
-                    (e.currentTarget as HTMLImageElement).src = "https://bugsnap.akusaraproject.my.id/icon.svg";
-                  }}
-                  className="w-14 h-14 rounded-full object-cover border-2 border-border bg-subtle shrink-0 shadow-sm"
-                />
-                <div className="flex-1 min-w-0 space-y-2">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted">Profile Avatar</label>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <input
-                      type="url"
-                      value={userAvatar}
-                      onChange={(e) => setUserAvatar(e.target.value)}
-                      placeholder="https://example.com/photo.jpg or upload file"
-                      className="flex-1 min-w-[200px] text-xs rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-subtle font-mono text-foreground"
+              <div className="pb-2 flex items-center gap-3">
+                <div className="group relative h-16 w-16 shrink-0">
+                  {userAvatar ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={userAvatar}
+                      alt="Profile Avatar"
+                      referrerPolicy="no-referrer"
+                      onError={() => setUserAvatar("")}
+                      className="h-16 w-16 rounded-full object-cover border-2 border-border bg-background shadow-sm"
                     />
-                    <label className="px-3 py-2 rounded-lg border border-border bg-subtle text-xs font-semibold text-foreground hover:bg-neutral-200/60 dark:hover:bg-neutral-800/60 transition-colors cursor-pointer shrink-0">
-                      <span>Upload File</span>
+                  ) : (
+                    <div className="h-16 w-16 rounded-full border-2 border-border bg-indigo-600 text-white text-xl font-semibold flex items-center justify-center shadow-sm">
+                      {initialOf(`${firstName} ${lastName}`.trim() || userEmail)}
+                    </div>
+                  )}
+                  <div className="absolute inset-0 rounded-full overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                    <label className="absolute inset-x-0 top-0 h-1/2 flex items-center justify-center bg-amber-700/90 hover:bg-amber-700 text-white text-[9px] font-semibold cursor-pointer">
+                      Upload
                       <input
                         type="file"
                         accept="image/png,image/jpeg,image/svg+xml,image/webp"
@@ -844,27 +1162,66 @@ function SettingsContent() {
                     </label>
                     <button
                       type="button"
-                      onClick={() => setUserAvatar("https://bugsnap.akusaraproject.my.id/icon.svg")}
-                      className="px-3 py-2 rounded-lg border border-border bg-subtle text-xs font-semibold text-muted hover:text-foreground transition-colors shrink-0"
+                      onClick={() => setUserAvatar("")}
+                      className="absolute inset-x-0 bottom-0 h-1/2 flex items-center justify-center bg-amber-900/90 hover:bg-amber-900 text-white text-[9px] font-semibold"
                     >
-                      Reset Default
+                      Delete
                     </button>
                   </div>
-                  <p className="text-[11px] text-muted">Defaults to official BugSnap logo. You can paste an image URL or upload a custom avatar file (PNG, JPG, SVG).</p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Full Name</label>
-                  <input type="text" value={userName} onChange={e=>setUserName(e.target.value)}
-                    className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-subtle" />
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">First name</label>
+                <input type="text" value={firstName} onChange={e=>setFirstName(e.target.value)}
+                  className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-background" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Last name</label>
+                <input type="text" value={lastName} onChange={e=>setLastName(e.target.value)}
+                  className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-background" />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Role</label>
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setRoleMenuOpen((o) => !o)}
+                    className="w-full flex items-center justify-between text-sm rounded-lg border border-border px-3 py-2 bg-background text-left"
+                  >
+                    <span className={jobRole ? "text-foreground" : "text-muted"}>{jobRole || "Select a role"}</span>
+                    <svg className={`w-3.5 h-3.5 text-muted transition-transform ${roleMenuOpen ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                  {roleMenuOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setRoleMenuOpen(false)} />
+                      <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-background border border-border rounded-xl shadow-xl py-1 px-1 flex flex-col gap-0.5 max-h-64 overflow-y-auto">
+                        {ROLE_OPTIONS.map((opt) => (
+                          <button
+                            key={opt}
+                            type="button"
+                            onClick={() => { setJobRole(opt); setRoleMenuOpen(false); }}
+                            className="w-full flex items-center justify-between gap-2 px-3 py-2 text-xs text-foreground hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
+                          >
+                            <span>{opt}</span>
+                            {jobRole === opt && (
+                              <svg className="w-3.5 h-3.5 shrink-0 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M20 6L9 17l-5-5" />
+                              </svg>
+                            )}
+                          </button>
+                        ))}
+                      </div>
+                    </>
+                  )}
                 </div>
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Email</label>
-                  <input type="email" value={userEmail} disabled
-                    className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none bg-subtle text-muted cursor-not-allowed" />
-                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Email</label>
+                <input type="email" value={userEmail} disabled
+                  className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none bg-background text-muted cursor-not-allowed" />
               </div>
 
               {/* Theme preference */}
@@ -883,13 +1240,13 @@ function SettingsContent() {
                         setTheme(opt.id);
                         try {
                           await supabase.rpc("update_user_theme", { p_theme: opt.id });
-                        } catch {}
+                        } catch { showToast("Could not save theme preference", "error"); }
                       }}
                       aria-pressed={theme === opt.id}
                       className={`flex flex-col items-center gap-1.5 rounded-lg border px-3 py-3 text-xs font-semibold transition-colors ${
                         theme === opt.id
-                          ? "border-indigo-400 bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300"
-                          : "border-border bg-subtle text-muted hover:text-foreground hover:bg-neutral-200/60 dark:hover:bg-neutral-800/60"
+                          ? "border-indigo-400 bg-indigo-50  text-indigo-700 dark:text-indigo-300"
+                          : "border-border bg-background text-muted hover:text-foreground hover:bg-neutral-200/60 dark:hover:bg-neutral-800/60"
                       }`}
                     >
                       {opt.icon}
@@ -904,7 +1261,14 @@ function SettingsContent() {
                 <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Plan</label>
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-foreground capitalize">{tierLabel(userPlan)}</span>
-                  {userPlan === "free" && <Link href="/pricing" className="text-xs text-indigo-600 hover:underline font-semibold">Upgrade</Link>}
+                  {userPlan === "free" && (
+                    <Link
+                      href="/upgrade"
+                      className="text-xs text-indigo-600 hover:underline font-semibold"
+                    >
+                      Upgrade
+                    </Link>
+                  )}
                 </div>
               </div>
             </div>
@@ -927,18 +1291,54 @@ function SettingsContent() {
             </div>
           </form>
         )}
+
+        {/* ── Notifications ─────────────────────────────────────────────── */}
+        {activeTab === "notifications" && (
+          <div className="space-y-6">
+            <div className="rounded-xl border border-border bg-background p-4 space-y-1">
+              {([
+                { key: "comment", label: "When someone comments on your capture" },
+                { key: "mention", label: "When you're @mentioned in a comment" },
+                { key: "digest", label: "Weekly digest email" },
+              ] as { key: keyof typeof notifPrefs; label: string }[]).map((row, i) => (
+                <div key={row.key} className={`flex items-center justify-between gap-4 py-3 ${i > 0 ? "border-t border-border" : ""}`}>
+                  <span className="text-sm text-foreground">{row.label}</span>
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={notifPrefs[row.key]}
+                    disabled={notifSaving}
+                    onClick={async () => {
+                      const next = { ...notifPrefs, [row.key]: !notifPrefs[row.key] };
+                      setNotifPrefs(next);
+                      setNotifSaving(true);
+                      try {
+                        await supabase.rpc("update_user_notification_prefs", { p_prefs: next });
+                      } catch { showToast("Could not save notification preference", "error"); }
+                      finally { setNotifSaving(false); }
+                    }}
+                    className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-60 ${notifPrefs[row.key] ? "bg-indigo-600" : "bg-border"}`}
+                  >
+                    <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-background shadow transition-transform ${notifPrefs[row.key] ? "translate-x-5" : "translate-x-0"}`} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        </div>
       </main>
 
       {/* Drive modal */}
       {connectDriveModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
           <button className="absolute inset-0 bg-black/40" aria-label="Close" onClick={() => !driveActionLoading && setConnectDriveModalOpen(false)} />
-          <div className="relative w-full max-w-sm rounded-xl border border-border bg-subtle p-6 shadow-xl">
+          <div className="relative w-full max-w-sm rounded-xl border border-border bg-background p-6 shadow-xl">
             <h2 className="text-lg font-bold text-foreground">{t("settings.connectDriveQ")}</h2>
             <p className="text-sm text-muted mt-2">{t("settings.connectDriveDesc")}</p>
             {driveError && <p className="text-xs text-red-600 mt-3">{driveError}</p>}
             <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-border">
-              <button type="button" onClick={() => setConnectDriveModalOpen(false)} disabled={driveActionLoading} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg disabled:opacity-50">{t("common.cancel")}</button>
+              <button type="button" onClick={() => setConnectDriveModalOpen(false)} disabled={driveActionLoading} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-border/30 rounded-lg disabled:opacity-50">{t("common.cancel")}</button>
               <button type="button" onClick={connectDrive} disabled={driveActionLoading} className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50">{driveActionLoading ? t("settings.connecting") : driveStatus === "reconnect_required" ? "Reconnect with Google" : t("settings.continueToGoogle")}</button>
             </div>
           </div>

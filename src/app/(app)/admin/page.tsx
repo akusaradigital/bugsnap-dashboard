@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
+import { useToast } from "@/components/Toast";
 
 interface AdminStats {
   totalUsers: number;
@@ -62,6 +63,7 @@ interface DriveOrphanPreview {
 
 export default function AdminDashboardPage() {
   const { t } = useT();
+  const { showToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<{ stats: AdminStats; users: AdminUser[]; topWorkspaces: TopWorkspace[]; promo: Promo; drift?: DriftReport | null; integrity?: IntegrityReport | null } | null>(null);
@@ -157,8 +159,10 @@ export default function AdminDashboardPage() {
 
       // Update local state for instant UI feedback
       setData((prev) => prev ? { ...prev, users: prev.users.map((u) => u.id === userId ? { ...u, suspended } : u) } : prev);
+      showToast(suspended ? "User suspended" : "User unsuspended", "success");
     } catch (err: unknown) {
       setActionError(err instanceof Error ? err.message : t("admin.updateFailed"));
+      showToast("Could not update user", "error");
     } finally {
       setActingUserId(null);
     }
@@ -181,8 +185,10 @@ export default function AdminDashboardPage() {
       if (!res.ok) throw new Error(json.error || t("admin.promoSaveFailed"));
       setPromoSaved(true);
       setTimeout(() => setPromoSaved(false), 3000);
+      showToast("Promo banner saved", "success");
     } catch (err: unknown) {
       setActionError(err instanceof Error ? err.message : t("admin.promoSaveFailed"));
+      showToast("Could not save promo banner", "error");
     } finally {
       setSavingPromo(false);
     }
@@ -210,8 +216,10 @@ export default function AdminDashboardPage() {
       setBroadcastResult(t("admin.broadcastSent", { count: json.sentCount }));
       setBroadcastSubject("");
       setBroadcastBody("");
+      showToast(`Broadcast sent to ${json.sentCount} users`, "success");
     } catch (err: unknown) {
       setBroadcastResult(err instanceof Error ? err.message : t("admin.broadcastFailed"));
+      showToast("Could not send broadcast", "error");
     } finally {
       setSendingBroadcast(false);
     }
@@ -230,8 +238,10 @@ export default function AdminDashboardPage() {
       setOrphanSummary({ totalDriveFiles: json.totalDriveFiles, linkedCaptureFiles: json.linkedCaptureFiles, orphanCount: json.orphanCount });
       setOrphanFiles((json.orphans || []) as DriveOrphanPreview[]);
       setOrphanResult(`Found ${json.orphanCount} orphaned Drive files.`);
+      showToast(`Found ${json.orphanCount} orphaned Drive files`, "success");
     } catch (err: unknown) {
       setOrphanResult(err instanceof Error ? err.message : "Drive scan failed");
+      showToast("Drive scan failed", "error");
     } finally {
       setOrphanLoading(false);
     }
@@ -257,8 +267,10 @@ export default function AdminDashboardPage() {
       setOrphanResult(`Trashed ${json.trashed} orphaned Drive files. ${json.failed} failed.`);
       setOrphanFiles((prev) => prev.filter((file) => !(json.results as Array<{ id: string; ok: boolean }>).some((item) => item.ok && item.id === file.id)));
       setOrphanSummary((prev) => prev ? { ...prev, orphanCount: Math.max(0, prev.orphanCount - Number(json.trashed || 0)) } : prev);
+      showToast(`Trashed ${json.trashed} orphaned Drive files`, "success");
     } catch (err: unknown) {
       setOrphanResult(err instanceof Error ? err.message : "Drive cleanup failed");
+      showToast("Drive cleanup failed", "error");
     } finally {
       setOrphanCleaning(false);
     }
