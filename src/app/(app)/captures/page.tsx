@@ -436,10 +436,23 @@ function CapturesContent() {
   // Dropdown states: false = not actively filtering by this type.
   // If BOTH are false, we show ALL (no filter applied).
   const [typeMenuOpen, setTypeMenuOpen] = useState(false);
+  const typeMenuRef = useRef<HTMLDivElement>(null);
   const [showVideo, setShowVideo] = useState(false);
   const [showScreenshot, setShowScreenshot] = useState(false);
   const [filterTag, setFilterTag] = useState("");
   const [filterStatus, setFilterStatus] = useState("");
+
+  // Close type filter dropdown when clicking outside without blocking scroll
+  useEffect(() => {
+    if (!typeMenuOpen) return;
+    function handleClickOutside(e: MouseEvent) {
+      if (typeMenuRef.current && !typeMenuRef.current.contains(e.target as Node)) {
+        setTypeMenuOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [typeMenuOpen]);
 
   // Infinite scroll / pagination state
   const PAGE_SIZE = 12;
@@ -869,7 +882,7 @@ function CapturesContent() {
           {t("cap.copiedShortcut")}
         </div>
       )}
-      {/* Header & Filter */}
+      {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 sm:mb-8 gap-4">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">{t("cap.title")}</h1>
 
@@ -884,69 +897,31 @@ function CapturesContent() {
               className="h-10 pl-9 pr-3 text-sm rounded-lg border border-border bg-subtle focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 w-full"
             />
           </div>
-          {selectedIds.size === 0 ? (
-            <>
-              <label className="h-10 flex items-center justify-center gap-2 px-4 border border-border bg-subtle text-muted hover:text-foreground hover:bg-subtle/80 text-sm font-medium rounded-lg transition-colors cursor-pointer whitespace-nowrap">
-                <input type="file" className="hidden" onChange={handleManualUpload} accept="image/*,video/*" />
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-                </svg>
-                {uploading ? "Uploading..." : "Upload file"}
-              </label>
-              <a
-                href={CHROME_WEB_STORE_URL}
-                onClick={handleNewCaptureClick}
-                target={extensionInstalled ? undefined : "_blank"}
-                rel={extensionInstalled ? undefined : "noopener noreferrer"}
-                title={extensionInstalled ? "Start a new screen capture" : "Install BugSnap from the Chrome Web Store"}
-                className="h-10 flex items-center justify-center gap-2 px-4 bg-emerald-400 text-white text-sm font-medium rounded-lg hover:bg-emerald-500 transition-colors whitespace-nowrap cursor-pointer shadow-sm"
-              >
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
-                {t("cap.newCapture")}
-              </a>
-            </>
-          ) : (
-            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-subtle px-3 py-2 w-full lg:w-auto shadow-sm justify-between">
-              <div className="flex items-center gap-2.5 text-foreground font-medium text-sm">
-                <span className="w-6 h-6 rounded-md bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shadow-sm">
-                  ✓
-                </span>
-                <span className="font-semibold text-foreground">{selectedIds.size} selected</span>
-                <button
-                  type="button"
-                  onClick={clearSelection}
-                  className="text-xs text-muted hover:text-foreground underline ml-1 cursor-pointer"
-                  title="Press Escape to deselect"
-                >
-                  Deselect (Esc)
-                </button>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <button
-                  onClick={() => void openMoveToModal()}
-                  disabled={moving || deleting}
-                  className="h-8.5 px-3 rounded-lg border border-border bg-background text-xs font-semibold text-foreground hover:bg-subtle/80 disabled:opacity-40 transition-colors flex items-center gap-1.5"
-                >
-                  <svg className="w-3.5 h-3.5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
-                  Move
-                </button>
-                <button
-                  onClick={() => openDeleteConfirmation(Array.from(selectedIds))}
-                  disabled={selectedIds.size === 0 || deleting}
-                  className="h-8.5 px-3 rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 text-xs font-semibold hover:bg-red-100 dark:hover:bg-red-900/50 disabled:opacity-40 transition-colors flex items-center gap-1.5"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                  Delete
-                </button>
-              </div>
-            </div>
-          )}
+          <label className="h-10 flex items-center justify-center gap-2 px-4 border border-border bg-subtle text-muted hover:text-foreground hover:bg-subtle/80 text-sm font-medium rounded-lg transition-colors cursor-pointer whitespace-nowrap">
+            <input type="file" className="hidden" onChange={handleManualUpload} accept="image/*,video/*" />
+            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+            {uploading ? "Uploading..." : "Upload file"}
+          </label>
+          <a
+            href={CHROME_WEB_STORE_URL}
+            onClick={handleNewCaptureClick}
+            target={extensionInstalled ? undefined : "_blank"}
+            rel={extensionInstalled ? undefined : "noopener noreferrer"}
+            title={extensionInstalled ? "Start a new screen capture" : "Install BugSnap from the Chrome Web Store"}
+            className="h-10 flex items-center justify-center gap-2 px-4 bg-emerald-400 text-white text-sm font-medium rounded-lg hover:bg-emerald-500 transition-colors whitespace-nowrap cursor-pointer shadow-sm"
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
+            {t("cap.newCapture")}
+          </a>
         </div>
       </div>
 
-      {/* Filter Row (Jam.dev style) - sticky so filters stay accessible while scrolling */}
-      <div className="sticky top-0 z-30 grid grid-cols-2 min-[430px]:flex min-[430px]:flex-wrap items-center gap-3 mb-6 pb-4 pt-3 border-b border-border bg-background">
-        <div className="relative min-w-0">
+      {/* Filter & Selection Row (Jam.dev style) - sticky so filters and multi-select actions stay accessible while scrolling */}
+      <div className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 pt-3 border-b border-border bg-background">
+        <div className="grid grid-cols-2 min-[430px]:flex min-[430px]:flex-wrap items-center gap-3">
+        <div ref={typeMenuRef} className="relative min-w-0">
           <button
             onClick={() => setTypeMenuOpen((o) => !o)}
             className={`w-full min-[430px]:w-auto flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors ${
@@ -965,59 +940,56 @@ function CapturesContent() {
           </button>
 
           {typeMenuOpen && (
-            <>
-              <div className="fixed inset-0 z-20" onClick={() => setTypeMenuOpen(false)} />
-              <div className="absolute top-full left-0 mt-1.5 w-[min(16rem,calc(100vw-1.5rem))] z-30 bg-subtle border border-border rounded-xl shadow-xl overflow-hidden">
-                <div className="px-3 pt-3 pb-1">
-                  <p className="text-[10px] font-semibold uppercase tracking-widest text-muted">{t("cap.type")}</p>
-                </div>
-
-                {/* Screenshot row */}
-                <label className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors text-sm ${showScreenshot ? "text-foreground" : "text-muted"}`}>
-                  <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${showScreenshot ? "bg-indigo-600 border-indigo-600" : "border-border"}`}
-                    onClick={() => setShowScreenshot((v) => !v)}>
-                    {showScreenshot && <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>}
-                  </div>
-                  <div className="w-7 h-7 rounded-md bg-rose-100 dark:bg-rose-950/30 flex items-center justify-center shrink-0">
-                    <svg className="w-4 h-4 text-rose-500 dark:text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium leading-none">{t("cap.screenshot")}</p>
-                    <p className="text-[11px] text-muted mt-0.5">{t("cap.screenshotHint")}</p>
-                  </div>
-                  <span className="text-xs text-muted">({screenshotCount})</span>
-                </label>
-
-                {/* Video row */}
-                <label className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors text-sm ${showVideo ? "text-foreground" : "text-muted"}`}>
-                  <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${showVideo ? "bg-indigo-600 border-indigo-600" : "border-border"}`}
-                    onClick={() => setShowVideo((v) => !v)}>
-                    {showVideo && <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>}
-                  </div>
-                  <div className="w-7 h-7 rounded-md bg-indigo-100 dark:bg-indigo-950/30 flex items-center justify-center shrink-0">
-                    <svg className="w-4 h-4 text-indigo-500 dark:text-indigo-400" fill="currentColor" viewBox="0 0 24 24">
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
-                  </div>
-                  <div className="flex-1">
-                    <p className="font-medium leading-none">{t("cap.video")}</p>
-                    <p className="text-[11px] text-muted mt-0.5">{t("cap.videoHint")}</p>
-                  </div>
-                  <span className="text-xs text-muted">({videoCount})</span>
-                </label>
-
-                <div className="border-t border-border mt-1 px-3 py-2 flex justify-between">
-                  <button onClick={() => { setShowVideo(true); setShowScreenshot(true); }} className="text-xs text-muted hover:text-foreground transition-colors">
-                    {t("cap.selectAll")}
-                  </button>
-                  <button onClick={() => { setShowVideo(false); setShowScreenshot(false); }} className="text-xs text-muted hover:text-foreground transition-colors">
-                    {t("cap.clear")}
-                  </button>
-                </div>
+            <div className="absolute top-full left-0 mt-1.5 w-[min(16rem,calc(100vw-1.5rem))] z-30 bg-subtle border border-border rounded-xl shadow-xl overflow-hidden">
+              <div className="px-3 pt-3 pb-1">
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted">{t("cap.type")}</p>
               </div>
-            </>
+
+              {/* Screenshot row */}
+              <label className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors text-sm ${showScreenshot ? "text-foreground" : "text-muted"}`}>
+                <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${showScreenshot ? "bg-indigo-600 border-indigo-600" : "border-border"}`}
+                  onClick={() => setShowScreenshot((v) => !v)}>
+                  {showScreenshot && <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>}
+                </div>
+                <div className="w-7 h-7 rounded-md bg-rose-100 dark:bg-rose-950/30 flex items-center justify-center shrink-0">
+                  <svg className="w-4 h-4 text-rose-500 dark:text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium leading-none">{t("cap.screenshot")}</p>
+                  <p className="text-[11px] text-muted mt-0.5">{t("cap.screenshotHint")}</p>
+                </div>
+                <span className="text-xs text-muted">({screenshotCount})</span>
+              </label>
+
+              {/* Video row */}
+              <label className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors text-sm ${showVideo ? "text-foreground" : "text-muted"}`}>
+                <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${showVideo ? "bg-indigo-600 border-indigo-600" : "border-border"}`}
+                  onClick={() => setShowVideo((v) => !v)}>
+                  {showVideo && <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>}
+                </div>
+                <div className="w-7 h-7 rounded-md bg-indigo-100 dark:bg-indigo-950/30 flex items-center justify-center shrink-0">
+                  <svg className="w-4 h-4 text-indigo-500 dark:text-indigo-400" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                </div>
+                <div className="flex-1">
+                  <p className="font-medium leading-none">{t("cap.video")}</p>
+                  <p className="text-[11px] text-muted mt-0.5">{t("cap.videoHint")}</p>
+                </div>
+                <span className="text-xs text-muted">({videoCount})</span>
+              </label>
+
+              <div className="border-t border-border mt-1 px-3 py-2 flex justify-between">
+                <button onClick={() => { setShowVideo(true); setShowScreenshot(true); }} className="text-xs text-muted hover:text-foreground transition-colors">
+                  {t("cap.selectAll")}
+                </button>
+                <button onClick={() => { setShowVideo(false); setShowScreenshot(false); }} className="text-xs text-muted hover:text-foreground transition-colors">
+                  {t("cap.clear")}
+                </button>
+              </div>
+            </div>
           )}
         </div>
 
@@ -1061,6 +1033,45 @@ function CapturesContent() {
             </span>
             {t("cap.clearFilters")}
           </button>
+        )}
+        </div>
+
+        {/* Sticky Batch Selection Actions */}
+        {selectedIds.size > 0 && (
+          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-subtle px-3 py-1.5 w-full sm:w-auto shadow-sm justify-between">
+            <div className="flex items-center gap-2 text-foreground font-medium text-xs">
+              <span className="w-5 h-5 rounded-md bg-indigo-600 text-white flex items-center justify-center text-[11px] font-bold shadow-sm">
+                ✓
+              </span>
+              <span className="font-semibold text-foreground">{selectedIds.size} selected</span>
+              <button
+                type="button"
+                onClick={clearSelection}
+                className="text-[11px] text-muted hover:text-foreground underline ml-1 cursor-pointer"
+                title="Press Escape to deselect"
+              >
+                Deselect (Esc)
+              </button>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => void openMoveToModal()}
+                disabled={moving || deleting}
+                className="h-7.5 px-2.5 rounded-lg border border-border bg-background text-xs font-semibold text-foreground hover:bg-subtle/80 disabled:opacity-40 transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <svg className="w-3.5 h-3.5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+                Move
+              </button>
+              <button
+                onClick={() => openDeleteConfirmation(Array.from(selectedIds))}
+                disabled={selectedIds.size === 0 || deleting}
+                className="h-7.5 px-2.5 rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 text-xs font-semibold hover:bg-red-100 dark:hover:bg-red-900/50 disabled:opacity-40 transition-colors flex items-center gap-1 cursor-pointer"
+              >
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                Delete
+              </button>
+            </div>
+          </div>
         )}
       </div>
 
