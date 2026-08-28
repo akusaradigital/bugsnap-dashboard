@@ -404,6 +404,7 @@ function CapturesContent() {
   const [moveTargetFolderName, setMoveTargetFolderName] = useState<string>("");
   const [moveWorkspaces, setMoveWorkspaces] = useState<Array<{ id: string; name: string }>>([]);
   const [moveFolders, setMoveFolders] = useState<string[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [dragActive, setDragActive] = useState(false);
   const [thumbFailed, setThumbFailed] = useState<Record<string, boolean>>({});
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -481,9 +482,11 @@ function CapturesContent() {
       }
       const cursor = cursorRef.current;
       if (cursor) {
-        query = query
-          .lt("created_at", cursor.created_at)
-          .or(`and(created_at.eq.${cursor.created_at},id.lt.${cursor.id})`);
+        // ponytail: .lt(...).or(...) chains as AND, making every page-2+
+        // query self-contradictory (0 rows forever). Must be one OR.
+        query = query.or(
+          `created_at.lt.${cursor.created_at},and(created_at.eq.${cursor.created_at},id.lt.${cursor.id})`
+        );
       }
       const { data, error } = await query;
       // Stale response for a filter that changed mid-flight - drop it.
@@ -517,6 +520,41 @@ function CapturesContent() {
       cancelled = true;
     };
   }, [wsParam, folderParam, loadPage]);
+
+  // Check if BugSnap Chrome extension is installed via window postMessage bridge
+  const [extensionInstalled, setExtensionInstalled] = useState(false);
+
+  useEffect(() => {
+    function handleExtensionMessage(event: MessageEvent) {
+      if (event.data?.source === "bugsnap-extension") {
+        setExtensionInstalled(true);
+      }
+    }
+    window.addEventListener("message", handleExtensionMessage);
+    window.postMessage({ source: "bugsnap-web", action: "ping" }, "*");
+    return () => window.removeEventListener("message", handleExtensionMessage);
+  }, []);
+
+  function handleNewCaptureClick(e: React.MouseEvent) {
+    if (extensionInstalled) {
+      e.preventDefault();
+      window.postMessage({ source: "bugsnap-web", action: "trigger_capture", mode: "area" }, "*");
+    }
+    // If not installed, link naturally navigates to Chrome Web Store URL
+  }
+
+  // Handle Escape key to cancel/clear active selection
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        if (selectedIds.size > 0 && !moveToOpen && !deleteRequest && !editing) {
+          clearSelection();
+        }
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [selectedIds.size, moveToOpen, deleteRequest, editing]);
 
   // IntersectionObserver: Callback Ref to safely load more when the sentinel enters the viewport
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -644,8 +682,6 @@ function CapturesContent() {
     }
   }
 
-  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-
   function toggleSelect(id: string) {
     setSelectedIds((prev) => {
       const next = new Set(prev);
@@ -696,6 +732,7 @@ function CapturesContent() {
   }
 
   async function openMoveToModal() {
+    setUploadError(null);
     const { data: wsRows, error: wsError } = await supabase.rpc("get_my_workspaces");
     if (wsError) {
       setUploadError(wsError.message);
@@ -718,6 +755,9 @@ function CapturesContent() {
       const folderList = ((folderRows ?? []) as Array<{ name: string }>).map((f) => f.name);
       setMoveFolders(folderList);
       setMoveTargetFolderName(folderList[0] || "");
+    } else {
+      setMoveFolders([]);
+      setMoveTargetFolderName("");
     }
     setMoveToOpen(true);
   }
@@ -760,6 +800,16 @@ function CapturesContent() {
     } finally {
       setMoving(false);
     }
+  }
+
+  const activeFilterCount =
+    (showVideo || showScreenshot ? 1 : 0) + (filterTag ? 1 : 0) + (filterStatus ? 1 : 0) + (search.trim() ? 1 : 0);
+  function clearAllFilters() {
+    setShowVideo(false);
+    setShowScreenshot(false);
+    setFilterTag("");
+    setFilterStatus("");
+    setSearch("");
   }
 
   const filteredCaptures = workspaceCaptures.filter((item) => {
@@ -845,34 +895,47 @@ function CapturesContent() {
               </label>
               <a
                 href={CHROME_WEB_STORE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                title="Install BugSnap from the Chrome Web Store"
-                className="h-10 flex items-center justify-center gap-2 px-4 bg-emerald-400 text-white text-sm font-medium rounded-lg hover:bg-emerald-500 transition-colors whitespace-nowrap"
+                onClick={handleNewCaptureClick}
+                target={extensionInstalled ? undefined : "_blank"}
+                rel={extensionInstalled ? undefined : "noopener noreferrer"}
+                title={extensionInstalled ? "Start a new screen capture" : "Install BugSnap from the Chrome Web Store"}
+                className="h-10 flex items-center justify-center gap-2 px-4 bg-emerald-400 text-white text-sm font-medium rounded-lg hover:bg-emerald-500 transition-colors whitespace-nowrap cursor-pointer shadow-sm"
               >
                 <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
                 {t("cap.newCapture")}
               </a>
             </>
           ) : (
-            <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 w-full lg:w-auto lg:min-w-[420px] justify-between">
-              <div className="flex items-center gap-3 text-foreground font-medium">
-                <span className="w-7 h-7 rounded-lg bg-foreground text-background flex items-center justify-center">✓</span>
-                <span>{selectedIds.size} selected</span>
+            <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-subtle px-3 py-2 w-full lg:w-auto shadow-sm justify-between">
+              <div className="flex items-center gap-2.5 text-foreground font-medium text-sm">
+                <span className="w-6 h-6 rounded-md bg-indigo-600 text-white flex items-center justify-center text-xs font-bold shadow-sm">
+                  ✓
+                </span>
+                <span className="font-semibold text-foreground">{selectedIds.size} selected</span>
+                <button
+                  type="button"
+                  onClick={clearSelection}
+                  className="text-xs text-muted hover:text-foreground underline ml-1 cursor-pointer"
+                  title="Press Escape to deselect"
+                >
+                  Deselect (Esc)
+                </button>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5">
                 <button
                   onClick={() => void openMoveToModal()}
                   disabled={moving || deleting}
-                  className="h-10 px-4 rounded-xl border border-border bg-subtle text-sm font-medium text-foreground hover:bg-subtle/80 disabled:opacity-40 transition-colors"
+                  className="h-8.5 px-3 rounded-lg border border-border bg-background text-xs font-semibold text-foreground hover:bg-subtle/80 disabled:opacity-40 transition-colors flex items-center gap-1.5"
                 >
-                  Move to
+                  <svg className="w-3.5 h-3.5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
+                  Move
                 </button>
                 <button
                   onClick={() => openDeleteConfirmation(Array.from(selectedIds))}
                   disabled={selectedIds.size === 0 || deleting}
-                  className="h-10 px-4 rounded-xl border border-red-200 bg-red-50 text-red-600 text-sm font-semibold hover:bg-red-100 disabled:opacity-40 transition-colors"
+                  className="h-8.5 px-3 rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 text-xs font-semibold hover:bg-red-100 dark:hover:bg-red-900/50 disabled:opacity-40 transition-colors flex items-center gap-1.5"
                 >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
                   Delete
                 </button>
               </div>
@@ -882,7 +945,7 @@ function CapturesContent() {
       </div>
 
       {/* Filter Row (Jam.dev style) - sticky so filters stay accessible while scrolling */}
-      <div className="sticky top-0 z-10 grid grid-cols-2 min-[430px]:flex min-[430px]:flex-wrap items-center gap-3 mb-6 pb-4 pt-3 border-b border-border bg-background/95 backdrop-blur-sm">
+      <div className="sticky top-0 z-30 grid grid-cols-2 min-[430px]:flex min-[430px]:flex-wrap items-center gap-3 mb-6 pb-4 pt-3 border-b border-border bg-background">
         <div className="relative min-w-0">
           <button
             onClick={() => setTypeMenuOpen((o) => !o)}
@@ -987,6 +1050,18 @@ function CapturesContent() {
             ))}
           </select>
         </div>
+
+        {activeFilterCount > 0 && (
+          <button
+            onClick={clearAllFilters}
+            className="flex items-center gap-1 text-xs text-muted hover:text-foreground transition-colors"
+          >
+            <span className="w-4 h-4 rounded-full bg-indigo-600 text-white text-[10px] font-bold flex items-center justify-center">
+              {activeFilterCount}
+            </span>
+            {t("cap.clearFilters")}
+          </button>
+        )}
       </div>
 
       {(deleteError || uploadError || uploadSuccess) && (
@@ -1017,15 +1092,20 @@ function CapturesContent() {
           </div>
           <div>
             <h3 className="text-base font-semibold text-foreground">
-              {search.trim() || showVideo || showScreenshot ? t("cap.noMatch") : t("cap.empty")}
+              {activeFilterCount > 0 ? t("cap.noMatch") : t("cap.empty")}
             </h3>
             <p className="text-xs text-muted mt-1 max-w-sm mx-auto text-balance">
-              {search.trim() || showVideo || showScreenshot
-                ? t("cap.noMatchHint")
-                : t("cap.emptyHint")}
+              {activeFilterCount > 0 ? t("cap.noMatchHint") : t("cap.emptyHint")}
             </p>
           </div>
-          {!search.trim() && !showVideo && !showScreenshot && (
+          {activeFilterCount > 0 ? (
+            <button
+              onClick={clearAllFilters}
+              className="mt-1 px-4 py-2 rounded-lg border border-border bg-subtle text-sm font-semibold text-foreground hover:bg-subtle/80 transition-colors"
+            >
+              {t("cap.clearFilters")}
+            </button>
+          ) : (
             <a
               href={CHROME_WEB_STORE_URL}
               target="_blank"
@@ -1215,53 +1295,143 @@ function CapturesContent() {
       {editing && <EditModal capture={editing} onClose={() => setEditing(null)} onSaved={(updated) => setCaptures((prev) => prev.map((c) => (c.id === updated.id ? updated : c)))} />}
 
       {moveToOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => !moving && setMoveToOpen(false)} />
-          <div className="relative w-full max-w-2xl rounded-2xl bg-subtle shadow-xl border border-border p-6">
-            <h2 className="text-2xl font-semibold text-foreground mb-4">Move {selectedIds.size} capture{selectedIds.size > 1 ? "s" : ""} to</h2>
-            <div className="grid grid-cols-[1fr_220px] gap-4 items-start">
-              <div className="space-y-2">
-                {moveFolders.map((folder) => {
-                  const isCurrent = filteredCaptures.some((c) => selectedIds.has(c.id) && c.workspace_id === moveTargetWorkspaceId && (c.folder_name || "") === folder);
-                  return (
-                    <button
-                      key={folder}
-                      type="button"
-                      onClick={() => setMoveTargetFolderName(folder)}
-                      className={`w-full flex items-center justify-between rounded-xl border px-4 py-3 text-left transition-colors ${moveTargetFolderName === folder ? "border-indigo-500 bg-subtle" : "border-border hover:bg-subtle"}`}
-                    >
-                      <span className="flex items-center gap-3 text-foreground">
-                        <svg className="w-5 h-5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/></svg>
-                        <span>{folder}</span>
-                      </span>
-                      {isCurrent && <span className="text-xs px-2 py-1 rounded-lg border border-border text-muted">Current location</span>}
-                    </button>
-                  );
-                })}
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="move-captures-title">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => !moving && setMoveToOpen(false)} />
+          <div className="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl bg-white dark:bg-subtle shadow-2xl border border-border overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-5 border-b border-border">
+              <div>
+                <h2 id="move-captures-title" className="text-xl font-bold text-foreground">
+                  Move {selectedIds.size} capture{selectedIds.size > 1 ? "s" : ""} to
+                </h2>
+                <p className="text-xs text-muted mt-0.5">Select a destination workspace and folder</p>
               </div>
-              <div className="rounded-xl border border-border bg-white dark:bg-background overflow-hidden">
-                <button type="button" className="w-full flex items-center justify-between gap-2 px-3 py-3 text-left border-b border-border">
-                  <span className="flex items-center gap-3">
-                    <span className="w-8 h-8 rounded-lg bg-sky-50 text-sky-600 flex items-center justify-center font-semibold">{(moveWorkspaces.find((ws) => ws.id === moveTargetWorkspaceId)?.name || "W").charAt(0)}</span>
-                    <span className="font-medium text-foreground truncate">{moveWorkspaces.find((ws) => ws.id === moveTargetWorkspaceId)?.name || "Workspace"}</span>
-                  </span>
-                </button>
-                {moveWorkspaces.map((ws) => (
-                  <button
-                    key={ws.id}
-                    type="button"
-                    onClick={() => void loadMoveFolders(ws.id)}
-                    className={`w-full flex items-center gap-3 px-3 py-3 text-left transition-colors ${moveTargetWorkspaceId === ws.id ? "bg-subtle text-foreground font-semibold" : "text-foreground hover:bg-subtle"}`}
-                  >
-                    <span className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center font-semibold">{ws.name.charAt(0)}</span>
-                    <span className="truncate">{ws.name}</span>
-                  </button>
-                ))}
-              </div>
+              <button
+                type="button"
+                onClick={() => !moving && setMoveToOpen(false)}
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-muted hover:text-foreground hover:bg-slate-100 dark:hover:bg-background transition-colors"
+                aria-label="Close dialog"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
             </div>
-            <div className="flex items-center justify-end gap-3 mt-6">
-              <button onClick={() => setMoveToOpen(false)} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors">{t("common.cancel")}</button>
-              <button onClick={() => void submitMoveTo()} disabled={moving || !moveTargetWorkspaceId} className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+
+            {/* Modal Body */}
+            <div className="p-6 overflow-y-auto">
+              <div className="grid grid-cols-1 md:grid-cols-[1fr_240px] gap-6 items-start">
+                {/* Left Column: Folders */}
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-2.5">
+                    Folder in {moveWorkspaces.find((ws) => ws.id === moveTargetWorkspaceId)?.name || "Workspace"}
+                  </label>
+                  <div className="space-y-2">
+                    {/* Root / Default Folder Option */}
+                    <button
+                      type="button"
+                      onClick={() => setMoveTargetFolderName("")}
+                      className={`w-full flex items-center justify-between rounded-xl border px-3.5 py-2.5 text-left transition-all ${
+                        moveTargetFolderName === ""
+                          ? "border-indigo-600 bg-indigo-50/60 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 ring-1 ring-indigo-600"
+                          : "border-border bg-slate-50/50 dark:bg-background/50 hover:bg-slate-100 dark:hover:bg-background text-foreground"
+                      }`}
+                    >
+                      <span className="flex items-center gap-2.5 min-w-0">
+                        <svg className="w-4 h-4 shrink-0 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                        </svg>
+                        <span className="text-sm font-medium truncate">No folder (General)</span>
+                      </span>
+                    </button>
+
+                    {/* Available folders in target workspace */}
+                    {moveFolders.map((folder) => {
+                      const isCurrent = filteredCaptures.some(
+                        (c) => selectedIds.has(c.id) && c.workspace_id === moveTargetWorkspaceId && (c.folder_name || "") === folder
+                      );
+                      const isSelected = moveTargetFolderName === folder;
+                      return (
+                        <button
+                          key={folder}
+                          type="button"
+                          onClick={() => setMoveTargetFolderName(folder)}
+                          className={`w-full flex items-center justify-between rounded-xl border px-3.5 py-2.5 text-left transition-all ${
+                            isSelected
+                              ? "border-indigo-600 bg-indigo-50/60 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 ring-1 ring-indigo-600"
+                              : "border-border bg-slate-50/50 dark:bg-background/50 hover:bg-slate-100 dark:hover:bg-background text-foreground"
+                          }`}
+                        >
+                          <span className="flex items-center gap-2.5 min-w-0 pr-2">
+                            <svg className="w-4 h-4 shrink-0 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                            </svg>
+                            <span className="text-sm font-medium truncate">{folder}</span>
+                          </span>
+                          {isCurrent && (
+                            <span className="shrink-0 text-[10px] uppercase tracking-wide font-semibold px-2 py-0.5 rounded border border-border text-muted bg-background">
+                              Current
+                            </span>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Right Column: Workspaces */}
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-2.5">
+                    Target Workspace
+                  </label>
+                  <div className="rounded-xl border border-border bg-slate-50/50 dark:bg-background/40 p-1.5 space-y-1">
+                    {moveWorkspaces.map((ws) => {
+                      const isTargetWs = moveTargetWorkspaceId === ws.id;
+                      return (
+                        <button
+                          key={ws.id}
+                          type="button"
+                          onClick={() => void loadMoveFolders(ws.id)}
+                          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left transition-all ${
+                            isTargetWs
+                              ? "bg-white dark:bg-subtle text-foreground font-semibold shadow-sm border border-border"
+                              : "text-muted hover:text-foreground hover:bg-white/60 dark:hover:bg-subtle/50"
+                          }`}
+                        >
+                          <span className={`w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold shrink-0 ${
+                            isTargetWs ? "bg-indigo-600 text-white" : "bg-slate-200 dark:bg-zinc-800 text-foreground"
+                          }`}>
+                            {ws.name.charAt(0).toUpperCase()}
+                          </span>
+                          <span className="text-xs truncate">{ws.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {uploadError && (
+                <div className="mt-4 rounded-lg border border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-950/20 px-3 py-2 text-xs text-red-700 dark:text-red-400">
+                  {uploadError}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border bg-slate-50/50 dark:bg-background/50">
+              <button
+                type="button"
+                onClick={() => setMoveToOpen(false)}
+                disabled={moving}
+                className="px-4 py-2 text-sm font-medium text-foreground hover:bg-slate-200/60 dark:hover:bg-subtle rounded-lg transition-colors disabled:opacity-50"
+              >
+                {t("common.cancel")}
+              </button>
+              <button
+                type="button"
+                onClick={() => void submitMoveTo()}
+                disabled={moving || !moveTargetWorkspaceId}
+                className="px-5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-sm"
+              >
                 {moving ? "Moving..." : "Move"}
               </button>
             </div>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useT } from "@/components/I18nProvider";
 
 interface TimedLog {
@@ -309,10 +309,55 @@ export default function DevToolsPanel({ capture }: Props) {
     (log) => ({ ...log, url: canonicalUrl(log.url) })
   );
 
-  const createdAt = new Date(capture.created_at).toLocaleString("en-US", {
-    month: "long", day: "numeric", year: "numeric",
-    hour: "numeric", minute: "2-digit", timeZoneName: "short",
-  });
+  const [timeZoneMode, setTimeZoneMode] = useState<"capture" | "local" | "utc">("capture");
+  const [showTzMenu, setShowTzMenu] = useState(false);
+  const tzMenuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (tzMenuRef.current && !tzMenuRef.current.contains(e.target as Node)) {
+        setShowTzMenu(false);
+      }
+    }
+    if (showTzMenu) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [showTzMenu]);
+
+  // Formats date according to selected timezone mode
+  const formatDateWithTz = (dateStr: string) => {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return "-";
+
+    if (timeZoneMode === "utc") {
+      return d.toLocaleString("en-US", {
+        month: "short", day: "numeric", year: "numeric",
+        hour: "2-digit", minute: "2-digit", second: "2-digit",
+        timeZone: "UTC",
+        timeZoneName: "short",
+      });
+    }
+
+    if (timeZoneMode === "capture") {
+      // Indonesia / Default capture timezone or standard capture locale
+      return d.toLocaleString("en-US", {
+        month: "short", day: "numeric", year: "numeric",
+        hour: "2-digit", minute: "2-digit", second: "2-digit",
+        timeZone: "Asia/Jakarta",
+        timeZoneName: "short",
+      });
+    }
+
+    // "local" mode uses viewer's local browser timezone
+    return d.toLocaleString("en-US", {
+      month: "short", day: "numeric", year: "numeric",
+      hour: "2-digit", minute: "2-digit", second: "2-digit",
+      timeZoneName: "short",
+    });
+  };
+
+  const createdAt = formatDateWithTz(capture.created_at);
 
   const legacyLogsText = JSON.stringify(capture.dev_logs || []);
   const detectedOs = capture.os || (legacyLogsText.toLowerCase().includes("macintosh") || legacyLogsText.toLowerCase().includes("mac os") ? "macOS" : "Windows");
@@ -474,17 +519,102 @@ export default function DevToolsPanel({ capture }: Props) {
               </div>
             )}
 
-            <div className="rounded-xl border border-border overflow-hidden bg-subtle shadow-sm">
-              {[
-                {
-                  icon: (
-                    <svg className="w-3.5 h-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+            <div className="rounded-xl border border-border overflow-visible bg-subtle shadow-sm">
+              {/* Timestamp Row with Timezone Switcher Dropdown */}
+              <div className="relative flex items-center justify-between px-3 py-2 border-b border-border/60">
+                <div className="flex items-center gap-2 text-muted">
+                  <svg className="w-3.5 h-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+                  </svg>
+                  <span className="text-xs">{t("dt.timestamp")}</span>
+                </div>
+
+                <div className="relative" ref={tzMenuRef}>
+                  <button
+                    type="button"
+                    onClick={() => setShowTzMenu((prev) => !prev)}
+                    className="flex items-center gap-1 text-xs font-medium text-foreground hover:text-indigo-600 dark:hover:text-indigo-400 px-1.5 py-0.5 rounded hover:bg-subtle/80 transition-colors group cursor-pointer"
+                    title="Change timezone format"
+                  >
+                    <span>{createdAt}</span>
+                    <svg
+                      className={`w-3 h-3 text-muted group-hover:text-foreground transition-transform ${showTzMenu ? "rotate-180" : ""}`}
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <polyline points="6 9 12 15 18 9" />
                     </svg>
-                  ),
-                  labelKey: "dt.timestamp",
-                  value: createdAt,
-                },
+                  </button>
+
+                  {showTzMenu && (
+                    <div className="absolute right-0 top-full mt-1.5 z-50 w-56 rounded-xl border border-border bg-subtle p-1.5 shadow-xl animate-in fade-in zoom-in-95 duration-100 text-xs">
+                      <div className="px-2 py-1 text-[10px] font-semibold text-muted uppercase tracking-wider">
+                        Select Timezone
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => { setTimeZoneMode("capture"); setShowTzMenu(false); }}
+                        className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left transition-colors ${
+                          timeZoneMode === "capture" ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-semibold" : "text-foreground hover:bg-subtle/70"
+                        }`}
+                      >
+                        <div>
+                          <p className="leading-none">Captured time</p>
+                          <p className="text-[10px] text-muted mt-0.5 font-normal">Asia/Jakarta (GMT+7)</p>
+                        </div>
+                        {timeZoneMode === "capture" && (
+                          <svg className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => { setTimeZoneMode("local"); setShowTzMenu(false); }}
+                        className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left transition-colors ${
+                          timeZoneMode === "local" ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-semibold" : "text-foreground hover:bg-subtle/70"
+                        }`}
+                      >
+                        <div>
+                          <p className="leading-none">Your time (Local)</p>
+                          <p className="text-[10px] text-muted mt-0.5 font-normal">
+                            {typeof Intl !== "undefined" ? Intl.DateTimeFormat().resolvedOptions().timeZone : "Device Time"}
+                          </p>
+                        </div>
+                        {timeZoneMode === "local" && (
+                          <svg className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        )}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => { setTimeZoneMode("utc"); setShowTzMenu(false); }}
+                        className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left transition-colors ${
+                          timeZoneMode === "utc" ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-semibold" : "text-foreground hover:bg-subtle/70"
+                        }`}
+                      >
+                        <div>
+                          <p className="leading-none">Universal time (UTC)</p>
+                          <p className="text-[10px] text-muted mt-0.5 font-normal">UTC / GMT+0</p>
+                        </div>
+                        {timeZoneMode === "utc" && (
+                          <svg className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {[
                 {
                   icon: (
                     <svg className="w-3.5 h-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">

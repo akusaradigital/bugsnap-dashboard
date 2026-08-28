@@ -513,17 +513,21 @@ function SettingsContent() {
                     {!driveLoading && <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${driveStatus === "connected" ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/40" : driveStatus === "reconnect_required" ? "text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/40" : "text-muted bg-subtle border-border"}`}>{driveStatus === "connected" ? t("settings.connected") : driveStatus === "reconnect_required" ? t("settings.reconnectRequired") : t("settings.notConnected")}</span>}
                   </h2>
                   <p className="text-xs text-muted mt-0.5">{driveLoading ? "Checking..." : driveStatus === "connected" ? `Dashboard actions using ${driveEmail || "connected account"}` : driveStatus === "reconnect_required" ? "Reconnect Drive for server-side actions." : "Connect for server-side Drive actions."}</p>
-                  {!driveLoading && driveStatus === "connected" && driveQuota?.usedBytes != null && driveQuota?.totalBytes != null && driveQuota.totalBytes > 0 && (
-                    <div className="mt-2 space-y-1.5">
-                      <p className="text-[11px] text-muted">Using {formatDriveBytes(driveQuota.usedBytes)} of {formatDriveBytes(driveQuota.totalBytes)} used</p>
-                      <div className="h-2 rounded-full bg-border overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-indigo-500"
-                          style={{ width: `${Math.max(0, Math.min(100, (driveQuota.usedBytes / driveQuota.totalBytes) * 100))}%` }}
-                        />
+                  {!driveLoading && driveStatus === "connected" && driveQuota?.usedBytes != null && driveQuota?.totalBytes != null && driveQuota.totalBytes > 0 && (() => {
+                    const pct = Math.max(0, Math.min(100, (driveQuota.usedBytes / driveQuota.totalBytes) * 100));
+                    const barColor = pct >= 90 ? "bg-red-500" : pct >= 75 ? "bg-amber-500" : "bg-indigo-500";
+                    return (
+                      <div className="mt-2 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <p className="text-[11px] text-muted">{formatDriveBytes(driveQuota.usedBytes)} of {formatDriveBytes(driveQuota.totalBytes)} used</p>
+                          <p className="text-[11px] text-muted">{pct.toFixed(pct < 1 ? 1 : 0)}%</p>
+                        </div>
+                        <div className="h-1.5 rounded-full bg-border overflow-hidden">
+                          <div className={`h-full rounded-full transition-all ${barColor}`} style={{ width: `${pct}%` }} />
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    );
+                  })()}
                   <p className="text-[11px] text-muted">Extension connection is managed separately.</p>
                 </div>
                 {driveStatus === "connected" ? (
@@ -576,11 +580,10 @@ function SettingsContent() {
             </div>
 
             {saveError && <p className="text-xs text-red-600">{saveError}</p>}
-            <div className="flex items-center gap-3">
-              <button type="submit" disabled={saving} className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60 transition-colors">
-                {saving ? "Saving…" : "Save changes"}
+            <div>
+              <button type="submit" disabled={saving} className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60 transition-colors min-w-[120px]">
+                {saving ? "Saving…" : saved ? "Saved" : "Save changes"}
               </button>
-              {saved && <span className="text-xs text-emerald-600 font-medium">✓ Saved</span>}
             </div>
           </form>
         )}
@@ -777,9 +780,8 @@ function SettingsContent() {
               <p className="text-[11px] text-muted">We POST a JSON payload with capture URL, thumbnail, and metadata when a new bug is saved.</p>
             </div>
             {saveError && <p className="text-xs text-red-600">{saveError}</p>}
-            <div className="flex items-center gap-3">
-              <button type="submit" disabled={saving} className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60 transition-colors">{saving ? "Saving…" : "Save"}</button>
-              {saved && <span className="text-xs text-emerald-600 font-medium">✓ Saved</span>}
+            <div>
+              <button type="submit" disabled={saving} className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60 transition-colors min-w-[100px]">{saving ? "Saving…" : saved ? "Saved" : "Save"}</button>
             </div>
           </form>
         )}
@@ -908,11 +910,10 @@ function SettingsContent() {
             </div>
 
             {profileSaveError && <p className="text-xs text-red-600">{profileSaveError}</p>}
-            <div className="flex items-center gap-3">
-              <button type="submit" disabled={profileSaving} className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60 transition-colors">
-                {profileSaving ? "Saving…" : "Save profile"}
+            <div>
+              <button type="submit" disabled={profileSaving} className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60 transition-colors min-w-[120px]">
+                {profileSaving ? "Saving…" : profileSaved ? "Saved" : "Save profile"}
               </button>
-              {profileSaved && <span className="text-xs text-emerald-600 font-medium">✓ Saved</span>}
             </div>
 
             <div className="rounded-xl border border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-950/20 p-4 space-y-3">

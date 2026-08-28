@@ -524,17 +524,27 @@ function SingleViewContent() {
   return (
     <div className="h-screen bg-white dark:bg-background flex flex-col font-sans overflow-y-auto lg:overflow-hidden">
       <header className="h-14 border-b border-border px-3 sm:px-6 flex items-center justify-between shrink-0 bg-white dark:bg-background">
-        <div className="flex items-center gap-2">
+        <Link href={isTeamMember ? "/dashboard" : "/"} className="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
           {brand.logo ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={brand.logo} alt="" className="h-6 w-auto object-contain" />
+            <img src={brand.logo} alt={brand.name} className="h-7 w-auto object-contain" />
           ) : (
-            <span className="text-base font-bold tracking-tight text-foreground truncate max-w-[140px]">{brand.name}</span>
+            <>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/icon.svg" alt="BugSnap" className="w-7 h-7 shrink-0 object-contain" />
+              <div>
+                <span className="text-sm font-bold tracking-tight text-foreground leading-none block">
+                  {brand.name}
+                </span>
+                {!brand.hideWatermark && (
+                  <span className="text-[10px] text-muted mt-0.5 leading-none font-medium block">
+                    Dashboard
+                  </span>
+                )}
+              </div>
+            </>
           )}
-          {!brand.hideWatermark && (
-            <span className="hidden sm:inline-block text-[10px] font-semibold text-muted bg-subtle px-1.5 py-0.5 rounded">{t("layout.screenRecorder")}</span>
-          )}
-        </div>
+        </Link>
         <div className="flex items-center gap-1.5 sm:gap-3">
           {isTeamMember && (
             <Link

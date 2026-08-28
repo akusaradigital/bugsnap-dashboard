@@ -191,28 +191,74 @@ export default function MediaViewer({ type, driveUrl, title }: MediaViewerProps)
             <div className="px-6 text-center text-sm text-white/70" role="status">{t("mv.unavailable")}</div>
           )
         ) : imageUrl && !imageFailed ? (
-          <button
-            ref={lightboxTriggerRef}
-            type="button"
-            onClick={() => setLightboxOpen(true)}
-            className="flex h-full w-full cursor-zoom-in items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-white relative"
-            aria-label={t("mv.openViewer", { name: title })}
-          >
-            {!imageLoaded && (
-              <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-6 h-6 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
+          <div className="group relative flex h-full w-full items-center justify-center">
+            <button
+              ref={lightboxTriggerRef}
+              type="button"
+              onClick={() => setLightboxOpen(true)}
+              className="flex h-full w-full cursor-zoom-in items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-[-4px] focus-visible:outline-white relative"
+              aria-label={t("mv.openViewer", { name: title })}
+            >
+              {!imageLoaded && (
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-6 h-6 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
+                </div>
+              )}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={imageUrl}
+                alt={title}
+                referrerPolicy="no-referrer"
+                onLoad={() => setImageLoaded(true)}
+                onError={() => setImageFailed(true)}
+                className={`h-full w-full object-contain transition-all duration-200 group-hover:scale-[1.01] ${imageLoaded ? "opacity-100" : "opacity-0"}`}
+              />
+
+              {/* Hover Badge Indicator */}
+              <div className="pointer-events-none absolute bottom-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 rounded-full bg-black/60 backdrop-blur-sm px-3 py-1 text-xs font-medium text-white/90 opacity-0 transition-all duration-200 group-hover:opacity-100 group-hover:-translate-y-0.5 shadow-sm">
+                <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <circle cx="11" cy="11" r="8" />
+                  <line x1="21" y1="21" x2="16.65" y2="16.65" />
+                  <line x1="11" y1="8" x2="11" y2="14" />
+                  <line x1="8" y1="11" x2="14" y2="11" />
+                </svg>
+                <span>Click to expand</span>
               </div>
-            )}
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src={imageUrl}
-              alt={title}
-              referrerPolicy="no-referrer"
-              onLoad={() => setImageLoaded(true)}
-              onError={() => setImageFailed(true)}
-              className={`h-full w-full object-contain transition-opacity duration-150 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
-            />
-          </button>
+            </button>
+
+            {/* Quick Action Top-Right Controls */}
+            <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+              {directUrl && (
+                <a
+                  href={directUrl}
+                  download={`${title || "capture"}.png`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-black/70 text-white/90 backdrop-blur-sm hover:bg-black hover:text-white transition-all shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+                  aria-label={t("mv.download")}
+                  title={t("mv.download")}
+                >
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                    <polyline points="7 10 12 15 17 10" />
+                    <line x1="12" y1="15" x2="12" y2="3" />
+                  </svg>
+                </a>
+              )}
+              <button
+                type="button"
+                onClick={() => setLightboxOpen(true)}
+                className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-black/70 text-white/90 backdrop-blur-sm hover:bg-black hover:text-white transition-all shadow-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-white"
+                aria-label={t("mv.openFullscreen")}
+                title="Expand"
+              >
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" />
+                </svg>
+              </button>
+            </div>
+          </div>
         ) : previewUrl ? (
           <iframe
             src={previewUrl}
@@ -231,7 +277,7 @@ export default function MediaViewer({ type, driveUrl, title }: MediaViewerProps)
         onClose={handleDialogClose}
         onClick={(event) => { if (event.target === event.currentTarget) closeLightbox(); }}
         aria-label={`${title} image viewer`}
-        className="m-0 h-screen max-h-none w-screen max-w-none bg-black/95 p-0 text-white backdrop:bg-black/95"
+        className="m-0 h-screen max-h-none w-screen max-w-none bg-white/95 dark:bg-black/95 p-0 text-foreground dark:text-white backdrop:bg-white/95 dark:backdrop:bg-black/95"
       >
         <div
           className="relative flex h-full w-full items-center justify-center overflow-hidden p-4 sm:p-8"
@@ -243,7 +289,7 @@ export default function MediaViewer({ type, driveUrl, title }: MediaViewerProps)
               <button
                 type="button"
                 onClick={resetView}
-                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg bg-black/75 text-white hover:bg-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg bg-black/10 dark:bg-black/75 text-zinc-900 dark:text-white hover:bg-black/20 dark:hover:bg-black border border-black/10 dark:border-transparent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:focus-visible:outline-white transition-colors"
                 aria-label={t("mv.resetZoom")}
               >
                 <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path strokeLinecap="round" strokeLinejoin="round" d="M4 4v6h6M20 20v-6h-6M4 10a8 8 0 0114-4.9M20 14a8 8 0 01-14 4.9" /></svg>
@@ -252,10 +298,10 @@ export default function MediaViewer({ type, driveUrl, title }: MediaViewerProps)
             {directUrl && (
               <a
                 href={directUrl}
-                download
+                download={`${title || "capture"}.${type === "video" ? "webm" : "png"}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg bg-black/75 text-white hover:bg-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg bg-black/10 dark:bg-black/75 text-zinc-900 dark:text-white hover:bg-black/20 dark:hover:bg-black border border-black/10 dark:border-transparent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:focus-visible:outline-white transition-colors"
                 aria-label={t("mv.download")}
                 title={t("mv.download")}
               >
@@ -265,7 +311,7 @@ export default function MediaViewer({ type, driveUrl, title }: MediaViewerProps)
             <button
               type="button"
               onClick={toggleFullscreen}
-              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg bg-black/75 text-white hover:bg-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg bg-black/10 dark:bg-black/75 text-zinc-900 dark:text-white hover:bg-black/20 dark:hover:bg-black border border-black/10 dark:border-transparent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:focus-visible:outline-white transition-colors"
               aria-label={isFullscreen ? t("mv.exitFullscreen") : t("mv.openFullscreen")}
             >
               {isFullscreen ? (
@@ -278,7 +324,7 @@ export default function MediaViewer({ type, driveUrl, title }: MediaViewerProps)
               ref={closeButtonRef}
               type="button"
               onClick={closeLightbox}
-              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg bg-black/75 text-white hover:bg-black focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg bg-black/10 dark:bg-black/75 text-zinc-900 dark:text-white hover:bg-black/20 dark:hover:bg-black border border-black/10 dark:border-transparent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 dark:focus-visible:outline-white transition-colors"
               aria-label={t("mv.closeViewer")}
             >
               <svg className="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
@@ -287,7 +333,7 @@ export default function MediaViewer({ type, driveUrl, title }: MediaViewerProps)
 
           {/* Zoom indicator */}
           {zoom > MIN_ZOOM && (
-            <div className="absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-lg bg-black/75 px-3 py-1 text-xs font-semibold text-white">
+            <div className="absolute bottom-3 left-1/2 z-10 -translate-x-1/2 rounded-lg bg-black/80 dark:bg-black/75 px-3 py-1 text-xs font-semibold text-white">
               {t("mv.dragToPan", { zoom: Math.round(zoom * 100) })}
             </div>
           )}

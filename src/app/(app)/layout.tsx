@@ -37,6 +37,7 @@ export default function DashboardLayout({
   const [wsOpen, setWsOpen] = useState(false);
   const [workspacePickerOpen, setWorkspacePickerOpen] = useState(false);
   const workspaceMenuRef = useRef<HTMLDivElement>(null);
+  const notifMenuRef = useRef<HTMLDivElement>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [promoBanner, setPromoBanner] = useState<{ enabled: boolean; message: string } | null>(null);
@@ -53,6 +54,8 @@ export default function DashboardLayout({
   const [creating, setCreating] = useState(false);
   const [members, setMembers] = useState<Record<string, string[]>>({});
   const [folders, setFolders] = useState<string[]>([]);
+  const [draggedFolder, setDraggedFolder] = useState<string | null>(null);
+  const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
   const [, setProjects] = useState<{ id: string; name: string; description: string; is_default: boolean }[]>([]);
   const [folderMenuOpen, setFolderMenuOpen] = useState<string | null>(null);
   const [createFolderModalOpen, setCreateFolderModalOpen] = useState(false);
@@ -105,17 +108,30 @@ export default function DashboardLayout({
     setWsOpen(false);
   }
 
+  // ponytail: sidebar <aside> has a `transform` class, which makes it the
+  // containing block for `fixed` descendants — a `fixed inset-0` click-catcher
+  // nested inside it only covers the sidebar's box, not the viewport. A
+  // document-level capture-phase pointerdown is immune to that, so every
+  // sidebar dropdown (workspace switcher, notifications, folder menu) closes
+  // on any outside click, not just clicks inside the sidebar.
   useEffect(() => {
-    if (!wsOpen && !workspacePickerOpen) return;
+    if (!wsOpen && !workspacePickerOpen && !notifOpen && !folderMenuOpen) return;
     const handleOutsidePointer = (event: PointerEvent) => {
       const target = event.target;
-      if (!(target instanceof Node) || !workspaceMenuRef.current?.contains(target)) {
+      if (!(target instanceof Node)) return;
+      if ((wsOpen || workspacePickerOpen) && !workspaceMenuRef.current?.contains(target)) {
         closeWorkspaceMenus();
+      }
+      if (notifOpen && !notifMenuRef.current?.contains(target)) {
+        setNotifOpen(false);
+      }
+      if (folderMenuOpen && !(target instanceof Element && target.closest("[data-folder-actions]"))) {
+        setFolderMenuOpen(null);
       }
     };
     document.addEventListener("pointerdown", handleOutsidePointer, true);
     return () => document.removeEventListener("pointerdown", handleOutsidePointer, true);
-  }, [wsOpen, workspacePickerOpen]);
+  }, [wsOpen, workspacePickerOpen, notifOpen, folderMenuOpen]);
 
   useEffect(() => {
     const updateFolder = () => {
@@ -421,7 +437,7 @@ export default function DashboardLayout({
         // 2. Fetch custom created folders in workspace (legacy surface)
         const { data: customFoldersData, error: customFoldersErr } = await supabase
           .from("workspace_folders")
-          .select("name, is_default")
+          .select("name, is_default, sort_order")
           .eq("workspace_id", activeWsId);
 
         if (customFoldersErr) throw customFoldersErr;
@@ -439,11 +455,21 @@ export default function DashboardLayout({
 
         const uniqueFolders = Array.from(new Set(allFolderNames));
         const defaultName = (customFoldersData || []).find((folder) => folder.is_default)?.name;
+        const orderByName = new Map(
+          (customFoldersData || []).map((f) => [f.name, f.sort_order ?? Number.MAX_SAFE_INTEGER])
+        );
 
         if (active) {
           const typedProjects = (projectsData || []) as { id: string; name: string; description?: string | null; is_default?: boolean }[];
           setProjects(typedProjects.map((p) => ({ id: p.id, name: p.name, description: p.description || "", is_default: !!p.is_default })));
-          setFolders(uniqueFolders.sort((a, b) => a === defaultName ? -1 : b === defaultName ? 1 : a.localeCompare(b)));
+          setFolders(
+            uniqueFolders.sort((a, b) => {
+              if (a === defaultName || b === defaultName) return a === defaultName ? -1 : 1;
+              const orderA = orderByName.get(a) ?? Number.MAX_SAFE_INTEGER;
+              const orderB = orderByName.get(b) ?? Number.MAX_SAFE_INTEGER;
+              return orderA !== orderB ? orderA - orderB : a.localeCompare(b);
+            })
+          );
         }
       } catch (err) {
         console.warn("Failed to load workspace folders:", err);
@@ -583,6 +609,29 @@ export default function DashboardLayout({
   };
 
 
+
+  const handleFolderDrop = async (targetFolder: string) => {
+    const dragged = draggedFolder;
+    setDraggedFolder(null);
+    setDragOverFolder(null);
+    if (!activeWsId || !dragged || dragged === targetFolder) return;
+
+    const reordered = folders.filter((f) => f !== dragged);
+    const targetIdx = reordered.indexOf(targetFolder);
+    reordered.splice(targetIdx, 0, dragged);
+    setFolders(reordered);
+
+    try {
+      const { error } = await supabase.rpc("reorder_workspace_folders", {
+        p_workspace_id: activeWsId,
+        p_folder_names: reordered,
+      });
+      if (error) throw error;
+    } catch (err) {
+      console.warn("Failed to persist folder order:", err);
+      showToast(t("layout.errReorderFolder"), "error");
+    }
+  };
 
   const handleRenameFolder = (currentName: string) => {
     setFolderToRename(currentName);
@@ -820,7 +869,7 @@ export default function DashboardLayout({
           </div>
 
           {/* Notification Bell */}
-          <div className="relative ml-auto hidden lg:block">
+          <div ref={notifMenuRef} className="relative ml-auto hidden lg:block">
             <button
               onClick={() => setNotifOpen((o) => !o)}
               className="relative p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-subtle transition-colors"
@@ -837,9 +886,6 @@ export default function DashboardLayout({
             </button>
 
             {notifOpen && (
-              <>
-                {/* Click-catcher that closes the dropdown without blocking page scroll */}
-                <div className="fixed inset-0 z-40" onClick={() => setNotifOpen(false)} onWheel={() => setNotifOpen(false)} />
                 <div className="fixed left-4 top-16 z-50 w-72 rounded-xl border border-border bg-subtle shadow-xl py-2 px-1 max-h-80 overflow-y-auto">
                   <div className="flex items-center justify-between px-3 py-1 mb-1 border-b border-border/50 pb-1.5">
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">{t("layout.notifications")}</p>
@@ -892,7 +938,6 @@ export default function DashboardLayout({
                     </div>
                   )}
                 </div>
-              </>
             )}
           </div>
         </div>
@@ -1027,10 +1072,10 @@ export default function DashboardLayout({
                 key={item.href}
                 href={href}
                 onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${
+                className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg border-l-2 transition-colors ${
                   active
-                    ? "bg-subtle text-foreground"
-                    : "text-muted hover:text-foreground hover:bg-subtle"
+                    ? "bg-indigo-50 dark:bg-indigo-950/30 border-indigo-500 text-indigo-600 dark:text-indigo-400"
+                    : "border-transparent text-muted hover:text-foreground hover:bg-subtle"
                 }`}
               >
                 <span className="text-base" aria-hidden="true">{item.icon}</span>
@@ -1053,8 +1098,8 @@ export default function DashboardLayout({
           )}
 
           {/* Google Drive Folders List (Sync Bridge) */}
-          <div className="pt-4 space-y-1">
-            <div className="flex items-center justify-between px-3 pb-1">
+          <div className="pt-4 mt-2 border-t border-border/60 space-y-1.5">
+            <div className="flex items-center justify-between px-3 pb-1 pt-2">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted flex items-center gap-1.5">
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
@@ -1069,17 +1114,17 @@ export default function DashboardLayout({
               </button>
             </div>
             
-            <div className="max-h-40 overflow-visible space-y-0.5">
+            <div className="max-h-40 overflow-y-auto space-y-0.5">
               <Link
                 href={activeWsId ? `/captures?ws=${activeWsId}` : "/captures"}
                 onClick={() => {
                   setCurrentFolder(null);
                   setSidebarOpen(false);
                 }}
-                className={`flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-xs transition-colors ${
+                className={`flex items-center gap-2.5 rounded-lg border-l-2 px-3 py-2 text-xs transition-colors ${
                   pathname === "/captures" && !currentFolder
-                    ? "bg-indigo-50 dark:bg-indigo-950/30 font-semibold text-indigo-600 dark:text-indigo-400"
-                    : "text-muted hover:bg-subtle hover:text-foreground"
+                    ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30 font-semibold text-indigo-600 dark:text-indigo-400"
+                    : "border-transparent text-muted hover:bg-subtle hover:text-foreground"
                 }`}
               >
                 <span className="text-xs shrink-0">📂</span>
@@ -1091,8 +1136,26 @@ export default function DashboardLayout({
                 return (
                   <div
                     key={folder}
-                    className={`relative w-full flex items-center justify-between gap-1 px-1 rounded-lg group/folder transition-colors ${
-                      isActiveFolder ? "bg-indigo-50 dark:bg-indigo-950/30 font-semibold" : "hover:bg-subtle"
+                    draggable={activeWsRole === "owner"}
+                    onDragStart={() => setDraggedFolder(folder)}
+                    onDragOver={(e) => {
+                      if (!draggedFolder) return;
+                      e.preventDefault();
+                      setDragOverFolder(folder);
+                    }}
+                    onDragLeave={() => setDragOverFolder((f) => (f === folder ? null : f))}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      void handleFolderDrop(folder);
+                    }}
+                    onDragEnd={() => {
+                      setDraggedFolder(null);
+                      setDragOverFolder(null);
+                    }}
+                    className={`relative w-full flex items-center justify-between gap-1 px-1 rounded-lg border-l-2 group/folder transition-colors ${
+                      isActiveFolder ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30 font-semibold" : "border-transparent hover:bg-subtle"
+                    } ${dragOverFolder === folder && draggedFolder && draggedFolder !== folder ? "ring-2 ring-indigo-400" : ""} ${
+                      draggedFolder === folder ? "opacity-40" : ""
                     }`}
                   >
                     <Link
@@ -1101,7 +1164,7 @@ export default function DashboardLayout({
                         setCurrentFolder(folder);
                         setSidebarOpen(false);
                       }}
-                      className={`flex-1 flex items-center gap-2.5 px-2 py-1.5 text-xs truncate ${
+                      className={`flex-1 flex items-center gap-2.5 px-2 py-2 text-xs truncate ${
                         isActiveFolder ? "text-indigo-600 font-semibold" : "text-muted hover:text-foreground"
                       }`}
                     >
@@ -1111,7 +1174,7 @@ export default function DashboardLayout({
 
                     {/* Folder actions stay behind one menu to keep the sidebar quiet. */}
                     {activeWsRole === "owner" && (
-                      <div className="shrink-0 pr-1">
+                      <div className="shrink-0 pr-1" data-folder-actions>
                         <button
                           type="button"
                           onClick={(e) => {
@@ -1125,9 +1188,7 @@ export default function DashboardLayout({
                           <span aria-hidden="true">⋯</span>
                         </button>
                         {folderMenuOpen === folder && (
-                          <>
-                            <div className="fixed inset-0 z-40" onClick={() => setFolderMenuOpen(null)} />
-                            <div className="absolute right-1 top-full z-50 mt-1 w-28 overflow-hidden rounded-lg border border-border bg-subtle py-1 text-xs shadow-lg">
+                          <div className="absolute right-1 top-full z-50 mt-1 w-28 overflow-hidden rounded-lg border border-border bg-subtle py-1 text-xs shadow-lg">
                               <button
                                 type="button"
                                 onClick={() => {
@@ -1149,7 +1210,6 @@ export default function DashboardLayout({
                                 Delete
                               </button>
                             </div>
-                          </>
                         )}
                       </div>
                     )}

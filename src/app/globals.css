@@ -20,10 +20,10 @@
    variants; switching the class alone recolors the whole app. */
 .dark {
   --background: #0b0f16;
-  --foreground: #f3f4f6;
-  --border: #263041;
+  --foreground: #ffffff;
+  --border: #2a374a;
   --subtle: #151b26;
-  --muted: #9aa4b2;
+  --muted: #94a3b8;
   --accent: #818cf8;
   --accent-hover: #a5b4fc;
   --glow-primary: rgba(129, 140, 248, 0.22);
