@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -36,6 +36,7 @@ export default function DashboardLayout({
   const [wsParam, setWsParam] = useState<string | null>(null);
   const [wsOpen, setWsOpen] = useState(false);
   const [workspacePickerOpen, setWorkspacePickerOpen] = useState(false);
+  const workspaceMenuRef = useRef<HTMLDivElement>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [promoBanner, setPromoBanner] = useState<{ enabled: boolean; message: string } | null>(null);
@@ -103,6 +104,18 @@ export default function DashboardLayout({
     setWorkspacePickerOpen(false);
     setWsOpen(false);
   }
+
+  useEffect(() => {
+    if (!wsOpen && !workspacePickerOpen) return;
+    const handleOutsidePointer = (event: PointerEvent) => {
+      const target = event.target;
+      if (!(target instanceof Node) || !workspaceMenuRef.current?.contains(target)) {
+        closeWorkspaceMenus();
+      }
+    };
+    document.addEventListener("pointerdown", handleOutsidePointer, true);
+    return () => document.removeEventListener("pointerdown", handleOutsidePointer, true);
+  }, [wsOpen, workspacePickerOpen]);
 
   useEffect(() => {
     const updateFolder = () => {
@@ -234,14 +247,16 @@ export default function DashboardLayout({
     };
   }, [router]);
 
-  // Read ?ws= from the URL without useSearchParams (avoids the
-  // suspense-boundary requirement for prerendered layouts).
+  // Keep workspace state synchronized with browser back/forward navigation.
   useEffect(() => {
-    if (typeof window !== "undefined") {
+    const syncWorkspaceParam = () => {
       const url = new URL(window.location.href);
       setWsParam(url.searchParams.get("ws"));
-    }
-  }, []);
+    };
+    syncWorkspaceParam();
+    window.addEventListener("popstate", syncWorkspaceParam);
+    return () => window.removeEventListener("popstate", syncWorkspaceParam);
+  }, [pathname]);
 
   // Load the user's workspaces (owned or invited) via the RLS-safe RPC
   // once the session resolves. Falls back to the default single-workspace
@@ -883,7 +898,7 @@ export default function DashboardLayout({
         </div>
 
         {/* Workspace Switcher */}
-        <div className="px-3 pt-4 relative">
+        <div ref={workspaceMenuRef} className="px-3 pt-4 relative">
           <button
             onClick={() => setWsOpen((o) => !o)}
             className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium rounded-xl border border-border bg-subtle hover:bg-subtle transition-colors text-left"
@@ -955,9 +970,11 @@ export default function DashboardLayout({
                           key={ws.id}
                           onClick={() => {
                             setActiveWsId(ws.id);
+                            setWsParam(ws.id);
+                            setCurrentFolder(null);
                             setWorkspacePickerOpen(false);
                             setWsOpen(false);
-                            router.replace(`?ws=${ws.id}`, { scroll: false });
+                            router.replace(`${pathname}?ws=${ws.id}`, { scroll: false });
                           }}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm text-left transition-colors ${activeWsId === ws.id ? "bg-subtle text-foreground font-semibold" : "text-foreground hover:bg-subtle"}`}
                         >
@@ -1055,6 +1072,10 @@ export default function DashboardLayout({
             <div className="max-h-40 overflow-visible space-y-0.5">
               <Link
                 href={activeWsId ? `/captures?ws=${activeWsId}` : "/captures"}
+                onClick={() => {
+                  setCurrentFolder(null);
+                  setSidebarOpen(false);
+                }}
                 className={`flex items-center gap-2.5 rounded-lg px-3 py-1.5 text-xs transition-colors ${
                   pathname === "/captures" && !currentFolder
                     ? "bg-indigo-50 dark:bg-indigo-950/30 font-semibold text-indigo-600 dark:text-indigo-400"
@@ -1076,6 +1097,10 @@ export default function DashboardLayout({
                   >
                     <Link
                       href={`/captures?ws=${activeWsId}&folder=${encodeURIComponent(folder)}`}
+                      onClick={() => {
+                        setCurrentFolder(folder);
+                        setSidebarOpen(false);
+                      }}
                       className={`flex-1 flex items-center gap-2.5 px-2 py-1.5 text-xs truncate ${
                         isActiveFolder ? "text-indigo-600 font-semibold" : "text-muted hover:text-foreground"
                       }`}
