@@ -523,6 +523,42 @@ function SingleViewContent() {
     }
   }
 
+  async function handleDownloadDirectMedia() {
+    if (!capture?.drive_url) return;
+    const fileId = driveFileId(capture.drive_url);
+    if (!fileId) return;
+
+    const directUrl = `https://drive.google.com/uc?export=download&id=${fileId}`;
+    const ext = capture.type === "video" ? ".webm" : ".png";
+    let filename = (capture.title || "capture").trim();
+    if (!filename.toLowerCase().endsWith(ext)) {
+      filename = `${filename}${ext}`;
+    }
+
+    try {
+      const res = await fetch(directUrl);
+      if (!res.ok) throw new Error("Fetch failed");
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 2000);
+    } catch {
+      const a = document.createElement("a");
+      a.href = directUrl;
+      a.download = filename;
+      a.target = "_blank";
+      a.rel = "noopener noreferrer";
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  }
+
   const embedUrl = typeof window !== "undefined" ? `${window.location.origin}/v/${id}?embed=true` : "";
   const embedCode = `<iframe src="${embedUrl}" width="640" height="360" frameborder="0" allowfullscreen></iframe>`;
 
@@ -592,18 +628,16 @@ function SingleViewContent() {
                 <div className="fixed inset-0 z-40" onClick={() => setMoreOpen(false)} />
                 <div className="absolute right-0 top-full mt-1.5 w-40 z-50 bg-white border border-border rounded-xl shadow-xl py-1 px-1 flex flex-col gap-0.5">
                   {status === "ready" && driveFileId(capture?.drive_url || null) && (
-                    <a
-                      href={`https://drive.google.com/uc?export=download&id=${driveFileId(capture?.drive_url || null)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      onClick={() => setMoreOpen(false)}
-                      className="w-full text-left px-3 py-1.5 text-xs text-foreground hover:bg-subtle rounded-lg transition-colors flex items-center gap-1.5"
+                    <button
+                      type="button"
+                      onClick={() => { handleDownloadDirectMedia(); setMoreOpen(false); }}
+                      className="w-full text-left px-3 py-1.5 text-xs text-foreground hover:bg-subtle rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
                     >
                       <svg className="w-3.5 h-3.5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                       </svg>
                       Download Media
-                    </a>
+                    </button>
                   )}
                   {status === "ready" && (
                     <button
