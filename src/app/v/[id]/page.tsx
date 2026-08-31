@@ -58,6 +58,14 @@ function driveFileId(url: string | null): string | null {
   }
 }
 
+function hostnameOf(url: string | null | undefined): string {
+  try {
+    return new URL(url || "").hostname;
+  } catch {
+    return url || "-";
+  }
+}
+
 function getExpiryCountdown(expiresAt: string, t: (k: string, vars?: Record<string, string | number>) => string): string {
   const diff = new Date(expiresAt).getTime() - Date.now();
   if (diff <= 0) return t("v.expired");
@@ -89,24 +97,18 @@ function SingleViewContent() {
   const recordedViewRef = useRef<string | null>(null);
 
   // Modals & Popovers
-  const [moreOpen, setMoreOpen] = useState(false);
   const [moveSubmenuOpen, setMoveSubmenuOpen] = useState(false);
+  const moveMenuRef = useRef<HTMLDivElement>(null);
   const [capFolders, setCapFolders] = useState<string[]>([]);
   const [movingCapture, setMovingCapture] = useState(false);
   const [newFolderMode, setNewFolderMode] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [copied, setCopied] = useState(false);
-  const [shareOpen, setShareOpen] = useState(false);
   const [shareType, setShareType] = useState<"devtools" | "content">("devtools");
   const [accessMode, setAccessMode] = useState<"public" | "members">("public");
   const [accessSaving, setAccessSaving] = useState(false);
   const [accessOpen, setAccessOpen] = useState(false);
-  const [aiModal, setAiModal] = useState(false);
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiSummary, setAiSummary] = useState("");
-  const [aiCopied, setAiCopied] = useState(false);
-  const [embedModal, setEmbedModal] = useState(false);
-  const [embedCopied, setEmbedCopied] = useState(false);
+  const accessMenuRef = useRef<HTMLDivElement>(null);
   const [deleteCaptureModalOpen, setDeleteCaptureModalOpen] = useState(false);
   const [deleteMode, setDeleteMode] = useState<"drive_trash" | "app_only">("drive_trash");
   const [deletingCapture, setDeletingCapture] = useState(false);
@@ -130,6 +132,23 @@ function SingleViewContent() {
   const [viewerEmail, setViewerEmail] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [brand, setBrand] = useState({ name: "BugSnap", logo: "", hideWatermark: false });
+
+  // Close menus on outside click
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (moveSubmenuOpen && moveMenuRef.current && !moveMenuRef.current.contains(e.target as Node)) {
+        setMoveSubmenuOpen(false);
+        setNewFolderMode(false);
+      }
+      if (accessOpen && accessMenuRef.current && !accessMenuRef.current.contains(e.target as Node)) {
+        setAccessOpen(false);
+      }
+    }
+    if (moveSubmenuOpen || accessOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+      return () => document.removeEventListener("mousedown", handleClickOutside);
+    }
+  }, [moveSubmenuOpen, accessOpen]);
 
   // 1. Initial Access Check (Non-Login default)
   useEffect(() => {
@@ -379,33 +398,6 @@ function SingleViewContent() {
       });
   }
 
-  async function handleGenerateAiReport() {
-    setAiModal(true);
-    if (aiSummary) return;
-    setAiLoading(true);
-    try {
-      const { data: authData, error: authError } = await supabase.auth.getSession();
-      const token = authData.session?.access_token;
-      if (authError || !token) throw new Error(t("v.signInForAi"));
-      const res = await fetch("/api/ai-bug-summary", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          title: capture?.title,
-          devLogs: capture?.dev_logs,
-          windowSize: capture?.window_size,
-        }),
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(res.status === 401 ? t("v.signInForAi") : json.error || t("v.aiFailed"));
-      if (json.summary) setAiSummary(json.summary);
-    } catch (error) {
-      setAiSummary(error instanceof Error ? error.message : t("v.aiFailed"));
-    } finally {
-      setAiLoading(false);
-    }
-  }
-
   async function handleCopyLink() {
     if (!capture) return;
     try {
@@ -516,7 +508,6 @@ function SingleViewContent() {
         p_target_folder_name: folderName,
       });
       if (error) throw error;
-      setMoreOpen(false);
       setMoveSubmenuOpen(false);
       setNewFolderMode(false);
       showToast(folderName ? `Moved to "${folderName}"` : "Removed from folder", "success");
@@ -610,306 +601,35 @@ function SingleViewContent() {
     window.location.href = `/api/google-drive/download?id=${encodeURIComponent(fileId)}&type=${capture.type === "video" ? "video" : "screenshot"}&filename=${encodeURIComponent(capture.title || "capture")}`;
   }
 
-  const embedUrl = typeof window !== "undefined" ? `${window.location.origin}/v/${id}?embed=true` : "";
-  const embedCode = `<iframe src="${embedUrl}" width="640" height="360" frameborder="0" allowfullscreen></iframe>`;
-
   return (
     <div className="h-screen bg-white dark:bg-background flex flex-col font-sans overflow-y-auto lg:overflow-hidden">
-      <header className="h-14 border-b border-border px-3 sm:px-6 flex items-center justify-between shrink-0 bg-white dark:bg-background">
+      <header className="h-16 border-b border-border px-6 flex items-center justify-between shrink-0 bg-white dark:bg-background">
         <Link href={isTeamMember ? "/dashboard" : "/"} className="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
           {brand.logo ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={brand.logo} alt={brand.name} className="h-7 w-auto object-contain" />
+            <img src={brand.logo} alt={brand.name} className="h-8 w-auto object-contain" />
           ) : (
             <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/icon.svg" alt="BugSnap" className="w-7 h-7 shrink-0 object-contain" />
+              <img src="/icon.svg" alt="BugSnap" className="w-8 h-8 shrink-0 object-contain" />
               <div>
-                <span className="text-sm font-bold tracking-tight text-foreground leading-none block">
-                  {brand.name}
-                </span>
-                {!brand.hideWatermark && (
-                  <span className="text-[10px] text-muted mt-0.5 leading-none font-medium block">
-                    Dashboard
-                  </span>
-                )}
+                <span className="text-sm font-bold tracking-tight text-foreground leading-none block">{brand.name}</span>
+                {!brand.hideWatermark && <span className="text-[10px] text-muted leading-none font-medium block">Dashboard</span>}
               </div>
             </>
           )}
         </Link>
-        <div className="flex items-center gap-1.5 sm:gap-3">
-          {isTeamMember && (
-            <Link
-              href="/captures"
-              className="px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-foreground hover:bg-subtle flex items-center gap-1.5 transition-colors"
-            >
-              <svg className="w-3.5 h-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 12H5M12 19l-7-7 7-7" />
-              </svg>
-              <span className="hidden md:inline">{t("v.backToDashboard")}</span>
-            </Link>
-          )}
-
-          {status === "ready" && (
-            <button
-              onClick={handleGenerateAiReport}
-              className="px-3 py-1.5 rounded-lg bg-indigo-50 border border-indigo-200 text-indigo-700 text-xs font-semibold hover:bg-indigo-100 transition-colors flex items-center gap-1.5 shadow-sm"
-            >
-              <span>✨ <span className="hidden sm:inline">{t("v.aiBugReport")}</span><span className="sm:hidden">AI</span></span>
-            </button>
-          )}
-
-          {/* More Actions Dropdown */}
-          <div className="relative">
-            <button
-              onClick={() => setMoreOpen(!moreOpen)}
-              className={`px-3 py-1.5 rounded-lg border text-xs font-medium transition-colors flex items-center gap-1.5 ${
-                moreOpen
-                  ? "bg-subtle border-indigo-200 text-foreground"
-                  : "border-border text-muted hover:text-foreground hover:bg-subtle"
-              }`}
-            >
-              <span>{t("v.more")}</span>
-              <svg className={`w-3.5 h-3.5 text-muted transition-transform ${moreOpen ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            {moreOpen && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setMoreOpen(false)} />
-                <div className="absolute right-0 top-full mt-1.5 w-40 z-50 bg-white border border-border rounded-xl shadow-xl py-1 px-1 flex flex-col gap-0.5">
-                  {status === "ready" && driveFileId(capture?.drive_url || null) && (
-                    <button
-                      type="button"
-                      onClick={() => { handleDownloadDirectMedia(); setMoreOpen(false); }}
-                      className="w-full text-left px-3 py-1.5 text-xs text-foreground hover:bg-subtle rounded-lg transition-colors flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <svg className="w-3.5 h-3.5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                      </svg>
-                      Download Media
-                    </button>
-                  )}
-                  {status === "ready" && (
-                    <button
-                      onClick={() => { setEmbedModal(true); setMoreOpen(false); }}
-                      className="w-full text-left px-3 py-1.5 text-xs text-foreground hover:bg-subtle rounded-lg transition-colors"
-                    >
-                      {t("v.embed")}
-                    </button>
-                  )}
-                  {isTeamMember && (
-                    <button
-                      onClick={() => { openEditModal(); setMoreOpen(false); }}
-                      className="w-full text-left px-3 py-1.5 text-xs text-indigo-600 hover:bg-indigo-50 font-semibold rounded-lg transition-colors"
-                    >
-                      {t("v.editCapture")}
-                    </button>
-                  )}
-                  {isWorkspaceOwner && (
-                    <div
-                      className="relative"
-                      onMouseEnter={() => { setMoveSubmenuOpen(true); if (capFolders.length === 0) loadCapFolders(); }}
-                      onMouseLeave={() => { setMoveSubmenuOpen(false); setNewFolderMode(false); }}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => { setMoveSubmenuOpen((o) => !o); if (capFolders.length === 0) loadCapFolders(); }}
-                        className="w-full flex items-center justify-between gap-1.5 px-3 py-1.5 text-xs text-foreground hover:bg-subtle rounded-lg transition-colors"
-                      >
-                        <span className="flex items-center gap-1.5">
-                          <svg className="w-3.5 h-3.5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v7a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
-                          </svg>
-                          Move to folder
-                        </span>
-                        <svg className="w-3 h-3 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                        </svg>
-                      </button>
-                      {moveSubmenuOpen && (
-                        <div className="absolute right-full top-0 mr-1 w-44 z-50 bg-white border border-border rounded-xl shadow-xl py-1 px-1 flex flex-col gap-0.5">
-                          <button
-                            type="button"
-                            disabled={movingCapture}
-                            onClick={() => handleMoveCapture(null)}
-                            className="w-full text-left px-3 py-1.5 text-xs text-foreground hover:bg-subtle rounded-lg transition-colors disabled:opacity-50"
-                          >
-                            No folder (General)
-                          </button>
-                          {capFolders.map((folder) => (
-                            <button
-                              key={folder}
-                              type="button"
-                              disabled={movingCapture}
-                              onClick={() => handleMoveCapture(folder)}
-                              className="w-full flex items-center gap-1.5 px-3 py-1.5 text-xs text-foreground hover:bg-subtle rounded-lg transition-colors disabled:opacity-50"
-                            >
-                              <svg className="w-3.5 h-3.5 text-muted shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v7a2 2 0 01-2 2H5a2 2 0 01-2-2V7z" />
-                              </svg>
-                              <span className="truncate">{folder}</span>
-                            </button>
-                          ))}
-                          <div className="my-0.5 border-t border-border" />
-                          {newFolderMode ? (
-                            <form
-                              onSubmit={(e) => { e.preventDefault(); handleCreateFolderAndMove(); }}
-                              className="px-2 py-1"
-                            >
-                              <input
-                                autoFocus
-                                value={newFolderName}
-                                onChange={(e) => setNewFolderName(e.target.value)}
-                                placeholder="Folder name"
-                                className="w-full rounded-md border border-border px-2 py-1 text-xs focus:outline-none focus:ring-1 focus:ring-indigo-400"
-                              />
-                            </form>
-                          ) : (
-                            <button
-                              type="button"
-                              onClick={() => setNewFolderMode(true)}
-                              className="w-full text-left px-3 py-1.5 text-xs text-indigo-600 hover:bg-indigo-50 rounded-lg transition-colors"
-                            >
-                              + New folder
-                            </button>
-                          )}
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  {isWorkspaceOwner && <div className="my-0.5 border-t border-border" />}
-                  {isWorkspaceOwner && (
-                    <button
-                      onClick={() => { handleDeleteCapture(); setMoreOpen(false); }}
-                      className="w-full text-left px-3 py-1.5 text-xs text-red-600 hover:bg-red-50 font-semibold rounded-lg transition-colors"
-                    >
-                      {t("v.deleteCapture")}
-                    </button>
-                  )}
-                  {isAuthenticated === false && (
-                    <a
-                      href="/"
-                      onClick={() => setMoreOpen(false)}
-                      className="w-full text-left px-3 py-1.5 text-xs text-foreground hover:bg-subtle rounded-lg transition-colors"
-                    >
-                      {t("v.login")}
-                    </a>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
-
-          {/* Split Copy Link Button */}
-          <div className="relative flex items-center">
-            <button
-              onClick={handleCopyLink}
-              className="px-3 py-1.5 bg-emerald-400 hover:bg-emerald-500 text-white text-xs font-semibold rounded-l-lg transition-colors border-r border-emerald-500/20"
-            >
-              {copied ? t("v.copied") : t("v.copy")}
-            </button>
-            <button
-              onClick={() => { setShareOpen(!shareOpen); setAccessOpen(false); }}
-              className="px-2 py-1.5 bg-emerald-400 hover:bg-emerald-500 text-white text-xs rounded-r-lg transition-colors flex items-center justify-center self-stretch"
-              aria-label={t("v.shareCapture")}
-            >
-              <svg className={`w-3 h-3 transition-transform ${shareOpen ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-
-            {/* Share Popover */}
-            {shareOpen && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setShareOpen(false)} />
-                <div className="absolute right-0 top-full mt-2 w-[min(26rem,calc(100vw-1rem))] z-50 overflow-hidden rounded-2xl border border-border bg-white text-foreground shadow-2xl dark:bg-background">
-                  <div className="border-b border-border px-5 py-3">
-                    <h3 className="text-lg font-semibold tracking-tight text-foreground">Share BugSnap</h3>
-                  </div>
-
-                  {/* Share Cards */}
-                  <div className="grid grid-cols-2 gap-7 px-8 py-6 text-center">
-                    <button
-                      onClick={() => setShareType("devtools")}
-                      className={`group flex flex-col items-center gap-3 rounded-xl text-sm font-semibold transition-colors ${shareType === "devtools" ? "text-foreground" : "text-muted hover:text-foreground"}`}
-                    >
-                      <div className={`flex h-[5.6rem] w-full items-center justify-center rounded-md border transition-colors ${shareType === "devtools" ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30" : "border-transparent bg-indigo-100/70 dark:bg-indigo-950/20"}`}>
-                        <div className="flex h-16 w-[6.5rem] items-center justify-center rounded-md border border-indigo-200 bg-white shadow-sm dark:border-indigo-800 dark:bg-subtle">
-                          <svg className="h-9 w-9 text-indigo-200 dark:text-indigo-700" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
-                          <div className="ml-2 hidden h-12 w-8 rounded border border-indigo-100 bg-indigo-50 sm:block dark:border-indigo-800 dark:bg-background" />
-                        </div>
-                      </div>
-                      <span>{t("v.withDevTools")}</span>
-                    </button>
-
-                    <button
-                      onClick={() => setShareType("content")}
-                      className={`group flex flex-col items-center gap-3 rounded-xl text-sm font-semibold transition-colors ${shareType === "content" ? "text-foreground" : "text-muted hover:text-foreground"}`}
-                    >
-                      <div className={`flex h-[5.6rem] w-full items-center justify-center rounded-md border transition-colors ${shareType === "content" ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30" : "border-transparent bg-indigo-100/70 dark:bg-indigo-950/20"}`}>
-                        <div className="flex h-16 w-[6.5rem] items-center justify-center rounded-md border border-indigo-200 bg-white shadow-sm dark:border-indigo-800 dark:bg-subtle">
-                          <svg className="h-9 w-9 text-indigo-200 dark:text-indigo-700" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M8 5v14l11-7z" /></svg>
-                        </div>
-                      </div>
-                      <span>{t("v.contentOnly")}</span>
-                    </button>
-                  </div>
-
-                  {/* General Access Selection */}
-                  <div className="relative border-t border-border px-5 py-4">
-                    <label className="mb-2 block text-sm font-medium text-muted">General access</label>
-                    <button
-                      type="button"
-                      onClick={() => setAccessOpen((open) => !open)}
-                      className="flex w-full items-center justify-between rounded-xl bg-subtle px-4 py-3 text-left text-base font-medium text-foreground hover:bg-subtle/80"
-                    >
-                      <span className="flex items-center gap-3">
-                        <svg className="h-5 w-5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
-                        {accessMode === "members" ? "Workspace members only" : t("v.anyoneWithLink")}
-                      </span>
-                      <svg className={`h-4 w-4 text-muted transition-transform ${accessOpen ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6"/></svg>
-                    </button>
-
-                    {accessOpen && (
-                      <div className="mt-2 overflow-hidden rounded-2xl border border-border bg-white p-2 shadow-xl dark:bg-background">
-                        <button type="button" onClick={() => void saveAccessMode("members")} disabled={accessSaving} className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm disabled:opacity-60 ${accessMode === "members" ? "bg-subtle text-foreground" : "text-muted hover:bg-subtle hover:text-foreground"}`}>
-                          <span className="flex items-center gap-3">
-                            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 21h18M5 21V7l8-4v18M19 21V11l-6-4M9 9h1M9 13h1M9 17h1"/></svg>
-                            Workspace members only
-                          </span>
-                          {accessMode === "members" && <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m5 12 4 4L19 6"/></svg>}
-                        </button>
-                        <button type="button" onClick={() => void saveAccessMode("public")} disabled={accessSaving} className={`flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm disabled:opacity-60 ${accessMode === "public" ? "bg-subtle text-foreground" : "text-muted hover:bg-subtle hover:text-foreground"}`}>
-                          <span className="flex items-center gap-3">
-                            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 010 20M12 2a15.3 15.3 0 000 20"/></svg>
-                            {t("v.anyoneWithLink")}
-                          </span>
-                          {accessMode === "public" && <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m5 12 4 4L19 6"/></svg>}
-                        </button>
-                        <a href="/settings" className="mt-2 flex w-full items-center justify-between border-t border-border px-3 py-3 text-sm text-foreground hover:bg-subtle">
-                          Manage access
-                          <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M7 17 17 7M7 7h10v10"/></svg>
-                        </a>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Copy Link Button */}
-                  <div className="px-5 pb-4">
-                    <button
-                      onClick={handleCopyLink}
-                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 py-3 text-sm font-semibold text-white transition-colors hover:bg-indigo-700"
-                    >
-                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
-                      {copied ? t("v.copiedLink") : t("v.copyLinkBtn")}
-                    </button>
-                  </div>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
+        {isTeamMember && (
+          <Link
+            href="/captures"
+            className="px-4 py-2 rounded-lg border border-border text-xs font-semibold text-foreground hover:bg-subtle flex items-center gap-2 transition-colors shadow-sm"
+          >
+            <svg className="w-4 h-4 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+            {t("v.backToDashboard")}
+          </Link>
+        )}
       </header>
 
       {status !== "ready" && (
@@ -987,59 +707,121 @@ function SingleViewContent() {
       )}
 
       {status === "ready" && capture && (
-        <div className="flex-1 flex flex-col lg:flex-row lg:overflow-hidden min-h-0">
-          <div className="flex-1 lg:overflow-y-auto p-4 sm:p-6 flex flex-col gap-6">
-            <MediaViewer
-              type={capture.type}
-              driveUrl={capture.drive_url}
-              title={capture.title}
-            />
-
-            {/* Title + Comments */}
-            <div className="rounded-xl p-4 bg-white dark:bg-background space-y-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0">
-                  <h2 className="text-base font-semibold text-foreground">{capture.title}</h2>
-                  {capture.description && <p className="text-xs text-muted mt-0.5">{capture.description}</p>}
-                  {capture.expires_at && (
-                    <p className="text-[11px] text-muted mt-1 font-medium">
-                      {getExpiryCountdown(capture.expires_at, t)}
-                    </p>
-                  )}
-                  {capture.drive_url && (
-                    <div className="flex items-center gap-3 mt-2 flex-wrap">
-                      <a
-                        href={capture.drive_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1.5 text-[11px] text-indigo-600 hover:text-indigo-700 font-medium transition-colors"
-                      >
-                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6v6M10 14L20 4" />
-                        </svg>
-                        {t("v.driveLink")}
-                      </a>
+        <main className="flex-1 overflow-y-auto bg-[#fbfbfd] px-6 py-4 dark:bg-background">
+          <div className="mx-auto flex w-full max-w-[1560px] flex-col gap-3">
+            <div className="flex justify-end gap-3">
+              {driveFileId(capture.drive_url || null) && (
+                <button type="button" onClick={handleDownloadDirectMedia} className="inline-flex items-center gap-2 rounded-lg border border-border bg-white px-4 py-2 text-xs font-semibold text-foreground shadow-sm hover:bg-subtle">
+                  <svg className="h-4 w-4 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  Download
+                </button>
+              )}
+              {isTeamMember && (
+                <button type="button" onClick={openEditModal} className="inline-flex items-center gap-2 rounded-lg border border-border bg-white px-4 py-2 text-xs font-semibold text-foreground shadow-sm hover:bg-subtle">
+                  <svg className="h-4 w-4 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                  Edit Capture
+                </button>
+              )}
+              {isWorkspaceOwner && (
+                <div ref={moveMenuRef} className="relative">
+                  <button type="button" onClick={() => { setMoveSubmenuOpen((o) => !o); if (capFolders.length === 0) loadCapFolders(); }} className="inline-flex items-center gap-2 rounded-lg border border-border bg-white px-4 py-2 text-xs font-semibold text-foreground shadow-sm hover:bg-subtle">
+                    <svg className="h-4 w-4 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg>
+                    Move to Folder
+                  </button>
+                  {moveSubmenuOpen && (
+                    <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-xl border border-border bg-white p-1 shadow-xl">
+                      <button type="button" disabled={movingCapture} onClick={() => handleMoveCapture(null)} className="w-full rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50">No folder</button>
+                      {capFolders.map((folder) => (
+                        <button key={folder} type="button" disabled={movingCapture} onClick={() => handleMoveCapture(folder)} className="w-full truncate rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50">{folder}</button>
+                      ))}
+                      {newFolderMode ? (
+                        <form onSubmit={(e) => { e.preventDefault(); handleCreateFolderAndMove(); }} className="p-2">
+                          <input autoFocus value={newFolderName} onChange={(e) => setNewFolderName(e.target.value)} placeholder="Folder name" className="w-full rounded-md border border-border px-2 py-1 text-xs outline-none" />
+                        </form>
+                      ) : (
+                        <button type="button" onClick={() => setNewFolderMode(true)} className="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-indigo-600 hover:bg-indigo-50">+ New folder</button>
+                      )}
                     </div>
                   )}
                 </div>
-                {viewCount !== null && <span className="shrink-0 text-xs text-muted whitespace-nowrap mt-0.5">{t("v.viewCount", { count: viewCount })}</span>}
-              </div>
+              )}
+              {isWorkspaceOwner && (
+                <button type="button" onClick={handleDeleteCapture} className="inline-flex items-center gap-2 rounded-lg border border-red-100 bg-white px-4 py-2 text-xs font-semibold text-red-600 shadow-sm hover:bg-red-50">
+                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/></svg>
+                  Delete
+                </button>
+              )}
+              <button type="button" onClick={handleCopyLink} className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700">
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                {copied ? t("v.copied") : "Copy Link"}
+              </button>
+            </div>
 
-              <div className="pt-2 border-t border-border/40">
-                <Comments
-                  captureId={capture.id}
-                  isVideo={capture.type === "video"}
-                  authorName={viewerEmail ? viewerEmail.split("@")[0] : undefined}
-                  authorEmail={viewerEmail || undefined}
-                />
-              </div>
+            <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_440px]">
+              <section className="rounded-xl border border-border bg-white p-7 shadow-sm dark:bg-background">
+                <MediaViewer type={capture.type} driveUrl={capture.drive_url} title={capture.title} />
+                <div className="mt-7 space-y-4">
+                  <div>
+                    <h2 className="text-lg font-bold text-foreground">{capture.title}</h2>
+                    {capture.description && <p className="mt-1 text-sm text-muted">{capture.description}</p>}
+                    <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted">
+                      {capture.site_url && (
+                        <a href={capture.site_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 font-medium text-indigo-600 hover:bg-indigo-100">
+                          🌈 {hostnameOf(capture.site_url)}
+                        </a>
+                      )}
+                      <span>•</span>
+                      <span>{new Date(capture.created_at).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: "Asia/Jakarta", timeZoneName: "short" })}</span>
+                      {viewCount !== null && <><span>•</span><span>{t("v.viewCount", { count: viewCount })}</span></>}
+                    </div>
+                    {capture.expires_at && <p className="mt-2 text-[11px] font-medium text-muted">{getExpiryCountdown(capture.expires_at, t)}</p>}
+                  </div>
+                  <div className="border-t border-border pt-4">
+                    <Comments captureId={capture.id} isVideo={capture.type === "video"} authorName={viewerEmail ? viewerEmail.split("@")[0] : undefined} authorEmail={viewerEmail || undefined} />
+                  </div>
+                </div>
+              </section>
+
+              <aside className="space-y-3">
+                {!hideDevTools && <DevToolsPanel capture={capture as unknown as React.ComponentProps<typeof DevToolsPanel>["capture"]} />}
+                <section className="rounded-xl border border-border bg-white p-5 shadow-sm dark:bg-background">
+                  <h3 className="mb-4 text-base font-bold text-foreground">Share BugSnap</h3>
+                  <div className="grid grid-cols-2 gap-5 text-center">
+                    <button type="button" onClick={() => setShareType("devtools")} className={`rounded-lg border p-4 text-xs font-semibold ${shareType === "devtools" ? "border-indigo-500 text-indigo-600" : "border-border text-muted hover:text-foreground"}`}>
+                      <div className="mx-auto mb-3 flex h-12 w-20 items-center justify-center rounded-md border border-indigo-100 bg-indigo-50 text-indigo-500">▷ ▯</div>
+                      With DevTools
+                      <p className="mt-1 text-[10px] font-normal text-muted">Includes logs, network & events</p>
+                    </button>
+                    <button type="button" onClick={() => setShareType("content")} className={`rounded-lg border p-4 text-xs font-semibold ${shareType === "content" ? "border-indigo-500 text-indigo-600" : "border-border text-muted hover:text-foreground"}`}>
+                      <div className="mx-auto mb-3 flex h-12 w-20 items-center justify-center rounded-md border border-indigo-100 bg-indigo-50 text-indigo-500">▷</div>
+                      Content Only
+                      <p className="mt-1 text-[10px] font-normal text-muted">Screenshot & basic info</p>
+                    </button>
+                  </div>
+                  <div className="mt-5">
+                    <label className="mb-2 block text-xs font-semibold text-muted">General access</label>
+                    <div ref={accessMenuRef} className="relative">
+                      <button type="button" onClick={() => setAccessOpen((open) => !open)} className="flex w-full items-center justify-between rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-subtle">
+                        <span className="flex items-center gap-2"><svg className="h-4 w-4 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 0 20M12 2a15.3 15.3 0 0 0 0 20"/></svg>{accessMode === "members" ? "Workspace members only" : t("v.anyoneWithLink")}</span>
+                        <svg className="h-3 w-3 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6"/></svg>
+                      </button>
+                      {accessOpen && (
+                        <div className="absolute left-0 right-0 top-full z-50 mt-2 rounded-xl border border-border bg-white p-1 shadow-xl">
+                          <button type="button" onClick={() => void saveAccessMode("public")} disabled={accessSaving} className="w-full rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50">{t("v.anyoneWithLink")}</button>
+                          <button type="button" onClick={() => void saveAccessMode("members")} disabled={accessSaving} className="w-full rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50">Workspace members only</button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <button type="button" onClick={handleCopyLink} className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700">
+                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                    {copied ? t("v.copiedLink") : "Copy Link"}
+                  </button>
+                </section>
+              </aside>
             </div>
           </div>
-
-          {!hideDevTools && (
-            <DevToolsPanel capture={capture as unknown as React.ComponentProps<typeof DevToolsPanel>["capture"]} />
-          )}
-        </div>
+        </main>
       )}
 
       {/* Edit Modal (Workspace Members only) */}
@@ -1123,93 +905,6 @@ function SingleViewContent() {
         </div>
       )}
 
-      {/* Embed Modal */}
-      {embedModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setEmbedModal(false)} />
-          <div className="relative w-full max-w-md rounded-xl bg-white p-6 shadow-xl border border-border">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-base font-bold text-foreground">{t("v.embedTitle")}</h3>
-              <button onClick={() => setEmbedModal(false)} className="text-muted hover:text-foreground">✕</button>
-            </div>
-            <textarea readOnly value={embedCode} className="w-full h-20 text-xs font-mono p-2 bg-subtle border border-border rounded-lg outline-none resize-none" />
-            <div className="flex justify-end gap-2 mt-4">
-              <button onClick={() => setEmbedModal(false)} className="px-4 py-2 text-xs font-medium text-muted hover:text-foreground">{t("v.close")}</button>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(embedCode);
-                  setEmbedCopied(true);
-                  setTimeout(() => setEmbedCopied(false), 2000);
-                }}
-                className="px-4 py-2 text-xs font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
-              >
-                {embedCopied ? t("v.copiedCode") : t("v.copyCode")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* AI Bug Report Modal */}
-      {aiModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setAiModal(false)} />
-          <div className="relative w-full max-w-2xl rounded-xl bg-white p-6 shadow-xl border border-border max-h-[85vh] overflow-y-auto">
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="text-base font-bold text-foreground">{t("v.aiReportTitle")}</h3>
-              <button onClick={() => setAiModal(false)} className="text-muted hover:text-foreground" aria-label={t("common.close")}>
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-              </button>
-            </div>
-            <p className="text-xs text-muted mb-4">
-              {t("v.aiDesc")}
-            </p>
-
-            {aiLoading ? (
-              <div className="py-10 flex flex-col items-center gap-3">
-                <div className="w-8 h-8 border-4 border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
-                <p className="text-xs text-muted">{t("v.analyzing")}</p>
-              </div>
-            ) : (
-              <pre className="text-xs font-mono whitespace-pre-wrap bg-subtle/60 border border-border rounded-lg p-4 text-foreground leading-relaxed max-h-[50vh] overflow-y-auto">
-                {aiSummary || t("v.generatePrompt")}
-              </pre>
-            )}
-
-            <div className="flex flex-wrap items-center justify-between gap-2 mt-4">
-              <div className="flex gap-2">
-                <a
-                  href={`https://github.com/new?title=${encodeURIComponent(capture?.title || "Bug")}&body=${encodeURIComponent(aiSummary)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-2 rounded-lg border border-border text-xs font-medium text-foreground hover:bg-subtle transition-colors"
-                >
-                  {t("v.githubIssue")}
-                </a>
-                <a
-                  href={`https://linear.app/issue?title=${encodeURIComponent(capture?.title || "Bug")}&description=${encodeURIComponent(aiSummary)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-3 py-2 rounded-lg border border-border text-xs font-medium text-foreground hover:bg-subtle transition-colors"
-                >
-                  Linear
-                </a>
-              </div>
-              <button
-                onClick={() => {
-                  navigator.clipboard.writeText(aiSummary);
-                  setAiCopied(true);
-                  setTimeout(() => setAiCopied(false), 2000);
-                }}
-                disabled={!aiSummary}
-                className="px-4 py-2 text-xs font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50"
-              >
-                {aiCopied ? t("v.copiedReport") : t("v.copyReport")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Delete Capture Modal */}
       {deleteCaptureModalOpen && (

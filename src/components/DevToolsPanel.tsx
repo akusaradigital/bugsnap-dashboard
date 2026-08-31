@@ -188,6 +188,28 @@ function networkLocation(value?: string) {
   }
 }
 
+function isClassSoup(text: string) {
+  const tokens = text.split(/\s+/).filter(Boolean);
+  return tokens.length >= 3 && (tokens.filter((token) => /(?:^|:)(?:[a-z]+-)|\[|#|\//i.test(token)).length >= 2 || text.length > 50);
+}
+
+function cleanActionMessage(message?: string) {
+  const text = (message || "").trim();
+  if (!text) return "";
+
+  // Format "Clicked select: Select Category Type Automotive B2B..." -> "Clicked select: Select Category"
+  const selectMatch = text.match(/^(Clicked\s+select:\s*)([^\n]+)$/i);
+  if (selectMatch) {
+    const rawVal = selectMatch[2].trim();
+    const shortVal = rawVal.split(/\s{2,}|\t|\n/)[0].slice(0, 35);
+    return `${selectMatch[1]}${shortVal}`;
+  }
+
+  const match = text.match(/^(Clicked|Typed in)\s+([^:]+):\s+(.+)$/i);
+  if (!match) return text;
+  return isClassSoup(match[3]) ? `${match[1]} ${match[2]}` : text;
+}
+
 function groupBy<T extends TimedLog>(items: T[], keyFor: (item: T) => string, mapItem?: (item: T) => T): Grouped<T>[] {
   const groups = new Map<string, Grouped<T>>();
   items.forEach((item) => {
@@ -260,7 +282,7 @@ export default function DevToolsPanel({ capture }: Props) {
   const { t } = useT();
   const [activeTab, setActiveTab] = useState<Tab>("Info");
   const [logSearch, setLogSearch] = useState("");
-  const [showErrorsOnly, setShowErrorsOnly] = useState(false);
+  const [showErrorsOnly, setShowErrorsOnly] = useState(true);
 
   const summaryOnly = !Array.isArray(capture.dev_logs) && isSummary(capture.dev_logs);
   const logs: DevLog[] = Array.isArray(capture.dev_logs)
@@ -319,6 +341,7 @@ export default function DevToolsPanel({ capture }: Props) {
 
   const actionLogs = logs
     .filter((l): l is ActionLog | NavigationLog | ScreenshotLog => l.type === "step" || l.type === "navigation" || l.type === "screenshot")
+    .map((log) => ({ ...log, message: cleanActionMessage(log.message) }))
     .filter((l) => !logSearch || `${l.message || ""} ${"url" in l ? l.url || "" : ""}`.toLowerCase().includes(logSearch.toLowerCase()));
   
   const groupedNetworkLogs = groupBy(
@@ -384,64 +407,6 @@ export default function DevToolsPanel({ capture }: Props) {
   const detectedOs = capture.os || (legacyLogsText.toLowerCase().includes("macintosh") || legacyLogsText.toLowerCase().includes("mac os") ? "macOS" : "Windows");
   const detectedBrowser = capture.browser || "Chrome";
 
-  const [copiedMd, setCopiedMd] = useState(false);
-
-  function downloadJson() {
-    const blob = new Blob([JSON.stringify(capture.dev_logs, null, 2)], {
-      type: "application/json",
-    });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "capture_logs.json";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    URL.revokeObjectURL(url);
-  }
-
-  function copyToMarkdown() {
-    let md = `## 🐞 BugSnap Bug Report: ${createdAt}\n\n`;
-    
-    md += `### 💻 System Info\n`;
-    md += `| Field | Value |\n`;
-    md += `| :--- | :--- |\n`;
-    md += `| **URL** | ${capture.site_url ? `[Open link](${capture.site_url})` : "-"} |\n`;
-    md += `| **OS** | ${detectedOs} |\n`;
-    md += `| **Browser** | ${detectedBrowser} |\n`;
-    md += `| **Window size** | ${capture.window_size || "-"} |\n`;
-    md += `| **Recorded at** | ${createdAt} |\n\n`;
-
-    if (consoleLogs.length > 0) {
-      md += `### Diagnostic Timeline (${totalLogCount(consoleLogs)})\n\`\`\`text\n`;
-      consoleLogs.forEach((log) => {
-        const detail = log.type === "console" ? log.message || log.text || "" : log.message || ("url" in log ? log.url : "") || (log.type === "screenshot" ? "Screenshot taken" : "Navigation");
-        md += `[${log.type.toUpperCase()}] ${eventTime(log)} ${detail}${(log.count || 1) > 1 ? ` ×${log.count}` : ""}\n`;
-      });
-      md += `\`\`\`\n\n`;
-    }
-
-    if (networkLogs.length > 0) {
-      md += `### 🌐 Network Errors (${totalLogCount(networkLogs)})\n| Method | Status | Type | URL |\n| :--- | :--- | :--- | :--- |\n`;
-      groupedNetworkLogs.forEach(({ log, count }) => {
-        md += `| ${log.method || "GET"} | ${log.status || "FAILED"} | ${log.resourceType || "xhr"} | ${log.url || ""}${count > 1 ? ` ×${count}` : ""} |\n`;
-      });
-      md += `\n`;
-    }
-
-    if (actionLogs.length > 0) {
-      md += `### User Actions Timeline\n`;
-      actionLogs.forEach((log) => {
-        md += `- **${eventTime(log)}**: ${log.type === "navigation" ? `Navigate to ${log.url || log.message || ""}` : log.message || ""}\n`;
-      });
-      md += `\n`;
-    }
-
-    navigator.clipboard.writeText(md);
-    setCopiedMd(true);
-    setTimeout(() => setCopiedMd(false), 2000);
-  }
-
   const tabLabel = (tab: Tab) => {
     if (tab === "Console" && consoleLogs.length) return `${t("dt.console")} (${totalLogCount(consoleLogs)})`;
     if (tab === "Network" && networkLogs.length) return `${t("dt.network")} (${totalLogCount(networkLogs)})`;
@@ -450,7 +415,7 @@ export default function DevToolsPanel({ capture }: Props) {
   };
 
   return (
-    <div className="w-full lg:w-[360px] border-t lg:border-t-0 lg:border-l border-border bg-subtle flex flex-col shrink-0 h-[450px] lg:h-auto min-h-0 max-h-full">
+    <div className="w-full h-[520px] rounded-xl border border-border bg-white shadow-sm dark:bg-background flex flex-col shrink-0 overflow-hidden">
       {/* Header */}
       <div className="h-11 border-b border-border px-4 flex items-center justify-between shrink-0">
         <span className="text-sm font-semibold text-foreground">{t("v.devTools")}</span>
@@ -481,8 +446,8 @@ export default function DevToolsPanel({ capture }: Props) {
         ))}
       </div>
 
-      {/* Content - scrollable */}
-      <div className="flex-1 overflow-y-auto min-h-0">
+      {/* Content */}
+      <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
         {/* Global Search & Filters */}
         {activeTab !== "Info" && (
           <div className="p-3 border-b border-border bg-subtle/30 flex flex-col gap-2 shrink-0">
@@ -525,7 +490,7 @@ export default function DevToolsPanel({ capture }: Props) {
 
         {/* INFO TAB */}
         {activeTab === "Info" && (
-          <div className="p-4 space-y-4">
+          <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
             {capture.site_url && (
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-muted mb-1.5">URL</p>
@@ -718,34 +683,12 @@ export default function DevToolsPanel({ capture }: Props) {
               </div>
             )}
 
-            <div className="space-y-2 pt-1">
-              <button
-                onClick={copyToMarkdown}
-                className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold shadow-sm transition-colors"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
-                </svg>
-                {copiedMd ? t("dt.copiedReport") : t("dt.copyReport")}
-              </button>
-              <button
-                onClick={downloadJson}
-                className="w-full flex items-center justify-center gap-2 px-3 py-2 rounded-lg border border-border bg-subtle hover:bg-subtle text-foreground text-xs font-semibold shadow-sm transition-colors"
-              >
-                <svg className="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                  <polyline points="7 10 12 15 17 10" />
-                  <line x1="12" y1="15" x2="12" y2="3" />
-                </svg>
-                {t("dt.downloadJson")}
-              </button>
-            </div>
           </div>
         )}
 
         {/* CONSOLE TAB */}
         {activeTab === "Console" && (
-          <div>
+          <div className="flex-1 min-h-0 overflow-y-auto">
             {consoleLogs.length === 0 ? (
               summary ? (
                 <div className="p-4 space-y-3">
@@ -847,7 +790,7 @@ export default function DevToolsPanel({ capture }: Props) {
 
         {/* NETWORK TAB */}
         {activeTab === "Network" && (
-          <div>
+          <div className="flex-1 min-h-0 overflow-y-auto">
             {networkLogs.length === 0 ? (
               summary ? (
                 <div className="p-4 space-y-3">
@@ -967,7 +910,7 @@ export default function DevToolsPanel({ capture }: Props) {
 
         {/* ACTIONS TAB */}
         {activeTab === "Actions" && (
-          <div className="p-4">
+          <div className="flex-1 min-h-0 overflow-y-auto p-4">
             {actionLogs.length === 0 ? (
               <div className="py-14 flex flex-col items-center gap-2 text-muted">
                 <svg className="w-8 h-8 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
