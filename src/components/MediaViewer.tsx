@@ -151,7 +151,7 @@ export default function MediaViewer({ type, driveUrl, title }: MediaViewerProps)
   return (
     <>
       <div
-        className="relative flex h-[clamp(16rem,40vh,28rem)] min-h-[16rem] sm:h-[clamp(28rem,72vh,60rem)] sm:min-h-[28rem] w-full items-center justify-center overflow-hidden rounded-2xl bg-[#f4f4f6] dark:bg-zinc-950 p-4 shadow-inner sm:p-6"
+        className="relative flex h-[clamp(18rem,45vw,32rem)] min-h-[18rem] w-full items-center justify-center overflow-hidden rounded-lg bg-[#f4f4f6] dark:bg-zinc-950 p-4"
       >
         {unavailable ? (
           <div className="px-6 text-center text-sm text-white/70" role="status">{t("mv.unavailable")}</div>
