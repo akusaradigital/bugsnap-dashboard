@@ -35,7 +35,7 @@ export async function POST(request: Request) {
 
   const { data: workspaces, error: wsError } = await db.rpc("get_workspaces_by_email", { p_email: email });
   if (wsError) return NextResponse.json({ error: wsError.message }, { status: 422 });
-  const list = (workspaces ?? []) as Array<{ id: string; name: string; role: string; is_owner: boolean }>;
+  const list = (workspaces ?? []) as Array<{ id: string; name: string; role: string; is_owner: boolean; avatar_url: string | null }>;
   const selectedWorkspaceId = workspaceId && list.some((w) => w.id === workspaceId) ? workspaceId : (list[0]?.id ?? null);
 
   let folders: unknown[] = [];
