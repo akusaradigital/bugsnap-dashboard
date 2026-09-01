@@ -132,10 +132,13 @@ export default function Comments({
           setCfToken(token);
           setCfError("");
         },
-        "expired-callback": () => setCfToken(null),
+        "expired-callback": () => {
+          setCfToken(null);
+          setCfError("Anti-bot check expired. Try again.");
+        },
         "error-callback": () => {
           setCfToken(null);
-          setCfError("Anti-bot check failed. Please try again.");
+          setCfError("Anti-bot check failed. Try again.");
         },
       });
     };
@@ -162,7 +165,7 @@ export default function Comments({
   // Validate the Turnstile token against the managed siteverify Worker.
   const verifyTurnstile = useCallback(async (): Promise<boolean> => {
     if (!cfToken) {
-      setCfError("Please complete the anti-bot check to post.");
+      setCfError("Complete the anti-bot check first.");
       return false;
     }
     setCfVerifying(true);
@@ -174,7 +177,7 @@ export default function Comments({
       });
       const data = await res.json();
       if (data?.success !== true) {
-        setCfError("Anti-bot verification failed. Please try again.");
+        setCfError("Anti-bot check failed. Try again.");
         setCfToken(null);
         if (widgetIdRef.current && window.turnstile) {
           try { window.turnstile.reset(widgetIdRef.current); } catch { /* ignore */ }
@@ -183,7 +186,11 @@ export default function Comments({
       }
       return true;
     } catch {
-      setCfError("Could not verify anti-bot check. Please try again.");
+      setCfError("Anti-bot check failed. Try again.");
+      setCfToken(null);
+      if (widgetIdRef.current && window.turnstile) {
+        try { window.turnstile.reset(widgetIdRef.current); } catch { /* ignore */ }
+      }
       return false;
     } finally {
       setCfVerifying(false);

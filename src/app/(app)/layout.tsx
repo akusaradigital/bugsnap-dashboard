@@ -571,7 +571,7 @@ export default function DashboardLayout({
     } catch (err) {
       console.warn("Failed to create folder:", err);
       setCreateFolderError("Could not create folder. Maybe it already exists?");
-      showToast("Could not create folder", "error");
+      showToast("Folder create failed", "error");
     } finally {
       setCreatingFolder(false);
     }
@@ -598,7 +598,7 @@ export default function DashboardLayout({
     } catch (err) {
       console.warn("Failed to create project:", err);
       setCreateProjectError("Could not create project. Maybe it already exists?");
-      showToast("Could not create project", "error");
+      showToast("Project create failed", "error");
     } finally {
       setCreatingProject(false);
     }
@@ -624,7 +624,7 @@ export default function DashboardLayout({
     } catch (err) {
       console.warn("Failed to rename project:", err);
       setRenameProjectError("Could not rename project.");
-      showToast("Could not rename project", "error");
+      showToast("Project rename failed", "error");
     } finally {
       setRenamingProject(false);
     }
@@ -641,7 +641,7 @@ export default function DashboardLayout({
       showToast("Project deleted", "success");
     } catch (err) {
       console.warn("Failed to delete project:", err);
-      showToast("Could not delete project", "error");
+      showToast("Project delete failed", "error");
     } finally {
       setDeletingProject(false);
     }
@@ -666,7 +666,7 @@ export default function DashboardLayout({
         p_folder_names: reordered,
       });
       if (error) throw error;
-      showToast("Folder order updated", "success");
+      showToast("Order saved", "success");
     } catch (err) {
       console.warn("Failed to persist folder order:", err);
       showToast(t("layout.errReorderFolder"), "error");
@@ -778,11 +778,11 @@ export default function DashboardLayout({
       router.replace(`${pathname}?ws=${created.id}`, { scroll: false });
       setNewWsName("");
       setCreateWsModalOpen(false);
-      showToast(`Workspace "${name}" created`, "success");
+      showToast("Workspace created", "success");
     } catch (err) {
       console.warn("Failed to create workspace:", err);
       setCreateWsError("Could not create workspace. Please try again.");
-      showToast("Could not create workspace", "error");
+      showToast("Workspace create failed", "error");
     } finally {
       setCreating(false);
     }
@@ -822,14 +822,14 @@ export default function DashboardLayout({
         ...prev,
         [activeWsId]: [...(prev[activeWsId] || []), email],
       }));
-      showToast(`Invite sent to ${email}`, "success");
+      showToast("Invite sent", "success");
     } catch (err) {
       console.warn("Failed to invite member:", err);
       setInviteError(
         (err as { message?: string })?.message ||
           t("layout.errInvite")
       );
-      showToast("Could not send invite", "error");
+      showToast("Invite failed", "error");
     } finally {
       setInviting(false);
     }

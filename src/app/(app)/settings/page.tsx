@@ -360,7 +360,7 @@ function SettingsContent() {
       const r = await driveRequest("/api/google-drive/connect", { method: "POST" });
       if (!r.url) throw new Error(t("settings.noAuthUrl"));
       window.location.assign(r.url);
-    } catch (e) { setDriveError(e instanceof Error ? e.message : t("settings.connectError")); showToast("Could not connect Google Drive", "error"); setDriveActionLoading(false); }
+    } catch (e) { setDriveError(e instanceof Error ? e.message : t("settings.connectError")); showToast("Drive connection failed", "error"); setDriveActionLoading(false); }
   }
 
   async function disconnectDrive() {
@@ -370,8 +370,8 @@ function SettingsContent() {
       await driveRequest("/api/google-drive/disconnect", { method: "DELETE" });
       setDriveStatus("not_connected"); setDriveEmail(null); setDriveQuota(null);
       setIntegrationsHealth((prev) => prev ? { ...prev, drive: { state: "not_configured", status: "not_connected", email: null, message: "Google Drive is not connected" } } : prev);
-      showToast("Google Drive disconnected", "success");
-    } catch (e) { setDriveError(e instanceof Error ? e.message : t("settings.disconnectError")); showToast("Could not disconnect Google Drive", "error"); }
+      showToast("Drive disconnected", "success");
+    } catch (e) { setDriveError(e instanceof Error ? e.message : t("settings.disconnectError")); showToast("Drive disconnect failed", "error"); }
     finally { setDriveActionLoading(false); }
   }
 
@@ -402,14 +402,14 @@ function SettingsContent() {
       });
       if (error) throw error;
       setSaved(true); setTimeout(() => setSaved(false), 3000);
-      showToast("Settings saved", "success");
+      showToast("Saved", "success");
       if (effectiveAutoDelete !== 0) {
         for (let i = 0; i < 20; i++) {
           const { data, error: e2 } = await supabase.rpc("delete_expired_captures", { p_workspace_id: activeWsId, p_batch_limit: 100 });
           if (e2 || !data || Number(data) <= 0) break;
         }
       }
-    } catch (e) { setSaveError(e instanceof Error ? e.message : t("settings.failedSave")); showToast("Could not save settings", "error"); }
+    } catch (e) { setSaveError(e instanceof Error ? e.message : t("settings.failedSave")); showToast("Save failed", "error"); }
     finally { setSaving(false); }
   }
 
@@ -449,7 +449,7 @@ function SettingsContent() {
       showToast("Profile saved", "success");
     } catch (e) {
       setProfileSaveError(e instanceof Error ? e.message : "Failed to save profile");
-      showToast("Could not save profile", "error");
+      showToast("Profile save failed", "error");
     } finally {
       setProfileSaving(false);
     }
@@ -472,10 +472,10 @@ function SettingsContent() {
       }).catch(() => null);
       setInviteEmail("");
       setInviteMsg({ type:"ok", text: `Invite sent to ${email}` });
-      showToast(`Invite sent to ${email}`, "success");
+      showToast("Invite sent", "success");
       const { data: fresh } = await supabase.rpc("get_workspace_members", { p_workspace_id: activeWsId });
       setMembers((fresh as typeof members) ?? []);
-    } catch (e) { setInviteMsg({ type:"err", text: (e as {message?:string})?.message || t("members.inviteFailed") }); showToast("Could not send invite", "error"); }
+    } catch (e) { setInviteMsg({ type:"err", text: (e as {message?:string})?.message || t("members.inviteFailed") }); showToast("Invite failed", "error"); }
     finally { setInviting(false); }
   }
 
@@ -1264,7 +1264,7 @@ function SettingsContent() {
                         setTheme(opt.id);
                         try {
                           await supabase.rpc("update_user_theme", { p_theme: opt.id });
-                        } catch { showToast("Could not save theme preference", "error"); }
+                        } catch { showToast("Theme save failed", "error"); }
                       }}
                       aria-pressed={theme === opt.id}
                       className={`flex flex-col items-center gap-1.5 rounded-lg border px-3 py-3 text-xs font-semibold transition-colors ${
@@ -1338,7 +1338,7 @@ function SettingsContent() {
                       setNotifSaving(true);
                       try {
                         await supabase.rpc("update_user_notification_prefs", { p_prefs: next });
-                      } catch { showToast("Could not save notification preference", "error"); }
+                      } catch { showToast("Preference save failed", "error"); }
                       finally { setNotifSaving(false); }
                     }}
                     className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-60 ${notifPrefs[row.key] ? "bg-indigo-600" : "bg-border"}`}

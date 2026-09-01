@@ -425,7 +425,7 @@ function SingleViewContent() {
     } catch {
       setAccessMode(previous);
       setCapture({ ...capture, access_mode: previous });
-      showToast("Only workspace owners can change link access.", "error");
+      showToast("Permission denied", "error");
     } finally {
       setAccessSaving(false);
       setAccessOpen(false);
@@ -468,11 +468,11 @@ function SingleViewContent() {
       if (error) throw error;
       setCapture(data as Capture);
       setEditModalOpen(false);
-      showToast("Capture updated", "success");
+      showToast("Capture saved", "success");
     } catch (err) {
       console.warn("Failed to save captures changes:", err);
       setEditError(t("v.saveError"));
-      showToast("Could not save capture", "error");
+      showToast("Save failed", "error");
     } finally {
       setSavingEdit(false);
     }
@@ -513,7 +513,7 @@ function SingleViewContent() {
       showToast(folderName ? `Moved to "${folderName}"` : "Removed from folder", "success");
     } catch (err) {
       console.warn("Failed to move capture:", err);
-      showToast("Could not move capture", "error");
+      showToast("Move failed", "error");
     } finally {
       setMovingCapture(false);
     }
@@ -530,7 +530,7 @@ function SingleViewContent() {
       await handleMoveCapture(name);
     } catch (err) {
       console.warn("Failed to create folder:", err);
-      showToast("Could not create folder", "error");
+      showToast("Folder create failed", "error");
     }
   }
 
@@ -588,7 +588,7 @@ function SingleViewContent() {
     } catch (err) {
       console.warn("Failed to delete capture:", err);
       setDeleteCaptureError(err instanceof Error ? err.message : t("v.deleteFailed"));
-      showToast("Could not delete capture", "error");
+      showToast("Delete failed", "error");
     } finally {
       setDeletingCapture(false);
     }
