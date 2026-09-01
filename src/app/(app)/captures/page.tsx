@@ -168,12 +168,12 @@ function EditModal({ capture, onClose, onSaved }: EditModalProps) {
     if (error) {
       console.warn("Error updating capture:", error);
       setError(t("cap.saveError"));
-      showToast("Could not save capture", "error");
+      showToast("Save failed", "error");
       setSaving(false);
       return;
     }
     onSaved(data as Capture);
-    showToast("Capture updated", "success");
+    showToast("Capture saved", "success");
     onClose();
   }
 
@@ -453,7 +453,7 @@ function CapturesContent() {
       if (!activeHoverId) return;
       const shareUrl = `${window.location.origin}/v/${activeHoverId}`;
       navigator.clipboard?.writeText(shareUrl).then(() => {
-        showToast("Link copied to clipboard", "success");
+        showToast("Link copied", "success");
       }).catch(() => showToast(t("cap.copyError"), "error"));
     }
     window.addEventListener("keydown", handleKeyDown);
@@ -631,7 +631,7 @@ function CapturesContent() {
     try {
       await navigator.clipboard.writeText(`${window.location.origin}/v/${id}`);
       setCopiedId(id);
-      showToast("Link copied to clipboard", "success");
+      showToast("Link copied", "success");
       setTimeout(() => setCopiedId(null), 2000);
     } catch {
       showToast(t("cap.copyError"), "error");
@@ -725,7 +725,7 @@ function CapturesContent() {
     } catch (error) {
       console.warn("Error deleting captures:", error);
       setDeleteError(error instanceof Error ? error.message : "Could not delete the selected captures. Please try again.");
-      showToast("Could not delete captures", "error");
+      showToast("Delete failed", "error");
     } finally {
       setDeleting(false);
     }
@@ -850,7 +850,7 @@ function CapturesContent() {
       showToast(`${movedCount} capture${movedCount === 1 ? "" : "s"} moved`, "success");
     } catch (error) {
       setUploadError(error instanceof Error ? error.message : "Failed moving captures");
-      showToast("Could not move captures", "error");
+      showToast("Move failed", "error");
     } finally {
       setMoving(false);
     }

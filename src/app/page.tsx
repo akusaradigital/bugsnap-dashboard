@@ -40,7 +40,7 @@ export default function Home() {
           .catch(err => {
             console.error("Auto login failed:", err);
             setAutoLoggingIn(false);
-            setError("Failed to auto-login. Please sign in manually.");
+            setError("Auto-login failed. Please sign in again.");
           });
         return;
       }
