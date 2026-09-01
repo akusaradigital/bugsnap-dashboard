@@ -22,6 +22,7 @@ type Workspace = {
   created_at: string;
   role: string;
   member_count: number;
+  avatar_url?: string | null;
 };
 
 export default function DashboardLayout({
@@ -992,9 +993,14 @@ export default function DashboardLayout({
             onClick={() => setWsOpen((o) => !o)}
             className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium rounded-xl border border-border bg-subtle hover:bg-subtle transition-colors text-left"
           >
-            <span className="w-6 h-6 rounded-md bg-indigo-600 text-white text-[11px] font-semibold flex items-center justify-center shrink-0">
-              {initialOf(activeWs?.name)}
-            </span>
+            {activeWs?.avatar_url ? (
+              /* eslint-disable-next-line @next/next/no-img-element */
+              <img src={activeWs.avatar_url} alt={activeWs.name} className="w-6 h-6 rounded-md object-cover shrink-0 bg-subtle border border-border" />
+            ) : (
+              <span className="w-6 h-6 rounded-md bg-indigo-600 text-white text-[11px] font-semibold flex items-center justify-center shrink-0">
+                {initialOf(activeWs?.name)}
+              </span>
+            )}
             <span className="flex-1 truncate">{activeWs?.name || "Workspace"}</span>
             <svg className={`w-3.5 h-3.5 text-muted transition-transform ${wsOpen ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M6 9l6 6 6-6" />
@@ -1006,9 +1012,14 @@ export default function DashboardLayout({
               <div className="fixed inset-0 z-40" onClick={closeWorkspaceMenus} />
               <div className="absolute left-3 right-3 top-[calc(100%+8px)] z-50 rounded-2xl border border-border bg-subtle shadow-xl overflow-visible">
                 <div className="p-4 flex items-center gap-3 border-b border-border">
-                  <span className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 text-lg font-semibold flex items-center justify-center shrink-0">
-                    {initialOf(activeWs?.name)}
-                  </span>
+                  {activeWs?.avatar_url ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img src={activeWs.avatar_url} alt={activeWs.name} className="w-10 h-10 rounded-xl object-cover shrink-0 bg-subtle border border-border" />
+                  ) : (
+                    <span className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 text-lg font-semibold flex items-center justify-center shrink-0">
+                      {initialOf(activeWs?.name)}
+                    </span>
+                  )}
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center justify-between gap-2">
                       <p className="text-base font-semibold text-foreground truncate">{activeWs?.name || "Workspace"}</p>
@@ -1066,7 +1077,12 @@ export default function DashboardLayout({
                           }}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm text-left transition-colors ${activeWsId === ws.id ? "bg-subtle text-foreground font-semibold" : "text-foreground hover:bg-subtle"}`}
                         >
-                          <span className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 text-sm font-semibold flex items-center justify-center shrink-0">{ws.name.charAt(0)}</span>
+                          {ws.avatar_url ? (
+                            /* eslint-disable-next-line @next/next/no-img-element */
+                            <img src={ws.avatar_url} alt={ws.name} className="w-7 h-7 rounded-lg object-cover shrink-0 bg-subtle border border-border" />
+                          ) : (
+                            <span className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 text-sm font-semibold flex items-center justify-center shrink-0">{ws.name.charAt(0)}</span>
+                          )}
                           <span className="truncate flex-1">{ws.name}</span>
                           <span className="text-[11px] px-2 py-0.5 rounded-md border border-border text-muted shrink-0">{tierLabel(currentUser.plan)}</span>
                         </button>

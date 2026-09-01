@@ -168,6 +168,7 @@ function SettingsContent() {
 
   // General / Workspace
   const [workspaceName, setWorkspaceName] = useState("My Workspace");
+  const [workspaceAvatar, setWorkspaceAvatar] = useState("");
   const [editingWsName, setEditingWsName] = useState(false);
   const [ssoRequired, setSsoRequired] = useState(false);
   const [defaultLinkAccess, setDefaultLinkAccess] = useState<"anyone" | "team" | "private">("anyone");
@@ -265,10 +266,11 @@ function SettingsContent() {
       setUserPlan(plan);
       if (activeWsId) {
         const [{ data: wsData }, { data: wsSet }] = await Promise.all([
-          supabase.from("workspaces").select("name").eq("id", activeWsId).maybeSingle(),
+          supabase.from("workspaces").select("name, avatar_url").eq("id", activeWsId).maybeSingle(),
           supabase.from("workspace_settings").select("*").eq("workspace_id", activeWsId).maybeSingle()
         ]);
         if (wsData?.name) setWorkspaceName(wsData.name);
+        if (wsData?.avatar_url) setWorkspaceAvatar(wsData.avatar_url);
         if (wsSet) {
           setWebhookUrl(wsSet.webhook_url || "");
           setBrandName(wsSet.brand_name || "BugSnap");
@@ -380,8 +382,11 @@ function SettingsContent() {
       const canBrand = hasBranding(normalizePlan(userPlan));
 
       // Update workspace name if changed
-      if (workspaceName.trim()) {
-        await supabase.from("workspaces").update({ name: workspaceName.trim() }).eq("id", activeWsId);
+      if (workspaceName.trim() || workspaceAvatar !== undefined) {
+        await supabase.from("workspaces").update({ 
+          name: workspaceName.trim() || undefined,
+          avatar_url: workspaceAvatar.trim() || null
+        }).eq("id", activeWsId);
       }
 
       const effectiveAutoDelete = autoDeleteEnabled ? autoDeleteMonths : 0;
@@ -569,36 +574,55 @@ function SettingsContent() {
           <form onSubmit={handleSave} className="space-y-6">
 
             {/* Workspace Name & Avatar Section */}
-            <div className="rounded-xl border border-border bg-background p-5">
-              <h2 className="text-sm font-bold text-foreground mb-3">Workspace name</h2>
-              <div className="flex items-center gap-3.5">
-                <div className="w-11 h-11 rounded-lg bg-indigo-600 text-white font-bold text-lg flex items-center justify-center shadow-sm shrink-0 uppercase select-none">
-                  {(workspaceName || "W").charAt(0)}
+            <div className="rounded-xl border border-border bg-background p-5 space-y-5">
+              <div>
+                <h2 className="text-sm font-bold text-foreground mb-3">Workspace name</h2>
+                <div className="flex items-center gap-3.5">
+                  {workspaceAvatar ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img src={workspaceAvatar} alt={workspaceName} className="w-11 h-11 rounded-lg object-cover shrink-0 border border-border" />
+                  ) : (
+                    <div className="w-11 h-11 rounded-lg bg-indigo-600 text-white font-bold text-lg flex items-center justify-center shadow-sm shrink-0 uppercase select-none">
+                      {(workspaceName || "W").charAt(0)}
+                    </div>
+                  )}
+                  {editingWsName ? (
+                    <input
+                      autoFocus
+                      type="text"
+                      value={workspaceName}
+                      onChange={(e) => setWorkspaceName(e.target.value)}
+                      onBlur={() => setEditingWsName(false)}
+                      onKeyDown={(e) => e.key === "Enter" && setEditingWsName(false)}
+                      placeholder="My Workspace"
+                      className="flex-1 text-sm font-medium rounded-lg border border-border px-3.5 py-2.5 outline-none focus:border-indigo-500 bg-background text-foreground transition-colors shadow-sm"
+                    />
+                  ) : (
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-semibold text-foreground truncate">{workspaceName || "My Workspace"}</p>
+                      <p className="text-xs text-muted mt-0.5">This is the name of your workspace.</p>
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => setEditingWsName((v) => !v)}
+                    className="text-xs font-semibold rounded-lg border border-border px-3.5 py-2 bg-background hover:bg-border/30 transition-colors shrink-0"
+                  >
+                    {editingWsName ? "Done" : "Edit"}
+                  </button>
                 </div>
-                {editingWsName ? (
-                  <input
-                    autoFocus
-                    type="text"
-                    value={workspaceName}
-                    onChange={(e) => setWorkspaceName(e.target.value)}
-                    onBlur={() => setEditingWsName(false)}
-                    onKeyDown={(e) => e.key === "Enter" && setEditingWsName(false)}
-                    placeholder="My Workspace"
-                    className="flex-1 text-sm font-medium rounded-lg border border-border px-3.5 py-2.5 outline-none focus:border-indigo-500 bg-background text-foreground transition-colors shadow-sm"
-                  />
-                ) : (
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground truncate">{workspaceName || "My Workspace"}</p>
-                    <p className="text-xs text-muted mt-0.5">This is the name of your workspace.</p>
-                  </div>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setEditingWsName((v) => !v)}
-                  className="text-xs font-semibold rounded-lg border border-border px-3.5 py-2 bg-background hover:bg-border/30 transition-colors shrink-0"
-                >
-                  {editingWsName ? "Done" : "Edit"}
-                </button>
+              </div>
+              
+              <div className="border-t border-border pt-4">
+                <label className="block text-xs font-semibold text-foreground mb-1">Workspace Icon URL</label>
+                <input
+                  type="url"
+                  value={workspaceAvatar}
+                  onChange={(e) => setWorkspaceAvatar(e.target.value)}
+                  placeholder="https://example.com/logo.png"
+                  className="w-full text-xs rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-subtle font-mono text-foreground"
+                />
+                <p className="text-[11px] text-muted mt-1.5">Leave blank to use the default initial letter icon. Square images work best.</p>
               </div>
             </div>
 
