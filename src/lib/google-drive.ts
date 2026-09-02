@@ -18,9 +18,10 @@ export type DriveQuota = { usedBytes: number | null; totalBytes: number | null }
 export type DriveConnectionHealth = { status: DriveConnectionStatus; email: string | null; updatedAt: string | null; message: string; quota?: DriveQuota | null };
 
 function env(name: string) {
-  const value = process.env[name];
-  if (!value) throw new Error(`${name} is not configured`);
-  return value;
+  const raw = process.env[name];
+  if (!raw) throw new Error(`${name} is not configured`);
+  // ponytail: strip zero-width characters / UTF-8 BOM if present
+  return raw.replace(/^[﻿​‌‍￾]+|[﻿​‌‍￾]+$/g, "").trim();
 }
 
 function key() {
@@ -99,14 +100,15 @@ export async function getDriveConnectionHealth(userId: string): Promise<DriveCon
   }
   try {
     const accessToken = await tokenRequest({ refresh_token: decrypt(connection.refresh_token), grant_type: "refresh_token" });
-    const aboutRes = await fetch("https://www.googleapis.com/drive/v3/about?fields=storageQuota", {
+    const aboutRes = await fetch("https://www.googleapis.com/drive/v3/about?fields=storageQuota(limit,usage,usageInDrive)", {
       headers: { Authorization: `Bearer ${accessToken.access_token}` },
       cache: "no-store",
     });
-    const about = await aboutRes.json().catch(() => ({})) as { storageQuota?: { limit?: string; usage?: string } };
+    const about = await aboutRes.json().catch(() => ({})) as { storageQuota?: { limit?: string; usage?: string; usageInDrive?: string } };
     const quota = aboutRes.ok
       ? {
-          usedBytes: about.storageQuota?.usage ? Number(about.storageQuota.usage) : null,
+          // ponytail: prefer usageInDrive for individual drive file quota, fallback to general usage
+          usedBytes: about.storageQuota?.usageInDrive ? Number(about.storageQuota.usageInDrive) : about.storageQuota?.usage ? Number(about.storageQuota.usage) : null,
           totalBytes: about.storageQuota?.limit ? Number(about.storageQuota.limit) : null,
         }
       : null;

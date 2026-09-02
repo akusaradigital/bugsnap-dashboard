@@ -282,7 +282,6 @@ export default function DevToolsPanel({ capture }: Props) {
   const { t } = useT();
   const [activeTab, setActiveTab] = useState<Tab>("Info");
   const [logSearch, setLogSearch] = useState("");
-  const [showErrorsOnly, setShowErrorsOnly] = useState(true);
 
   const summaryOnly = !Array.isArray(capture.dev_logs) && isSummary(capture.dev_logs);
   const logs: DevLog[] = Array.isArray(capture.dev_logs)
@@ -322,10 +321,7 @@ export default function DevToolsPanel({ capture }: Props) {
     .filter((l): l is NetworkLog => l.type === "network")
     .filter((l) => {
       if (isTracker(l.url)) return false;
-      const matchesQuery = !logSearch || (l.url || "").toLowerCase().includes(logSearch.toLowerCase());
-      const isErr = !l.status || l.status >= 400 || normalizeLevel(l.level) === "error";
-      const matchesError = !showErrorsOnly || isErr;
-      return matchesQuery && matchesError;
+      return !logSearch || (l.url || "").toLowerCase().includes(logSearch.toLowerCase());
     });
 
   const eventTime = (log: TimedLog) => log.time || log.timestamp || "";
@@ -335,8 +331,7 @@ export default function DevToolsPanel({ capture }: Props) {
     .filter((log) => {
       const detail = log.type === "console" ? consoleText(log) : log.message || ("url" in log ? log.url : "") || "";
       if (isTracker(detail) || ("url" in log && isTracker(log.url))) return false;
-      const isError = log.type === "console" ? normalizeLevel(log.level) === "error" : false;
-      return (!logSearch || detail.toLowerCase().includes(logSearch.toLowerCase())) && (!showErrorsOnly || isError);
+      return !logSearch || detail.toLowerCase().includes(logSearch.toLowerCase());
     });
 
   const actionLogs = logs
@@ -463,28 +458,6 @@ export default function DevToolsPanel({ capture }: Props) {
                 className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-border text-xs bg-subtle outline-none focus:border-indigo-500 shadow-sm"
               />
             </div>
-            {(activeTab === "Console" || activeTab === "Network") && (
-              <div className="flex bg-border/40 p-0.5 rounded-lg shrink-0">
-                <button
-                  type="button"
-                  onClick={() => setShowErrorsOnly(false)}
-                  className={`flex-1 px-3 py-1 text-[10px] font-semibold rounded-md transition-colors ${
-                    !showErrorsOnly ? "bg-subtle text-foreground shadow-sm" : "text-muted hover:text-foreground"
-                  }`}
-                >
-                  {t("dt.all")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setShowErrorsOnly(true)}
-                  className={`flex-1 px-3 py-1 text-[10px] font-semibold rounded-md transition-colors flex items-center justify-center gap-1 ${
-                    showErrorsOnly ? "bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 shadow-sm border border-red-100 dark:border-red-800/40" : "text-muted hover:text-red-500 dark:hover:text-red-400"
-                  }`}
-                >
-                  {t("dt.errorsOnly")}
-                </button>
-              </div>
-            )}
           </div>
         )}
 

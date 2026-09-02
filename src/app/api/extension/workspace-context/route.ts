@@ -40,15 +40,20 @@ export async function POST(request: Request) {
 
   let folders: unknown[] = [];
   let projects: unknown[] = [];
+  let integrations: Record<string, unknown> = {};
   if (selectedWorkspaceId) {
-    const [{ data: folderRows, error: folderError }, { data: projectRows, error: projectError }] = await Promise.all([
+    const [{ data: folderRows, error: folderError }, { data: projectRows, error: projectError }, { data: settingsRow }] = await Promise.all([
       db.rpc("get_folders_by_workspace_and_email", { p_email: email, p_workspace_id: selectedWorkspaceId }),
       db.rpc("get_projects_by_workspace_and_email", { p_email: email, p_workspace_id: selectedWorkspaceId }),
+      db.from("workspace_settings").select("integrations").eq("workspace_id", selectedWorkspaceId).maybeSingle(),
     ]);
     if (folderError) return NextResponse.json({ error: folderError.message }, { status: 422 });
     if (projectError) return NextResponse.json({ error: projectError.message }, { status: 422 });
     folders = (folderRows ?? []) as unknown[];
     projects = (projectRows ?? []) as unknown[];
+    if (settingsRow?.integrations && typeof settingsRow.integrations === "object") {
+      integrations = settingsRow.integrations as Record<string, unknown>;
+    }
   }
 
   return NextResponse.json({
@@ -56,5 +61,6 @@ export async function POST(request: Request) {
     selectedWorkspaceId,
     folders,
     projects,
+    integrations,
   });
 }

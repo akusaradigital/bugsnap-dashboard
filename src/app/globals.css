@@ -65,9 +65,30 @@ summary {
   cursor: pointer;
 }
 
+/* Universal interactive hover & transition enhancements */
+a,
+button,
+[role="button"],
+select,
+summary {
+  transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease, opacity 0.15s ease, box-shadow 0.15s ease;
+}
+
 input,
 textarea {
   cursor: text;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Subtle interactive feedback for clickable buttons and cards lacking explicit background hover */
+button:not(:disabled):hover,
+[role="button"]:not([aria-disabled="true"]):hover {
+  filter: brightness(1.04);
+}
+
+.dark button:not(:disabled):hover,
+.dark [role="button"]:not([aria-disabled="true"]):hover {
+  filter: brightness(1.12);
 }
 
 @layer base {
