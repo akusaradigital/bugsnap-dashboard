@@ -48,6 +48,7 @@ export async function POST(req: Request) {
     const type = String(form.get("type") || "screenshot");
     const workspaceId = String(form.get("workspaceId") || "").trim();
     const projectId = String(form.get("projectId") || "").trim() || null;
+    const folderName = String(form.get("folderName") || "").trim() || null;
     const description = String(form.get("description") || "").trim();
     if (!(file instanceof File)) return NextResponse.json({ error: "Missing file" }, { status: 400 });
     if (!workspaceId) return NextResponse.json({ error: "Missing workspaceId" }, { status: 400 });
@@ -92,6 +93,7 @@ export async function POST(req: Request) {
         description: description || null,
         workspace_id: workspaceId,
         project_id: projectId,
+        folder_name: folderName,
         user_id: user.id,
         owner_email: user.email,
         source: "web_upload",

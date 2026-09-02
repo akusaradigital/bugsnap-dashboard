@@ -271,6 +271,92 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Akusara Suite / Ecosystem Section */}
+        <section className="border-t border-slate-200 bg-gradient-to-b from-white to-indigo-50/30 py-20">
+          <div className="mx-auto max-w-6xl px-6">
+            <div className="mx-auto max-w-2xl text-center mb-12">
+              <span className="inline-block px-3 py-1 text-[11px] font-semibold tracking-wider uppercase rounded-full bg-indigo-100 text-indigo-700 mb-3">
+                {t("landing.ecosystemEyebrow")}
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900">
+                {t("landing.ecosystemTitle")}
+              </h2>
+              <p className="mt-3 text-sm text-slate-600 leading-relaxed">
+                {t("landing.ecosystemSub")}
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {/* BugSnap Card (Active) */}
+              <div className="rounded-3xl border-2 border-indigo-500/40 bg-white/90 p-6 shadow-xl shadow-indigo-100/50 backdrop-blur-xl flex flex-col justify-between">
+                <div>
+                  <div className="w-10 h-10 rounded-2xl bg-indigo-600 text-white flex items-center justify-center text-xl shadow-md shadow-indigo-500/30 mb-4">
+                    📸
+                  </div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <h3 className="text-base font-bold text-slate-900">BugSnap</h3>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-200">This App</span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    {t("landing.ecosystemBugSnapDesc")}
+                  </p>
+                </div>
+                <div className="mt-6 pt-4 border-t border-slate-100 text-xs font-semibold text-indigo-600">
+                  Captures &amp; DevTools
+                </div>
+              </div>
+
+              {/* Aksora Card */}
+              <div className="rounded-3xl border border-white/70 bg-white/80 p-6 shadow-xl shadow-slate-200/60 backdrop-blur-xl flex flex-col justify-between hover:-translate-y-1 transition-transform">
+                <div>
+                  <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center text-xl shadow-md shadow-blue-500/30 mb-4">
+                    📋
+                  </div>
+                  <h3 className="text-base font-bold text-slate-900 mb-2">{t("landing.ecosystemAksoraTitle")}</h3>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    {t("landing.ecosystemAksoraDesc")}
+                  </p>
+                </div>
+                <div className="mt-6 pt-4 border-t border-slate-100">
+                  {/* ponytail: external link defaults to # if env var is unset */}
+                  <a
+                    href={process.env.NEXT_PUBLIC_AKSORA_URL || "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center text-xs font-semibold text-blue-600 hover:text-blue-700 gap-1"
+                  >
+                    {t("landing.ecosystemOpen")}
+                  </a>
+                </div>
+              </div>
+
+              {/* SnapTest Card */}
+              <div className="rounded-3xl border border-white/70 bg-white/80 p-6 shadow-xl shadow-slate-200/60 backdrop-blur-xl flex flex-col justify-between hover:-translate-y-1 transition-transform">
+                <div>
+                  <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center text-xl shadow-md shadow-emerald-500/30 mb-4">
+                    🤖
+                  </div>
+                  <h3 className="text-base font-bold text-slate-900 mb-2">{t("landing.ecosystemSnapTestTitle")}</h3>
+                  <p className="text-xs text-slate-600 leading-relaxed">
+                    {t("landing.ecosystemSnapTestDesc")}
+                  </p>
+                </div>
+                <div className="mt-6 pt-4 border-t border-slate-100">
+                  {/* ponytail: external link defaults to # if env var is unset */}
+                  <a
+                    href={process.env.NEXT_PUBLIC_SNAPTEST_URL || "#"}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center text-xs font-semibold text-emerald-600 hover:text-emerald-700 gap-1"
+                  >
+                    {t("landing.ecosystemOpen")}
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* FAQ Section */}
         <section className="border-t border-slate-200 bg-slate-50/30 py-20">
           <div className="mx-auto max-w-4xl px-6">

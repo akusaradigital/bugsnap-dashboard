@@ -565,28 +565,6 @@ function CapturesContent() {
     };
   }, [wsParam, folderParam, loadPage]);
 
-  // Check if BugSnap Chrome extension is installed via window postMessage bridge
-  const [extensionInstalled, setExtensionInstalled] = useState(false);
-
-  useEffect(() => {
-    function handleExtensionMessage(event: MessageEvent) {
-      if (event.data?.source === "bugsnap-extension") {
-        setExtensionInstalled(true);
-      }
-    }
-    window.addEventListener("message", handleExtensionMessage);
-    window.postMessage({ source: "bugsnap-web", action: "ping" }, "*");
-    return () => window.removeEventListener("message", handleExtensionMessage);
-  }, []);
-
-  function handleNewCaptureClick(e: React.MouseEvent) {
-    if (extensionInstalled) {
-      e.preventDefault();
-      window.postMessage({ source: "bugsnap-web", action: "trigger_capture", mode: "area" }, "*");
-    }
-    // If not installed, link naturally navigates to Chrome Web Store URL
-  }
-
   // Handle Escape key to cancel/clear active selection
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -756,6 +734,12 @@ function CapturesContent() {
       form.append("title", title);
       form.append("type", file.type.startsWith("video/") ? "video" : "screenshot");
       form.append("workspaceId", workspaceParam);
+      if (folderParam) {
+        form.append("folderName", folderParam);
+      }
+      if (projectFilter) {
+        form.append("projectId", projectFilter);
+      }
       const { data: sessionData } = await supabase.auth.getSession();
       const response = await fetch("/api/captures/upload", {
         method: "POST",
@@ -940,17 +924,6 @@ function CapturesContent() {
             </svg>
             {uploading ? "Uploading..." : "Upload file"}
           </label>
-          <a
-            href={CHROME_WEB_STORE_URL}
-            onClick={handleNewCaptureClick}
-            target={extensionInstalled ? undefined : "_blank"}
-            rel={extensionInstalled ? undefined : "noopener noreferrer"}
-            title={extensionInstalled ? "Start a new screen capture" : "Install BugSnap from the Chrome Web Store"}
-            className="h-10 flex items-center justify-center gap-2 px-4 bg-emerald-400 text-white text-sm font-medium rounded-lg hover:bg-emerald-500 transition-colors whitespace-nowrap cursor-pointer shadow-sm"
-          >
-            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4"/></svg>
-            {t("cap.newCapture")}
-          </a>
         </div>
       </div>
 

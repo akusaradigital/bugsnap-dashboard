@@ -344,13 +344,15 @@ export default function DashboardLayout({
 
         if (!active) return;
         setWorkspaces(rows);
-        // Initialize from the URL ?ws= param when valid, else first workspace.
-        const initialWs =
-          wsParam && rows.some((w) => w.id === wsParam)
-            ? wsParam
-            : rows[0]?.id ?? null;
+        // Initialize from the URL ?ws= param (by ID or name) when valid, else first workspace.
+        const matchedWs = wsParam
+          ? rows.find((w) => w.id === wsParam || w.name.toLowerCase() === wsParam.toLowerCase())
+          : null;
+        const initialWs = matchedWs ? matchedWs.id : rows[0]?.id ?? null;
         setActiveWsId(initialWs);
-        if (!wsParam && initialWs) {
+        if (matchedWs && matchedWs.id !== wsParam) {
+          router.replace(`${pathname}?ws=${matchedWs.id}`, { scroll: false });
+        } else if (!wsParam && initialWs) {
           router.replace(`${pathname}?ws=${initialWs}`, { scroll: false });
         }
       } catch (err) {
@@ -1155,6 +1157,50 @@ export default function DashboardLayout({
               {t("nav.admin")}
             </Link>
           )}
+
+          {/* Sister Apps Entry Points (Aksora & SnapTest) */}
+          <div className="pt-3 mt-2 border-t border-border/60 space-y-1">
+            <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted">
+              {t("nav.sisterApps")}
+            </p>
+            {/* ponytail: pass current workspace name as ?ws= param for instant cross-app context sync */}
+            <a
+              href={
+                process.env.NEXT_PUBLIC_AKSORA_URL
+                  ? `${process.env.NEXT_PUBLIC_AKSORA_URL}${activeWs?.name ? `?ws=${encodeURIComponent(activeWs.name)}` : ""}`
+                  : "#"
+              }
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between px-3 py-2 text-xs font-medium rounded-lg text-muted hover:text-foreground hover:bg-subtle transition-colors group"
+            >
+              <span className="flex items-center gap-2.5">
+                <span className="text-sm" aria-hidden="true">📋</span>
+                {t("nav.aksora")}
+              </span>
+              <svg className="w-3 h-3 text-muted/60 group-hover:text-foreground transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
+            <a
+              href={
+                process.env.NEXT_PUBLIC_SNAPTEST_URL
+                  ? `${process.env.NEXT_PUBLIC_SNAPTEST_URL}${activeWs?.name ? `?ws=${encodeURIComponent(activeWs.name)}` : ""}`
+                  : "#"
+              }
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center justify-between px-3 py-2 text-xs font-medium rounded-lg text-muted hover:text-foreground hover:bg-subtle transition-colors group"
+            >
+              <span className="flex items-center gap-2.5">
+                <span className="text-sm" aria-hidden="true">🤖</span>
+                {t("nav.snaptest")}
+              </span>
+              <svg className="w-3 h-3 text-muted/60 group-hover:text-foreground transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+              </svg>
+            </a>
+          </div>
 
           {/* Google Drive Folders List (Sync Bridge) */}
           <div className="pt-4 mt-2 border-t border-border/60 space-y-1.5">

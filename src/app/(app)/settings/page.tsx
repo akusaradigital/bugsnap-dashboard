@@ -14,6 +14,28 @@ import { Dropdown } from "@/components/Dropdown";
 // ── Integration catalogue (same order as extension editor.html) ─────────────
 const INTEGRATIONS = [
   {
+    id: "aksora",
+    name: "Aksora",
+    desc: "Connect your Aksora QA Workspace to push bug tickets directly.",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none">
+        <rect width="24" height="24" rx="5" fill="#6366F1" />
+        <path d="M7 17L12 7L17 17M9 14H15" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
+  {
+    id: "snaptest",
+    name: "SnapTest AI",
+    desc: "Forward captures directly into automated test suites and test runs.",
+    icon: (
+      <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none">
+        <rect width="24" height="24" rx="5" fill="#EC4899" />
+        <path d="M13 3L4 14H11L10 21L19 10H12L13 3Z" fill="white" />
+      </svg>
+    ),
+  },
+  {
     id: "slack",
     name: "Slack",
     desc: "Send bug captures directly to Slack channels.",
@@ -225,8 +247,20 @@ function SettingsContent() {
   const [inviting, setInviting] = useState(false);
   const [inviteMsg, setInviteMsg] = useState<{type:"ok"|"err"; text:string} | null>(null);
 
-  // Integration search
+  // Integration search & settings
   const [intSearch, setIntSearch] = useState("");
+  const [wsIntegrations, setWsIntegrations] = useState<Record<string, Record<string, string>>>({});
+  const [activeModalInt, setActiveModalInt] = useState<string | null>(null);
+  const [intModalForm, setIntModalForm] = useState<{ url: string; apiKey: string }>({ url: "", apiKey: "" });
+  const [intModalSaving, setIntModalSaving] = useState(false);
+
+  // BugSnap API Keys state
+  const [apiKeys, setApiKeys] = useState<Array<{ id: string; name: string; prefix: string; createdAt: string; lastUsedAt: string | null }>>([]);
+  const [apiKeysLoading, setApiKeysLoading] = useState(false);
+  const [newKeyName, setNewKeyName] = useState("");
+  const [creatingKey, setCreatingKey] = useState(false);
+  const [revokingKeyId, setRevokingKeyId] = useState<string | null>(null);
+  const [revealedBugsnapKey, setRevealedBugsnapKey] = useState<{ rawKey: string; name: string } | null>(null);
 
   // ── Init ──────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -279,6 +313,9 @@ function SettingsContent() {
           setCustomDomain(wsSet.custom_domain || "");
           setAutoDeleteMonths(wsSet.auto_delete_months ?? 3);
           setAutoDeleteEnabled(wsSet.auto_delete_months !== 0);
+          if (wsSet.integrations && typeof wsSet.integrations === "object") {
+            setWsIntegrations(wsSet.integrations as Record<string, Record<string, string>>);
+          }
         }
       } else {
         const { data: myWs } = await supabase.rpc("get_my_workspaces");
@@ -478,6 +515,140 @@ function SettingsContent() {
     } catch (e) { setInviteMsg({ type:"err", text: (e as {message?:string})?.message || t("members.inviteFailed") }); showToast("Invite failed", "error"); }
     finally { setInviting(false); }
   }
+
+  async function handleSaveIntegration(id: string) {
+    if (!activeWsId) {
+      showToast(t("settings.noWs"), "error");
+      return;
+    }
+    setIntModalSaving(true);
+    try {
+      const updatedIntegrations = {
+        ...wsIntegrations,
+        [id]: {
+          url: intModalForm.url.trim(),
+          apiKey: intModalForm.apiKey.trim(),
+        }
+      };
+
+      const { error } = await supabase.from("workspace_settings").upsert({
+        workspace_id: activeWsId,
+        integrations: updatedIntegrations,
+        updated_at: new Date().toISOString(),
+      });
+      if (error) throw error;
+      setWsIntegrations(updatedIntegrations);
+      setActiveModalInt(null);
+      showToast(`${id === "aksora" ? "Aksora" : "SnapTest"} integration saved`, "success");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to save integration";
+      showToast(msg, "error");
+    } finally {
+      setIntModalSaving(false);
+    }
+  }
+
+  async function handleDisconnectIntegration(id: string) {
+    if (!activeWsId) return;
+    setIntModalSaving(true);
+    try {
+      const updatedIntegrations = { ...wsIntegrations };
+      delete updatedIntegrations[id];
+
+      const { error } = await supabase.from("workspace_settings").upsert({
+        workspace_id: activeWsId,
+        integrations: updatedIntegrations,
+        updated_at: new Date().toISOString(),
+      });
+      if (error) throw error;
+      setWsIntegrations(updatedIntegrations);
+      setActiveModalInt(null);
+      showToast("Integration disconnected", "success");
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to disconnect";
+      showToast(msg, "error");
+    } finally {
+      setIntModalSaving(false);
+    }
+  }
+
+  // BugSnap API Keys handlers
+  async function loadBugsnapApiKeys() {
+    if (!activeWsId) return;
+    setApiKeysLoading(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return;
+      const res = await fetch(`/api/settings/api-keys?workspaceId=${encodeURIComponent(activeWsId)}`, {
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setApiKeys(data.keys || []);
+      }
+    } catch {
+      // Non-blocking
+    } finally {
+      setApiKeysLoading(false);
+    }
+  }
+
+  async function handleCreateBugsnapApiKey(e: React.FormEvent) {
+    e.preventDefault();
+    if (!activeWsId || !newKeyName.trim()) return;
+    setCreatingKey(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Not authenticated");
+      const res = await fetch("/api/settings/api-keys", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify({ workspaceId: activeWsId, name: newKeyName.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to create API key");
+      setRevealedBugsnapKey({ rawKey: data.key.rawKey, name: data.key.name });
+      setNewKeyName("");
+      showToast("BugSnap API key created", "success");
+      await loadBugsnapApiKeys();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to create key";
+      showToast(msg, "error");
+    } finally {
+      setCreatingKey(false);
+    }
+  }
+
+  async function handleRevokeBugsnapApiKey(id: string) {
+    if (!activeWsId || !confirm("Revoke this BugSnap API key? Any tools using it will lose access immediately.")) return;
+    setRevokingKeyId(id);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) throw new Error("Not authenticated");
+      const res = await fetch(`/api/settings/api-keys?workspaceId=${encodeURIComponent(activeWsId)}&id=${encodeURIComponent(id)}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${session.access_token}` },
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to revoke API key");
+      showToast("API key revoked", "success");
+      await loadBugsnapApiKeys();
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : "Failed to revoke key";
+      showToast(msg, "error");
+    } finally {
+      setRevokingKeyId(null);
+    }
+  }
+
+  useEffect(() => {
+    if (activeTab === "integrations" && activeWsId) {
+      loadBugsnapApiKeys();
+    }
+  }, [activeTab, activeWsId]);
 
   // ── Helper ────────────────────────────────────────────────────────────────
   function setTab(tab: Tab) {
@@ -1090,24 +1261,155 @@ function SettingsContent() {
               </div>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {filteredIntegrations.map(int => (
-                <div key={int.id} className="rounded-xl border border-border bg-background p-4 flex items-start gap-3 hover:border-indigo-200 transition-colors">
-                  <div className="shrink-0 w-10 h-10 rounded-lg border border-border bg-background flex items-center justify-center">
-                    {int.icon}
+              {filteredIntegrations.map(int => {
+                const isCustomConfigurable = int.id === "aksora" || int.id === "snaptest";
+                const config = wsIntegrations[int.id];
+                const isConnected = !!(config && (config.url || config.apiKey));
+
+                return (
+                  <div key={int.id} className="rounded-xl border border-border bg-background p-4 flex items-start gap-3 hover:border-indigo-200 transition-colors">
+                    <div className="shrink-0 w-10 h-10 rounded-lg border border-border bg-background flex items-center justify-center">
+                      {int.icon}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm font-semibold text-foreground">{int.name}</p>
+                        {isCustomConfigurable && isConnected && (
+                          <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-800/40 px-1.5 py-0.2 rounded-full">
+                            Connected
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted mt-0.5 leading-snug">{int.desc}</p>
+                      {isCustomConfigurable && isConnected && config.url && (
+                        <p className="text-[11px] text-muted font-mono truncate mt-1">{config.url}</p>
+                      )}
+                    </div>
+                    {isCustomConfigurable ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActiveModalInt(int.id);
+                          setIntModalForm({
+                            url: config?.url || (int.id === "snaptest" ? "http://localhost:3000" : ""),
+                            apiKey: config?.apiKey || ""
+                          });
+                        }}
+                        className={`shrink-0 text-xs font-semibold hover:underline mt-0.5 ${isConnected ? "text-muted hover:text-foreground" : "text-indigo-600"}`}
+                      >
+                        {isConnected ? "Configure" : "Connect"}
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => alert(`${int.name} integration coming soon!`)}
+                        className="shrink-0 text-xs font-semibold text-indigo-600 hover:underline mt-0.5"
+                      >
+                        Connect
+                      </button>
+                    )}
                   </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground">{int.name}</p>
-                    <p className="text-xs text-muted mt-0.5 leading-snug">{int.desc}</p>
-                  </div>
-                  <button type="button"
-                    onClick={() => alert(`${int.name} integration coming soon!`)}
-                    className="shrink-0 text-xs font-semibold text-indigo-600 hover:underline mt-0.5">
-                    Connect
-                  </button>
-                </div>
-              ))}
+                );
+              })}
             </div>
             {filteredIntegrations.length === 0 && <p className="text-sm text-muted text-center py-8">No integrations match your search.</p>}
+
+            {/* ── BugSnap Public API Keys ─────────────────────────────────── */}
+            <div className="rounded-xl border border-border bg-background p-4 space-y-4 pt-5 border-t-2">
+              <div>
+                <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  <span>BugSnap API Keys</span>
+                  <span className="text-[10px] font-semibold text-indigo-600 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/40 px-2 py-0.5 rounded-full">
+                    Inbound API
+                  </span>
+                </h2>
+                <p className="text-xs text-muted mt-0.5">
+                  Generate API keys to let Aksora, SnapTest, CI/CD pipelines, and other external services push captures directly into this workspace.
+                </p>
+              </div>
+
+              {revealedBugsnapKey && (
+                <div className="p-3.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 space-y-2">
+                  <p className="text-xs font-semibold">Save your BugSnap API Key: &ldquo;{revealedBugsnapKey.name}&rdquo;</p>
+                  <p className="text-[11px] text-amber-800/80 dark:text-amber-300/80">
+                    This key will never be shown again. Copy it now to authenticate requests with <code className="font-mono bg-black/10 px-1 py-0.5 rounded">Authorization: Bearer bugsnap_...</code>
+                  </p>
+                  <div className="flex items-center gap-2 pt-1">
+                    <code className="flex-1 px-3 py-1.5 bg-black/10 dark:bg-black/40 rounded text-xs font-mono select-all overflow-x-auto">
+                      {revealedBugsnapKey.rawKey}
+                    </code>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        navigator.clipboard.writeText(revealedBugsnapKey.rawKey);
+                        showToast("API key copied!", "success");
+                      }}
+                      className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded text-xs font-medium"
+                    >
+                      Copy
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setRevealedBugsnapKey(null)}
+                      className="px-3 py-1.5 bg-border hover:bg-border/80 text-foreground rounded text-xs"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              <form onSubmit={handleCreateBugsnapApiKey} className="flex gap-2">
+                <input
+                  type="text"
+                  placeholder="Key name (e.g. SnapTest AI Integration)"
+                  value={newKeyName}
+                  onChange={(e) => setNewKeyName(e.target.value)}
+                  className="flex-1 text-xs rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-background"
+                />
+                <button
+                  type="submit"
+                  disabled={creatingKey || !newKeyName.trim()}
+                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shrink-0"
+                >
+                  {creatingKey ? "Generating…" : "Generate Key"}
+                </button>
+              </form>
+
+              <div className="space-y-2 pt-2">
+                <h3 className="text-[11px] font-semibold text-muted uppercase tracking-wider">Active Workspace Keys</h3>
+                {apiKeysLoading ? (
+                  <p className="text-xs text-muted py-2">Loading API keys…</p>
+                ) : apiKeys.length === 0 ? (
+                  <p className="text-xs text-muted py-2 italic">No active API keys for this workspace.</p>
+                ) : (
+                  <div className="divide-y divide-border/60">
+                    {apiKeys.map((k) => (
+                      <div key={k.id} className="py-2 flex items-center justify-between gap-3">
+                        <div className="min-w-0 space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-medium text-foreground truncate">{k.name}</span>
+                            <code className="text-[10px] px-1.5 py-0.5 rounded bg-border/40 font-mono text-muted">{k.prefix}...</code>
+                          </div>
+                          <p className="text-[10px] text-muted">
+                            Created: {new Date(k.createdAt).toLocaleDateString()} &bull; Last used:{" "}
+                            {k.lastUsedAt ? new Date(k.lastUsedAt).toLocaleDateString() : "Never"}
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleRevokeBugsnapApiKey(k.id)}
+                          disabled={revokingKeyId === k.id}
+                          className="text-xs text-red-600 hover:underline disabled:opacity-50 shrink-0"
+                        >
+                          {revokingKeyId === k.id ? "Revoking…" : "Revoke"}
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         )}
 
@@ -1364,6 +1666,90 @@ function SettingsContent() {
             <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-border">
               <button type="button" onClick={() => setConnectDriveModalOpen(false)} disabled={driveActionLoading} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-border/30 rounded-lg disabled:opacity-50">{t("common.cancel")}</button>
               <button type="button" onClick={connectDrive} disabled={driveActionLoading} className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50">{driveActionLoading ? t("settings.connecting") : driveStatus === "reconnect_required" ? "Reconnect with Google" : t("settings.continueToGoogle")}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Integration Modal (Aksora & SnapTest) */}
+      {activeModalInt && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+          <button className="absolute inset-0 bg-black/40 backdrop-blur-xs" aria-label="Close" onClick={() => !intModalSaving && setActiveModalInt(null)} />
+          <div className="relative w-full max-w-md rounded-xl border border-border bg-background p-6 shadow-xl space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="shrink-0 w-8 h-8 rounded-lg border border-border bg-background flex items-center justify-center">
+                {INTEGRATIONS.find(i => i.id === activeModalInt)?.icon}
+              </div>
+              <div>
+                <h2 className="text-base font-bold text-foreground">
+                  {activeModalInt === "aksora" ? "Aksora QA Workspace" : "SnapTest AI QA Suite"}
+                </h2>
+                <p className="text-xs text-muted">Configure workspace integration credentials</p>
+              </div>
+            </div>
+
+            <div className="space-y-3 pt-1">
+              <div>
+                <label className="block text-xs font-semibold text-foreground mb-1">
+                  Instance URL
+                </label>
+                <input
+                  type="url"
+                  placeholder={activeModalInt === "aksora" ? "https://your-aksora-instance.com" : "http://localhost:3000"}
+                  value={intModalForm.url}
+                  onChange={(e) => setIntModalForm(prev => ({ ...prev, url: e.target.value }))}
+                  className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-background font-mono text-xs"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-foreground mb-1">
+                  API Key / Token {activeModalInt === "snaptest" && <span className="text-muted font-normal">(Optional)</span>}
+                </label>
+                <input
+                  type="password"
+                  placeholder={activeModalInt === "aksora" ? "aksora_..." : "Token (optional)"}
+                  value={intModalForm.apiKey}
+                  onChange={(e) => setIntModalForm(prev => ({ ...prev, apiKey: e.target.value }))}
+                  className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-background font-mono text-xs"
+                />
+                {activeModalInt === "aksora" && (
+                  <p className="text-[11px] text-muted mt-1">
+                    Generate an API key with write permissions from Aksora &gt; Settings &gt; API Keys.
+                  </p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-3 pt-4 border-t border-border">
+              {wsIntegrations[activeModalInt] ? (
+                <button
+                  type="button"
+                  onClick={() => handleDisconnectIntegration(activeModalInt)}
+                  disabled={intModalSaving}
+                  className="text-xs font-semibold text-red-600 hover:underline disabled:opacity-50"
+                >
+                  Disconnect
+                </button>
+              ) : <div />}
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setActiveModalInt(null)}
+                  disabled={intModalSaving}
+                  className="px-3 py-1.5 text-xs font-medium text-foreground hover:bg-border/30 rounded-lg disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleSaveIntegration(activeModalInt)}
+                  disabled={intModalSaving}
+                  className="px-4 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 disabled:opacity-50"
+                >
+                  {intModalSaving ? "Saving..." : "Save Credentials"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
