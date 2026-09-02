@@ -4,6 +4,15 @@ export const runtime = "nodejs";
 export async function POST(request: Request) {
   const user = await authenticatedUser(request);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  try { return NextResponse.json({ url: await createConnectUrl(user.id) }); }
-  catch { return NextResponse.json({ error: "Unable to start Google authorization" }, { status: 500 }); }
+  try {
+    const url = await createConnectUrl(user.id);
+    return NextResponse.json({ url });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error("[/api/google-drive/connect] Failed to create connect URL:", err);
+    return NextResponse.json({
+      error: "Unable to start Google authorization",
+      details: message
+    }, { status: 500 });
+  }
 }
