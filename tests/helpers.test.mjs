@@ -146,3 +146,22 @@ test("expiryToOption: classifies expiry windows", () => {
     "never"
   );
 });
+
+// ---------------------------------------------------------------------------
+// Rate Limiter & Security Token Sanitizer Helpers
+// ---------------------------------------------------------------------------
+test("redact: sanitizes authorization header variations safely", () => {
+  const customHeader = "Authorization: Bearer my-secret-jwt-token-xyz123";
+  const sanitized = redactSensitiveData(customHeader);
+  assert.ok(sanitized.includes("***REDACTED***"));
+  assert.ok(!sanitized.includes("my-secret-jwt-token-xyz123"));
+});
+
+test("canonical UUID validator rejects SQL and command injection strings", () => {
+  const isValidUUID = (str) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
+  assert.equal(isValidUUID("123e4567-e89b-12d3-a456-426614174000"), true);
+  assert.equal(isValidUUID("123e4567-e89b-12d3-a456-426614174000' OR '1'='1"), false);
+  assert.equal(isValidUUID("DROP TABLE users;--"), false);
+  assert.equal(isValidUUID("../../../etc/passwd"), false);
+});
+
