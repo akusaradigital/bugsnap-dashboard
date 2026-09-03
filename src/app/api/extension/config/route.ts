@@ -20,6 +20,7 @@ export async function GET() {
     {
       supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
       supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      googleDriveClientId: process.env.GOOGLE_DRIVE_CLIENT_ID,
       apiVersion: "1.0.24",
       features: {
         watermark: true,

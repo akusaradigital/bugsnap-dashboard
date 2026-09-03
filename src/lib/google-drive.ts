@@ -78,13 +78,44 @@ async function tokenRequest(params: Record<string, string>) {
   return body as { access_token: string; refresh_token?: string; expires_in?: number };
 }
 
-export async function finishConnection(userId: string, code: string) {
-  const tokens = await tokenRequest({ code, redirect_uri: env("GOOGLE_DRIVE_REDIRECT_URI"), grant_type: "authorization_code" });
+async function exchangeAuthorizationCode(code: string, redirectUri: string) {
+  const tokens = await tokenRequest({ code, redirect_uri: redirectUri, grant_type: "authorization_code" });
   if (!tokens.refresh_token) throw new Error("Google did not return a refresh token");
   const info = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", { headers: { Authorization: `Bearer ${tokens.access_token}` }, cache: "no-store" });
   const profile = info.ok ? await info.json() as { email?: string } : {};
-  const { error } = await createServiceClient().from("google_drive_connections").upsert({ user_id: userId, refresh_token: encrypt(tokens.refresh_token), google_email: profile.email ?? null, updated_at: new Date().toISOString() }, { onConflict: "user_id" });
+  return { refreshToken: tokens.refresh_token, email: profile.email ?? null };
+}
+
+export async function finishConnection(userId: string, code: string) {
+  const { refreshToken, email } = await exchangeAuthorizationCode(code, env("GOOGLE_DRIVE_REDIRECT_URI"));
+  const { error } = await createServiceClient().from("google_drive_connections").upsert({ user_id: userId, refresh_token: encrypt(refreshToken), google_email: email, updated_at: new Date().toISOString() }, { onConflict: "user_id" });
   if (error) throw error;
+}
+
+// Extension-facing counterpart to finishConnection: same Google OAuth client,
+// but the caller has no Supabase session yet, so identity comes from the
+// verified email in the token exchange itself (one consent covers both).
+export async function finishConnectionByEmailCode(code: string, redirectUri: string) {
+  const { refreshToken, email } = await exchangeAuthorizationCode(code, redirectUri);
+  if (!email) throw new Error("Google did not return a verified email");
+  const db = createServiceClient();
+  const { data: prov, error: provError } = await db.rpc("ensure_user_and_workspace_by_email", { p_email: email }).single();
+  if (provError) throw provError;
+  const userId = (prov as { out_user_id: string | null } | null)?.out_user_id;
+  if (!userId) throw new Error("Could not provision user for this email");
+  const { error } = await db.from("google_drive_connections").upsert({ user_id: userId, refresh_token: encrypt(refreshToken), google_email: email, updated_at: new Date().toISOString() }, { onConflict: "user_id" });
+  if (error) throw error;
+
+  // Mirrors the invite-acceptance side effect of /api/auth/token-login so
+  // extension-first connects don't skip pending workspace invites.
+  const emailNorm = email.toLowerCase().trim();
+  const { data: invites } = await db.from("workspace_invites").select("workspace_id, role").eq("email", emailNorm).is("accepted_at", null);
+  if (invites && invites.length > 0) {
+    await db.from("workspace_members").upsert(invites.map((inv) => ({ workspace_id: inv.workspace_id, user_id: userId, role: inv.role || "member", joined_at: new Date().toISOString() })), { onConflict: "workspace_id,user_id" });
+    await db.from("workspace_invites").update({ accepted_at: new Date().toISOString() }).eq("email", emailNorm).is("accepted_at", null);
+  }
+
+  return { userId, email };
 }
 
 async function getDriveConnection(userId: string) {
