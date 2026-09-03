@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { useT } from "@/components/I18nProvider";
+import { decompressDevLogs } from "@/lib/devlogs-compression";
 
 interface TimedLog {
   time?: string | number;
@@ -121,7 +122,7 @@ export interface DevLogSummary {
   failedUrls?: string[];
 }
 
-export type CapturedLogs = DevLog[] | DevLogSummary | null;
+export type CapturedLogs = DevLog[] | DevLogSummary | string | null;
 
 function isSummary(logs: unknown): logs is DevLogSummary {
   return !!logs && typeof logs === "object" && typeof (logs as Record<string, unknown>).version === "number";
@@ -282,12 +283,24 @@ export default function DevToolsPanel({ capture }: Props) {
   const { t } = useT();
   const [activeTab, setActiveTab] = useState<Tab>("Info");
   const [logSearch, setLogSearch] = useState("");
+  const [decompressedLogs, setDecompressedLogs] = useState<CapturedLogs>(capture.dev_logs || null);
 
-  const summaryOnly = !Array.isArray(capture.dev_logs) && isSummary(capture.dev_logs);
-  const logs: DevLog[] = Array.isArray(capture.dev_logs)
-    ? (capture.dev_logs as unknown[]).map((log) => normalizeDevLog((log || {}) as Record<string, unknown>))
+  useEffect(() => {
+    if (typeof capture.dev_logs === "string" && capture.dev_logs.startsWith("gz:")) {
+      decompressDevLogs(capture.dev_logs).then((res) => {
+        if (res) setDecompressedLogs(res as CapturedLogs);
+      });
+    } else {
+      setDecompressedLogs(capture.dev_logs || null);
+    }
+  }, [capture.dev_logs]);
+
+  const effectiveDevLogs = decompressedLogs;
+  const summaryOnly = !Array.isArray(effectiveDevLogs) && isSummary(effectiveDevLogs);
+  const logs: DevLog[] = Array.isArray(effectiveDevLogs)
+    ? (effectiveDevLogs as unknown[]).map((log) => normalizeDevLog((log || {}) as Record<string, unknown>))
     : [];
-  const summary = summaryOnly ? (capture.dev_logs as DevLogSummary) : null;
+  const summary = summaryOnly ? (effectiveDevLogs as DevLogSummary) : null;
 
   const earliestTimestamp = logs.reduce<number>((min, log) => {
     const raw = log.timestamp;

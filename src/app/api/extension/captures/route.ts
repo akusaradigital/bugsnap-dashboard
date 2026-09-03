@@ -43,13 +43,21 @@ export async function POST(request: Request) {
   const driveUrl = typeof input.p_drive_url === "string" ? input.p_drive_url.trim() : "";
   if (!title || !driveUrl) return NextResponse.json({ error: "title and drive URL are required" }, { status: 400 });
 
+  const rawLogs = input.p_dev_logs;
+  const devLogsValue =
+    typeof rawLogs === "string"
+      ? rawLogs
+      : Array.isArray(rawLogs) || (rawLogs && typeof rawLogs === "object")
+        ? rawLogs
+        : null;
+
   const db = createServiceClient();
   const { data, error } = await db.rpc("insert_capture_by_email", {
     p_owner_email: email,
     p_title: title,
     p_type: type,
     p_drive_url: driveUrl,
-    p_dev_logs: Array.isArray(input.p_dev_logs) || (input.p_dev_logs && typeof input.p_dev_logs === "object") ? input.p_dev_logs : null,
+    p_dev_logs: devLogsValue,
     p_window_size: typeof input.p_window_size === "string" ? input.p_window_size : null,
     p_description: typeof input.p_description === "string" ? input.p_description : null,
     p_duration: typeof input.p_duration === "number" ? input.p_duration : null,
@@ -60,5 +68,18 @@ export async function POST(request: Request) {
     p_workspace_id: typeof input.p_workspace_id === "string" ? input.p_workspace_id : null,
   });
   if (error) return NextResponse.json({ error: error.message, code: error.code }, { status: 422 });
+
+  // Non-blocking trigger for workspace team webhooks (Discord / Slack / Telegram)
+  if (data) {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://bugsnap.akusaraproject.my.id";
+    fetch(`${appUrl}/api/notifications/capture`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ capture_id: data }),
+    }).catch((err) => {
+      console.warn("Background webhook dispatch notification notice:", err);
+    });
+  }
+
   return NextResponse.json({ id: data });
 }

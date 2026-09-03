@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { authenticatedUser } from "@/lib/google-drive";
 import { createServiceClient } from "@/lib/supabase-server";
+import { decompressDevLogs } from "@/lib/devlogs-compression";
 
 export const runtime = "nodejs";
 
@@ -89,7 +90,11 @@ export async function POST(
     ].filter(Boolean);
 
     const envBlock = envParts.length ? `\n\n### Environment\n${envParts.map((p) => `- ${p}`).join("\n")}` : "";
-    const logSummary = summarizeDevLogs(capture.dev_logs);
+    const rawLogs = capture.dev_logs;
+    const resolvedLogs = typeof rawLogs === "string" && rawLogs.startsWith("gz:")
+      ? await decompressDevLogs(rawLogs)
+      : rawLogs;
+    const logSummary = summarizeDevLogs(resolvedLogs);
     const fullDescription = `${capture.description || "Bug report captured via BugSnap."}${envBlock}${logSummary}\n\n[View BugSnap Capture](${capture.drive_url || ""})`;
 
     const taskPayload = {

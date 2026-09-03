@@ -254,6 +254,10 @@ function SettingsContent() {
   const [intModalForm, setIntModalForm] = useState<{ url: string; apiKey: string }>({ url: "", apiKey: "" });
   const [intModalSaving, setIntModalSaving] = useState(false);
 
+  // Webhook test state
+  const [testingWebhook, setTestingWebhook] = useState(false);
+  const [webhookTestResult, setWebhookTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
+
   // BugSnap API Keys state
   const [apiKeys, setApiKeys] = useState<Array<{ id: string; name: string; prefix: string; createdAt: string; lastUsedAt: string | null }>>([]);
   const [apiKeysLoading, setApiKeysLoading] = useState(false);
@@ -1426,10 +1430,46 @@ function SettingsContent() {
                 )}
               </div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Webhook URL</label>
-              <input type="url" value={webhookUrl} onChange={e=>setWebhookUrl(e.target.value)}
-                placeholder="https://hooks.slack.com/services/..."
-                className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-background font-mono" />
-              <p className="text-[11px] text-muted">We POST a JSON payload with capture URL, thumbnail, and metadata when a new bug is saved.</p>
+              <div className="flex gap-2">
+                <input type="url" value={webhookUrl} onChange={e=>{setWebhookUrl(e.target.value); setWebhookTestResult(null);}}
+                  placeholder="https://hooks.slack.com/services/... or https://discord.com/api/webhooks/..."
+                  className="flex-1 text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-background font-mono" />
+                <button
+                  type="button"
+                  disabled={!webhookUrl.trim() || testingWebhook}
+                  onClick={async () => {
+                    setTestingWebhook(true);
+                    setWebhookTestResult(null);
+                    try {
+                      const res = await fetch("/api/webhooks/test", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ url: webhookUrl }),
+                      });
+                      const json = await res.json().catch(() => ({}));
+                      if (res.ok) {
+                        setWebhookTestResult({ ok: true, msg: "Test payload delivered successfully! Check your channel." });
+                      } else {
+                        setWebhookTestResult({ ok: false, msg: json.error || "Failed to deliver test payload" });
+                      }
+                    } catch (err) {
+                      setWebhookTestResult({ ok: false, msg: err instanceof Error ? err.message : "Network error" });
+                    } finally {
+                      setTestingWebhook(false);
+                    }
+                  }}
+                  className="rounded-lg border border-border bg-subtle px-4 py-2 text-xs font-semibold text-foreground hover:bg-subtle/80 hover:border-accent/40 disabled:opacity-50 transition-all shrink-0"
+                >
+                  {testingWebhook ? "Testing…" : "Send Test"}
+                </button>
+              </div>
+              {webhookTestResult && (
+                <div className={`p-2.5 rounded-lg text-xs font-medium border ${webhookTestResult.ok ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40" : "bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/40"}`}>
+                  {webhookTestResult.ok ? "✓ " : "✕ "}
+                  {webhookTestResult.msg}
+                </div>
+              )}
+              <p className="text-[11px] text-muted">We POST a JSON payload with capture URL, thumbnail, DevTools error diagnostics, and system metadata when a new bug is saved.</p>
             </div>
             {saveError && <p className="text-xs text-red-600">{saveError}</p>}
             <div>
