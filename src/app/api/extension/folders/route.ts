@@ -8,6 +8,7 @@ async function emailFromGoogleToken(accessToken: string) {
   if (!res.ok) throw new Error("Invalid Google token");
   const user = await res.json();
   if (!user.email) throw new Error("Google token has no email");
+  if (user.email_verified !== true) throw new Error("A verified Google email is required");
   return String(user.email).trim().toLowerCase();
 }
 

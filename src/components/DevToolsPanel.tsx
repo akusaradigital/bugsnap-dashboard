@@ -252,7 +252,7 @@ function FormattedErrorMessage({ msg }: { msg: string }) {
     const method = lines[0].toUpperCase();
     const url = lines[1];
     return (
-      <div className="rounded-lg border border-red-200/80 dark:border-red-800/40 bg-subtle p-2.5 shadow-sm space-y-1.5">
+      <div className="pl-2.5 border-l-2 border-red-300 dark:border-red-800/50 space-y-1 py-0.5">
         <div className="flex items-center gap-2 min-w-0">
           <span className="px-1.5 py-0.5 rounded text-[9px] font-bold tracking-wide uppercase bg-red-100 dark:bg-red-950/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800/40 shrink-0">
             {method}
@@ -271,7 +271,7 @@ function FormattedErrorMessage({ msg }: { msg: string }) {
   }
 
   return (
-    <div className="rounded-lg border border-red-100 dark:border-red-800/40 bg-subtle p-2.5 shadow-sm">
+    <div className="pl-2.5 border-l-2 border-red-200 dark:border-red-800/40 py-0.5">
       <p className="text-[11px] font-mono text-foreground/90 break-words leading-relaxed whitespace-pre-wrap">
         {msg}
       </p>
@@ -796,9 +796,9 @@ export default function DevToolsPanel({ capture }: Props) {
                           {summary.failedRequests === 1 ? t("dt.failedReqOne") : t("dt.failedReq")}
                         </p>
                       </div>
-                      <div className="space-y-2 pt-1">
+                      <div className="space-y-1.5 pt-1">
                         {(summary.failedUrls || []).map((url, i) => (
-                          <div key={i} className="rounded-lg border border-red-100 dark:border-red-800/40 bg-subtle p-2.5 shadow-sm">
+                          <div key={i} className="pl-2.5 border-l-2 border-red-200 dark:border-red-800/40 py-0.5">
                             <p className="text-[11px] font-mono text-red-700 dark:text-red-400 break-all leading-tight">
                               {url}
                             </p>
