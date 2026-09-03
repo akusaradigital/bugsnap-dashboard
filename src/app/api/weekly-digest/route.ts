@@ -15,6 +15,7 @@ export async function GET(req: Request) {
 
   try {
     const supabase = createServiceClient();
+    await supabase.rpc("prune_expired_captures");
     const since = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
     const workspaceResult = await supabase.from("workspaces").select("id,name,owner_user_id");
     if (workspaceResult.error) throw workspaceResult.error;

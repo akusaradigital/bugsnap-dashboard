@@ -1,13 +1,13 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Suspense, useEffect, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import type { CapturedLogs } from "@/components/DevToolsPanel";
 import Comments from "@/components/Comments";
-import MediaViewer from "@/components/MediaViewer";
+import MediaViewer, { ErrorMarker } from "@/components/MediaViewer";
 import { useT } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
 import { Dropdown } from "@/components/Dropdown";
@@ -136,6 +136,46 @@ function SingleViewContent() {
   const [viewerEmail, setViewerEmail] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [brand, setBrand] = useState({ name: "BugSnap", logo: "", hideWatermark: false });
+
+  // Timeline Sync between Video Playback and DevToolsPanel
+  const [playbackTime, setPlaybackTime] = useState<number>(0);
+  const [seekTargetTime, setSeekTargetTime] = useState<number | null>(null);
+
+  const errorMarkers = useMemo<ErrorMarker[]>(() => {
+    if (!capture || capture.type !== "video" || !capture.dev_logs) return [];
+
+    let rawLogs: Array<{ type?: string; level?: string; message?: string; status?: number; time?: string | number; timestamp?: string | number; url?: string }> = [];
+    if (Array.isArray(capture.dev_logs)) {
+      rawLogs = capture.dev_logs;
+    }
+
+    const earliest = rawLogs.reduce<number>((min, log) => {
+      const raw = log.timestamp;
+      const ts = typeof raw === "number" ? raw : typeof raw === "string" && !/^\d{1,2}:\d{2}$/.test(raw) ? new Date(raw).getTime() : 0;
+      return Number.isFinite(ts) && ts > 0 && (min === 0 || ts < min) ? ts : min;
+    }, 0);
+
+    const markers: ErrorMarker[] = [];
+    for (const log of rawLogs) {
+      const isErr = (log.type === "console" && (log.level === "error" || log.level === "warn")) ||
+                    (log.type === "network" && (Number(log.status) >= 400 || Number(log.status) === 0));
+      if (!isErr) continue;
+
+      let sec = 0;
+      const val = log.time || log.timestamp;
+      if (typeof val === "string") {
+        const match = val.match(/^(\d{1,2}):(\d{2})$/);
+        if (match) sec = parseInt(match[1], 10) * 60 + parseInt(match[2], 10);
+      } else if (typeof val === "number" && earliest > 0 && val >= earliest) {
+        sec = (val - earliest) / 1000;
+      }
+
+      const label = (log.type === "network" ? `${log.status || "ERR"} ${log.url || ""}` : (log.message || "Error")).slice(0, 50);
+      markers.push({ timeSec: Math.max(0, sec), label, type: log.level === "warn" ? "warn" : "error" });
+    }
+
+    return markers.slice(0, 30);
+  }, [capture]);
 
   // Close menus on outside click
   useEffect(() => {
@@ -801,7 +841,14 @@ function SingleViewContent() {
 
             <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_440px]">
               <section className="rounded-xl border border-border bg-white p-7 shadow-sm dark:bg-background">
-                <MediaViewer type={capture.type} driveUrl={capture.drive_url} title={capture.title} />
+                <MediaViewer
+                  type={capture.type}
+                  driveUrl={capture.drive_url}
+                  title={capture.title}
+                  onTimeUpdate={(t) => setPlaybackTime(t)}
+                  seekToTime={seekTargetTime}
+                  errorMarkers={errorMarkers}
+                />
                 <div className="mt-7 space-y-4">
                   <div>
                     <h2 className="text-lg font-bold text-foreground">{capture.title}</h2>
@@ -825,7 +872,13 @@ function SingleViewContent() {
               </section>
 
               <aside className="space-y-3">
-                {!hideDevTools && <DevToolsPanel capture={capture as unknown as React.ComponentProps<typeof DevToolsPanel>["capture"]} />}
+                {!hideDevTools && (
+                  <DevToolsPanel
+                    capture={capture as unknown as React.ComponentProps<typeof DevToolsPanel>["capture"]}
+                    currentTime={playbackTime}
+                    onSeekToTime={(t) => setSeekTargetTime(t)}
+                  />
+                )}
                 <section className="rounded-xl border border-border bg-white p-5 shadow-sm dark:bg-background">
                   <h3 className="mb-4 text-base font-bold text-foreground">Share BugSnap</h3>
                   <div className="grid grid-cols-2 gap-5 text-center">

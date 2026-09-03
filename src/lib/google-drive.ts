@@ -57,7 +57,7 @@ export async function createConnectUrl(userId: string) {
   const { error } = await db.from("google_drive_oauth_states").insert({ nonce_hash: createHash("sha256").update(nonce).digest("hex"), user_id: userId, expires_at: expiresAt });
   if (error) throw error;
   const state = encrypt(JSON.stringify({ userId, nonce, exp: Date.now() + STATE_TTL_MS } satisfies State));
-  const params = new URLSearchParams({ client_id: env("GOOGLE_DRIVE_CLIENT_ID"), redirect_uri: env("GOOGLE_DRIVE_REDIRECT_URI"), response_type: "code", scope: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email", access_type: "offline", prompt: "consent", state });
+  const params = new URLSearchParams({ client_id: env("GOOGLE_DRIVE_CLIENT_ID"), redirect_uri: env("GOOGLE_DRIVE_REDIRECT_URI"), response_type: "code", scope: "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email", access_type: "offline", prompt: "consent", state });
   return `${GOOGLE_AUTH}?${params}`;
 }
 

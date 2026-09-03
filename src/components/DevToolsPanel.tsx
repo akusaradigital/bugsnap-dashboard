@@ -122,7 +122,16 @@ export interface DevLogSummary {
   failedUrls?: string[];
 }
 
-export type CapturedLogs = DevLog[] | DevLogSummary | string | null;
+export interface DriveExternalLogReference {
+  driveFileId: string;
+  driveUrl?: string;
+  errors?: number;
+  warnings?: number;
+  totalLogs?: number;
+  duration?: number;
+}
+
+export type CapturedLogs = DevLog[] | DevLogSummary | DriveExternalLogReference | string | null;
 
 function isSummary(logs: unknown): logs is DevLogSummary {
   return !!logs && typeof logs === "object" && typeof (logs as Record<string, unknown>).version === "number";
@@ -139,6 +148,8 @@ interface Props {
     browser?: string | null;
     dev_logs?: CapturedLogs;
   };
+  currentTime?: number;
+  onSeekToTime?: (timeSec: number) => void;
 }
 
 const TABS = ["Info", "Console", "Network", "Actions"] as const;
@@ -279,13 +290,41 @@ function FormattedErrorMessage({ msg }: { msg: string }) {
   );
 }
 
-export default function DevToolsPanel({ capture }: Props) {
+export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Props) {
   const { t } = useT();
   const [activeTab, setActiveTab] = useState<Tab>("Info");
   const [logSearch, setLogSearch] = useState("");
   const [decompressedLogs, setDecompressedLogs] = useState<CapturedLogs>(capture.dev_logs || null);
 
   useEffect(() => {
+    let raw: unknown = capture.dev_logs;
+    if (typeof raw === "string" && (raw.startsWith("{") || raw.startsWith("["))) {
+      try {
+        raw = JSON.parse(raw);
+      } catch {
+        // Leave raw string as is if not valid JSON
+      }
+    }
+
+    if (raw && typeof raw === "object" && "driveFileId" in raw && typeof (raw as DriveExternalLogReference).driveFileId === "string") {
+      const fileId = (raw as DriveExternalLogReference).driveFileId;
+      fetch(`/api/google-drive/download?id=${encodeURIComponent(fileId)}&type=logs`)
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.json();
+        })
+        .then((fullLogs) => {
+          if (Array.isArray(fullLogs)) {
+            setDecompressedLogs(fullLogs as CapturedLogs);
+          }
+        })
+        .catch((err) => {
+          console.warn("Could not load external logs from Google Drive:", err);
+          setDecompressedLogs(raw as CapturedLogs);
+        });
+      return;
+    }
+
     if (typeof capture.dev_logs === "string" && capture.dev_logs.startsWith("gz:")) {
       decompressDevLogs(capture.dev_logs).then((res) => {
         if (res) setDecompressedLogs(res as CapturedLogs);
@@ -328,6 +367,58 @@ export default function DevToolsPanel({ capture }: Props) {
     if (elapsed < 1000) return `${Math.max(0, elapsed)}ms`;
     if (elapsed < 60000) return `${(elapsed / 1000).toFixed(1)}s`;
     return `${Math.floor(elapsed / 60000)}m ${Math.floor((elapsed % 60000) / 1000)}s`;
+  };
+
+  const getLogSeconds = (log: TimedLog): number | null => {
+    const value = log.time || log.timestamp;
+    if (!value) return null;
+    if (typeof value === "string") {
+      const match = value.match(/^(\d{1,2}):(\d{2})$/);
+      if (match) {
+        return parseInt(match[1], 10) * 60 + parseInt(match[2], 10);
+      }
+    }
+    const ts = typeof value === "number" ? value : new Date(value).getTime();
+    if (Number.isFinite(ts) && earliestTimestamp > 0 && ts >= earliestTimestamp) {
+      return (ts - earliestTimestamp) / 1000;
+    }
+    return null;
+  };
+
+  const isLogActive = (log: TimedLog) => {
+    if (currentTime === undefined || capture.type !== "video") return false;
+    const sec = getLogSeconds(log);
+    if (sec === null) return false;
+    return Math.abs(currentTime - sec) < 1.5;
+  };
+
+  const renderTimeBadge = (log: TimedLog) => {
+    const relTime = getRelativeTime(log);
+    if (relTime === "-") return null;
+    const sec = getLogSeconds(log);
+
+    if (onSeekToTime && sec !== null && capture.type === "video") {
+      return (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onSeekToTime(sec);
+          }}
+          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-zinc-100 hover:bg-indigo-100 text-muted hover:text-indigo-600 dark:bg-zinc-800 dark:hover:bg-indigo-900/60 dark:hover:text-indigo-300 border border-border/80 transition-colors cursor-pointer shrink-0"
+          title={`Click to jump video to ${relTime}`}
+        >
+          <span className="text-[8px] text-indigo-500">▶</span>
+          <span>{relTime}</span>
+        </button>
+      );
+    }
+
+    return (
+      <span className="pt-0.5 text-[10px] font-mono text-muted shrink-0 tabular-nums">
+        {relTime}
+      </span>
+    );
   };
 
   const networkLogs = logs
@@ -724,17 +815,16 @@ export default function DevToolsPanel({ capture }: Props) {
                   const detail = log.type === "console" ? conciseConsoleText(log)
                     : log.message || ("url" in log ? log.url : "") || (log.type === "screenshot" ? t("dt.screenshotTaken") : t("dt.navigation"));
                   const fullText = log.type === "console" ? consoleText(log) : detail;
+                  const active = isLogActive(log);
                   return (
                     <div
                       key={i}
-                      className={`p-3 text-xs transition-colors ${
-                        isWarn ? "bg-amber-50/40 dark:bg-amber-950/20 hover:bg-amber-50/70 dark:hover:bg-amber-950/30" : isErr ? "bg-red-50/40 dark:bg-red-950/20 hover:bg-red-50/70 dark:hover:bg-red-950/30" : "hover:bg-subtle/50"
+                      className={`p-3 text-xs transition-all ${
+                        active ? "ring-2 ring-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/40 rounded-sm" : isWarn ? "bg-amber-50/40 dark:bg-amber-950/20 hover:bg-amber-50/70 dark:hover:bg-amber-950/30" : isErr ? "bg-red-50/40 dark:bg-red-950/20 hover:bg-red-50/70 dark:hover:bg-red-950/30" : "hover:bg-subtle/50"
                       }`}
                     >
                       <div className="flex items-start gap-2.5 min-w-0">
-                        <span className="pt-0.5 text-[10px] font-mono text-muted shrink-0 tabular-nums">
-                          {getRelativeTime(log)}
-                        </span>
+                        {renderTimeBadge(log)}
                         <span
                           className={`px-1.5 py-0.2 rounded text-[9px] font-bold uppercase shrink-0 ${
                             isWarn
@@ -817,8 +907,9 @@ export default function DevToolsPanel({ capture }: Props) {
                   const { domain, path } = networkLocation(log.url);
                   const isFailed = !log.status || log.status >= 400;
                   const isOk = log.status && log.status < 300;
+                  const active = isLogActive(log);
                   return (
-                    <details key={i} className="group hover:bg-subtle/50 transition-colors">
+                    <details key={i} className={`group hover:bg-subtle/50 transition-all ${active ? "ring-2 ring-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/40 rounded-sm" : ""}`}>
                       <summary className="p-3 cursor-pointer list-none flex items-center justify-between gap-2 min-w-0">
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                           <span className="px-1.5 py-0.5 rounded text-[9px] font-bold font-mono uppercase bg-subtle text-foreground border border-border shrink-0">
@@ -847,6 +938,7 @@ export default function DevToolsPanel({ capture }: Props) {
                           </div>
                         </div>
                         <div className="flex items-center gap-1.5 shrink-0">
+                          {renderTimeBadge(log)}
                           {count > 1 && (
                             <span className="px-1.5 py-0.5 rounded-full bg-subtle text-[10px] font-bold text-muted border border-border">
                               ×{count}
@@ -913,8 +1005,9 @@ export default function DevToolsPanel({ capture }: Props) {
                     const isClick = label === "Click" || (log.message || "").toLowerCase().includes("click");
                     const isType = label === "Typing" || (log.message || "").toLowerCase().includes("type") || (log.message || "").toLowerCase().includes("input");
                     const isScreenshot = log.type === "screenshot";
+                    const active = isLogActive(log);
                     return (
-                      <div key={i} className="flex items-start gap-3 relative">
+                      <div key={i} className={`flex items-start gap-3 relative transition-all rounded-lg p-1.5 ${active ? "ring-2 ring-indigo-500 bg-indigo-50/60 dark:bg-indigo-950/40" : ""}`}>
                         <div
                           className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 z-10 border-2 border-white dark:border-background shadow-sm ${
                             isScreenshot ? "bg-rose-100 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400" : isClick ? "bg-indigo-100 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400" : isType ? "bg-emerald-100 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400" : "bg-subtle text-muted"
@@ -940,7 +1033,7 @@ export default function DevToolsPanel({ capture }: Props) {
                         </div>
                         <div className="flex-1 min-w-0 pt-0.5">
                           {eventTime(log) && (
-                            <span className="text-[10px] text-muted font-mono block mb-0.5">{getRelativeTime(log)}</span>
+                            <div className="mb-1">{renderTimeBadge(log)}</div>
                           )}
                           <p className="text-[10px] uppercase tracking-wide text-muted font-semibold mb-0.5">{label}</p>
                           <p className="text-xs text-foreground font-medium leading-normal break-words">
