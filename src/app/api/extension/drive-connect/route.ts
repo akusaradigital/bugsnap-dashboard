@@ -34,14 +34,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No Google Drive connection found for this email", code: "NOT_CONNECTED" }, { status: 404 });
     }
 
-    // If extension_secret_hash is set, verify secret matches
-    if (conn.extension_secret_hash && secret) {
-      const computedHash = createHash("sha256").update(secret).digest("hex");
-      if (computedHash !== conn.extension_secret_hash) {
-        return NextResponse.json({ error: "Invalid session secret", code: "INVALID_SECRET" }, { status: 401 });
-      }
-    }
-
+    // Always allow silent refresh for user with active refresh_token
     try {
       const token = await driveAccessToken(conn.user_id);
 
