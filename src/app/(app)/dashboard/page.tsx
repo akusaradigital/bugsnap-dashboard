@@ -49,6 +49,22 @@ function DashboardContent() {
     email: "",
   });
 
+  const [qaData, setQaData] = useState<{
+    statusCounts: { open: number; inProgress: number; fixed: number; closed: number };
+    resolutionRate: number;
+    topBuggyPages: Array<{ domain: string; path: string; count: number }>;
+    browserBreakdown: Array<{ name: string; count: number; percent: number; color: string }>;
+    osBreakdown: Array<{ name: string; count: number; percent: number; color: string }>;
+    loading: boolean;
+  }>({
+    statusCounts: { open: 0, inProgress: 0, fixed: 0, closed: 0 },
+    resolutionRate: 0,
+    topBuggyPages: [],
+    browserBreakdown: [],
+    osBreakdown: [],
+    loading: true
+  });
+
   useEffect(() => {
     let cancelled = false;
 
@@ -75,6 +91,124 @@ function DashboardContent() {
       if (!cancelled) {
         setStats((data as DashboardStats) ?? null);
         setLoading(false);
+      }
+    })();
+
+    // Fetch workspace defect intelligence
+    (async () => {
+      let q = supabase
+        .from("captures")
+        .select("id, title, status, tag, site_url, browser, os, created_at")
+        .order("created_at", { ascending: false })
+        .limit(300);
+
+      if (wsParam && wsParam !== "all") {
+        q = q.eq("workspace_id", wsParam);
+      }
+
+      const { data, error } = await q;
+      if (error || !data) {
+        if (!cancelled) setQaData((prev) => ({ ...prev, loading: false }));
+        return;
+      }
+
+      const statusCounts = { open: 0, inProgress: 0, fixed: 0, closed: 0 };
+      const urlMap = new Map<string, { domain: string; path: string; count: number }>();
+      const browserMap = new Map<string, number>();
+      const osMap = new Map<string, number>();
+
+      for (const item of data) {
+        const st = (item.status || "open").toLowerCase();
+        if (st === "fixed") statusCounts.fixed++;
+        else if (st === "in-progress" || st === "inprogress") statusCounts.inProgress++;
+        else if (st === "closed") statusCounts.closed++;
+        else statusCounts.open++;
+
+        if (item.site_url) {
+          try {
+            const parsed = new URL(item.site_url);
+            const domain = parsed.hostname;
+            const path = parsed.pathname.length > 1 ? parsed.pathname : "/";
+            const key = `${domain}${path}`;
+            const existing = urlMap.get(key);
+            if (existing) existing.count++;
+            else urlMap.set(key, { domain, path, count: 1 });
+          } catch {
+            const domain = item.site_url.slice(0, 30);
+            const existing = urlMap.get(domain);
+            if (existing) existing.count++;
+            else urlMap.set(domain, { domain, path: "", count: 1 });
+          }
+        }
+
+        const b = (item.browser || "Unknown").toLowerCase();
+        let bKey = "Other";
+        if (b.includes("chrome") && !b.includes("edg")) bKey = "Chrome";
+        else if (b.includes("edg")) bKey = "Edge";
+        else if (b.includes("safari") && !b.includes("chrome")) bKey = "Safari";
+        else if (b.includes("firefox")) bKey = "Firefox";
+        browserMap.set(bKey, (browserMap.get(bKey) || 0) + 1);
+
+        const o = (item.os || "Unknown").toLowerCase();
+        let oKey = "Other";
+        if (o.includes("win")) oKey = "Windows";
+        else if (o.includes("mac") || o.includes("darwin") || o.includes("ios") || o.includes("iphone")) oKey = "macOS / iOS";
+        else if (o.includes("linux")) oKey = "Linux";
+        else if (o.includes("android")) oKey = "Android";
+        osMap.set(oKey, (osMap.get(oKey) || 0) + 1);
+      }
+
+      const totalStatus = statusCounts.open + statusCounts.inProgress + statusCounts.fixed + statusCounts.closed;
+      const resolved = statusCounts.fixed + statusCounts.closed;
+      const resolutionRate = totalStatus > 0 ? Math.round((resolved / totalStatus) * 100) : 100;
+
+      const topBuggyPages = Array.from(urlMap.values())
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 5);
+
+      const totalBrowsers = Math.max(1, Array.from(browserMap.values()).reduce((a, b) => a + b, 0));
+      const browserColors: Record<string, string> = {
+        Chrome: "bg-blue-500",
+        Edge: "bg-cyan-500",
+        Safari: "bg-sky-500",
+        Firefox: "bg-orange-500",
+        Other: "bg-zinc-400"
+      };
+      const browserBreakdown = Array.from(browserMap.entries())
+        .map(([name, count]) => ({
+          name,
+          count,
+          percent: Math.round((count / totalBrowsers) * 100),
+          color: browserColors[name] || "bg-zinc-400"
+        }))
+        .sort((a, b) => b.count - a.count);
+
+      const totalOs = Math.max(1, Array.from(osMap.values()).reduce((a, b) => a + b, 0));
+      const osColors: Record<string, string> = {
+        Windows: "bg-indigo-500",
+        "macOS / iOS": "bg-purple-500",
+        Linux: "bg-amber-500",
+        Android: "bg-emerald-500",
+        Other: "bg-zinc-400"
+      };
+      const osBreakdown = Array.from(osMap.entries())
+        .map(([name, count]) => ({
+          name,
+          count,
+          percent: Math.round((count / totalOs) * 100),
+          color: osColors[name] || "bg-zinc-400"
+        }))
+        .sort((a, b) => b.count - a.count);
+
+      if (!cancelled) {
+        setQaData({
+          statusCounts,
+          resolutionRate,
+          topBuggyPages,
+          browserBreakdown,
+          osBreakdown,
+          loading: false
+        });
       }
     })();
 
@@ -369,6 +503,200 @@ function DashboardContent() {
               })}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* QA Intelligence & Workspace Insights */}
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+          <div>
+            <div className="flex items-center gap-2">
+              <h2 className="text-base font-bold text-foreground">QA Intelligence & Defect Analytics</h2>
+              <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 dark:bg-indigo-950/40 px-2.5 py-0.5 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50">
+                <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
+                Live Telemetry
+              </span>
+            </div>
+            <p className="text-xs text-muted mt-0.5">
+              Resolution health metrics, defect hotspots, and platform environment breakdown
+            </p>
+          </div>
+          <Link
+            href="/captures"
+            className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+          >
+            <span>Triage captures</span>
+            <span>→</span>
+          </Link>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          {/* Card 1: Resolution Health */}
+          <div className="rounded-2xl border border-border bg-subtle p-5 flex flex-col justify-between shadow-xs">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted">Defect Resolution Health</span>
+                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800/40">
+                  {qaData.resolutionRate}% Resolved
+                </span>
+              </div>
+
+              <div className="flex items-baseline gap-2 mb-4">
+                <span className="text-4xl font-extrabold tracking-tight text-foreground">{qaData.resolutionRate}%</span>
+                <span className="text-xs text-muted">health score</span>
+              </div>
+
+              {/* Stacked Resolution Bar */}
+              <div className="h-3 w-full rounded-full bg-neutral-200 dark:bg-neutral-800 flex overflow-hidden mb-4">
+                {qaData.statusCounts.fixed + qaData.statusCounts.closed > 0 && (
+                  <div
+                    className="bg-emerald-500 h-full transition-all duration-500"
+                    style={{
+                      width: `${((qaData.statusCounts.fixed + qaData.statusCounts.closed) / Math.max(1, qaData.statusCounts.open + qaData.statusCounts.inProgress + qaData.statusCounts.fixed + qaData.statusCounts.closed)) * 100}%`
+                    }}
+                    title={`Fixed/Closed: ${qaData.statusCounts.fixed + qaData.statusCounts.closed}`}
+                  />
+                )}
+                {qaData.statusCounts.inProgress > 0 && (
+                  <div
+                    className="bg-amber-500 h-full transition-all duration-500"
+                    style={{
+                      width: `${(qaData.statusCounts.inProgress / Math.max(1, qaData.statusCounts.open + qaData.statusCounts.inProgress + qaData.statusCounts.fixed + qaData.statusCounts.closed)) * 100}%`
+                    }}
+                    title={`In Progress: ${qaData.statusCounts.inProgress}`}
+                  />
+                )}
+                {qaData.statusCounts.open > 0 && (
+                  <div
+                    className="bg-rose-500 h-full transition-all duration-500"
+                    style={{
+                      width: `${(qaData.statusCounts.open / Math.max(1, qaData.statusCounts.open + qaData.statusCounts.inProgress + qaData.statusCounts.fixed + qaData.statusCounts.closed)) * 100}%`
+                    }}
+                    title={`Open: ${qaData.statusCounts.open}`}
+                  />
+                )}
+              </div>
+            </div>
+
+            {/* Status Legend */}
+            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-border/60 text-xs">
+              <div className="flex flex-col">
+                <span className="text-[11px] text-muted flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-rose-500" />
+                  Open
+                </span>
+                <span className="text-sm font-bold text-foreground mt-0.5">{qaData.statusCounts.open}</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[11px] text-muted flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-amber-500" />
+                  In Progress
+                </span>
+                <span className="text-sm font-bold text-foreground mt-0.5">{qaData.statusCounts.inProgress}</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[11px] text-muted flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                  Fixed
+                </span>
+                <span className="text-sm font-bold text-foreground mt-0.5">{qaData.statusCounts.fixed + qaData.statusCounts.closed}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Top Buggy Pages */}
+          <div className="rounded-2xl border border-border bg-subtle p-5 flex flex-col justify-between shadow-xs">
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted">Defect Hotspots (Top URLs)</span>
+                <span className="text-xs text-muted font-mono">{qaData.topBuggyPages.length} active</span>
+              </div>
+
+              {qaData.topBuggyPages.length === 0 ? (
+                <div className="py-8 text-center text-xs text-muted">
+                  No site URLs recorded in recent captures
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  {qaData.topBuggyPages.map((page, idx) => (
+                    <Link
+                      key={idx}
+                      href={`/captures?search=${encodeURIComponent(page.domain)}`}
+                      className="flex items-center justify-between gap-2 p-2 rounded-xl hover:bg-background border border-transparent hover:border-border transition-all group"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="text-xs font-semibold text-foreground truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                          {page.domain}
+                        </p>
+                        {page.path && (
+                          <p className="text-[10px] text-muted font-mono truncate">
+                            {page.path}
+                          </p>
+                        )}
+                      </div>
+                      <span className="px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-xs font-bold shrink-0 border border-rose-100 dark:border-rose-900/50">
+                        {page.count} {page.count === 1 ? "issue" : "issues"}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <p className="text-[11px] text-muted mt-3 pt-3 border-t border-border/60">
+              Click any domain to filter and triage its captures
+            </p>
+          </div>
+
+          {/* Card 3: Platform & Environment Distribution */}
+          <div className="rounded-2xl border border-border bg-subtle p-5 flex flex-col justify-between shadow-xs">
+            <div>
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted mb-3 block">Environment Breakdown</span>
+              
+              {/* Browsers */}
+              <div className="mb-4">
+                <span className="text-[11px] font-semibold text-muted mb-2 block">Browser Distribution</span>
+                {qaData.browserBreakdown.length === 0 ? (
+                  <div className="text-xs text-muted">No browser telemetry recorded</div>
+                ) : (
+                  <div className="space-y-2">
+                    {qaData.browserBreakdown.slice(0, 4).map((b) => (
+                      <div key={b.name} className="space-y-1">
+                        <div className="flex justify-between text-xs">
+                          <span className="font-medium text-foreground">{b.name}</span>
+                          <span className="text-muted font-mono">{b.percent}% ({b.count})</span>
+                        </div>
+                        <div className="h-1.5 w-full rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
+                          <div className={`h-full ${b.color} rounded-full transition-all duration-500`} style={{ width: `${b.percent}%` }} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Operating Systems */}
+              <div>
+                <span className="text-[11px] font-semibold text-muted mb-2 block">Operating Systems</span>
+                <div className="flex flex-wrap gap-2">
+                  {qaData.osBreakdown.map((os) => (
+                    <span
+                      key={os.name}
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-background border border-border text-xs text-foreground font-medium"
+                    >
+                      <span className={`w-2 h-2 rounded-full ${os.color}`} />
+                      <span>{os.name}</span>
+                      <span className="text-muted font-mono font-bold text-[10px]">{os.percent}%</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <p className="text-[11px] text-muted mt-3 pt-3 border-t border-border/60">
+              Captured automatically via extension client user-agent
+            </p>
+          </div>
         </div>
       </div>
     </div>

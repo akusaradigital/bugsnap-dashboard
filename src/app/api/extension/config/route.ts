@@ -15,12 +15,19 @@ export async function OPTIONS() {
   });
 }
 
+// ponytail: same zero-width/BOM strip as lib/google-drive.ts's env() -
+// Vercel env vars pasted from elsewhere can carry an invisible leading char
+// that breaks the extension's client_id regex validation.
+function clean(value: string | undefined) {
+  return value?.replace(/^[﻿​‌‍￾]+|[﻿​‌‍￾]+$/g, "").trim();
+}
+
 export async function GET() {
   return NextResponse.json(
     {
-      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL,
-      supabaseAnonKey: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-      googleDriveClientId: process.env.GOOGLE_DRIVE_CLIENT_ID,
+      supabaseUrl: clean(process.env.NEXT_PUBLIC_SUPABASE_URL),
+      supabaseAnonKey: clean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
+      googleDriveClientId: clean(process.env.GOOGLE_DRIVE_CLIENT_ID),
       apiVersion: "1.0.24",
       features: {
         watermark: true,

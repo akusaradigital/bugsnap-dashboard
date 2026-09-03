@@ -3,10 +3,19 @@
 import { useEffect, useRef, useState } from "react";
 import { useT } from "@/components/I18nProvider";
 
+export interface ErrorMarker {
+  timeSec: number;
+  label: string;
+  type?: "error" | "warn";
+}
+
 interface MediaViewerProps {
   type: string;
   driveUrl: string | null;
   title: string;
+  onTimeUpdate?: (currentTimeSec: number) => void;
+  seekToTime?: number | null;
+  errorMarkers?: ErrorMarker[];
 }
 
 function driveFileId(url: string): string | null {
@@ -27,17 +36,34 @@ const MAX_ZOOM = 5;
 const STEP_ZOOM = 0.5;
 const DOUBLE_CLICK_ZOOM = 2.5;
 
-export default function MediaViewer({ type, driveUrl, title }: MediaViewerProps) {
+function formatSec(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+export default function MediaViewer({
+  type,
+  driveUrl,
+  title,
+  onTimeUpdate,
+  seekToTime,
+  errorMarkers = []
+}: MediaViewerProps) {
   const { t } = useT();
   const dialogRef = useRef<HTMLDialogElement>(null);
   const lightboxTriggerRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const [videoFailed, setVideoFailed] = useState(false);
   const [imageFailed, setImageFailed] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [zoom, setZoom] = useState(MIN_ZOOM);
   const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [videoDuration, setVideoDuration] = useState<number>(0);
+  const [currentPlaybackTime, setCurrentPlaybackTime] = useState<number>(0);
+  const [hoveredMarker, setHoveredMarker] = useState<ErrorMarker | null>(null);
   const dragRef = useRef<{ startX: number; startY: number; panX: number; panY: number; dragging: boolean }>({
     startX: 0, startY: 0, panX: 0, panY: 0, dragging: false,
   });
@@ -146,6 +172,17 @@ export default function MediaViewer({ type, driveUrl, title }: MediaViewerProps)
     }
   }
 
+  // Synchronize seek target time from external controls (DevTools / Timeline dots)
+  useEffect(() => {
+    if (typeof seekToTime === "number" && !isNaN(seekToTime) && videoRef.current) {
+      videoRef.current.currentTime = Math.max(0, seekToTime);
+      setCurrentPlaybackTime(seekToTime);
+      if (videoRef.current.paused) {
+        videoRef.current.play().catch(() => {});
+      }
+    }
+  }, [seekToTime]);
+
   const unavailable = !fileId || (type !== "video" && type !== "screenshot");
 
   return (
@@ -156,7 +193,29 @@ export default function MediaViewer({ type, driveUrl, title }: MediaViewerProps)
         {unavailable ? (
           <div className="px-6 text-center text-sm text-white/70" role="status">{t("mv.unavailable")}</div>
         ) : type === "video" ? (
-          previewUrl ? (
+          !videoFailed && (directUrl || downloadUrl) ? (
+            <video
+              ref={videoRef}
+              controls
+              preload="metadata"
+              src={directUrl || downloadUrl || ""}
+              onTimeUpdate={(e) => {
+                const cur = e.currentTarget.currentTime;
+                setCurrentPlaybackTime(cur);
+                onTimeUpdate?.(cur);
+              }}
+              onLoadedMetadata={(e) => {
+                if (e.currentTarget.duration && !isNaN(e.currentTarget.duration)) {
+                  setVideoDuration(e.currentTarget.duration);
+                }
+              }}
+              onError={() => setVideoFailed(true)}
+              className="h-full w-full object-contain"
+              aria-label={title}
+            >
+              {t("mv.noVideoSupport")}
+            </video>
+          ) : previewUrl ? (
             <iframe
               src={previewUrl}
               className="h-full w-full border-0"
@@ -164,17 +223,6 @@ export default function MediaViewer({ type, driveUrl, title }: MediaViewerProps)
               allowFullScreen
               title={`${title} video preview`}
             />
-          ) : !videoFailed && directUrl ? (
-            <video
-              controls
-              preload="metadata"
-              src={directUrl}
-              onError={() => setVideoFailed(true)}
-              className="h-full w-full object-contain"
-              aria-label={title}
-            >
-              {t("mv.noVideoSupport")}
-            </video>
           ) : (
             <div className="px-6 text-center text-sm text-white/70" role="status">{t("mv.unavailable")}</div>
           )
@@ -235,6 +283,90 @@ export default function MediaViewer({ type, driveUrl, title }: MediaViewerProps)
           <div className="px-6 text-center text-sm text-white/70" role="status">{t("mv.unavailable")}</div>
         )}
       </div>
+
+      {type === "video" && errorMarkers.length > 0 && (
+        <div className="mt-3 rounded-xl border border-border bg-white dark:bg-zinc-900/70 p-3 shadow-xs">
+          <div className="flex items-center justify-between gap-2 mb-2 text-xs">
+            <div className="flex items-center gap-1.5 font-medium text-foreground">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+              </span>
+              <span>Interactive Error Timeline</span>
+              <span className="rounded-full bg-rose-100 dark:bg-rose-950/50 px-2 py-0.5 text-[10px] font-semibold text-rose-600 dark:text-rose-400">
+                {errorMarkers.length} event{errorMarkers.length > 1 ? "s" : ""}
+              </span>
+            </div>
+            <div className="text-[11px] text-muted font-mono">
+              {formatSec(currentPlaybackTime)} / {formatSec(videoDuration)}
+            </div>
+          </div>
+
+          {/* Interactive Timeline Bar */}
+          <div
+            className="relative h-4 w-full cursor-pointer rounded-md bg-zinc-100 dark:bg-zinc-800"
+            onClick={(e) => {
+              if (!videoDuration || !videoRef.current) return;
+              const rect = e.currentTarget.getBoundingClientRect();
+              const clickX = e.clientX - rect.left;
+              const targetSec = (clickX / rect.width) * videoDuration;
+              videoRef.current.currentTime = Math.max(0, Math.min(videoDuration, targetSec));
+            }}
+          >
+            {/* Playback progress bar */}
+            <div
+              className="absolute left-0 top-0 bottom-0 rounded-md bg-indigo-500/20 dark:bg-indigo-500/30 pointer-events-none transition-all duration-75"
+              style={{ width: `${videoDuration > 0 ? (currentPlaybackTime / videoDuration) * 100 : 0}%` }}
+            />
+            {/* Playhead line */}
+            <div
+              className="absolute top-0 bottom-0 w-1 bg-indigo-600 dark:bg-indigo-400 pointer-events-none z-10 transition-all duration-75"
+              style={{ left: `${videoDuration > 0 ? (currentPlaybackTime / videoDuration) * 100 : 0}%` }}
+            />
+
+            {/* Error Marker Pins */}
+            {errorMarkers.map((marker, idx) => {
+              const leftPercent = videoDuration > 0
+                ? Math.min(99, Math.max(1, (marker.timeSec / videoDuration) * 100))
+                : ((idx + 1) / (errorMarkers.length + 1)) * 100;
+              const isNearActive = Math.abs(currentPlaybackTime - marker.timeSec) < 1.5;
+
+              return (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (videoRef.current) {
+                      videoRef.current.currentTime = marker.timeSec;
+                      if (videoRef.current.paused) videoRef.current.play().catch(() => {});
+                    }
+                  }}
+                  onMouseEnter={() => setHoveredMarker(marker)}
+                  onMouseLeave={() => setHoveredMarker(null)}
+                  className={`absolute top-1/2 -translate-y-1/2 -translate-x-1/2 z-20 flex items-center justify-center transition-transform hover:scale-125 focus:outline-hidden cursor-pointer ${
+                    isNearActive ? "scale-125" : ""
+                  }`}
+                  style={{ left: `${leftPercent}%` }}
+                  title={`[${formatSec(marker.timeSec)}] ${marker.label}`}
+                >
+                  <span className="relative flex h-3 w-3 items-center justify-center">
+                    <span className="absolute h-full w-full rounded-full bg-rose-500 opacity-75 animate-ping" />
+                    <span className="relative h-2.5 w-2.5 rounded-full bg-rose-600 border border-white dark:border-zinc-900 shadow-xs" />
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Tooltip on hovered marker */}
+          {hoveredMarker && (
+            <div className="mt-2 text-xs text-rose-600 dark:text-rose-400 font-mono truncate">
+              📍 [{formatSec(hoveredMarker.timeSec)}] {hoveredMarker.label}
+            </div>
+          )}
+        </div>
+      )}
 
       <dialog
         ref={dialogRef}

@@ -57,23 +57,94 @@ export async function POST(req: Request) {
     // top messages/urls made explicit (raw rows are no longer persisted).
     // Normalize either shape (legacy raw array or the new compact summary)
     // into the error views the AI already understands.
-    let consoleErrors: DevLog[] = [];
-    let networkErrors: DevLog[] = [];
-    let steps: DevLog[] = [];
+    // Compact, high-signal extraction to minimize token usage (saves ~90% tokens)
+    const cleanUrl = (url?: string) => {
+      if (!url) return "";
+      try {
+        const u = new URL(url);
+        return `${u.origin}${u.pathname}${u.search ? "?..." : ""}`.slice(0, 150);
+      } catch {
+        return url.slice(0, 150);
+      }
+    };
+
+    interface CompactError {
+      type: string;
+      level?: string;
+      message?: string;
+      url?: string;
+      status?: number;
+      method?: string;
+      count?: number;
+    }
+
+    let consoleErrors: CompactError[] = [];
+    let networkErrors: CompactError[] = [];
+    let steps: string[] = [];
+
+    // If devLogs is stored externally in Google Drive, fetch content
+    if (devLogs && typeof devLogs === "object" && !Array.isArray(devLogs) && "driveFileId" in devLogs) {
+      try {
+        const fileId = (devLogs as { driveFileId?: string }).driveFileId;
+        if (fileId) {
+          const driveRes = await fetch(`https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`, { cache: "no-store" });
+          if (driveRes.ok) {
+            const fetched = await driveRes.json();
+            if (Array.isArray(fetched)) {
+              devLogs = fetched;
+            }
+          }
+        }
+      } catch {
+        // Fallback silently if network or drive fails
+      }
+    }
+
     if (Array.isArray(devLogs)) {
       const logs: DevLog[] = devLogs.filter((l): l is DevLog => Boolean(l) && typeof l === "object");
-      consoleErrors = logs.filter((l) => l.type === "console");
-      networkErrors = logs.filter((l) => l.type === "network");
-      steps = logs.filter((l) => l.type === "step");
+      
+      // Filter strictly to errors, warnings, or exceptions
+      consoleErrors = logs
+        .filter((l) => l.type === "console" && (l.level === "error" || l.level === "warn" || /error|uncaught|fail|exception/i.test(l.message || "")))
+        .slice(0, 15)
+        .map((l) => ({
+          type: "console",
+          level: l.level || "error",
+          message: (l.message || l.text || "").slice(0, 250)
+        }));
+
+      // Filter strictly to HTTP 4xx/5xx or network drops (status 0)
+      networkErrors = logs
+        .filter((l) => l.type === "network" && (Number(l.status) >= 400 || Number(l.status) === 0))
+        .slice(0, 15)
+        .map((l) => ({
+          type: "network",
+          method: l.method || "GET",
+          status: l.status || 0,
+          url: cleanUrl(l.url)
+        }));
+
+      steps = logs
+        .filter((l) => l.type === "step" || l.type === "navigation")
+        .slice(0, 20)
+        .map((l) => (l.message || l.text || l.url || "").slice(0, 100));
     } else {
       const s = devLogs as DevLogSummary | null;
-      consoleErrors = (s?.topErrors ?? []).map((message) => ({ type: "console", level: "error", message }));
-      networkErrors = (s?.failedUrls ?? []).map((url) => ({ type: "network", level: "error", url, method: "GET" }));
+      consoleErrors = (s?.topErrors ?? []).slice(0, 15).map((message) => ({
+        type: "console",
+        level: "error",
+        message: message.slice(0, 250)
+      }));
+      networkErrors = (s?.failedUrls ?? []).slice(0, 15).map((url) => ({
+        type: "network",
+        method: "GET",
+        url: cleanUrl(url)
+      }));
       if ((s?.errors ?? 0) > consoleErrors.length) {
-        consoleErrors.push({ type: "console", level: "error", message: `(${s!.errors} total console errors, top ${consoleErrors.length} shown)` });
+        consoleErrors.push({ type: "console", level: "error", message: `+${s!.errors - consoleErrors.length} additional console errors omitted` });
       }
       if ((s?.failedRequests ?? 0) > networkErrors.length) {
-        networkErrors.push({ type: "network", level: "error", url: `(${s!.failedRequests} total failed requests, top ${networkErrors.length} shown)`, method: "GET" });
+        networkErrors.push({ type: "network", method: "GET", url: `+${s!.failedRequests - networkErrors.length} additional failed requests omitted` });
       }
     }
 
@@ -86,7 +157,7 @@ export async function POST(req: Request) {
         },
         {
           role: "user",
-          content: `<dev_logs_untrusted>\nTitle: ${title || "Untitled"}\nWindow size: ${windowSize || "Unknown"}\nConsole errors: ${JSON.stringify(consoleErrors.slice(0, 20))}\nNetwork errors: ${JSON.stringify(networkErrors.slice(0, 20))}\nUser actions: ${JSON.stringify(steps.slice(0, 30))}\n</dev_logs_untrusted>`,
+          content: `<dev_logs_untrusted>\nTitle: ${title || "Untitled"}\nWindow size: ${windowSize || "Unknown"}\nConsole errors: ${JSON.stringify(consoleErrors)}\nNetwork failures: ${JSON.stringify(networkErrors)}\nUser actions: ${JSON.stringify(steps)}\n</dev_logs_untrusted>`,
         },
       ],
       max_tokens: 800,
@@ -174,11 +245,11 @@ export async function POST(req: Request) {
 
     // ---- Local smart summary logic (fallback, no API key worked) ----
     const stepsText = steps.length
-      ? steps.map((s, i) => `${i + 1}. ${s.message || "User action"}`).join("\n")
+      ? steps.map((s, i) => `${i + 1}. ${s || "User action"}`).join("\n")
       : "1. Open application\n2. Perform actions on screen\n3. Observed issue";
 
     const consoleSummary = consoleErrors.length
-      ? consoleErrors.map((c) => `- [${c.level || "ERROR"}] ${c.message || c.text || ""}`).join("\n")
+      ? consoleErrors.map((c) => `- [${(c.level || "ERROR").toUpperCase()}] ${c.message || ""}`).join("\n")
       : "No console errors detected.";
 
     const networkSummary = networkErrors.length

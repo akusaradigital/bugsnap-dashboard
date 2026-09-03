@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -577,7 +577,7 @@ function SettingsContent() {
   }
 
   // BugSnap API Keys handlers
-  async function loadBugsnapApiKeys() {
+  const loadBugsnapApiKeys = useCallback(async () => {
     if (!activeWsId) return;
     setApiKeysLoading(true);
     try {
@@ -595,7 +595,7 @@ function SettingsContent() {
     } finally {
       setApiKeysLoading(false);
     }
-  }
+  }, [activeWsId]);
 
   async function handleCreateBugsnapApiKey(e: React.FormEvent) {
     e.preventDefault();
@@ -652,7 +652,7 @@ function SettingsContent() {
     if (activeTab === "integrations" && activeWsId) {
       loadBugsnapApiKeys();
     }
-  }, [activeTab, activeWsId]);
+  }, [activeTab, activeWsId, loadBugsnapApiKeys]);
 
   // ── Helper ────────────────────────────────────────────────────────────────
   function setTab(tab: Tab) {
