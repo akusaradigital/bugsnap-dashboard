@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-server";
+import { decompressDevLogs } from "@/lib/devlogs-compression";
 
 export const runtime = "nodejs";
 
@@ -38,9 +39,12 @@ export async function POST(req: Request) {
     const captureUrl = `${appUrl}/v/${captureId}`;
     const typeLabel = capture.type === "video" ? "🎥 Video" : "📸 Screenshot";
 
-    // Compact health summary (new capture shape) or the raw array (legacy).
+    // Compact health summary (new capture shape) or the raw array (legacy) or compressed string.
     // Extract the diagnostics so Slack/Discord get a status line, not just a link.
-    const logs = capture.dev_logs;
+    const rawLogs = capture.dev_logs;
+    const logs = typeof rawLogs === "string" && rawLogs.startsWith("gz:")
+      ? await decompressDevLogs(rawLogs)
+      : rawLogs;
     const isSummary = !!logs && typeof logs === "object" && !Array.isArray(logs) && typeof (logs as Record<string, unknown>).version === "number";
     const summary = isSummary ? logs as { errors?: number; warnings?: number; failedRequests?: number; topErrors?: string[]; failedUrls?: string[] } : null;
     const consoleErrorsForWebhook = Array.isArray(logs)

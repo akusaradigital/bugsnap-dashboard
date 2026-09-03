@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedUser } from "@/lib/supabase-server";
+import { decompressDevLogs } from "@/lib/devlogs-compression";
 
 interface DevLog {
   type: string;
@@ -34,7 +35,11 @@ export async function POST(req: Request) {
     if (!body || typeof body !== "object") {
       return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
     }
-    const { title, devLogs, windowSize } = body as Record<string, unknown>;
+    const { title, devLogs: rawDevLogs, windowSize } = body as Record<string, unknown>;
+    let devLogs = rawDevLogs;
+    if (typeof devLogs === "string" && devLogs.startsWith("gz:")) {
+      devLogs = await decompressDevLogs(devLogs);
+    }
     const isSummaryShape =
       !!devLogs && typeof devLogs === "object" && !Array.isArray(devLogs) &&
       typeof (devLogs as DevLogSummary).version === "number";
