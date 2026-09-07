@@ -44,23 +44,31 @@ export async function GET(req: Request) {
     const supabase = createServiceClient();
     const { data: cap } = await supabase
       .from("captures")
-      .select("user_id")
+      .select("user_id, expires_at, access_mode")
       .or(`drive_file_id.eq.${id},id.eq.${id}`)
       .limit(1)
       .maybeSingle();
 
+    if (cap) {
+      if (cap.expires_at && new Date(cap.expires_at).getTime() < Date.now()) {
+        return NextResponse.json({ error: "Capture expired" }, { status: 410 });
+      }
+    }
+
     if (cap?.user_id) {
       const accessToken = await driveAccessToken(cap.user_id).catch(() => null);
       if (accessToken) {
-        // Self-heal: asynchronously ensure anyone with link can view
-        fetch(`https://www.googleapis.com/drive/v3/files/${id}/permissions?supportsAllDrives=true`, {
-          method: "POST",
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ role: "reader", type: "anyone" }),
-        }).catch(() => {});
+        // Self-heal: asynchronously ensure anyone with link can view if access_mode is public
+        if (cap.access_mode !== "members") {
+          fetch(`https://www.googleapis.com/drive/v3/files/${id}/permissions?supportsAllDrives=true`, {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ role: "reader", type: "anyone" }),
+          }).catch(() => {});
+        }
 
         const authRes = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media&supportsAllDrives=true`, {
           headers: { Authorization: `Bearer ${accessToken}` },
