@@ -408,7 +408,7 @@ function DashboardContent() {
       </div>
 
       {/* Daily Activity Chart for Selected Month (Full Width) */}
-      <div className="rounded-2xl border border-border bg-subtle p-6 shadow-sm">
+      <div className="rounded-2xl border border-border bg-subtle p-4 sm:p-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
           <div>
             <h2 className="text-base font-bold text-foreground">{t("dash.monthly")}</h2>
@@ -456,53 +456,55 @@ function DashboardContent() {
           </div>
         </div>
 
-        <div className="relative h-48 flex flex-col justify-end mt-2">
-          {/* Chart Grid Lines */}
-          <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-7">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="w-full border-t border-dashed border-border/80" />
-            ))}
-          </div>
-
-          {/* Bars container */}
-          {monthlyLoading ? (
-            <div className="flex items-end gap-1 sm:gap-1.5 md:gap-2 h-40 relative z-10 px-1 w-full">
-              {days.map((d) => (
-                <div key={d.day} className="flex-1 min-w-0 flex flex-col items-center gap-1.5 h-full justify-end animate-pulse">
-                  <div className="w-full max-w-[18px] rounded-t-md bg-neutral-200 dark:bg-neutral-800 h-6" />
-                  <span className="text-[9px] text-muted font-medium mt-1">{d.label}</span>
-                </div>
+        <div className="overflow-x-auto pb-2 -mx-2 px-2 sm:overflow-visible sm:pb-0 sm:mx-0 sm:px-0">
+          <div className="relative h-48 flex flex-col justify-end mt-2 min-w-[500px] sm:min-w-0">
+            {/* Chart Grid Lines */}
+            <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-7">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="w-full border-t border-dashed border-border/80" />
               ))}
             </div>
-          ) : (
-            <div className="flex items-end gap-1 sm:gap-1.5 md:gap-2 h-40 relative z-10 px-1 w-full">
-              {days.map((d) => {
-                const edge = d.day <= 3 ? "left" : d.day > days.length - 3 ? "right" : "center";
-                const tooltipPos =
-                  edge === "left" ? "left-0" : edge === "right" ? "right-0" : "left-1/2 -translate-x-1/2";
-                const arrowPos =
-                  edge === "left" ? "left-3" : edge === "right" ? "right-3" : "left-1/2 -translate-x-1/2";
-                return (
-                <div key={d.day} className="flex-1 min-w-0 flex flex-col items-center gap-1.5 group h-full justify-end relative cursor-pointer">
-                  {/* Tooltip on hover */}
-                  <div className={`opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none bg-neutral-900 text-white text-[11px] font-semibold px-2.5 py-1 rounded-lg shadow-xl mb-2 absolute bottom-full ${tooltipPos} z-30 whitespace-nowrap`}>
-                    {MONTH_NAMES[selectedMonth]} {d.day}: <span className="font-bold text-indigo-300">{d.count}</span>
-                    <div className={`absolute top-full ${arrowPos} -mt-1 border-4 border-transparent border-t-neutral-900`} />
+
+            {/* Bars container */}
+            {monthlyLoading ? (
+              <div className="flex items-end gap-1 sm:gap-1.5 md:gap-2 h-40 relative z-10 px-1 w-full">
+                {days.map((d) => (
+                  <div key={d.day} className="flex-1 min-w-0 flex flex-col items-center gap-1.5 h-full justify-end animate-pulse">
+                    <div className="w-full max-w-[18px] rounded-t-md bg-neutral-200 dark:bg-neutral-800 h-6" />
+                    <span className="text-[9px] text-muted font-medium mt-1">{d.label}</span>
                   </div>
-                  {d.count > 0 ? (
-                    <div
-                      className="w-full max-w-[20px] rounded-t-md bg-gradient-to-t from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 hover:scale-110 shadow-xs hover:shadow-md transition-all duration-200"
-                      style={{ height: `${Math.max(8, (d.count / maxDayCount) * 125)}px` }}
-                    />
-                  ) : (
-                    <div className="w-full max-w-[20px] rounded-t-sm bg-neutral-100 dark:bg-neutral-800/60 h-1.5 group-hover:bg-neutral-300 dark:group-hover:bg-neutral-700 transition-colors" />
-                  )}
-                  <span className="text-[9px] sm:text-[10px] text-muted font-medium mt-1 select-none">{d.label}</span>
-                </div>
-                );
-              })}
-            </div>
-          )}
+                ))}
+              </div>
+            ) : (
+              <div className="flex items-end gap-1 sm:gap-1.5 md:gap-2 h-40 relative z-10 px-1 w-full">
+                {days.map((d) => {
+                  const edge = d.day <= 3 ? "left" : d.day > days.length - 3 ? "right" : "center";
+                  const tooltipPos =
+                    edge === "left" ? "left-0" : edge === "right" ? "right-0" : "left-1/2 -translate-x-1/2";
+                  const arrowPos =
+                    edge === "left" ? "left-3" : edge === "right" ? "right-3" : "left-1/2 -translate-x-1/2";
+                  return (
+                  <div key={d.day} className="flex-1 min-w-0 flex flex-col items-center gap-1.5 group h-full justify-end relative cursor-pointer">
+                    {/* Tooltip on hover */}
+                    <div className={`opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none bg-neutral-900 text-white text-[11px] font-semibold px-2.5 py-1 rounded-lg shadow-xl mb-2 absolute bottom-full ${tooltipPos} z-30 whitespace-nowrap`}>
+                      {MONTH_NAMES[selectedMonth]} {d.day}: <span className="font-bold text-indigo-300">{d.count}</span>
+                      <div className={`absolute top-full ${arrowPos} -mt-1 border-4 border-transparent border-t-neutral-900`} />
+                    </div>
+                    {d.count > 0 ? (
+                      <div
+                        className="w-full max-w-[20px] rounded-t-md bg-gradient-to-t from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 hover:scale-110 shadow-xs hover:shadow-md transition-all duration-200"
+                        style={{ height: `${Math.max(8, (d.count / maxDayCount) * 125)}px` }}
+                      />
+                    ) : (
+                      <div className="w-full max-w-[20px] rounded-t-sm bg-neutral-100 dark:bg-neutral-800/60 h-1.5 group-hover:bg-neutral-300 dark:group-hover:bg-neutral-700 transition-colors" />
+                    )}
+                    <span className="text-[9px] sm:text-[10px] text-muted font-medium mt-1 select-none">{d.label}</span>
+                  </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

@@ -5,7 +5,7 @@ import { createServiceClient } from "@/lib/supabase-server";
 export const runtime = "nodejs";
 
 type Mode = "drive_trash" | "app_only";
-type Capture = { id: string; workspace_id: string | null; drive_file_id: string | null; drive_url: string | null };
+type Capture = { id: string; workspace_id: string | null; user_id: string | null; drive_file_id: string | null; drive_url: string | null; dev_logs?: unknown; workspaces?: { owner_user_id: string } | null };
 type Result = { captureId: string; ok: boolean; outcome: string; driveOutcome?: "trashed" | "kept" | "unknown"; error?: string };
 
 export async function POST(request: Request) {
@@ -57,14 +57,31 @@ export async function POST(request: Request) {
       let trashed = false;
       try {
         if (mode === "drive_trash") {
-          const { data, error } = await db.from("captures").select("id,workspace_id,drive_file_id,drive_url,workspaces!inner(owner_user_id)").eq("id", captureId).eq("workspaces.owner_user_id", user.id).maybeSingle();
+          const { data, error } = await db.from("captures")
+            .select("id,workspace_id,user_id,drive_file_id,drive_url,dev_logs,workspaces(owner_user_id)")
+            .eq("id", captureId)
+            .maybeSingle();
           if (error) throw error;
-          const capture = data as Capture | null;
+          const capture = data as unknown as Capture | null;
           if (!capture) throw new Error("Not found or not owned");
+          const isOwner = capture.workspaces?.owner_user_id === user.id;
+          const isCreator = capture.user_id === user.id;
+          if (!isOwner && !isCreator) throw new Error("Not found or not owned");
+
           fileId = capture.drive_file_id ?? parseDriveFileId(capture.drive_url);
           if (!fileId) throw new Error("Capture has no exact Google Drive file ID");
           await trashDriveFile(accessToken!, fileId);
           trashed = true;
+
+          // Also trash dev_logs file in Drive if present
+          let devLogsFileId: string | null = null;
+          if (capture.dev_logs && typeof capture.dev_logs === "object") {
+            const logs = capture.dev_logs as Record<string, unknown>;
+            devLogsFileId = (typeof logs.driveFileId === "string" ? logs.driveFileId : null) ?? parseDriveFileId(typeof logs.driveUrl === "string" ? logs.driveUrl : null);
+          }
+          if (devLogsFileId) {
+            try { await trashDriveFile(accessToken!, devLogsFileId); } catch {}
+          }
         }
 
         const { data, error } = await db.rpc("delete_capture_with_audit", {

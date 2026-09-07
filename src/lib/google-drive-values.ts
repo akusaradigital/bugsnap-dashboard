@@ -16,8 +16,9 @@ export function isUuid(value: string) {
 
 export function parseDriveFileId(url: string | null) {
   if (!url) return null;
+  const raw = url.trim();
   try {
-    const parsed = new URL(url);
+    const parsed = new URL(raw.startsWith("http://") || raw.startsWith("https://") ? raw : `https://${raw}`);
     if (parsed.hostname !== "drive.google.com" && parsed.hostname !== "docs.google.com") return null;
     const id = parsed.searchParams.get("id") ?? parsed.pathname.match(/\/d\/([^/]+)/)?.[1] ?? null;
     return id && /^[A-Za-z0-9_-]{10,200}$/.test(id) ? id : null;

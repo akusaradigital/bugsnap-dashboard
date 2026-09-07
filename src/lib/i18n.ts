@@ -501,6 +501,7 @@ const en: Dict = {
   "v.signInToDelete": "Sign in again to delete this capture.",
   "v.deleteFailed": "Could not delete this capture. Please try again.",
   // DevTools panel
+  "dt.issues": "Issues",
   "dt.info": "Info",
   "dt.console": "Console",
   "dt.network": "Network",
@@ -1073,6 +1074,7 @@ const id: Dict = {
   "v.clipboardDenied": "Izin clipboard ditolak. Silakan salin tautan dari bilah alamat.",
   "v.signInToDelete": "Masuk lagi untuk menghapus tangkapan ini.",
   "v.deleteFailed": "Tidak dapat menghapus tangkapan ini. Silakan coba lagi.",
+  "dt.issues": "Masalah",
   "dt.info": "Info",
   "dt.console": "Console",
   "dt.network": "Network",

@@ -278,7 +278,7 @@ export default function AdminDashboardPage() {
 
   if (loading) {
     return (
-      <div className="p-6 md:p-8 space-y-6 max-w-7xl mx-auto animate-pulse">
+      <div className="p-4 sm:p-6 lg:p-8 space-y-6 max-w-7xl mx-auto animate-pulse">
         <div>
           <div className="h-6 w-48 bg-subtle rounded mb-2" />
           <div className="h-4 w-full max-w-96 bg-subtle rounded" />
@@ -292,7 +292,7 @@ export default function AdminDashboardPage() {
 
   if (error) {
     return (
-      <div className="p-6 md:p-8 max-w-7xl mx-auto">
+      <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
         <div className="bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/40 p-6 rounded-xl text-center">
           <svg className="w-10 h-10 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -316,14 +316,14 @@ export default function AdminDashboardPage() {
   });
 
   return (
-    <main className="p-6 md:p-8 space-y-8 max-w-7xl mx-auto">
+    <main className="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 max-w-7xl mx-auto">
       <div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground">{t("admin.title")}</h1>
         <p className="text-sm text-muted mt-1">{t("admin.subtitle")}</p>
       </div>
 
       {/* STATS CARDS */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 sm:gap-4">
         {[
           { label: t("admin.totalUsers"), value: data.stats.totalUsers },
           { label: t("admin.workspaces"), value: data.stats.totalWorkspaces },
@@ -331,7 +331,7 @@ export default function AdminDashboardPage() {
           { label: t("admin.totalViews"), value: data.stats.totalViews },
           { label: t("admin.comments"), value: data.stats.totalComments },
         ].map((s) => (
-          <div key={s.label} className="bg-subtle border border-border rounded-xl p-4 shadow-sm flex flex-col justify-center">
+          <div key={s.label} className="bg-subtle border border-border rounded-xl p-4 shadow-sm flex flex-col justify-center last:col-span-2 sm:last:col-span-1 lg:last:col-span-1">
             <p className="text-[11px] font-semibold text-muted uppercase tracking-wider mb-1">{s.label}</p>
             <p className="text-2xl font-bold text-foreground">{s.value}</p>
           </div>
@@ -454,7 +454,7 @@ export default function AdminDashboardPage() {
             <h2 className="text-sm font-bold text-foreground">Drive orphan cleanup</h2>
             <p className="text-[11px] text-muted mt-0.5">Preview Drive files that are no longer linked to any BugSnap capture, then move them to Drive trash manually.</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button onClick={scanDriveOrphans} disabled={orphanLoading || orphanCleaning} className="px-4 py-1.5 text-xs font-semibold bg-subtle border border-border text-foreground rounded-lg hover:bg-subtle disabled:opacity-50 transition-colors">{orphanLoading ? "Scanning..." : "Scan Drive"}</button>
             <button onClick={trashDriveOrphans} disabled={orphanCleaning || orphanFiles.length === 0} className="px-4 py-1.5 text-xs font-semibold bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 transition-colors">{orphanCleaning ? "Trashing..." : "Trash orphans"}</button>
           </div>
@@ -577,7 +577,7 @@ export default function AdminDashboardPage() {
       </div>
 
       {/* FOOTER DB HEALTH */}
-      <div className="flex items-center justify-between text-xs text-muted pt-2 border-t border-border/60">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs text-muted pt-2 border-t border-border/60">
         <div className="flex items-center gap-2">
           <span className={`w-2 h-2 rounded-full ${dbHealth?.status === "healthy" ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`} />
           <span>Live Database: <strong className="text-foreground">{dbHealth?.status === "healthy" ? "Connected" : "Checking..."}</strong></span>

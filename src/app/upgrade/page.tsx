@@ -47,7 +47,7 @@ function UpgradeContent() {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-neutral-950 text-foreground flex flex-col justify-between p-6 sm:p-10 relative">
+    <div className="min-h-screen bg-white dark:bg-neutral-950 text-foreground flex flex-col justify-between p-4 sm:p-10 relative">
       {/* Top bar with Close button */}
       <div className="w-full max-w-5xl mx-auto flex items-center justify-between">
         <button

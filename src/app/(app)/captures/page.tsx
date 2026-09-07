@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useCallback, useEffect, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -112,6 +112,23 @@ function expiryToOption(expiresAt: string | null | undefined, createdAt: string)
   if (diffMs <= 36 * 60 * 60 * 1000) return "24h";
   if (diffMs <= 10.5 * 24 * 60 * 60 * 1000) return "7d";
   return "never";
+}
+
+interface UploadTask {
+  name: string;
+  size: number;
+  type: "video" | "screenshot";
+  progress: number;
+  status: "uploading" | "syncing" | "completed" | "error";
+  error?: string;
+}
+
+function formatBytes(bytes: number, decimals = 1): string {
+  if (!bytes || bytes <= 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(decimals))} ${sizes[i]}`;
 }
 
 function EditModal({ capture, onClose, onSaved }: EditModalProps) {
@@ -429,7 +446,7 @@ function CapturesContent() {
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
-  const [uploadSuccess, setUploadSuccess] = useState<string | null>(null);
+  const [currentUpload, setCurrentUpload] = useState<UploadTask | null>(null);
   const [moveToOpen, setMoveToOpen] = useState(false);
   const [moving, setMoving] = useState(false);
   const [moveTargetWorkspaceId, setMoveTargetWorkspaceId] = useState<string>("");
@@ -439,6 +456,11 @@ function CapturesContent() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [dragActive, setDragActive] = useState(false);
   const [thumbFailed, setThumbFailed] = useState<Record<string, boolean>>({});
+  const missingDriveIds = useMemo(() => {
+    return captures
+      .filter((c) => thumbFailed[c.id] || (Boolean(c.drive_url) && !driveFileId(c.drive_url)))
+      .map((c) => c.id);
+  }, [captures, thumbFailed]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [activeHoverId, setActiveHoverId] = useState<string | null>(null);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
@@ -509,6 +531,9 @@ function CapturesContent() {
 
   const loadPage = useCallback(
     async (replace: boolean) => {
+      if (replace) {
+        cursorRef.current = null;
+      }
       const gen = loadGenRef.current;
       let query = supabase
         .from("captures")
@@ -545,6 +570,8 @@ function CapturesContent() {
       if (items.length > 0) {
         const last = items[items.length - 1];
         cursorRef.current = { created_at: last.created_at, id: last.id };
+      } else if (replace) {
+        cursorRef.current = null;
       }
       setHasMore(items.length === PAGE_SIZE);
     },
@@ -724,15 +751,26 @@ function CapturesContent() {
 
   async function uploadSelectedFile(file: File) {
     if (!file || uploading) return;
+    const isVideo = file.type.startsWith("video/");
     const title = file.name.replace(/\.[^.]+$/, "") || "Untitled";
+
     setUploading(true);
     setUploadError(null);
-    setUploadSuccess(null);
+
+    const task: UploadTask = {
+      name: file.name,
+      size: file.size,
+      type: isVideo ? "video" : "screenshot",
+      progress: 5,
+      status: "uploading",
+    };
+    setCurrentUpload(task);
+
     try {
       const form = new FormData();
       form.append("file", file);
       form.append("title", title);
-      form.append("type", file.type.startsWith("video/") ? "video" : "screenshot");
+      form.append("type", isVideo ? "video" : "screenshot");
       form.append("workspaceId", workspaceParam);
       if (folderParam) {
         form.append("folderName", folderParam);
@@ -740,20 +778,83 @@ function CapturesContent() {
       if (projectFilter) {
         form.append("projectId", projectFilter);
       }
+
       const { data: sessionData } = await supabase.auth.getSession();
-      const response = await fetch("/api/captures/upload", {
-        method: "POST",
-        headers: sessionData.session?.access_token ? { Authorization: `Bearer ${sessionData.session.access_token}` } : undefined,
-        body: form,
+      const token = sessionData.session?.access_token;
+
+      await new Promise<void>((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        let syncTimer: ReturnType<typeof setInterval> | null = null;
+
+        xhr.upload.onprogress = (event) => {
+          if (event.lengthComputable) {
+            // Client-to-server upload stages: 5% to 75%
+            const pct = Math.max(5, Math.min(75, Math.round((event.loaded / event.total) * 75)));
+            setCurrentUpload((prev) => (prev ? { ...prev, progress: pct, status: "uploading" } : null));
+          }
+        };
+
+        xhr.upload.onload = () => {
+          // Upload to server complete; server is syncing to Google Drive and Supabase
+          setCurrentUpload((prev) => (prev ? { ...prev, progress: 80, status: "syncing" } : null));
+          let currentPct = 80;
+          syncTimer = setInterval(() => {
+            if (currentPct < 96) {
+              currentPct += 2;
+              setCurrentUpload((prev) => (prev ? { ...prev, progress: currentPct, status: "syncing" } : null));
+            }
+          }, 250);
+        };
+
+        xhr.onload = () => {
+          if (syncTimer) clearInterval(syncTimer);
+          if (xhr.status >= 200 && xhr.status < 300) {
+            let res: { capture?: Capture; error?: string } = {};
+            try {
+              res = JSON.parse(xhr.responseText);
+            } catch {}
+
+            // Immediately prepend the newly created capture into grid state so it appears instantly
+            if (res.capture) {
+              setCaptures((prev) => {
+                if (prev.some((c) => c.id === res.capture!.id)) return prev;
+                return [res.capture!, ...prev];
+              });
+            }
+
+            setCurrentUpload((prev) => (prev ? { ...prev, progress: 100, status: "completed" } : null));
+            showToast(`Uploaded ${file.name}`, "success");
+            loadPage(true);
+            setTimeout(() => {
+              setCurrentUpload((prev) => (prev?.status === "completed" ? null : prev));
+            }, 4000);
+            resolve();
+          } else {
+            let errorMsg = "Upload failed";
+            try {
+              const res = JSON.parse(xhr.responseText);
+              if (res.error) errorMsg = res.error;
+            } catch {}
+            reject(new Error(errorMsg));
+          }
+        };
+
+        xhr.onerror = () => {
+          if (syncTimer) clearInterval(syncTimer);
+          reject(new Error("Network error during upload"));
+        };
+
+        xhr.open("POST", "/api/captures/upload");
+        if (token) {
+          xhr.setRequestHeader("Authorization", `Bearer ${token}`);
+        }
+        xhr.send(form);
       });
-      const json = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(json.error || "Upload failed");
-      setUploadSuccess(`Uploaded ${file.name}`);
-      showToast(`Uploaded ${file.name}`, "success");
-      loadPage(true);
     } catch (error) {
-      setUploadError(error instanceof Error ? error.message : "Upload failed");
-      showToast("Upload failed", "error");
+      const errMsg = error instanceof Error ? error.message : "Upload failed";
+      setCurrentUpload((prev) => (prev ? { ...prev, status: "error", error: errMsg } : null));
+      setUploadError(errMsg);
+      showToast(errMsg, "error");
     } finally {
       setUploading(false);
     }
@@ -879,9 +980,13 @@ function CapturesContent() {
     >
       {dragActive && (
         <div
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-indigo-600/10 backdrop-blur-sm border-4 border-dashed border-indigo-600 m-4 rounded-2xl transition-all"
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-indigo-950/40 dark:bg-black/60 backdrop-blur-sm border-4 border-dashed border-indigo-500 m-3 sm:m-6 rounded-3xl transition-all animate-in fade-in zoom-in-95 duration-200"
           onDragOver={(e) => e.preventDefault()}
-          onDragLeave={() => setDragActive(false)}
+          onDragLeave={(e) => {
+            if (e.currentTarget === e.target) {
+              setDragActive(false);
+            }
+          }}
           onDrop={(e) => {
             e.preventDefault();
             setDragActive(false);
@@ -889,15 +994,23 @@ function CapturesContent() {
             if (file) void uploadSelectedFile(file);
           }}
         >
-          <div className="bg-white dark:bg-zinc-950 p-6 rounded-2xl shadow-xl flex flex-col items-center gap-3 max-w-sm text-center">
-            <div className="w-12 h-12 rounded-full bg-indigo-50 dark:bg-indigo-900/30 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
-              <svg className="w-6 h-6 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+          <div className="bg-white dark:bg-zinc-900 border border-border p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 max-w-md text-center pointer-events-none transform transition-transform">
+            <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-800/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-inner">
+              <svg className="w-8 h-8 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
               </svg>
             </div>
             <div>
-              <p className="font-semibold text-foreground text-sm">Drop file to upload</p>
-              <p className="text-xs text-muted mt-1">Upload your screenshot or video to BugSnap</p>
+              <p className="font-semibold text-foreground text-base">Drop file to upload</p>
+              <p className="text-xs text-muted mt-1.5 max-w-xs">
+                Release your screenshot or video to upload directly to Google Drive & BugSnap
+              </p>
+            </div>
+            <div className="flex items-center gap-2 mt-1">
+              <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-subtle border border-border text-muted">PNG</span>
+              <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-subtle border border-border text-muted">JPG</span>
+              <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-subtle border border-border text-muted">MP4</span>
+              <span className="px-2 py-0.5 rounded text-[10px] font-medium bg-subtle border border-border text-muted">WEBM</span>
             </div>
           </div>
         </div>
@@ -907,7 +1020,7 @@ function CapturesContent() {
         <h1 className="text-2xl font-bold tracking-tight text-foreground">{t("cap.title")}</h1>
 
         <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
-          <div className="relative flex-1 min-w-[200px] lg:flex-none lg:w-64">
+          <div className="relative flex-1 min-w-[150px] sm:min-w-[200px] lg:flex-none lg:w-64">
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             <input
               type="text"
@@ -917,23 +1030,34 @@ function CapturesContent() {
               className="h-10 pl-9 pr-3 text-sm rounded-lg border border-border bg-subtle focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 w-full"
             />
           </div>
-          <label className="h-10 flex items-center justify-center gap-2 px-4 border border-border bg-subtle text-muted hover:text-foreground hover:bg-subtle/80 text-sm font-medium rounded-lg transition-colors cursor-pointer whitespace-nowrap">
-            <input type="file" className="hidden" onChange={handleManualUpload} accept="image/*,video/*" />
-            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
-            </svg>
-            {uploading ? "Uploading..." : "Upload file"}
+          <label className={`h-10 flex items-center justify-center gap-2 px-4 border border-border text-sm font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 ${uploading ? "bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800/40 cursor-wait" : "bg-subtle text-muted hover:text-foreground hover:bg-subtle/80 cursor-pointer"}`}>
+            <input type="file" className="hidden" onChange={handleManualUpload} accept="image/*,video/*" disabled={uploading} />
+            {uploading ? (
+              <svg className="w-4 h-4 text-indigo-600 dark:text-indigo-400 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+              </svg>
+            )}
+            {uploading
+              ? currentUpload?.status === "syncing"
+                ? "Syncing Drive..."
+                : `Uploading (${currentUpload?.progress || 0}%)`
+              : "Upload file"}
           </label>
         </div>
       </div>
 
       {/* Filter & Selection Row (Jam.dev style) - sticky so filters and multi-select actions stay accessible while scrolling */}
       <div className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 pt-3 border-b border-border bg-background">
-        <div className="grid grid-cols-2 min-[430px]:flex min-[430px]:flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
         <div ref={typeMenuRef} className="relative min-w-0">
           <button
             onClick={() => setTypeMenuOpen((o) => !o)}
-            className={`w-full min-[430px]:w-auto flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors ${
+            className={`flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors ${
               typeMenuOpen || showVideo || showScreenshot
                 ? "bg-subtle border-indigo-200 text-foreground"
                 : "bg-subtle border-border text-muted hover:text-foreground hover:bg-subtle"
@@ -1078,9 +1202,160 @@ function CapturesContent() {
         )}
       </div>
 
-      {(deleteError || uploadError || uploadSuccess) && (
-        <div className={`mb-6 rounded-lg px-4 py-3 text-xs ${deleteError || uploadError ? "border border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400" : "border border-emerald-200 bg-emerald-50 text-emerald-700"}`}>
-          {deleteError || uploadError || uploadSuccess}
+      {/* Upload Progress Animation Banner */}
+      {currentUpload && (
+        <div className="mb-6 overflow-hidden rounded-xl border border-indigo-200/80 dark:border-indigo-900/50 bg-white dark:bg-subtle p-4 shadow-sm transition-all animate-in fade-in slide-in-from-top-2 duration-300">
+          <div className="flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div
+                className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all ${
+                  currentUpload.status === "completed"
+                    ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 ring-2 ring-emerald-500/20"
+                    : currentUpload.status === "error"
+                    ? "bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-400 ring-2 ring-red-500/20"
+                    : "bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400 ring-2 ring-indigo-500/20"
+                }`}
+              >
+                {currentUpload.status === "completed" ? (
+                  <svg className="w-5 h-5 animate-in zoom-in duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                ) : currentUpload.status === "error" ? (
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                ) : currentUpload.type === "video" ? (
+                  <svg className="w-5 h-5 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                ) : (
+                  <svg className="w-5 h-5 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                )}
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold text-sm text-foreground truncate max-w-xs sm:max-w-md">
+                    {currentUpload.name}
+                  </span>
+                  <span className="text-[11px] text-muted shrink-0">
+                    ({formatBytes(currentUpload.size)})
+                  </span>
+                </div>
+                <div className="text-xs text-muted flex items-center gap-1.5 mt-0.5">
+                  {currentUpload.status === "uploading" && (
+                    <>
+                      <span className="inline-block w-2 h-2 rounded-full bg-indigo-500 animate-ping" />
+                      <span>Uploading to server...</span>
+                    </>
+                  )}
+                  {currentUpload.status === "syncing" && (
+                    <>
+                      <svg className="w-3.5 h-3.5 text-indigo-500 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
+                      </svg>
+                      <span>Syncing to Google Drive...</span>
+                    </>
+                  )}
+                  {currentUpload.status === "completed" && (
+                    <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
+                      <span>Successfully uploaded to Google Drive & BugSnap</span>
+                    </span>
+                  )}
+                  {currentUpload.status === "error" && (
+                    <span className="text-red-600 dark:text-red-400 font-medium">
+                      {currentUpload.error || "Upload failed"}
+                    </span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2.5 shrink-0">
+              <span
+                className={`text-xs font-bold tabular-nums ${
+                  currentUpload.status === "completed"
+                    ? "text-emerald-600 dark:text-emerald-400"
+                    : currentUpload.status === "error"
+                    ? "text-red-600 dark:text-red-400"
+                    : "text-indigo-600 dark:text-indigo-400"
+                }`}
+              >
+                {currentUpload.status === "error" ? "Error" : `${currentUpload.progress}%`}
+              </span>
+              {(currentUpload.status === "completed" || currentUpload.status === "error") && (
+                <button
+                  type="button"
+                  onClick={() => setCurrentUpload(null)}
+                  className="p-1 text-muted hover:text-foreground rounded-lg hover:bg-subtle transition-colors cursor-pointer"
+                  title="Dismiss"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Smooth Progress Bar */}
+          <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-border/60">
+            <div
+              className={`h-full transition-all duration-300 ease-out rounded-full ${
+                currentUpload.status === "completed"
+                  ? "bg-emerald-500"
+                  : currentUpload.status === "error"
+                  ? "bg-red-500"
+                  : "bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600"
+              }`}
+              style={{ width: `${currentUpload.progress}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {(deleteError || (!currentUpload && uploadError)) && (
+        <div className="mb-6 rounded-lg px-4 py-3 text-xs border border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400">
+          {deleteError || uploadError}
+        </div>
+      )}
+
+      {/* 1-Click Ghost Cleanup Banner for Missing Drive Files */}
+      {missingDriveIds.length > 0 && !currentUpload && (
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/20 px-4 py-3 text-xs text-amber-900 dark:text-amber-200 shadow-sm animate-in fade-in duration-200">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0 text-amber-600 dark:text-amber-400">
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <div className="min-w-0">
+              <span className="font-semibold">
+                {missingDriveIds.length} {missingDriveIds.length === 1 ? "capture" : "captures"} missing from Google Drive
+              </span>
+              <span className="text-amber-700/80 dark:text-amber-400/80 ml-1.5 hidden sm:inline">
+                The original files were deleted in Google Drive. You can clean up their ghost records from the dashboard.
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              type="button"
+              onClick={() => openDeleteConfirmation(missingDriveIds, `${missingDriveIds.length} missing captures`)}
+              className="rounded-lg bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white font-medium px-3 py-1.5 transition-colors cursor-pointer shadow-xs whitespace-nowrap"
+            >
+              Clean Up from Dashboard ({missingDriveIds.length})
+            </button>
+            <button
+              type="button"
+              onClick={() => setSelectedIds(new Set(missingDriveIds))}
+              className="rounded-lg border border-amber-300 dark:border-amber-800/60 bg-white dark:bg-subtle text-amber-800 dark:text-amber-200 font-medium px-3 py-1.5 hover:bg-amber-100/50 transition-colors cursor-pointer whitespace-nowrap"
+            >
+              Select All
+            </button>
+          </div>
         </div>
       )}
 
@@ -1234,9 +1509,9 @@ function CapturesContent() {
                     </div>
                   </div>
 
-                  {/* Top-Right: Actions on Hover */}
+                  {/* Top-Right: Actions (always visible on mobile touch, hover on desktop) */}
                   {!isSelectionActive && (
-                    <div className="absolute top-3 right-3 z-20 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute top-3 right-3 z-20 flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                       <button
                         type="button"
                         aria-label={t("cap.copyLink")}
@@ -1260,7 +1535,9 @@ function CapturesContent() {
                             e.preventDefault();
                             e.stopPropagation();
                             const rect = e.currentTarget.getBoundingClientRect();
-                            setMenuPos({ top: rect.bottom + 6, left: Math.max(12, rect.right - 128) });
+                            const left = typeof window !== "undefined" ? Math.max(12, Math.min(rect.right - 128, window.innerWidth - 136)) : rect.right - 128;
+                            const top = typeof window !== "undefined" ? Math.min(rect.bottom + 6, window.innerHeight - 150) : rect.bottom + 6;
+                            setMenuPos({ top, left });
                             setActiveMenuId((prev) => (prev === item.id ? null : item.id));
                           }}
                           className="w-7 h-7 rounded-lg bg-white/90 hover:bg-white text-slate-700 dark:bg-zinc-900/90 dark:hover:bg-zinc-900 dark:text-slate-200 border border-slate-200/80 dark:border-zinc-700 flex items-center justify-center shadow-md transition-colors"
@@ -1279,8 +1556,8 @@ function CapturesContent() {
                     </div>
                   )}
 
-                  {/* Status badges - top right when not hovered */}
-                  <div className="absolute top-3 right-3 flex items-center gap-1.5 z-10 group-hover:opacity-0 transition-opacity">
+                  {/* Status badges - top right when not hovered on desktop, shifted left on mobile to prevent overlap with actions */}
+                  <div className="absolute top-3 right-20 sm:right-3 flex items-center gap-1.5 z-10 sm:group-hover:opacity-0 transition-opacity pointer-events-none">
                     {item.expires_at && new Date(item.expires_at).getTime() < Date.now() && (
                       <span className="text-[10px] font-semibold uppercase tracking-wider text-red-100 bg-red-600/80 px-2 py-0.5 rounded backdrop-blur-sm shadow-sm">
                         {t("cap.expired")}
@@ -1293,6 +1570,19 @@ function CapturesContent() {
                       </span>
                     )}
                   </div>
+
+                  {/* Drive File Missing Badge */}
+                  {(thumbFailed[item.id] || (Boolean(item.drive_url) && !driveFileId(item.drive_url))) && (
+                    <div
+                      className="absolute bottom-2.5 left-2.5 z-10 inline-flex items-center gap-1 rounded-md bg-amber-600/90 backdrop-blur-sm text-white text-[10px] font-semibold px-2 py-0.5 shadow-sm pointer-events-none"
+                      title="File missing in Google Drive"
+                    >
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                      </svg>
+                      <span>Drive missing</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Meta Footer */}

@@ -152,7 +152,7 @@ interface Props {
   onSeekToTime?: (timeSec: number) => void;
 }
 
-const TABS = ["Info", "Console", "Network", "Actions"] as const;
+const TABS = ["Issues", "Info", "Console", "Network", "Actions"] as const;
 type Tab = typeof TABS[number];
 type Grouped<T> = { log: T; count: number };
 
@@ -292,7 +292,9 @@ function FormattedErrorMessage({ msg }: { msg: string }) {
 
 export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Props) {
   const { t } = useT();
-  const [activeTab, setActiveTab] = useState<Tab>("Info");
+  const [activeTab, setActiveTab] = useState<Tab>("Issues");
+  const [consoleErrorsOnly, setConsoleErrorsOnly] = useState(false);
+  const [networkFailedOnly, setNetworkFailedOnly] = useState(false);
   const [logSearch, setLogSearch] = useState("");
   const [decompressedLogs, setDecompressedLogs] = useState<CapturedLogs>(capture.dev_logs || null);
 
@@ -449,6 +451,40 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
     (log) => ({ ...log, url: canonicalUrl(log.url) })
   );
 
+  const isConsoleError = (log: ConsoleLog) => {
+    const level = normalizeLevel(log.level);
+    return level === "error" || Boolean(log.stack) || /(uncaught|exception|error|failed)/i.test(consoleText(log));
+  };
+
+  const isNetworkFailed = (log: NetworkLog) => {
+    return !log.status || log.status >= 400 || log.status === 0 || Boolean(log.error);
+  };
+
+  const consoleErrors = consoleLogs.filter((l): l is ConsoleLog => l.type === "console" && isConsoleError(l));
+  const networkErrors = networkLogs.filter(isNetworkFailed);
+  const totalIssuesCount = summary
+    ? (summary.errors || 0) + (summary.failedRequests || 0)
+    : consoleErrors.length + networkErrors.length;
+
+  type IssueItem = {
+    id: string;
+    type: "console" | "network";
+    log: ConsoleLog | NetworkLog;
+  };
+
+  const issueItems: IssueItem[] = [
+    ...consoleErrors.map((log, i) => ({ id: `err_c_${i}`, type: "console" as const, log })),
+    ...networkErrors.map((log, i) => ({ id: `err_n_${i}`, type: "network" as const, log })),
+  ];
+
+  const visibleConsoleLogs = consoleErrorsOnly
+    ? consoleLogs.filter((l) => l.type === "console" && isConsoleError(l))
+    : consoleLogs;
+
+  const visibleGroupedNetworkLogs = networkFailedOnly
+    ? groupedNetworkLogs.filter(({ log }) => isNetworkFailed(log))
+    : groupedNetworkLogs;
+
   const performanceLog = logs.findLast((l): l is PerformanceLog => l.type === "performance");
   const metrics = performanceLog?.metrics;
 
@@ -507,6 +543,7 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
   const detectedBrowser = capture.browser || "Chrome";
 
   const tabLabel = (tab: Tab) => {
+    if (tab === "Issues") return `${t("dt.issues") || "Issues"} (${totalIssuesCount})`;
     if (tab === "Console" && consoleLogs.length) return `${t("dt.console")} (${totalLogCount(consoleLogs)})`;
     if (tab === "Network" && networkLogs.length) return `${t("dt.network")} (${totalLogCount(networkLogs)})`;
     if (tab === "Actions" && actionLogs.length)  return `${t("dt.actions")} (${totalLogCount(actionLogs)})`;
@@ -529,20 +566,37 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
 
       {/* Tabs */}
       <div className="flex border-b border-border shrink-0 px-4 gap-1 overflow-x-auto">
-        {TABS.map((t) => (
-          <button
-            key={t}
-            onClick={() => setActiveTab(t)}
-            className={`px-2.5 py-2.5 text-[11px] font-medium relative transition-colors whitespace-nowrap ${
-              activeTab === t ? "text-indigo-600 font-semibold" : "text-muted hover:text-foreground"
-            }`}
-          >
-            {tabLabel(t)}
-            {activeTab === t && (
-              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 rounded-full" />
-            )}
-          </button>
-        ))}
+        {TABS.map((tab) => {
+          const isIssues = tab === "Issues";
+          const hasIssues = isIssues && totalIssuesCount > 0;
+          return (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`px-2.5 py-2.5 text-[11px] font-medium relative transition-colors whitespace-nowrap flex items-center gap-1.5 ${
+                activeTab === tab
+                  ? isIssues && hasIssues
+                    ? "text-red-600 dark:text-red-400 font-semibold"
+                    : "text-indigo-600 font-semibold"
+                  : isIssues && hasIssues
+                  ? "text-red-600/90 dark:text-red-400/90 hover:text-red-700 font-medium"
+                  : "text-muted hover:text-foreground"
+              }`}
+            >
+              {tabLabel(tab)}
+              {isIssues && hasIssues && (
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
+              )}
+              {activeTab === tab && (
+                <span
+                  className={`absolute bottom-0 left-0 right-0 h-0.5 rounded-full ${
+                    isIssues && hasIssues ? "bg-red-600" : "bg-indigo-600"
+                  }`}
+                />
+              )}
+            </button>
+          );
+        })}
       </div>
 
       {/* Content */}
@@ -562,6 +616,206 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                 className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-border text-xs bg-subtle outline-none focus:border-indigo-500 shadow-sm"
               />
             </div>
+            {/* Quick Filter for Console */}
+            {activeTab === "Console" && consoleErrors.length > 0 && (
+              <div className="flex items-center gap-1.5 pt-0.5">
+                <button
+                  type="button"
+                  onClick={() => setConsoleErrorsOnly(false)}
+                  className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors ${
+                    !consoleErrorsOnly
+                      ? "bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800/40 font-semibold"
+                      : "text-muted hover:text-foreground border border-transparent"
+                  }`}
+                >
+                  {t("dt.all") || "All"} ({consoleLogs.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setConsoleErrorsOnly(true)}
+                  className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors flex items-center gap-1 ${
+                    consoleErrorsOnly
+                      ? "bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/40 font-semibold"
+                      : "text-red-600/80 hover:text-red-700 border border-transparent"
+                  }`}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                  {t("dt.errorsOnly") || "Errors Only"} ({consoleErrors.length})
+                </button>
+              </div>
+            )}
+            {/* Quick Filter for Network */}
+            {activeTab === "Network" && networkErrors.length > 0 && (
+              <div className="flex items-center gap-1.5 pt-0.5">
+                <button
+                  type="button"
+                  onClick={() => setNetworkFailedOnly(false)}
+                  className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors ${
+                    !networkFailedOnly
+                      ? "bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800/40 font-semibold"
+                      : "text-muted hover:text-foreground border border-transparent"
+                  }`}
+                >
+                  {t("dt.all") || "All"} ({networkLogs.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setNetworkFailedOnly(true)}
+                  className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors flex items-center gap-1 ${
+                    networkFailedOnly
+                      ? "bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/40 font-semibold"
+                      : "text-red-600/80 hover:text-red-700 border border-transparent"
+                  }`}
+                >
+                  <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                  {t("dt.failedReq") || "Failed Requests"} ({networkErrors.length})
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ISSUES TAB */}
+        {activeTab === "Issues" && (
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            {totalIssuesCount === 0 ? (
+              <div className="py-14 flex flex-col items-center gap-2 text-center text-xs text-muted p-4">
+                <div className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+                <p className="font-semibold text-emerald-700 dark:text-emerald-400 text-sm mt-1">{t("dt.pageRanClean")}</p>
+                <p className="text-xs text-muted max-w-sm">No console errors or failed network requests were detected during this capture session.</p>
+              </div>
+            ) : summary ? (
+              <div className="p-4 space-y-3">
+                <div className="flex items-center gap-2.5 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200/80 dark:border-red-800/40 px-3.5 py-2.5 shadow-sm">
+                  <div className="w-7 h-7 rounded-full bg-red-100 dark:bg-red-950/40 border border-red-200 dark:border-red-800/40 flex items-center justify-center shrink-0 text-red-600 dark:text-red-400 text-xs font-bold">
+                    {totalIssuesCount}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-semibold text-red-800 dark:text-red-300 leading-tight">
+                      {totalIssuesCount} {totalIssuesCount === 1 ? "issue detected" : "issues detected"}
+                    </p>
+                    <p className="text-[10px] text-red-700/80 dark:text-red-400/80 mt-0.5">
+                      {summary.errors} console errors, {summary.failedRequests} failed network requests
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-2 pt-1">
+                  {(summary.topErrors || []).map((msg, i) => (
+                    <FormattedErrorMessage key={`se_${i}`} msg={msg} />
+                  ))}
+                  {(summary.failedUrls || []).map((url, i) => (
+                    <div key={`su_${i}`} className="pl-2.5 border-l-2 border-red-300 dark:border-red-800/40 py-0.5">
+                      <span className="text-[9px] font-bold uppercase tracking-wider text-red-600 bg-red-50 dark:bg-red-950/30 px-1 py-0.2 rounded border border-red-200 dark:border-red-800/40 mr-1.5">FAIL</span>
+                      <span className="text-[11px] font-mono text-red-700 dark:text-red-400 break-all">{url}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="p-3 space-y-2.5">
+                {/* Issues Stat Banner */}
+                <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200/60 dark:border-red-800/30 text-xs text-red-800 dark:text-red-300">
+                  <span className="font-semibold flex items-center gap-1.5">
+                    <svg className="w-4 h-4 text-red-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    {totalIssuesCount} {totalIssuesCount === 1 ? "Issue detected" : "Issues detected"}
+                  </span>
+                  <div className="flex items-center gap-2 text-[10px] font-medium text-red-700 dark:text-red-400">
+                    <span>{consoleErrors.length} console</span>
+                    <span>•</span>
+                    <span>{networkErrors.length} network</span>
+                  </div>
+                </div>
+
+                <div className="divide-y divide-border/60 border border-border rounded-lg overflow-hidden bg-background">
+                  {issueItems.map(({ id, type, log }) => {
+                    const active = isLogActive(log);
+                    if (type === "console") {
+                      const cLog = log as ConsoleLog;
+                      const detail = conciseConsoleText(cLog);
+                      const fullText = consoleText(cLog);
+                      return (
+                        <div
+                          key={id}
+                          className={`p-3 text-xs transition-all ${
+                            active ? "ring-2 ring-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/40" : "bg-red-50/30 dark:bg-red-950/10 hover:bg-red-50/60 dark:hover:bg-red-950/20"
+                          }`}
+                        >
+                          <div className="flex items-start gap-2.5 min-w-0">
+                            {renderTimeBadge(cLog)}
+                            <span className="px-1.5 py-0.2 rounded text-[9px] font-bold uppercase shrink-0 bg-red-100 dark:bg-red-950/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800/40">
+                              CONSOLE
+                            </span>
+                            <div className="min-w-0 flex-1">
+                              <FormattedErrorMessage msg={fullText || detail} />
+                              {cLog.stack && (
+                                <details className="group mt-2">
+                                  <summary className="flex list-none cursor-pointer items-center gap-1 text-[10px] font-semibold text-muted hover:text-foreground">
+                                    <svg className="w-3 h-3 transition-transform group-open:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+                                    {t("dt.stack")}
+                                  </summary>
+                                  <pre className="mt-1.5 p-2 rounded-lg bg-red-950 text-red-200 font-mono text-[10px] leading-relaxed whitespace-pre-wrap break-all overflow-x-auto">
+                                    {cLog.stack}
+                                  </pre>
+                                </details>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    // Network failed log
+                    const nLog = log as NetworkLog;
+                    const { domain, path } = networkLocation(nLog.url);
+                    return (
+                      <details
+                        key={id}
+                        className={`group transition-all ${
+                          active ? "ring-2 ring-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/40" : "bg-red-50/20 dark:bg-red-950/10 hover:bg-red-50/50 dark:hover:bg-red-950/20"
+                        }`}
+                      >
+                        <summary className="p-3 cursor-pointer list-none flex items-center justify-between gap-2 min-w-0">
+                          <div className="flex items-center gap-2 min-w-0 flex-1">
+                            {renderTimeBadge(nLog)}
+                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold font-mono uppercase bg-subtle text-foreground border border-border shrink-0">
+                              {nLog.method || "GET"}
+                            </span>
+                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono shrink-0 bg-red-100 dark:bg-red-950/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800/40">
+                              {nLog.status || "FAIL"}
+                            </span>
+                            <div className="min-w-0 flex-1 truncate">
+                              <span className="font-mono text-muted text-[11px]">{domain}</span>
+                              <span className="font-mono text-foreground font-medium text-[11px]">{path}</span>
+                            </div>
+                          </div>
+                          <svg className="w-3.5 h-3.5 text-muted transition-transform group-open:rotate-180 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                        </summary>
+                        <div className="px-3.5 pb-3.5 pt-1 space-y-2 border-t border-border/40 text-[11px] bg-subtle/30 font-mono">
+                          {nLog.url && <p className="text-muted break-all"><span className="text-foreground font-semibold">URL:</span> {nLog.url}</p>}
+                          {nLog.statusText && <p className="text-muted"><span className="text-foreground font-semibold">Status:</span> {nLog.statusText}</p>}
+                          {nLog.error && <p className="text-red-600 dark:text-red-400"><span className="font-semibold">Error:</span> {nLog.error}</p>}
+                          {nLog.responseBody && (
+                            <div>
+                              <p className="text-foreground font-semibold mb-1">Response Body:</p>
+                              <pre className="p-2 rounded bg-subtle border border-border text-[10px] whitespace-pre-wrap break-all max-h-32 overflow-y-auto">
+                                {nLog.responseBody}
+                              </pre>
+                            </div>
+                          )}
+                        </div>
+                      </details>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
@@ -766,7 +1020,7 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
         {/* CONSOLE TAB */}
         {activeTab === "Console" && (
           <div className="flex-1 min-h-0 overflow-y-auto">
-            {consoleLogs.length === 0 ? (
+            {visibleConsoleLogs.length === 0 ? (
               summary ? (
                 <div className="p-4 space-y-3">
                   {summary.errors === 0 && summary.warnings === 0 ? (
@@ -804,11 +1058,13 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                   )}
                 </div>
               ) : (
-                <div className="py-14 text-center text-xs text-muted">{t("dt.noConsoleEvents")}</div>
+                <div className="py-14 text-center text-xs text-muted">
+                  {consoleErrorsOnly ? "No console errors detected" : t("dt.noConsoleEvents")}
+                </div>
               )
             ) : (
               <div className="divide-y divide-border/60">
-                {consoleLogs.map((log, i) => {
+                {visibleConsoleLogs.map((log, i) => {
                   const level = log.type === "console" ? normalizeLevel(log.level) : log.type;
                   const isWarn = level === "warn";
                   const isErr = level === "error";
@@ -901,9 +1157,13 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
               ) : (
                 <div className="py-14 text-center text-xs text-muted">{t("dt.noNetworkErrors")}</div>
               )
+            ) : visibleGroupedNetworkLogs.length === 0 ? (
+              <div className="py-14 text-center text-xs text-muted">
+                {networkFailedOnly ? "No failed network requests recorded" : t("dt.noNetworkErrors")}
+              </div>
             ) : (
               <div className="divide-y divide-border/60">
-                {groupedNetworkLogs.map(({ log, count }, i) => {
+                {visibleGroupedNetworkLogs.map(({ log, count }, i) => {
                   const { domain, path } = networkLocation(log.url);
                   const isFailed = !log.status || log.status >= 400;
                   const isOk = log.status && log.status < 300;

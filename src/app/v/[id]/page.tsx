@@ -11,6 +11,7 @@ import MediaViewer, { ErrorMarker } from "@/components/MediaViewer";
 import { useT } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
 import { Dropdown } from "@/components/Dropdown";
+import { SopGuideModal } from "@/components/SopGuideModal";
 
 const DevToolsPanel = dynamic(() => import("@/components/DevToolsPanel"), {
   ssr: false,
@@ -47,23 +48,68 @@ const STATUS_OPTIONS = ["open", "in-progress", "fixed", "closed"];
 
 const viewCountCache = new Map<string, { value: number; expiresAt: number }>();
 
-function driveFileId(url: string | null): string | null {
-  if (!url) return null;
-  const match = url.match(/[?&]id=([A-Za-z0-9_-]{10,200})/) || url.match(/\/d\/([A-Za-z0-9_-]{10,200})/);
-  if (!match) return null;
-  try {
-    return decodeURIComponent(match[1]);
-  } catch {
-    return match[1];
-  }
-}
-
 function hostnameOf(url: string | null | undefined): string {
   try {
     return new URL(url || "").hostname;
   } catch {
     return url || "-";
   }
+}
+
+function WebsiteFavicon({ url, className }: { url?: string | null; className?: string }) {
+  const [srcIndex, setSrcIndex] = useState(0);
+  const [failed, setFailed] = useState(false);
+
+  const sources = useMemo(() => {
+    if (!url) return [];
+    try {
+      const parsed = new URL(url.startsWith("http") ? url : `https://${url}`);
+      const origin = parsed.origin;
+      const host = parsed.hostname;
+      return [
+        // 1. Direct origin favicon (works for authenticated/intranet/staging tabs)
+        `${origin}/favicon.ico`,
+        // 2. Google Favicon Service
+        `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host)}&sz=32`,
+        // 3. DuckDuckGo Favicon Service
+        `https://icons.duckduckgo.com/ip3/${encodeURIComponent(host)}.ico`,
+      ];
+    } catch {
+      return [];
+    }
+  }, [url]);
+
+  useEffect(() => {
+    setSrcIndex(0);
+    setFailed(false);
+  }, [url]);
+
+  if (!url || failed || sources.length === 0 || srcIndex >= sources.length) {
+    return (
+      <svg className={className || "h-3.5 w-3.5 text-indigo-500 shrink-0"} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <circle cx="12" cy="12" r="10" />
+        <line x1="2" y1="12" x2="22" y2="12" />
+        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
+      </svg>
+    );
+  }
+
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={sources[srcIndex]}
+      alt=""
+      loading="lazy"
+      className={className || "h-3.5 w-3.5 rounded-sm object-contain shrink-0"}
+      onError={() => {
+        if (srcIndex + 1 < sources.length) {
+          setSrcIndex((prev) => prev + 1);
+        } else {
+          setFailed(true);
+        }
+      }}
+    />
+  );
 }
 
 function getExpiryCountdown(expiresAt: string, t: (k: string, vars?: Record<string, string | number>) => string): string {
@@ -104,6 +150,7 @@ function SingleViewContent() {
   const [newFolderMode, setNewFolderMode] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [copied, setCopied] = useState(false);
+  const [sopModalOpen, setSopModalOpen] = useState(false);
   const [shareType, setShareType] = useState<"devtools" | "content">("devtools");
   const [accessMode, setAccessMode] = useState<"public" | "members">("public");
   const [accessSaving, setAccessSaving] = useState(false);
@@ -132,6 +179,7 @@ function SingleViewContent() {
   // Send to Aksora
   const [sendingToAksora, setSendingToAksora] = useState(false);
   const [sentToAksora, setSentToAksora] = useState(false);
+  const [hasAksoraConfigured, setHasAksoraConfigured] = useState(false);
 
   const [viewerEmail, setViewerEmail] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -245,7 +293,7 @@ function SingleViewContent() {
         if (cancelled || !wsRow?.workspace_id) return;
         const { data: settingsRow } = await supabase
           .from("workspace_settings")
-          .select("brand_name, custom_logo_url, hide_watermark")
+          .select("brand_name, custom_logo_url, hide_watermark, integrations")
           .eq("workspace_id", wsRow.workspace_id)
           .maybeSingle();
         if (cancelled) return;
@@ -254,6 +302,10 @@ function SingleViewContent() {
           logo: settingsRow?.custom_logo_url || prev.logo,
           hideWatermark: prev.hideWatermark || !!settingsRow?.hide_watermark,
         }));
+        const integrations = (settingsRow?.integrations || {}) as Record<string, { url?: string; apiKey?: string }>;
+        if (integrations?.aksora?.url && integrations?.aksora?.apiKey) {
+          setHasAksoraConfigured(true);
+        }
       } catch {
         // Keep defaults; branding is a best-effort enhancement.
       }
@@ -374,6 +426,25 @@ function SingleViewContent() {
       authListener.subscription.unsubscribe();
     };
   }, [id, showToast]);
+
+  // Check Aksora integration configuration whenever capture workspace is known
+  useEffect(() => {
+    if (!capture?.workspace_id) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("workspace_settings")
+          .select("integrations")
+          .eq("workspace_id", capture.workspace_id)
+          .maybeSingle();
+        if (cancelled || !data) return;
+        const integrations = (data.integrations || {}) as Record<string, { url?: string; apiKey?: string }>;
+        setHasAksoraConfigured(Boolean(integrations?.aksora?.url && integrations?.aksora?.apiKey));
+      } catch {}
+    })();
+    return () => { cancelled = true; };
+  }, [capture?.workspace_id]);
 
   // 2. View Tracking Effect
   useEffect(() => {
@@ -638,13 +709,6 @@ function SingleViewContent() {
     }
   }
 
-  function handleDownloadDirectMedia() {
-    if (!capture?.drive_url) return;
-    const fileId = driveFileId(capture.drive_url);
-    if (!fileId) return;
-    window.location.href = `/api/google-drive/download?id=${encodeURIComponent(fileId)}&type=${capture.type === "video" ? "video" : "screenshot"}&filename=${encodeURIComponent(capture.title || "capture")}`;
-  }
-
   async function handleSendToAksora() {
     if (!capture?.id || sendingToAksora) return;
     setSendingToAksora(true);
@@ -673,8 +737,8 @@ function SingleViewContent() {
 
   return (
     <div className="h-screen bg-white dark:bg-background flex flex-col font-sans overflow-y-auto lg:overflow-hidden">
-      <header className="h-16 border-b border-border px-6 flex items-center justify-between shrink-0 bg-white dark:bg-background">
-        <Link href={isTeamMember ? "/dashboard" : "/"} className="flex items-center gap-2.5 hover:opacity-90 transition-opacity">
+      <header className="h-16 border-b border-border px-4 sm:px-6 flex items-center justify-between shrink-0 bg-white dark:bg-background">
+        <Link href={isTeamMember ? "/dashboard" : "/"} className="flex items-center gap-2.5 hover:opacity-90 transition-opacity min-w-0">
           {brand.logo ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img src={brand.logo} alt={brand.name} className="h-8 w-auto object-contain" />
@@ -682,8 +746,8 @@ function SingleViewContent() {
             <>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/icon.svg" alt="BugSnap" className="w-8 h-8 shrink-0 object-contain" />
-              <div>
-                <span className="text-sm font-bold tracking-tight text-foreground leading-none block">{brand.name}</span>
+              <div className="min-w-0">
+                <span className="text-sm font-bold tracking-tight text-foreground leading-none truncate block">{brand.name}</span>
                 {!brand.hideWatermark && <span className="text-[10px] text-muted leading-none font-medium block">Dashboard</span>}
               </div>
             </>
@@ -692,12 +756,13 @@ function SingleViewContent() {
         {isTeamMember && (
           <Link
             href="/captures"
-            className="px-4 py-2 rounded-lg border border-border text-xs font-semibold text-foreground hover:bg-subtle flex items-center gap-2 transition-colors shadow-sm"
+            className="px-3 sm:px-4 py-2 rounded-lg border border-border text-xs font-semibold text-foreground hover:bg-subtle flex items-center gap-1.5 sm:gap-2 transition-colors shadow-sm shrink-0"
           >
-            <svg className="w-4 h-4 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <svg className="w-4 h-4 text-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 12H5M12 19l-7-7 7-7" />
             </svg>
-            {t("v.backToDashboard")}
+            <span className="hidden sm:inline">{t("v.backToDashboard")}</span>
+            <span className="sm:hidden">Captures</span>
           </Link>
         )}
       </header>
@@ -777,38 +842,26 @@ function SingleViewContent() {
       )}
 
       {status === "ready" && capture && (
-        <main className="flex-1 overflow-y-auto bg-[#fbfbfd] px-6 py-4 dark:bg-background">
+        <main className="flex-1 overflow-y-auto bg-[#fbfbfd] px-3 sm:px-6 py-3 sm:py-4 dark:bg-background">
           <div className="mx-auto flex w-full max-w-[1560px] flex-col gap-3">
-            <div className="flex justify-end gap-3">
-              {driveFileId(capture.drive_url || null) && (
-                <button type="button" onClick={handleDownloadDirectMedia} className="inline-flex items-center gap-2 rounded-lg border border-border bg-white px-4 py-2 text-xs font-semibold text-foreground shadow-sm hover:bg-subtle">
-                  <svg className="h-4 w-4 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-                  Download
-                </button>
-              )}
-              {isTeamMember && (
+            <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 w-full">
+              {isTeamMember && hasAksoraConfigured && (
                 <button
                   type="button"
                   disabled={sendingToAksora}
                   onClick={handleSendToAksora}
                   title="Create a new task in Aksora from this capture"
-                  className="inline-flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-semibold text-blue-700 shadow-sm hover:bg-blue-100 disabled:opacity-50 transition"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-blue-200 bg-blue-50 px-3.5 py-2 text-xs font-semibold text-blue-700 shadow-sm hover:bg-blue-100 disabled:opacity-50 transition flex-1 sm:flex-initial"
                 >
-                  <svg className="h-4 w-4 text-blue-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 12 2 2 4-4"/></svg>
-                  {sendingToAksora ? "Sending..." : sentToAksora ? "Sent to Aksora ✓" : "Send to Aksora"}
-                </button>
-              )}
-              {isTeamMember && (
-                <button type="button" onClick={openEditModal} className="inline-flex items-center gap-2 rounded-lg border border-border bg-white px-4 py-2 text-xs font-semibold text-foreground shadow-sm hover:bg-subtle">
-                  <svg className="h-4 w-4 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-                  Edit Capture
+                  <svg className="h-4 w-4 text-blue-600 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="m9 12 2 2 4-4"/></svg>
+                  <span className="truncate">{sendingToAksora ? "Sending..." : sentToAksora ? "Sent to Aksora ✓" : "Send to Aksora"}</span>
                 </button>
               )}
               {isWorkspaceOwner && (
-                <div ref={moveMenuRef} className="relative">
-                  <button type="button" onClick={() => { setMoveSubmenuOpen((o) => !o); if (capFolders.length === 0) loadCapFolders(); }} className="inline-flex items-center gap-2 rounded-lg border border-border bg-white px-4 py-2 text-xs font-semibold text-foreground shadow-sm hover:bg-subtle">
-                    <svg className="h-4 w-4 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg>
-                    Move to Folder
+                <div ref={moveMenuRef} className="relative flex-1 sm:flex-initial">
+                  <button type="button" onClick={() => { setMoveSubmenuOpen((o) => !o); if (capFolders.length === 0) loadCapFolders(); }} className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-white px-3.5 py-2 text-xs font-semibold text-foreground shadow-sm hover:bg-subtle">
+                    <svg className="h-4 w-4 text-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg>
+                    <span>Move to Folder</span>
                   </button>
                   {moveSubmenuOpen && (
                     <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-xl border border-border bg-white p-1 shadow-xl">
@@ -827,20 +880,28 @@ function SingleViewContent() {
                   )}
                 </div>
               )}
-              {isWorkspaceOwner && (
-                <button type="button" onClick={handleDeleteCapture} className="inline-flex items-center gap-2 rounded-lg border border-red-100 bg-white px-4 py-2 text-xs font-semibold text-red-600 shadow-sm hover:bg-red-50">
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/></svg>
-                  Delete
-                </button>
-              )}
-              <button type="button" onClick={handleCopyLink} className="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700">
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                {copied ? t("v.copied") : "Copy Link"}
+              <button
+                type="button"
+                onClick={() => setSopModalOpen(true)}
+                className="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-600/30 bg-emerald-50 dark:bg-emerald-950/40 px-3.5 py-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400 shadow-sm hover:bg-emerald-100 dark:hover:bg-emerald-900/50 flex-1 sm:flex-initial transition-colors"
+                title="View Step-by-Step SOP Guide"
+              >
+                <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                </svg>
+                <span>SOP Guide</span>
+              </button>
+              <button type="button" onClick={handleCopyLink} className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 flex-1 sm:flex-initial">
+                <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                <span>{copied ? t("v.copied") : "Copy Link"}</span>
               </button>
             </div>
 
             <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_440px]">
-              <section className="rounded-xl border border-border bg-white p-7 shadow-sm dark:bg-background">
+              <section className="rounded-xl border border-border bg-white p-4 sm:p-6 lg:p-7 shadow-sm dark:bg-background">
                 <MediaViewer
                   type={capture.type}
                   driveUrl={capture.drive_url}
@@ -849,14 +910,44 @@ function SingleViewContent() {
                   seekToTime={seekTargetTime}
                   errorMarkers={errorMarkers}
                 />
-                <div className="mt-7 space-y-4">
-                  <div>
-                    <h2 className="text-lg font-bold text-foreground">{capture.title}</h2>
-                    {capture.description && <p className="mt-1 text-sm text-muted">{capture.description}</p>}
+                <div className="mt-5 sm:mt-7 space-y-4">
+                  <div
+                    onClick={isTeamMember ? openEditModal : undefined}
+                    role={isTeamMember ? "button" : undefined}
+                    tabIndex={isTeamMember ? 0 : undefined}
+                    onKeyDown={isTeamMember ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); openEditModal(); } } : undefined}
+                    className={isTeamMember ? "group -m-2 rounded-xl p-2 transition-colors hover:bg-subtle/80 cursor-pointer" : ""}
+                    title={isTeamMember ? "Click to edit capture details" : undefined}
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <h2 className="text-lg font-bold text-foreground group-hover:text-indigo-600 transition-colors">
+                        {capture.title}
+                      </h2>
+                      {isTeamMember && (
+                        <span className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-xs font-medium text-muted flex items-center gap-1 shrink-0 mt-0.5 rounded-md border border-border/60 bg-white dark:bg-background px-2 py-0.5 shadow-sm">
+                          <svg className="h-3.5 w-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+                          </svg>
+                          Edit
+                        </span>
+                      )}
+                    </div>
+                    {capture.description ? (
+                      <p className="mt-1 text-sm text-muted">{capture.description}</p>
+                    ) : isTeamMember ? (
+                      <p className="mt-1 text-xs italic text-muted/60">Add a description...</p>
+                    ) : null}
                     <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted">
                       {capture.site_url && (
-                        <a href={capture.site_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 font-medium text-indigo-600 hover:bg-indigo-100">
-                          🌈 {hostnameOf(capture.site_url)}
+                        <a
+                          href={capture.site_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 px-2.5 py-1 font-medium text-indigo-600 hover:bg-indigo-100 transition-colors"
+                        >
+                          <WebsiteFavicon url={capture.site_url} className="h-3.5 w-3.5 rounded-sm object-contain shrink-0" />
+                          <span>{hostnameOf(capture.site_url)}</span>
                         </a>
                       )}
                       <span>•</span>
@@ -881,15 +972,15 @@ function SingleViewContent() {
                 )}
                 <section className="rounded-xl border border-border bg-white p-5 shadow-sm dark:bg-background">
                   <h3 className="mb-4 text-base font-bold text-foreground">Share BugSnap</h3>
-                  <div className="grid grid-cols-2 gap-5 text-center">
-                    <button type="button" onClick={() => setShareType("devtools")} className={`rounded-lg border p-4 text-xs font-semibold ${shareType === "devtools" ? "border-indigo-500 text-indigo-600" : "border-border text-muted hover:text-foreground"}`}>
-                      <div className="mx-auto mb-3 flex h-12 w-20 items-center justify-center rounded-md border border-indigo-100 bg-indigo-50 text-indigo-500">▷ ▯</div>
-                      With DevTools
+                  <div className="grid grid-cols-2 gap-3 sm:gap-5 text-center">
+                    <button type="button" onClick={() => setShareType("devtools")} className={`rounded-lg border p-3 sm:p-4 text-xs font-semibold ${shareType === "devtools" ? "border-indigo-500 text-indigo-600" : "border-border text-muted hover:text-foreground"}`}>
+                      <div className="mx-auto mb-2 sm:mb-3 flex h-10 sm:h-12 w-16 sm:w-20 items-center justify-center rounded-md border border-indigo-100 bg-indigo-50 text-indigo-500 text-xs sm:text-sm">▷ ▯</div>
+                      <span>With DevTools</span>
                       <p className="mt-1 text-[10px] font-normal text-muted">Includes logs, network & events</p>
                     </button>
-                    <button type="button" onClick={() => setShareType("content")} className={`rounded-lg border p-4 text-xs font-semibold ${shareType === "content" ? "border-indigo-500 text-indigo-600" : "border-border text-muted hover:text-foreground"}`}>
-                      <div className="mx-auto mb-3 flex h-12 w-20 items-center justify-center rounded-md border border-indigo-100 bg-indigo-50 text-indigo-500">▷</div>
-                      Content Only
+                    <button type="button" onClick={() => setShareType("content")} className={`rounded-lg border p-3 sm:p-4 text-xs font-semibold ${shareType === "content" ? "border-indigo-500 text-indigo-600" : "border-border text-muted hover:text-foreground"}`}>
+                      <div className="mx-auto mb-2 sm:mb-3 flex h-10 sm:h-12 w-16 sm:w-20 items-center justify-center rounded-md border border-indigo-100 bg-indigo-50 text-indigo-500 text-xs sm:text-sm">▷</div>
+                      <span>Content Only</span>
                       <p className="mt-1 text-[10px] font-normal text-muted">Screenshot & basic info</p>
                     </button>
                   </div>
@@ -912,6 +1003,16 @@ function SingleViewContent() {
                     <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
                     {copied ? t("v.copiedLink") : "Copy Link"}
                   </button>
+                  {isWorkspaceOwner && (
+                    <button
+                      type="button"
+                      onClick={handleDeleteCapture}
+                      className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 bg-white py-2.5 text-xs font-semibold text-red-600 shadow-sm hover:bg-red-50 hover:border-red-300 transition-colors"
+                    >
+                      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/></svg>
+                      Delete Capture
+                    </button>
+                  )}
                 </section>
               </aside>
             </div>
@@ -1047,6 +1148,14 @@ function SingleViewContent() {
             </div>
           </div>
         </div>
+      )}
+
+      {capture && (
+        <SopGuideModal
+          isOpen={sopModalOpen}
+          onClose={() => setSopModalOpen(false)}
+          capture={capture}
+        />
       )}
     </div>
   );
