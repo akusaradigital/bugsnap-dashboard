@@ -4,6 +4,40 @@ import { createServiceClient } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
 
+async function makeDriveItemPublic(accessToken: string, fileId: string): Promise<void> {
+  try {
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions?supportsAllDrives=true`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        role: "reader",
+        type: "anyone",
+      }),
+    });
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "");
+      if (/cannotShareOutsideDomain|domain/i.test(errText)) {
+        await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions?supportsAllDrives=true`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            role: "reader",
+            type: "domain",
+          }),
+        }).catch(() => {});
+      }
+    }
+  } catch (err) {
+    console.warn("Failed to set public permission on Drive item:", err);
+  }
+}
+
 async function getOrCreateFolder(accessToken: string, folderName: string): Promise<string | null> {
   const cleanName = folderName.trim();
   if (!cleanName || cleanName === "No folder") return null;
@@ -15,7 +49,9 @@ async function getOrCreateFolder(accessToken: string, folderName: string): Promi
   if (searchRes.ok) {
     const data = (await searchRes.json()) as { files?: Array<{ id: string; webViewLink?: string }> };
     if (data.files && data.files.length > 0) {
-      return data.files[0].id;
+      const folderId = data.files[0].id;
+      makeDriveItemPublic(accessToken, folderId).catch(() => {});
+      return folderId;
     }
   }
 
@@ -33,6 +69,7 @@ async function getOrCreateFolder(accessToken: string, folderName: string): Promi
   });
   if (createRes.ok) {
     const newFolder = (await createRes.json()) as { id: string };
+    await makeDriveItemPublic(accessToken, newFolder.id);
     return newFolder.id;
   }
   return null;
@@ -179,6 +216,7 @@ export async function POST(req: Request) {
     }
 
     const uploaded = await uploadToDrive(accessToken, file, safeName, parentFolderId);
+    await makeDriveItemPublic(accessToken, uploaded.id);
 
     const { data: inserted, error } = await supabase
       .from("captures")

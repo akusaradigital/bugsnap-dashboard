@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { driveAccessToken } from "@/lib/google-drive";
+import { createServiceClient } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
 
@@ -12,20 +14,75 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const id = url.searchParams.get("id") || "";
   const type = url.searchParams.get("type") || "screenshot";
+  const disposition = url.searchParams.get("disposition") === "inline" ? "inline" : "attachment";
   if (!/^[A-Za-z0-9_-]{10,200}$/.test(id)) {
     return NextResponse.json({ error: "Invalid file id" }, { status: 400 });
   }
 
-  const driveRes = await fetch(`https://drive.google.com/uc?export=download&id=${id}`, { cache: "no-store" });
-  if (!driveRes.ok || !driveRes.body) {
-    return NextResponse.json({ error: "Download failed" }, { status: driveRes.status || 502 });
+  // 1. Try fetching directly via Google Drive download
+  try {
+    const driveRes = await fetch(`https://drive.google.com/uc?export=download&id=${id}`, { cache: "no-store" });
+    const contentType = driveRes.headers.get("content-type") || "";
+    const isHtmlChallenge = contentType.includes("text/html");
+
+    if (driveRes.ok && driveRes.body && !isHtmlChallenge) {
+      const contentDisp = disposition === "inline" ? "inline" : `attachment; filename="${safeFilename(url.searchParams.get("filename") || "capture", type)}"`;
+      return new NextResponse(driveRes.body, {
+        headers: {
+          "Content-Type": contentType || (type === "video" ? "video/webm" : type === "logs" ? "application/json" : "image/png"),
+          "Content-Disposition": contentDisp,
+          "Cache-Control": "public, max-age=3600",
+        },
+      });
+    }
+  } catch (err) {
+    console.warn("Direct Drive fetch failed, falling back to owner auth token:", err);
   }
 
-  return new NextResponse(driveRes.body, {
-    headers: {
-      "Content-Type": driveRes.headers.get("content-type") || (type === "video" ? "video/webm" : type === "logs" ? "application/json" : "image/png"),
-      "Content-Disposition": `attachment; filename="${safeFilename(url.searchParams.get("filename") || "capture", type)}"`,
-      "Cache-Control": "no-store",
-    },
-  });
+  // 2. Fallback: Authenticated proxy using capture owner's Drive token
+  try {
+    const supabase = createServiceClient();
+    const { data: cap } = await supabase
+      .from("captures")
+      .select("user_id")
+      .or(`drive_file_id.eq.${id},id.eq.${id}`)
+      .limit(1)
+      .maybeSingle();
+
+    if (cap?.user_id) {
+      const accessToken = await driveAccessToken(cap.user_id).catch(() => null);
+      if (accessToken) {
+        // Self-heal: asynchronously ensure anyone with link can view
+        fetch(`https://www.googleapis.com/drive/v3/files/${id}/permissions?supportsAllDrives=true`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ role: "reader", type: "anyone" }),
+        }).catch(() => {});
+
+        const authRes = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media&supportsAllDrives=true`, {
+          headers: { Authorization: `Bearer ${accessToken}` },
+          cache: "no-store",
+        });
+
+        if (authRes.ok && authRes.body) {
+          const finalContentType = authRes.headers.get("content-type") || (type === "video" ? "video/webm" : type === "logs" ? "application/json" : "image/png");
+          const contentDisp = disposition === "inline" ? "inline" : `attachment; filename="${safeFilename(url.searchParams.get("filename") || "capture", type)}"`;
+          return new NextResponse(authRes.body, {
+            headers: {
+              "Content-Type": finalContentType,
+              "Content-Disposition": contentDisp,
+              "Cache-Control": "public, max-age=3600",
+            },
+          });
+        }
+      }
+    }
+  } catch (authErr) {
+    console.warn("Owner authenticated fetch failed:", authErr);
+  }
+
+  return NextResponse.json({ error: "Download failed or file not accessible" }, { status: 403 });
 }
