@@ -182,7 +182,7 @@ export default function TeamManagementPage() {
         <h2 className="text-sm font-semibold text-foreground mb-1">{t("members.inviteTitle")}</h2>
         <p className="text-xs text-muted mb-3">{t("members.inviteHint")}</p>
         <p className="text-[11px] text-muted mb-3">Invited teammates will receive an email to join the workspace and download the extension.</p>
-        <div className="flex gap-2">
+        <div className="flex flex-col sm:flex-row gap-2">
           <input
             type="email"
             value={inviteEmail}
@@ -192,53 +192,55 @@ export default function TeamManagementPage() {
             disabled={cap !== null && members.length >= cap}
             className="flex-1 text-sm rounded-lg border border-border px-3.5 py-2.5 outline-none focus:border-indigo-500 bg-subtle disabled:bg-subtle disabled:cursor-not-allowed"
           />
-          <div className="relative">
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1 sm:flex-none">
+              <button
+                type="button"
+                onClick={() => setRoleMenuOpen((o) => !o)}
+                className="w-full sm:w-auto flex items-center justify-between gap-1.5 text-sm rounded-lg border border-border px-3.5 py-2.5 bg-subtle hover:bg-border/30 transition-colors"
+              >
+                {inviteRole === "creator" ? "Creator" : "Viewer"}
+                <svg className={`w-3.5 h-3.5 text-muted transition-transform ${roleMenuOpen ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {roleMenuOpen && (
+                <>
+                  <div className="fixed inset-0 z-40" onClick={() => setRoleMenuOpen(false)} />
+                  <div className="absolute right-0 mt-1 w-64 rounded-lg border border-border bg-background shadow-lg z-50 py-1">
+                    {([
+                      { value: "creator", label: "Creator", hint: "Can create and comment" },
+                      { value: "viewer", label: "Viewer", hint: "Can view and comment" },
+                    ] as const).map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => { setInviteRole(opt.value); setRoleMenuOpen(false); }}
+                        className="w-full flex items-start justify-between gap-2 px-3.5 py-2 text-left hover:bg-subtle transition-colors"
+                      >
+                        <span>
+                          <span className="block text-sm font-medium text-foreground">{opt.label}</span>
+                          <span className="block text-xs text-muted">{opt.hint}</span>
+                        </span>
+                        {inviteRole === opt.value && (
+                          <svg className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
             <button
-              type="button"
-              onClick={() => setRoleMenuOpen((o) => !o)}
-              className="flex items-center gap-1.5 text-sm rounded-lg border border-border px-3.5 py-2.5 bg-subtle hover:bg-border/30 transition-colors"
+              onClick={handleInvite}
+              disabled={inviting || !inviteEmail.trim() || (cap !== null && members.length >= cap)}
+              className="px-5 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors shrink-0"
             >
-              {inviteRole === "creator" ? "Creator" : "Viewer"}
-              <svg className={`w-3.5 h-3.5 text-muted transition-transform ${roleMenuOpen ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
+              {inviting ? t("members.inviting") : t("members.invite")}
             </button>
-            {roleMenuOpen && (
-              <>
-                <div className="fixed inset-0 z-40" onClick={() => setRoleMenuOpen(false)} />
-                <div className="absolute right-0 mt-1 w-64 rounded-lg border border-border bg-background shadow-lg z-50 py-1">
-                  {([
-                    { value: "creator", label: "Creator", hint: "Can create and comment" },
-                    { value: "viewer", label: "Viewer", hint: "Can view and comment" },
-                  ] as const).map((opt) => (
-                    <button
-                      key={opt.value}
-                      type="button"
-                      onClick={() => { setInviteRole(opt.value); setRoleMenuOpen(false); }}
-                      className="w-full flex items-start justify-between gap-2 px-3.5 py-2 text-left hover:bg-subtle transition-colors"
-                    >
-                      <span>
-                        <span className="block text-sm font-medium text-foreground">{opt.label}</span>
-                        <span className="block text-xs text-muted">{opt.hint}</span>
-                      </span>
-                      {inviteRole === opt.value && (
-                        <svg className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                        </svg>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
           </div>
-          <button
-            onClick={handleInvite}
-            disabled={inviting || !inviteEmail.trim() || (cap !== null && members.length >= cap)}
-            className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
-          >
-            {inviting ? t("members.inviting") : t("members.invite")}
-          </button>
         </div>
         {cap !== null && members.length >= cap && (
           <p className="text-xs text-indigo-600 mt-2">{t("members.seatLimit", { cap })}</p>

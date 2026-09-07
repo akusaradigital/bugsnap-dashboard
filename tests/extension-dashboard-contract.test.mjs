@@ -51,9 +51,8 @@ test("Google token identity is authoritative across dashboard endpoints", () => 
   assert.match(captureRoute, /emailFromGoogleToken\(accessToken\)/);
   assert.match(contextRoute, /emailFromGoogleToken\(accessToken\)/);
   if (background) {
-    assert.match(background, /fetchUserInfo\(accessToken\)/);
-    assert.match(background, /token-login/);
-    assert.match(background, /remove\(\['oauth_token', 'oauth_expiry', 'user_email', 'user_avatar'\]\)/);
+    assert.match(background, /oauth2\/v3\/userinfo/);
+    assert.match(background, /drive-connect/);
   }
 });
 

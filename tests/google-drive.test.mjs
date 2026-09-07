@@ -13,8 +13,9 @@ function isUuid(value) {
 
 function parseDriveFileId(url) {
   if (!url) return null;
+  const raw = String(url).trim();
   try {
-    const parsed = new URL(url);
+    const parsed = new URL(raw.startsWith("http://") || raw.startsWith("https://") ? raw : `https://${raw}`);
     if (parsed.hostname !== "drive.google.com" && parsed.hostname !== "docs.google.com") return null;
     const id = parsed.searchParams.get("id") ?? parsed.pathname.match(/\/d\/([^/]+)/)?.[1] ?? null;
     return id && /^[A-Za-z0-9_-]{10,200}$/.test(id) ? id : null;
@@ -45,6 +46,7 @@ test("canonical UUID validation rejects malformed and non-RFC variants", () => {
 
 test("exact Drive IDs are accepted only from Google hosts", () => {
   assert.equal(parseDriveFileId("https://drive.google.com/file/d/ABCdef_12345/view"), "ABCdef_12345");
+  assert.equal(parseDriveFileId("drive.google.com/file/d/ABCdef_12345/view?usp=sharing"), "ABCdef_12345");
   assert.equal(parseDriveFileId("https://docs.google.com/open?id=XYZabc-98765"), "XYZabc-98765");
   assert.equal(parseDriveFileId("https://evil.example/file/d/ABCdef_12345/view"), null);
   assert.equal(parseDriveFileId("not a url"), null);

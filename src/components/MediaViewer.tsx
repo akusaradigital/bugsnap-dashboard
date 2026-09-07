@@ -254,7 +254,7 @@ export default function MediaViewer({
 
             {/* Download stays as a separate explicit action (not implied by the hover affordance above) */}
             {(directUrl || imageUrl) && (
-              <div className="absolute right-3 top-3 z-10 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+              <div className="absolute right-3 top-3 z-10 opacity-100 sm:opacity-0 transition-opacity duration-200 sm:group-hover:opacity-100">
                 <button
                   type="button"
                   onClick={handleDownloadMedia}

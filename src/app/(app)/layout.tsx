@@ -9,6 +9,7 @@ import { useToast } from "@/components/Toast";
 import { normalizePlan, seatLimit, tierLabel, type Plan } from "@/lib/tiers";
 import { pickAvatar, initialOf } from "@/lib/avatar";
 import { AuthRequiredCard } from "@/components/AuthRequiredCard";
+import DriveStorageMeter from "@/components/DriveStorageMeter";
 
 const navItems = [
   { labelKey: "nav.dashboard", href: "/dashboard", icon: "📊" },
@@ -125,7 +126,7 @@ export default function DashboardLayout({
       if ((wsOpen || workspacePickerOpen) && !workspaceMenuRef.current?.contains(target)) {
         closeWorkspaceMenus();
       }
-      if (notifOpen && !notifMenuRef.current?.contains(target)) {
+      if (notifOpen && !notifMenuRef.current?.contains(target) && !(target instanceof Element && target.closest("[data-notif-trigger]"))) {
         setNotifOpen(false);
       }
       if (folderMenuOpen && !(target instanceof Element && target.closest("[data-folder-actions]"))) {
@@ -874,6 +875,7 @@ export default function DashboardLayout({
           <span className="text-sm font-bold tracking-tight">BugSnap</span>
         </a>
         <button
+          data-notif-trigger
           onClick={() => setNotifOpen((o) => !o)}
           className="relative p-2.5 rounded-lg text-muted hover:text-foreground hover:bg-subtle transition-colors"
           aria-label={t("layout.notifications")}
@@ -915,9 +917,10 @@ export default function DashboardLayout({
             <p className="text-[10px] text-muted mt-1 leading-none font-medium">{t("layout.screenRecorder")}</p>
           </div>
 
-          {/* Notification Bell */}
-          <div ref={notifMenuRef} className="relative ml-auto hidden lg:block">
+          {/* Desktop Notification Bell */}
+          <div className="relative ml-auto hidden lg:block">
             <button
+              data-notif-trigger
               onClick={() => setNotifOpen((o) => !o)}
               className="relative p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-subtle transition-colors"
               aria-label={t("layout.notifications")}
@@ -931,63 +934,67 @@ export default function DashboardLayout({
                 </span>
               )}
             </button>
-
-            {notifOpen && (
-                <div className="fixed left-4 top-16 z-50 w-72 rounded-xl border border-border bg-subtle shadow-xl py-2 px-1 max-h-80 overflow-y-auto">
-                  <div className="flex items-center justify-between px-3 py-1 mb-1 border-b border-border/50 pb-1.5">
-                    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">{t("layout.notifications")}</p>
-                    {notifications.length > 0 && (
-                      <button
-                        onClick={handleClearNotifications}
-                        className="text-[10px] font-semibold text-indigo-600 hover:underline"
-                      >
-                        {t("layout.clearAll")}
-                      </button>
-                    )}
-                  </div>
-                  {notifications.length > 0 ? (
-                    <div className="space-y-0.5">
-                      {notifications.map((n) => {
-                        const isRead = readIds.has(n.capture_id);
-                        return (
-                          <div
-                            key={n.comment_id}
-                            className={`px-3 py-2 text-xs rounded-lg transition-colors cursor-pointer ${
-                              isRead
-                                ? "text-muted/60 hover:bg-subtle/50 opacity-60"
-                                : "text-foreground bg-indigo-50/40 dark:bg-indigo-950/20 hover:bg-indigo-50/80 font-medium"
-                            }`}
-                            onClick={() => {
-                              markRead(n.capture_id);
-                              setNotifOpen(false);
-                              router.push(`/v/${n.capture_id}`);
-                            }}
-                          >
-                            <div className="flex items-center gap-1.5 min-w-0">
-                              <span className="shrink-0">{isRead ? "💬" : "🔵"}</span>
-                              <p className="truncate font-semibold text-[11px] flex-1">
-                                {n.capture_title || "Untitled capture"}
-                              </p>
-                              <span className="text-[9px] text-muted/70 shrink-0">
-                                {new Date(n.created_at).toLocaleDateString([], { month: "short", day: "numeric" })}
-                              </span>
-                            </div>
-                            <p className="truncate text-[10px] text-muted pl-4 mt-0.5">
-                              {n.body || "New comment"}
-                            </p>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div className="px-3 py-4 text-center">
-                      <p className="text-xs text-muted/60">{t("layout.noNotifications")}</p>
-                    </div>
-                  )}
-                </div>
-            )}
           </div>
         </div>
+
+        {/* Responsive Notifications Popover (works for mobile top bar and desktop sidebar) */}
+        {notifOpen && (
+          <div
+            ref={notifMenuRef}
+            className="fixed right-3 top-14 lg:right-auto lg:left-4 lg:top-16 z-[70] w-[min(20rem,calc(100vw-1.5rem))] lg:w-72 rounded-xl border border-border bg-subtle shadow-2xl py-2 px-1 max-h-80 overflow-y-auto"
+          >
+            <div className="flex items-center justify-between px-3 py-1 mb-1 border-b border-border/50 pb-1.5">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">{t("layout.notifications")}</p>
+              {notifications.length > 0 && (
+                <button
+                  onClick={handleClearNotifications}
+                  className="text-[10px] font-semibold text-indigo-600 hover:underline"
+                >
+                  {t("layout.clearAll")}
+                </button>
+              )}
+            </div>
+            {notifications.length > 0 ? (
+              <div className="space-y-0.5">
+                {notifications.map((n) => {
+                  const isRead = readIds.has(n.capture_id);
+                  return (
+                    <div
+                      key={n.comment_id}
+                      className={`px-3 py-2 text-xs rounded-lg transition-colors cursor-pointer ${
+                        isRead
+                          ? "text-muted/60 hover:bg-subtle/50 opacity-60"
+                          : "text-foreground bg-indigo-50/40 dark:bg-indigo-950/20 hover:bg-indigo-50/80 font-medium"
+                      }`}
+                      onClick={() => {
+                        markRead(n.capture_id);
+                        setNotifOpen(false);
+                        router.push(`/v/${n.capture_id}`);
+                      }}
+                    >
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <span className="shrink-0">{isRead ? "💬" : "🔵"}</span>
+                        <p className="truncate font-semibold text-[11px] flex-1">
+                          {n.capture_title || "Untitled capture"}
+                        </p>
+                        <span className="text-[9px] text-muted/70 shrink-0">
+                          {new Date(n.created_at).toLocaleDateString([], { month: "short", day: "numeric" })}
+                        </span>
+                      </div>
+                      <p className="truncate text-[10px] text-muted pl-4 mt-0.5">
+                        {n.body || "New comment"}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="px-3 py-4 text-center">
+                <p className="text-xs text-muted/60">{t("layout.noNotifications")}</p>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Workspace Switcher */}
         <div ref={workspaceMenuRef} className="px-3 pt-4 relative">
@@ -1064,8 +1071,8 @@ export default function DashboardLayout({
                   </button>
                   {workspacePickerOpen && (
                     <>
-                      <div className="absolute left-full top-0 ml-0 w-3 h-full z-[55]" />
-                      <div className="absolute left-full top-0 ml-2 w-72 rounded-2xl border border-border bg-white dark:bg-background shadow-xl overflow-hidden z-[60]">
+                      <div className="hidden lg:block absolute left-full top-0 ml-0 w-3 h-full z-[55]" />
+                      <div className="mt-2 w-full rounded-xl border border-border bg-white dark:bg-background/95 shadow-md overflow-hidden lg:absolute lg:left-full lg:top-0 lg:ml-2 lg:mt-0 lg:w-72 lg:rounded-2xl lg:shadow-xl z-[60]">
                       {workspaces.map((ws) => (
                         <button
                           key={ws.id}
@@ -1075,6 +1082,7 @@ export default function DashboardLayout({
                             setCurrentFolder(null);
                             setWorkspacePickerOpen(false);
                             setWsOpen(false);
+                            setSidebarOpen(false);
                             router.replace(`${pathname}?ws=${ws.id}`, { scroll: false });
                           }}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm text-left transition-colors ${activeWsId === ws.id ? "bg-subtle text-foreground font-semibold" : "text-foreground hover:bg-subtle"}`}
@@ -1093,6 +1101,7 @@ export default function DashboardLayout({
                         onClick={() => {
                           setWorkspacePickerOpen(false);
                           setWsOpen(false);
+                          setSidebarOpen(false);
                           setCreateWsModalOpen(true);
                         }}
                         className="w-full flex items-center gap-3 px-3 py-3 text-sm text-left text-foreground hover:bg-subtle transition-colors border-t border-border"
@@ -1158,12 +1167,12 @@ export default function DashboardLayout({
             </Link>
           )}
 
-          {/* Sister Apps Entry Points (Aksora & SnapTest) */}
+          {/* Sister Apps Entry Points (Aksora & SnapTest) - Temporarily hidden per user request */}
+          {/*
           <div className="pt-3 mt-2 border-t border-border/60 space-y-1">
             <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted">
               {t("nav.sisterApps")}
             </p>
-            {/* ponytail: pass current workspace name as ?ws= param for instant cross-app context sync */}
             <a
               href={
                 process.env.NEXT_PUBLIC_AKSORA_URL
@@ -1201,6 +1210,7 @@ export default function DashboardLayout({
               </svg>
             </a>
           </div>
+          */}
 
           {/* Google Drive Folders List (Sync Bridge) */}
           <div className="pt-4 mt-2 border-t border-border/60 space-y-1.5">
@@ -1286,7 +1296,9 @@ export default function DashboardLayout({
                             e.preventDefault();
                             e.stopPropagation();
                             const rect = e.currentTarget.getBoundingClientRect();
-                            setFolderMenuPos({ top: rect.top, left: rect.right + 4 });
+                            const left = typeof window !== "undefined" ? Math.max(8, Math.min(rect.right + 4, window.innerWidth - 120)) : rect.right + 4;
+                            const top = typeof window !== "undefined" ? Math.min(rect.top, window.innerHeight - 90) : rect.top;
+                            setFolderMenuPos({ top, left });
                             setFolderMenuOpen((open) => (open === folder ? null : folder));
                           }}
                           aria-label={`${folder} actions`}
@@ -1343,6 +1355,7 @@ export default function DashboardLayout({
         </nav>
 
         <div className="mt-auto shrink-0" />
+        <DriveStorageMeter />
       </aside>
       )}
 

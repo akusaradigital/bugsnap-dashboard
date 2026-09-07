@@ -249,7 +249,8 @@ function SettingsContent() {
 
   // Integration search & settings
   const [intSearch, setIntSearch] = useState("");
-  const [wsIntegrations, setWsIntegrations] = useState<Record<string, Record<string, string>>>({});
+  const [wsIntegrations, setWsIntegrations] = useState<Record<string, Record<string, string> | string>>({});
+  const [driveFolderName, setDriveFolderName] = useState("BugSnap Captures");
   const [activeModalInt, setActiveModalInt] = useState<string | null>(null);
   const [intModalForm, setIntModalForm] = useState<{ url: string; apiKey: string }>({ url: "", apiKey: "" });
   const [intModalSaving, setIntModalSaving] = useState(false);
@@ -315,10 +316,15 @@ function SettingsContent() {
           setLogoUrl(wsSet.custom_logo_url || "");
           setHideWatermark(!!wsSet.hide_watermark);
           setCustomDomain(wsSet.custom_domain || "");
-          setAutoDeleteMonths(wsSet.auto_delete_months ?? 3);
-          setAutoDeleteEnabled(wsSet.auto_delete_months !== 0);
+          const months = wsSet.auto_delete_months ?? 0;
+          setAutoDeleteMonths(months > 0 ? months : 3);
+          setAutoDeleteEnabled(months > 0);
           if (wsSet.integrations && typeof wsSet.integrations === "object") {
-            setWsIntegrations(wsSet.integrations as Record<string, Record<string, string>>);
+            const integrationsObj = wsSet.integrations as Record<string, Record<string, string> | string>;
+            setWsIntegrations(integrationsObj);
+            if (typeof integrationsObj.drive_folder_name === "string" && integrationsObj.drive_folder_name.trim()) {
+              setDriveFolderName(integrationsObj.drive_folder_name.trim());
+            }
           }
         }
       } else {
@@ -431,6 +437,10 @@ function SettingsContent() {
       }
 
       const effectiveAutoDelete = autoDeleteEnabled ? autoDeleteMonths : 0;
+      const updatedIntegrations = {
+        ...(wsIntegrations || {}),
+        drive_folder_name: driveFolderName.trim() || "BugSnap Captures",
+      };
       const { error } = await supabase.from("workspace_settings").upsert({
         workspace_id: activeWsId,
         webhook_url: webhookUrl.trim(),
@@ -438,10 +448,12 @@ function SettingsContent() {
         custom_logo_url: canBrand ? logoUrl.trim() : "",
         hide_watermark: canBrand ? hideWatermark : false,
         custom_domain: canBrand ? customDomain.trim() : "",
-        auto_delete_months: [0,3,6,12].includes(effectiveAutoDelete) ? effectiveAutoDelete : 3,
+        auto_delete_months: [0,3,6,12].includes(effectiveAutoDelete) ? effectiveAutoDelete : 0,
+        integrations: updatedIntegrations,
         updated_at: new Date().toISOString(),
       });
       if (error) throw error;
+      setWsIntegrations(updatedIntegrations);
       setSaved(true); setTimeout(() => setSaved(false), 3000);
       showToast("Saved", "success");
       if (effectiveAutoDelete !== 0) {
@@ -682,8 +694,8 @@ function SettingsContent() {
   // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="flex h-full bg-background overflow-hidden">
-      {/* Sidebar */}
-      <aside className="w-64 shrink-0 border-r border-border bg-background px-4 py-7 flex flex-col gap-7 h-full overflow-y-auto">
+      {/* Sidebar - desktop only */}
+      <aside className="hidden lg:flex w-64 shrink-0 border-r border-border bg-background px-4 py-7 flex-col gap-7 h-full overflow-y-auto">
         <div className="px-3 py-1 flex items-center justify-between">
           <div className="flex items-center gap-2">
             {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -738,11 +750,72 @@ function SettingsContent() {
 
       {/* Panel */}
       <main className="flex-1 min-w-0 overflow-y-auto w-full bg-background">
-        <div className="sticky top-0 z-10 bg-background border-b border-border px-8 lg:px-10 py-7">
+        {/* Mobile Settings Header & Horizontal Tab Bar (visible on <lg) */}
+        <div className="lg:hidden sticky top-0 z-20 bg-background/95 backdrop-blur-md border-b border-border">
+          <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== "undefined" && window.history.length > 1) {
+                  router.back();
+                } else {
+                  router.push(wsParam ? `/captures?ws=${wsParam}` : "/captures");
+                }
+              }}
+              className="flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-foreground transition-colors"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+              <span>Back to app</span>
+            </button>
+            <div className="flex items-center gap-2">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/icon.svg" alt="BugSnap" className="w-5 h-5 object-contain" />
+              <span className="text-xs font-bold text-foreground">Settings</span>
+            </div>
+          </div>
+
+          {/* Horizontal scrollable tab pills */}
+          <div className="overflow-x-auto no-scrollbar flex items-center gap-1.5 px-3 py-2.5">
+            {[
+              { id: "general", label: "General" },
+              { id: "members", label: "Members" },
+              { id: "billing", label: "Billing" },
+              { id: "integrations", label: "Integrations" },
+              { id: "webhooks", label: "Webhooks" },
+              { id: "account", label: "Account" },
+              { id: "notifications", label: "Notifications" },
+            ].map((t) => (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setTab(t.id as Tab)}
+                className={`shrink-0 px-3 py-1.5 text-xs rounded-lg font-medium transition-all ${
+                  activeTab === t.id
+                    ? "bg-indigo-600 text-white font-semibold shadow-xs"
+                    : "text-muted hover:text-foreground hover:bg-subtle"
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Desktop Sticky Header */}
+        <div className="hidden lg:block sticky top-0 z-10 bg-background border-b border-border px-8 lg:px-10 py-7">
           <h1 className="text-2xl font-bold tracking-tight text-foreground">{TAB_TITLES[activeTab].title}</h1>
           <p className="text-[15px] text-muted mt-2">{TAB_TITLES[activeTab].subtitle}</p>
         </div>
-        <div className="max-w-5xl mx-auto w-full p-8 lg:p-10">
+
+        {/* Mobile Page Title */}
+        <div className="lg:hidden px-4 pt-4 pb-1">
+          <h1 className="text-xl font-bold text-foreground">{TAB_TITLES[activeTab].title}</h1>
+          <p className="text-xs text-muted mt-1">{TAB_TITLES[activeTab].subtitle}</p>
+        </div>
+
+        <div className="max-w-5xl mx-auto w-full p-4 sm:p-6 lg:p-10">
 
         {/* ── General (Jam.dev styled) ────────────────────────────── */}
         {activeTab === "general" && (
@@ -987,6 +1060,31 @@ function SettingsContent() {
               </div>
             </div>
 
+            {/* Google Drive Destination Folder */}
+            <div className="rounded-xl border border-border bg-background p-5 space-y-4">
+              <div className="flex items-center justify-between border-b border-border pb-2.5">
+                <div className="flex items-center gap-2">
+                  <svg className="w-4 h-4 text-muted" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z" />
+                  </svg>
+                  <h2 className="text-sm font-bold text-foreground">Google Drive Destination Folder</h2>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-muted mb-1.5">Destination Folder Name</label>
+                <input
+                  type="text"
+                  value={driveFolderName}
+                  onChange={(e) => setDriveFolderName(e.target.value)}
+                  placeholder="BugSnap Captures"
+                  className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-background text-foreground shadow-sm"
+                />
+                <p className="text-[11px] text-muted mt-1.5">
+                  Captures recorded or uploaded to this workspace will be automatically stored inside this Google Drive folder.
+                </p>
+              </div>
+            </div>
+
             {/* Custom Branding (Integrated) */}
             <div className="rounded-xl border border-border bg-background p-5 space-y-4">
               <div className="flex items-center justify-between border-b border-border pb-2.5">
@@ -1065,7 +1163,7 @@ function SettingsContent() {
                 <h2 className="text-lg font-bold tracking-tight text-foreground">Invite member</h2>
                 <p className="text-[15px] text-muted mt-3">If they don&apos;t have an account yet, we&apos;ll send them a join link + extension download.</p>
               </div>
-              <div className="grid grid-cols-[minmax(0,1fr)_190px_96px] gap-3">
+              <div className="flex flex-col sm:grid sm:grid-cols-[minmax(0,1fr)_180px_96px] gap-3">
                 <input type="email" value={inviteEmail} onChange={e=>setInviteEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleInvite()}
                   disabled={seatLimit(userPlan) !== null && members.length >= (seatLimit(userPlan) ?? 0)}
                   placeholder="Enter email address"
@@ -1267,7 +1365,8 @@ function SettingsContent() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {filteredIntegrations.map(int => {
                 const isCustomConfigurable = int.id === "aksora" || int.id === "snaptest";
-                const config = wsIntegrations[int.id];
+                const rawConfig = wsIntegrations[int.id];
+                const config = rawConfig && typeof rawConfig === "object" ? rawConfig : null;
                 const isConnected = !!(config && (config.url || config.apiKey));
 
                 return (
@@ -1363,18 +1462,18 @@ function SettingsContent() {
                 </div>
               )}
 
-              <form onSubmit={handleCreateBugsnapApiKey} className="flex gap-2">
+              <form onSubmit={handleCreateBugsnapApiKey} className="flex flex-col sm:flex-row gap-2">
                 <input
                   type="text"
                   placeholder="Key name (e.g. SnapTest AI Integration)"
                   value={newKeyName}
                   onChange={(e) => setNewKeyName(e.target.value)}
-                  className="flex-1 text-xs rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-background"
+                  className="flex-1 text-xs rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-background"
                 />
                 <button
                   type="submit"
                   disabled={creatingKey || !newKeyName.trim()}
-                  className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shrink-0"
+                  className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shrink-0"
                 >
                   {creatingKey ? "Generating…" : "Generate Key"}
                 </button>
@@ -1430,10 +1529,10 @@ function SettingsContent() {
                 )}
               </div>
               <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Webhook URL</label>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row gap-2">
                 <input type="url" value={webhookUrl} onChange={e=>{setWebhookUrl(e.target.value); setWebhookTestResult(null);}}
                   placeholder="https://hooks.slack.com/services/... or https://discord.com/api/webhooks/..."
-                  className="flex-1 text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-background font-mono" />
+                  className="flex-1 text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-background font-mono" />
                 <button
                   type="button"
                   disabled={!webhookUrl.trim() || testingWebhook}
