@@ -70,8 +70,10 @@ export default function MediaViewer({
   const fileId = driveUrl ? driveFileId(driveUrl) : null;
   const imageUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w2400` : null;
   const directUrl = fileId ? `https://drive.google.com/uc?export=download&id=${fileId}` : null;
+  const streamUrl = fileId ? `/api/google-drive/download?id=${encodeURIComponent(fileId)}&type=${type === "video" ? "video" : "screenshot"}&disposition=inline` : null;
   const downloadUrl = fileId ? `/api/google-drive/download?id=${encodeURIComponent(fileId)}&type=${type === "video" ? "video" : "screenshot"}&filename=${encodeURIComponent(title || "capture")}` : null;
   const previewUrl = fileId ? `https://drive.google.com/file/d/${fileId}/preview` : null;
+  const [activeImageSrc, setActiveImageSrc] = useState<string | null>(imageUrl);
 
   function handleDownloadMedia(e: React.MouseEvent) {
     e.stopPropagation();
@@ -79,21 +81,37 @@ export default function MediaViewer({
     window.location.href = downloadUrl;
   }
 
-  // Reset and verify image loading
+  // Reset and verify image loading with fallback
   useEffect(() => {
     setVideoFailed(false);
     setImageFailed(false);
     setImageLoaded(false);
     setLightboxOpen(false);
+    setActiveImageSrc(imageUrl);
 
     if (type === "screenshot" && imageUrl) {
       const probe = new Image();
       probe.referrerPolicy = "no-referrer";
       probe.src = imageUrl;
-      probe.onload = () => setImageLoaded(true);
-      probe.onerror = () => setImageFailed(true);
+      probe.onload = () => {
+        setActiveImageSrc(imageUrl);
+        setImageLoaded(true);
+      };
+      probe.onerror = () => {
+        if (streamUrl) {
+          const fallbackProbe = new Image();
+          fallbackProbe.src = streamUrl;
+          fallbackProbe.onload = () => {
+            setActiveImageSrc(streamUrl);
+            setImageLoaded(true);
+          };
+          fallbackProbe.onerror = () => setImageFailed(true);
+        } else {
+          setImageFailed(true);
+        }
+      };
     }
-  }, [driveUrl, type, imageUrl]);
+  }, [driveUrl, type, imageUrl, streamUrl]);
 
   useEffect(() => {
     const dialog = dialogRef.current;
@@ -193,12 +211,12 @@ export default function MediaViewer({
         {unavailable ? (
           <div className="px-6 text-center text-sm text-white/70" role="status">{t("mv.unavailable")}</div>
         ) : type === "video" ? (
-          !videoFailed && (directUrl || downloadUrl) ? (
+          !videoFailed && (streamUrl || directUrl || downloadUrl) ? (
             <video
               ref={videoRef}
               controls
               preload="metadata"
-              src={directUrl || downloadUrl || ""}
+              src={streamUrl || directUrl || downloadUrl || ""}
               onTimeUpdate={(e) => {
                 const cur = e.currentTarget.currentTime;
                 setCurrentPlaybackTime(cur);
@@ -209,7 +227,14 @@ export default function MediaViewer({
                   setVideoDuration(e.currentTarget.duration);
                 }
               }}
-              onError={() => setVideoFailed(true)}
+              onError={() => {
+                if (videoRef.current && directUrl && videoRef.current.src !== directUrl) {
+                  videoRef.current.src = directUrl;
+                  videoRef.current.load();
+                } else {
+                  setVideoFailed(true);
+                }
+              }}
               className="h-full w-full object-contain"
               aria-label={title}
             >
@@ -226,7 +251,7 @@ export default function MediaViewer({
           ) : (
             <div className="px-6 text-center text-sm text-white/70" role="status">{t("mv.unavailable")}</div>
           )
-        ) : imageUrl && !imageFailed ? (
+        ) : (activeImageSrc || imageUrl) && !imageFailed ? (
           <div className="group relative flex h-full w-full items-center justify-center">
             <div
               className="relative flex h-full w-full items-center justify-center cursor-zoom-in select-none"
@@ -240,11 +265,17 @@ export default function MediaViewer({
               )}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={imageUrl}
+                src={activeImageSrc || imageUrl || ""}
                 alt={title}
                 referrerPolicy="no-referrer"
                 onLoad={() => setImageLoaded(true)}
-                onError={() => setImageFailed(true)}
+                onError={() => {
+                  if (activeImageSrc !== streamUrl && streamUrl) {
+                    setActiveImageSrc(streamUrl);
+                  } else {
+                    setImageFailed(true);
+                  }
+                }}
                 className={`h-full w-full object-contain transition-all duration-200 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
               />
             </div>
@@ -411,7 +442,7 @@ export default function MediaViewer({
             </div>
           )}
 
-          {imageUrl && (
+          {(activeImageSrc || imageUrl) && (
             <div
               className={`h-full w-full flex items-center justify-center overflow-hidden ${zoom > MIN_ZOOM ? "cursor-grab active:cursor-grabbing" : "cursor-zoom-in"}`}
               onPointerDown={handlePointerDown}
@@ -421,7 +452,7 @@ export default function MediaViewer({
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src={imageUrl}
+                src={activeImageSrc || imageUrl || ""}
                 alt={title}
                 referrerPolicy="no-referrer"
                 className="max-h-full max-w-full object-contain select-none"
