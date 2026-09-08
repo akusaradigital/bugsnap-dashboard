@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 
-const CHROME_WEB_STORE_URL = "https://chromewebstore.google.com/detail/jfhbmdllebgpmceeoffkfhlhdchhbcg";
+const CHROME_WEB_STORE_URL = "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
 
 export function AuthRequiredCard({ title = "404 - Page Requires Authentication" }: { title?: string }) {
   return (

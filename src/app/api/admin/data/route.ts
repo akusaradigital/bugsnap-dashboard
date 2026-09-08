@@ -1,87 +1,216 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-server";
-import { createClient } from "@supabase/supabase-js";
+import { isRequestAdminAuthenticated } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
 
-// Admin stats: one SECURITY DEFINER RPC (admin_stats) instead of 6 unbounded
-// service-role table scans pulled into Node. The RPC is super-admin guarded
-// (super_admin_emails app_settings / SUPER_ADMIN_EMAILS env), and this route
-// keeps its own Bearer-token check as defence-in-depth. T-022.
 export async function GET(req: Request) {
+  const isAdminAuthenticated = await isRequestAdminAuthenticated(req);
   const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-  if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  let authorized = isAdminAuthenticated;
+  const serviceClient = createServiceClient();
+
+  if (!authorized && token) {
+    const { data: { user }, error: authError } = await serviceClient.auth.getUser(token);
+    if (!authError && user?.email) {
+      const adminEmails = (process.env.SUPER_ADMIN_EMAILS || "")
+        .split(",")
+        .map((e) => e.trim().toLowerCase())
+        .filter(Boolean);
+      if (adminEmails.includes(user.email.toLowerCase())) {
+        authorized = true;
+      }
+    }
+  }
+
+  if (!authorized) {
+    return NextResponse.json({ error: "Forbidden: Super Admin only" }, { status: 403 });
+  }
 
   try {
-    const serviceClient = createServiceClient();
+    // 14 days lookback for real time-series chart
+    const fourteenDaysAgo = new Date();
+    fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
+    const iso14 = fourteenDaysAgo.toISOString();
 
-    // 1. Verify caller identity via service role
-    const { data: { user }, error: authError } = await serviceClient.auth.getUser(token);
-    if (authError || !user || !user.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    const [
+      { count: totalUsers },
+      { count: totalWorkspaces },
+      { count: totalCaptures },
+      { count: totalViews },
+      { count: totalComments },
+      { data: usersList },
+      { data: workspacesList },
+      { data: promoSetting },
+      { data: recentCaptures },
+      { data: recentViews },
+    ] = await Promise.all([
+      serviceClient.from("users").select("*", { count: "exact", head: true }),
+      serviceClient.from("workspaces").select("*", { count: "exact", head: true }),
+      serviceClient.from("captures").select("*", { count: "exact", head: true }),
+      serviceClient.from("capture_views").select("*", { count: "exact", head: true }),
+      serviceClient.from("comments").select("*", { count: "exact", head: true }),
+      serviceClient
+        .from("users")
+        .select("id, email, full_name, plan, created_at, suspended")
+        .order("created_at", { ascending: false })
+        .limit(200),
+      serviceClient
+        .from("workspaces")
+        .select("id, name, owner_email, created_at")
+        .order("created_at", { ascending: false })
+        .limit(20),
+      serviceClient
+        .from("app_settings")
+        .select("value")
+        .eq("key", "promo_banner")
+        .maybeSingle(),
+      serviceClient
+        .from("captures")
+        .select("id, created_at, workspace_id, type")
+        .gte("created_at", iso14)
+        .order("created_at", { ascending: true })
+        .limit(1000),
+      serviceClient
+        .from("capture_views")
+        .select("id, viewed_at")
+        .gte("viewed_at", iso14)
+        .order("viewed_at", { ascending: true })
+        .limit(1000),
+    ]);
+
+    // Compute real 7-day daily activity time series
+    const dailyMap: Record<
+      string,
+      { label: string; date: string; captures: number; views: number; workspaces: number; users: number }
+    > = {};
+    const now = new Date();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const yyyyMmDd = d.toISOString().split("T")[0];
+      const dayLabel = d.toLocaleDateString("id-ID", { weekday: "short", day: "numeric" });
+      dailyMap[yyyyMmDd] = { label: dayLabel, date: yyyyMmDd, captures: 0, views: 0, workspaces: 0, users: 0 };
     }
 
-    // 2. Enforce Super Admin list (same gate as before - the RPC checks its
-    //    own copy of the list as defence-in-depth)
-    const adminEmails = (process.env.SUPER_ADMIN_EMAILS || "")
-      .split(",")
-      .map((e) => e.trim().toLowerCase())
-      .filter(Boolean);
-    if (!adminEmails.includes(user.email.toLowerCase())) {
-      return NextResponse.json({ error: "Forbidden: Super Admin only" }, { status: 403 });
-    }
-
-    // 3. Call admin_stats with the USER's JWT so auth.jwt()->>'email' resolves
-    //    correctly inside the SECURITY DEFINER RPC (service-role JWT has no email).
-    const userClient = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      { global: { headers: { Authorization: `Bearer ${token}` } }, auth: { persistSession: false } }
-    );
-    const { data, error } = await userClient.rpc("admin_stats");
-    const { data: driftData } = await userClient.rpc("run_schema_drift_check");
-    const { data: integrityData } = await userClient.rpc("run_integrity_audit");
-    if (error) {
-      if (error.message?.includes("forbidden")) {
-        return NextResponse.json({ error: "Forbidden: Super Admin only" }, { status: 403 });
+    (recentCaptures || []).forEach((c) => {
+      if (c.created_at) {
+        const day = c.created_at.split("T")[0];
+        if (dailyMap[day]) dailyMap[day].captures += 1;
       }
-      throw error;
+    });
+
+    (recentViews || []).forEach((v) => {
+      if (v.viewed_at) {
+        const day = v.viewed_at.split("T")[0];
+        if (dailyMap[day]) dailyMap[day].views += 1;
+      }
+    });
+
+    (usersList || []).forEach((u) => {
+      if (u.created_at) {
+        const day = u.created_at.split("T")[0];
+        if (dailyMap[day]) dailyMap[day].users += 1;
+      }
+    });
+
+    (workspacesList || []).forEach((w) => {
+      if (w.created_at) {
+        const day = w.created_at.split("T")[0];
+        if (dailyMap[day]) dailyMap[day].workspaces += 1;
+      }
+    });
+
+    const dailyActivity = Object.values(dailyMap);
+
+    // Compute real top workspaces with real capture counts
+    const workspaceCaptureCounts: Record<string, number> = {};
+    (recentCaptures || []).forEach((c) => {
+      if (c.workspace_id) {
+        workspaceCaptureCounts[c.workspace_id] = (workspaceCaptureCounts[c.workspace_id] || 0) + 1;
+      }
+    });
+
+    const topWorkspaces = (workspacesList || []).map((w) => ({
+      id: w.id,
+      name: w.name,
+      owner_email: w.owner_email || "-",
+      capture_count: workspaceCaptureCounts[w.id] || 0,
+    }));
+
+    // Compute real plan distribution
+    const planCounts: Record<string, number> = { free: 0, pro: 0, team: 0, enterprise: 0 };
+    (usersList || []).forEach((u) => {
+      const p = (u.plan || "free").toLowerCase();
+      if (planCounts[p] !== undefined) {
+        planCounts[p] += 1;
+      } else {
+        planCounts.free += 1;
+      }
+    });
+
+    // Compute media types breakdown
+    const mediaTypes: Record<string, number> = { screenshot: 0, video: 0, other: 0 };
+    (recentCaptures || []).forEach((c) => {
+      const t = (c.type || "").toLowerCase();
+      if (t.includes("video") || t.includes("record")) {
+        mediaTypes.video += 1;
+      } else if (t.includes("shot") || t.includes("screen") || t.includes("image")) {
+        mediaTypes.screenshot += 1;
+      } else {
+        mediaTypes.other += 1;
+      }
+    });
+
+    const promoVal = promoSetting?.value as { enabled?: boolean; message?: string } | null;
+
+    // Schema drift & integrity - only run heavy RPCs when explicitly requested by /admin/system
+    const { searchParams } = new URL(req.url);
+    const includeAudit = searchParams.get("includeAudit") === "true";
+
+    let driftData = null;
+    let integrityData = null;
+    if (includeAudit) {
+      try {
+        const [{ data: drift }, { data: integrity }] = await Promise.all([
+          serviceClient.rpc("run_schema_drift_check"),
+          serviceClient.rpc("run_integrity_audit"),
+        ]);
+        driftData = drift;
+        integrityData = integrity;
+      } catch {
+        // ignore
+      }
     }
 
-    const raw = data as {
-      stats?: { total_users?: number; total_workspaces?: number; total_captures?: number; total_views?: number; total_comments?: number };
-      users?: { id: string; email: string; full_name?: string | null; plan?: string | null; created_at: string; suspended?: boolean }[];
-      top_workspaces?: { name: string; owner_email: string; capture_count: number }[];
-      promo?: { enabled: boolean; message: string };
-    } | null;
-
-    const s = raw?.stats ?? {};
     return NextResponse.json({
       ok: true,
       stats: {
-        totalUsers: s.total_users ?? 0,
-        totalWorkspaces: s.total_workspaces ?? 0,
-        totalCaptures: s.total_captures ?? 0,
-        totalViews: s.total_views ?? 0,
-        totalComments: s.total_comments ?? 0,
+        totalUsers: totalUsers ?? 0,
+        totalWorkspaces: totalWorkspaces ?? 0,
+        totalCaptures: totalCaptures ?? 0,
+        totalViews: totalViews ?? 0,
+        totalComments: totalComments ?? 0,
+        recentCapturesCount: (recentCaptures || []).length,
+        recentViewsCount: (recentViews || []).length,
       },
-      users: (raw?.users ?? []).map((u) => ({
+      dailyActivity,
+      planDistribution: planCounts,
+      mediaTypes,
+      users: (usersList || []).map((u) => ({
         id: u.id,
         email: u.email,
         full_name: u.full_name ?? null,
         plan: u.plan ?? "free",
         created_at: u.created_at,
         suspended: u.suspended ?? false,
-        workspace_count: 0,
-        capture_count: 0,
       })),
-      topWorkspaces: (raw?.top_workspaces ?? []).map((w) => ({
-        id: "",
-        name: w.name,
-        owner_email: w.owner_email,
-        capture_count: Number(w.capture_count),
-      })),
-      promo: raw?.promo ?? { enabled: false, message: "" },
+      topWorkspaces,
+      promo: {
+        enabled: Boolean(promoVal?.enabled),
+        message: String(promoVal?.message || ""),
+      },
       drift: driftData ?? null,
       integrity: integrityData ?? null,
     });

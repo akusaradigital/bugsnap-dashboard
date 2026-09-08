@@ -1,7 +1,7 @@
 import { MetadataRoute } from 'next';
 
 export default function robots(): MetadataRoute.Robots {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'https://bugsnap.akusaraproject.my.id';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_API_URL || 'https://bugsnap.akusaraproject.my.id';
   return {
     rules: [
       {
@@ -17,7 +17,10 @@ export default function robots(): MetadataRoute.Robots {
           '/help',
           '/status',
           '/login',
-          '/v/*',
+          '/icon.png',
+          '/icon.svg',
+          '/opengraph-image.png',
+          '/twitter-image.png',
         ],
         disallow: [
           '/api/',
@@ -25,6 +28,34 @@ export default function robots(): MetadataRoute.Robots {
           '/dashboard/',
           '/captures/',
           '/settings/',
+          '/v/',
+        ],
+      },
+      {
+        userAgent: 'Googlebot',
+        allow: [
+          '/',
+          '/pricing',
+          '/features',
+          '/privacy',
+          '/terms',
+          '/security',
+          '/contact',
+          '/help',
+          '/status',
+          '/login',
+          '/icon.png',
+          '/icon.svg',
+          '/opengraph-image.png',
+          '/twitter-image.png',
+        ],
+        disallow: [
+          '/api/',
+          '/admin/',
+          '/dashboard/',
+          '/captures/',
+          '/settings/',
+          '/v/',
         ],
       },
     ],

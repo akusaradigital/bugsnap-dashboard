@@ -9,7 +9,7 @@ const TIERS = [
     monthly: 0,
     yearly: 0,
     cta: "Install Extension Free",
-    href: "https://chrome.google.com/webstore",
+    href: "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf",
     popular: false,
     features: [
       "5 new captures per week",

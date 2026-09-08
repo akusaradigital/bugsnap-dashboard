@@ -1,7 +1,15 @@
 import { NextResponse } from "next/server";
 import { finishConnectionByEmailCode, driveAccessToken } from "@/lib/google-drive";
 import { createServiceClient } from "@/lib/supabase-server";
-import { createHash, randomBytes } from "crypto";
+import { createHash, randomBytes, timingSafeEqual } from "crypto";
+
+function secretMatches(provided: string, expectedHash: string): boolean {
+  if (!provided || !expectedHash) return false;
+  const hash = createHash("sha256").update(provided).digest("hex");
+  const a = Buffer.from(hash, "utf-8");
+  const b = Buffer.from(expectedHash, "utf-8");
+  return a.length === b.length && timingSafeEqual(a, b);
+}
 
 export const runtime = "nodejs";
 
@@ -34,23 +42,32 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No Google Drive connection found for this email", code: "NOT_CONNECTED" }, { status: 404 });
     }
 
-    // Always allow silent refresh for user with active refresh_token
+    // The device secret is the ONLY credential on this branch — an email alone
+    // is public knowledge. Without this check anyone could POST an email and
+    // receive a live Google Drive access token for that account.
+    if (!conn.extension_secret_hash) {
+      // Never had a secret issued: the extension must re-run the code exchange,
+      // which is the only flow that proves possession of the Google account.
+      return NextResponse.json(
+        { error: "Extension is not paired with this connection", code: "RECONNECT_REQUIRED" },
+        { status: 409 }
+      );
+    }
+    if (!secretMatches(secret, conn.extension_secret_hash)) {
+      return NextResponse.json(
+        { error: "Invalid extension secret", code: "RECONNECT_REQUIRED" },
+        { status: 401 }
+      );
+    }
+
     try {
       const token = await driveAccessToken(conn.user_id);
-
-      // Issue / update secret if it was missing or passed
-      let effectiveSecret = secret;
-      if (!conn.extension_secret_hash || !effectiveSecret) {
-        effectiveSecret = randomBytes(32).toString("hex");
-        const newHash = createHash("sha256").update(effectiveSecret).digest("hex");
-        await db.from("google_drive_connections").update({ extension_secret_hash: newHash }).eq("user_id", conn.user_id);
-      }
 
       return NextResponse.json({
         connected: true,
         email: conn.google_email,
         access_token: token,
-        secret: effectiveSecret,
+        secret,
         expires_in: 3000
       });
     } catch (err) {

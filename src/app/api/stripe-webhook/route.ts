@@ -39,7 +39,10 @@ export async function POST(req: NextRequest) {
   if (!event || typeof event !== "object" || !("type" in event)) {
     return NextResponse.json({ error: "Invalid event" }, { status: 400 });
   }
-  if (event.type !== "checkout.session.completed") return NextResponse.json({ received: true });
+  const supportedEvents = ["checkout.session.completed", "checkout.session.expired"];
+  if (!supportedEvents.includes(event.type as string)) {
+    return NextResponse.json({ received: true });
+  }
 
   const object = (event as {
     data?: { object?: {
@@ -53,21 +56,39 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Checkout session has no valid customer email" }, { status: 400 });
   }
 
-  // Tier comes from the checkout session's plan metadata (set at session
-  // creation), not a client-supplied field. Fall back to "pro" so the old
-  // behaviour holds until session creation sets metadata.
+  const email = rawEmail.trim().toLowerCase();
+  const supabase = createServiceClient();
+
+  // Tier comes from the checkout session's plan metadata (set at session creation)
   const rawPlan = object?.metadata?.plan;
   const plan = typeof rawPlan === "string" && isPlan(rawPlan) ? rawPlan : "pro";
 
   try {
-    const { error } = await createServiceClient()
-      .from("users")
-      .update({ plan })
-      .eq("email", rawEmail.trim().toLowerCase());
-    if (error) throw error;
+    if (event.type === "checkout.session.completed") {
+      const { error } = await supabase
+        .from("users")
+        .update({
+          plan,
+          checkout_status: "completed",
+          last_checkout_plan: plan,
+        })
+        .eq("email", email);
+      if (error) throw error;
+    } else if (event.type === "checkout.session.expired") {
+      // User abandoned checkout session without paying — hot lead for cart recovery
+      // ponytail: zero extra rows, purely a status flag on user record
+      await supabase
+        .from("users")
+        .update({
+          checkout_status: "abandoned",
+          last_checkout_plan: plan,
+        })
+        .eq("email", email);
+    }
+
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error("[Stripe Webhook] User upgrade failed", error);
+    console.error("[Stripe Webhook] Processing failed", error);
     return NextResponse.json({ error: "Failed to process webhook" }, { status: 500 });
   }
 }

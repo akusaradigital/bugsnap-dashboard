@@ -2,18 +2,39 @@ import { NextResponse } from "next/server";
 import { driveAccessToken, listAccessibleDriveFiles, trashDriveFile } from "@/lib/google-drive";
 import { parseDriveFileId } from "@/lib/google-drive-values";
 import { createServiceClient } from "@/lib/supabase-server";
+import { isRequestAdminAuthenticated } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
 
-async function getAdminUser(req: Request) {
+async function getAdminUser(req: Request): Promise<{ id: string; email?: string } | null> {
+  const isAdminAuthenticated = await isRequestAdminAuthenticated(req);
   const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-  if (!token) return null;
   const serviceClient = createServiceClient();
-  const { data: { user }, error } = await serviceClient.auth.getUser(token);
-  if (error || !user?.email) return null;
-  const adminEmails = (process.env.SUPER_ADMIN_EMAILS || "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
-  if (!adminEmails.includes(user.email.toLowerCase())) return null;
-  return user;
+
+  if (token) {
+    const { data: { user }, error } = await serviceClient.auth.getUser(token);
+    if (!error && user?.email) {
+      if (isAdminAuthenticated) return user;
+      const adminEmails = (process.env.SUPER_ADMIN_EMAILS || "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
+      if (adminEmails.includes(user.email.toLowerCase())) return user;
+    }
+  }
+
+  if (isAdminAuthenticated) {
+    // If authenticated via admin credentials, look up user with connected drive
+    const { data: conn } = await serviceClient
+      .from("google_drive_connections")
+      .select("user_id")
+      .order("updated_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (conn?.user_id) {
+      return { id: conn.user_id };
+    }
+  }
+
+  return null;
 }
 
 async function computeOrphans(userId: string) {
@@ -35,7 +56,7 @@ async function computeOrphans(userId: string) {
 
 export async function GET(request: Request) {
   const user = await getAdminUser(request);
-  if (!user) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!user) return NextResponse.json({ error: "Forbidden: Super Admin only" }, { status: 403 });
   try {
     const { orphans, totalDriveFiles, linkedCaptureFiles } = await computeOrphans(user.id);
     return NextResponse.json({ totalDriveFiles, linkedCaptureFiles, orphanCount: orphans.length, orphans: orphans.slice(0, 100) });
@@ -48,7 +69,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const user = await getAdminUser(request);
-  if (!user) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (!user) return NextResponse.json({ error: "Forbidden: Super Admin only" }, { status: 403 });
   let body: unknown;
   try { body = await request.json(); } catch { return NextResponse.json({ error: "Invalid JSON" }, { status: 400 }); }
   const input = body as { fileIds?: unknown };
@@ -58,21 +79,22 @@ export async function POST(request: Request) {
     const { accessToken, orphans } = await computeOrphans(user.id);
     const allowed = new Set(orphans.map((file) => file.id));
     const results: Array<{ id: string; ok: boolean; error?: string }> = [];
+    let trashed = 0;
     for (const fileId of fileIds) {
       if (!allowed.has(fileId)) {
-        results.push({ id: fileId, ok: false, error: "File is no longer considered orphaned" });
+        results.push({ id: fileId, ok: false, error: "Not an orphan file" });
         continue;
       }
       try {
         await trashDriveFile(accessToken, fileId);
+        trashed += 1;
         results.push({ id: fileId, ok: true });
       } catch (error) {
         results.push({ id: fileId, ok: false, error: error instanceof Error ? error.message : "Trash failed" });
       }
     }
-    return NextResponse.json({ results, trashed: results.filter((item) => item.ok).length, failed: results.filter((item) => !item.ok).length });
+    return NextResponse.json({ trashed, failed: fileIds.length - trashed, results });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Unable to clean orphaned Drive files";
-    return NextResponse.json({ error: message }, { status: 422 });
+    return NextResponse.json({ error: error instanceof Error ? error.message : "Unable to clean Drive files" }, { status: 422 });
   }
 }

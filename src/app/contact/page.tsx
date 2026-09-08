@@ -2,8 +2,8 @@ import { Metadata } from "next";
 import { StaticShell } from "@/components/StaticShell";
 
 export const metadata: Metadata = {
-  title: "Contact Us - BugSnap",
-  description: "Get in touch with the BugSnap team for support, inquiries, or feedback.",
+  title: "Contact & Support",
+  description: "Get in touch with the BugSnap team for technical support, enterprise inquiries, or feedback.",
 };
 
 export default function ContactPage() {
@@ -52,7 +52,7 @@ export default function ContactPage() {
           <div className="creative-surface rounded-2xl p-6 space-y-4">
             <h3 className="text-base font-bold text-foreground">Start capturing with BugSnap</h3>
             <a
-              href="https://chrome.google.com/webstore"
+              href="https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf"
               target="_blank"
               rel="noopener noreferrer"
               className="block text-center bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 rounded-lg transition-colors"

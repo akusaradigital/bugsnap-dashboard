@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { StaticShell } from "@/components/StaticShell";
 
 export const metadata: Metadata = {
-  title: "Features - BugSnap",
+  title: "Features - Bug Reporting & Screen Recorder",
   description: "Explore BugSnap features: Screen Recorder, DevTools log capture, instant sharing, and AI bug summaries.",
 };
 
@@ -104,7 +104,7 @@ export default function FeaturesPage() {
             Install the BugSnap extension and start capturing screen recordings, audio, and DevTools logs in seconds - saved directly to your own Google Drive, free, no credit card required.
           </p>
           <a
-            href="https://chrome.google.com/webstore"
+            href="https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm px-6 py-2.5 rounded-lg transition-colors shadow-sm"
