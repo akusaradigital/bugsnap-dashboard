@@ -3,7 +3,7 @@ import { createServiceClient, getAuthenticatedUser } from "@/lib/supabase-server
 
 export const runtime = "nodejs";
 
-const EXTENSION_URL = "https://chromewebstore.google.com/detail/jfhbmdllebgpmceeoffkfhlhdchhbcg";
+const EXTENSION_URL = "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
 
 function escapeHtml(value: string) {
   return value.replace(/[&<>"]/g, (ch) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[ch] || ch));

@@ -268,6 +268,14 @@ function SingleViewContent() {
       return;
     }
 
+    // Viral Loop Attribution: store referral capture in cookie & storage for zero-DB conversion tracking
+    try {
+      if (typeof window !== "undefined") {
+        localStorage.setItem("bugsnap_ref_capture_id", id);
+        document.cookie = `bugsnap_ref_capture_id=${encodeURIComponent(id)};path=/;max-age=2592000;SameSite=Lax`;
+      }
+    } catch {}
+
     supabase.auth.getSession().then(({ data }) => {
       if (cancelled) return;
       const u = data.session?.user;
@@ -753,7 +761,7 @@ function SingleViewContent() {
             </>
           )}
         </Link>
-        {isTeamMember && (
+        {isTeamMember ? (
           <Link
             href="/captures"
             className="px-3 sm:px-4 py-2 rounded-lg border border-border text-xs font-semibold text-foreground hover:bg-subtle flex items-center gap-1.5 sm:gap-2 transition-colors shadow-sm shrink-0"
@@ -764,6 +772,16 @@ function SingleViewContent() {
             <span className="hidden sm:inline">{t("v.backToDashboard")}</span>
             <span className="sm:hidden">Captures</span>
           </Link>
+        ) : (
+          <a
+            href="https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3 sm:px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm shrink-0"
+          >
+            <span>Add to Chrome</span>
+            <span className="hidden sm:inline text-indigo-200">· Free</span>
+          </a>
         )}
       </header>
 
@@ -909,6 +927,7 @@ function SingleViewContent() {
                   onTimeUpdate={(t) => setPlaybackTime(t)}
                   seekToTime={seekTargetTime}
                   errorMarkers={errorMarkers}
+                  accessMode={accessMode}
                 />
                 <div className="mt-5 sm:mt-7 space-y-4">
                   <div
@@ -1018,6 +1037,28 @@ function SingleViewContent() {
             </div>
           </div>
         </main>
+      )}
+
+      {/* Viral Referral Banner for External Viewers */}
+      {!isTeamMember && status === "ready" && (
+        <div className="sticky bottom-0 z-20 border-t border-border/80 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-md px-4 py-2.5 shadow-lg">
+          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2.5 text-xs text-center sm:text-left">
+            <div className="flex items-center gap-2">
+              <span className="flex h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
+              <span className="text-muted">
+                Recorded with <strong className="text-foreground font-semibold">BugSnap</strong> &mdash; screen recorder &amp; DevTools error logger for Chrome.
+              </span>
+            </div>
+            <a
+              href="https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-transform hover:scale-105 shadow-sm"
+            >
+              <span>Add to Chrome &mdash; Free</span>
+            </a>
+          </div>
+        </div>
       )}
 
       {/* Edit Modal (Workspace Members only) */}

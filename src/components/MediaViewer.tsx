@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useT } from "@/components/I18nProvider";
+import { supabase } from "@/lib/supabase";
 
 export interface ErrorMarker {
   timeSec: number;
@@ -16,6 +17,8 @@ interface MediaViewerProps {
   onTimeUpdate?: (currentTimeSec: number) => void;
   seekToTime?: number | null;
   errorMarkers?: ErrorMarker[];
+  /** "members" makes the stream route require proof of access. */
+  accessMode?: "public" | "members";
 }
 
 function driveFileId(url: string): string | null {
@@ -37,6 +40,7 @@ const STEP_ZOOM = 0.5;
 const DOUBLE_CLICK_ZOOM = 2.5;
 
 function formatSec(seconds: number): string {
+  if (!seconds || !isFinite(seconds) || isNaN(seconds) || seconds < 0) return "00:00";
   const m = Math.floor(seconds / 60);
   const s = Math.floor(seconds % 60);
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
@@ -48,7 +52,8 @@ export default function MediaViewer({
   title,
   onTimeUpdate,
   seekToTime,
-  errorMarkers = []
+  errorMarkers = [],
+  accessMode = "public"
 }: MediaViewerProps) {
   const { t } = useT();
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -69,11 +74,38 @@ export default function MediaViewer({
   });
   const fileId = driveUrl ? driveFileId(driveUrl) : null;
   const imageUrl = fileId ? `https://drive.google.com/thumbnail?id=${fileId}&sz=w2400` : null;
-  const directUrl = fileId ? `https://drive.google.com/uc?export=download&id=${fileId}` : null;
-  const streamUrl = fileId ? `/api/google-drive/download?id=${encodeURIComponent(fileId)}&type=${type === "video" ? "video" : "screenshot"}&disposition=inline` : null;
-  const downloadUrl = fileId ? `/api/google-drive/download?id=${encodeURIComponent(fileId)}&type=${type === "video" ? "video" : "screenshot"}&filename=${encodeURIComponent(title || "capture")}` : null;
+  // Public Drive URL: pointless for a members-only capture (the file is private
+  // in Drive), and using it as a fallback would just render a broken tag.
+  const directUrl = fileId && accessMode !== "members" ? `https://drive.google.com/uc?export=download&id=${fileId}` : null;
+  // For members-only captures the stream route rejects an unsigned request, and
+  // <img>/<video> cannot send an Authorization header — so append a signature
+  // fetched once below. Public captures need none and stay on the plain URL.
+  const [sigQuery, setSigQuery] = useState("");
+  const needsSig = accessMode === "members";
+  const sigReady = !needsSig || sigQuery !== "";
+  const streamUrl = fileId && sigReady ? `/api/google-drive/download?id=${encodeURIComponent(fileId)}&type=${type === "video" ? "video" : "screenshot"}&disposition=inline${sigQuery}` : null;
+  const downloadUrl = fileId && sigReady ? `/api/google-drive/download?id=${encodeURIComponent(fileId)}&type=${type === "video" ? "video" : "screenshot"}&filename=${encodeURIComponent(title || "capture")}${sigQuery}` : null;
   const previewUrl = fileId ? `https://drive.google.com/file/d/${fileId}/preview` : null;
   const [activeImageSrc, setActiveImageSrc] = useState<string | null>(imageUrl);
+
+  useEffect(() => {
+    if (!fileId || !needsSig) { setSigQuery(""); return; }
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) return;
+      const res = await fetch("/api/google-drive/sign", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ fileId }),
+      }).catch(() => null);
+      if (!res?.ok || cancelled) return;
+      const { sig, exp } = await res.json();
+      if (!cancelled && sig) setSigQuery(`&sig=${encodeURIComponent(sig)}&exp=${exp}`);
+    })();
+    return () => { cancelled = true; };
+  }, [fileId, needsSig]);
 
   function handleDownloadMedia(e: React.MouseEvent) {
     e.stopPropagation();
@@ -223,8 +255,26 @@ export default function MediaViewer({
                 onTimeUpdate?.(cur);
               }}
               onLoadedMetadata={(e) => {
-                if (e.currentTarget.duration && !isNaN(e.currentTarget.duration)) {
-                  setVideoDuration(e.currentTarget.duration);
+                const vid = e.currentTarget;
+                if (isFinite(vid.duration) && vid.duration > 0) {
+                  setVideoDuration(vid.duration);
+                } else if (vid.duration === Infinity) {
+                  // Chromium MediaRecorder bug: WebM stream missing duration header.
+                  // Temporarily seeking to infinity forces browser decoder to calculate
+                  // total duration from the last cluster timestamp.
+                  const onSeeked = () => {
+                    vid.removeEventListener("seeked", onSeeked);
+                    if (isFinite(vid.duration) && vid.duration > 0) {
+                      setVideoDuration(vid.duration);
+                    }
+                    vid.currentTime = 0;
+                  };
+                  vid.addEventListener("seeked", onSeeked, { once: true });
+                  try {
+                    vid.currentTime = 1e101;
+                  } catch {
+                    // Ignore seek errors on unbuffered media
+                  }
                 }
               }}
               onError={() => {
@@ -313,6 +363,18 @@ export default function MediaViewer({
         ) : (
           <div className="px-6 text-center text-sm text-white/70" role="status">{t("mv.unavailable")}</div>
         )}
+
+        {/* Powered by BugSnap Badge */}
+        <a
+          href="https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="absolute top-3 left-3 z-10 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-zinc-900/80 hover:bg-zinc-900 text-white/80 hover:text-white text-[11px] font-medium backdrop-blur-md transition-all shadow-sm border border-white/10 hover:border-white/20 select-none group/badge"
+          title="Captured with BugSnap - Free Chrome Extension"
+        >
+          <span className="w-1.5 h-1.5 rounded-full bg-indigo-500 group-hover/badge:bg-indigo-400" />
+          <span>Powered by <strong className="font-semibold text-white">BugSnap</strong></span>
+        </a>
       </div>
 
       {type === "video" && errorMarkers.length > 0 && (

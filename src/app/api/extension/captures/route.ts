@@ -1,19 +1,10 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-server";
+import { verifiedGoogleEmail } from "@/lib/google-token";
 
 export const runtime = "nodejs";
 
-async function emailFromGoogleToken(accessToken: string) {
-  const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-    headers: { Authorization: `Bearer ${accessToken}` },
-    cache: "no-store",
-  });
-  if (!res.ok) throw new Error("Invalid Google token");
-  const user = await res.json() as { email?: unknown; email_verified?: unknown };
-  if (typeof user.email !== "string" || !user.email.trim()) throw new Error("Google token has no email");
-  if (user.email_verified !== true) throw new Error("A verified Google email is required");
-  return user.email.trim().toLowerCase();
-}
+const emailFromGoogleToken = verifiedGoogleEmail;
 
 export async function POST(request: Request) {
   let body: Record<string, unknown>;

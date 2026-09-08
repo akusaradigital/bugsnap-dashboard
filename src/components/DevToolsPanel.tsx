@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { useT } from "@/components/I18nProvider";
 import { decompressDevLogs } from "@/lib/devlogs-compression";
+import { supabase } from "@/lib/supabase";
 
 interface TimedLog {
   time?: string | number;
@@ -313,7 +314,16 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
 
     if (raw && typeof raw === "object" && "driveFileId" in raw && typeof (raw as DriveExternalLogReference).driveFileId === "string") {
       const fileId = (raw as DriveExternalLogReference).driveFileId;
-      fetch(`/api/google-drive/download?id=${encodeURIComponent(fileId)}&type=logs`)
+      // Bearer token when signed in: the stream route needs it for members-only
+      // captures. Public ones ignore it, so sending it unconditionally is fine.
+      supabase.auth
+        .getSession()
+        .then(({ data }) => {
+          const token = data.session?.access_token;
+          return fetch(`/api/google-drive/download?id=${encodeURIComponent(fileId)}&type=logs`, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+          });
+        })
         .then((res) => {
           if (!res.ok) throw new Error(`HTTP ${res.status}`);
           return res.json();

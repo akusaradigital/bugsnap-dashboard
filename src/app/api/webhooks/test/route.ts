@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { authenticatedUser } from "@/lib/google-drive";
+import { assertPublicUrl } from "@/lib/safe-url";
 
 export const runtime = "nodejs";
 
@@ -9,8 +10,18 @@ export async function POST(req: Request) {
 
   try {
     const { url } = (await req.json()) as { url?: string };
-    if (!url || typeof url !== "string" || !url.trim().startsWith("http")) {
+    if (!url || typeof url !== "string") {
       return NextResponse.json({ error: "Valid Webhook URL is required" }, { status: 400 });
+    }
+
+    let target: URL;
+    try {
+      target = await assertPublicUrl(url);
+    } catch (err) {
+      return NextResponse.json(
+        { error: err instanceof Error ? err.message : "Invalid webhook URL" },
+        { status: 400 }
+      );
     }
 
     const payload = {
@@ -30,16 +41,19 @@ export async function POST(req: Request) {
       ],
     };
 
-    const res = await fetch(url.trim(), {
+    const res = await fetch(target, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
+      // Don't let a redirect escape the public-address check above.
+      redirect: "manual",
+      signal: AbortSignal.timeout(10000),
     });
 
     if (!res.ok) {
-      const errText = await res.text().catch(() => "");
+      // Status only — echoing the response body turns this into a read primitive.
       return NextResponse.json(
-        { error: `Webhook endpoint responded with status ${res.status}: ${errText.slice(0, 120)}` },
+        { error: `Webhook endpoint responded with status ${res.status}` },
         { status: 400 }
       );
     }

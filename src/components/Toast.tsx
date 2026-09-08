@@ -29,8 +29,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
   const showToast = useCallback((message: string, type: ToastType = "info", duration = 3500) => {
     const id = Date.now() + Math.random();
     setToasts((prev) => {
-      const next = [...prev, { id, message, type, duration }];
-      return next.slice(-4); // keep max 4 stacked
+      // Deduplicate identical message within active window
+      if (prev.length > 0 && prev[0].message === message) {
+        return prev;
+      }
+      // Strictly 1 notification at a time in the bottom right (no double stacking)
+      return [{ id, message, type, duration }];
     });
     return id;
   }, []);

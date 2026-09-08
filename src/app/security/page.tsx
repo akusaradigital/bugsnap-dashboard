@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { StaticShell } from "@/components/StaticShell";
 
 export const metadata: Metadata = {
-  title: "Security - BugSnap",
+  title: "Security & Google Drive Privacy",
   description: "BugSnap security practices: your files stay in your Google Drive, encryption in transit, and no data ever sold.",
 };
 
@@ -75,7 +75,7 @@ export default function SecurityPage() {
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
             <a
-              href="https://chrome.google.com/webstore"
+              href="https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-6 py-2.5 transition-colors shadow-sm"

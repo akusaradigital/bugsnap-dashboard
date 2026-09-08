@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-server";
+import { verifiedGoogleEmail } from "@/lib/google-token";
 import type { User } from "@supabase/supabase-js";
+
+export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
@@ -9,21 +12,26 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Access token is required" }, { status: 400 });
     }
 
-    // 1. Verify access token with Google to get the user's email securely
-    const googleRes = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
-      headers: { Authorization: `Bearer ${access_token}` }
-    });
-
-    if (!googleRes.ok) {
-      const errText = await googleRes.text();
-      return NextResponse.json({ error: `Invalid Google token: ${errText}` }, { status: 401 });
+    // 1. Verify the access token with Google AND that it was issued for our own
+    // OAuth client. This endpoint mints a login link for the token's email, so
+    // accepting a token from any client would be full account takeover.
+    let email: string;
+    try {
+      email = await verifiedGoogleEmail(access_token);
+    } catch (err) {
+      return NextResponse.json(
+        { error: err instanceof Error ? err.message : "Invalid Google token" },
+        { status: 401 }
+      );
     }
 
-    const googleUser = await googleRes.json() as { email?: string; email_verified?: boolean; name?: string; picture?: string };
-    const email = googleUser.email?.trim().toLowerCase();
-    if (!email || googleUser.email_verified !== true) {
-      return NextResponse.json({ error: "A verified Google email is required" }, { status: 401 });
-    }
+    // Profile fields are cosmetic; the identity above is the authenticated part.
+    const googleUser = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+      headers: { Authorization: `Bearer ${access_token}` },
+      cache: "no-store",
+    })
+      .then((r) => (r.ok ? r.json() : {}))
+      .catch(() => ({})) as { name?: string; picture?: string };
 
     // 2. Initialize Supabase Admin Service Client
     const supabaseAdmin = createServiceClient();

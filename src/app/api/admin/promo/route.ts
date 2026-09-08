@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-server";
+import { isRequestAdminAuthenticated } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
 
@@ -10,19 +11,27 @@ const getAdminEmails = () =>
     .filter(Boolean);
 
 export async function POST(req: Request) {
+  const isAdminAuthenticated = await isRequestAdminAuthenticated(req);
   const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-  if (!token) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  let authorized = isAdminAuthenticated;
+
+  const supabase = createServiceClient();
+
+  if (!authorized && token) {
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (!authError && user?.email) {
+      if (getAdminEmails().includes(user.email.toLowerCase())) {
+        authorized = true;
+      }
+    }
+  }
+
+  if (!authorized) {
+    return NextResponse.json({ error: "Forbidden: Super Admin only" }, { status: 403 });
+  }
 
   try {
-    const supabase = createServiceClient();
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (authError || !user || !user.email) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-    if (!getAdminEmails().includes(user.email.toLowerCase())) {
-      return NextResponse.json({ error: "Forbidden: Super Admin only" }, { status: 403 });
-    }
-
     const body = await req.json();
     const message = typeof body?.message === "string" ? body.message.trim().slice(0, 500) : "";
     const enabled = Boolean(body?.enabled);

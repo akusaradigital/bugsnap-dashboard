@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
-import { getAuthenticatedUser } from "@/lib/supabase-server";
+import { getAuthenticatedUser, createServiceClient } from "@/lib/supabase-server";
+import { isRateLimited } from "@/lib/rate-limit";
+import { isUuid } from "@/lib/google-drive-values";
 import { decompressDevLogs } from "@/lib/devlogs-compression";
 
 interface DevLog {
@@ -26,16 +28,43 @@ interface DevLogSummary {
 
 export const runtime = "nodejs"; // fetch to OpenAI works in edge too, but nodejs is safest
 
+// Every call spends paid upstream AI tokens, so one authenticated account
+// could otherwise drain the API budget in a loop.
+const AI_LIMIT = 20;
+const AI_WINDOW_S = 60 * 60;
+
 export async function POST(req: Request) {
   try {
     const user = await getAuthenticatedUser(req);
     if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (await isRateLimited(`ai-summary:${user.id}`, AI_LIMIT, AI_WINDOW_S)) {
+      return NextResponse.json(
+        { error: "Too many AI summaries. Try again later." },
+        { status: 429 }
+      );
+    }
 
     const body: unknown = await req.json();
     if (!body || typeof body !== "object") {
       return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
     }
-    const { title, devLogs: rawDevLogs, windowSize } = body as Record<string, unknown>;
+    const { title, devLogs: rawDevLogs, windowSize, captureId } = body as Record<string, unknown>;
+
+    // Cache hit: the logs for a capture never change once uploaded, so a
+    // regenerated summary would be identical. Only serve the cache to someone
+    // who owns the capture — captureId alone must not leak another user's data.
+    const cacheId = typeof captureId === "string" && isUuid(captureId) ? captureId : null;
+    const db = cacheId ? createServiceClient() : null;
+    if (cacheId && db) {
+      const { data: cached } = await db
+        .from("captures")
+        .select("ai_summary, user_id")
+        .eq("id", cacheId)
+        .maybeSingle();
+      if (cached?.ai_summary && cached.user_id === user.id) {
+        return NextResponse.json({ summary: cached.ai_summary, cached: true });
+      }
+    }
     let devLogs = rawDevLogs;
     if (typeof devLogs === "string" && devLogs.startsWith("gz:")) {
       devLogs = await decompressDevLogs(devLogs);
@@ -240,6 +269,15 @@ export async function POST(req: Request) {
     }
 
     if (aiSummary) {
+      // Only the AI result is worth caching; the local fallback below is
+      // cheap to rebuild and would otherwise pin a degraded summary forever.
+      if (cacheId && db) {
+        await db
+          .from("captures")
+          .update({ ai_summary: aiSummary, ai_summary_at: new Date().toISOString() })
+          .eq("id", cacheId)
+          .eq("user_id", user.id);
+      }
       return NextResponse.json({ summary: aiSummary });
     }
 

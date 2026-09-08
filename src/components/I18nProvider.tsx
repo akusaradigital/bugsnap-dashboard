@@ -8,20 +8,31 @@ type Translator = (key: string, vars?: Record<string, string | number>) => strin
 
 interface I18nContextValue {
   locale: Locale;
+  setLocale: (locale: Locale) => void;
   t: Translator;
   dir: "ltr" | "rtl";
 }
 
 const I18nContext = createContext<I18nContextValue>({
   locale: "en",
+  setLocale: () => {},
   t: (key) => key,
   dir: "ltr",
 });
 
 export function I18nProvider({ children }: { children: ReactNode }) {
-  // Detect once on mount; vanilla useState init (localStorage is safe to
-  // access in the browser, SSR renders en as the initial pass anyway).
-  const [locale] = useState<Locale>(() => detectLocale());
+  const [locale, setLocaleState] = useState<Locale>("en");
+
+  // Synchronize detected locale on client mount
+  useEffect(() => {
+    const detected = detectLocale();
+    setLocaleState(detected);
+  }, []);
+
+  const setLocale = useCallback((newLocale: Locale) => {
+    setLocalePref(newLocale);
+    setLocaleState(newLocale);
+  }, []);
 
   useEffect(() => {
     setLocalePref(locale);
@@ -64,7 +75,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   );
 
   return (
-    <I18nContext.Provider value={{ locale, t, dir: "ltr" }}>
+    <I18nContext.Provider value={{ locale, setLocale, t, dir: "ltr" }}>
       {children}
     </I18nContext.Provider>
   );

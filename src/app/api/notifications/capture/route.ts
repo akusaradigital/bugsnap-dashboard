@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-server";
 import { decompressDevLogs } from "@/lib/devlogs-compression";
+import { assertPublicUrl } from "@/lib/safe-url";
 
 export const runtime = "nodejs";
 
@@ -16,12 +17,20 @@ export async function POST(req: Request) {
 
     const { data: capture, error: captureError } = await supabase
       .from("captures")
-      .select("title, type, site_url, os, browser, workspace_id, dev_logs")
+      .select("title, type, site_url, os, browser, workspace_id, dev_logs, created_at")
       .eq("id", captureId)
       .single();
 
     if (captureError || !capture) {
       return NextResponse.json({ error: "Capture not found" }, { status: 404 });
+    }
+
+    // This route is unauthenticated (the extension fires it right after upload),
+    // so bound it to genuinely new captures. Otherwise anyone holding a public
+    // share id could replay it to spam the workspace webhook indefinitely.
+    const ageMs = Date.now() - new Date(capture.created_at).getTime();
+    if (!(ageMs >= 0 && ageMs < 5 * 60_000)) {
+      return NextResponse.json({ ok: true, skipped: "Capture is not new" });
     }
 
     const { data: settings } = await supabase
@@ -80,10 +89,19 @@ export async function POST(req: Request) {
       ],
     };
 
-    const response = await fetch(webhookUrl, {
+    let target: URL;
+    try {
+      target = await assertPublicUrl(webhookUrl);
+    } catch {
+      return NextResponse.json({ error: "Configured webhook URL is not reachable" }, { status: 400 });
+    }
+
+    const response = await fetch(target, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
+      redirect: "manual",
+      signal: AbortSignal.timeout(10000),
     });
 
     if (!response.ok) {

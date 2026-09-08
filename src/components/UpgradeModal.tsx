@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { supabase } from "@/lib/supabase";
 
 interface UpgradeModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentPlan?: string;
+  feature?: string;
   onSelectPlan?: (plan: string, isYearly: boolean) => void;
 }
 
@@ -14,11 +16,29 @@ export function UpgradeModal({
   isOpen,
   onClose,
   currentPlan = "free",
+  feature = "upgrade_modal",
   onSelectPlan,
 }: UpgradeModalProps) {
   const [isYearly, setIsYearly] = useState(true);
   const [showAllFeatures, setShowAllFeatures] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // Track paywall impression for zero-DB sales lead scoring
+  useEffect(() => {
+    if (!isOpen) return;
+    supabase.auth.getSession().then(({ data }) => {
+      const token = data.session?.access_token;
+      if (!token) return;
+      fetch("/api/track/paywall-hit", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ feature }),
+      }).catch(() => {});
+    });
+  }, [isOpen, feature]);
 
   if (!isOpen) return null;
 

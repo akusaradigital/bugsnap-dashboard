@@ -5,6 +5,9 @@ import { parseDriveFileId } from "@/lib/google-drive-values";
 
 export const runtime = "nodejs";
 
+// Dev logs are diagnostic scratch, not the artifact the user came for.
+const DEV_LOG_TTL_DAYS = 30;
+
 type ExpiredCapture = {
   capture_id: string;
   workspace_id: string;
@@ -18,7 +21,8 @@ type ExpiredCapture = {
 
 export async function GET(req: Request) {
   const authorization = req.headers.get("authorization");
-  if (process.env.CRON_SECRET && authorization !== `Bearer ${process.env.CRON_SECRET}`) {
+  // Fail closed: an unset CRON_SECRET used to leave this destructive route open.
+  if (!process.env.CRON_SECRET || authorization !== `Bearer ${process.env.CRON_SECRET}`) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -42,6 +46,52 @@ export async function GET(req: Request) {
   let totalPruned = 0;
   let totalDriveTrashed = 0;
   const errors: string[] = [];
+
+  // 0. Age-based retention for the log tables and the rate-limit table. Both
+  // functions existed but nothing ever called them, so the rows only grew.
+  // Best-effort: a failure here must not stop the capture cleanup below.
+  try {
+    await Promise.all([supabase.rpc("prune_admin_logs"), supabase.rpc("prune_rate_limits")]);
+  } catch (pruneErr) {
+    console.warn("[Cron cleanup] prune RPC failed:", pruneErr);
+  }
+
+  // 0b. Dev logs outlive their usefulness long before the capture does: they
+  // carry request/response bodies and stack traces, and used to sit around for
+  // the full 3-12 month capture retention. Drop them at 30 days; the
+  // screenshot/recording itself is untouched.
+  let devLogsPurged = 0;
+  try {
+    const cutoff = new Date(Date.now() - DEV_LOG_TTL_DAYS * 86400_000).toISOString();
+    const { data: stale } = await supabase
+      .from("captures")
+      .select("id, user_id, workspace_id, dev_logs")
+      .lt("created_at", cutoff)
+      .not("dev_logs", "is", null)
+      .limit(200);
+
+    for (const row of stale ?? []) {
+      // Trash the Drive-hosted copy too, or the bytes just stay in Drive.
+      const logs = (row.dev_logs ?? {}) as Record<string, unknown>;
+      const logFileId =
+        (typeof logs.driveFileId === "string" ? logs.driveFileId : null) ??
+        parseDriveFileId(typeof logs.driveUrl === "string" ? logs.driveUrl : null);
+      if (logFileId) {
+        const token = await resolveUserDriveToken(row.user_id);
+        if (token) {
+          try {
+            await trashDriveFile(token, logFileId);
+          } catch (logErr) {
+            console.warn(`[Cron cleanup] Could not trash stale dev_logs ${logFileId}:`, logErr);
+          }
+        }
+      }
+      const { error } = await supabase.from("captures").update({ dev_logs: null }).eq("id", row.id);
+      if (!error) devLogsPurged++;
+    }
+  } catch (ttlErr) {
+    console.warn("[Cron cleanup] dev_logs TTL sweep failed:", ttlErr);
+  }
 
   try {
     // 1. Fetch candidate expired captures using batch RPC or direct query fallback
@@ -99,6 +149,7 @@ export async function GET(req: Request) {
         message: "No expired captures to prune",
         totalPruned: 0,
         totalDriveTrashed: 0,
+        devLogsPurged,
       });
     }
 
@@ -160,6 +211,7 @@ export async function GET(req: Request) {
       ok: true,
       totalPruned,
       totalDriveTrashed,
+      devLogsPurged,
       operationId: cronOperationId,
       errors: errors.length > 0 ? errors : undefined,
     });

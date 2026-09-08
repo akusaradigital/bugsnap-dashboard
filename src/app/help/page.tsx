@@ -2,7 +2,7 @@ import { Metadata } from "next";
 import { StaticShell } from "@/components/StaticShell";
 
 export const metadata: Metadata = {
-  title: "Help Center - BugSnap",
+  title: "Help Center & FAQ",
   description: "Get help with BugSnap setup, Google Drive permissions, reporting bugs, and team management.",
 };
 
@@ -67,7 +67,7 @@ export default function HelpPage() {
           <div className="creative-surface rounded-2xl p-6 space-y-3">
             <h3 className="text-sm font-bold text-foreground">Get started</h3>
             <a
-              href="https://chrome.google.com/webstore"
+              href="https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf"
               target="_blank"
               rel="noopener noreferrer"
               className="block text-center bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold py-2.5 rounded-lg transition-colors"

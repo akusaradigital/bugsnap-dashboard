@@ -10,6 +10,7 @@ import { normalizePlan, seatLimit, tierLabel, type Plan } from "@/lib/tiers";
 import { pickAvatar, initialOf } from "@/lib/avatar";
 import { AuthRequiredCard } from "@/components/AuthRequiredCard";
 import DriveStorageMeter from "@/components/DriveStorageMeter";
+import FloatingSupport from "@/components/FloatingSupport";
 
 const navItems = [
   { labelKey: "nav.dashboard", href: "/dashboard", icon: "📊" },
@@ -42,7 +43,6 @@ export default function DashboardLayout({
   const workspaceMenuRef = useRef<HTMLDivElement>(null);
   const notifMenuRef = useRef<HTMLDivElement>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
   const [promoBanner, setPromoBanner] = useState<{ enabled: boolean; message: string } | null>(null);
   const [promoDismissed, setPromoDismissed] = useState(false);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -219,6 +219,23 @@ export default function DashboardLayout({
       }
       const meta = u.user_metadata || {};
       const userEmail = u.email || "";
+
+      // Attribute viral signup if referral capture ID exists
+      try {
+        const refCaptureId = localStorage.getItem("bugsnap_ref_capture_id");
+        if (refCaptureId && data.session?.access_token) {
+          fetch("/api/track/referral", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${data.session.access_token}`,
+            },
+            body: JSON.stringify({ captureId: refCaptureId }),
+          })
+            .then(() => localStorage.removeItem("bugsnap_ref_capture_id"))
+            .catch(() => {});
+        }
+      } catch {}
       
       // Read the plan from public.users (source of truth updated by the
       // Stripe webhook) so upgrades take effect immediately without re-login.
@@ -401,36 +418,6 @@ export default function DashboardLayout({
   useEffect(() => {
     setSidebarOpen(false);
   }, [pathname]);
-
-  // Check if current user is a super admin
-  useEffect(() => {
-    const email = session.user?.email?.trim().toLowerCase();
-    if (!session.user?.id || !email) {
-      setIsSuperAdmin(false);
-      return;
-    }
-    let active = true;
-    (async () => {
-      try {
-        const { data: authData } = await supabase.auth.getSession();
-        const token = authData.session?.access_token;
-        if (!token) {
-          if (active) setIsSuperAdmin(false);
-          return;
-        }
-        const res = await fetch("/api/admin/check", {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const json = await res.json();
-        if (active) {
-          setIsSuperAdmin(Boolean(json.isAdmin));
-        }
-      } catch {
-        if (active) setIsSuperAdmin(false);
-      }
-    })();
-    return () => { active = false; };
-  }, [session.user?.id, session.user?.email]);
 
   // Fetch Promo Banner
   useEffect(() => {
@@ -1154,19 +1141,6 @@ export default function DashboardLayout({
             );
           })}
 
-          {isSuperAdmin && (
-            <Link
-              href="/admin"
-              onClick={() => setSidebarOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors ${
-                pathname === "/admin" ? "bg-subtle text-foreground" : "text-muted hover:text-foreground hover:bg-subtle"
-              }`}
-            >
-              <span className="text-base" aria-hidden="true">🛡️</span>
-              {t("nav.admin")}
-            </Link>
-          )}
-
           {/* Sister Apps Entry Points (Aksora & SnapTest) - Temporarily hidden per user request */}
           {/*
           <div className="pt-3 mt-2 border-t border-border/60 space-y-1">
@@ -1699,6 +1673,8 @@ export default function DashboardLayout({
         </div>
       )}
 
+      {/* Customer Support Floating Widget */}
+      <FloatingSupport />
     </div>
     </div>
   );
