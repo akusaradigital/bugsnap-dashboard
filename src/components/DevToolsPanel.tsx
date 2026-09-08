@@ -39,11 +39,14 @@ export interface ActionLog extends TimedLog {
 
 const ACTION_LABELS: Record<string, string> = {
   click: "Click",
+  clicked: "Click",
   typing: "Typing",
   type: "Typing",
+  typed: "Typing",
   input: "Input",
   navigate: "Navigation",
   navigation: "Navigation",
+  navigated: "Navigation",
   screenshot: "Screenshot",
 };
 
@@ -152,7 +155,7 @@ interface Props {
   onSeekToTime?: (timeSec: number) => void;
 }
 
-const TABS = ["Issues", "Info", "Console", "Network", "Actions"] as const;
+const TABS = ["Info", "Console", "Network", "Actions", "Issues"] as const;
 type Tab = typeof TABS[number];
 type Grouped<T> = { log: T; count: number };
 
@@ -292,7 +295,7 @@ function FormattedErrorMessage({ msg }: { msg: string }) {
 
 export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Props) {
   const { t } = useT();
-  const [activeTab, setActiveTab] = useState<Tab>("Issues");
+  const [activeTab, setActiveTab] = useState<Tab>("Info");
   const [consoleErrorsOnly, setConsoleErrorsOnly] = useState(false);
   const [networkFailedOnly, setNetworkFailedOnly] = useState(false);
   const [logSearch, setLogSearch] = useState("");
@@ -1248,7 +1251,7 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
 
         {/* ACTIONS TAB */}
         {activeTab === "Actions" && (
-          <div className="flex-1 min-h-0 overflow-y-auto p-4">
+          <div className="flex-1 min-h-0 overflow-y-auto p-3">
             {actionLogs.length === 0 ? (
               <div className="py-14 flex flex-col items-center gap-2 text-muted">
                 <svg className="w-8 h-8 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -1257,53 +1260,83 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                 <p className="text-xs">{t("dt.noActions")}</p>
               </div>
             ) : (
-              <div className="relative pl-2">
-                <div className="absolute left-[19px] top-3 bottom-3 w-px bg-border/80" />
-                <div className="space-y-3">
-                  {actionLogs.map((log, i) => {
-                    const label = ACTION_LABELS[(log.message || "").toLowerCase().split(/\s+/)[0]] || ACTION_LABELS[log.type] || "Action";
-                    const isClick = label === "Click" || (log.message || "").toLowerCase().includes("click");
-                    const isType = label === "Typing" || (log.message || "").toLowerCase().includes("type") || (log.message || "").toLowerCase().includes("input");
-                    const isScreenshot = log.type === "screenshot";
-                    const active = isLogActive(log);
-                    return (
-                      <div key={i} className={`flex items-start gap-3 relative transition-all rounded-lg p-1.5 ${active ? "ring-2 ring-indigo-500 bg-indigo-50/60 dark:bg-indigo-950/40" : ""}`}>
-                        <div
-                          className={`w-7 h-7 rounded-full flex items-center justify-center shrink-0 z-10 border-2 border-white dark:border-background shadow-sm ${
-                            isScreenshot ? "bg-rose-100 dark:bg-rose-950/30 text-rose-600 dark:text-rose-400" : isClick ? "bg-indigo-100 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400" : isType ? "bg-emerald-100 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400" : "bg-subtle text-muted"
-                          }`}
-                        >
-                          {isScreenshot ? (
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                            </svg>
-                          ) : isClick ? (
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/>
-                            </svg>
-                          ) : isType ? (
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
-                            </svg>
-                          ) : (
-                            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                              <circle cx="12" cy="12" r="4"/>
-                            </svg>
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0 pt-0.5">
-                          {eventTime(log) && (
-                            <div className="mb-1">{renderTimeBadge(log)}</div>
-                          )}
-                          <p className="text-[10px] uppercase tracking-wide text-muted font-semibold mb-0.5">{label}</p>
-                          <p className="text-xs text-foreground font-medium leading-normal break-words">
-                            {log.type === "navigation" ? t("dt.navigateTo", { url: log.url || log.message || "" }) : log.type === "screenshot" ? t("dt.screenshotTaken") : log.message || ""}
-                          </p>
-                        </div>
+              <div className="space-y-2">
+                {actionLogs.map((log, i) => {
+                  const firstWord = (log.message || "").toLowerCase().split(/\s+/)[0];
+                  const label = ACTION_LABELS[firstWord] || ACTION_LABELS[log.type] || "Action";
+                  const isClick = label === "Click" || (log.message || "").toLowerCase().includes("click");
+                  const isType = label === "Typing" || (log.message || "").toLowerCase().includes("type") || (log.message || "").toLowerCase().includes("input");
+                  const isScreenshot = log.type === "screenshot";
+                  const active = isLogActive(log);
+
+                  const actionText = log.type === "navigation"
+                    ? t("dt.navigateTo", { url: log.url || log.message || "" })
+                    : log.type === "screenshot"
+                    ? t("dt.screenshotTaken")
+                    : cleanActionMessage(log.message) || log.message || "";
+
+                  return (
+                    <div
+                      key={i}
+                      className={`group flex items-start gap-2.5 p-2.5 rounded-lg border transition-all ${
+                        active
+                          ? "ring-2 ring-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800/60 shadow-xs"
+                          : "bg-background hover:bg-subtle/50 border-border/80"
+                      }`}
+                    >
+                      <div
+                        className={`w-7 h-7 rounded-md flex items-center justify-center shrink-0 mt-0.5 shadow-2xs ${
+                          isScreenshot
+                            ? "bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40"
+                            : isClick
+                            ? "bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/40"
+                            : isType
+                            ? "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40"
+                            : "bg-subtle text-muted border border-border"
+                        }`}
+                      >
+                        {isScreenshot ? (
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
+                          </svg>
+                        ) : isClick ? (
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5" />
+                          </svg>
+                        ) : isType ? (
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                        ) : (
+                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                            <circle cx="12" cy="12" r="3" fill="currentColor" />
+                          </svg>
+                        )}
                       </div>
-                    );
-                  })}
-                </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <span
+                            className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                              isScreenshot
+                                ? "bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 border border-rose-200/80 dark:border-rose-800/40"
+                                : isClick
+                                ? "bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-400 border border-indigo-200/80 dark:border-indigo-800/40"
+                                : isType
+                                ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/40"
+                                : "bg-subtle text-muted border border-border"
+                            }`}
+                          >
+                            {label}
+                          </span>
+                          {eventTime(log) && renderTimeBadge(log)}
+                        </div>
+                        <p className="text-xs text-foreground font-medium leading-snug break-words mt-1">
+                          {actionText}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
