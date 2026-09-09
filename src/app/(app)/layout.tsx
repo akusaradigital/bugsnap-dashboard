@@ -1449,7 +1449,7 @@ export default function DashboardLayout({
               {t("layout.upgradeToPro")}
             </Link>
             <p className="text-[11px] text-muted mt-3">
-              {t("layout.upgradeViaStripe")}
+              {t("layout.upgradeViaPaddle")}
             </p>
           </div>
         </div>

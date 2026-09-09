@@ -26,7 +26,7 @@ export async function GET(req: Request) {
   const { data: cap } = await supabase
     .from("captures")
     .select("user_id, workspace_id, expires_at, access_mode")
-    .or(`drive_file_id.eq.${id},id.eq.${id}`)
+    .or(`drive_file_id.eq.${id},id.eq.${id},drive_url.ilike.%${id}%`)
     .limit(1)
     .maybeSingle();
 
@@ -69,7 +69,50 @@ export async function GET(req: Request) {
     forwardHeaders["Range"] = rangeHeader;
   }
 
-  // 1. Try fetching directly via Google Drive download
+  // 1. For video or when Range is requested, try authenticated Drive API v3 first if owner token is available,
+  // as it natively supports HTTP 206 Partial Content and Range headers for video seeking.
+  if (cap?.user_id && (type === "video" || rangeHeader)) {
+    try {
+      const accessToken = await driveAccessToken(cap.user_id).catch(() => null);
+      if (accessToken) {
+        const authRes = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media&supportsAllDrives=true`, {
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+            ...forwardHeaders,
+          },
+          cache: "no-store",
+        });
+
+        if (authRes.ok && authRes.body) {
+          const rawAuthType = authRes.headers.get("content-type") || "";
+          const finalContentType =
+            type === "video" && (!rawAuthType || rawAuthType === "application/octet-stream")
+              ? "video/webm"
+              : (rawAuthType || (type === "video" ? "video/webm" : type === "logs" ? "application/json" : "image/png"));
+          const contentDisp = disposition === "inline" ? "inline" : `attachment; filename="${safeFilename(url.searchParams.get("filename") || "capture", type)}"`;
+          const resHeaders: Record<string, string> = {
+            "Content-Type": finalContentType,
+            "Content-Disposition": contentDisp,
+            "Cache-Control": cacheControl,
+            "Accept-Ranges": "bytes",
+          };
+          const contentRange = authRes.headers.get("content-range");
+          if (contentRange) resHeaders["Content-Range"] = contentRange;
+          const contentLength = authRes.headers.get("content-length");
+          if (contentLength) resHeaders["Content-Length"] = contentLength;
+
+          return new NextResponse(authRes.body, {
+            status: authRes.status,
+            headers: resHeaders,
+          });
+        }
+      }
+    } catch (authErr) {
+      console.warn("Drive API v3 fetch failed, falling back to direct uc fetch:", authErr);
+    }
+  }
+
+  // 2. Try fetching directly via Google Drive download
   try {
     const driveRes = await fetch(`https://drive.google.com/uc?export=download&id=${id}`, {
       headers: forwardHeaders,
@@ -80,8 +123,12 @@ export async function GET(req: Request) {
 
     if (driveRes.ok && driveRes.body && !isHtmlChallenge) {
       const contentDisp = disposition === "inline" ? "inline" : `attachment; filename="${safeFilename(url.searchParams.get("filename") || "capture", type)}"`;
+      const resolvedContentType =
+        type === "video" && (!contentType || contentType === "application/octet-stream")
+          ? "video/webm"
+          : (contentType || (type === "video" ? "video/webm" : type === "logs" ? "application/json" : "image/png"));
       const resHeaders: Record<string, string> = {
-        "Content-Type": contentType || (type === "video" ? "video/webm" : type === "logs" ? "application/json" : "image/png"),
+        "Content-Type": resolvedContentType,
         "Content-Disposition": contentDisp,
         "Cache-Control": cacheControl,
         "Accept-Ranges": "bytes",
@@ -100,7 +147,7 @@ export async function GET(req: Request) {
     console.warn("Direct Drive fetch failed, falling back to owner auth token:", err);
   }
 
-  // 2. Fallback: Authenticated proxy using capture owner's Drive token.
+  // 3. Fallback: Authenticated proxy using capture owner's Drive token if not tried yet.
   // This proxy IS the access path for members-only captures, so the file itself
   // stays private in Drive — we never grant `type: "anyone"` here. Doing so made
   // the sharing setting irreversible: flipping a capture back to "members" left
@@ -118,7 +165,11 @@ export async function GET(req: Request) {
         });
 
         if (authRes.ok && authRes.body) {
-          const finalContentType = authRes.headers.get("content-type") || (type === "video" ? "video/webm" : type === "logs" ? "application/json" : "image/png");
+          const rawAuthType = authRes.headers.get("content-type") || "";
+          const finalContentType =
+            type === "video" && (!rawAuthType || rawAuthType === "application/octet-stream")
+              ? "video/webm"
+              : (rawAuthType || (type === "video" ? "video/webm" : type === "logs" ? "application/json" : "image/png"));
           const contentDisp = disposition === "inline" ? "inline" : `attachment; filename="${safeFilename(url.searchParams.get("filename") || "capture", type)}"`;
           const resHeaders: Record<string, string> = {
             "Content-Type": finalContentType,

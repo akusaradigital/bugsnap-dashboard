@@ -5,18 +5,25 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { normalizePlan, type Plan } from "@/lib/tiers";
+import { openPaddleCheckout, getAddonPriceId } from "@/lib/paddle";
+import { useT } from "@/components/I18nProvider";
 
 function UpgradeContent() {
+  const { t } = useT();
   const router = useRouter();
   const [isYearly, setIsYearly] = useState(true);
   const [showAllFeatures, setShowAllFeatures] = useState(false);
   const [loading, setLoading] = useState(false);
   const [userPlan, setUserPlan] = useState<Plan>("free");
+  const [currentUser, setCurrentUser] = useState<{ id: string; email: string } | null>(null);
+  const [promoCode, setPromoCode] = useState("");
+  const [showPromoInput, setShowPromoInput] = useState(false);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
       const u = data.session?.user;
       if (!u?.email) return;
+      setCurrentUser({ id: u.id, email: u.email });
       let p: Plan = normalizePlan(u.user_metadata?.plan);
       const { data: row } = await supabase
         .from("users")
@@ -28,14 +35,42 @@ function UpgradeContent() {
     });
   }, []);
 
-  const handleUpgrade = (planName: string) => {
+  const handleUpgrade = async (planName: string) => {
     setLoading(true);
-    // Ready for Stripe / payment gateway checkout session:
-    // e.g. const res = await fetch('/api/stripe/checkout', { method: 'POST', body: JSON.stringify({ plan: planName, yearly: isYearly }) });
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const opened = await openPaddleCheckout({
+        plan: planName,
+        isYearly,
+        userEmail: currentUser?.email,
+        userId: currentUser?.id,
+        discountCode: promoCode,
+      });
+      if (!opened) {
+        window.location.href = `/pricing?plan=${planName}&billing=${isYearly ? "yearly" : "monthly"}`;
+      }
+    } catch {
       window.location.href = `/pricing?plan=${planName}&billing=${isYearly ? "yearly" : "monthly"}`;
-    }, 400);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleBuyAddon = async (addon: "ai_summaries" | "captures_pack") => {
+    setLoading(true);
+    try {
+      const priceId = getAddonPriceId(addon);
+      const opened = await openPaddleCheckout({
+        priceId,
+        userEmail: currentUser?.email,
+        userId: currentUser?.id,
+        discountCode: promoCode,
+      });
+      if (!opened) {
+        window.location.href = `/contact?topic=addon_${addon}`;
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleClose = () => {
@@ -64,10 +99,70 @@ function UpgradeContent() {
 
       {/* Main Content */}
       <main className="w-full max-w-4xl mx-auto my-auto py-8">
-        <div className="text-center mb-10">
+        <div className="text-center mb-8">
           <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-neutral-900 dark:text-white">
             Level-up with advanced features
           </h1>
+        </div>
+
+        {/* Floating Urgency Banner (Feature 5) */}
+        <div className="mb-4 rounded-2xl border border-amber-300 dark:border-amber-800/70 bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-amber-500/10 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+          <div className="flex items-center gap-2">
+            <span className="text-sm">⚡</span>
+            <span className="font-semibold text-amber-950 dark:text-amber-200">
+              {t("upgrade.urgencyBanner")}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setPromoCode("INDO40");
+              setShowPromoInput(true);
+            }}
+            className="text-amber-800 dark:text-amber-400 font-bold hover:underline shrink-0 text-left sm:text-right"
+          >
+            {t("upgrade.claimDiscount")} →
+          </button>
+        </div>
+
+        {/* Purchasing Power Parity (PPP) Banner */}
+        <div className="mb-3 rounded-2xl border border-indigo-200/80 dark:border-indigo-900/50 bg-indigo-50/60 dark:bg-indigo-950/30 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2.5">
+            <span className="text-base">🌏</span>
+            <span className="text-neutral-700 dark:text-neutral-300">
+              <strong>Regional Pricing:</strong> Indonesian & regional creators get 40% off with coupon code <code className="font-mono bg-white dark:bg-neutral-800 px-1.5 py-0.5 rounded font-bold text-indigo-600 dark:text-indigo-400">INDO40</code>
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setPromoCode("INDO40");
+              setShowPromoInput(true);
+            }}
+            className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline shrink-0 text-left sm:text-right"
+          >
+            Apply Code
+          </button>
+        </div>
+
+        {/* Student & OSS Discount Banner (Feature 2) */}
+        <div className="mb-6 rounded-2xl border border-sky-200/80 dark:border-sky-900/50 bg-sky-50/60 dark:bg-sky-950/30 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2.5">
+            <span className="text-base">🎓</span>
+            <span className="text-neutral-700 dark:text-neutral-300">
+              <strong>Education & OSS:</strong> {t("upgrade.studentBanner")} <code className="font-mono bg-white dark:bg-neutral-800 px-1.5 py-0.5 rounded font-bold text-sky-600 dark:text-sky-400">STUDENT50</code>
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setPromoCode("STUDENT50");
+              setShowPromoInput(true);
+            }}
+            className="text-sky-600 dark:text-sky-400 font-bold hover:underline shrink-0 text-left sm:text-right"
+          >
+            {t("upgrade.applyStudent")}
+          </button>
         </div>
 
         {/* Plan Cards Grid */}
@@ -155,7 +250,7 @@ function UpgradeContent() {
                 </span>
               </div>
 
-              {/* Billed yearly toggle */}
+              {/* Billed yearly toggle with 2 Months Free */}
               <div className="mt-3 pb-4 border-b border-neutral-200/80 dark:border-neutral-800 flex items-center gap-2.5">
                 <button
                   type="button"
@@ -173,12 +268,44 @@ function UpgradeContent() {
                   />
                 </button>
                 <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
-                  Billed yearly {isYearly && <span className="text-emerald-600 dark:text-emerald-400 font-semibold">(Save ~28%)</span>}
+                  Billed yearly {isYearly && <span className="text-emerald-600 dark:text-emerald-400 font-semibold">(Save ~28% · 2 Months Free)</span>}
                 </span>
               </div>
 
+              {/* Promo Code Input */}
+              <div className="mt-4 text-xs">
+                {!showPromoInput ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowPromoInput(true)}
+                    className="text-neutral-500 hover:text-indigo-600 dark:hover:text-indigo-400 underline flex items-center gap-1"
+                  >
+                    <span>Have a promo code?</span>
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2 animate-in fade-in">
+                    <input
+                      type="text"
+                      value={promoCode}
+                      onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                      placeholder="e.g. INDO40 / LAUNCH50"
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 text-xs text-foreground uppercase tracking-wide font-mono focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    />
+                    {promoCode && (
+                      <button
+                        type="button"
+                        onClick={() => setPromoCode("")}
+                        className="text-neutral-400 hover:text-neutral-600 text-xs shrink-0"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
               {/* Action Button */}
-              <div className="my-6">
+              <div className="my-5">
                 <button
                   type="button"
                   onClick={() => handleUpgrade("pro")}
@@ -191,6 +318,25 @@ function UpgradeContent() {
                     "Upgrade to Team"
                   )}
                 </button>
+                <p className="text-[11px] text-neutral-400 text-center mt-2">
+                  Taxes (VAT / PPN) calculated automatically at checkout.
+                </p>
+
+                {/* Trust & Security Badges (Feature 4) */}
+                <div className="mt-3.5 pt-3 border-t border-neutral-200/60 dark:border-neutral-800/80 flex flex-wrap items-center justify-center gap-2 text-[11px] text-neutral-500 dark:text-neutral-400">
+                  <span className="flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                    {t("upgrade.trustPaddle")}
+                  </span>
+                  <span>·</span>
+                  <span>💳 {t("upgrade.trustCards")}</span>
+                  <span>·</span>
+                  <span>🍏 {t("upgrade.trustAppleGoogle")}</span>
+                  <span>·</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">↩️ {t("upgrade.trustGuarantee")}</span>
+                </div>
               </div>
 
               <div>
@@ -256,6 +402,94 @@ function UpgradeContent() {
                   )}
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Sticky Plan Bar for scrolling (Feature 2) */}
+        <div className="sticky top-4 z-20 mt-6 p-3.5 rounded-2xl bg-white/95 dark:bg-neutral-900/95 backdrop-blur-md border border-neutral-200/80 dark:border-neutral-800 shadow-md flex items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <span className="text-xs sm:text-sm font-bold text-neutral-900 dark:text-white">
+              {t("upgrade.stickyHeader")}
+            </span>
+            <span className="text-[11px] sm:text-xs text-neutral-500 font-medium">
+              · Team: ${isYearly ? "10" : "14"}/mo
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => handleUpgrade("pro")}
+            disabled={loading}
+            className="px-4 py-1.5 rounded-xl bg-[#a3e635] hover:bg-[#93d625] active:scale-95 text-neutral-950 font-bold text-xs shadow-xs transition-all"
+          >
+            {loading ? "..." : "Upgrade to Team"}
+          </button>
+        </div>
+
+        {/* Limited Lifetime Deal Card (Feature 4) */}
+        <div className="mt-8 rounded-3xl border-2 border-indigo-500/40 dark:border-indigo-500/30 bg-gradient-to-br from-indigo-50/70 via-purple-50/40 to-background dark:from-indigo-950/40 dark:via-purple-950/20 dark:to-neutral-900/40 p-6 sm:p-8 shadow-sm">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-indigo-600 text-white shadow-xs">
+                  Early Supporter LTD
+                </span>
+                <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                  🔥 27/100 spots remaining
+                </span>
+              </div>
+              <h3 className="text-xl font-extrabold text-neutral-900 dark:text-white">
+                {t("upgrade.lifetimeDeal")}
+              </h3>
+              <p className="text-xs sm:text-sm text-neutral-600 dark:text-neutral-400 max-w-xl">
+                {t("upgrade.lifetimeDesc")}
+              </p>
+            </div>
+            <div className="flex flex-col sm:items-end shrink-0 gap-3">
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-3xl sm:text-4xl font-black text-neutral-900 dark:text-white">
+                  {t("upgrade.lifetimePrice")}
+                </span>
+                <span className="text-xs text-neutral-500 dark:text-neutral-400">
+                  / {t("upgrade.lifetimeOneTime")}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleUpgrade("pro")}
+                disabled={loading}
+                className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm shadow-md transition-all hover:scale-105 active:scale-95 text-center"
+              >
+                {t("upgrade.lifetimeCta")}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Top-Up Add-on Packs */}
+        <div className="mt-8 rounded-2xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/60 dark:bg-neutral-900/40 p-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h3 className="text-sm font-bold text-neutral-900 dark:text-white">Need a one-time quota boost without subscription?</h3>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">Top-up additional quota anytime. Never expires.</p>
+            </div>
+            <div className="flex flex-wrap gap-2.5">
+              <button
+                type="button"
+                onClick={() => handleBuyAddon("ai_summaries")}
+                disabled={loading}
+                className="px-3.5 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-xs font-semibold text-neutral-800 dark:text-neutral-200 hover:border-indigo-500 transition-colors shadow-sm"
+              >
+                +100 AI Summaries ($3)
+              </button>
+              <button
+                type="button"
+                onClick={() => handleBuyAddon("captures_pack")}
+                disabled={loading}
+                className="px-3.5 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-xs font-semibold text-neutral-800 dark:text-neutral-200 hover:border-indigo-500 transition-colors shadow-sm"
+              >
+                +50 Captures Pack ($5)
+              </button>
             </div>
           </div>
         </div>

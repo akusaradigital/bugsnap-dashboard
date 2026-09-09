@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { openPaddleCheckout } from "@/lib/paddle";
+import { useT } from "@/components/I18nProvider";
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -19,9 +21,12 @@ export function UpgradeModal({
   feature = "upgrade_modal",
   onSelectPlan,
 }: UpgradeModalProps) {
+  const { t } = useT();
   const [isYearly, setIsYearly] = useState(true);
   const [showAllFeatures, setShowAllFeatures] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [promoCode, setPromoCode] = useState("");
+  const [showPromoInput, setShowPromoInput] = useState(false);
 
   // Track paywall impression for zero-DB sales lead scoring
   useEffect(() => {
@@ -42,18 +47,30 @@ export function UpgradeModal({
 
   if (!isOpen) return null;
 
-  const handleUpgrade = (planName: string) => {
+  const handleUpgrade = async (planName: string) => {
     if (onSelectPlan) {
       onSelectPlan(planName, isYearly);
       return;
     }
-    // Default placeholder for Stripe checkout integration
     setLoading(true);
-    // Ready for Stripe integration: can call fetch('/api/stripe/checkout-session', ...)
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const user = data.session?.user;
+      const opened = await openPaddleCheckout({
+        plan: planName,
+        isYearly,
+        userEmail: user?.email,
+        userId: user?.id,
+        discountCode: promoCode,
+      });
+      if (!opened) {
+        window.location.href = `/pricing?plan=${planName}&billing=${isYearly ? "yearly" : "monthly"}`;
+      }
+    } catch {
       window.location.href = `/pricing?plan=${planName}&billing=${isYearly ? "yearly" : "monthly"}`;
-    }, 400);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -75,10 +92,50 @@ export function UpgradeModal({
         </button>
 
         {/* Heading */}
-        <div className="text-center pt-2 pb-8">
+        <div className="text-center pt-2 pb-6">
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-neutral-900 dark:text-white">
             Level-up with advanced features
           </h2>
+        </div>
+
+        {/* Floating Urgency Banner (Feature 5) */}
+        <div className="mb-3 rounded-2xl border border-amber-300 dark:border-amber-800/70 bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-amber-500/10 p-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
+          <div className="flex items-center gap-2">
+            <span>⚡</span>
+            <span className="font-semibold text-amber-950 dark:text-amber-200">
+              {t("upgrade.urgencyBanner")}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setPromoCode("INDO40");
+              setShowPromoInput(true);
+            }}
+            className="text-amber-800 dark:text-amber-400 font-bold hover:underline shrink-0 text-left sm:text-right"
+          >
+            {t("upgrade.claimDiscount")} →
+          </button>
+        </div>
+
+        {/* Regional PPP Banner */}
+        <div className="mb-4 rounded-2xl border border-indigo-200/80 dark:border-indigo-900/50 bg-indigo-50/60 dark:bg-indigo-950/30 p-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+          <div className="flex items-center gap-2">
+            <span>🌏</span>
+            <span className="text-neutral-700 dark:text-neutral-300">
+              <strong>Regional Pricing:</strong> Indonesian creators get 40% off with code <code className="font-mono bg-white dark:bg-neutral-800 px-1 py-0.5 rounded font-bold text-indigo-600 dark:text-indigo-400">INDO40</code>
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setPromoCode("INDO40");
+              setShowPromoInput(true);
+            }}
+            className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline shrink-0 text-left sm:text-right"
+          >
+            Apply Code
+          </button>
         </div>
 
         {/* Plan Cards Grid */}
@@ -185,12 +242,44 @@ export function UpgradeModal({
                   />
                 </button>
                 <span className="text-xs font-medium text-neutral-700 dark:text-neutral-300">
-                  Billed yearly {isYearly && <span className="text-emerald-600 dark:text-emerald-400 font-semibold">(Save ~28%)</span>}
+                  Billed yearly {isYearly && <span className="text-emerald-600 dark:text-emerald-400 font-semibold">(Save ~28% · 2 Months Free)</span>}
                 </span>
               </div>
 
+              {/* Promo Code Input */}
+              <div className="mt-3 text-xs">
+                {!showPromoInput ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowPromoInput(true)}
+                    className="text-neutral-500 hover:text-indigo-600 dark:hover:text-indigo-400 underline flex items-center gap-1"
+                  >
+                    <span>Have a promo code?</span>
+                  </button>
+                ) : (
+                  <div className="flex items-center gap-2 animate-in fade-in">
+                    <input
+                      type="text"
+                      value={promoCode}
+                      onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                      placeholder="e.g. INDO40 / LAUNCH50"
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 text-xs text-foreground uppercase tracking-wide font-mono focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                    />
+                    {promoCode && (
+                      <button
+                        type="button"
+                        onClick={() => setPromoCode("")}
+                        className="text-neutral-400 hover:text-neutral-600 text-xs shrink-0"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+
               {/* Action Button */}
-              <div className="my-6">
+              <div className="my-5">
                 <button
                   type="button"
                   onClick={() => handleUpgrade("pro")}
@@ -203,6 +292,25 @@ export function UpgradeModal({
                     "Upgrade to Team"
                   )}
                 </button>
+                <p className="text-[11px] text-neutral-400 text-center mt-2">
+                  Taxes (VAT / PPN) calculated automatically at checkout.
+                </p>
+
+                {/* Trust & Security Badges (Feature 4) */}
+                <div className="mt-3.5 pt-3 border-t border-neutral-200/60 dark:border-neutral-800/80 flex flex-wrap items-center justify-center gap-2 text-[11px] text-neutral-500 dark:text-neutral-400">
+                  <span className="flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400">
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                    </svg>
+                    {t("upgrade.trustPaddle")}
+                  </span>
+                  <span>·</span>
+                  <span>💳 {t("upgrade.trustCards")}</span>
+                  <span>·</span>
+                  <span>🍏 {t("upgrade.trustAppleGoogle")}</span>
+                  <span>·</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">↩️ {t("upgrade.trustGuarantee")}</span>
+                </div>
               </div>
 
               <div>

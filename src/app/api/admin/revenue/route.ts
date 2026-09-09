@@ -156,6 +156,59 @@ export async function GET(req: Request) {
     const conversionRate = totalUsers > 0 ? ((payingCount / totalUsers) * 100).toFixed(1) : "0";
     const arr = mrr * 12;
 
+    // A/B Experiment metrics summary
+    // ponytail: pulled directly from existing app_settings blob, zero schema addition
+    const { data: abRecord } = await supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "ab_experiments_metrics")
+      .maybeSingle();
+
+    interface VariantStats {
+      impressions?: number;
+      conversions?: Record<string, number>;
+      last_event_at?: string;
+    }
+
+    interface ExpData {
+      updated_at?: string;
+      variants?: Record<string, VariantStats>;
+    }
+
+    const rawAb = (abRecord?.value as Record<string, ExpData>) || {};
+    const abExperiments: Record<string, {
+      updated_at?: string;
+      variants: Record<string, {
+        impressions: number;
+        total_conversions: number;
+        conversion_rate: string;
+        conversions_by_goal: Record<string, number>;
+        last_event_at?: string;
+      }>;
+    }> = {};
+
+    for (const [expId, expData] of Object.entries(rawAb)) {
+      abExperiments[expId] = {
+        updated_at: expData.updated_at,
+        variants: {},
+      };
+      for (const [varId, varStats] of Object.entries(expData.variants || {})) {
+        const impressions = varStats.impressions || 0;
+        const conversions = Object.values(varStats.conversions || {}).reduce(
+          (a, b) => a + b,
+          0
+        );
+        const rate = impressions > 0 ? ((conversions / impressions) * 100).toFixed(1) + "%" : "0.0%";
+        abExperiments[expId].variants[varId] = {
+          impressions,
+          total_conversions: conversions,
+          conversion_rate: rate,
+          conversions_by_goal: varStats.conversions || {},
+          last_event_at: varStats.last_event_at,
+        };
+      }
+    }
+
     // Check Stripe configuration status
     const hasStripeSecret = Boolean(process.env.STRIPE_SECRET_KEY);
     const hasStripeWebhook = Boolean(process.env.STRIPE_WEBHOOK_SECRET);
@@ -177,6 +230,7 @@ export async function GET(req: Request) {
       payingCustomers,
       hotProspects,
       abandonedCheckouts,
+      abExperiments,
       stripeStatus: {
         configured: hasStripeSecret && hasStripeWebhook,
         hasSecretKey: hasStripeSecret,

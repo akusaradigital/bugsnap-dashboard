@@ -11,8 +11,9 @@ export async function GET(request: Request) {
     const userId = await consumeState(state);
     await finishConnection(userId, code);
     destination.searchParams.set("drive", "connected");
-  } catch {
-    destination.searchParams.set("drive", "error");
+  } catch (err) {
+    const isScopeError = err instanceof Error && /DRIVE_PERMISSION_DENIED|drive\.file|insufficient/i.test(err.message);
+    destination.searchParams.set("drive", isScopeError ? "scope_denied" : "error");
   }
   return NextResponse.redirect(destination);
 }

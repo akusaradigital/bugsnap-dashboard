@@ -336,20 +336,20 @@ export default function AdminSupportPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
           <div className="w-full max-w-2xl max-h-[90vh] rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl flex flex-col overflow-hidden">
             {/* Modal Header */}
-            <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <span className="text-sm font-bold text-slate-900 dark:text-white">
+            <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-sm font-bold text-slate-900 dark:text-white shrink-0">
                   Tiket #{selectedTicket.id.slice(-6)}
                 </span>
-                <span className="text-xs text-slate-400">•</span>
-                <span className="text-xs text-slate-500 dark:text-zinc-400">
+                <span className="text-xs text-slate-400 shrink-0">•</span>
+                <span className="text-xs text-slate-500 dark:text-zinc-400 truncate font-mono">
                   {selectedTicket.userEmail}
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => setSelectedTicket(null)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg p-1"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-white text-lg p-1 shrink-0"
               >
                 ✕
               </button>
@@ -394,7 +394,7 @@ export default function AdminSupportPage() {
               </div>
 
               {/* Status Action Buttons */}
-              <div className="flex items-center gap-2 pt-2 border-t border-slate-100 dark:border-zinc-800">
+              <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100 dark:border-zinc-800">
                 <span className="text-xs font-bold text-slate-700 dark:text-zinc-300 mr-2">Ubah Status:</span>
                 {(["open", "in_progress", "resolved"] as const).map((st) => (
                   <button

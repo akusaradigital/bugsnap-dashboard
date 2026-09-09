@@ -72,7 +72,13 @@ export async function POST(request: Request) {
       });
     } catch (err) {
       console.error("[/api/extension/drive-connect] Silent refresh failed:", err);
-      return NextResponse.json({ error: "Token refresh failed", code: "RECONNECT_REQUIRED" }, { status: 409 });
+      const isScopeError = err instanceof Error && /DRIVE_PERMISSION_DENIED|drive\.file|insufficient/i.test(err.message);
+      return NextResponse.json({
+        error: isScopeError
+          ? "Google Drive permission was not granted. Please reconnect and check the Drive permission box."
+          : "Token refresh failed",
+        code: isScopeError ? "DRIVE_PERMISSION_DENIED" : "RECONNECT_REQUIRED"
+      }, { status: isScopeError ? 403 : 409 });
     }
   }
 
@@ -101,6 +107,11 @@ export async function POST(request: Request) {
     });
   } catch (err) {
     console.error("[/api/extension/drive-connect] Failed:", err);
-    return NextResponse.json({ error: err instanceof Error ? err.message : "Google Drive connection failed" }, { status: 400 });
+    const msg = err instanceof Error ? err.message : "Google Drive connection failed";
+    const isScopeError = /DRIVE_PERMISSION_DENIED|drive\.file|insufficient/i.test(msg);
+    return NextResponse.json({
+      error: msg,
+      code: isScopeError ? "DRIVE_PERMISSION_DENIED" : "CONNECT_FAILED"
+    }, { status: isScopeError ? 403 : 400 });
   }
 }

@@ -8,6 +8,7 @@ import { useT } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
 import { Dropdown } from "@/components/Dropdown";
 import { pickAvatar, initialOf } from "@/lib/avatar";
+import { ShimmerLockBadge } from "@/components/ShimmerLockBadge";
 
 export type CaptureFilter = "all" | "video" | "screenshot";
 
@@ -315,6 +316,7 @@ function EditModal({ capture, onClose, onSaved }: EditModalProps) {
               <div className="border-t border-border pt-4 space-y-4">
                 <div className="flex items-center gap-2">
                   <h4 className="text-xs font-semibold text-foreground">{t("cap.advancedProtection")}</h4>
+                  <ShimmerLockBadge label="PRO" />
                 </div>
 
                 {/* Burn after reading */}
@@ -654,9 +656,10 @@ function CapturesContent() {
     window.location.assign(result.url);
   }
 
-  function openDeleteConfirmation(ids: string[], title?: string) {
+  function openDeleteConfirmation(ids: string[], title?: string, defaultMode?: "drive_trash" | "app_only") {
     if (ids.length === 0 || deleting) return;
-    setDeleteMode("drive_trash");
+    const isMissingCleanup = defaultMode === "app_only" || ids.every((id) => missingDriveIds.includes(id));
+    setDeleteMode(isMissingCleanup ? "app_only" : (defaultMode ?? "drive_trash"));
     setDriveIssue(null);
     setDeleteError(null);
     setDeleteRequest({ ids, title, operationId: crypto.randomUUID() });
@@ -1343,7 +1346,7 @@ function CapturesContent() {
           <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
-              onClick={() => openDeleteConfirmation(missingDriveIds, `${missingDriveIds.length} missing captures`)}
+              onClick={() => openDeleteConfirmation(missingDriveIds, `${missingDriveIds.length} missing captures`, "app_only")}
               className="rounded-lg bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white font-medium px-3 py-1.5 transition-colors cursor-pointer shadow-xs whitespace-nowrap"
             >
               Clean Up from Dashboard ({missingDriveIds.length})
@@ -1447,23 +1450,25 @@ function CapturesContent() {
                       />
                       {/* Play overlay for videos so the grid clearly shows what's a recording */}
                       {item.type === "video" ? (
-                        <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/40 transition-colors">
-                          <div className="w-10 h-10 rounded-full bg-background/90 flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
-                            <svg className="w-5 h-5 text-indigo-600 ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                        <div className="absolute inset-0 z-10 pointer-events-none flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
+                          <div className="w-12 h-12 rounded-full bg-white/95 dark:bg-zinc-900/95 text-slate-900 dark:text-white shadow-xl flex items-center justify-center border border-white/30 group-hover:bg-indigo-600 group-hover:text-white group-hover:scale-110 group-hover:border-indigo-400 group-hover:shadow-indigo-500/40 transition-all duration-200">
+                            <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
                               <path d="M8 5v14l11-7z" />
                             </svg>
                           </div>
                         </div>
                       ) : (
-                        <div className="absolute inset-0 bg-black/25 group-hover:bg-black/40 transition-colors" />
+                        <div className="absolute inset-0 bg-black/15 group-hover:bg-black/35 transition-colors pointer-events-none" />
                       )}
                     </>
                   ) : (
                     <div className="flex flex-col items-center gap-1.5">
                       {item.type === "video" ? (
-                        <svg className="w-9 h-9 text-indigo-600/80 group-hover:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
-                          <path d="M8 5v14l11-7z" />
-                        </svg>
+                        <div className="w-12 h-12 rounded-full bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform shadow-xs">
+                          <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M8 5v14l11-7z" />
+                          </svg>
+                        </div>
                       ) : (
                         <svg className="w-8 h-8 text-indigo-600/80 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />

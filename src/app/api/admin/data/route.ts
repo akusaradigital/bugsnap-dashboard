@@ -45,6 +45,9 @@ export async function GET(req: Request) {
       { data: promoSetting },
       { data: recentCaptures },
       { data: recentViews },
+      { count: openTicketsCount },
+      { count: hotProspectsCount },
+      { count: abandonedCartsCount },
     ] = await Promise.all([
       serviceClient.from("users").select("*", { count: "exact", head: true }),
       serviceClient.from("workspaces").select("*", { count: "exact", head: true }),
@@ -78,6 +81,19 @@ export async function GET(req: Request) {
         .gte("viewed_at", iso14)
         .order("viewed_at", { ascending: true })
         .limit(1000),
+      serviceClient
+        .from("support_tickets")
+        .select("id", { count: "exact", head: true })
+        .eq("status", "open"),
+      serviceClient
+        .from("users")
+        .select("id", { count: "exact", head: true })
+        .eq("plan", "free")
+        .gt("paywall_hits", 0),
+      serviceClient
+        .from("users")
+        .select("id", { count: "exact", head: true })
+        .eq("checkout_status", "abandoned"),
     ]);
 
     // Compute real 7-day daily activity time series
@@ -184,6 +200,16 @@ export async function GET(req: Request) {
       }
     }
 
+    const hasStripeKey = Boolean(process.env.STRIPE_SECRET_KEY);
+    const hasGoogleDrive = Boolean(process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
+    const hasResend = Boolean(process.env.RESEND_API_KEY);
+    const systemPulse = {
+      database: "healthy",
+      stripe: hasStripeKey ? "configured" : "pending",
+      googleDrive: hasGoogleDrive ? "configured" : "pending",
+      emailService: hasResend ? "configured" : "pending",
+    };
+
     return NextResponse.json({
       ok: true,
       stats: {
@@ -207,10 +233,16 @@ export async function GET(req: Request) {
         suspended: u.suspended ?? false,
       })),
       topWorkspaces,
+      needsAttention: {
+        openTickets: openTicketsCount || 0,
+        hotProspects: hotProspectsCount || 0,
+        abandonedCarts: abandonedCartsCount || 0,
+      },
       promo: {
         enabled: Boolean(promoVal?.enabled),
         message: String(promoVal?.message || ""),
       },
+      systemPulse,
       drift: driftData ?? null,
       integrity: integrityData ?? null,
     });

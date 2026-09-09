@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/Toast";
 import { useT } from "@/components/I18nProvider";
@@ -46,6 +47,17 @@ interface AdminData {
   promo: {
     enabled: boolean;
     message: string;
+  };
+  needsAttention?: {
+    openTickets: number;
+    hotProspects: number;
+    abandonedCarts: number;
+  };
+  systemPulse?: {
+    database: string;
+    stripe: string;
+    googleDrive: string;
+    emailService: string;
   };
 }
 
@@ -182,6 +194,11 @@ export default function AdminOverviewPage() {
   const capturePolyline = capturePathPoints.map((p) => `${p.x},${p.y}`).join(" ");
   const viewPolyline = viewPathPoints.map((p) => `${p.x},${p.y}`).join(" ");
 
+  const openTickets = data?.needsAttention?.openTickets ?? 0;
+  const hotProspects = data?.needsAttention?.hotProspects ?? 0;
+  const abandonedCarts = data?.needsAttention?.abandonedCarts ?? 0;
+  const totalAttention = openTickets + hotProspects + abandonedCarts;
+
   return (
     <div className="space-y-6">
       {/* Top Welcome & Refresh Bar */}
@@ -216,6 +233,170 @@ export default function AdminOverviewPage() {
           </button>
         </div>
       )}
+
+      {/* NEEDS ATTENTION TODAY ACTION STRIP */}
+      {data?.needsAttention && (
+        <div className="rounded-xl border border-amber-200/80 dark:border-amber-900/50 bg-gradient-to-r from-amber-50/90 via-white to-amber-50/40 dark:from-amber-950/20 dark:via-zinc-900/70 dark:to-amber-950/10 p-3 shadow-2xs flex flex-wrap items-center justify-between gap-3 text-xs">
+          <div className="flex items-center gap-2.5">
+            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold text-sm">
+              ⚡
+            </span>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-bold text-slate-800 dark:text-zinc-200">
+                  {t("admin.needsAttentionTitle")}
+                </span>
+                {totalAttention === 0 ? (
+                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
+                    <span>✓</span> {t("admin.allClearToday")}
+                  </span>
+                ) : (
+                  <span className="text-[11px] text-slate-500 dark:text-zinc-400 hidden sm:inline">
+                    {t("admin.needsAttentionDesc")}
+                  </span>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs">
+            {/* Open Tickets */}
+            <Link
+              href="/admin/support"
+              className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg font-medium transition-all ${
+                openTickets > 0
+                  ? "bg-rose-100 hover:bg-rose-200 dark:bg-rose-950/70 dark:hover:bg-rose-900/80 text-rose-700 dark:text-rose-300 font-semibold shadow-2xs"
+                  : "bg-slate-100 dark:bg-zinc-800/60 text-slate-500 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-800"
+              }`}
+            >
+              <span>📥</span>
+              <span>{t("admin.openTicketsLabel")}:</span>
+              <span className={`px-1.5 py-0.2 rounded font-bold text-[10px] sm:text-[11px] ${openTickets > 0 ? "bg-rose-600 text-white" : "bg-slate-200 dark:bg-zinc-700 text-slate-700 dark:text-zinc-300"}`}>
+                {openTickets}
+              </span>
+            </Link>
+
+            {/* Hot Prospects */}
+            <Link
+              href="/admin/revenue"
+              className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg font-medium transition-all ${
+                hotProspects > 0
+                  ? "bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/70 dark:hover:bg-amber-900/80 text-amber-800 dark:text-amber-300 font-semibold shadow-2xs"
+                  : "bg-slate-100 dark:bg-zinc-800/60 text-slate-500 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-800"
+              }`}
+            >
+              <span>🔥</span>
+              <span>{t("admin.hotProspectsLabel")}:</span>
+              <span className={`px-1.5 py-0.2 rounded font-bold text-[10px] sm:text-[11px] ${hotProspects > 0 ? "bg-amber-600 text-white" : "bg-slate-200 dark:bg-zinc-700 text-slate-700 dark:text-zinc-300"}`}>
+                {hotProspects}
+              </span>
+            </Link>
+
+            {/* Abandoned Carts */}
+            <Link
+              href="/admin/revenue"
+              className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg font-medium transition-all ${
+                abandonedCarts > 0
+                  ? "bg-indigo-100 hover:bg-indigo-200 dark:bg-indigo-950/70 dark:hover:bg-indigo-900/80 text-indigo-700 dark:text-indigo-300 font-semibold shadow-2xs"
+                  : "bg-slate-100 dark:bg-zinc-800/60 text-slate-500 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-800"
+              }`}
+            >
+              <span>🛒</span>
+              <span>{t("admin.abandonedCartsLabel")}:</span>
+              <span className={`px-1.5 py-0.2 rounded font-bold text-[10px] sm:text-[11px] ${abandonedCarts > 0 ? "bg-indigo-600 text-white" : "bg-slate-200 dark:bg-zinc-700 text-slate-700 dark:text-zinc-300"}`}>
+                {abandonedCarts}
+              </span>
+            </Link>
+          </div>
+        </div>
+      )}
+
+      {/* SYSTEM & INTEGRATION PULSE BAR */}
+      <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xs p-3 shadow-2xs flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-2">
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
+          </span>
+          <span className="font-bold text-slate-800 dark:text-zinc-200 text-xs">
+            {t("admin.systemPulse")}
+          </span>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2.5 sm:gap-6 text-[10px] sm:text-[11px]">
+          {/* Supabase DB */}
+          <div className="flex items-center gap-1.5 font-medium text-slate-600 dark:text-zinc-400">
+            <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
+            <span>{t("admin.dbConnected")}:</span>
+            <span className="font-bold text-emerald-600 dark:text-emerald-400">
+              {t("admin.statusHealthy")}
+            </span>
+          </div>
+
+          {/* Stripe Billing */}
+          <div className="flex items-center gap-1.5 font-medium text-slate-600 dark:text-zinc-400">
+            <span
+              className={`h-2 w-2 rounded-full shrink-0 ${
+                data?.systemPulse?.stripe === "configured" ? "bg-emerald-500" : "bg-amber-500"
+              }`}
+            />
+            <span>{t("admin.stripeStatusLabel")}:</span>
+            <span
+              className={`font-bold ${
+                data?.systemPulse?.stripe === "configured"
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : "text-amber-600 dark:text-amber-400"
+              }`}
+            >
+              {data?.systemPulse?.stripe === "configured"
+                ? t("admin.statusConfigured")
+                : t("admin.statusPending")}
+            </span>
+          </div>
+
+          {/* Google Drive */}
+          <div className="flex items-center gap-1.5 font-medium text-slate-600 dark:text-zinc-400">
+            <span
+              className={`h-2 w-2 rounded-full shrink-0 ${
+                data?.systemPulse?.googleDrive === "configured" ? "bg-emerald-500" : "bg-amber-500"
+              }`}
+            />
+            <span>{t("admin.driveStatusLabel")}:</span>
+            <span
+              className={`font-bold ${
+                data?.systemPulse?.googleDrive === "configured"
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : "text-amber-600 dark:text-amber-400"
+              }`}
+            >
+              {data?.systemPulse?.googleDrive === "configured"
+                ? t("admin.statusConfigured")
+                : t("admin.statusPending")}
+            </span>
+          </div>
+
+          {/* Email Service */}
+          <div className="flex items-center gap-1.5 font-medium text-slate-600 dark:text-zinc-400">
+            <span
+              className={`h-2 w-2 rounded-full shrink-0 ${
+                data?.systemPulse?.emailService === "configured" ? "bg-emerald-500" : "bg-amber-500"
+              }`}
+            />
+            <span>Email (Resend):</span>
+            <span
+              className={`font-bold ${
+                data?.systemPulse?.emailService === "configured"
+                  ? "text-emerald-600 dark:text-emerald-400"
+                  : "text-amber-600 dark:text-amber-400"
+              }`}
+            >
+              {data?.systemPulse?.emailService === "configured"
+                ? t("admin.statusConfigured")
+                : t("admin.statusPending")}
+            </span>
+          </div>
+        </div>
+      </div>
 
       {/* 4 TOP STAT CARDS (STARADMIN DESIGN) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
