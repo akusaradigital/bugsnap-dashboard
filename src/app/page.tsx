@@ -4,9 +4,32 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
+import { useExperiment } from "@/lib/experiments";
+
+function ChromeLogo({ className = "w-4 h-4 shrink-0" }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path
+        fill="#EA4335"
+        d="M12 2a9.96 9.96 0 0 0-7.85 3.82l3.43 5.95A4.5 4.5 0 0 1 12 7.5h9.49A10 10 0 0 0 12 2z"
+      />
+      <path
+        fill="#34A853"
+        d="M4.15 5.82A10 10 0 0 0 2 12a10 10 0 0 0 6.64 9.42l3.43-5.95A4.5 4.5 0 0 1 7.5 12a4.52 4.52 0 0 1 .44-1.93L4.15 5.82z"
+      />
+      <path
+        fill="#FBBC05"
+        d="M21.49 7.5H12a4.5 4.5 0 0 1 3.9 6.75L12.47 20.2A10 10 0 0 0 22 12c0-1.58-.37-3.08-1.02-4.42l.51-.08z"
+      />
+      <circle cx="12" cy="12" r="4.5" fill="#FFFFFF" />
+      <circle cx="12" cy="12" r="3.2" fill="#4285F4" />
+    </svg>
+  );
+}
 
 export default function Home() {
   const { t } = useT();
+  const { variant: heroCtaVariant, trackConversion } = useExperiment("landing_hero_cta");
   const [loadingSession, setLoadingSession] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -89,10 +112,14 @@ export default function Home() {
               href="https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf"
               target="_blank"
               rel="noopener noreferrer"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg border border-slate-200 bg-white/85 hover:bg-white text-slate-700 text-xs font-semibold transition-all shadow-sm hover:shadow"
+              className="hidden sm:inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl border border-slate-700/80 bg-slate-900 hover:bg-black text-white text-xs font-semibold shadow-xs transition-all hover:scale-105"
+              title={t("footer.addToChrome")}
             >
-              <span>Add to Chrome</span>
-              <span className="text-indigo-600 font-bold">· Free</span>
+              <ChromeLogo className="w-4 h-4" />
+              <span>Chrome Web Store</span>
+              <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                {t("v.free")}
+              </span>
             </a>
             {loadingSession ? (
               <div className="w-16 h-4 bg-slate-50 animate-pulse rounded" />
@@ -132,21 +159,36 @@ export default function Home() {
 
           {error && <p className="mt-3 text-xs text-red-600">{error}</p>}
 
-          {/* Hero CTAs */}
+          {/* Hero CTAs (A/B Test Enabled) */}
           <div className="mt-9 flex flex-col sm:flex-row items-center justify-center gap-3">
             <a
               href="https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf"
               target="_blank"
               rel="noopener noreferrer"
-              className="group inline-flex items-center gap-2.5 w-full sm:w-auto justify-center rounded-2xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 px-7 py-3 text-sm font-bold text-white transition-all shadow-xl shadow-indigo-500/25 hover:-translate-y-0.5"
+              onClick={() => trackConversion("install_click")}
+              className="group inline-flex items-center gap-3 w-full sm:w-auto justify-center rounded-2xl bg-slate-950 hover:bg-black px-6 py-3.5 text-white transition-all shadow-xl shadow-slate-900/25 hover:-translate-y-0.5 border border-slate-800 hover:scale-105"
+              title={t("footer.addToChrome")}
             >
-              <svg className="w-4 h-4 transition-transform group-hover:rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-              </svg>
-              {t("landing.cta")}
+              <ChromeLogo className="w-5 h-5 shrink-0 transition-transform group-hover:scale-110" />
+              <div className="flex flex-col text-left leading-tight">
+                <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">
+                  {heroCtaVariant === "variant_speed"
+                    ? t("landing.ctaVariantSpeedSub")
+                    : t("v.availableInThe")}
+                </span>
+                <span className="text-sm font-bold text-white tracking-tight">
+                  {heroCtaVariant === "variant_speed"
+                    ? t("landing.ctaVariantSpeed")
+                    : "Chrome Web Store"}
+                </span>
+              </div>
+              <span className="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                {t("v.free")}
+              </span>
             </a>
             <a
               href="/pricing"
+              onClick={() => trackConversion("pricing_click")}
               className="inline-flex items-center gap-2 w-full sm:w-auto justify-center rounded-2xl border border-white/70 bg-white/80 hover:bg-white px-7 py-3 text-sm font-bold text-slate-900 transition-all shadow-lg shadow-slate-200/70 backdrop-blur-xl hover:-translate-y-0.5"
             >
               {t("landing.pricing")}
@@ -157,15 +199,18 @@ export default function Home() {
             {t("landing.noCard")}
           </p>
 
-          <div className="mx-auto mt-14 grid max-w-4xl grid-cols-3 gap-3 text-left">
+          <div className="mx-auto mt-14 grid max-w-4xl grid-cols-1 sm:grid-cols-3 gap-3 text-left">
             {[
-              ["Console logs", "Full context"],
-              ["Drive native", "Own your files"],
-              ["Share ready", "One-click links"],
-            ].map(([title, body]) => (
-              <div key={title} className="rounded-2xl border border-white/70 bg-white/65 p-4 shadow-xl shadow-slate-200/60 backdrop-blur-xl">
-                <p className="text-sm font-bold text-slate-900">{title}</p>
-                <p className="mt-1 text-xs text-slate-500">{body}</p>
+              { title: t("landing.pill1Title"), body: t("landing.pill1Desc"), icon: "⚡" },
+              { title: t("landing.pill2Title"), body: t("landing.pill2Desc"), icon: "🔒" },
+              { title: t("landing.pill3Title"), body: t("landing.pill3Desc"), icon: "🔗" },
+            ].map(({ title, body, icon }) => (
+              <div key={title} className="rounded-2xl border border-white/70 bg-white/65 p-4 shadow-xl shadow-slate-200/60 backdrop-blur-xl transition-transform hover:-translate-y-0.5">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-sm">{icon}</span>
+                  <p className="text-sm font-bold text-slate-900">{title}</p>
+                </div>
+                <p className="text-xs text-slate-500 leading-relaxed">{body}</p>
               </div>
             ))}
           </div>
@@ -398,12 +443,21 @@ export default function Home() {
                 href="https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white px-7 py-3 text-sm font-bold transition-all shadow-xl shadow-indigo-600/30 hover:-translate-y-0.5"
+                className="group inline-flex items-center gap-3 rounded-2xl bg-slate-900 hover:bg-black text-white px-6 py-3.5 text-sm font-bold transition-all shadow-xl shadow-slate-950/40 hover:-translate-y-0.5 border border-slate-800 hover:scale-105"
+                title={t("footer.addToChrome")}
               >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" />
-                </svg>
-                {t("landing.cta")}
+                <ChromeLogo className="w-5 h-5 shrink-0 transition-transform group-hover:scale-110" />
+                <div className="flex flex-col text-left leading-tight">
+                  <span className="text-[9px] font-semibold uppercase tracking-wider text-slate-400">
+                    {t("v.availableInThe")}
+                  </span>
+                  <span className="text-sm font-bold text-white tracking-tight">
+                    Chrome Web Store
+                  </span>
+                </div>
+                <span className="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                  {t("v.free")}
+                </span>
               </a>
               <Link
                 href="/features"

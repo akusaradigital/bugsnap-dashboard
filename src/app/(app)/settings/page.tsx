@@ -8,8 +8,10 @@ import { useT } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
 import { useTheme, type Theme } from "@/components/ThemeProvider";
 import { hasBranding, normalizePlan, seatLimit, tierLabel, type Plan } from "@/lib/tiers";
+import { openPaddleCustomerPortal, getEffectivePlan } from "@/lib/paddle";
 import { pickAvatar, isRealAvatar, initialOf } from "@/lib/avatar";
 import { Dropdown } from "@/components/Dropdown";
+import { ShimmerLockBadge } from "@/components/ShimmerLockBadge";
 
 // ── Integration catalogue (same order as extension editor.html) ─────────────
 const INTEGRATIONS = [
@@ -209,6 +211,8 @@ function SettingsContent() {
   const [profileSaved, setProfileSaved] = useState(false);
   const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
   const [userPlan, setUserPlan] = useState<Plan>("free");
+  const [trialInfo, setTrialInfo] = useState<{ isTrial: boolean; trialDaysLeft: number }>({ isTrial: false, trialDaysLeft: 0 });
+  const [checkoutStatus, setCheckoutStatus] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -267,11 +271,16 @@ function SettingsContent() {
   const [revokingKeyId, setRevokingKeyId] = useState<string | null>(null);
   const [revealedBugsnapKey, setRevealedBugsnapKey] = useState<{ rawKey: string; name: string } | null>(null);
 
+  // Churn Prevention Retention Modal state
+  const [showRetentionModal, setShowRetentionModal] = useState(false);
+  const [copiedRetentionCode, setCopiedRetentionCode] = useState(false);
+
   // ── Init ──────────────────────────────────────────────────────────────────
   useEffect(() => {
     const url = new URL(window.location.href);
     const driveResult = url.searchParams.get("drive");
     if (driveResult === "connected") { setDriveSuccess(t("settings.driveConnectedOk")); }
+    else if (driveResult === "scope_denied") { setDriveError(t("settings.driveScopeError")); }
     else if (driveResult === "error") { setDriveError(t("settings.driveError")); }
     if (driveResult) {
       url.searchParams.delete("drive");
@@ -291,8 +300,14 @@ function SettingsContent() {
       setUserAvatar(pickAvatar(u.user_metadata?.avatar_url, u.user_metadata?.picture));
       let plan: Plan = normalizePlan(u.user_metadata?.plan);
       if (u.email) {
-        const { data: row } = await supabase.from("users").select("plan, avatar_url, full_name, job_role, notification_prefs").ilike("email", u.email).maybeSingle();
+        const { data: row } = await supabase.from("users").select("plan, created_at, checkout_status, avatar_url, full_name, job_role, notification_prefs").ilike("email", u.email).maybeSingle();
         if (row?.plan) plan = normalizePlan(row.plan);
+        if (row?.checkout_status) setCheckoutStatus(row.checkout_status);
+        const effective = getEffectivePlan(plan, row?.created_at);
+        setTrialInfo({ isTrial: effective.isTrial, trialDaysLeft: effective.trialDaysLeft });
+        if (effective.isTrial && plan === "free") {
+          plan = "pro";
+        }
         if (isRealAvatar(row?.avatar_url)) setUserAvatar(row.avatar_url);
         if (row?.full_name) {
           const [rfn, ...rrest] = row.full_name.trim().split(/\s+/);
@@ -1028,9 +1043,13 @@ function SettingsContent() {
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-foreground">Audit logs</span>
-                    <span className="text-[10px] font-semibold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/40 px-1.5 py-0.5 rounded">
-                      Enterprise
-                    </span>
+                    {userPlan !== "enterprise" ? (
+                      <ShimmerLockBadge label="ENTERPRISE" onClick={() => router.push("/upgrade")} />
+                    ) : (
+                      <span className="text-[10px] font-semibold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/40 px-1.5 py-0.5 rounded">
+                        Enterprise
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs text-muted">
                     Track workspace events, captures access, exports, and security audits.
@@ -1091,9 +1110,13 @@ function SettingsContent() {
                 <h2 className="text-sm font-bold text-foreground">
                   Custom branding
                 </h2>
-                <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 px-2 py-0.5 rounded-full">
-                  Included
-                </span>
+                {!hasBranding(userPlan) ? (
+                  <ShimmerLockBadge label="PRO+" onClick={() => router.push("/upgrade")} />
+                ) : (
+                  <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 px-2 py-0.5 rounded-full">
+                    Included
+                  </span>
+                )}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -1121,15 +1144,29 @@ function SettingsContent() {
                 <input
                   type="checkbox"
                   checked={hideWatermark}
-                  onChange={(e) => setHideWatermark(e.target.checked)}
+                  onChange={(e) => {
+                    if (!hasBranding(userPlan)) {
+                      router.push("/upgrade");
+                      return;
+                    }
+                    setHideWatermark(e.target.checked);
+                  }}
                   className="w-4 h-4 rounded border-border text-indigo-600 focus:ring-indigo-500"
                 />
-                <span className="text-xs font-medium text-foreground">
-                  Hide &quot;Powered by BugSnap&quot; watermark
+                <span className="text-xs font-medium text-foreground flex items-center gap-2">
+                  <span>Hide &quot;Powered by BugSnap&quot; watermark</span>
+                  {!hasBranding(userPlan) && (
+                    <ShimmerLockBadge label="PRO+" onClick={() => router.push("/upgrade")} />
+                  )}
                 </span>
               </label>
               <div>
-                <label className="block text-xs font-medium text-muted mb-1.5">Custom Domain</label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="text-xs font-medium text-muted">Custom Domain</label>
+                  {!hasBranding(userPlan) && (
+                    <ShimmerLockBadge label="PRO+" onClick={() => router.push("/upgrade")} />
+                  )}
+                </div>
                 <input
                   type="text"
                   value={customDomain}
@@ -1247,23 +1284,107 @@ function SettingsContent() {
         {/* ── Billing ────────────────────────────────────────────────────── */}
         {activeTab === "billing" && (
           <div className="space-y-6">
+            {checkoutStatus === "past_due" && (
+              <div className="rounded-xl border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm">
+                <div>
+                  <p className="font-bold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
+                    <span>⚠️</span> {t("settings.pastDueWarning")}
+                  </p>
+                  <p className="text-xs text-amber-800 dark:text-amber-300 mt-0.5">
+                    {t("settings.pastDueDesc")}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => openPaddleCustomerPortal()}
+                  className="shrink-0 px-3.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-xs font-semibold shadow-xs"
+                >
+                  {t("settings.updatePayment")}
+                </button>
+              </div>
+            )}
+
+            {checkoutStatus === "paused" && (
+              <div className="rounded-xl border border-blue-300 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/40 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm">
+                <div>
+                  <p className="font-bold text-blue-900 dark:text-blue-200 flex items-center gap-1.5">
+                    <span>⏸️</span> {t("settings.pausedNotice")}
+                  </p>
+                  <p className="text-xs text-blue-800 dark:text-blue-300 mt-0.5">
+                    {t("settings.pausedDesc")}
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => openPaddleCustomerPortal()}
+                  className="shrink-0 px-3.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold shadow-xs"
+                >
+                  {t("settings.openPortal")}
+                </button>
+              </div>
+            )}
+
             <div className="rounded-xl border border-border bg-background p-6 flex items-center justify-between gap-4">
               <div>
-                <p className="text-xs text-muted uppercase tracking-widest font-semibold mb-1">Current plan</p>
+                <div className="flex items-center gap-2 mb-1">
+                  <p className="text-xs text-muted uppercase tracking-widest font-semibold">{t("settings.currentPlan")}</p>
+                  {trialInfo.isTrial && (
+                    <span className="text-[10px] font-bold bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full">
+                      {t("settings.trialDaysLeft", { days: trialInfo.trialDaysLeft })}
+                    </span>
+                  )}
+                </div>
                 <h2 className="text-2xl font-bold text-foreground capitalize">{tierLabel(userPlan)}</h2>
                 <p className="text-sm text-muted mt-1">
                   {seatLimit(userPlan) !== null ? `Up to ${seatLimit(userPlan)} team members` : "Unlimited team members"}
                 </p>
               </div>
-              {userPlan === "free" && (
+              {(userPlan === "free" || trialInfo.isTrial) && (
                 <Link
                   href="/upgrade"
                   className="shrink-0 px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors inline-block"
                 >
-                  Upgrade
+                  {t("settings.upgradeToPro")}
                 </Link>
               )}
             </div>
+
+            {/* Customer Portal Management */}
+            <div className="rounded-xl border border-border bg-background p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+                  {t("settings.customerPortal")}
+                  <span className="text-[10px] uppercase tracking-wider font-bold bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 px-2 py-0.5 rounded-full border border-neutral-200 dark:border-neutral-700">
+                    Paddle Billing
+                  </span>
+                </h3>
+                <p className="text-xs text-muted mt-1 max-w-xl">
+                  {t("settings.customerPortalHint")}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => openPaddleCustomerPortal()}
+                className="shrink-0 px-4 py-2 rounded-lg border border-border hover:bg-subtle text-foreground text-xs font-semibold transition-colors flex items-center gap-1.5"
+              >
+                <span>{t("settings.openPortal")}</span>
+                <svg className="w-3.5 h-3.5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                </svg>
+              </button>
+            </div>
+
+            {userPlan !== "free" && !trialInfo.isTrial && (
+              <div className="flex items-center justify-end px-1 -mt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowRetentionModal(true)}
+                  className="text-xs text-muted hover:text-rose-600 dark:hover:text-rose-400 transition-colors underline underline-offset-4"
+                >
+                  {t("settings.cancelSub")} / {t("settings.pauseSub")}
+                </button>
+              </div>
+            )}
 
             <div className="rounded-xl border border-border bg-background p-4 space-y-3">
               <h2 className="text-sm font-semibold text-foreground border-b border-border pb-2">Plan features</h2>
@@ -1887,6 +2008,70 @@ function SettingsContent() {
                   className="px-4 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 disabled:opacity-50"
                 >
                   {intModalSaving ? "Saving..." : "Save Credentials"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Churn Prevention Downsell Retention Modal (Feature 5) */}
+      {showRetentionModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs" role="dialog" aria-modal="true">
+          <button className="absolute inset-0 bg-transparent" aria-label="Close" onClick={() => setShowRetentionModal(false)} />
+          <div className="relative w-full max-w-md rounded-2xl border border-border bg-background p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 flex items-center justify-center text-2xl mx-auto shadow-inner">
+              🎁
+            </div>
+            <div className="text-center space-y-1.5">
+              <h2 className="text-lg font-bold text-foreground">
+                {t("settings.churnRetentionTitle")}
+              </h2>
+              <p className="text-xs text-muted leading-relaxed">
+                {t("settings.churnRetentionOffer")}
+              </p>
+            </div>
+
+            <div className="space-y-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  navigator.clipboard.writeText("SAVE50");
+                  setCopiedRetentionCode(true);
+                  showToast(t("upgrade.appliedCoupon", { coupon: "SAVE50" }) || "Code SAVE50 copied!", "success");
+                  setTimeout(() => {
+                    openPaddleCustomerPortal();
+                    setShowRetentionModal(false);
+                  }, 800);
+                }}
+                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 active:scale-98"
+              >
+                <span>{copiedRetentionCode ? "✓ Copied SAVE50!" : t("settings.churnApplyCode")}</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  showToast("Opening customer portal to pause your subscription...", "info");
+                  openPaddleCustomerPortal();
+                  setShowRetentionModal(false);
+                }}
+                className="w-full py-2 px-4 rounded-xl border border-border hover:bg-subtle text-foreground font-semibold text-xs transition-colors flex items-center justify-center gap-1.5"
+              >
+                <span>⏸️</span>
+                <span>{t("settings.churnPauseInstead")}</span>
+              </button>
+
+              <div className="pt-2 text-center">
+                <button
+                  type="button"
+                  onClick={() => {
+                    openPaddleCustomerPortal();
+                    setShowRetentionModal(false);
+                  }}
+                  className="text-[11px] text-muted hover:text-foreground transition-colors"
+                >
+                  {t("settings.churnContinueCancel")}
                 </button>
               </div>
             </div>

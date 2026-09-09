@@ -48,13 +48,26 @@ export async function GET(req: Request) {
     try {
       const { data: user, error: userErr } = await supabase
         .from("users")
-        .select("id, email, full_name, plan, created_at, suspended, theme, job_role, google_drive_connected, google_drive_email")
+        .select("id, email, full_name, plan, created_at, suspended, theme, job_role")
         .eq("id", userId)
         .single();
 
       if (userErr || !user) {
         return NextResponse.json({ error: "User not found" }, { status: 404 });
       }
+
+      // Google Drive connection status
+      const { data: driveConn } = await supabase
+        .from("google_drive_connections")
+        .select("google_email")
+        .eq("user_id", userId)
+        .maybeSingle();
+
+      const enrichedUser = {
+        ...user,
+        google_drive_connected: Boolean(driveConn),
+        google_drive_email: driveConn?.google_email || null,
+      };
 
       // Workspaces where user is owner or member
       const { data: memberRows } = await supabase
@@ -83,7 +96,7 @@ export async function GET(req: Request) {
 
       return NextResponse.json({
         ok: true,
-        user,
+        user: enrichedUser,
         workspaces: ((memberRows as unknown as WorkspaceMemberRow[]) || []).map((m) => ({
           id: m.workspaces?.id || m.workspace_id,
           name: m.workspaces?.name || "Workspace",
@@ -113,7 +126,7 @@ export async function GET(req: Request) {
   try {
     let query = supabase
       .from("users")
-      .select("id, email, full_name, plan, created_at, suspended, google_drive_connected", { count: "exact" });
+      .select("id, email, full_name, plan, created_at, suspended", { count: "exact" });
 
     if (search) {
       query = query.or(`email.ilike.%${search}%,full_name.ilike.%${search}%`);
@@ -135,9 +148,26 @@ export async function GET(req: Request) {
 
     if (error) throw error;
 
+    const userList = users || [];
+    let enrichedUsers = userList;
+
+    if (userList.length > 0) {
+      const userIds = userList.map((u) => u.id);
+      const { data: driveConns } = await supabase
+        .from("google_drive_connections")
+        .select("user_id")
+        .in("user_id", userIds);
+
+      const connectedSet = new Set((driveConns || []).map((d) => d.user_id));
+      enrichedUsers = userList.map((u) => ({
+        ...u,
+        google_drive_connected: connectedSet.has(u.id),
+      }));
+    }
+
     return NextResponse.json({
       ok: true,
-      users: users || [],
+      users: enrichedUsers,
       pagination: {
         page,
         limit,

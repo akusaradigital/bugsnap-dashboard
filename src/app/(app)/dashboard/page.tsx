@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
+import { getEffectivePlan } from "@/lib/paddle";
 
 interface DayCount {
   day: number; // 1 to 31
@@ -48,6 +49,15 @@ function DashboardContent() {
     name: "User",
     email: "",
   });
+  const [trialInfo, setTrialInfo] = useState<{ isTrial: boolean; trialDaysLeft: number }>({ isTrial: false, trialDaysLeft: 0 });
+  const [checkoutStatus, setCheckoutStatus] = useState<string | null>(null);
+  const [justUpgraded, setJustUpgraded] = useState(false);
+
+  useEffect(() => {
+    if (searchParams.get("upgraded") === "true") {
+      setJustUpgraded(true);
+    }
+  }, [searchParams]);
 
   const [qaData, setQaData] = useState<{
     statusCounts: { open: number; inProgress: number; fixed: number; closed: number };
@@ -77,6 +87,23 @@ function DashboardContent() {
           name: meta.full_name || meta.name || u.email?.split("@")[0] || "User",
           email: u.email || "",
         });
+
+        supabase
+          .from("users")
+          .select("plan, created_at, checkout_status")
+          .eq("id", u.id)
+          .maybeSingle()
+          .then(
+            ({ data: userRow }) => {
+              if (cancelled || !userRow) return;
+              if (userRow.checkout_status) setCheckoutStatus(userRow.checkout_status);
+              const eff = getEffectivePlan(userRow.plan, userRow.created_at);
+              if (eff.isTrial) {
+                setTrialInfo({ isTrial: true, trialDaysLeft: eff.trialDaysLeft });
+              }
+            },
+            () => {}
+          );
       }
     });
 
@@ -340,6 +367,125 @@ function DashboardContent() {
           </svg>
           {t("dash.viewAll")}
         </Link>
+      </div>
+
+      {/* Upgrade Celebration Banner */}
+      {justUpgraded && (
+        <div className="rounded-2xl border border-emerald-300 dark:border-emerald-800 bg-gradient-to-r from-emerald-500/15 via-emerald-500/10 to-teal-500/10 p-4 sm:p-5 shadow-sm flex items-start sm:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2">
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🎉</span>
+            <div>
+              <h2 className="text-sm font-bold text-emerald-900 dark:text-emerald-100">
+                {t("dash.upgradedTitle")}
+              </h2>
+              <p className="text-xs text-emerald-800 dark:text-emerald-200 mt-0.5">
+                {t("dash.upgradedDesc")}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setJustUpgraded(false)}
+            className="text-emerald-700 dark:text-emerald-300 hover:opacity-75 p-1 text-sm font-bold shrink-0"
+            aria-label="Dismiss"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      {/* Smart Dunning / Past Due Alert */}
+      {checkoutStatus === "past_due" && (
+        <div className="rounded-2xl border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 p-4 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs sm:text-sm">
+          <div className="flex items-center gap-2.5">
+            <span className="text-lg">⚠️</span>
+            <p className="text-amber-900 dark:text-amber-200 font-medium">
+              {t("dash.pastDueAlert")}
+            </p>
+          </div>
+          <Link
+            href="/settings?tab=billing"
+            className="shrink-0 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs transition-colors"
+          >
+            {t("settings.updatePayment")}
+          </Link>
+        </div>
+      )}
+
+      {/* 7-Day Reverse Trial Banner */}
+      {trialInfo.isTrial && (
+        <div className="rounded-2xl border border-indigo-200 dark:border-indigo-800 bg-gradient-to-r from-indigo-50 dark:from-indigo-950/40 via-purple-50 dark:via-purple-950/30 to-background p-4 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 text-xs sm:text-sm">
+            <span className="text-lg">✨</span>
+            <div>
+              <p className="font-semibold text-indigo-950 dark:text-indigo-200">
+                {t("dash.trialBanner", { days: trialInfo.trialDaysLeft })}
+              </p>
+            </div>
+          </div>
+          <Link
+            href="/upgrade"
+            className="shrink-0 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-colors shadow-xs"
+          >
+            {t("dash.trialUpgradeBtn")}
+          </Link>
+        </div>
+      )}
+
+      {/* Chrome Extension Onboarding Banner */}
+      <div className="rounded-2xl border border-indigo-200/80 dark:border-indigo-800/60 bg-gradient-to-r from-indigo-500/10 via-indigo-500/5 to-emerald-500/10 p-5 sm:p-6 shadow-sm backdrop-blur-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+        <div className="space-y-1.5 max-w-2xl">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-indigo-600 text-white shadow-xs">
+              Chrome Extension
+            </span>
+            <span className="text-xs text-muted font-medium">
+              {t("dash.bannerHotkeys")}
+            </span>
+          </div>
+          <h2 className="text-base sm:text-lg font-bold text-foreground tracking-tight">
+            {t("dash.bannerTitle")}
+          </h2>
+          <p className="text-xs sm:text-sm text-muted leading-relaxed">
+            {t("dash.bannerDesc")}
+          </p>
+        </div>
+        <a
+          href="https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-md transition-all hover:shadow-lg hover:scale-105 shrink-0 group"
+          title={t("footer.addToChrome")}
+        >
+          <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path
+              fill="#EA4335"
+              d="M12 2a9.96 9.96 0 0 0-7.85 3.82l3.43 5.95A4.5 4.5 0 0 1 12 7.5h9.49A10 10 0 0 0 12 2z"
+            />
+            <path
+              fill="#34A853"
+              d="M4.15 5.82A10 10 0 0 0 2 12a10 10 0 0 0 6.64 9.42l3.43-5.95A4.5 4.5 0 0 1 7.5 12a4.52 4.52 0 0 1 .44-1.93L4.15 5.82z"
+            />
+            <path
+              fill="#FBBC05"
+              d="M21.49 7.5H12a4.5 4.5 0 0 1 3.9 6.75L12.47 20.2A10 10 0 0 0 22 12c0-1.58-.37-3.08-1.02-4.42l.51-.08z"
+            />
+            <circle cx="12" cy="12" r="4.5" fill="#FFFFFF" />
+            <circle cx="12" cy="12" r="3.2" fill="#4285F4" />
+          </svg>
+          <span>{t("dash.bannerCta")}</span>
+          <svg
+            className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </a>
       </div>
 
       {/* Stat Cards */}

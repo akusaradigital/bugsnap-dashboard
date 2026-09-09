@@ -69,9 +69,17 @@ export async function POST(request: Request) {
           if (!isOwner && !isCreator) throw new Error("Not found or not owned");
 
           fileId = capture.drive_file_id ?? parseDriveFileId(capture.drive_url);
-          if (!fileId) throw new Error("Capture has no exact Google Drive file ID");
-          await trashDriveFile(accessToken!, fileId);
-          trashed = true;
+          if (fileId && accessToken) {
+            try {
+              await trashDriveFile(accessToken, fileId);
+              trashed = true;
+            } catch (driveErr: unknown) {
+              const msg = driveErr instanceof Error ? driveErr.message : String(driveErr);
+              if (!/404|410|not found/i.test(msg)) {
+                throw driveErr;
+              }
+            }
+          }
 
           // Also trash dev_logs file in Drive if present
           let devLogsFileId: string | null = null;
@@ -79,8 +87,8 @@ export async function POST(request: Request) {
             const logs = capture.dev_logs as Record<string, unknown>;
             devLogsFileId = (typeof logs.driveFileId === "string" ? logs.driveFileId : null) ?? parseDriveFileId(typeof logs.driveUrl === "string" ? logs.driveUrl : null);
           }
-          if (devLogsFileId) {
-            try { await trashDriveFile(accessToken!, devLogsFileId); } catch {}
+          if (devLogsFileId && accessToken) {
+            try { await trashDriveFile(accessToken, devLogsFileId); } catch {}
           }
         }
 

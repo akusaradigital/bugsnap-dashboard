@@ -5,13 +5,14 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
-import type { CapturedLogs } from "@/components/DevToolsPanel";
+import { type CapturedLogs } from "@/components/DevToolsPanel";
+import { isIgnoredUrl } from "@/lib/ignored-urls";
 import Comments from "@/components/Comments";
 import MediaViewer, { ErrorMarker } from "@/components/MediaViewer";
+import CaptureFooter from "@/components/CaptureFooter";
 import { useT } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
 import { Dropdown } from "@/components/Dropdown";
-import { SopGuideModal } from "@/components/SopGuideModal";
 
 const DevToolsPanel = dynamic(() => import("@/components/DevToolsPanel"), {
   ssr: false,
@@ -150,7 +151,6 @@ function SingleViewContent() {
   const [newFolderMode, setNewFolderMode] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [copied, setCopied] = useState(false);
-  const [sopModalOpen, setSopModalOpen] = useState(false);
   const [shareType, setShareType] = useState<"devtools" | "content">("devtools");
   const [accessMode, setAccessMode] = useState<"public" | "members">("public");
   const [accessSaving, setAccessSaving] = useState(false);
@@ -205,6 +205,7 @@ function SingleViewContent() {
 
     const markers: ErrorMarker[] = [];
     for (const log of rawLogs) {
+      if (isIgnoredUrl(log.url) || isIgnoredUrl(log.message)) continue;
       const isErr = (log.type === "console" && (log.level === "error" || log.level === "warn")) ||
                     (log.type === "network" && (Number(log.status) >= 400 || Number(log.status) === 0));
       if (!isErr) continue;
@@ -761,28 +762,20 @@ function SingleViewContent() {
             </>
           )}
         </Link>
-        {isTeamMember ? (
-          <Link
-            href="/captures"
-            className="px-3 sm:px-4 py-2 rounded-lg border border-border text-xs font-semibold text-foreground hover:bg-subtle flex items-center gap-1.5 sm:gap-2 transition-colors shadow-sm shrink-0"
-          >
-            <svg className="w-4 h-4 text-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 12H5M12 19l-7-7 7-7" />
-            </svg>
-            <span className="hidden sm:inline">{t("v.backToDashboard")}</span>
-            <span className="sm:hidden">Captures</span>
-          </Link>
-        ) : (
-          <a
-            href="https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="px-3 sm:px-4 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors shadow-sm shrink-0"
-          >
-            <span>Add to Chrome</span>
-            <span className="hidden sm:inline text-indigo-200">· Free</span>
-          </a>
-        )}
+        <div className="flex items-center gap-2 sm:gap-3">
+          {isTeamMember && (
+            <Link
+              href="/captures"
+              className="px-3 sm:px-4 py-2 rounded-lg border border-border text-xs font-semibold text-foreground hover:bg-subtle flex items-center gap-1.5 sm:gap-2 transition-colors shadow-sm shrink-0"
+            >
+              <svg className="w-4 h-4 text-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 12H5M12 19l-7-7 7-7" />
+              </svg>
+              <span className="hidden sm:inline">{t("v.backToDashboard")}</span>
+              <span className="sm:hidden">{t("nav.captures")}</span>
+            </Link>
+          )}
+        </div>
       </header>
 
       {status !== "ready" && (
@@ -826,7 +819,7 @@ function SingleViewContent() {
           {status === "needs_login" && (
             <div className="text-center max-w-sm">
               <h1 className="text-lg font-semibold text-foreground">{t("v.loginRequired")}</h1>
-              <p className="text-sm text-muted mt-1 mb-6">{accessMode === "members" ? "Only workspace members can view this capture." : t("v.domainRestricted")}</p>
+              <p className="text-sm text-muted mt-1 mb-6">{accessMode === "members" ? t("v.membersOnlyRestricted") : t("v.domainRestricted")}</p>
               <a href="/" className="px-5 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-semibold">{t("v.signIn")}</a>
             </div>
           )}
@@ -860,8 +853,8 @@ function SingleViewContent() {
       )}
 
       {status === "ready" && capture && (
-        <main className="flex-1 overflow-y-auto bg-[#fbfbfd] px-3 sm:px-6 py-3 sm:py-4 dark:bg-background">
-          <div className="mx-auto flex w-full max-w-[1560px] flex-col gap-3">
+        <main className="flex-1 overflow-y-auto bg-[#fbfbfd] dark:bg-background flex flex-col justify-between">
+          <div className="mx-auto flex w-full max-w-[1560px] flex-col gap-3 px-3 sm:px-6 pt-3 sm:pt-4 pb-12 sm:pb-16 lg:pb-20">
             <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 w-full">
               {isTeamMember && hasAksoraConfigured && (
                 <button
@@ -879,42 +872,28 @@ function SingleViewContent() {
                 <div ref={moveMenuRef} className="relative flex-1 sm:flex-initial">
                   <button type="button" onClick={() => { setMoveSubmenuOpen((o) => !o); if (capFolders.length === 0) loadCapFolders(); }} className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-white px-3.5 py-2 text-xs font-semibold text-foreground shadow-sm hover:bg-subtle">
                     <svg className="h-4 w-4 text-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg>
-                    <span>Move to Folder</span>
+                    <span>{t("v.moveToFolder")}</span>
                   </button>
                   {moveSubmenuOpen && (
                     <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-xl border border-border bg-white p-1 shadow-xl">
-                      <button type="button" disabled={movingCapture} onClick={() => handleMoveCapture(null)} className="w-full rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50">No folder</button>
+                      <button type="button" disabled={movingCapture} onClick={() => handleMoveCapture(null)} className="w-full rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50">{t("v.noFolder")}</button>
                       {capFolders.map((folder) => (
                         <button key={folder} type="button" disabled={movingCapture} onClick={() => handleMoveCapture(folder)} className="w-full truncate rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50">{folder}</button>
                       ))}
                       {newFolderMode ? (
                         <form onSubmit={(e) => { e.preventDefault(); handleCreateFolderAndMove(); }} className="p-2">
-                          <input autoFocus value={newFolderName} onChange={(e) => setNewFolderName(e.target.value)} placeholder="Folder name" className="w-full rounded-md border border-border px-2 py-1 text-xs outline-none" />
+                          <input autoFocus value={newFolderName} onChange={(e) => setNewFolderName(e.target.value)} placeholder={t("v.folderName")} className="w-full rounded-md border border-border px-2 py-1 text-xs outline-none" />
                         </form>
                       ) : (
-                        <button type="button" onClick={() => setNewFolderMode(true)} className="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-indigo-600 hover:bg-indigo-50">+ New folder</button>
+                        <button type="button" onClick={() => setNewFolderMode(true)} className="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-indigo-600 hover:bg-indigo-50">{t("v.newFolder")}</button>
                       )}
                     </div>
                   )}
                 </div>
               )}
-              <button
-                type="button"
-                onClick={() => setSopModalOpen(true)}
-                className="inline-flex items-center justify-center gap-2 rounded-lg border border-emerald-600/30 bg-emerald-50 dark:bg-emerald-950/40 px-3.5 py-2 text-xs font-semibold text-emerald-700 dark:text-emerald-400 shadow-sm hover:bg-emerald-100 dark:hover:bg-emerald-900/50 flex-1 sm:flex-initial transition-colors"
-                title="View Step-by-Step SOP Guide"
-              >
-                <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-                  <polyline points="14 2 14 8 20 8" />
-                  <line x1="16" y1="13" x2="8" y2="13" />
-                  <line x1="16" y1="17" x2="8" y2="17" />
-                </svg>
-                <span>SOP Guide</span>
-              </button>
               <button type="button" onClick={handleCopyLink} className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 flex-1 sm:flex-initial">
                 <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                <span>{copied ? t("v.copied") : "Copy Link"}</span>
+                <span>{copied ? t("v.copied") : t("v.copyLinkBtn")}</span>
               </button>
             </div>
 
@@ -954,7 +933,7 @@ function SingleViewContent() {
                     {capture.description ? (
                       <p className="mt-1 text-sm text-muted">{capture.description}</p>
                     ) : isTeamMember ? (
-                      <p className="mt-1 text-xs italic text-muted/60">Add a description...</p>
+                      <p className="mt-1 text-xs italic text-muted/60">{t("v.addDescription")}</p>
                     ) : null}
                     <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted">
                       {capture.site_url && (
@@ -975,13 +954,13 @@ function SingleViewContent() {
                     </div>
                     {capture.expires_at && <p className="mt-2 text-[11px] font-medium text-muted">{getExpiryCountdown(capture.expires_at, t)}</p>}
                   </div>
-                  <div className="border-t border-border pt-4">
+                  <div className="border-t border-border pt-3">
                     <Comments captureId={capture.id} isVideo={capture.type === "video"} authorName={viewerEmail ? viewerEmail.split("@")[0] : undefined} authorEmail={viewerEmail || undefined} />
                   </div>
                 </div>
               </section>
 
-              <aside className="space-y-3">
+              <aside className="flex flex-col gap-3 xl:h-full">
                 {!hideDevTools && (
                   <DevToolsPanel
                     capture={capture as unknown as React.ComponentProps<typeof DevToolsPanel>["capture"]}
@@ -989,76 +968,60 @@ function SingleViewContent() {
                     onSeekToTime={(t) => setSeekTargetTime(t)}
                   />
                 )}
-                <section className="rounded-xl border border-border bg-white p-5 shadow-sm dark:bg-background">
-                  <h3 className="mb-4 text-base font-bold text-foreground">Share BugSnap</h3>
-                  <div className="grid grid-cols-2 gap-3 sm:gap-5 text-center">
-                    <button type="button" onClick={() => setShareType("devtools")} className={`rounded-lg border p-3 sm:p-4 text-xs font-semibold ${shareType === "devtools" ? "border-indigo-500 text-indigo-600" : "border-border text-muted hover:text-foreground"}`}>
-                      <div className="mx-auto mb-2 sm:mb-3 flex h-10 sm:h-12 w-16 sm:w-20 items-center justify-center rounded-md border border-indigo-100 bg-indigo-50 text-indigo-500 text-xs sm:text-sm">▷ ▯</div>
-                      <span>With DevTools</span>
-                      <p className="mt-1 text-[10px] font-normal text-muted">Includes logs, network & events</p>
-                    </button>
-                    <button type="button" onClick={() => setShareType("content")} className={`rounded-lg border p-3 sm:p-4 text-xs font-semibold ${shareType === "content" ? "border-indigo-500 text-indigo-600" : "border-border text-muted hover:text-foreground"}`}>
-                      <div className="mx-auto mb-2 sm:mb-3 flex h-10 sm:h-12 w-16 sm:w-20 items-center justify-center rounded-md border border-indigo-100 bg-indigo-50 text-indigo-500 text-xs sm:text-sm">▷</div>
-                      <span>Content Only</span>
-                      <p className="mt-1 text-[10px] font-normal text-muted">Screenshot & basic info</p>
-                    </button>
-                  </div>
-                  <div className="mt-5">
-                    <label className="mb-2 block text-xs font-semibold text-muted">General access</label>
-                    <div ref={accessMenuRef} className="relative">
-                      <button type="button" onClick={() => setAccessOpen((open) => !open)} className="flex w-full items-center justify-between rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-subtle">
-                        <span className="flex items-center gap-2"><svg className="h-4 w-4 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 0 20M12 2a15.3 15.3 0 0 0 0 20"/></svg>{accessMode === "members" ? "Workspace members only" : t("v.anyoneWithLink")}</span>
-                        <svg className="h-3 w-3 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6"/></svg>
+                <section className="rounded-xl border border-border bg-white p-5 shadow-sm dark:bg-background xl:h-full xl:flex-1 flex flex-col justify-between">
+                  <div>
+                    <h3 className="mb-4 text-base font-bold text-foreground">{t("v.shareCapture")}</h3>
+                    <div className="grid grid-cols-2 gap-3 sm:gap-5 text-center">
+                      <button type="button" onClick={() => setShareType("devtools")} className={`rounded-lg border p-3 sm:p-4 text-xs font-semibold ${shareType === "devtools" ? "border-indigo-500 text-indigo-600" : "border-border text-muted hover:text-foreground"}`}>
+                        <div className="mx-auto mb-2 sm:mb-3 flex h-10 sm:h-12 w-16 sm:w-20 items-center justify-center rounded-md border border-indigo-100 bg-indigo-50 text-indigo-500 text-xs sm:text-sm">▷ ▯</div>
+                        <span>{t("v.withDevTools")}</span>
+                        <p className="mt-1 text-[10px] font-normal text-muted">{t("v.withDevToolsHint")}</p>
                       </button>
-                      {accessOpen && (
-                        <div className="absolute left-0 right-0 top-full z-50 mt-2 rounded-xl border border-border bg-white p-1 shadow-xl">
-                          <button type="button" onClick={() => void saveAccessMode("public")} disabled={accessSaving} className="w-full rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50">{t("v.anyoneWithLink")}</button>
-                          <button type="button" onClick={() => void saveAccessMode("members")} disabled={accessSaving} className="w-full rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50">Workspace members only</button>
-                        </div>
-                      )}
+                      <button type="button" onClick={() => setShareType("content")} className={`rounded-lg border p-3 sm:p-4 text-xs font-semibold ${shareType === "content" ? "border-indigo-500 text-indigo-600" : "border-border text-muted hover:text-foreground"}`}>
+                        <div className="mx-auto mb-2 sm:mb-3 flex h-10 sm:h-12 w-16 sm:w-20 items-center justify-center rounded-md border border-indigo-100 bg-indigo-50 text-indigo-500 text-xs sm:text-sm">▷</div>
+                        <span>{t("v.contentOnly")}</span>
+                        <p className="mt-1 text-[10px] font-normal text-muted">{t("v.contentOnlyHint")}</p>
+                      </button>
+                    </div>
+                    <div className="mt-5">
+                      <label className="mb-2 block text-xs font-semibold text-muted">{t("v.generalAccess")}</label>
+                      <div ref={accessMenuRef} className="relative">
+                        <button type="button" onClick={() => setAccessOpen((open) => !open)} className="flex w-full items-center justify-between rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-subtle">
+                          <span className="flex items-center gap-2"><svg className="h-4 w-4 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 0 20M12 2a15.3 15.3 0 0 0 0 20"/></svg>{accessMode === "members" ? t("v.membersOnly") : t("v.anyoneWithLink")}</span>
+                          <svg className="h-3 w-3 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6"/></svg>
+                        </button>
+                        {accessOpen && (
+                          <div className="absolute left-0 right-0 top-full z-50 mt-2 rounded-xl border border-border bg-white p-1 shadow-xl">
+                            <button type="button" onClick={() => void saveAccessMode("public")} disabled={accessSaving} className="w-full rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50">{t("v.anyoneWithLink")}</button>
+                            <button type="button" onClick={() => void saveAccessMode("members")} disabled={accessSaving} className="w-full rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50">{t("v.membersOnly")}</button>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                  <button type="button" onClick={handleCopyLink} className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700">
-                    <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                    {copied ? t("v.copiedLink") : "Copy Link"}
-                  </button>
-                  {isWorkspaceOwner && (
-                    <button
-                      type="button"
-                      onClick={handleDeleteCapture}
-                      className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 bg-white py-2.5 text-xs font-semibold text-red-600 shadow-sm hover:bg-red-50 hover:border-red-300 transition-colors"
-                    >
-                      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/></svg>
-                      Delete Capture
+                  <div className="mt-6 pt-2">
+                    <button type="button" onClick={handleCopyLink} className="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700">
+                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                      {copied ? t("v.copiedLink") : t("v.copyLinkBtn")}
                     </button>
-                  )}
+                    {isWorkspaceOwner && (
+                      <button
+                        type="button"
+                        onClick={handleDeleteCapture}
+                        className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 bg-white py-2.5 text-xs font-semibold text-red-600 shadow-sm hover:bg-red-50 hover:border-red-300 transition-colors"
+                      >
+                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/></svg>
+                        {t("v.deleteCapture")}
+                      </button>
+                    )}
+                  </div>
                 </section>
               </aside>
             </div>
           </div>
+          {/* Footer at the bottom of natural scroll flow */}
+          <CaptureFooter className="mt-4 sm:mt-6" />
         </main>
-      )}
-
-      {/* Viral Referral Banner for External Viewers */}
-      {!isTeamMember && status === "ready" && (
-        <div className="sticky bottom-0 z-20 border-t border-border/80 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-md px-4 py-2.5 shadow-lg">
-          <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2.5 text-xs text-center sm:text-left">
-            <div className="flex items-center gap-2">
-              <span className="flex h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
-              <span className="text-muted">
-                Recorded with <strong className="text-foreground font-semibold">BugSnap</strong> &mdash; screen recorder &amp; DevTools error logger for Chrome.
-              </span>
-            </div>
-            <a
-              href="https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-xs transition-transform hover:scale-105 shadow-sm"
-            >
-              <span>Add to Chrome &mdash; Free</span>
-            </a>
-          </div>
-        </div>
       )}
 
       {/* Edit Modal (Workspace Members only) */}
@@ -1189,14 +1152,6 @@ function SingleViewContent() {
             </div>
           </div>
         </div>
-      )}
-
-      {capture && (
-        <SopGuideModal
-          isOpen={sopModalOpen}
-          onClose={() => setSopModalOpen(false)}
-          capture={capture}
-        />
       )}
     </div>
   );

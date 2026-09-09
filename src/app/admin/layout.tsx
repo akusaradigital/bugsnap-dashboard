@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/Toast";
 import { useT } from "@/components/I18nProvider";
+import { CommandPalette } from "./CommandPalette";
 
 interface AdminNotificationItem {
   id: string;
@@ -32,14 +33,29 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [loggingIn, setLoggingIn] = useState(false);
   const [signingInGoogle, setSigningInGoogle] = useState(false);
 
-  // Sidebar & Topbar UI State
-  const [sidebarOpen, setSidebarOpen] = useState(true);
+  // Sidebar & Topbar UI State (defaults to false on mobile, true on desktop)
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth >= 768) {
+      setSidebarOpen(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 768) {
+      setSidebarOpen(false);
+    }
+  }, [pathname]);
 
   // Notifications State
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState<AdminNotificationItem[]>([]);
   const [notifCount, setNotifCount] = useState(0);
   const notifRef = useRef<HTMLDivElement>(null);
+
+  // Command Palette State
+  const [commandOpen, setCommandOpen] = useState(false);
 
   // Profile Menu & Change Password Modal State
   const [profileOpen, setProfileOpen] = useState(false);
@@ -52,19 +68,78 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [savingPassword, setSavingPassword] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
-  const navItems = [
-    { href: "/admin", label: t("nav.dashboard"), icon: "📊" },
-    { href: "/admin/users", label: t("admin.manageUsers"), icon: "👥" },
-    { href: "/admin/workspaces", label: t("admin.navWorkspaces"), icon: "🏢" },
-    { href: "/admin/captures", label: t("admin.navCaptures"), icon: "📸" },
-    { href: "/admin/revenue", label: t("admin.navRevenue"), icon: "💰" },
-    { href: "/admin/ai-analytics", label: t("admin.navAiAnalytics"), icon: "🤖" },
-    { href: "/admin/support", label: t("admin.supportInbox"), icon: "📥", badgeKey: "support" },
-    { href: "/admin/extension", label: t("admin.extensionFleet"), icon: "🧩" },
-    { href: "/admin/email-health", label: t("admin.emailHealth"), icon: "✉️" },
-    { href: "/admin/security-audit", label: t("admin.auditTitle"), icon: "🛡️" },
-    { href: "/admin/system", label: t("admin.systemDrive"), icon: "🛠️" },
+  interface NavSubItem {
+    href: string;
+    label: string;
+    badgeKey?: string;
+  }
+
+  interface MasterHub {
+    title: string;
+    href: string;
+    icon: string;
+    badgeKey?: string;
+    subItems?: NavSubItem[];
+  }
+
+  const masterHubs: MasterHub[] = [
+    {
+      title: t("admin.hubOverview"),
+      href: "/admin",
+      icon: "📊",
+    },
+    {
+      title: t("admin.hubUsers"),
+      href: "/admin/users",
+      icon: "👥",
+      subItems: [
+        { href: "/admin/users", label: t("admin.manageUsers") },
+        { href: "/admin/workspaces", label: t("admin.navWorkspaces") },
+        { href: "/admin/captures", label: t("admin.navCaptures") },
+      ],
+    },
+    {
+      title: t("admin.hubRevenue"),
+      href: "/admin/revenue",
+      icon: "💰",
+      subItems: [
+        { href: "/admin/revenue", label: t("admin.navRevenue") },
+        { href: "/admin/ai-analytics", label: t("admin.navAiAnalytics") },
+      ],
+    },
+    {
+      title: t("admin.hubOperations"),
+      href: "/admin/support",
+      icon: "📥",
+      badgeKey: "support",
+      subItems: [
+        { href: "/admin/support", label: t("admin.supportInbox"), badgeKey: "support" },
+        { href: "/admin/extension", label: t("admin.extensionFleet") },
+        { href: "/admin/email-health", label: t("admin.emailHealth") },
+      ],
+    },
+    {
+      title: t("admin.hubSystem"),
+      href: "/admin/system",
+      icon: "🛠️",
+      subItems: [
+        { href: "/admin/system", label: t("admin.systemDrive") },
+        { href: "/admin/security-audit", label: t("admin.auditTitle") },
+      ],
+    },
   ];
+
+  // Global Ctrl+K / Cmd+K listener
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setCommandOpen((prev) => !prev);
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
 
   // Click-outside listener for dropdowns
   useEffect(() => {
@@ -408,56 +483,112 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   // --- STARADMIN-STYLE DASHBOARD LAYOUT ---
   return (
     <div className="h-screen flex bg-slate-100 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 overflow-hidden">
-      {/* WHITE DAY MODE LEFT SIDEBAR - Pinned/Stationary */}
+      {/* Mobile Drawer Backdrop */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 bg-slate-900/50 dark:bg-black/70 backdrop-blur-xs z-40 md:hidden animate-in fade-in duration-150"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* LEFT SIDEBAR - Drawer on Mobile, Pinned on Desktop */}
       <aside
-        className={`${
-          sidebarOpen ? "w-64" : "w-20"
-        } h-full shrink-0 bg-white dark:bg-zinc-900 border-r border-slate-200 dark:border-zinc-800 text-slate-900 dark:text-zinc-100 flex flex-col transition-all duration-300 z-40 shadow-xs select-none`}
+        className={`fixed inset-y-0 left-0 z-50 md:relative md:z-40 h-full shrink-0 bg-white dark:bg-zinc-900 border-r border-slate-200 dark:border-zinc-800 text-slate-900 dark:text-zinc-100 flex flex-col transition-all duration-200 ease-in-out select-none shadow-xl md:shadow-xs ${
+          sidebarOpen
+            ? "w-64 translate-x-0"
+            : "-translate-x-full md:translate-x-0 md:w-20"
+        }`}
       >
         {/* Brand Header with Official BugSnap Logo */}
-        <div className="h-16 px-4 flex items-center gap-3 border-b border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50 dark:bg-zinc-800 shrink-0 p-1.5 shadow-xs border border-indigo-100 dark:border-zinc-700">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/icon.svg" alt="BugSnap" className="h-6 w-6 object-contain" />
-          </div>
-          {sidebarOpen && (
-            <div className="overflow-hidden whitespace-nowrap">
-              <h2 className="text-sm font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
-                BugSnap Admin
-              </h2>
-              <span className="text-[10px] text-slate-500 dark:text-zinc-400 uppercase tracking-wider font-semibold">
-                Platform Console
-              </span>
+        <div className="h-16 px-4 flex items-center justify-between border-b border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50 dark:bg-zinc-800 shrink-0 p-1.5 shadow-xs border border-indigo-100 dark:border-zinc-700">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/icon.svg" alt="BugSnap" className="h-6 w-6 object-contain" />
             </div>
+            {sidebarOpen && (
+              <div className="overflow-hidden whitespace-nowrap">
+                <h2 className="text-sm font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
+                  BugSnap Admin
+                </h2>
+                <span className="text-[10px] text-slate-500 dark:text-zinc-400 uppercase tracking-wider font-semibold">
+                  Platform Console
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* Close button on mobile */}
+          {sidebarOpen && (
+            <button
+              type="button"
+              onClick={() => setSidebarOpen(false)}
+              className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 text-sm cursor-pointer"
+              title="Close Sidebar"
+            >
+              ✕
+            </button>
           )}
         </div>
 
-        {/* Navigation Menu List */}
-        <nav className="flex-1 py-4 px-3 space-y-1 overflow-y-auto">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                prefetch={true}
-                className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-xs transition-all ${
-                  isActive
-                    ? "bg-[#1f3bb3]/10 dark:bg-indigo-950/60 text-[#1f3bb3] dark:text-indigo-400 font-bold border border-[#1f3bb3]/20 dark:border-indigo-800/40 shadow-xs"
-                    : "text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-zinc-100 font-semibold"
-                }`}
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <span className="text-base shrink-0">{item.icon}</span>
-                  {sidebarOpen && <span className="truncate">{item.label}</span>}
-                </div>
+        {/* 5 Master Hubs Navigation List */}
+        <nav className="flex-1 py-3 px-3 space-y-1.5 overflow-y-auto">
+          {masterHubs.map((hub) => {
+            const isHubActive = pathname === hub.href || Boolean(hub.subItems?.some((s) => s.href === pathname));
+            const badgeCount = hub.badgeKey === "support" ? notifCount : 0;
 
-                {sidebarOpen && item.badgeKey === "support" && notifCount > 0 && (
-                  <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white shadow-xs">
-                    {notifCount}
-                  </span>
+            return (
+              <div key={hub.title} className="space-y-1">
+                <Link
+                  href={hub.href}
+                  prefetch={true}
+                  className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all ${
+                    isHubActive
+                      ? "bg-[#1f3bb3]/10 dark:bg-indigo-950/60 text-[#1f3bb3] dark:text-indigo-400 font-bold border border-[#1f3bb3]/20 dark:border-indigo-800/40 shadow-xs"
+                      : "text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-zinc-100 font-semibold"
+                  }`}
+                >
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="text-base shrink-0">{hub.icon}</span>
+                    {sidebarOpen && <span className="truncate">{hub.title}</span>}
+                  </div>
+
+                  {sidebarOpen && badgeCount > 0 && (
+                    <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white shadow-xs">
+                      {badgeCount}
+                    </span>
+                  )}
+                </Link>
+
+                {/* Sub-items for active Hub when sidebar is open */}
+                {sidebarOpen && isHubActive && hub.subItems && hub.subItems.length > 0 && (
+                  <div className="ml-5 pl-2.5 my-1 space-y-0.5 border-l border-slate-200 dark:border-zinc-800">
+                    {hub.subItems.map((sub) => {
+                      const isSubActive = pathname === sub.href;
+                      const subBadge = sub.badgeKey === "support" ? notifCount : 0;
+                      return (
+                        <Link
+                          key={sub.href}
+                          href={sub.href}
+                          prefetch={true}
+                          className={`flex items-center justify-between py-1 px-2 rounded-md text-[11px] transition-colors ${
+                            isSubActive
+                              ? "text-[#1f3bb3] dark:text-indigo-400 font-bold bg-[#1f3bb3]/10 dark:bg-indigo-950/40"
+                              : "text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800/50 font-medium"
+                          }`}
+                        >
+                          <span className="truncate">{sub.label}</span>
+                          {subBadge > 0 && (
+                            <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-rose-500 text-white">
+                              {subBadge}
+                            </span>
+                          )}
+                        </Link>
+                      );
+                    })}
+                  </div>
                 )}
-              </Link>
+              </div>
             );
           })}
         </nav>
@@ -486,13 +617,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* RIGHT MAIN WRAPPER - Scrolls independently */}
       <div className="flex-1 flex flex-col min-w-0 h-full overflow-hidden">
         {/* TOP NAVBAR */}
-        <header className="h-16 shrink-0 px-4 sm:px-6 bg-white dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between z-30 shadow-xs">
+        <header className="h-16 shrink-0 px-3 sm:px-6 bg-white dark:bg-zinc-900 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between z-30 shadow-xs">
           {/* Left: Sidebar Toggle + Info */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2 sm:gap-4 min-w-0">
             <button
               type="button"
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-colors"
+              className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-colors cursor-pointer shrink-0"
               title="Toggle Sidebar"
             >
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -500,36 +631,52 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </svg>
             </button>
 
-            <div className="hidden md:flex items-center gap-4 text-xs text-slate-500 dark:text-zinc-400 font-medium">
-              <span className="flex items-center gap-1.5">
+            <div className="hidden md:flex items-center gap-4 text-xs text-slate-500 dark:text-zinc-400 font-medium truncate">
+              <span className="flex items-center gap-1.5 shrink-0">
                 <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
                 <span>Supabase: Online</span>
               </span>
               <span>•</span>
-              <span>CS Contact: <strong className="text-slate-700 dark:text-zinc-300">contact.akusaraproject@gmail.com</strong></span>
+              <span className="truncate">CS Contact: <strong className="text-slate-700 dark:text-zinc-300">contact.akusaraproject@gmail.com</strong></span>
             </div>
           </div>
 
-          {/* Right: Search + i18n + Notifications + Admin Identity Dropdown */}
-          <div className="flex items-center gap-3 sm:gap-4">
-            {/* Quick Search */}
-            <div className="hidden sm:block relative w-44 lg:w-60">
-              <input
-                type="text"
-                placeholder={t("admin.searchPlaceholder")}
-                className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 px-3 py-1.5 outline-none focus:border-[#1f3bb3] focus:bg-white dark:focus:bg-zinc-900"
-              />
-            </div>
+          {/* Right: Command Bar (Ctrl+K) + i18n + Notifications + Admin Identity Dropdown */}
+          <div className="flex items-center gap-2 sm:gap-4 shrink-0">
+            {/* Desktop Quick Search Trigger (Ctrl+K) */}
+            <button
+              type="button"
+              onClick={() => setCommandOpen(true)}
+              className="hidden sm:flex items-center justify-between w-44 lg:w-60 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 text-slate-400 dark:text-zinc-500 hover:border-slate-300 dark:hover:border-zinc-700 hover:text-slate-600 dark:hover:text-zinc-300 text-xs transition-colors cursor-pointer shadow-2xs"
+            >
+              <div className="flex items-center gap-2 min-w-0">
+                <span>🔍</span>
+                <span className="truncate">{t("admin.commandSearchHint")}</span>
+              </div>
+              <kbd className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-bold text-slate-500 dark:text-zinc-400 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded shadow-2xs shrink-0">
+                ⌘K
+              </kbd>
+            </button>
+
+            {/* Mobile Search Button (< sm) */}
+            <button
+              type="button"
+              onClick={() => setCommandOpen(true)}
+              className="sm:hidden p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+              title={t("admin.commandSearchHint")}
+            >
+              <span className="text-base">🔍</span>
+            </button>
 
             {/* Language Switcher (i18n) */}
             <button
               type="button"
               onClick={() => setLocale(locale === "id" ? "en" : "id")}
-              className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+              className="px-2 sm:px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer shadow-xs"
               title={locale === "id" ? "Switch to English" : "Ganti ke Bahasa Indonesia"}
             >
-              <span>🌐</span>
-              <span className="uppercase">{locale}</span>
+              <span className="text-sm">🌐</span>
+              <span className="uppercase text-[11px]">{locale}</span>
             </button>
 
             {/* UNIFIED ADMIN NOTIFICATIONS DROPDOWN */}
@@ -540,7 +687,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   setNotifOpen(!notifOpen);
                   loadNotifications();
                 }}
-                className="relative p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-colors"
+                className="relative p-1.5 sm:p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                 title={t("admin.notificationsTitle")}
               >
                 <span className="text-base">🔔</span>
@@ -552,7 +699,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </button>
 
               {notifOpen && (
-                <div className="absolute right-0 mt-2 w-80 sm:w-96 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
+                <div className="absolute right-0 mt-2 w-[calc(100vw-1.5rem)] max-w-sm sm:w-96 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
                   <div className="p-4 border-b border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 flex items-center justify-between">
                     <div>
                       <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
@@ -654,7 +801,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
               {/* Profile Dropdown */}
               {profileOpen && (
-                <div className="absolute right-0 mt-2 w-56 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
+                <div className="absolute right-0 mt-2 w-56 max-w-[calc(100vw-1.5rem)] rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
                   <div className="p-3.5 border-b border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950">
                     <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
                       {adminIdentity}
@@ -705,7 +852,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </header>
 
         {/* MAIN BODY CONTENT */}
-        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto">{children}</div>
         </main>
       </div>
@@ -798,6 +945,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </div>
       )}
+
+      {/* GLOBAL COMMAND PALETTE (CTRL+K / CMD+K) */}
+      <CommandPalette
+        isOpen={commandOpen}
+        onClose={() => setCommandOpen(false)}
+        onLockConsole={handleLogout}
+        onToggleLocale={() => setLocale(locale === "id" ? "en" : "id")}
+        onRefreshNotifs={loadNotifications}
+      />
     </div>
   );
 }

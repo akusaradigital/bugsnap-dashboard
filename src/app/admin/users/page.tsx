@@ -255,14 +255,14 @@ export default function AdminUsersPage() {
 
       {/* Filter and Search Bar */}
       <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <select
             value={planFilter}
             onChange={(e) => {
               setPlanFilter(e.target.value);
               setPage(1);
             }}
-            className="text-xs font-semibold rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 px-3 py-2 outline-none"
+            className="flex-1 sm:flex-none min-w-[120px] text-xs font-semibold rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 px-3 py-2 outline-none"
           >
             <option value="all">{t("admin.allPlans")}</option>
             <option value="free">Free</option>
@@ -277,7 +277,7 @@ export default function AdminUsersPage() {
               setStatusFilter(e.target.value);
               setPage(1);
             }}
-            className="text-xs font-semibold rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 px-3 py-2 outline-none"
+            className="flex-1 sm:flex-none min-w-[120px] text-xs font-semibold rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 px-3 py-2 outline-none"
           >
             <option value="all">{t("admin.allStatuses")}</option>
             <option value="active">{t("admin.active")}</option>

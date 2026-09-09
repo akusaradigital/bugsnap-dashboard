@@ -57,7 +57,7 @@ export async function createConnectUrl(userId: string) {
   const { error } = await db.from("google_drive_oauth_states").insert({ nonce_hash: createHash("sha256").update(nonce).digest("hex"), user_id: userId, expires_at: expiresAt });
   if (error) throw error;
   const state = encrypt(JSON.stringify({ userId, nonce, exp: Date.now() + STATE_TTL_MS } satisfies State));
-  const params = new URLSearchParams({ client_id: env("GOOGLE_DRIVE_CLIENT_ID"), redirect_uri: env("GOOGLE_DRIVE_REDIRECT_URI"), response_type: "code", scope: "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email", access_type: "offline", prompt: "consent", state });
+  const params = new URLSearchParams({ client_id: env("GOOGLE_DRIVE_CLIENT_ID"), redirect_uri: env("GOOGLE_DRIVE_REDIRECT_URI"), response_type: "code", scope: "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email", access_type: "offline", prompt: "consent select_account", state });
   return `${GOOGLE_AUTH}?${params}`;
 }
 
@@ -75,12 +75,16 @@ async function tokenRequest(params: Record<string, string>) {
   const response = await fetch(GOOGLE_TOKEN, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ client_id: env("GOOGLE_DRIVE_CLIENT_ID"), client_secret: env("GOOGLE_DRIVE_CLIENT_SECRET"), ...params }), cache: "no-store" });
   const body = await response.json();
   if (!response.ok || typeof body.access_token !== "string") throw new Error("Google token exchange failed");
-  return body as { access_token: string; refresh_token?: string; expires_in?: number };
+  return body as { access_token: string; refresh_token?: string; expires_in?: number; scope?: string };
 }
 
 async function exchangeAuthorizationCode(code: string, redirectUri: string) {
   const tokens = await tokenRequest({ code, redirect_uri: redirectUri, grant_type: "authorization_code" });
   if (!tokens.refresh_token) throw new Error("Google did not return a refresh token");
+  const grantedScope = typeof tokens.scope === "string" ? tokens.scope : "";
+  if (grantedScope && !grantedScope.includes("drive.file")) {
+    throw new Error("DRIVE_PERMISSION_DENIED: Google Drive permission was not granted. Please check the Google Drive permission box during login.");
+  }
   const info = await fetch("https://www.googleapis.com/oauth2/v2/userinfo", { headers: { Authorization: `Bearer ${tokens.access_token}` }, cache: "no-store" });
   const profile = info.ok ? await info.json() as { email?: string } : {};
   return { refreshToken: tokens.refresh_token, email: profile.email ?? null };
@@ -131,10 +135,35 @@ export async function getDriveConnectionHealth(userId: string): Promise<DriveCon
   }
   try {
     const accessToken = await tokenRequest({ refresh_token: decrypt(connection.refresh_token), grant_type: "refresh_token" });
+    if (accessToken.scope && !accessToken.scope.includes("drive.file")) {
+      // Auto-purge defective connection from DB so user is prompted to reconnect with consent
+      await createServiceClient().from("google_drive_connections").delete().eq("user_id", userId);
+      return {
+        status: "reconnect_required",
+        email: connection.google_email ?? null,
+        updatedAt: connection.updated_at ?? null,
+        message: "Google Drive permission was not granted. Please reconnect and check the Drive permission box.",
+        quota: null,
+      };
+    }
     const aboutRes = await fetch("https://www.googleapis.com/drive/v3/about?fields=storageQuota(limit,usage,usageInDrive)", {
       headers: { Authorization: `Bearer ${accessToken.access_token}` },
       cache: "no-store",
     });
+    if (aboutRes.status === 403) {
+      const errBody = await aboutRes.json().catch(() => ({}));
+      const errMsg = JSON.stringify(errBody);
+      if (/ACCESS_TOKEN_SCOPE_INSUFFICIENT|insufficient authentication scopes|insufficientPermissions/i.test(errMsg)) {
+        await createServiceClient().from("google_drive_connections").delete().eq("user_id", userId);
+        return {
+          status: "reconnect_required",
+          email: connection.google_email ?? null,
+          updatedAt: connection.updated_at ?? null,
+          message: "Google Drive permission was not granted. Please reconnect and check the Drive permission box.",
+          quota: null,
+        };
+      }
+    }
     const about = await aboutRes.json().catch(() => ({})) as { storageQuota?: { limit?: string; usage?: string; usageInDrive?: string } };
     const quota = aboutRes.ok
       ? {
@@ -174,18 +203,26 @@ export async function driveAccessToken(userId: string) {
   if (!connection) throw new Error("Google Drive is not connected");
   try {
     const tokens = await tokenRequest({ refresh_token: decrypt(connection.refresh_token), grant_type: "refresh_token" });
+    if (tokens.scope && !tokens.scope.includes("drive.file")) {
+      tokenCache.delete(userId);
+      await createServiceClient().from("google_drive_connections").delete().eq("user_id", userId);
+      throw new Error("DRIVE_PERMISSION_DENIED: Google Drive permission was not granted. Please reconnect and check the Drive permission box.");
+    }
     const ttlMs = (tokens.expires_in ? Math.max(tokens.expires_in - 300, 300) : 3000) * 1000;
     tokenCache.set(userId, { token: tokens.access_token, expiresAt: Date.now() + ttlMs });
     return tokens.access_token;
-  } catch {
+  } catch (err) {
     tokenCache.delete(userId);
+    if (err instanceof Error && err.message.includes("DRIVE_PERMISSION_DENIED")) {
+      throw err;
+    }
     throw new Error("Google Drive needs to be reconnected");
   }
 }
 
 async function setDriveFileTrashed(accessToken: string, fileId: string, trashed: boolean) {
   const response = await fetch(`${DRIVE_FILES}/${encodeURIComponent(fileId)}?supportsAllDrives=true`, { method: "PATCH", headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" }, body: JSON.stringify({ trashed }), cache: "no-store" });
-  if (response.ok || (trashed && response.status === 404)) return;
+  if (response.ok || (trashed && (response.status === 404 || response.status === 410))) return;
   throw new Error(`Google Drive rejected ${trashed ? "trash" : "restore"} request (${response.status})`);
 }
 

@@ -4,6 +4,9 @@ import { useState, useRef, useEffect } from "react";
 import { useT } from "@/components/I18nProvider";
 import { decompressDevLogs } from "@/lib/devlogs-compression";
 import { supabase } from "@/lib/supabase";
+import { isIgnoredUrl, TRACKER_PATTERNS } from "@/lib/ignored-urls";
+
+export { isIgnoredUrl, TRACKER_PATTERNS };
 
 interface TimedLog {
   time?: string | number;
@@ -204,6 +207,28 @@ function networkLocation(value?: string) {
   }
 }
 
+const HTTP_STATUS_TEXT: Record<number, string> = {
+  200: "OK",
+  201: "Created",
+  204: "No Content",
+  301: "Moved Permanently",
+  302: "Found",
+  304: "Not Modified",
+  400: "Bad Request",
+  401: "Unauthorized",
+  403: "Forbidden",
+  404: "Not Found",
+  405: "Method Not Allowed",
+  408: "Request Timeout",
+  409: "Conflict",
+  422: "Unprocessable Entity",
+  429: "Too Many Requests",
+  500: "Internal Server Error",
+  502: "Bad Gateway",
+  503: "Service Unavailable",
+  504: "Gateway Timeout",
+};
+
 function isClassSoup(text: string) {
   const tokens = text.split(/\s+/).filter(Boolean);
   return tokens.length >= 3 && (tokens.filter((token) => /(?:^|:)(?:[a-z]+-)|\[|#|\//i.test(token)).length >= 2 || text.length > 50);
@@ -238,26 +263,8 @@ function groupBy<T extends TimedLog>(items: T[], keyFor: (item: T) => string, ma
   return Array.from(groups.values());
 }
 
-const TRACKER_PATTERNS = [
-  /atlassian\.com/i,
-  /google-analytics\.com/i,
-  /googletagmanager\.com/i,
-  /sentry\.io/i,
-  /mixpanel\.com/i,
-  /hotjar\.com/i,
-  /amplitude\.com/i,
-  /statsig\.com/i,
-  /segment\.io/i,
-  /doubleclick\.net/i,
-  /facebook\.net/i,
-  /analytics/i,
-  /telemetry/i,
-  /tracking/i
-];
-
 function isTracker(url?: string) {
-  if (!url) return false;
-  return TRACKER_PATTERNS.some((pattern) => pattern.test(url));
+  return isIgnoredUrl(url);
 }
 
 // Formats error messages cleanly (e.g. converts "POST\nhttps://..." into structured method + URL badges)
@@ -301,6 +308,16 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
   const [networkFailedOnly, setNetworkFailedOnly] = useState(false);
   const [logSearch, setLogSearch] = useState("");
   const [decompressedLogs, setDecompressedLogs] = useState<CapturedLogs>(capture.dev_logs || null);
+  const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
+
+  const handleCopyUrl = (url: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      navigator.clipboard.writeText(url);
+      setCopiedUrl(url);
+      setTimeout(() => setCopiedUrl(null), 2000);
+    } catch {}
+  };
 
   useEffect(() => {
     let raw: unknown = capture.dev_logs;
@@ -718,10 +735,10 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                 </div>
 
                 <div className="space-y-2 pt-1">
-                  {(summary.topErrors || []).map((msg, i) => (
+                  {(summary.topErrors || []).filter((msg) => !isIgnoredUrl(msg)).map((msg, i) => (
                     <FormattedErrorMessage key={`se_${i}`} msg={msg} />
                   ))}
-                  {(summary.failedUrls || []).map((url, i) => (
+                  {(summary.failedUrls || []).filter((url) => !isIgnoredUrl(url)).map((url, i) => (
                     <div key={`su_${i}`} className="pl-2.5 border-l-2 border-red-300 dark:border-red-800/40 py-0.5">
                       <span className="text-[9px] font-bold uppercase tracking-wider text-red-600 bg-red-50 dark:bg-red-950/30 px-1 py-0.2 rounded border border-red-200 dark:border-red-800/40 mr-1.5">FAIL</span>
                       <span className="text-[11px] font-mono text-red-700 dark:text-red-400 break-all">{url}</span>
@@ -812,7 +829,14 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                         </summary>
                         <div className="px-3.5 pb-3.5 pt-1 space-y-2 border-t border-border/40 text-[11px] bg-subtle/30 font-mono">
                           {nLog.url && <p className="text-muted break-all"><span className="text-foreground font-semibold">URL:</span> {nLog.url}</p>}
-                          {nLog.statusText && <p className="text-muted"><span className="text-foreground font-semibold">Status:</span> {nLog.statusText}</p>}
+                          <p className="text-muted">
+                            <span className="text-foreground font-semibold">Status:</span>{" "}
+                            {nLog.status || "FAIL"}{" "}
+                            {nLog.statusText || (nLog.status ? HTTP_STATUS_TEXT[nLog.status] : "") ? `(${nLog.statusText || HTTP_STATUS_TEXT[nLog.status!]})` : ""}
+                          </p>
+                          {nLog.resourceType && (
+                            <p className="text-muted"><span className="text-foreground font-semibold">Type:</span> <span className="capitalize">{nLog.resourceType}</span></p>
+                          )}
                           {nLog.error && <p className="text-red-600 dark:text-red-400"><span className="font-semibold">Error:</span> {nLog.error}</p>}
                           {nLog.responseBody && (
                             <div>
@@ -1181,6 +1205,8 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                   const isFailed = !log.status || log.status >= 400;
                   const isOk = log.status && log.status < 300;
                   const active = isLogActive(log);
+                  const effectiveStatusText = log.statusText || (log.status ? HTTP_STATUS_TEXT[log.status] || `HTTP ${log.status}` : undefined);
+                  const hasPayload = log.requestBody != null || Boolean(log.responseBody);
                   return (
                     <details key={i} className={`group hover:bg-subtle/50 transition-all ${active ? "ring-2 ring-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/40 rounded-sm" : ""}`}>
                       <summary className="p-3 cursor-pointer list-none flex items-center justify-between gap-2 min-w-0">
@@ -1222,18 +1248,60 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                           </svg>
                         </div>
                       </summary>
-                      <div className="px-3 pb-3 pt-1 space-y-2 border-t border-border/40 bg-subtle/20 text-xs">
-                        <div className="flex flex-wrap gap-x-4 gap-y-1 font-mono text-[10px]">
-                          {log.duration != null && (
-                            <span><span className="text-muted">{t("dt.duration")}:</span> {log.duration}ms</span>
+                      <div className="px-3 pb-3 pt-2 space-y-2.5 border-t border-border/40 bg-subtle/20 text-xs">
+                        {/* Full URL row with copy button */}
+                        {log.url && (
+                          <div className="flex items-start justify-between gap-2 p-2 rounded-lg bg-background border border-border/60">
+                            <div className="min-w-0 flex-1 font-mono text-[11px] break-all leading-relaxed">
+                              <span className="text-muted select-none font-semibold mr-1.5">URL:</span>
+                              <span className="text-foreground select-all">{log.url}</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={(e) => handleCopyUrl(log.url!, e)}
+                              className="shrink-0 text-[10px] px-2 py-1 rounded bg-subtle hover:bg-subtle/80 text-muted hover:text-foreground border border-border transition-colors flex items-center gap-1 cursor-pointer"
+                              title={t("dt.copyUrl")}
+                            >
+                              {copiedUrl === log.url ? (
+                                <>
+                                  <svg className="w-3 h-3 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">{t("dt.urlCopied")}</span>
+                                </>
+                              ) : (
+                                <>
+                                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                                  <span>{t("dt.copyUrl")}</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Metadata Row */}
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 font-mono text-[10px]">
+                          {log.method && (
+                            <span><span className="text-muted">{t("dt.method")}:</span> <span className="font-semibold text-foreground">{log.method}</span></span>
                           )}
-                          {log.statusText && (
-                            <span><span className="text-muted">{t("dt.statusText")}:</span> {log.statusText}</span>
+                          {log.status !== undefined && (
+                            <span>
+                              <span className="text-muted">{t("dt.status")}:</span>{" "}
+                              <span className={`font-semibold ${isFailed ? "text-red-600 dark:text-red-400" : isOk ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
+                                {log.status} {effectiveStatusText ? `(${effectiveStatusText})` : ""}
+                              </span>
+                            </span>
+                          )}
+                          {log.resourceType && (
+                            <span><span className="text-muted">{t("dt.resourceType")}:</span> <span className="text-foreground capitalize">{log.resourceType}</span></span>
+                          )}
+                          {log.duration != null && (
+                            <span><span className="text-muted">{t("dt.duration")}:</span> <span className="text-foreground">{log.duration}ms</span></span>
                           )}
                           {log.error && (
-                            <span className="text-red-600 font-semibold">{t("dt.error")}: {log.error}</span>
+                            <span className="text-red-600 dark:text-red-400 font-semibold">{t("dt.error")}: {log.error}</span>
                           )}
                         </div>
+
+                        {/* Request Body */}
                         {log.requestBody != null && (
                           <div>
                             <p className="text-[10px] font-semibold uppercase tracking-wider text-muted mb-1">{t("dt.requestBody")}</p>
@@ -1242,12 +1310,20 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                             </pre>
                           </div>
                         )}
-                        {log.responseBody && (
+
+                        {/* Response Body */}
+                        {log.responseBody ? (
                           <div>
                             <p className="text-[10px] font-semibold uppercase tracking-wider text-muted mb-1">{t("dt.responseBody")}</p>
                             <pre className="p-2 rounded-lg bg-subtle border border-border font-mono text-[10px] leading-relaxed whitespace-pre-wrap break-all max-h-32 overflow-y-auto">
                               {log.responseBody}
                             </pre>
+                          </div>
+                        ) : !hasPayload && (
+                          <div className="py-2 px-2.5 rounded bg-subtle/50 border border-border/40 text-[11px] text-muted italic">
+                            {log.resourceType === "image" || log.resourceType === "stylesheet" || log.resourceType === "font"
+                              ? t("dt.noBodyStatic")
+                              : t("dt.noBodyRecorded")}
                           </div>
                         )}
                       </div>
