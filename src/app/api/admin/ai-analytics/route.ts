@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
+﻿import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-server";
 import { isRequestAdminAuthenticated } from "@/lib/admin-auth";
+import { resolvePlanWithExpiry } from "@/lib/tiers";
 
 export const runtime = "nodejs";
 
@@ -71,6 +72,71 @@ export async function GET(req: Request) {
       creator_email: c.user_id ? userEmailMap[c.user_id] || "-" : "-",
     }));
 
+    // Aggregate Top AI Cost Drivers (to catch free-tier abusers / heavy consumption)
+    let topDrivers: Array<{
+      user_id: string;
+      email: string;
+      full_name: string;
+      plan: string;
+      effective_plan: string;
+      ai_count: number;
+      estimated_tokens: number;
+      estimated_cost_usd: string;
+      is_leech: boolean;
+    }> = [];
+
+    try {
+      const { data: allAiUsers } = await supabase
+        .from("captures")
+        .select("user_id")
+        .not("ai_summary", "is", null)
+        .not("user_id", "is", null)
+        .limit(2500);
+
+      const userAiCounts: Record<string, number> = {};
+      (allAiUsers || []).forEach((c) => {
+        if (c.user_id) {
+          userAiCounts[c.user_id] = (userAiCounts[c.user_id] || 0) + 1;
+        }
+      });
+
+      const sortedUserIds = Object.entries(userAiCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 10);
+
+      if (sortedUserIds.length > 0) {
+        const { data: driversUsers } = await supabase
+          .from("users")
+          .select("id, email, full_name, plan, plan_expires_at")
+          .in("id", sortedUserIds.map(([uid]) => uid));
+
+        const driverMap = new Map((driversUsers || []).map((u) => [u.id, u]));
+
+        topDrivers = sortedUserIds.map(([uid, count]) => {
+          const u = driverMap.get(uid);
+          const effectivePlan = resolvePlanWithExpiry(u?.plan || "free", u?.plan_expires_at);
+          const tokens = count * 1200;
+          const cost = ((tokens / 1_000_000) * 1.5).toFixed(3);
+          // Flag as leech if high usage on free tier
+          const isLeech = effectivePlan === "free" && count >= 5;
+
+          return {
+            user_id: uid,
+            email: u?.email || "Unknown",
+            full_name: u?.full_name || "",
+            plan: u?.plan || "free",
+            effective_plan: effectivePlan,
+            ai_count: count,
+            estimated_tokens: tokens,
+            estimated_cost_usd: `$${cost}`,
+            is_leech: isLeech,
+          };
+        });
+      }
+    } catch (e) {
+      console.warn("Failed to compute top AI drivers:", e);
+    }
+
     // 2. API Keys Analytics
     let apiKeys: Array<{
       id: string;
@@ -127,6 +193,7 @@ export async function GET(req: Request) {
         estimatedTokens,
         estimatedCostUsd: `$${estimatedCostUsd}`,
         recentSummaries: enrichedAiCaptures,
+        topDrivers,
       },
       apiKeysStats: {
         totalKeys: totalApiKeys,

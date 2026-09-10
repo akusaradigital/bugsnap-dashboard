@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useToast } from "@/components/Toast";
@@ -10,6 +10,9 @@ interface UserItem {
   email: string;
   full_name: string | null;
   plan: string;
+  plan_expires_at?: string | null;
+  effective_plan?: string;
+  is_disposable?: boolean;
   created_at: string;
   suspended: boolean;
   google_drive_connected?: boolean;
@@ -19,6 +22,8 @@ interface UserDetail extends UserItem {
   theme?: string;
   job_role?: string;
   google_drive_email?: string;
+  stripe_search_url?: string;
+  paddle_search_url?: string;
 }
 
 interface WorkspaceInfo {
@@ -63,7 +68,9 @@ export default function AdminUsersPage() {
   const [togglingUser, setTogglingUser] = useState<string | null>(null);
   const [planModalUser, setPlanModalUser] = useState<UserItem | null>(null);
   const [selectedNewPlan, setSelectedNewPlan] = useState<string>("free");
+  const [selectedDuration, setSelectedDuration] = useState<string>("permanent");
   const [savingPlan, setSavingPlan] = useState(false);
+  const [syncingSubscription, setSyncingSubscription] = useState(false);
 
   useEffect(() => {
     loadUsers();
@@ -169,16 +176,22 @@ export default function AdminUsersPage() {
           user_id: planModalUser.id,
           action: "set_plan",
           plan: selectedNewPlan,
+          expires_in: selectedDuration,
         }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Failed to update plan");
 
+      const updatedExpiry = json.user?.plan_expires_at || null;
       setUsers((prev) =>
-        prev.map((u) => (u.id === planModalUser.id ? { ...u, plan: selectedNewPlan } : u))
+        prev.map((u) =>
+          u.id === planModalUser.id ? { ...u, plan: selectedNewPlan, plan_expires_at: updatedExpiry } : u
+        )
       );
       if (selectedUser?.id === planModalUser.id) {
-        setSelectedUser((prev) => (prev ? { ...prev, plan: selectedNewPlan } : null));
+        setSelectedUser((prev) =>
+          prev ? { ...prev, plan: selectedNewPlan, plan_expires_at: updatedExpiry } : null
+        );
       }
       showToast(t("admin.planChanged"), "success");
       setPlanModalUser(null);
@@ -186,6 +199,35 @@ export default function AdminUsersPage() {
       showToast((err as Error)?.message || "Failed to change plan", "error");
     } finally {
       setSavingPlan(false);
+    }
+  }
+
+  async function handleSyncSubscription(user: UserItem) {
+    setSyncingSubscription(true);
+    try {
+      const headers = await getAdminHeaders();
+      const res = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: user.id, action: "sync_subscription" }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || "Failed to sync subscription");
+      if (json.synced && json.plan) {
+        showToast(json.message || "Subscription synced!", "success");
+        setUsers((prev) =>
+          prev.map((u) => (u.id === user.id ? { ...u, plan: json.plan, plan_expires_at: null } : u))
+        );
+        if (selectedUser?.id === user.id) {
+          setSelectedUser((prev) => (prev ? { ...prev, plan: json.plan, plan_expires_at: null } : null));
+        }
+      } else {
+        showToast(json.message || "No active gateway subscription found", "info");
+      }
+    } catch (err: unknown) {
+      showToast((err as Error)?.message || "Failed to sync", "error");
+    } finally {
+      setSyncingSubscription(false);
     }
   }
 
@@ -340,22 +382,35 @@ export default function AdminUsersPage() {
                           </span>
                         )}
                       </div>
-                      <div className="text-[11px] text-slate-500 dark:text-zinc-400 font-mono">
-                        {u.email}
+                      <div className="text-[11px] text-slate-500 dark:text-zinc-400 font-mono flex items-center gap-1.5 mt-0.5">
+                        <span>{u.email}</span>
+                        {u.is_disposable && (
+                          <span className="px-1.5 py-0.2 rounded text-[9px] font-bold uppercase bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-300 dark:border-amber-800" title="Disposable/Throwaway Email Domain">
+                            Temp Mail
+                          </span>
+                        )}
                       </div>
                     </td>
                     <td className="py-3 px-4 whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setPlanModalUser(u);
-                          setSelectedNewPlan(u.plan || "free");
-                        }}
-                        className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 hover:ring-1 hover:ring-indigo-400 cursor-pointer transition-all"
-                        title={t("admin.changePlan")}
-                      >
-                        {u.plan || "free"} ✎
-                      </button>
+                      <div className="flex flex-col items-start gap-0.5">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setPlanModalUser(u);
+                            setSelectedNewPlan(u.plan || "free");
+                            setSelectedDuration("permanent");
+                          }}
+                          className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 hover:ring-1 hover:ring-indigo-400 cursor-pointer transition-all"
+                          title={t("admin.changePlan")}
+                        >
+                          {u.plan || "free"} ✎
+                        </button>
+                        {u.plan_expires_at && (
+                          <span className="text-[9px] text-slate-400">
+                            {new Date(u.plan_expires_at).getTime() < Date.now() ? "expired" : `exp: ${new Date(u.plan_expires_at).toLocaleDateString("id-ID", { day: "numeric", month: "short" })}`}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="py-3 px-4 whitespace-nowrap text-slate-500 dark:text-zinc-400">
                       {new Date(u.created_at).toLocaleDateString("id-ID", {
@@ -485,6 +540,26 @@ export default function AdminUsersPage() {
               ))}
             </div>
 
+            {selectedNewPlan !== "free" && (
+              <div className="pt-1">
+                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 mb-1">
+                  Durasi Paket (Comp / Gift / Trial)
+                </label>
+                <select
+                  value={selectedDuration}
+                  onChange={(e) => setSelectedDuration(e.target.value)}
+                  className="w-full text-xs rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2.5 text-slate-800 dark:text-zinc-200"
+                >
+                  <option value="permanent">Permanen / Langganan Rutin (Tanpa Expire)</option>
+                  <option value="7d">7 Hari (Trial / Demo)</option>
+                  <option value="30d">1 Bulan (30 Hari)</option>
+                  <option value="90d">3 Bulan (Quarterly Gift)</option>
+                  <option value="180d">6 Bulan</option>
+                  <option value="365d">1 Tahun (365 Hari)</option>
+                </select>
+              </div>
+            )}
+
             <div className="flex items-center justify-end gap-2 pt-2">
               <button
                 type="button"
@@ -560,6 +635,59 @@ export default function AdminUsersPage() {
                     <span className="font-bold text-slate-800 dark:text-zinc-200">
                       {userTotalCaptures}
                     </span>
+                  </div>
+                </div>
+
+                {/* Billing & Subscription Gateway Reconcile */}
+                <div className="p-3.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/70 dark:bg-zinc-950/60 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 block">
+                        Billing & Subscription Status
+                      </span>
+                      <p className="text-[11px] text-slate-500 dark:text-zinc-400">
+                        Paket: <span className="font-bold text-indigo-600 dark:text-indigo-400 uppercase">{selectedUser.plan}</span>
+                        {selectedUser.plan_expires_at ? (
+                          <span className="ml-1 text-slate-400">
+                            (Expires: {new Date(selectedUser.plan_expires_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })})
+                          </span>
+                        ) : (
+                          <span className="ml-1 text-slate-400">(Permanent / Regular)</span>
+                        )}
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={syncingSubscription}
+                      onClick={() => handleSyncSubscription(selectedUser)}
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 transition-all flex items-center gap-1.5 shadow-xs"
+                      title="Tarik status langganan live dari Stripe/Paddle"
+                    >
+                      {syncingSubscription ? "Syncing..." : "⚡ Sync from Gateway"}
+                    </button>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-200/60 dark:border-zinc-800/60">
+                    <span className="text-[10px] uppercase font-bold text-slate-400">Direct Gateway Search:</span>
+                    <a
+                      href={selectedUser.stripe_search_url || `https://dashboard.stripe.com/customers?query=${encodeURIComponent(selectedUser.email)}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+                    >
+                      <span>Stripe Dashboard</span>
+                      <span className="text-[10px]">↗</span>
+                    </a>
+                    <span className="text-slate-300 dark:text-zinc-700">•</span>
+                    <a
+                      href={selectedUser.paddle_search_url || "https://vendors.paddle.com/customers"}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+                    >
+                      <span>Paddle Dashboard</span>
+                      <span className="text-[10px]">↗</span>
+                    </a>
                   </div>
                 </div>
 

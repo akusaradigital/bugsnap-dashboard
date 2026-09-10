@@ -42,6 +42,7 @@ interface Capture {
   project_name?: string | null;
   source?: string | null;
   access_mode?: "public" | "members" | null;
+  duration?: number | null;
 }
 
 const TAG_OPTIONS = ["bug", "feature-request", "wip", "design", "other"];
@@ -371,6 +372,38 @@ function SingleViewContent() {
     return markers.slice(0, 30);
   }, [capture]);
 
+  const initialDuration = useMemo(() => {
+    if (!capture || capture.type !== "video") return 0;
+    if (typeof capture.duration === "number" && capture.duration > 0) {
+      return capture.duration;
+    }
+    if (!capture.dev_logs || !Array.isArray(capture.dev_logs)) return 0;
+
+    let maxSec = 0;
+    let earliest = 0;
+    let latest = 0;
+
+    for (const log of capture.dev_logs) {
+      if (!log) continue;
+      if (typeof log.time === "string") {
+        const match = log.time.match(/^(\d{1,3}):(\d{2})$/);
+        if (match) {
+          const sec = parseInt(match[1], 10) * 60 + parseInt(match[2], 10);
+          if (sec > maxSec) maxSec = sec;
+        }
+      }
+      const raw = log.timestamp;
+      const ts = typeof raw === "number" ? raw : typeof raw === "string" && !/^\d{1,2}:\d{2}$/.test(raw) ? new Date(raw).getTime() : 0;
+      if (Number.isFinite(ts) && ts > 0) {
+        if (earliest === 0 || ts < earliest) earliest = ts;
+        if (ts > latest) latest = ts;
+      }
+    }
+
+    const span = earliest > 0 && latest > earliest ? Math.ceil((latest - earliest) / 1000) : 0;
+    return Math.max(maxSec, span);
+  }, [capture]);
+
   // Close menus on outside click
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -526,7 +559,7 @@ function SingleViewContent() {
           const { data: directData } = await supabase
             .from("captures")
             .select(
-              "id, title, type, drive_url, description, dev_logs, os, browser, site_url, window_size, created_at, workspace_id, tag, status, allowed_domains, allowed_ips, burn_after_read, expires_at, project_id, source, access_mode"
+              "id, title, type, drive_url, description, dev_logs, os, browser, site_url, window_size, created_at, workspace_id, tag, status, allowed_domains, allowed_ips, burn_after_read, expires_at, project_id, source, access_mode, duration"
             )
             .eq("id", id)
             .single();
@@ -1059,6 +1092,7 @@ function SingleViewContent() {
                   seekToTime={seekTargetTime}
                   errorMarkers={errorMarkers}
                   accessMode={accessMode}
+                  initialDuration={initialDuration}
                 />
                 <div className="mt-5 sm:mt-7 space-y-4">
                   <div

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { useToast } from "@/components/Toast";
@@ -15,6 +15,17 @@ interface AiStats {
     type: string;
     created_at: string;
     creator_email: string;
+  }>;
+  topDrivers?: Array<{
+    user_id: string;
+    email: string;
+    full_name: string;
+    plan: string;
+    effective_plan: string;
+    ai_count: number;
+    estimated_tokens: number;
+    estimated_cost_usd: string;
+    is_leech: boolean;
   }>;
 }
 
@@ -143,6 +154,100 @@ export default function AdminAiAnalyticsPage() {
           <span className="text-[10px] text-slate-400 mt-0.5 block">
             {webhooksStats?.activeWebhooksCount || 0} active webhooks
           </span>
+        </div>
+      </div>
+
+      {/* Top AI Cost Drivers / Leech Alert Section */}
+      <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-slate-200 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+          <div>
+            <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+              <span>🔥 Top AI Cost Drivers (Heavy Consumers)</span>
+              {(aiStats?.topDrivers || []).some((d) => d.is_leech) && (
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-300 dark:border-amber-700 animate-pulse">
+                  ⚠ Free Tier Leech Detected
+                </span>
+              )}
+            </h3>
+            <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">
+              Pantau pengguna yang mengonsumsi kuota AI terbesar untuk mencegah tagihan OpenAI bocor dari akun gratis.
+            </p>
+          </div>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[10px]">
+              <tr>
+                <th className="py-3 px-4">User</th>
+                <th className="py-3 px-4">Current Plan</th>
+                <th className="py-3 px-4">AI Invocations</th>
+                <th className="py-3 px-4">Est. Tokens</th>
+                <th className="py-3 px-4">Est. USD Cost</th>
+                <th className="py-3 px-4 text-right">Action</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-zinc-800">
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="p-8 text-center text-slate-400">
+                    {t("common.loading")}
+                  </td>
+                </tr>
+              ) : (aiStats?.topDrivers || []).length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="p-8 text-center text-slate-400">
+                    Belum ada data konsumsi AI.
+                  </td>
+                </tr>
+              ) : (
+                (aiStats?.topDrivers || []).map((driver) => (
+                  <tr key={driver.user_id} className="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
+                    <td className="py-3 px-4 whitespace-nowrap">
+                      <div className="font-bold text-slate-900 dark:text-white">
+                        {driver.full_name || "Tanpa Nama"}
+                      </div>
+                      <div className="text-[11px] text-slate-500 dark:text-zinc-400 font-mono">
+                        {driver.email}
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 whitespace-nowrap">
+                      <div className="flex items-center gap-1.5">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300">
+                          {driver.effective_plan}
+                        </span>
+                        {driver.is_leech && (
+                          <span
+                            className="px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200 dark:border-rose-900"
+                            title="Akun gratis dengan konsumsi AI tinggi"
+                          >
+                            High Leech
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="py-3 px-4 whitespace-nowrap font-bold text-slate-900 dark:text-white">
+                      {driver.ai_count} calls
+                    </td>
+                    <td className="py-3 px-4 whitespace-nowrap font-mono text-slate-600 dark:text-zinc-400 text-[11px]">
+                      ~{driver.estimated_tokens.toLocaleString()}
+                    </td>
+                    <td className="py-3 px-4 whitespace-nowrap font-bold text-emerald-600 dark:text-emerald-400 font-mono">
+                      {driver.estimated_cost_usd}
+                    </td>
+                    <td className="py-3 px-4 text-right whitespace-nowrap">
+                      <a
+                        href="/admin/users"
+                        className="px-2.5 py-1 rounded text-[11px] font-semibold bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400 hover:bg-indigo-100 transition-colors"
+                      >
+                        Manage User →
+                      </a>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
 

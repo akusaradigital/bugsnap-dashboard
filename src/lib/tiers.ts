@@ -22,6 +22,21 @@ const RANK: Record<Plan, number> = {
 
 export const normalizePlan = (p: unknown): Plan => (isPlan(p) ? p : PLAN_FREE);
 
+/**
+ * Resolves effective plan considering optional plan_expires_at timestamp.
+ * If expired, drops to free.
+ */
+export const resolvePlanWithExpiry = (p: unknown, expiresAt?: string | null): Plan => {
+  const norm = normalizePlan(p);
+  if (norm === PLAN_FREE) return PLAN_FREE;
+  if (!expiresAt) return norm;
+  const expTime = new Date(expiresAt).getTime();
+  if (Number.isFinite(expTime) && expTime < Date.now()) {
+    return PLAN_FREE;
+  }
+  return norm;
+};
+
 /** true when the plan is at or above `min`. */
 export const planAtLeast = (plan: Plan, min: Plan): boolean => RANK[normalizePlan(plan)] >= RANK[min];
 

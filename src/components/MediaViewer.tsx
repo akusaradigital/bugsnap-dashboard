@@ -19,6 +19,7 @@ interface MediaViewerProps {
   errorMarkers?: ErrorMarker[];
   /** "members" makes the stream route require proof of access. */
   accessMode?: "public" | "members";
+  initialDuration?: number | null;
 }
 
 function driveFileId(url: string): string | null {
@@ -53,7 +54,8 @@ export default function MediaViewer({
   onTimeUpdate,
   seekToTime,
   errorMarkers = [],
-  accessMode = "public"
+  accessMode = "public",
+  initialDuration = 0,
 }: MediaViewerProps) {
   const { t } = useT();
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -62,6 +64,7 @@ export default function MediaViewer({
   const videoRef = useRef<HTMLVideoElement>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
+  const [isBuffering, setIsBuffering] = useState(false);
   const [playbackRate, setPlaybackRate] = useState<number>(1);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [videoFailed, setVideoFailed] = useState(false);
@@ -70,7 +73,7 @@ export default function MediaViewer({
   const [imageLoaded, setImageLoaded] = useState(false);
   const [zoom, setZoom] = useState(MIN_ZOOM);
   const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [videoDuration, setVideoDuration] = useState<number>(0);
+  const [videoDuration, setVideoDuration] = useState<number>(initialDuration || 0);
   const [currentPlaybackTime, setCurrentPlaybackTime] = useState<number>(0);
   const [hoveredMarker, setHoveredMarker] = useState<ErrorMarker | null>(null);
   const [isScrubbing, setIsScrubbing] = useState(false);
@@ -89,7 +92,6 @@ export default function MediaViewer({
   // <img>/<video> cannot send an Authorization header — so append a signature
   // fetched once below. Public captures need none and stay on the plain URL.
   const [sigQuery, setSigQuery] = useState("");
-  const [videoBlobUrl, setVideoBlobUrl] = useState<string | null>(null);
   const needsSig = accessMode === "members";
   const sigReady = !needsSig || sigQuery !== "";
   const streamUrl = fileId && sigReady ? `/api/google-drive/download?id=${encodeURIComponent(fileId)}&type=${type === "video" ? "video" : "screenshot"}&disposition=inline${sigQuery}` : null;
@@ -97,44 +99,11 @@ export default function MediaViewer({
   const previewUrl = fileId ? `https://drive.google.com/file/d/${fileId}/preview` : null;
   const [activeImageSrc, setActiveImageSrc] = useState<string | null>(imageUrl);
 
-  // Fetch full video into a local Blob URL so WebM seeking/scrubbing works instantly in-memory while paused
   useEffect(() => {
-    if (type !== "video") return;
-    const targetUrl = streamUrl || directUrl || downloadUrl;
-    if (!targetUrl) return;
-
-    let cancelled = false;
-    const controller = new AbortController();
-
-    fetch(targetUrl, { signal: controller.signal })
-      .then((res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        return res.blob();
-      })
-      .then((blob) => {
-        if (cancelled) return;
-        const blobUrl = URL.createObjectURL(blob);
-        setVideoBlobUrl((prev) => {
-          if (prev) URL.revokeObjectURL(prev);
-          return blobUrl;
-        });
-      })
-      .catch((err) => {
-        if (cancelled) return;
-        console.warn("MediaViewer: blob fetch fallback to streamUrl:", err);
-      });
-
-    return () => {
-      cancelled = true;
-      controller.abort();
-    };
-  }, [type, streamUrl, directUrl, downloadUrl]);
-
-  useEffect(() => {
-    return () => {
-      if (videoBlobUrl) URL.revokeObjectURL(videoBlobUrl);
-    };
-  }, [videoBlobUrl]);
+    if (initialDuration && initialDuration > 0 && (!videoDuration || videoDuration === 0)) {
+      setVideoDuration(initialDuration);
+    }
+  }, [initialDuration, videoDuration]);
 
   useEffect(() => {
     if (!fileId || !needsSig) { setSigQuery(""); return; }
@@ -425,10 +394,10 @@ export default function MediaViewer({
     if (!vid) return;
 
     if (vid.paused || vid.ended) {
+      const dur = effectiveDuration > 0 ? effectiveDuration : vid.duration;
       const isAtEnd =
         vid.ended ||
-        (isFinite(vid.duration) && vid.duration > 0 && Math.abs(vid.currentTime - vid.duration) < 0.25) ||
-        vid.currentTime === Infinity;
+        (isFinite(dur) && dur > 0 && Math.abs(vid.currentTime - dur) < 0.35);
       if (isAtEnd) {
         vid.currentTime = 0;
       }
@@ -439,7 +408,7 @@ export default function MediaViewer({
     } else {
       vid.pause();
     }
-  }, []);
+  }, [effectiveDuration]);
 
   // Keyboard shortcut matching extension editor: Space to toggle play/pause
   useEffect(() => {
@@ -485,14 +454,37 @@ export default function MediaViewer({
                 ref={videoRef}
                 playsInline
                 preload="auto"
-                src={videoBlobUrl || streamUrl || directUrl || downloadUrl || ""}
-                onPlay={() => setIsPlaying(true)}
-                onPause={() => setIsPlaying(false)}
+                poster={imageUrl || undefined}
+                src={streamUrl || directUrl || downloadUrl || ""}
+                onPlay={() => {
+                  setIsPlaying(true);
+                  setIsBuffering(false);
+                }}
+                onPause={() => {
+                  setIsPlaying(false);
+                  setIsBuffering(false);
+                }}
+                onWaiting={() => setIsBuffering(true)}
+                onPlaying={() => setIsBuffering(false)}
+                onCanPlay={(e) => {
+                  setIsBuffering(false);
+                  const dur = e.currentTarget.duration;
+                  if (isFinite(dur) && dur > 0 && videoDuration !== dur) {
+                    setVideoDuration(dur);
+                  }
+                }}
                 onEnded={() => {
                   setIsPlaying(false);
-                  if (videoRef.current) videoRef.current.currentTime = 0;
+                  setIsBuffering(false);
+                  if (videoRef.current) {
+                    if (isFinite(videoRef.current.currentTime) && videoRef.current.currentTime > 0) {
+                      setVideoDuration(videoRef.current.currentTime);
+                    }
+                    videoRef.current.currentTime = 0;
+                  }
                 }}
                 onSeeked={(e) => {
+                  setIsBuffering(false);
                   const vid = e.currentTarget;
                   if (!isDraggingScrubberRef.current && isFinite(vid.currentTime)) {
                     setCurrentPlaybackTime(vid.currentTime);
@@ -504,6 +496,8 @@ export default function MediaViewer({
                   const dur = e.currentTarget.duration;
                   if (isFinite(dur) && dur > 0 && videoDuration !== dur) {
                     setVideoDuration(dur);
+                  } else if (isFinite(cur) && cur > videoDuration) {
+                    setVideoDuration(cur);
                   }
                   if (!isDraggingScrubberRef.current && isFinite(cur)) {
                     setCurrentPlaybackTime(cur);
@@ -516,12 +510,6 @@ export default function MediaViewer({
                     setVideoDuration(dur);
                   }
                 }}
-                onCanPlay={(e) => {
-                  const dur = e.currentTarget.duration;
-                  if (isFinite(dur) && dur > 0 && videoDuration !== dur) {
-                    setVideoDuration(dur);
-                  }
-                }}
                 onLoadedMetadata={(e) => {
                   const vid = e.currentTarget;
                   if (isFinite(vid.duration) && vid.duration > 0) {
@@ -531,47 +519,10 @@ export default function MediaViewer({
                     try {
                       vid.currentTime = currentPlaybackTime;
                     } catch {}
-                  } else if (vid.duration === Infinity) {
-                    let settled = false;
-                    const timeout = setTimeout(() => {
-                      if (!settled) {
-                        settled = true;
-                        if (isFinite(vid.duration) && vid.duration > 0) setVideoDuration(vid.duration);
-                      }
-                    }, 2500);
-
-                    const onSeekedToStart = () => {
-                      vid.removeEventListener("seeked", onSeekedToStart);
-                      if (!settled) {
-                        settled = true;
-                        clearTimeout(timeout);
-                        if (isFinite(vid.duration) && vid.duration > 0) setVideoDuration(vid.duration);
-                      }
-                    };
-
-                    const onSeekedToEnd = () => {
-                      vid.removeEventListener("seeked", onSeekedToEnd);
-                      if (isFinite(vid.duration) && vid.duration > 0) {
-                        setVideoDuration(vid.duration);
-                      }
-                      vid.addEventListener("seeked", onSeekedToStart, { once: true });
-                      if (!isDraggingScrubberRef.current && vid.paused) {
-                        vid.currentTime = 0;
-                      }
-                    };
-
-                    if (vid.paused && vid.currentTime === 0) {
-                      vid.addEventListener("seeked", onSeekedToEnd, { once: true });
-                      try {
-                        vid.currentTime = 1e101;
-                      } catch {
-                        clearTimeout(timeout);
-                        if (isFinite(vid.duration) && vid.duration > 0) setVideoDuration(vid.duration);
-                      }
-                    }
                   }
                 }}
                 onError={() => {
+                  setIsBuffering(false);
                   if (videoRef.current && directUrl && videoRef.current.src !== directUrl) {
                     videoRef.current.src = directUrl;
                     videoRef.current.load();
@@ -584,6 +535,15 @@ export default function MediaViewer({
               >
                 {t("mv.noVideoSupport")}
               </video>
+
+              {/* Buffering Indicator */}
+              {isBuffering && isPlaying && (
+                <div className="absolute inset-0 z-20 flex items-center justify-center pointer-events-none">
+                  <div className="flex items-center justify-center h-12 w-12 rounded-full bg-black/60 backdrop-blur-xs text-white shadow-lg">
+                    <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  </div>
+                </div>
+              )}
 
               {/* HUD Play Overlay - Exact Extension Editor Behavior (.video-hud-overlay & .hud-play-btn) */}
               <div

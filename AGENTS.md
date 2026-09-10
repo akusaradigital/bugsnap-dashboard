@@ -8,6 +8,8 @@
 2. **Do NOT use shell command `cat`** to read files. Always use the dedicated `Read` tool (which handles line numbers, pagination, and caching correctly).
 3. **NEVER run `git push`** unless the user explicitly asks in that exact turn.
 4. **After applying fixes, restart the local dev server** so Next.js does not stay stuck on stale loading/HMR state (for example a plain "Loading your dashboard..." page). Restart only the BugSnap dev process, not unrelated Node.js processes.
+5. **Wajib Pake i18n**: Seluruh teks antarmuka, label form, pesan status, modal, banner, dan komponen UI di BugSnap **WAJIB** menggunakan sistem i18n (`src/lib/i18n.ts`, `I18nProvider`, `useT()`). Bahasa harus otomatis mendeteksi locale browser pengguna (`navigator.language.startsWith('id')` → `"id"`, selain itu `"en"`), atau mengikuti preferensi bahasa yang disimpan (`BugSnap.locale`). Setiap penambahan key baru harus disertakan pada kamus `en` dan `id`. Dilarang menulis teks UI langsung (*hardcoded string*).
+6. **Etika Produk & Desain**: Dilarang keras membanding-bandingkan produk dengan kompetitor di UI atau dokumentasi publik. Gunakan warna solid (tanpa gradient berlebihan), bersih, konsisten dengan token Tailwind, dan mendukung mode gelap/terang.
 
 ## Versioning (SemVer - bump before every production deploy)
 

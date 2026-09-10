@@ -5,6 +5,16 @@ import { verifyDownloadSig } from "@/lib/download-signing";
 
 export const runtime = "nodejs";
 
+interface CachedCap {
+  user_id: string | null;
+  workspace_id: string | null;
+  expires_at: string | null;
+  access_mode: "public" | "members" | null;
+}
+
+// ponytail: 60s in-memory cache to prevent repeated Supabase queries during multi-chunk video streaming
+const capCache = new Map<string, { data: CachedCap | null; expiresAt: number }>();
+
 function safeFilename(value: string, type: string) {
   const ext = type === "video" ? ".webm" : type === "logs" ? ".json" : ".png";
   const base = (value || "capture").replace(/[\\/:*?"<>| - ]/g, "-").trim().slice(0, 180) || "capture";
@@ -22,13 +32,21 @@ export async function GET(req: Request) {
 
   // Resolve the capture first: expiry has to be enforced before ANY byte is
   // streamed, otherwise the public-Drive path below serves expired captures.
-  const supabase = createServiceClient();
-  const { data: cap } = await supabase
-    .from("captures")
-    .select("user_id, workspace_id, expires_at, access_mode")
-    .or(`drive_file_id.eq.${id},id.eq.${id},drive_url.ilike.%${id}%`)
-    .limit(1)
-    .maybeSingle();
+  let cap: CachedCap | null = null;
+  const cached = capCache.get(id);
+  if (cached && cached.expiresAt > Date.now()) {
+    cap = cached.data;
+  } else {
+    const supabase = createServiceClient();
+    const { data } = await supabase
+      .from("captures")
+      .select("user_id, workspace_id, expires_at, access_mode")
+      .or(`drive_file_id.eq.${id},id.eq.${id},drive_url.ilike.%${id}%`)
+      .limit(1)
+      .maybeSingle();
+    cap = (data as CachedCap | null) ?? null;
+    capCache.set(id, { data: cap, expiresAt: Date.now() + 60_000 });
+  }
 
   if (cap?.expires_at && new Date(cap.expires_at).getTime() < Date.now()) {
     return NextResponse.json({ error: "Capture expired" }, { status: 410 });
@@ -45,6 +63,7 @@ export async function GET(req: Request) {
       if (user) {
         allowed = cap.user_id === user.id;
         if (!allowed && cap.workspace_id) {
+          const supabase = createServiceClient();
           const { data: member } = await supabase
             .from("workspace_members")
             .select("user_id")

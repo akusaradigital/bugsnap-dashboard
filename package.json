@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "node --test tests/helpers.test.mjs tests/google-drive.test.mjs tests/contract.test.mjs tests/extension-dashboard-contract.test.mjs tests/safe-url.test.mjs tests/download-signing.test.mjs tests/redact.test.mjs tests/experiments.test.mjs tests/paddle-webhook.test.mjs tests/ignored-urls.test.mjs",
+    "test": "node --test tests/helpers.test.mjs tests/google-drive.test.mjs tests/contract.test.mjs tests/extension-dashboard-contract.test.mjs tests/safe-url.test.mjs tests/download-signing.test.mjs tests/redact.test.mjs tests/experiments.test.mjs tests/paddle-webhook.test.mjs tests/ignored-urls.test.mjs tests/party-classification.test.mjs tests/devtools-derived.test.mjs tests/disposable-email.test.mjs tests/video-duration-calc.test.mjs",
     "test:integration": "node --test tests/rpc.test.mjs"
   },
   "dependencies": {

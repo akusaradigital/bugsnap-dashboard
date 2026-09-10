@@ -9,6 +9,9 @@ import { isIgnoredUrl, TRACKER_PATTERNS } from "@/lib/ignored-urls";
 export { isIgnoredUrl, TRACKER_PATTERNS };
 
 interface TimedLog {
+  /** Position in the original `logs` array. Set when a derived list makes a
+   *  spread copy, so breadcrumb lookup does not need reference identity. */
+  srcIdx?: number;
   time?: string | number;
   timestamp?: string | number;
   count?: number;
@@ -41,17 +44,27 @@ export interface ActionLog extends TimedLog {
   message?: string;
 }
 
-const ACTION_LABELS: Record<string, string> = {
-  click: "Click",
-  clicked: "Click",
-  typing: "Typing",
-  type: "Typing",
-  typed: "Typing",
-  input: "Input",
-  navigate: "Navigation",
-  navigation: "Navigation",
-  navigated: "Navigation",
-  screenshot: "Screenshot",
+// One place decides an action's kind, so the chip filter and the row badge can
+// never disagree about what a row is.
+function actionKind(log: { type: string; message?: string }): "click" | "typing" | "input" | "navigation" | "screenshot" | null {
+  const firstWord = (log.message || "").toLowerCase().split(/\s+/)[0];
+  return ACTION_KINDS[firstWord] || ACTION_KINDS[log.type] || null;
+}
+
+// Values are i18n keys, not display strings - the label is resolved at render.
+// The bare kind (right column) is what the UI branches on, so it stays stable
+// regardless of locale; only the visible label goes through t().
+const ACTION_KINDS: Record<string, "click" | "typing" | "input" | "navigation" | "screenshot"> = {
+  click: "click",
+  clicked: "click",
+  typing: "typing",
+  type: "typing",
+  typed: "typing",
+  input: "input",
+  navigate: "navigation",
+  navigation: "navigation",
+  navigated: "navigation",
+  screenshot: "screenshot",
 };
 
 export interface NavigationLog extends TimedLog {
@@ -193,6 +206,19 @@ function normalizeLevel(level?: string) {
   return normalized === "warning" ? "warn" : normalized;
 }
 
+function isConsoleError(log: ConsoleLog) {
+  const level = normalizeLevel(log.level);
+  return level === "error" || Boolean(log.stack) || /(uncaught|exception|error|failed)/i.test(consoleText(log));
+}
+
+function isNetworkFailed(log: NetworkLog) {
+  return !log.status || log.status >= 400 || log.status === 0 || Boolean(log.error);
+}
+
+function consoleDetail(log: ConsoleLog | NavigationLog | ScreenshotLog) {
+  return log.type === "console" ? consoleText(log) : log.message || ("url" in log ? log.url : "") || "";
+}
+
 function canonicalUrl(value?: string) {
   return (value || "").split("#", 1)[0];
 }
@@ -216,7 +242,7 @@ function conciseConsoleText(log: ConsoleLog) {
     .map((line) => line.trim())
     .filter(Boolean);
   const meaningful = lines.find((line, index) => index === 0 || !/(webpack|node_modules|react-dom|chrome-extension:|^at (?:__webpack|webpack))/i.test(line));
-  return meaningful || lines[0] || "Console error";
+  return meaningful || lines[0] || "";
 }
 
 function cleanStackTrace(stack?: string | null): string {
@@ -252,7 +278,9 @@ function getTargetHost(siteUrl?: string | null): string {
   if (!siteUrl) return "";
   try {
     const parsed = new URL(siteUrl.startsWith("http") ? siteUrl : `https://${siteUrl}`);
-    return parsed.hostname;
+    // Strip www. so "www.example.com" matches a request to "example.com".
+    // The reverse already matches via the endsWith("." + target) check below.
+    return parsed.hostname.replace(/^www\./i, "");
   } catch {
     return "";
   }
@@ -260,12 +288,16 @@ function getTargetHost(siteUrl?: string | null): string {
 
 function isFirstPartyUrl(url?: string, targetHost?: string): boolean {
   if (!url || !targetHost) return true;
+  const target = targetHost.toLowerCase();
   try {
-    const host = new URL(url).hostname.toLowerCase();
-    const target = targetHost.toLowerCase();
+    // Relative paths ("/api/orders") are the shape a first-party API call takes
+    // and throw without a base, so resolve against the site under test.
+    const host = new URL(url, `https://${target}`).hostname.toLowerCase();
+    // data: and blob: parse fine but have no hostname - they came from the page.
+    if (!host) return true;
     return host === target || host.endsWith("." + target);
   } catch {
-    return false;
+    return true;
   }
 }
 
@@ -290,6 +322,14 @@ const HTTP_STATUS_TEXT: Record<number, string> = {
   503: "Service Unavailable",
   504: "Gateway Timeout",
 };
+
+function statusLabel(t: (k: string) => string, status?: number): string {
+  if (!status) return "";
+  const key = `dt.st.${status}`;
+  const hit = t(key);
+  // translate() returns the key itself when there is no entry.
+  return hit === key ? HTTP_STATUS_TEXT[status] || `HTTP ${status}` : hit;
+}
 
 function isClassSoup(text: string) {
   const tokens = text.split(/\s+/).filter(Boolean);
@@ -472,14 +512,17 @@ export function buildMarkdownBugReport({
   networkErrors: NetworkLog[];
   actionLogs: (ActionLog | NavigationLog | ScreenshotLog)[];
   storage?: StorageLog["storage"];
-  findPrecedingAction: (log: TimedLog) => { message: string; deltaSec: number | null } | null;
+  findPrecedingAction: (log: TimedLog, knownIdx?: number) => { message: string; deltaSec: number | null } | null;
 }): string {
   const totalIssues = consoleErrors.length + networkErrors.length;
   const sections: string[] = [];
 
-  sections.push(`## 🐛 Bug Report: ${capture.site_url || "Session Capture"}`);
+  // Plain headings and no zero-valued lines: a pasted report is read in an issue
+  // tracker, where emoji headings and "Failed Network Requests: 0" are noise the
+  // reader has to scan past to reach the two lines that matter.
+  sections.push(`## Bug Report: ${capture.site_url || "Session Capture"}`);
   sections.push("");
-  sections.push("### 📋 Environment");
+  sections.push("### Environment");
   sections.push(`- **URL**: ${capture.site_url || "-"}`);
   if (targetHost) sections.push(`- **Target Host**: ${targetHost}`);
   sections.push(`- **OS**: ${detectedOs}`);
@@ -488,16 +531,18 @@ export function buildMarkdownBugReport({
   sections.push(`- **Captured At**: ${createdAt}`);
   if (capture.drive_url) sections.push(`- **Session Recording**: [View Recording](${capture.drive_url})`);
 
-  sections.push("");
-  sections.push(`### ⚠️ Issues Overview (${totalIssues} detected)`);
-  sections.push(`- **Console Errors**: ${consoleErrors.length}`);
-  sections.push(`- **Failed Network Requests**: ${networkErrors.length}`);
+  if (totalIssues > 0) {
+    sections.push("");
+    sections.push(`### Issues Overview (${totalIssues} detected)`);
+    if (consoleErrors.length > 0) sections.push(`- **Console Errors**: ${consoleErrors.length}`);
+    if (networkErrors.length > 0) sections.push(`- **Failed Network Requests**: ${networkErrors.length}`);
+  }
 
   if (consoleErrors.length > 0) {
     sections.push("");
-    sections.push("### 🚨 Console Errors");
+    sections.push("### Console Errors");
     consoleErrors.slice(0, 5).forEach((err, idx) => {
-      const msg = conciseConsoleText(err);
+      const msg = conciseConsoleText(err) || "Console error";
       const preceding = findPrecedingAction(err);
       sections.push(`${idx + 1}. \`${msg}\``);
       if (preceding) {
@@ -516,7 +561,7 @@ export function buildMarkdownBugReport({
 
   if (networkErrors.length > 0) {
     sections.push("");
-    sections.push("### 🌐 Failed Network Requests");
+    sections.push("### Failed Network Requests");
     networkErrors.slice(0, 5).forEach((req, idx) => {
       const method = (req.method || "GET").toUpperCase();
       const status = req.status || "FAIL";
@@ -534,12 +579,17 @@ export function buildMarkdownBugReport({
 
   if (actionLogs.length > 0) {
     sections.push("");
-    sections.push("### 👣 Steps to Reproduce (Recent Actions)");
+    sections.push("### Steps to Reproduce (Recent Actions)");
     const recent = actionLogs.slice(-10);
-    recent.forEach((act, idx) => {
-      const msg = act.message || ("url" in act ? `Navigate to ${act.url}` : act.type);
-      sections.push(`${idx + 1}. ${msg}`);
+    let step = 0;
+    recent.forEach((act) => {
+      const msg = (act.message || ("url" in act && act.url ? `Navigate to ${act.url}` : "")).trim();
+      // A step with no target is not reproducible, so it is not a step.
+      if (!msg) return;
+      sections.push(`${++step}. ${msg}`);
     });
+    // Heading AND the blank line before it, or the report grows a stray gap.
+    if (step === 0) sections.splice(-2, 2);
   }
 
   if (storage) {
@@ -547,7 +597,7 @@ export function buildMarkdownBugReport({
     const sessionKeys = Object.keys(storage.sessionStorage || {});
     if (localKeys.length > 0 || sessionKeys.length > 0) {
       sections.push("");
-      sections.push("### 💾 Storage Snapshot");
+      sections.push("### Storage Snapshot");
       if (localKeys.length > 0) {
         sections.push(`- **localStorage** (${localKeys.length} items): \`${localKeys.slice(0, 10).join("`, `")}${localKeys.length > 10 ? "..." : ""}\``);
       }
@@ -641,6 +691,40 @@ export function buildHarExport(networkLogs: NetworkLog[], siteUrl?: string | nul
   return JSON.stringify(har, null, 2);
 }
 
+// Zero rows has two causes that used to print the same sentence: the capture
+// holds nothing, or a filter hid everything. The second needs a way out, so it
+// gets the reason and a reset button instead of a dead end.
+function EmptyLogState({
+  filtered,
+  emptyText,
+  onReset,
+  t,
+}: {
+  filtered: boolean;
+  emptyText: string;
+  onReset: () => void;
+  t: (key: string, vars?: Record<string, string | number>) => string;
+}) {
+  if (!filtered) {
+    return <div className="py-14 text-center text-xs text-muted">{emptyText}</div>;
+  }
+  return (
+    <div className="py-14 flex flex-col items-center gap-2 text-center text-xs text-muted px-4">
+      <svg className="w-7 h-7 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
+      <p>{t("dt.noMatches") || "No rows match the current filters"}</p>
+      <button
+        type="button"
+        onClick={onReset}
+        className="mt-1 px-2.5 py-1 rounded-md text-[11px] font-medium bg-subtle border border-border text-foreground hover:bg-subtle/70 transition-colors"
+      >
+        {t("dt.resetFilters") || "Reset filters"}
+      </button>
+    </div>
+  );
+}
+
 function ActionBreadcrumb({
   action,
   t,
@@ -649,15 +733,17 @@ function ActionBreadcrumb({
   t: (key: string) => string;
 }) {
   return (
-    <div className="mt-1.5 flex items-center gap-1.5 text-[10px] text-zinc-600 dark:text-zinc-400 bg-amber-500/10 dark:bg-amber-500/15 px-2 py-1 rounded-md border border-amber-500/20 dark:border-amber-500/30 font-sans">
+    /* Wraps rather than truncates: the action label is the whole point of the
+       breadcrumb, and `Clicked button: "Re...` identifies nothing. */
+    <div className="mt-1.5 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 text-[10px] text-zinc-600 dark:text-zinc-400 bg-amber-500/10 dark:bg-amber-500/15 px-2 py-1 rounded-md border border-amber-500/20 dark:border-amber-500/30 font-sans">
       <span className="text-amber-600 dark:text-amber-400 font-semibold shrink-0">
         ↳ {t("dt.triggeredAfter") || "Triggered after"}:
       </span>
-      <span className="font-medium text-foreground truncate" title={action.message}>
+      <span className="font-medium text-foreground break-words min-w-0">
         {action.message}
       </span>
       {action.deltaSec != null && (
-        <span className="text-[9px] font-mono text-muted shrink-0 ml-auto tabular-nums">
+        <span className="text-[9px] font-mono text-muted shrink-0 tabular-nums">
           ({action.deltaSec < 1 ? "<1s" : `${action.deltaSec.toFixed(1)}s`} {t("dt.prior") || "prior"})
         </span>
       )}
@@ -671,10 +757,20 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
   const [consoleErrorsOnly, setConsoleErrorsOnly] = useState(false);
   const [networkFailedOnly, setNetworkFailedOnly] = useState(false);
   const [networkPartyFilter, setNetworkPartyFilter] = useState<"all" | "1st" | "3rd">("all");
+  // Actions was the only list tab with no chips - just the shared search box.
+  const [actionKindFilter, setActionKindFilter] = useState<string>("all");
   const [logSearch, setLogSearch] = useState("");
+  const resetLogFilters = () => {
+    setLogSearch("");
+    setConsoleErrorsOnly(false);
+    setNetworkFailedOnly(false);
+    setNetworkPartyFilter("all");
+    setActionKindFilter("all");
+  };
   const [decompressedLogs, setDecompressedLogs] = useState<CapturedLogs>(capture.dev_logs || null);
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
   const [copiedCurl, setCopiedCurl] = useState<string | null>(null);
+  const [copiedConsole, setCopiedConsole] = useState<string | null>(null);
 
   const handleCopyUrl = (url: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -682,6 +778,21 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
       navigator.clipboard.writeText(url);
       setCopiedUrl(url);
       setTimeout(() => setCopiedUrl(null), 2000);
+    } catch {}
+  };
+
+  // Network rows already had copy-URL and copy-curl; a console error had none, so
+  // pasting one into a ticket meant hand-selecting message and stack separately.
+  const handleCopyConsole = (log: ConsoleLog | NavigationLog | ScreenshotLog, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const body = log.type === "console" ? consoleText(log) : log.message || ("url" in log ? log.url || "" : "");
+    const stack = log.type === "console" ? cleanStackTrace(log.stack) : "";
+    try {
+      navigator.clipboard.writeText(stack ? `${body}
+
+${stack}` : body);
+      setCopiedConsole(body);
+      setTimeout(() => setCopiedConsole(null), 2000);
     } catch {}
   };
 
@@ -696,6 +807,10 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
   };
 
   useEffect(() => {
+    // Switching captures while a slow Drive fetch is in flight used to let the
+    // old capture's logs land in the new capture's panel. Ignore any resolution
+    // that arrives after this effect has been superseded.
+    let cancelled = false;
     let raw: unknown = capture.dev_logs;
     if (typeof raw === "string" && (raw.startsWith("{") || raw.startsWith("["))) {
       try {
@@ -722,45 +837,73 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
           return res.json();
         })
         .then((fullLogs) => {
+          if (cancelled) return;
           if (Array.isArray(fullLogs)) {
             setDecompressedLogs(fullLogs as CapturedLogs);
           }
         })
         .catch((err) => {
+          if (cancelled) return;
           console.warn("Could not load external logs from Google Drive:", err);
-          setDecompressedLogs(raw as CapturedLogs);
+          // The bare Drive reference has no `version`, so isSummary() rejects it
+          // and the panel renders empty. Surface the counts it does carry.
+          const ref = raw as DriveExternalLogReference;
+          setDecompressedLogs({
+            version: 1,
+            errors: ref.errors || 0,
+            warnings: ref.warnings || 0,
+            failedRequests: 0,
+          } satisfies DevLogSummary);
         });
       return;
     }
 
     if (typeof capture.dev_logs === "string" && capture.dev_logs.startsWith("gz:")) {
       decompressDevLogs(capture.dev_logs).then((res) => {
-        if (res) setDecompressedLogs(res as CapturedLogs);
+        if (!cancelled && res) setDecompressedLogs(res as CapturedLogs);
       });
     } else {
       setDecompressedLogs(capture.dev_logs || null);
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, [capture.dev_logs]);
 
   const effectiveDevLogs = decompressedLogs;
   const summaryOnly = !Array.isArray(effectiveDevLogs) && isSummary(effectiveDevLogs);
-  const logs: DevLog[] = Array.isArray(effectiveDevLogs)
-    ? (effectiveDevLogs as unknown[]).map((log) => normalizeDevLog((log || {}) as Record<string, unknown>))
-    : [];
+  // Must be memoized: a fresh array identity here invalidates every downstream
+  // useMemo that lists `logs` as a dependency, which is all of them. Without
+  // this, one keystroke in the log search re-normalizes and re-groups the whole
+  // 500-entry ring.
+  const logs: DevLog[] = useMemo(
+    () =>
+      Array.isArray(effectiveDevLogs)
+        ? (effectiveDevLogs as unknown[]).map((log) => normalizeDevLog((log || {}) as Record<string, unknown>))
+        : [],
+    [effectiveDevLogs]
+  );
   const summary = summaryOnly ? (effectiveDevLogs as DevLogSummary) : null;
 
-  const earliestTimestamp = logs.reduce<number>((min, log) => {
-    const raw = log.timestamp;
-    const ts =
-      typeof raw === "number"
-        ? raw
-        : typeof raw === "string" && !/^\d{1,2}:\d{2}$/.test(raw)
-          ? new Date(raw).getTime()
-          : 0;
-    return Number.isFinite(ts) && ts > 0 && (min === 0 || ts < min) ? ts : min;
-  }, 0);
+  const earliestTimestamp = useMemo(
+    () =>
+      logs.reduce<number>((min, log) => {
+        const raw = log.timestamp;
+        const ts =
+          typeof raw === "number"
+            ? raw
+            : typeof raw === "string" && !/^\d{1,2}:\d{2}$/.test(raw)
+              ? new Date(raw).getTime()
+              : 0;
+        return Number.isFinite(ts) && ts > 0 && (min === 0 || ts < min) ? ts : min;
+      }, 0),
+    [logs]
+  );
 
-  const getRelativeTime = (log: TimedLog) => {
+  // Both are dependencies of the memos below, so they need stable identities of
+  // their own or those memos never hit cache.
+  const getRelativeTime = useCallback((log: TimedLog) => {
     // If it's a screenshot, there is no "video duration", so we just want absolute wall clock time.
     if (capture.type === "screenshot" && log.timestamp && Number(log.timestamp)) {
       return new Date(Number(log.timestamp)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -775,9 +918,9 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
     if (elapsed < 1000) return `${Math.max(0, elapsed)}ms`;
     if (elapsed < 60000) return `${(elapsed / 1000).toFixed(1)}s`;
     return `${Math.floor(elapsed / 60000)}m ${Math.floor((elapsed % 60000) / 1000)}s`;
-  };
+  }, [capture.type, earliestTimestamp]);
 
-  const getLogSeconds = (log: TimedLog): number | null => {
+  const getLogSeconds = useCallback((log: TimedLog): number | null => {
     const value = log.time || log.timestamp;
     if (!value) return null;
     if (typeof value === "string") {
@@ -791,7 +934,7 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
       return (ts - earliestTimestamp) / 1000;
     }
     return null;
-  };
+  }, [earliestTimestamp]);
 
   const targetHost = useMemo(() => {
     if (capture.site_url) return getTargetHost(capture.site_url);
@@ -800,10 +943,25 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
     return "";
   }, [capture.site_url, logs]);
 
+  // Every action/navigation index, ascending, built once per capture. The
+  // timestamp fallback below scanned and sorted the whole log for each rendered
+  // error row - O(n log n) per row over a 500-entry ring.
+  const actionIndex = useMemo(() => {
+    const out: { idx: number; sec: number | null; log: ActionLog | NavigationLog }[] = [];
+    logs.forEach((l, idx) => {
+      if (l.type === "step" || l.type === "navigation") out.push({ idx, sec: getLogSeconds(l), log: l });
+    });
+    return out;
+  }, [logs, getLogSeconds]);
+
   const findPrecedingAction = useCallback(
-    (errLog: TimedLog) => {
+    (errLog: TimedLog, knownIdx?: number) => {
       const errSec = getLogSeconds(errLog);
-      const errIdx = logs.indexOf(errLog as DevLog);
+      // indexOf is reference-based, but actionLogs and groupedNetworkLogs both
+      // hand out spread copies - it returned -1 for every row from those lists
+      // and silently fell through to the slow path. Callers that know their own
+      // position pass it in; the lookup stays as a fallback for those that don't.
+      const errIdx = knownIdx ?? logs.indexOf(errLog as DevLog);
 
       if (errIdx > 0) {
         for (let i = errIdx - 1; i >= 0; i--) {
@@ -820,14 +978,17 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
       }
 
       if (errSec !== null) {
-        const candidateActions = logs
-          .filter((l): l is ActionLog | NavigationLog => l.type === "step" || l.type === "navigation")
-          .map((l) => ({ log: l, sec: getLogSeconds(l) }))
-          .filter((item) => item.sec !== null && (item.sec as number) <= errSec)
-          .sort((a, b) => (b.sec as number) - (a.sec as number));
+        // actionIndex is already in log order; walk back for the latest action
+        // at or before the error instead of re-filtering and sorting.
+        let best: { sec: number | null; log: ActionLog | NavigationLog } | null = null;
+        for (let i = actionIndex.length - 1; i >= 0; i--) {
+          const cand = actionIndex[i];
+          if (cand.sec !== null && cand.sec <= errSec) {
+            if (best === null || (cand.sec as number) > (best.sec as number)) best = cand;
+          }
+        }
 
-        if (candidateActions.length > 0) {
-          const best = candidateActions[0];
+        if (best) {
           const deltaSec = errSec - (best.sec as number);
           if (deltaSec <= 30) {
             const message = cleanActionMessage(best.log.message || ("url" in best.log ? `Navigated to ${best.log.url}` : ""));
@@ -840,7 +1001,7 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
 
       return null;
     },
-    [logs, earliestTimestamp]
+    [logs, getLogSeconds, actionIndex]
   );
 
   const isLogActive = (log: TimedLog) => {
@@ -848,6 +1009,29 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
     const sec = getLogSeconds(log);
     if (sec === null) return false;
     return Math.abs(currentTime - sec) < 1.5;
+  };
+
+  // The time badge was the only way to jump the video, and nobody finds a 10px
+  // pill. Whole row is the target now; the badge stays as the visible affordance.
+  const seekProps = (log: TimedLog) => {
+    const sec = getLogSeconds(log);
+    if (!onSeekToTime || sec === null || capture.type !== "video") return {};
+    const jump = () => onSeekToTime(sec);
+    return {
+      onClick: jump,
+      // A div is not focusable or Enter-activatable on its own, and this is the
+      // primary way to navigate the capture - it has to reach the keyboard.
+      role: "button" as const,
+      tabIndex: 0,
+      onKeyDown: (e: React.KeyboardEvent) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          jump();
+        }
+      },
+      title: t("dt.jumpVideoTo", { time: getRelativeTime(log) }),
+      className: "cursor-pointer",
+    };
   };
 
   const renderTimeBadge = (log: TimedLog) => {
@@ -864,7 +1048,7 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
             onSeekToTime(sec);
           }}
           className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-zinc-100 hover:bg-indigo-100 text-muted hover:text-indigo-600 dark:bg-zinc-800 dark:hover:bg-indigo-900/60 dark:hover:text-indigo-300 border border-border/80 transition-colors cursor-pointer shrink-0"
-          title={`Click to jump video to ${relTime}`}
+          title={t("dt.jumpVideoTo", { time: relTime })}
         >
           <span className="text-[8px] text-indigo-500">▶</span>
           <span>{relTime}</span>
@@ -879,45 +1063,89 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
     );
   };
 
-  const networkLogs = logs
-    .filter((l): l is NetworkLog => l.type === "network")
-    .filter((l) => {
-      if (isTracker(l.url)) return false;
-      return !logSearch || (l.url || "").toLowerCase().includes(logSearch.toLowerCase());
-    });
+  // all* is tracker-filtered but not search-filtered. Tracker rows are noise that
+  // is never wanted; the search query is a view the tab badges must not follow.
+  //
+  // Every one of these used to recompute on each render - which meant on every
+  // search keystroke AND every currentTime tick from the video player, for a
+  // list that can hold 500 entries. The memo deps are the only real inputs.
+  const matchesSearch = useCallback(
+    (text: string) => !logSearch || text.toLowerCase().includes(logSearch.toLowerCase()),
+    [logSearch]
+  );
+
+  const allNetworkLogs = useMemo(
+    () =>
+      logs
+        .map((l, srcIdx) => (l.type === "network" ? { ...l, srcIdx } : null))
+        .filter((l): l is NetworkLog & { srcIdx: number } => l !== null && !isTracker(l.url)),
+    [logs]
+  );
+  const networkLogs = useMemo(
+    () => allNetworkLogs.filter((l) => matchesSearch(l.url || "")),
+    [allNetworkLogs, matchesSearch]
+  );
 
   const eventTime = (log: TimedLog) => log.time || log.timestamp || "";
 
-  const consoleLogs = logs
-    .filter((log) => log.type === "console" || log.type === "navigation" || log.type === "screenshot")
-    .filter((log) => {
-      const detail = log.type === "console" ? consoleText(log) : log.message || ("url" in log ? log.url : "") || "";
-      if (isTracker(detail) || ("url" in log && isTracker(log.url))) return false;
-      return !logSearch || detail.toLowerCase().includes(logSearch.toLowerCase());
-    });
-
-  const actionLogs = logs
-    .filter((l): l is ActionLog | NavigationLog | ScreenshotLog => l.type === "step" || l.type === "navigation" || l.type === "screenshot")
-    .map((log) => ({ ...log, message: cleanActionMessage(log.message) }))
-    .filter((l) => !logSearch || `${l.message || ""} ${"url" in l ? l.url || "" : ""}`.toLowerCase().includes(logSearch.toLowerCase()));
-  
-  const groupedNetworkLogs = groupBy(
-    networkLogs,
-    (log) => `${(log.method || "GET").toUpperCase()}\u0000${log.status ?? "FAILED"}\u0000${canonicalUrl(log.url)}`,
-    (log) => ({ ...log, url: canonicalUrl(log.url) })
+  const allConsoleLogs = useMemo<(ConsoleLog | NavigationLog | ScreenshotLog)[]>(
+    () =>
+      logs
+        .map((log, srcIdx) => ({ log, srcIdx }))
+        .filter((e): e is { log: ConsoleLog | NavigationLog | ScreenshotLog; srcIdx: number } =>
+          e.log.type === "console" || e.log.type === "navigation" || e.log.type === "screenshot")
+        .filter(({ log }) => !isTracker(consoleDetail(log)) && !("url" in log && isTracker(log.url)))
+        .map(({ log, srcIdx }) => ({ ...log, srcIdx })),
+    [logs]
+  );
+  const consoleLogs = useMemo(
+    () => allConsoleLogs.filter((log) => matchesSearch(consoleDetail(log))),
+    [allConsoleLogs, matchesSearch]
   );
 
-  const isConsoleError = (log: ConsoleLog) => {
-    const level = normalizeLevel(log.level);
-    return level === "error" || Boolean(log.stack) || /(uncaught|exception|error|failed)/i.test(consoleText(log));
-  };
+  const allActionLogs = useMemo(
+    () =>
+      logs
+        .map((log, srcIdx) => ({ log, srcIdx }))
+        .filter((e): e is { log: ActionLog | NavigationLog | ScreenshotLog; srcIdx: number } =>
+          e.log.type === "step" || e.log.type === "navigation" || e.log.type === "screenshot")
+        .map(({ log, srcIdx }) => ({ ...log, srcIdx, message: cleanActionMessage(log.message) })),
+    [logs]
+  );
+  const actionLogs = useMemo(
+    () =>
+      allActionLogs
+        .filter((l) => actionKindFilter === "all" || actionKind(l) === actionKindFilter)
+        .filter((l) => matchesSearch(`${l.message || ""} ${"url" in l ? l.url || "" : ""}`)),
+    [allActionLogs, matchesSearch, actionKindFilter]
+  );
 
-  const isNetworkFailed = (log: NetworkLog) => {
-    return !log.status || log.status >= 400 || log.status === 0 || Boolean(log.error);
-  };
+  // Only offer a chip for a kind the capture contains - a zero chip is a dead
+  // control. Counted before the search filter, like the tab badges.
+  const actionKindCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    allActionLogs.forEach((l) => {
+      const k = actionKind(l);
+      if (k) counts.set(k, (counts.get(k) || 0) + 1);
+    });
+    return counts;
+  }, [allActionLogs]);
 
-  const consoleErrors = consoleLogs.filter((l): l is ConsoleLog => l.type === "console" && isConsoleError(l));
-  const networkErrors = networkLogs.filter(isNetworkFailed);
+  const groupedNetworkLogs = useMemo(
+    () =>
+      groupBy(
+        networkLogs,
+        (log) => `${(log.method || "GET").toUpperCase()}\u0000${log.status ?? "FAILED"}\u0000${canonicalUrl(log.url)}`,
+        (log) => ({ ...log, url: canonicalUrl(log.url) })  // srcIdx rides along in the spread
+      ),
+    [networkLogs]
+  );
+
+  const consoleErrors = useMemo(
+    () => consoleLogs.filter((l): l is ConsoleLog => l.type === "console" && isConsoleError(l)),
+    [consoleLogs]
+  );
+  const networkErrors = useMemo(() => networkLogs.filter(isNetworkFailed), [networkLogs]);
   const totalIssuesCount = summary
     ? (summary.errors || 0) + (summary.failedRequests || 0)
     : consoleErrors.length + networkErrors.length;
@@ -928,22 +1156,30 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
     log: ConsoleLog | NetworkLog;
   };
 
-  const issueItems: IssueItem[] = [
-    ...consoleErrors.map((log, i) => ({ id: `err_c_${i}`, type: "console" as const, log })),
-    ...networkErrors.map((log, i) => ({ id: `err_n_${i}`, type: "network" as const, log })),
-  ];
+  const issueItems: IssueItem[] = useMemo(
+    () => [
+      ...consoleErrors.map((log, i) => ({ id: `err_c_${i}`, type: "console" as const, log })),
+      ...networkErrors.map((log, i) => ({ id: `err_n_${i}`, type: "network" as const, log })),
+    ],
+    [consoleErrors, networkErrors]
+  );
 
-  const visibleConsoleLogs = consoleErrorsOnly
-    ? consoleLogs.filter((l) => l.type === "console" && isConsoleError(l))
-    : consoleLogs;
+  const visibleConsoleLogs = useMemo(
+    () => (consoleErrorsOnly ? consoleLogs.filter((l) => l.type === "console" && isConsoleError(l)) : consoleLogs),
+    [consoleLogs, consoleErrorsOnly]
+  );
 
-  const visibleGroupedNetworkLogs = groupedNetworkLogs
-    .filter(({ log }) => !networkFailedOnly || isNetworkFailed(log))
-    .filter(({ log }) => {
-      if (networkPartyFilter === "all" || !targetHost) return true;
-      const is1st = isFirstPartyUrl(log.url, targetHost);
-      return networkPartyFilter === "1st" ? is1st : !is1st;
-    });
+  const visibleGroupedNetworkLogs = useMemo(
+    () =>
+      groupedNetworkLogs
+        .filter(({ log }) => !networkFailedOnly || isNetworkFailed(log))
+        .filter(({ log }) => {
+          if (networkPartyFilter === "all" || !targetHost) return true;
+          const is1st = isFirstPartyUrl(log.url, targetHost);
+          return networkPartyFilter === "1st" ? is1st : !is1st;
+        }),
+    [groupedNetworkLogs, networkFailedOnly, networkPartyFilter, targetHost]
+  );
 
   const firstPartyCount = useMemo(
     () => (targetHost ? networkLogs.filter((l) => isFirstPartyUrl(l.url, targetHost)).length : 0),
@@ -953,6 +1189,10 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
     () => (targetHost ? networkLogs.filter((l) => !isFirstPartyUrl(l.url, targetHost)).length : 0),
     [networkLogs, targetHost]
   );
+  // A per-row 1ST/3RD badge only informs when the capture actually mixes the two.
+  // When every request is one party the badge is 96 identical stamps of noise -
+  // and it reads as wrong on sibling subdomains (dev-fe -> dev-be is stamped 3RD).
+  const partyIsMixed = firstPartyCount > 0 && thirdPartyCount > 0;
 
   const performanceLog = logs.findLast((l): l is PerformanceLog => l.type === "performance");
   const metrics = performanceLog?.metrics;
@@ -963,6 +1203,25 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
   const [copiedStorageKey, setCopiedStorageKey] = useState<string | null>(null);
   const [copiedAllStorage, setCopiedAllStorage] = useState(false);
   const [copiedBugReport, setCopiedBugReport] = useState(false);
+
+  // <details> closes itself on the summary, but not on a click elsewhere. One
+  // capture-phase listener flips `open` back off; no state, so no re-render.
+  const eventMenuRef = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    const close = (e: Event) => {
+      const el = eventMenuRef.current;
+      if (el?.open && !el.contains(e.target as Node)) el.open = false;
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && eventMenuRef.current?.open) eventMenuRef.current.open = false;
+    };
+    document.addEventListener("pointerdown", close, true);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", close, true);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, []);
 
   const [timeZoneMode, setTimeZoneMode] = useState<"capture" | "local" | "utc">("capture");
   const [showTzMenu, setShowTzMenu] = useState(false);
@@ -1060,73 +1319,143 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
     }
   };
 
-  const tabLabel = (tab: Tab) => {
-    if (tab === "Issues") return `${t("dt.issues") || "Issues"} (${totalIssuesCount})`;
-    if (tab === "Console" && consoleLogs.length) return `${t("dt.console")} (${totalLogCount(consoleLogs)})`;
-    if (tab === "Network" && networkLogs.length) return `${t("dt.network")} (${totalLogCount(networkLogs)})`;
-    if (tab === "Actions" && actionLogs.length)  return `${t("dt.actions")} (${totalLogCount(actionLogs)})`;
-    if (tab === "Storage") {
-      const totalStorageKeys = Object.keys(storageData?.localStorage || {}).length + Object.keys(storageData?.sessionStorage || {}).length;
-      return totalStorageKeys > 0 ? `${t("dt.storage") || "Storage"} (${totalStorageKeys})` : (t("dt.storage") || "Storage");
-    }
+  // Name and count are separate so the count can render as a compact pill: six
+  // tabs with "(96)" inline overflowed the panel width and forced a scrollbar.
+  // Counted from the unfiltered logs: these badges are the shape of the capture,
+  // not of the current query. Reading consoleLogs/networkLogs here meant typing
+  // in Console also shrank the Network and Actions badges, while Storage - which
+  // is filtered elsewhere - never shrank at all.
+  const tabCount = (tab: Tab): number => {
+    if (tab === "Issues") return totalIssuesCount;
+    if (tab === "Console") return totalLogCount(allConsoleLogs);
+    if (tab === "Network") return totalLogCount(allNetworkLogs);
+    if (tab === "Actions") return totalLogCount(allActionLogs);
+    if (tab === "Storage") return Object.keys(storageData?.localStorage || {}).length + Object.keys(storageData?.sessionStorage || {}).length;
+    return 0;
+  };
+
+  // Arrow/Home/End roving focus. Focusing the next button is enough - each one
+  // selects on click and the list is short, so no separate selection model.
+  const onTabKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    const delta = e.key === "ArrowRight" ? 1 : e.key === "ArrowLeft" ? -1 : 0;
+    let next: Tab | null = null;
+    if (delta !== 0) {
+      const i = TABS.indexOf(activeTab);
+      next = TABS[(i + delta + TABS.length) % TABS.length];
+    } else if (e.key === "Home") next = TABS[0];
+    else if (e.key === "End") next = TABS[TABS.length - 1];
+    if (!next) return;
+    e.preventDefault();
+    setLogSearch("");
+    setActiveTab(next);
+    document.getElementById(`dt-tab-${next}`)?.focus();
+  };
+
+  const tabName = (tab: Tab) => {
+    if (tab === "Issues") return t("dt.issues") || "Issues";
+    if (tab === "Storage") return t("dt.storage") || "Storage";
     return t(`dt.${tab.toLowerCase()}`);
   };
 
+  // Header pill: the same total it always showed, plus the per-kind split behind it.
+  const eventBreakdown = (() => {
+    const rows = summary
+      ? [
+          { key: "errors", label: t("dt.errors") || "Errors", n: summary.errors || 0 },
+          { key: "warnings", label: t("dt.warnings") || "Warnings", n: summary.warnings || 0 },
+          { key: "failed", label: t("dt.failedReq") || "Failed requests", n: summary.failedRequests || 0 },
+        ]
+      : [
+          { key: "errors", label: t("dt.errors") || "Errors", n: consoleErrors.length },
+          { key: "failed", label: t("dt.failedReq") || "Failed requests", n: networkErrors.length },
+          { key: "console", label: tabName("Console"), n: totalLogCount(consoleLogs) },
+          { key: "network", label: tabName("Network"), n: totalLogCount(networkLogs) },
+          { key: "actions", label: tabName("Actions"), n: totalLogCount(actionLogs) },
+        ];
+    const total = summary
+      ? rows.reduce((sum, r) => sum + r.n, 0)
+      : totalLogCount(consoleLogs) + totalLogCount(networkLogs) + totalLogCount(actionLogs);
+    const label = summary && total === 0 ? t("dt.clean", { n: 0 }) : t("dt.events", { n: total });
+    return { label, rows };
+  })();
+
+  // Search placeholder still wants one string.
+  const tabLabel = (tab: Tab) => {
+    const n = tabCount(tab);
+    return n > 0 ? `${tabName(tab)} (${n})` : tabName(tab);
+  };
+
+  // Typing in the search box silently changes the list length. Announce the new
+  // count, or a screen-reader user gets no feedback that the query did anything.
+  // Storage filters its rows inside its own render block, so it is left out.
+  const searchMatchCount = (): number | null => {
+    if (activeTab === "Console") return visibleConsoleLogs.length;
+    if (activeTab === "Network") return visibleGroupedNetworkLogs.length;
+    if (activeTab === "Actions") return actionLogs.length;
+    return null;
+  };
+
   return (
-    <div className="w-full h-[520px] rounded-xl border border-border bg-white shadow-sm dark:bg-background flex flex-col shrink-0 overflow-hidden">
+    // Was a hard 520px: cramped on a short laptop, wasteful on a tall monitor.
+    // clamp() is a one-value fix and needs no resize listener.
+    <div className="w-full h-[clamp(360px,60vh,760px)] rounded-xl border border-border bg-white shadow-sm dark:bg-background flex flex-col shrink-0 overflow-hidden">
       {/* Header */}
       <div className="h-11 border-b border-border px-4 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-sm font-semibold text-foreground">{t("v.devTools")}</span>
-          {targetHost && (
-            <span
-              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-mono font-medium bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 truncate max-w-[220px]"
-              title={`Target site: ${targetHost}`}
-            >
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-              <span className="truncate">{targetHost}</span>
-            </span>
-          )}
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={handleCopyBugReport}
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:hover:bg-indigo-900/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/50 transition-colors shadow-2xs cursor-pointer"
-            title="Copy bug report in Markdown (Jira, GitHub, Linear)"
-          >
-            {copiedBugReport ? (
-              <>
-                <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
-                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{t("dt.bugReportCopied") || "Report Copied!"}</span>
-              </>
-            ) : (
-              <>
-                <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                <span>{t("dt.copyBugReport") || "Copy Bug Report"}</span>
-              </>
-            )}
-          </button>
-          <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30 px-2 py-0.5 rounded-full border border-indigo-100 dark:border-indigo-800/40">
-            {summary
-              ? summary.errors === 0 && summary.warnings === 0 && summary.failedRequests === 0
-                ? t("dt.clean", { n: 0 })
-                : t("dt.events", { n: summary.errors + summary.warnings + summary.failedRequests })
-              : t("dt.events", { n: totalLogCount(consoleLogs) + totalLogCount(networkLogs) + totalLogCount(actionLogs) })}
-          </span>
+          {/* <details> instead of a bare pill: the number alone never said what it
+              counted. Native disclosure - no state, no outside-click handler. */}
+          <details ref={eventMenuRef} className="relative group">
+            <summary className="list-none cursor-pointer flex items-center gap-1 text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30 px-2 py-0.5 rounded-full border border-indigo-100 dark:border-indigo-800/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors">
+              <span className="tabular-nums">{eventBreakdown.label}</span>
+              <svg className="w-2.5 h-2.5 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden="true">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </summary>
+            <div className="absolute right-0 top-full mt-1 z-20 w-44 rounded-lg border border-border bg-white dark:bg-background shadow-lg p-1">
+              {eventBreakdown.rows.map(({ key, label, n }) => (
+                <div key={key} className="flex items-center justify-between gap-2 px-2 py-1 rounded text-[10px]">
+                  <span className="text-muted truncate">{label}</span>
+                  <span className={`font-semibold tabular-nums shrink-0 ${n > 0 && (key === "errors" || key === "failed") ? "text-red-600 dark:text-red-400" : "text-foreground"}`}>{n}</span>
+                </div>
+              ))}
+            </div>
+          </details>
         </div>
       </div>
 
       {/* Tabs */}
-      <div className="flex border-b border-border shrink-0 px-4 gap-1 overflow-x-auto">
+      {/* A real tablist, not aria-current="page" (that is a nav idiom): screen
+          readers now announce "tab 3 of 6" and arrow keys move between tabs. */}
+      <div
+        role="tablist"
+        aria-label={t("dt.title") || "DevTools"}
+        onKeyDown={onTabKeyDown}
+        className="flex border-b border-border shrink-0 px-2.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+      >
         {TABS.map((tab) => {
           const isIssues = tab === "Issues";
           const hasIssues = isIssues && totalIssuesCount > 0;
+          const count = tabCount(tab);
           return (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`px-2.5 py-2.5 text-[11px] font-medium relative transition-colors whitespace-nowrap flex items-center gap-1.5 ${
+              onClick={() => {
+                // One search box serves every tab. Carrying the query across a tab
+                // switch showed an empty list with no visible reason - it reads as
+                // lost data, not as an active filter.
+                if (tab !== activeTab) setLogSearch("");
+                setActiveTab(tab);
+              }}
+              role="tab"
+              id={`dt-tab-${tab}`}
+              aria-controls="dt-tabpanel"
+              aria-selected={activeTab === tab}
+              // Only the selected tab is tabbable; arrows move within the set.
+              tabIndex={activeTab === tab ? 0 : -1}
+              className={`px-2 py-2 text-[11px] font-medium relative transition-colors whitespace-nowrap flex items-center gap-1 ${
                 activeTab === tab
                   ? isIssues && hasIssues
                     ? "text-red-600 dark:text-red-400 font-semibold"
@@ -1136,7 +1465,16 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                   : "text-muted hover:text-foreground"
               }`}
             >
-              {tabLabel(tab)}
+              {tabName(tab)}
+              {count > 0 && (
+                <span className={`px-1 py-px rounded text-[9px] font-semibold leading-none tabular-nums ${
+                  isIssues
+                    ? "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400"
+                    : activeTab === tab
+                    ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300"
+                    : "bg-subtle text-muted"
+                }`}>{count}</span>
+              )}
               {isIssues && hasIssues && (
                 <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
               )}
@@ -1153,7 +1491,12 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
       </div>
 
       {/* Content */}
-      <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+      <div
+        role="tabpanel"
+        id="dt-tabpanel"
+        aria-labelledby={`dt-tab-${activeTab}`}
+        className="flex-1 min-h-0 flex flex-col overflow-hidden"
+      >
         {/* Global Search & Filters */}
         {activeTab !== "Info" && (
           <div className="p-3 border-b border-border bg-subtle/30 flex flex-col gap-2 shrink-0">
@@ -1166,8 +1509,26 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                 placeholder={t("dt.search", { tab: tabLabel(activeTab) })}
                 value={logSearch}
                 onChange={(e) => setLogSearch(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-border text-xs bg-subtle outline-none focus:border-indigo-500 shadow-sm"
+                className="w-full pl-8 pr-8 py-1.5 rounded-lg border border-border text-xs bg-subtle outline-none focus:border-indigo-500 shadow-sm"
               />
+              {logSearch && (
+                <button
+                  type="button"
+                  onClick={() => setLogSearch("")}
+                  aria-label={t("dt.clearSearch") || "Clear search"}
+                  title={t("dt.clearSearch") || "Clear search"}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted hover:text-foreground transition-colors"
+                >
+                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" d="M18 6L6 18M6 6l12 12" />
+                  </svg>
+                </button>
+              )}
+              <span role="status" aria-live="polite" className="sr-only">
+                {logSearch && searchMatchCount() !== null
+                  ? t("dt.searchResults", { n: searchMatchCount() as number })
+                  : ""}
+              </span>
             </div>
             {/* Quick Filter for Console */}
             {activeTab === "Console" && consoleErrors.length > 0 && (
@@ -1197,77 +1558,109 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                 </button>
               </div>
             )}
+            {/* Quick Filter for Actions */}
+            {activeTab === "Actions" && actionKindCounts.size > 1 && (
+              <div
+                role="group"
+                aria-label={t("dt.actionKindFilter")}
+                className="flex flex-wrap items-center gap-1.5 pt-0.5"
+              >
+                {(["all", "click", "typing", "input", "navigation", "screenshot"] as const)
+                  .filter((k) => k === "all" || actionKindCounts.has(k))
+                  .map((k) => {
+                    const on = actionKindFilter === k;
+                    return (
+                      <button
+                        key={k}
+                        type="button"
+                        onClick={() => setActionKindFilter(k)}
+                        aria-pressed={on}
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors cursor-pointer ${
+                          on
+                            ? "bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800/40 font-semibold"
+                            : "text-muted hover:text-foreground border border-transparent"
+                        }`}
+                      >
+                        {k === "all"
+                          ? `${t("dt.allOrigins") || "All"} (${allActionLogs.length})`
+                          : `${t(`dt.act.${k}`)} (${actionKindCounts.get(k)})`}
+                      </button>
+                    );
+                  })}
+              </div>
+            )}
             {/* Quick Filter for Network */}
             {activeTab === "Network" && (
               <div className="flex flex-wrap items-center justify-between gap-1.5 pt-0.5">
                 <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setNetworkFailedOnly(false)}
-                    className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors ${
-                      !networkFailedOnly
-                        ? "bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800/40 font-semibold"
-                        : "text-muted hover:text-foreground border border-transparent"
-                    }`}
-                  >
-                    {t("dt.all") || "All"} ({networkLogs.length})
-                  </button>
+                  {/* No "All" chip: its count is the ungrouped total, which disagreed with
+                      the tab and search counts (they sum repeat requests), and "off" is
+                      already expressible by unpressing Failed Requests. */}
                   {networkErrors.length > 0 && (
                     <button
                       type="button"
-                      onClick={() => setNetworkFailedOnly(true)}
+                      onClick={() => setNetworkFailedOnly(!networkFailedOnly)}
+                      aria-pressed={networkFailedOnly}
                       className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors flex items-center gap-1 ${
                         networkFailedOnly
                           ? "bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/40 font-semibold"
                           : "text-red-600/80 hover:text-red-700 border border-transparent"
                       }`}
+                      title={networkFailedOnly ? t("dt.showAllRequests") : t("dt.showOnlyFailed")}
                     >
                       <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
                       {t("dt.failedReq") || "Failed Requests"} ({networkErrors.length})
                     </button>
                   )}
+                  {targetHost && networkErrors.length > 0 && (
+                    /* Status and origin are independent filters; the rule marks the
+                       boundary. Pointless when there is no status chip to separate. */
+                    <span className="w-px h-3.5 bg-border mx-0.5" aria-hidden="true" />
+                  )}
+                  {targetHost && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setNetworkPartyFilter("all")}
+                        aria-pressed={networkPartyFilter === "all"}
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors ${
+                          networkPartyFilter === "all"
+                            ? "bg-subtle text-foreground border border-border font-semibold"
+                            : "text-muted hover:text-foreground border border-transparent"
+                        }`}
+                      >
+                        {t("dt.allOrigins") || "All Origins"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNetworkPartyFilter("1st")}
+                        aria-pressed={networkPartyFilter === "1st"}
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors flex items-center gap-1 ${
+                          networkPartyFilter === "1st"
+                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/40 font-semibold"
+                            : "text-muted hover:text-emerald-600 border border-transparent"
+                        }`}
+                        title={`Requests to ${targetHost} or subdomains`}
+                      >
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                        {t("dt.firstParty") || "1st-Party"} ({firstPartyCount})
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setNetworkPartyFilter("3rd")}
+                        aria-pressed={networkPartyFilter === "3rd"}
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors ${
+                          networkPartyFilter === "3rd"
+                            ? "bg-subtle text-foreground border border-border font-semibold"
+                            : "text-muted hover:text-foreground border border-transparent"
+                        }`}
+                        title="External SaaS, CDNs, 3rd-party APIs"
+                      >
+                        {t("dt.thirdParty") || "3rd-Party"} ({thirdPartyCount})
+                      </button>
+                    </>
+                  )}
                 </div>
-
-                {targetHost && (
-                  <div className="flex items-center gap-1 bg-subtle/80 p-0.5 rounded-md border border-border/60">
-                    <button
-                      type="button"
-                      onClick={() => setNetworkPartyFilter("all")}
-                      className={`px-1.5 py-0.5 rounded text-[9px] font-medium transition-colors ${
-                        networkPartyFilter === "all"
-                          ? "bg-background text-foreground shadow-xs font-semibold"
-                          : "text-muted hover:text-foreground"
-                      }`}
-                    >
-                      {t("dt.allOrigins") || "All Origins"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setNetworkPartyFilter("1st")}
-                      className={`px-1.5 py-0.5 rounded text-[9px] font-medium transition-colors flex items-center gap-1 ${
-                        networkPartyFilter === "1st"
-                          ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-200/60 dark:border-emerald-800/40 shadow-xs"
-                          : "text-muted hover:text-emerald-600"
-                      }`}
-                      title={`Requests to ${targetHost} or subdomains`}
-                    >
-                      <span className="w-1 h-1 rounded-full bg-emerald-500" />
-                      {t("dt.firstParty") || "1st-Party"} ({firstPartyCount})
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setNetworkPartyFilter("3rd")}
-                      className={`px-1.5 py-0.5 rounded text-[9px] font-medium transition-colors flex items-center gap-1 ${
-                        networkPartyFilter === "3rd"
-                          ? "bg-zinc-200 dark:bg-zinc-800 text-foreground font-semibold shadow-xs"
-                          : "text-muted hover:text-foreground"
-                      }`}
-                      title="External SaaS, CDNs, 3rd-party APIs"
-                    >
-                      {t("dt.thirdParty") || "3rd-Party"} ({thirdPartyCount})
-                    </button>
-                  </div>
-                )}
 
                 {networkLogs.length > 0 && (
                   <button
@@ -1308,10 +1701,10 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                   </div>
                   <div className="min-w-0 flex-1">
                     <p className="text-xs font-semibold text-red-800 dark:text-red-300 leading-tight">
-                      {totalIssuesCount} {totalIssuesCount === 1 ? "issue detected" : "issues detected"}
+                      {t("dt.issuesDetected", { n: totalIssuesCount })}
                     </p>
                     <p className="text-[10px] text-red-700/80 dark:text-red-400/80 mt-0.5">
-                      {summary.errors} console errors, {summary.failedRequests} failed network requests
+                      {t("dt.issueSplit", { errors: summary.errors, failed: summary.failedRequests })}
                     </p>
                   </div>
                 </div>
@@ -1336,7 +1729,7 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                     <svg className="w-4 h-4 text-red-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                     </svg>
-                    {totalIssuesCount} {totalIssuesCount === 1 ? "Issue detected" : "Issues detected"}
+                    {t("dt.issuesDetected", { n: totalIssuesCount })}
                   </span>
                   <div className="flex items-center gap-2 text-[10px] font-medium text-red-700 dark:text-red-400">
                     <span>{consoleErrors.length} console</span>
@@ -1350,9 +1743,9 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                     const active = isLogActive(log);
                     if (type === "console") {
                       const cLog = log as ConsoleLog;
-                      const detail = conciseConsoleText(cLog);
+                      const detail = conciseConsoleText(cLog) || t("dt.consoleError");
                       const fullText = consoleText(cLog);
-                      const preceding = findPrecedingAction(cLog);
+                      const preceding = findPrecedingAction(cLog, cLog.srcIdx);
                       return (
                         <div
                           key={id}
@@ -1388,7 +1781,7 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                     // Network failed log
                     const nLog = log as NetworkLog;
                     const { domain, path } = networkLocation(nLog.url);
-                    const preceding = findPrecedingAction(nLog);
+                    const preceding = findPrecedingAction(nLog, nLog.srcIdx);
                     return (
                       <details
                         key={id}
@@ -1396,7 +1789,10 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                           active ? "ring-2 ring-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/40" : "bg-red-50/20 dark:bg-red-950/10 hover:bg-red-50/50 dark:hover:bg-red-950/20"
                         }`}
                       >
-                        <summary className="p-3 cursor-pointer list-none flex items-center justify-between gap-2 min-w-0">
+                        <summary
+                          onClick={seekProps(nLog).onClick}
+                          className="p-3 cursor-pointer list-none flex items-center justify-between gap-2 min-w-0"
+                        >
                           <div className="flex items-center gap-2 min-w-0 flex-1">
                             {renderTimeBadge(nLog)}
                             <span className="px-1.5 py-0.5 rounded text-[9px] font-bold font-mono uppercase bg-subtle text-foreground border border-border shrink-0">
@@ -1405,7 +1801,7 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                             <span className="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono shrink-0 bg-red-100 dark:bg-red-950/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800/40">
                               {nLog.status || "FAIL"}
                             </span>
-                            {targetHost && (
+                            {partyIsMixed && (
                               <span
                                 className={`px-1 py-0.2 rounded text-[8px] font-bold font-mono shrink-0 uppercase tracking-tight ${
                                   isFirstPartyUrl(nLog.url, targetHost)
@@ -1448,7 +1844,7 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                           <p className="text-muted">
                             <span className="text-foreground font-semibold">Status:</span>{" "}
                             {nLog.status || "FAIL"}{" "}
-                            {nLog.statusText || (nLog.status ? HTTP_STATUS_TEXT[nLog.status] : "") ? `(${nLog.statusText || HTTP_STATUS_TEXT[nLog.status!]})` : ""}
+                            {nLog.statusText || statusLabel(t, nLog.status) ? `(${nLog.statusText || statusLabel(t, nLog.status)})` : ""}
                           </p>
                           {nLog.resourceType && (
                             <p className="text-muted"><span className="text-foreground font-semibold">Type:</span> <span className="capitalize">{nLog.resourceType}</span></p>
@@ -1470,36 +1866,6 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
         {/* INFO TAB */}
         {activeTab === "Info" && (
           <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
-            {/* Quick Export Bug Report Card */}
-            <div className="p-3 rounded-xl border border-indigo-200/80 dark:border-indigo-900/40 bg-indigo-50/40 dark:bg-indigo-950/20 flex items-center justify-between gap-3 shadow-2xs">
-              <div className="min-w-0">
-                <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                  <span className="text-indigo-600 dark:text-indigo-400">📋</span>
-                  <span>Markdown Bug Report</span>
-                </p>
-                <p className="text-[11px] text-muted truncate mt-0.5">
-                  Environment, causality timeline, top errors, failed cURLs & reproduction steps.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={handleCopyBugReport}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer"
-              >
-                {copiedBugReport ? (
-                  <>
-                    <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
-                    <span>{t("dt.bugReportCopied") || "Report Copied!"}</span>
-                  </>
-                ) : (
-                  <>
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                    <span>{t("dt.copyBugReport") || "Copy Bug Report"}</span>
-                  </>
-                )}
-              </button>
-            </div>
-
             {capture.site_url && (
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-muted mb-1.5">URL</p>
@@ -1529,7 +1895,7 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                     type="button"
                     onClick={() => setShowTzMenu((prev) => !prev)}
                     className="flex items-center gap-1 text-xs font-medium text-foreground hover:text-indigo-600 dark:hover:text-indigo-400 px-1.5 py-0.5 rounded hover:bg-subtle/80 transition-colors group cursor-pointer"
-                    title="Change timezone format"
+                    title={t("dt.changeTz")}
                   >
                     <span>{createdAt}</span>
                     <svg
@@ -1692,6 +2058,36 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
               </div>
             )}
 
+            {/* Quick Export Bug Report Card */}
+            <div className="p-3 rounded-xl border border-indigo-200/80 dark:border-indigo-900/40 bg-indigo-50/40 dark:bg-indigo-950/20 flex items-center justify-between gap-3 shadow-2xs">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <span className="text-indigo-600 dark:text-indigo-400">📋</span>
+                  <span>Markdown Bug Report</span>
+                </p>
+                <p className="text-[11px] text-muted truncate mt-0.5">
+                  Environment, causality timeline, top errors, failed cURLs & reproduction steps.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleCopyBugReport}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer"
+              >
+                {copiedBugReport ? (
+                  <>
+                    <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                    <span>{t("dt.bugReportCopied") || "Report Copied!"}</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    <span>{t("dt.copyBugReport") || "Copy Bug Report"}</span>
+                  </>
+                )}
+              </button>
+            </div>
+
           </div>
         )}
 
@@ -1736,25 +2132,30 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                   )}
                 </div>
               ) : (
-                <div className="py-14 text-center text-xs text-muted">
-                  {consoleErrorsOnly ? "No console errors detected" : t("dt.noConsoleEvents")}
-                </div>
+                <EmptyLogState
+                  filtered={consoleErrorsOnly || Boolean(logSearch)}
+                  emptyText={t("dt.noConsoleEvents")}
+                  onReset={resetLogFilters}
+                  t={t}
+                />
               )
             ) : (
               <div className="divide-y divide-border/60">
-                {visibleConsoleLogs.map((log, i) => {
+                {visibleConsoleLogs.map((log) => {
                   const level = log.type === "console" ? normalizeLevel(log.level) : log.type;
                   const isWarn = level === "warn";
                   const isErr = level === "error";
-                  const preceding = isErr ? findPrecedingAction(log) : null;
-                  const detail = log.type === "console" ? conciseConsoleText(log)
+                  const preceding = isErr ? findPrecedingAction(log, log.srcIdx) : null;
+                  const detail = log.type === "console" ? conciseConsoleText(log) || t("dt.consoleError")
                     : log.message || ("url" in log ? log.url : "") || (log.type === "screenshot" ? t("dt.screenshotTaken") : t("dt.navigation"));
                   const fullText = log.type === "console" ? consoleText(log) : detail;
                   const active = isLogActive(log);
+                  const seek = seekProps(log);
                   return (
                     <div
-                      key={i}
-                      className={`p-3 text-xs transition-all ${
+                      key={log.srcIdx}
+                      {...seek}
+                      className={`group p-3 text-xs transition-all ${seek.className || ""} ${
                         active ? "ring-2 ring-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/40 rounded-sm" : isWarn ? "bg-amber-50/40 dark:bg-amber-950/20 hover:bg-amber-50/70 dark:hover:bg-amber-950/30" : isErr ? "bg-red-50/40 dark:bg-red-950/20 hover:bg-red-50/70 dark:hover:bg-red-950/30" : "hover:bg-subtle/50"
                       }`}
                     >
@@ -1791,6 +2192,19 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                             ×{logCount(log)}
                           </span>
                         )}
+                        <button
+                          type="button"
+                          onClick={(e) => handleCopyConsole(log, e)}
+                          aria-label={t("dt.copyLog") || "Copy log"}
+                          title={t("dt.copyLog") || "Copy log"}
+                          className="shrink-0 p-1 rounded text-muted opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-foreground hover:bg-subtle transition-all"
+                        >
+                          {copiedConsole === (log.type === "console" ? consoleText(log) : log.message || ("url" in log ? log.url || "" : "")) ? (
+                            <svg className="w-3.5 h-3.5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
+                          ) : (
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                          )}
+                        </button>
                       </div>
                     </div>
                   );
@@ -1838,21 +2252,27 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                 <div className="py-14 text-center text-xs text-muted">{t("dt.noNetworkErrors")}</div>
               )
             ) : visibleGroupedNetworkLogs.length === 0 ? (
-              <div className="py-14 text-center text-xs text-muted">
-                {networkFailedOnly ? "No failed network requests recorded" : t("dt.noNetworkErrors")}
-              </div>
+              <EmptyLogState
+                filtered={networkFailedOnly || networkPartyFilter !== "all" || Boolean(logSearch)}
+                emptyText={t("dt.noNetworkErrors")}
+                onReset={resetLogFilters}
+                t={t}
+              />
             ) : (
               <div className="divide-y divide-border/60">
-                {visibleGroupedNetworkLogs.map(({ log, count }, i) => {
+                {visibleGroupedNetworkLogs.map(({ log, count }) => {
                   const { domain, path } = networkLocation(log.url);
                   const isFailed = !log.status || log.status >= 400;
                   const isOk = log.status && log.status < 300;
                   const active = isLogActive(log);
-                  const effectiveStatusText = log.statusText || (log.status ? HTTP_STATUS_TEXT[log.status] || `HTTP ${log.status}` : undefined);
+                  const effectiveStatusText = log.statusText || statusLabel(t, log.status) || undefined;
                   const hasPayload = log.requestBody != null || Boolean(log.responseBody);
                   return (
-                    <details key={i} className={`group hover:bg-subtle/50 transition-all ${active ? "ring-2 ring-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/40 rounded-sm" : ""}`}>
-                      <summary className="p-3 cursor-pointer list-none flex items-center justify-between gap-2 min-w-0">
+                    <details key={`${log.method || "GET"}|${log.status ?? "FAILED"}|${log.url}`} className={`group hover:bg-subtle/50 transition-all ${active ? "ring-2 ring-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/40 rounded-sm" : ""}`}>
+                      <summary
+                        onClick={seekProps(log).onClick}
+                        className="p-3 cursor-pointer list-none flex items-center justify-between gap-2 min-w-0"
+                      >
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                           <span className="px-1.5 py-0.5 rounded text-[9px] font-bold font-mono uppercase bg-subtle text-foreground border border-border shrink-0">
                             {log.method || "GET"}
@@ -1868,7 +2288,7 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                           >
                             {log.status || "FAIL"}
                           </span>
-                          {targetHost && (
+                          {partyIsMixed && (
                             <span
                               className={`px-1 py-0.2 rounded text-[8px] font-bold font-mono shrink-0 uppercase tracking-tight ${
                                 isFirstPartyUrl(log.url, targetHost)
@@ -1905,7 +2325,7 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                       </summary>
                       <div className="px-3 pb-3 pt-2 space-y-2.5 border-t border-border/40 bg-subtle/20 text-xs">
                         {isFailed && (() => {
-                          const preceding = findPrecedingAction(log);
+                          const preceding = findPrecedingAction(log, log.srcIdx);
                           return preceding ? <ActionBreadcrumb action={preceding} t={t} /> : null;
                         })()}
                         {/* Full URL row with copy button */}
@@ -2008,19 +2428,26 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
         {activeTab === "Actions" && (
           <div className="flex-1 min-h-0 overflow-y-auto p-3">
             {actionLogs.length === 0 ? (
-              <div className="py-14 flex flex-col items-center gap-2 text-muted">
-                <svg className="w-8 h-8 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/>
-                </svg>
-                <p className="text-xs">{t("dt.noActions")}</p>
-              </div>
+              logSearch || actionKindFilter !== "all" ? (
+                <EmptyLogState filtered emptyText="" onReset={resetLogFilters} t={t} />
+              ) : (
+                <div className="py-14 flex flex-col items-center gap-2 text-muted">
+                  <svg className="w-8 h-8 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/>
+                  </svg>
+                  <p className="text-xs">{t("dt.noActions")}</p>
+                </div>
+              )
             ) : (
               <div className="space-y-2">
-                {actionLogs.map((log, i) => {
-                  const firstWord = (log.message || "").toLowerCase().split(/\s+/)[0];
-                  const label = ACTION_LABELS[firstWord] || ACTION_LABELS[log.type] || "Action";
-                  const isClick = label === "Click" || (log.message || "").toLowerCase().includes("click");
-                  const isType = label === "Typing" || (log.message || "").toLowerCase().includes("type") || (log.message || "").toLowerCase().includes("input");
+                {actionLogs.map((log) => {
+                  const kind = actionKind(log);
+                  const label = kind ? t(`dt.act.${kind}`) : t("dt.act.generic");
+                  const lowerMsg = (log.message || "").toLowerCase();
+                  // Branch on the kind, not the localised label - comparing against
+                  // "Click" broke the icon the moment the locale changed.
+                  const isClick = kind === "click" || lowerMsg.includes("click");
+                  const isType = kind === "typing" || kind === "input" || lowerMsg.includes("type") || lowerMsg.includes("input");
                   const isScreenshot = log.type === "screenshot";
                   const active = isLogActive(log);
 
@@ -2030,10 +2457,12 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                     ? t("dt.screenshotTaken")
                     : cleanActionMessage(log.message) || log.message || "";
 
+                  const seek = seekProps(log);
                   return (
                     <div
-                      key={i}
-                      className={`group flex items-start gap-2.5 p-2.5 rounded-lg border transition-all ${
+                      key={log.srcIdx}
+                      {...seek}
+                      className={`group flex items-start gap-2.5 p-2.5 rounded-lg border transition-all ${seek.className || ""} ${
                         active
                           ? "ring-2 ring-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800/60 shadow-xs"
                           : "bg-background hover:bg-subtle/50 border-border/80"
@@ -2100,17 +2529,29 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
         {/* STORAGE TAB */}
         {activeTab === "Storage" && (() => {
           const currentStore = storageType === "local" ? (storageData?.localStorage || {}) : (storageData?.sessionStorage || {});
-          const entries = Object.entries(currentStore).filter(([k, v]) => {
-            if (!logSearch) return true;
-            const q = logSearch.toLowerCase();
-            return k.toLowerCase().includes(q) || String(v).toLowerCase().includes(q);
-          });
+          // The extension caps a snapshot at 50 keys and signals the rest by
+          // injecting a synthetic `... N more keys omitted` key with an empty
+          // value (injected_logger.js:276). Rendered as a data row it read as a
+          // real storage entry with no value - it belongs in a notice.
+          const OMITTED_RE = /^\.\.\.\s+(\d+)\s+more keys omitted$/;
+          const allEntries = Object.entries(currentStore);
+          const omittedCount = allEntries.reduce((n, [k]) => {
+            const m = OMITTED_RE.exec(k);
+            return m ? n + Number(m[1]) : n;
+          }, 0);
+          const entries = allEntries
+            .filter(([k]) => !OMITTED_RE.test(k))
+            .filter(([k, v]) => {
+              if (!logSearch) return true;
+              const q = logSearch.toLowerCase();
+              return k.toLowerCase().includes(q) || String(v).toLowerCase().includes(q);
+            });
           const localCount = Object.keys(storageData?.localStorage || {}).length;
           const sessionCount = Object.keys(storageData?.sessionStorage || {}).length;
 
           const handleCopyAllStorage = () => {
             try {
-              navigator.clipboard.writeText(JSON.stringify(currentStore, null, 2));
+              navigator.clipboard.writeText(JSON.stringify(Object.fromEntries(allEntries.filter(([k]) => !OMITTED_RE.test(k))), null, 2));
               setCopiedAllStorage(true);
               setTimeout(() => setCopiedAllStorage(false), 2000);
             } catch {}
@@ -2172,15 +2613,27 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
 
               {/* Storage Entries */}
               <div className="flex-1 min-h-0 overflow-y-auto">
+                {omittedCount > 0 && (
+                  <p className="px-3 py-2 text-[10px] text-amber-700 dark:text-amber-400 bg-amber-50/60 dark:bg-amber-950/20 border-b border-amber-200/60 dark:border-amber-800/40">
+                    {t("dt.storageOmitted", { n: omittedCount })}
+                  </p>
+                )}
                 {entries.length === 0 ? (
-                  <div className="py-14 text-center text-xs text-muted">
-                    {t("dt.noStorage") || "No storage data recorded"}
-                  </div>
+                  <EmptyLogState
+                    filtered={Boolean(logSearch)}
+                    emptyText={t("dt.noStorage") || "No storage data recorded"}
+                    onReset={resetLogFilters}
+                    t={t}
+                  />
                 ) : (
                   <div className="divide-y divide-border/60">
                     {entries.map(([key, rawValue]) => {
                       const valStr = String(rawValue);
                       const isCopied = copiedStorageKey === key;
+                      // injected_logger.js:410 caps a value at 200 chars and
+                      // appends this marker. Nothing labelled it, so a clipped
+                      // value looked like the real stored content.
+                      const isTruncated = valStr.endsWith("... (truncated)");
                       let isJson = false;
                       let prettyVal = valStr;
                       const trimmed = valStr.trim();
@@ -2206,6 +2659,11 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                               <span className="text-[9px] font-mono text-muted">
                                 ({valStr.length} chars)
                               </span>
+                              {isTruncated && (
+                                <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/40">
+                                  {t("dt.storageTruncated")}
+                                </span>
+                              )}
                             </div>
                             <button
                               type="button"

@@ -1,3 +1,5 @@
+﻿import { isDisposableEmail } from "@/lib/disposable-email";
+import { resolvePlanWithExpiry } from "@/lib/tiers";
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-server";
 import { isRequestAdminAuthenticated } from "@/lib/admin-auth";
@@ -48,7 +50,7 @@ export async function GET(req: Request) {
     try {
       const { data: user, error: userErr } = await supabase
         .from("users")
-        .select("id, email, full_name, plan, created_at, suspended, theme, job_role")
+        .select("id, email, full_name, plan, plan_expires_at, created_at, suspended, theme, job_role")
         .eq("id", userId)
         .single();
 
@@ -65,6 +67,10 @@ export async function GET(req: Request) {
 
       const enrichedUser = {
         ...user,
+        effective_plan: resolvePlanWithExpiry(user.plan, (user as { plan_expires_at?: string | null }).plan_expires_at),
+        is_disposable: isDisposableEmail(user.email),
+        stripe_search_url: `https://dashboard.stripe.com/customers?query=${encodeURIComponent(user.email)}`,
+        paddle_search_url: "https://vendors.paddle.com/customers",
         google_drive_connected: Boolean(driveConn),
         google_drive_email: driveConn?.google_email || null,
       };
@@ -126,7 +132,7 @@ export async function GET(req: Request) {
   try {
     let query = supabase
       .from("users")
-      .select("id, email, full_name, plan, created_at, suspended", { count: "exact" });
+      .select("id, email, full_name, plan, plan_expires_at, created_at, suspended", { count: "exact" });
 
     if (search) {
       query = query.or(`email.ilike.%${search}%,full_name.ilike.%${search}%`);
@@ -148,22 +154,35 @@ export async function GET(req: Request) {
 
     if (error) throw error;
 
-    const userList = users || [];
-    let enrichedUsers = userList;
+    const userList = (users || []) as Array<{
+      id: string;
+      email: string;
+      full_name: string | null;
+      plan: string;
+      plan_expires_at?: string | null;
+      created_at: string;
+      suspended: boolean;
+      google_drive_connected?: boolean;
+      effective_plan?: string;
+      is_disposable?: boolean;
+    }>;
 
+    let connectedSet = new Set<string>();
     if (userList.length > 0) {
       const userIds = userList.map((u) => u.id);
       const { data: driveConns } = await supabase
         .from("google_drive_connections")
         .select("user_id")
         .in("user_id", userIds);
-
-      const connectedSet = new Set((driveConns || []).map((d) => d.user_id));
-      enrichedUsers = userList.map((u) => ({
-        ...u,
-        google_drive_connected: connectedSet.has(u.id),
-      }));
+      connectedSet = new Set((driveConns || []).map((d) => d.user_id));
     }
+
+    const enrichedUsers = userList.map((u) => ({
+      ...u,
+      effective_plan: resolvePlanWithExpiry(u.plan, u.plan_expires_at),
+      is_disposable: isDisposableEmail(u.email),
+      google_drive_connected: connectedSet.has(u.id),
+    }));
 
     return NextResponse.json({
       ok: true,
@@ -195,7 +214,7 @@ export async function PATCH(req: Request) {
       return NextResponse.json({ error: "Missing user_id" }, { status: 400 });
     }
 
-    // 1. Update Subscription Plan
+    // 1. Update Subscription Plan (with optional expiry / comp duration)
     if (action === "set_plan") {
       const validPlans = ["free", "pro", "team", "enterprise"];
       const targetPlan = (plan || "").toLowerCase();
@@ -203,22 +222,116 @@ export async function PATCH(req: Request) {
         return NextResponse.json({ error: "Invalid plan specified" }, { status: 400 });
       }
 
+      const { expires_in } = body;
+      let planExpiresAt: string | null = null;
+      if (targetPlan !== "free") {
+        if (expires_in === "7d") {
+          planExpiresAt = new Date(Date.now() + 7 * 86400 * 1000).toISOString();
+        } else if (expires_in === "30d" || expires_in === "1m") {
+          planExpiresAt = new Date(Date.now() + 30 * 86400 * 1000).toISOString();
+        } else if (expires_in === "90d" || expires_in === "3m") {
+          planExpiresAt = new Date(Date.now() + 90 * 86400 * 1000).toISOString();
+        } else if (expires_in === "180d" || expires_in === "6m") {
+          planExpiresAt = new Date(Date.now() + 180 * 86400 * 1000).toISOString();
+        } else if (expires_in === "365d" || expires_in === "1y") {
+          planExpiresAt = new Date(Date.now() + 365 * 86400 * 1000).toISOString();
+        } else if (expires_in && expires_in !== "permanent" && expires_in !== "never") {
+          const parsed = new Date(expires_in).getTime();
+          if (!isNaN(parsed)) planExpiresAt = new Date(parsed).toISOString();
+        }
+      }
+
       const { data, error } = await supabase
         .from("users")
-        .update({ plan: targetPlan })
+        .update({ plan: targetPlan, plan_expires_at: planExpiresAt })
         .eq("id", user_id)
-        .select("id, email, plan")
+        .select("id, email, plan, plan_expires_at")
         .single();
 
       if (error) throw error;
 
+      const expiryNote = planExpiresAt ? ` (expires ${new Date(planExpiresAt).toLocaleDateString()})` : " (permanent)";
       await logSecurityEvent({
         type: "admin_action",
         title: "User Plan Changed",
-        detail: `Admin ${callerEmail || "Console"} changed plan of ${data.email} to ${targetPlan}`,
+        detail: `Admin ${callerEmail || "Console"} changed plan of ${data.email} to ${targetPlan}${expiryNote}`,
       });
 
       return NextResponse.json({ ok: true, user: data });
+    }
+
+    // 1b. Sync / Reconcile Subscription with Stripe or Paddle
+    if (action === "sync_subscription") {
+      const { data: user, error: fetchErr } = await supabase
+        .from("users")
+        .select("id, email, plan")
+        .eq("id", user_id)
+        .single();
+
+      if (fetchErr || !user) {
+        return NextResponse.json({ error: "User not found" }, { status: 404 });
+      }
+
+      const stripeSecret = process.env.STRIPE_SECRET_KEY;
+      let synced = false;
+      let gatewayPlan: string | null = null;
+      let source: string | null = null;
+
+      if (stripeSecret) {
+        try {
+          const stripeRes = await fetch(
+            `https://api.stripe.com/v1/customers?email=${encodeURIComponent(user.email)}&expand[]=data.subscriptions`,
+            {
+              headers: { Authorization: `Bearer ${stripeSecret}` },
+            }
+          );
+          if (stripeRes.ok) {
+            const stripeData = await stripeRes.json();
+            const customer = stripeData.data?.[0];
+            const subs = customer?.subscriptions?.data || [];
+            const activeSub = subs.find(
+              (s: { status?: string }) => s.status === "active" || s.status === "trialing"
+            );
+            if (activeSub) {
+              synced = true;
+              source = "Stripe";
+              const metaPlan =
+                activeSub.metadata?.plan || activeSub.items?.data?.[0]?.price?.metadata?.plan;
+              gatewayPlan = metaPlan ? String(metaPlan).toLowerCase() : "pro";
+            }
+          }
+        } catch (stripeErr) {
+          console.warn("[Admin] Stripe subscription sync warning:", stripeErr);
+        }
+      }
+
+      if (synced && gatewayPlan) {
+        await supabase
+          .from("users")
+          .update({ plan: gatewayPlan, plan_expires_at: null, checkout_status: "completed" })
+          .eq("id", user_id);
+
+        await logSecurityEvent({
+          type: "admin_action",
+          title: "Subscription Reconciled",
+          detail: `Admin reconciled ${user.email} from ${source}: set plan to ${gatewayPlan}`,
+        });
+
+        return NextResponse.json({
+          ok: true,
+          synced: true,
+          plan: gatewayPlan,
+          message: `Successfully synchronized ${gatewayPlan.toUpperCase()} subscription from ${source}!`,
+        });
+      }
+
+      return NextResponse.json({
+        ok: true,
+        synced: false,
+        message: "No active gateway subscription found.",
+        stripe_search_url: `https://dashboard.stripe.com/customers?query=${encodeURIComponent(user.email)}`,
+        paddle_search_url: "https://vendors.paddle.com/customers",
+      });
     }
 
     // 2. Toggle Suspend
