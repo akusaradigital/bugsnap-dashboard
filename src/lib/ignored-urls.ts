@@ -2,6 +2,12 @@
 // Extracted to avoid SSR / dynamic bundling split issues.
 
 export const TRACKER_PATTERNS = [
+  /\.supabase\.co/i,
+  /bugsnap\.akusaraproject\.my\.id/i,
+  /googleapis\.com/i,
+  /googleusercontent\.com/i,
+  /accounts\.google\.com/i,
+  /apis\.google\.com/i,
   /atlassian\.com/i,
   /atlassian\.net/i,
   /google-analytics\.com/i,

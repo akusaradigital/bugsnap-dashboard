@@ -165,3 +165,372 @@ test("canonical UUID validator rejects SQL and command injection strings", () =>
   assert.equal(isValidUUID("../../../etc/passwd"), false);
 });
 
+// ---------------------------------------------------------------------------
+// DevTools Helpers (cleanStackTrace, buildCurlCommand, isFirstPartyUrl)
+// ---------------------------------------------------------------------------
+function cleanStackTrace(stack) {
+  if (!stack || typeof stack !== "string") return "";
+  return stack
+    .split(/\r?\n/)
+    .filter((line) => {
+      const lower = line.toLowerCase();
+      return (
+        !lower.includes("chrome-extension://") &&
+        !lower.includes("moz-extension://") &&
+        !lower.includes("safari-extension://") &&
+        !lower.includes("edge-extension://") &&
+        !lower.includes("injected_logger.js") &&
+        !lower.includes("rrweb-record") &&
+        !lower.includes("record_controls")
+      );
+    })
+    .join("\n")
+    .trim();
+}
+
+function buildCurlCommand(log) {
+  const method = (log.method || "GET").toUpperCase();
+  const url = log.url || "";
+  let cmd = `curl -X ${method} "${url}"`;
+  if (log.requestBody) {
+    const escaped = log.requestBody.replace(/'/g, "'\\''");
+    cmd += ` -H "Content-Type: application/json" -d '${escaped}'`;
+  }
+  return cmd;
+}
+
+function isFirstPartyUrl(url, targetHost) {
+  if (!url || !targetHost) return true;
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    const target = targetHost.toLowerCase();
+    return host === target || host.endsWith("." + target);
+  } catch {
+    return false;
+  }
+}
+
+test("cleanStackTrace: strips extension and recorder frames from stack traces", () => {
+  const dirtyStack = `Error: Cannot read properties of undefined
+    at login (https://myapp.com/assets/auth.js:42:12)
+    at HTMLButtonElement.dispatch (https://myapp.com/assets/vendor.js:100:5)
+    at chrome-extension://abcdefghij/injected_logger.js:15:30
+    at rrweb-record.min.js:200:10
+    at record_controls.js:50:5`;
+
+  const cleaned = cleanStackTrace(dirtyStack);
+  assert.ok(cleaned.includes("https://myapp.com/assets/auth.js:42:12"));
+  assert.ok(cleaned.includes("https://myapp.com/assets/vendor.js:100:5"));
+  assert.ok(!cleaned.includes("chrome-extension://"));
+  assert.ok(!cleaned.includes("injected_logger.js"));
+  assert.ok(!cleaned.includes("rrweb-record"));
+  assert.ok(!cleaned.includes("record_controls"));
+});
+
+test("buildCurlCommand: formats GET and POST requests with json payloads", () => {
+  const getLog = { method: "GET", url: "https://api.myapp.com/v1/users" };
+  assert.equal(buildCurlCommand(getLog), 'curl -X GET "https://api.myapp.com/v1/users"');
+
+  const postLog = {
+    method: "POST",
+    url: "https://api.myapp.com/v1/checkout",
+    requestBody: JSON.stringify({ item: "book", price: 10 }),
+  };
+  assert.equal(
+    buildCurlCommand(postLog),
+    'curl -X POST "https://api.myapp.com/v1/checkout" -H "Content-Type: application/json" -d \'{"item":"book","price":10}\''
+  );
+
+  const postWithQuote = {
+    method: "POST",
+    url: "https://api.myapp.com/v1/note",
+    requestBody: "it's working",
+  };
+  assert.equal(
+    buildCurlCommand(postWithQuote),
+    'curl -X POST "https://api.myapp.com/v1/note" -H "Content-Type: application/json" -d \'it\'\\\'\'s working\''
+  );
+});
+
+test("isFirstPartyUrl: accurately categorizes 1st-party vs 3rd-party domains", () => {
+  const targetHost = "myapp.com";
+
+  // Exact match and subdomains are 1st-party
+  assert.equal(isFirstPartyUrl("https://myapp.com/api/test", targetHost), true);
+  assert.equal(isFirstPartyUrl("https://api.myapp.com/v1/users", targetHost), true);
+  assert.equal(isFirstPartyUrl("https://cdn.static.myapp.com/logo.png", targetHost), true);
+
+  // External CDNs, APIs, and trackers are 3rd-party
+  assert.equal(isFirstPartyUrl("https://checkout.stripe.com/c/pay", targetHost), false);
+  assert.equal(isFirstPartyUrl("https://fonts.googleapis.com/css", targetHost), false);
+  assert.equal(isFirstPartyUrl("https://notmyapp.com/api", targetHost), false);
+  assert.equal(isFirstPartyUrl("https://fake-myapp.com", targetHost), false);
+});
+
+// ---------------------------------------------------------------------------
+// Markdown Bug Report Generator & HAR Exporter
+// ---------------------------------------------------------------------------
+function buildMarkdownBugReport({
+  capture,
+  targetHost,
+  detectedOs,
+  detectedBrowser,
+  createdAt,
+  consoleErrors,
+  networkErrors,
+  actionLogs,
+  storage,
+  findPrecedingAction,
+}) {
+  const totalIssues = (consoleErrors || []).length + (networkErrors || []).length;
+  const sections = [];
+
+  sections.push(`## 🐛 Bug Report: ${capture.site_url || "Session Capture"}`);
+  sections.push("");
+  sections.push("### 📋 Environment");
+  sections.push(`- **URL**: ${capture.site_url || "-"}`);
+  if (targetHost) sections.push(`- **Target Host**: ${targetHost}`);
+  sections.push(`- **OS**: ${detectedOs}`);
+  sections.push(`- **Browser**: ${detectedBrowser}`);
+  if (capture.window_size) sections.push(`- **Window Size**: ${capture.window_size}`);
+  sections.push(`- **Captured At**: ${createdAt}`);
+  if (capture.drive_url) sections.push(`- **Session Recording**: [View Recording](${capture.drive_url})`);
+
+  sections.push("");
+  sections.push(`### ⚠️ Issues Overview (${totalIssues} detected)`);
+  sections.push(`- **Console Errors**: ${(consoleErrors || []).length}`);
+  sections.push(`- **Failed Network Requests**: ${(networkErrors || []).length}`);
+
+  if (consoleErrors && consoleErrors.length > 0) {
+    sections.push("");
+    sections.push("### 🚨 Console Errors");
+    consoleErrors.slice(0, 5).forEach((err, idx) => {
+      const msg = err.message || err.text || "Error";
+      const preceding = findPrecedingAction ? findPrecedingAction(err) : null;
+      sections.push(`${idx + 1}. \`${msg}\``);
+      if (preceding) {
+        const delta = preceding.deltaSec != null ? ` (${preceding.deltaSec < 1 ? "<1s" : `${preceding.deltaSec.toFixed(1)}s`} prior)` : "";
+        sections.push(`   - ↳ *Triggered after*: ${preceding.message}${delta}`);
+      }
+    });
+  }
+
+  if (networkErrors && networkErrors.length > 0) {
+    sections.push("");
+    sections.push("### 🌐 Failed Network Requests");
+    networkErrors.slice(0, 5).forEach((req, idx) => {
+      const method = (req.method || "GET").toUpperCase();
+      const status = req.status || "FAIL";
+      const preceding = findPrecedingAction ? findPrecedingAction(req) : null;
+      sections.push(`${idx + 1}. **${method} ${status}** \`${req.url || "-"}\``);
+      if (preceding) {
+        const delta = preceding.deltaSec != null ? ` (${preceding.deltaSec < 1 ? "<1s" : `${preceding.deltaSec.toFixed(1)}s`} prior)` : "";
+        sections.push(`   - ↳ *Triggered after*: ${preceding.message}${delta}`);
+      }
+      sections.push("   ```bash");
+      sections.push(`   ${buildCurlCommand(req)}`);
+      sections.push("   ```");
+    });
+  }
+
+  if (actionLogs && actionLogs.length > 0) {
+    sections.push("");
+    sections.push("### 👣 Steps to Reproduce (Recent Actions)");
+    actionLogs.slice(-10).forEach((act, idx) => {
+      const msg = act.message || act.url || act.type;
+      sections.push(`${idx + 1}. ${msg}`);
+    });
+  }
+
+  if (storage) {
+    const localKeys = Object.keys(storage.localStorage || {});
+    const sessionKeys = Object.keys(storage.sessionStorage || {});
+    if (localKeys.length > 0 || sessionKeys.length > 0) {
+      sections.push("");
+      sections.push("### 💾 Storage Snapshot");
+      if (localKeys.length > 0) {
+        sections.push(`- **localStorage** (${localKeys.length} items): \`${localKeys.slice(0, 10).join("`, `")}${localKeys.length > 10 ? "..." : ""}\``);
+      }
+      if (sessionKeys.length > 0) {
+        sections.push(`- **sessionStorage** (${sessionKeys.length} items): \`${sessionKeys.slice(0, 10).join("`, `")}${sessionKeys.length > 10 ? "..." : ""}\``);
+      }
+    }
+  }
+
+  sections.push("");
+  sections.push("---");
+  sections.push("*Generated via BugSnap DevTools*");
+
+  return sections.join("\n");
+}
+
+function buildHarExport(networkLogs, siteUrl) {
+  const startedDateTime = new Date().toISOString();
+  const entries = (networkLogs || []).map((log, index) => {
+    const duration = typeof log.duration === "number" && log.duration > 0 ? log.duration : 50;
+    const status = log.status || (log.error ? 0 : 200);
+    const reqBody = log.requestBody || "";
+    const resBody = log.responseBody || "";
+
+    return {
+      _index: index,
+      startedDateTime: log.timestamp ? new Date(Number(log.timestamp)).toISOString() : startedDateTime,
+      time: duration,
+      request: {
+        method: (log.method || "GET").toUpperCase(),
+        url: log.url || "",
+        httpVersion: "HTTP/1.1",
+        cookies: [],
+        headers: reqBody ? [{ name: "Content-Type", value: "application/json" }] : [],
+        queryString: [],
+        postData: reqBody ? { mimeType: "application/json", text: reqBody } : undefined,
+        headersSize: -1,
+        bodySize: reqBody ? reqBody.length : 0,
+      },
+      response: {
+        status,
+        statusText: status === 200 ? "OK" : "Error",
+        httpVersion: "HTTP/1.1",
+        cookies: [],
+        headers: resBody ? [{ name: "Content-Type", value: "application/json" }] : [],
+        content: {
+          size: resBody ? resBody.length : 0,
+          mimeType: "application/json",
+          text: resBody,
+        },
+        redirectURL: "",
+        headersSize: -1,
+        bodySize: resBody ? resBody.length : 0,
+      },
+      cache: {},
+      timings: {
+        blocked: -1,
+        dns: -1,
+        connect: -1,
+        send: 0,
+        wait: duration,
+        receive: 0,
+        ssl: -1,
+      },
+    };
+  });
+
+  const har = {
+    log: {
+      version: "1.2",
+      creator: {
+        name: "BugSnap DevTools",
+        version: "1.0.0",
+      },
+      pages: [
+        {
+          startedDateTime,
+          id: "page_1",
+          title: siteUrl || "BugSnap Session",
+          pageTimings: {
+            onContentLoad: -1,
+            onLoad: -1,
+          },
+        },
+      ],
+      entries,
+    },
+  };
+
+  return JSON.stringify(har, null, 2);
+}
+
+test("buildMarkdownBugReport: generates structured Jira/GitHub/Linear markdown", () => {
+  const mockCapture = {
+    site_url: "https://myapp.com/dashboard",
+    created_at: "2026-09-10T12:00:00Z",
+    window_size: "1920x1080",
+    drive_url: "https://drive.google.com/file/d/test123/view",
+  };
+
+  const mockConsoleErrors = [
+    { type: "console", level: "error", message: "Uncaught TypeError: Cannot read properties of undefined" },
+  ];
+
+  const mockNetworkErrors = [
+    { type: "network", method: "POST", status: 500, url: "https://myapp.com/api/save", requestBody: '{"name":"test"}' },
+  ];
+
+  const mockActionLogs = [
+    { type: "step", message: "Clicked button: Save Changes" },
+  ];
+
+  const mockStorage = {
+    localStorage: { user_id: "12345", session_token: "***REDACTED***" },
+    sessionStorage: { tab_state: "active" },
+  };
+
+  const markdown = buildMarkdownBugReport({
+    capture: mockCapture,
+    targetHost: "myapp.com",
+    detectedOs: "macOS",
+    detectedBrowser: "Chrome",
+    createdAt: "Sep 10, 2026",
+    consoleErrors: mockConsoleErrors,
+    networkErrors: mockNetworkErrors,
+    actionLogs: mockActionLogs,
+    storage: mockStorage,
+    findPrecedingAction: () => ({ message: "Clicked button: Save Changes", deltaSec: 0.4 }),
+  });
+
+  assert.ok(markdown.includes("## 🐛 Bug Report: https://myapp.com/dashboard"));
+  assert.ok(markdown.includes("- **OS**: macOS"));
+  assert.ok(markdown.includes("- **Browser**: Chrome"));
+  assert.ok(markdown.includes("### 🚨 Console Errors"));
+  assert.ok(markdown.includes("Triggered after*: Clicked button: Save Changes"));
+  assert.ok(markdown.includes("### 🌐 Failed Network Requests"));
+  assert.ok(markdown.includes('curl -X POST "https://myapp.com/api/save"'));
+  assert.ok(markdown.includes("### 👣 Steps to Reproduce (Recent Actions)"));
+  assert.ok(markdown.includes("Clicked button: Save Changes"));
+  assert.ok(markdown.includes("### 💾 Storage Snapshot"));
+  assert.ok(markdown.includes("user_id"));
+});
+
+test("buildHarExport: produces valid HAR 1.2 schema with request and response details", () => {
+  const networkLogs = [
+    {
+      method: "POST",
+      url: "https://myapp.com/api/checkout",
+      status: 200,
+      duration: 120,
+      requestBody: JSON.stringify({ amount: 50 }),
+      responseBody: JSON.stringify({ success: true, orderId: "ord_123" }),
+      timestamp: Date.now(),
+    },
+    {
+      method: "GET",
+      url: "https://myapp.com/api/profile",
+      status: 404,
+      duration: 45,
+      timestamp: Date.now(),
+    },
+  ];
+
+  const harJson = buildHarExport(networkLogs, "https://myapp.com");
+  const parsed = JSON.parse(harJson);
+
+  assert.equal(parsed.log.version, "1.2");
+  assert.equal(parsed.log.creator.name, "BugSnap DevTools");
+  assert.equal(parsed.log.pages.length, 1);
+  assert.equal(parsed.log.entries.length, 2);
+
+  const entry0 = parsed.log.entries[0];
+  assert.equal(entry0.request.method, "POST");
+  assert.equal(entry0.request.url, "https://myapp.com/api/checkout");
+  assert.equal(entry0.request.postData.mimeType, "application/json");
+  assert.equal(entry0.request.postData.text, JSON.stringify({ amount: 50 }));
+  assert.equal(entry0.response.status, 200);
+  assert.equal(entry0.response.content.text, JSON.stringify({ success: true, orderId: "ord_123" }));
+  assert.equal(entry0.time, 120);
+
+  const entry1 = parsed.log.entries[1];
+  assert.equal(entry1.request.method, "GET");
+  assert.equal(entry1.response.status, 404);
+});
+
+

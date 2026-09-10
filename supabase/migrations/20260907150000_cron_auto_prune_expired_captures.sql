@@ -48,6 +48,7 @@ END;
 $$;
 
 -- Alias for weekly-digest route or callers
+DROP FUNCTION IF EXISTS public.prune_expired_captures();
 CREATE OR REPLACE FUNCTION public.prune_expired_captures()
 RETURNS jsonb
 LANGUAGE sql

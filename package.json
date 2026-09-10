@@ -1,6 +1,6 @@
 {
   "name": "bugsnap",
-  "version": "0.5.6",
+  "version": "0.5.7",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,7 +9,7 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "node --test tests/helpers.test.mjs tests/google-drive.test.mjs tests/contract.test.mjs tests/extension-dashboard-contract.test.mjs tests/safe-url.test.mjs tests/download-signing.test.mjs tests/redact.test.mjs tests/experiments.test.mjs tests/paddle-webhook.test.mjs",
+    "test": "node --test tests/helpers.test.mjs tests/google-drive.test.mjs tests/contract.test.mjs tests/extension-dashboard-contract.test.mjs tests/safe-url.test.mjs tests/download-signing.test.mjs tests/redact.test.mjs tests/experiments.test.mjs tests/paddle-webhook.test.mjs tests/ignored-urls.test.mjs",
     "test:integration": "node --test tests/rpc.test.mjs"
   },
   "dependencies": {
