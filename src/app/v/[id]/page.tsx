@@ -125,6 +125,151 @@ function getExpiryCountdown(expiresAt: string, t: (k: string, vars?: Record<stri
   return t("v.expiresInDays", { n: days });
 }
 
+const DEMO_CAPTURE: Capture = {
+  id: "demo",
+  title: "TokoOnline - Checkout Payment Deadlock (500 Error)",
+  type: "screenshot",
+  drive_url: "https://images.unsplash.com/photo-1557821552-17105176677c?w=1600&q=80",
+  created_at: new Date().toISOString(),
+  window_size: "1440x900",
+  os: "macOS 15.0 (Sequoia)",
+  browser: "Chrome 128.0.0.0",
+  site_url: "https://tokoonline.id/checkout/payment?ref=tokopedia_promo",
+  status: "open",
+  tag: "bug",
+  access_mode: "public",
+  dev_logs: [
+    {
+      type: "step",
+      message: "Typed 'DISKON50' into promo code input",
+      time: "0:02",
+      timestamp: 1725978719000,
+    },
+    {
+      type: "step",
+      message: "Clicked option: BCA Virtual Account",
+      time: "0:04",
+      timestamp: 1725978721000,
+    },
+    {
+      type: "step",
+      message: "Clicked button: Bayar Sekarang (Rp 450.000)",
+      time: "0:07",
+      timestamp: 1725978724000,
+    },
+    {
+      type: "network",
+      method: "POST",
+      url: "https://api.tokoonline.id/v1/checkout/pay",
+      status: 500,
+      statusText: "Internal Server Error",
+      duration: 420,
+      time: "0:08",
+      timestamp: 1725978725000,
+      requestBody: JSON.stringify({
+        cartId: "cart_88321",
+        paymentMethod: "BCA_VA",
+        voucherCode: "DISKON50",
+        amount: {
+          subtotal: 450000,
+          discount: 50000,
+          shipping: 15000,
+          grandTotal: 415000,
+        },
+        customer: {
+          id: "usr_99812",
+          phone: "+6281234567890",
+        },
+      }),
+      responseBody: JSON.stringify({
+        status: "error",
+        code: "GATEWAY_TIMEOUT",
+        message: "Transaction deadlock: Payment provider gateway responded with HTTP 500",
+        intentId: "pi_992144",
+        timestamp: "2026-09-10T14:32:05.142Z",
+      }),
+    },
+    {
+      type: "network",
+      method: "GET",
+      url: "https://api.tokoonline.id/v1/cart",
+      status: 200,
+      statusText: "OK",
+      duration: 85,
+      time: "0:01",
+      timestamp: 1725978718000,
+      responseBody: JSON.stringify({
+        cartId: "cart_88321",
+        itemCount: 2,
+        currency: "IDR",
+        items: [
+          { id: "prod_101", name: "Wireless Mechanical Keyboard", price: 350000 },
+          { id: "prod_402", name: "Desk Mat Extra Large", price: 100000 },
+        ],
+      }),
+    },
+    {
+      type: "console",
+      level: "error",
+      message: "Uncaught PaymentGatewayError: Failed to finalize payment intent pi_992144 (500 Internal Server Error)",
+      stack: "PaymentGatewayError: Failed to finalize payment intent pi_992144\n    at Object.chargeCard (https://tokoonline.id/assets/payment.js:142:19)\n    at async HTMLButtonElement.onPayClick (https://tokoonline.id/assets/checkout.js:88:9)",
+      time: "0:08",
+      timestamp: 1725978725142,
+    },
+    {
+      type: "console",
+      level: "warn",
+      message: "Meta Pixel: Beacon request to connect.facebook.net/en_US/fbevents.js timed out after 3000ms",
+      time: "0:07",
+      timestamp: 1725978724210,
+    },
+    {
+      type: "console",
+      level: "info",
+      message: "[Checkout] Loaded checkout flow with 2 items. Total: Rp 450.000",
+      time: "0:01",
+      timestamp: 1725978718005,
+    },
+    {
+      type: "storage",
+      time: "0:08",
+      timestamp: 1725978725200,
+      storage: {
+        localStorage: {
+          user_session: JSON.stringify({
+            userId: "usr_99812",
+            name: "Budi Pratama",
+            email: "budi.pratama@gmail.com",
+            loyaltyTier: "Gold",
+          }),
+          auth_token: "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.***REDACTED***",
+          cart_items: JSON.stringify([
+            { id: "prod_101", title: "Wireless Mechanical Keyboard", qty: 1, price: 350000 },
+            { id: "prod_402", title: "Desk Mat Extra Large", qty: 1, price: 100000 },
+          ]),
+          preferred_payment: "BCA_VA",
+        },
+        sessionStorage: {
+          checkout_step: "step_3_payment",
+          applied_voucher: "DISKON50",
+        },
+      },
+    },
+    {
+      type: "device_specs",
+      time: "0:01",
+      timestamp: 1725978718000,
+      specs: {
+        deviceMemory: 16,
+        hardwareConcurrency: 10,
+        connectionType: "4g",
+        screenResolution: "1440x900",
+        pixelRatio: 2,
+      },
+    },
+  ],
+};
+
 function SingleViewContent() {
   const params = useParams<{ id: string }>();
   const router = useRouter();
@@ -262,6 +407,13 @@ function SingleViewContent() {
 
     let cancelled = false;
     if (!id) { setStatus("notfound"); return; }
+
+    if (id === "demo") {
+      setCapture(DEMO_CAPTURE);
+      setAccessMode("public");
+      setStatus("ready");
+      return;
+    }
 
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     if (!uuidRegex.test(id)) {

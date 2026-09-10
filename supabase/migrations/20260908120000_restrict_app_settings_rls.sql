@@ -11,6 +11,7 @@
 -- =====================================================================
 
 drop policy if exists "app_settings public read" on public.app_settings;
+drop policy if exists "app_settings public read whitelist" on public.app_settings;
 
 -- Only the promo banner and extension config are genuinely public. Keep them
 -- readable in case a client ever reads them directly with the anon key.

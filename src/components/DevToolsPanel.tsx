@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useT } from "@/components/I18nProvider";
 import { decompressDevLogs } from "@/lib/devlogs-compression";
 import { supabase } from "@/lib/supabase";
@@ -80,7 +80,20 @@ export interface PerformanceLog extends TimedLog {
   };
 }
 
-export type DevLog = ConsoleLog | NetworkLog | ActionLog | NavigationLog | ScreenshotLog | PerformanceLog;
+export interface StorageLog extends TimedLog {
+  type: "storage";
+  storage?: {
+    localStorage?: Record<string, string>;
+    sessionStorage?: Record<string, string>;
+  };
+}
+
+export interface DeviceSpecsLog extends TimedLog {
+  type: "device_specs";
+  specs?: Record<string, unknown>;
+}
+
+export type DevLog = ConsoleLog | NetworkLog | ActionLog | NavigationLog | ScreenshotLog | PerformanceLog | StorageLog | DeviceSpecsLog;
 
 export function normalizeDevLog(log: Record<string, unknown>): DevLog {
   const type = typeof log.type === "string" ? log.type.toLowerCase() : "";
@@ -101,9 +114,17 @@ export function normalizeDevLog(log: Record<string, unknown>): DevLog {
   const timestamp = typeof log.timestamp === "string" || typeof log.timestamp === "number" ? log.timestamp : undefined;
   const count = typeof log.count === "number" ? log.count : undefined;
   const metrics = typeof log.metrics === "object" && log.metrics !== null ? (log.metrics as PerformanceLog["metrics"]) : undefined;
+  const storage = typeof log.storage === "object" && log.storage !== null ? (log.storage as StorageLog["storage"]) : undefined;
+  const specs = typeof log.specs === "object" && log.specs !== null ? (log.specs as DeviceSpecsLog["specs"]) : undefined;
 
   if (type === "performance") {
     return { type: "performance", metrics, time, timestamp, count };
+  }
+  if (type === "storage") {
+    return { type: "storage", storage, time, timestamp, count };
+  }
+  if (type === "device_specs") {
+    return { type: "device_specs", specs, time, timestamp, count };
   }
   if (type === "console" || (type === "" && (level !== undefined || stack !== undefined || text !== undefined))) {
     return { type: "console", level, message, text, stack, time, timestamp, count };
@@ -159,7 +180,7 @@ interface Props {
   onSeekToTime?: (timeSec: number) => void;
 }
 
-const TABS = ["Info", "Console", "Network", "Actions", "Issues"] as const;
+const TABS = ["Info", "Console", "Network", "Actions", "Storage", "Issues"] as const;
 type Tab = typeof TABS[number];
 type Grouped<T> = { log: T; count: number };
 
@@ -198,12 +219,53 @@ function conciseConsoleText(log: ConsoleLog) {
   return meaningful || lines[0] || "Console error";
 }
 
+function cleanStackTrace(stack?: string | null): string {
+  if (!stack || typeof stack !== "string") return "";
+  return stack
+    .split(/\r?\n/)
+    .filter((line) => {
+      const lower = line.toLowerCase();
+      return (
+        !lower.includes("chrome-extension://") &&
+        !lower.includes("moz-extension://") &&
+        !lower.includes("safari-extension://") &&
+        !lower.includes("edge-extension://") &&
+        !lower.includes("injected_logger.js") &&
+        !lower.includes("rrweb-record") &&
+        !lower.includes("record_controls")
+      );
+    })
+    .join("\n")
+    .trim();
+}
+
 function networkLocation(value?: string) {
   try {
     const url = new URL(value || "");
     return { domain: url.hostname, path: `${url.pathname}${url.search}` || "/" };
   } catch {
     return { domain: value || "-", path: "" };
+  }
+}
+
+function getTargetHost(siteUrl?: string | null): string {
+  if (!siteUrl) return "";
+  try {
+    const parsed = new URL(siteUrl.startsWith("http") ? siteUrl : `https://${siteUrl}`);
+    return parsed.hostname;
+  } catch {
+    return "";
+  }
+}
+
+function isFirstPartyUrl(url?: string, targetHost?: string): boolean {
+  if (!url || !targetHost) return true;
+  try {
+    const host = new URL(url).hostname.toLowerCase();
+    const target = targetHost.toLowerCase();
+    return host === target || host.endsWith("." + target);
+  } catch {
+    return false;
   }
 }
 
@@ -301,14 +363,318 @@ function FormattedErrorMessage({ msg }: { msg: string }) {
   );
 }
 
+export function buildCurlCommand(log: NetworkLog): string {
+  const method = (log.method || "GET").toUpperCase();
+  const url = log.url || "";
+  let cmd = `curl -X ${method} "${url}"`;
+  if (log.requestBody) {
+    const escaped = log.requestBody.replace(/'/g, "'\\''");
+    cmd += ` -H "Content-Type: application/json" -d '${escaped}'`;
+  }
+  return cmd;
+}
+
+export { cleanStackTrace, isFirstPartyUrl };
+
+function FormattedJsonBody({
+  content,
+  title,
+  t,
+}: {
+  content?: string | null;
+  title?: string;
+  t: (key: string) => string;
+}) {
+  const [copied, setCopied] = useState(false);
+
+  if (!content) return null;
+
+  let isJson = false;
+  let formatted = content;
+
+  const trimmed = content.trim();
+  if ((trimmed.startsWith("{") && trimmed.endsWith("}")) || (trimmed.startsWith("[") && trimmed.endsWith("]"))) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      formatted = JSON.stringify(parsed, null, 2);
+      isJson = true;
+    } catch {
+      // Not valid JSON, keep formatted content
+    }
+  }
+
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      navigator.clipboard.writeText(formatted);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch {}
+  };
+
+  return (
+    <div className="space-y-1 mt-1.5">
+      <div className="flex items-center justify-between text-[10px]">
+        <div className="flex items-center gap-1.5 font-semibold text-muted uppercase tracking-wider">
+          <span>{title || "Body"}</span>
+          {isJson && (
+            <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/40">
+              JSON
+            </span>
+          )}
+          <span className="text-[9px] font-mono text-muted lowercase">
+            ({content.length > 1024 ? `${(content.length / 1024).toFixed(1)} KB` : `${content.length} B`})
+          </span>
+        </div>
+        <button
+          type="button"
+          onClick={handleCopy}
+          className="px-1.5 py-0.5 rounded text-[10px] text-muted hover:text-foreground bg-subtle hover:bg-subtle/80 border border-border transition-colors flex items-center gap-1 cursor-pointer"
+        >
+          {copied ? (
+            <span className="text-emerald-600 dark:text-emerald-400 font-medium">{t("dt.urlCopied") || "Copied!"}</span>
+          ) : (
+            <>
+              <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+              <span>{t("dt.copy") || "Copy"}</span>
+            </>
+          )}
+        </button>
+      </div>
+      <pre className="p-2 rounded-lg bg-subtle border border-border font-mono text-[10px] leading-relaxed whitespace-pre-wrap break-all max-h-48 overflow-y-auto select-all">
+        {formatted}
+      </pre>
+    </div>
+  );
+}
+
+export function buildMarkdownBugReport({
+  capture,
+  targetHost,
+  detectedOs,
+  detectedBrowser,
+  createdAt,
+  consoleErrors,
+  networkErrors,
+  actionLogs,
+  storage,
+  findPrecedingAction,
+}: {
+  capture: Props["capture"];
+  targetHost?: string;
+  detectedOs: string;
+  detectedBrowser: string;
+  createdAt: string;
+  consoleErrors: ConsoleLog[];
+  networkErrors: NetworkLog[];
+  actionLogs: (ActionLog | NavigationLog | ScreenshotLog)[];
+  storage?: StorageLog["storage"];
+  findPrecedingAction: (log: TimedLog) => { message: string; deltaSec: number | null } | null;
+}): string {
+  const totalIssues = consoleErrors.length + networkErrors.length;
+  const sections: string[] = [];
+
+  sections.push(`## 🐛 Bug Report: ${capture.site_url || "Session Capture"}`);
+  sections.push("");
+  sections.push("### 📋 Environment");
+  sections.push(`- **URL**: ${capture.site_url || "-"}`);
+  if (targetHost) sections.push(`- **Target Host**: ${targetHost}`);
+  sections.push(`- **OS**: ${detectedOs}`);
+  sections.push(`- **Browser**: ${detectedBrowser}`);
+  if (capture.window_size) sections.push(`- **Window Size**: ${capture.window_size}`);
+  sections.push(`- **Captured At**: ${createdAt}`);
+  if (capture.drive_url) sections.push(`- **Session Recording**: [View Recording](${capture.drive_url})`);
+
+  sections.push("");
+  sections.push(`### ⚠️ Issues Overview (${totalIssues} detected)`);
+  sections.push(`- **Console Errors**: ${consoleErrors.length}`);
+  sections.push(`- **Failed Network Requests**: ${networkErrors.length}`);
+
+  if (consoleErrors.length > 0) {
+    sections.push("");
+    sections.push("### 🚨 Console Errors");
+    consoleErrors.slice(0, 5).forEach((err, idx) => {
+      const msg = conciseConsoleText(err);
+      const preceding = findPrecedingAction(err);
+      sections.push(`${idx + 1}. \`${msg}\``);
+      if (preceding) {
+        const delta = preceding.deltaSec != null ? ` (${preceding.deltaSec < 1 ? "<1s" : `${preceding.deltaSec.toFixed(1)}s`} prior)` : "";
+        sections.push(`   - ↳ *Triggered after*: ${preceding.message}${delta}`);
+      }
+      const stack = cleanStackTrace(err.stack);
+      if (stack) {
+        const topLines = stack.split("\n").slice(0, 4).join("\n");
+        sections.push("   ```stack");
+        sections.push(`   ${topLines}`);
+        sections.push("   ```");
+      }
+    });
+  }
+
+  if (networkErrors.length > 0) {
+    sections.push("");
+    sections.push("### 🌐 Failed Network Requests");
+    networkErrors.slice(0, 5).forEach((req, idx) => {
+      const method = (req.method || "GET").toUpperCase();
+      const status = req.status || "FAIL";
+      const preceding = findPrecedingAction(req);
+      sections.push(`${idx + 1}. **${method} ${status}** \`${req.url || "-"}\``);
+      if (preceding) {
+        const delta = preceding.deltaSec != null ? ` (${preceding.deltaSec < 1 ? "<1s" : `${preceding.deltaSec.toFixed(1)}s`} prior)` : "";
+        sections.push(`   - ↳ *Triggered after*: ${preceding.message}${delta}`);
+      }
+      sections.push("   ```bash");
+      sections.push(`   ${buildCurlCommand(req)}`);
+      sections.push("   ```");
+    });
+  }
+
+  if (actionLogs.length > 0) {
+    sections.push("");
+    sections.push("### 👣 Steps to Reproduce (Recent Actions)");
+    const recent = actionLogs.slice(-10);
+    recent.forEach((act, idx) => {
+      const msg = act.message || ("url" in act ? `Navigate to ${act.url}` : act.type);
+      sections.push(`${idx + 1}. ${msg}`);
+    });
+  }
+
+  if (storage) {
+    const localKeys = Object.keys(storage.localStorage || {});
+    const sessionKeys = Object.keys(storage.sessionStorage || {});
+    if (localKeys.length > 0 || sessionKeys.length > 0) {
+      sections.push("");
+      sections.push("### 💾 Storage Snapshot");
+      if (localKeys.length > 0) {
+        sections.push(`- **localStorage** (${localKeys.length} items): \`${localKeys.slice(0, 10).join("`, `")}${localKeys.length > 10 ? "..." : ""}\``);
+      }
+      if (sessionKeys.length > 0) {
+        sections.push(`- **sessionStorage** (${sessionKeys.length} items): \`${sessionKeys.slice(0, 10).join("`, `")}${sessionKeys.length > 10 ? "..." : ""}\``);
+      }
+    }
+  }
+
+  sections.push("");
+  sections.push("---");
+  sections.push("*Generated via BugSnap DevTools*");
+
+  return sections.join("\n");
+}
+
+export function buildHarExport(networkLogs: NetworkLog[], siteUrl?: string | null): string {
+  const startedDateTime = new Date().toISOString();
+  const entries = networkLogs.map((log, index) => {
+    const duration = typeof log.duration === "number" && log.duration > 0 ? log.duration : 50;
+    const status = log.status || (log.error ? 0 : 200);
+    const statusText = log.statusText || (HTTP_STATUS_TEXT[status] || (status === 0 ? "Failed" : "OK"));
+    const reqBody = log.requestBody || "";
+    const resBody = log.responseBody || "";
+
+    return {
+      _index: index,
+      startedDateTime: log.timestamp ? new Date(Number(log.timestamp)).toISOString() : startedDateTime,
+      time: duration,
+      request: {
+        method: (log.method || "GET").toUpperCase(),
+        url: log.url || "",
+        httpVersion: "HTTP/1.1",
+        cookies: [],
+        headers: reqBody ? [{ name: "Content-Type", value: "application/json" }] : [],
+        queryString: [],
+        postData: reqBody ? { mimeType: "application/json", text: reqBody } : undefined,
+        headersSize: -1,
+        bodySize: reqBody ? reqBody.length : 0,
+      },
+      response: {
+        status,
+        statusText,
+        httpVersion: "HTTP/1.1",
+        cookies: [],
+        headers: resBody ? [{ name: "Content-Type", value: "application/json" }] : [],
+        content: {
+          size: resBody ? resBody.length : 0,
+          mimeType: "application/json",
+          text: resBody,
+        },
+        redirectURL: "",
+        headersSize: -1,
+        bodySize: resBody ? resBody.length : 0,
+      },
+      cache: {},
+      timings: {
+        blocked: -1,
+        dns: -1,
+        connect: -1,
+        send: 0,
+        wait: duration,
+        receive: 0,
+        ssl: -1,
+      },
+    };
+  });
+
+  const har = {
+    log: {
+      version: "1.2",
+      creator: {
+        name: "BugSnap DevTools",
+        version: "1.0.0",
+      },
+      pages: [
+        {
+          startedDateTime,
+          id: "page_1",
+          title: siteUrl || "BugSnap Session",
+          pageTimings: {
+            onContentLoad: -1,
+            onLoad: -1,
+          },
+        },
+      ],
+      entries,
+    },
+  };
+
+  return JSON.stringify(har, null, 2);
+}
+
+function ActionBreadcrumb({
+  action,
+  t,
+}: {
+  action: { message: string; deltaSec: number | null };
+  t: (key: string) => string;
+}) {
+  return (
+    <div className="mt-1.5 flex items-center gap-1.5 text-[10px] text-zinc-600 dark:text-zinc-400 bg-amber-500/10 dark:bg-amber-500/15 px-2 py-1 rounded-md border border-amber-500/20 dark:border-amber-500/30 font-sans">
+      <span className="text-amber-600 dark:text-amber-400 font-semibold shrink-0">
+        ↳ {t("dt.triggeredAfter") || "Triggered after"}:
+      </span>
+      <span className="font-medium text-foreground truncate" title={action.message}>
+        {action.message}
+      </span>
+      {action.deltaSec != null && (
+        <span className="text-[9px] font-mono text-muted shrink-0 ml-auto tabular-nums">
+          ({action.deltaSec < 1 ? "<1s" : `${action.deltaSec.toFixed(1)}s`} {t("dt.prior") || "prior"})
+        </span>
+      )}
+    </div>
+  );
+}
+
 export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Props) {
   const { t } = useT();
   const [activeTab, setActiveTab] = useState<Tab>("Info");
   const [consoleErrorsOnly, setConsoleErrorsOnly] = useState(false);
   const [networkFailedOnly, setNetworkFailedOnly] = useState(false);
+  const [networkPartyFilter, setNetworkPartyFilter] = useState<"all" | "1st" | "3rd">("all");
   const [logSearch, setLogSearch] = useState("");
   const [decompressedLogs, setDecompressedLogs] = useState<CapturedLogs>(capture.dev_logs || null);
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
+  const [copiedCurl, setCopiedCurl] = useState<string | null>(null);
 
   const handleCopyUrl = (url: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -316,6 +682,16 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
       navigator.clipboard.writeText(url);
       setCopiedUrl(url);
       setTimeout(() => setCopiedUrl(null), 2000);
+    } catch {}
+  };
+
+  const handleCopyCurl = (log: NetworkLog, e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const curl = buildCurlCommand(log);
+      navigator.clipboard.writeText(curl);
+      setCopiedCurl(log.url || "");
+      setTimeout(() => setCopiedCurl(null), 2000);
     } catch {}
   };
 
@@ -417,6 +793,56 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
     return null;
   };
 
+  const targetHost = useMemo(() => {
+    if (capture.site_url) return getTargetHost(capture.site_url);
+    const firstNav = logs.find((l): l is NavigationLog => l.type === "navigation");
+    if (firstNav?.url) return getTargetHost(firstNav.url);
+    return "";
+  }, [capture.site_url, logs]);
+
+  const findPrecedingAction = useCallback(
+    (errLog: TimedLog) => {
+      const errSec = getLogSeconds(errLog);
+      const errIdx = logs.indexOf(errLog as DevLog);
+
+      if (errIdx > 0) {
+        for (let i = errIdx - 1; i >= 0; i--) {
+          const item = logs[i];
+          if (item.type === "step" || item.type === "navigation") {
+            const itemSec = getLogSeconds(item);
+            const deltaSec = errSec != null && itemSec != null ? Math.max(0, errSec - itemSec) : null;
+            const message = cleanActionMessage(item.message || ("url" in item ? `Navigated to ${item.url}` : ""));
+            if (message) {
+              return { message, deltaSec };
+            }
+          }
+        }
+      }
+
+      if (errSec !== null) {
+        const candidateActions = logs
+          .filter((l): l is ActionLog | NavigationLog => l.type === "step" || l.type === "navigation")
+          .map((l) => ({ log: l, sec: getLogSeconds(l) }))
+          .filter((item) => item.sec !== null && (item.sec as number) <= errSec)
+          .sort((a, b) => (b.sec as number) - (a.sec as number));
+
+        if (candidateActions.length > 0) {
+          const best = candidateActions[0];
+          const deltaSec = errSec - (best.sec as number);
+          if (deltaSec <= 30) {
+            const message = cleanActionMessage(best.log.message || ("url" in best.log ? `Navigated to ${best.log.url}` : ""));
+            if (message) {
+              return { message, deltaSec };
+            }
+          }
+        }
+      }
+
+      return null;
+    },
+    [logs, earliestTimestamp]
+  );
+
   const isLogActive = (log: TimedLog) => {
     if (currentTime === undefined || capture.type !== "video") return false;
     const sec = getLogSeconds(log);
@@ -511,12 +937,32 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
     ? consoleLogs.filter((l) => l.type === "console" && isConsoleError(l))
     : consoleLogs;
 
-  const visibleGroupedNetworkLogs = networkFailedOnly
-    ? groupedNetworkLogs.filter(({ log }) => isNetworkFailed(log))
-    : groupedNetworkLogs;
+  const visibleGroupedNetworkLogs = groupedNetworkLogs
+    .filter(({ log }) => !networkFailedOnly || isNetworkFailed(log))
+    .filter(({ log }) => {
+      if (networkPartyFilter === "all" || !targetHost) return true;
+      const is1st = isFirstPartyUrl(log.url, targetHost);
+      return networkPartyFilter === "1st" ? is1st : !is1st;
+    });
+
+  const firstPartyCount = useMemo(
+    () => (targetHost ? networkLogs.filter((l) => isFirstPartyUrl(l.url, targetHost)).length : 0),
+    [networkLogs, targetHost]
+  );
+  const thirdPartyCount = useMemo(
+    () => (targetHost ? networkLogs.filter((l) => !isFirstPartyUrl(l.url, targetHost)).length : 0),
+    [networkLogs, targetHost]
+  );
 
   const performanceLog = logs.findLast((l): l is PerformanceLog => l.type === "performance");
   const metrics = performanceLog?.metrics;
+
+  const storageLog = logs.findLast((l): l is StorageLog => l.type === "storage");
+  const storageData = storageLog?.storage;
+  const [storageType, setStorageType] = useState<"local" | "session">("local");
+  const [copiedStorageKey, setCopiedStorageKey] = useState<string | null>(null);
+  const [copiedAllStorage, setCopiedAllStorage] = useState(false);
+  const [copiedBugReport, setCopiedBugReport] = useState(false);
 
   const [timeZoneMode, setTimeZoneMode] = useState<"capture" | "local" | "utc">("capture");
   const [showTzMenu, setShowTzMenu] = useState(false);
@@ -572,11 +1018,57 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
   const detectedOs = capture.os || (legacyLogsText.toLowerCase().includes("macintosh") || legacyLogsText.toLowerCase().includes("mac os") ? "macOS" : "Windows");
   const detectedBrowser = capture.browser || "Chrome";
 
+  const handleCopyBugReport = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    try {
+      const report = buildMarkdownBugReport({
+        capture,
+        targetHost,
+        detectedOs,
+        detectedBrowser,
+        createdAt,
+        consoleErrors,
+        networkErrors,
+        actionLogs,
+        storage: storageData,
+        findPrecedingAction,
+      });
+      navigator.clipboard.writeText(report);
+      setCopiedBugReport(true);
+      setTimeout(() => setCopiedBugReport(false), 2000);
+    } catch (err) {
+      console.error("Failed to copy bug report:", err);
+    }
+  };
+
+  const handleExportHar = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    try {
+      const harContent = buildHarExport(networkLogs, capture.site_url);
+      const blob = new Blob([harContent], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const host = targetHost ? targetHost.replace(/[^a-z0-9]/gi, "_") : "session";
+      a.href = url;
+      a.download = `bugsnap-${host}-${Date.now()}.har`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to export HAR:", err);
+    }
+  };
+
   const tabLabel = (tab: Tab) => {
     if (tab === "Issues") return `${t("dt.issues") || "Issues"} (${totalIssuesCount})`;
     if (tab === "Console" && consoleLogs.length) return `${t("dt.console")} (${totalLogCount(consoleLogs)})`;
     if (tab === "Network" && networkLogs.length) return `${t("dt.network")} (${totalLogCount(networkLogs)})`;
     if (tab === "Actions" && actionLogs.length)  return `${t("dt.actions")} (${totalLogCount(actionLogs)})`;
+    if (tab === "Storage") {
+      const totalStorageKeys = Object.keys(storageData?.localStorage || {}).length + Object.keys(storageData?.sessionStorage || {}).length;
+      return totalStorageKeys > 0 ? `${t("dt.storage") || "Storage"} (${totalStorageKeys})` : (t("dt.storage") || "Storage");
+    }
     return t(`dt.${tab.toLowerCase()}`);
   };
 
@@ -584,14 +1076,45 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
     <div className="w-full h-[520px] rounded-xl border border-border bg-white shadow-sm dark:bg-background flex flex-col shrink-0 overflow-hidden">
       {/* Header */}
       <div className="h-11 border-b border-border px-4 flex items-center justify-between shrink-0">
-        <span className="text-sm font-semibold text-foreground">{t("v.devTools")}</span>
-        <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30 px-2 py-0.5 rounded-full border border-indigo-100 dark:border-indigo-800/40">
-          {summary
-            ? summary.errors === 0 && summary.warnings === 0 && summary.failedRequests === 0
-              ? t("dt.clean", { n: 0 })
-              : t("dt.events", { n: summary.errors + summary.warnings + summary.failedRequests })
-            : t("dt.events", { n: totalLogCount(consoleLogs) + totalLogCount(networkLogs) + totalLogCount(actionLogs) })}
-        </span>
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="text-sm font-semibold text-foreground">{t("v.devTools")}</span>
+          {targetHost && (
+            <span
+              className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[10px] font-mono font-medium bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 truncate max-w-[220px]"
+              title={`Target site: ${targetHost}`}
+            >
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+              <span className="truncate">{targetHost}</span>
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={handleCopyBugReport}
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium bg-indigo-50 hover:bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:hover:bg-indigo-900/60 dark:text-indigo-300 border border-indigo-200 dark:border-indigo-800/50 transition-colors shadow-2xs cursor-pointer"
+            title="Copy bug report in Markdown (Jira, GitHub, Linear)"
+          >
+            {copiedBugReport ? (
+              <>
+                <svg className="w-3.5 h-3.5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{t("dt.bugReportCopied") || "Report Copied!"}</span>
+              </>
+            ) : (
+              <>
+                <svg className="w-3.5 h-3.5 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                <span>{t("dt.copyBugReport") || "Copy Bug Report"}</span>
+              </>
+            )}
+          </button>
+          <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30 px-2 py-0.5 rounded-full border border-indigo-100 dark:border-indigo-800/40">
+            {summary
+              ? summary.errors === 0 && summary.warnings === 0 && summary.failedRequests === 0
+                ? t("dt.clean", { n: 0 })
+                : t("dt.events", { n: summary.errors + summary.warnings + summary.failedRequests })
+              : t("dt.events", { n: totalLogCount(consoleLogs) + totalLogCount(networkLogs) + totalLogCount(actionLogs) })}
+          </span>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -675,31 +1198,90 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
               </div>
             )}
             {/* Quick Filter for Network */}
-            {activeTab === "Network" && networkErrors.length > 0 && (
-              <div className="flex items-center gap-1.5 pt-0.5">
-                <button
-                  type="button"
-                  onClick={() => setNetworkFailedOnly(false)}
-                  className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors ${
-                    !networkFailedOnly
-                      ? "bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800/40 font-semibold"
-                      : "text-muted hover:text-foreground border border-transparent"
-                  }`}
-                >
-                  {t("dt.all") || "All"} ({networkLogs.length})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setNetworkFailedOnly(true)}
-                  className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors flex items-center gap-1 ${
-                    networkFailedOnly
-                      ? "bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/40 font-semibold"
-                      : "text-red-600/80 hover:text-red-700 border border-transparent"
-                  }`}
-                >
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                  {t("dt.failedReq") || "Failed Requests"} ({networkErrors.length})
-                </button>
+            {activeTab === "Network" && (
+              <div className="flex flex-wrap items-center justify-between gap-1.5 pt-0.5">
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setNetworkFailedOnly(false)}
+                    className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors ${
+                      !networkFailedOnly
+                        ? "bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800/40 font-semibold"
+                        : "text-muted hover:text-foreground border border-transparent"
+                    }`}
+                  >
+                    {t("dt.all") || "All"} ({networkLogs.length})
+                  </button>
+                  {networkErrors.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setNetworkFailedOnly(true)}
+                      className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors flex items-center gap-1 ${
+                        networkFailedOnly
+                          ? "bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/40 font-semibold"
+                          : "text-red-600/80 hover:text-red-700 border border-transparent"
+                      }`}
+                    >
+                      <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                      {t("dt.failedReq") || "Failed Requests"} ({networkErrors.length})
+                    </button>
+                  )}
+                </div>
+
+                {targetHost && (
+                  <div className="flex items-center gap-1 bg-subtle/80 p-0.5 rounded-md border border-border/60">
+                    <button
+                      type="button"
+                      onClick={() => setNetworkPartyFilter("all")}
+                      className={`px-1.5 py-0.5 rounded text-[9px] font-medium transition-colors ${
+                        networkPartyFilter === "all"
+                          ? "bg-background text-foreground shadow-xs font-semibold"
+                          : "text-muted hover:text-foreground"
+                      }`}
+                    >
+                      {t("dt.allOrigins") || "All Origins"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNetworkPartyFilter("1st")}
+                      className={`px-1.5 py-0.5 rounded text-[9px] font-medium transition-colors flex items-center gap-1 ${
+                        networkPartyFilter === "1st"
+                          ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 font-semibold border border-emerald-200/60 dark:border-emerald-800/40 shadow-xs"
+                          : "text-muted hover:text-emerald-600"
+                      }`}
+                      title={`Requests to ${targetHost} or subdomains`}
+                    >
+                      <span className="w-1 h-1 rounded-full bg-emerald-500" />
+                      {t("dt.firstParty") || "1st-Party"} ({firstPartyCount})
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setNetworkPartyFilter("3rd")}
+                      className={`px-1.5 py-0.5 rounded text-[9px] font-medium transition-colors flex items-center gap-1 ${
+                        networkPartyFilter === "3rd"
+                          ? "bg-zinc-200 dark:bg-zinc-800 text-foreground font-semibold shadow-xs"
+                          : "text-muted hover:text-foreground"
+                      }`}
+                      title="External SaaS, CDNs, 3rd-party APIs"
+                    >
+                      {t("dt.thirdParty") || "3rd-Party"} ({thirdPartyCount})
+                    </button>
+                  </div>
+                )}
+
+                {networkLogs.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleExportHar}
+                    className="px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors bg-subtle hover:bg-subtle/80 text-muted hover:text-foreground border border-border flex items-center gap-1 cursor-pointer ml-auto"
+                    title={t("dt.exportHar") || "Export network session as HTTP Archive (.har)"}
+                  >
+                    <svg className="w-3 h-3 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    <span>{t("dt.exportHar") || "Export HAR"}</span>
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -770,6 +1352,7 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                       const cLog = log as ConsoleLog;
                       const detail = conciseConsoleText(cLog);
                       const fullText = consoleText(cLog);
+                      const preceding = findPrecedingAction(cLog);
                       return (
                         <div
                           key={id}
@@ -784,17 +1367,18 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                             </span>
                             <div className="min-w-0 flex-1">
                               <FormattedErrorMessage msg={fullText || detail} />
-                              {cLog.stack && (
+                              {preceding && <ActionBreadcrumb action={preceding} t={t} />}
+                              {cleanStackTrace(cLog.stack) ? (
                                 <details className="group mt-2">
                                   <summary className="flex list-none cursor-pointer items-center gap-1 text-[10px] font-semibold text-muted hover:text-foreground">
                                     <svg className="w-3 h-3 transition-transform group-open:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
                                     {t("dt.stack")}
                                   </summary>
                                   <pre className="mt-1.5 p-2 rounded-lg bg-red-950 text-red-200 font-mono text-[10px] leading-relaxed whitespace-pre-wrap break-all overflow-x-auto">
-                                    {cLog.stack}
+                                    {cleanStackTrace(cLog.stack)}
                                   </pre>
                                 </details>
-                              )}
+                              ) : null}
                             </div>
                           </div>
                         </div>
@@ -804,6 +1388,7 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                     // Network failed log
                     const nLog = log as NetworkLog;
                     const { domain, path } = networkLocation(nLog.url);
+                    const preceding = findPrecedingAction(nLog);
                     return (
                       <details
                         key={id}
@@ -820,6 +1405,17 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                             <span className="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono shrink-0 bg-red-100 dark:bg-red-950/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800/40">
                               {nLog.status || "FAIL"}
                             </span>
+                            {targetHost && (
+                              <span
+                                className={`px-1 py-0.2 rounded text-[8px] font-bold font-mono shrink-0 uppercase tracking-tight ${
+                                  isFirstPartyUrl(nLog.url, targetHost)
+                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200/70 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800/40"
+                                    : "bg-zinc-100 text-zinc-600 border border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700"
+                                }`}
+                              >
+                                {isFirstPartyUrl(nLog.url, targetHost) ? "1ST" : "3RD"}
+                              </span>
+                            )}
                             <div className="min-w-0 flex-1 truncate">
                               <span className="font-mono text-muted text-[11px]">{domain}</span>
                               <span className="font-mono text-foreground font-medium text-[11px]">{path}</span>
@@ -828,7 +1424,27 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                           <svg className="w-3.5 h-3.5 text-muted transition-transform group-open:rotate-180 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
                         </summary>
                         <div className="px-3.5 pb-3.5 pt-1 space-y-2 border-t border-border/40 text-[11px] bg-subtle/30 font-mono">
-                          {nLog.url && <p className="text-muted break-all"><span className="text-foreground font-semibold">URL:</span> {nLog.url}</p>}
+                          {preceding && <ActionBreadcrumb action={preceding} t={t} />}
+                          {nLog.url && (
+                            <div className="flex items-center justify-between gap-2 p-1.5 rounded bg-background border border-border/60">
+                              <span className="text-muted truncate min-w-0 flex-1"><span className="text-foreground font-semibold">URL:</span> {nLog.url}</span>
+                              <button
+                                type="button"
+                                onClick={(e) => handleCopyCurl(nLog, e)}
+                                className="shrink-0 text-[10px] px-2 py-0.5 rounded bg-subtle hover:bg-subtle/80 text-muted hover:text-foreground border border-border transition-colors flex items-center gap-1 cursor-pointer"
+                                title={t("dt.copyCurl") || "Copy as cURL"}
+                              >
+                                {copiedCurl === nLog.url ? (
+                                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">{t("dt.curlCopied") || "Copied!"}</span>
+                                ) : (
+                                  <>
+                                    <span className="font-mono text-[9px] font-bold text-indigo-500">cURL</span>
+                                    <span>{t("dt.copyCurl") || "Copy as cURL"}</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
+                          )}
                           <p className="text-muted">
                             <span className="text-foreground font-semibold">Status:</span>{" "}
                             {nLog.status || "FAIL"}{" "}
@@ -839,12 +1455,7 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                           )}
                           {nLog.error && <p className="text-red-600 dark:text-red-400"><span className="font-semibold">Error:</span> {nLog.error}</p>}
                           {nLog.responseBody && (
-                            <div>
-                              <p className="text-foreground font-semibold mb-1">Response Body:</p>
-                              <pre className="p-2 rounded bg-subtle border border-border text-[10px] whitespace-pre-wrap break-all max-h-32 overflow-y-auto">
-                                {nLog.responseBody}
-                              </pre>
-                            </div>
+                            <FormattedJsonBody content={nLog.responseBody} title="Response Body" t={t} />
                           )}
                         </div>
                       </details>
@@ -859,6 +1470,36 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
         {/* INFO TAB */}
         {activeTab === "Info" && (
           <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
+            {/* Quick Export Bug Report Card */}
+            <div className="p-3 rounded-xl border border-indigo-200/80 dark:border-indigo-900/40 bg-indigo-50/40 dark:bg-indigo-950/20 flex items-center justify-between gap-3 shadow-2xs">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                  <span className="text-indigo-600 dark:text-indigo-400">📋</span>
+                  <span>Markdown Bug Report</span>
+                </p>
+                <p className="text-[11px] text-muted truncate mt-0.5">
+                  Environment, causality timeline, top errors, failed cURLs & reproduction steps.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={handleCopyBugReport}
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer"
+              >
+                {copiedBugReport ? (
+                  <>
+                    <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                    <span>{t("dt.bugReportCopied") || "Report Copied!"}</span>
+                  </>
+                ) : (
+                  <>
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    <span>{t("dt.copyBugReport") || "Copy Bug Report"}</span>
+                  </>
+                )}
+              </button>
+            </div>
+
             {capture.site_url && (
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-muted mb-1.5">URL</p>
@@ -1105,6 +1746,7 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                   const level = log.type === "console" ? normalizeLevel(log.level) : log.type;
                   const isWarn = level === "warn";
                   const isErr = level === "error";
+                  const preceding = isErr ? findPrecedingAction(log) : null;
                   const detail = log.type === "console" ? conciseConsoleText(log)
                     : log.message || ("url" in log ? log.url : "") || (log.type === "screenshot" ? t("dt.screenshotTaken") : t("dt.navigation"));
                   const fullText = log.type === "console" ? consoleText(log) : detail;
@@ -1131,17 +1773,18 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                         </span>
                         <div className="min-w-0 flex-1">
                           <FormattedErrorMessage msg={fullText || detail} />
-                          {log.type === "console" && log.stack != null && (
+                          {preceding && <ActionBreadcrumb action={preceding} t={t} />}
+                          {log.type === "console" && cleanStackTrace(log.stack) ? (
                             <details className="group mt-2">
                               <summary className="flex list-none cursor-pointer items-center gap-1 text-[10px] font-semibold text-muted hover:text-foreground">
                                 <svg className="w-3 h-3 transition-transform group-open:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
                                 {t("dt.stack")}
                               </summary>
                               <pre className="mt-1.5 p-2 rounded-lg bg-red-950 text-red-200 font-mono text-[10px] leading-relaxed whitespace-pre-wrap break-all overflow-x-auto">
-                                {log.stack}
+                                {cleanStackTrace(log.stack)}
                               </pre>
                             </details>
-                          )}
+                          ) : null}
                         </div>
                         {logCount(log) > 1 && (
                           <span className="px-1.5 py-0.5 rounded-full bg-subtle text-[10px] font-bold text-muted border border-border shrink-0">
@@ -1225,6 +1868,18 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                           >
                             {log.status || "FAIL"}
                           </span>
+                          {targetHost && (
+                            <span
+                              className={`px-1 py-0.2 rounded text-[8px] font-bold font-mono shrink-0 uppercase tracking-tight ${
+                                isFirstPartyUrl(log.url, targetHost)
+                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200/70 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800/40"
+                                  : "bg-zinc-100 text-zinc-600 border border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700"
+                              }`}
+                              title={isFirstPartyUrl(log.url, targetHost) ? `1st-Party: matches ${targetHost}` : "3rd-Party: external host"}
+                            >
+                              {isFirstPartyUrl(log.url, targetHost) ? "1ST" : "3RD"}
+                            </span>
+                          )}
                           <div className="min-w-0 flex-1 truncate">
                             <p className="text-xs font-medium text-foreground truncate" title={log.url}>
                               {domain}
@@ -1249,6 +1904,10 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                         </div>
                       </summary>
                       <div className="px-3 pb-3 pt-2 space-y-2.5 border-t border-border/40 bg-subtle/20 text-xs">
+                        {isFailed && (() => {
+                          const preceding = findPrecedingAction(log);
+                          return preceding ? <ActionBreadcrumb action={preceding} t={t} /> : null;
+                        })()}
                         {/* Full URL row with copy button */}
                         {log.url && (
                           <div className="flex items-start justify-between gap-2 p-2 rounded-lg bg-background border border-border/60">
@@ -1256,24 +1915,44 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
                               <span className="text-muted select-none font-semibold mr-1.5">URL:</span>
                               <span className="text-foreground select-all">{log.url}</span>
                             </div>
-                            <button
-                              type="button"
-                              onClick={(e) => handleCopyUrl(log.url!, e)}
-                              className="shrink-0 text-[10px] px-2 py-1 rounded bg-subtle hover:bg-subtle/80 text-muted hover:text-foreground border border-border transition-colors flex items-center gap-1 cursor-pointer"
-                              title={t("dt.copyUrl")}
-                            >
-                              {copiedUrl === log.url ? (
-                                <>
-                                  <svg className="w-3 h-3 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
-                                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">{t("dt.urlCopied")}</span>
-                                </>
-                              ) : (
-                                <>
-                                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                                  <span>{t("dt.copyUrl")}</span>
-                                </>
-                              )}
-                            </button>
+                            <div className="flex items-center gap-1.5 shrink-0">
+                              <button
+                                type="button"
+                                onClick={(e) => handleCopyCurl(log, e)}
+                                className="shrink-0 text-[10px] px-2 py-1 rounded bg-subtle hover:bg-subtle/80 text-muted hover:text-foreground border border-border transition-colors flex items-center gap-1 cursor-pointer"
+                                title={t("dt.copyCurl") || "Copy as cURL"}
+                              >
+                                {copiedCurl === log.url ? (
+                                  <>
+                                    <svg className="w-3 h-3 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                                    <span className="text-emerald-600 dark:text-emerald-400 font-medium">{t("dt.curlCopied") || "Copied!"}</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <span className="font-mono text-[9px] font-bold text-indigo-500">cURL</span>
+                                    <span>{t("dt.copyCurl") || "Copy as cURL"}</span>
+                                  </>
+                                )}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={(e) => handleCopyUrl(log.url!, e)}
+                                className="shrink-0 text-[10px] px-2 py-1 rounded bg-subtle hover:bg-subtle/80 text-muted hover:text-foreground border border-border transition-colors flex items-center gap-1 cursor-pointer"
+                                title={t("dt.copyUrl")}
+                              >
+                                {copiedUrl === log.url ? (
+                                  <>
+                                    <svg className="w-3 h-3 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                                    <span className="text-emerald-600 dark:text-emerald-400 font-medium">{t("dt.urlCopied")}</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                                    <span>{t("dt.copyUrl")}</span>
+                                  </>
+                                )}
+                              </button>
+                            </div>
                           </div>
                         )}
 
@@ -1303,22 +1982,12 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
 
                         {/* Request Body */}
                         {log.requestBody != null && (
-                          <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted mb-1">{t("dt.requestBody")}</p>
-                            <pre className="p-2 rounded-lg bg-subtle border border-border font-mono text-[10px] leading-relaxed whitespace-pre-wrap break-all max-h-32 overflow-y-auto">
-                              {log.requestBody}
-                            </pre>
-                          </div>
+                          <FormattedJsonBody content={log.requestBody} title={t("dt.requestBody")} t={t} />
                         )}
 
                         {/* Response Body */}
                         {log.responseBody ? (
-                          <div>
-                            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted mb-1">{t("dt.responseBody")}</p>
-                            <pre className="p-2 rounded-lg bg-subtle border border-border font-mono text-[10px] leading-relaxed whitespace-pre-wrap break-all max-h-32 overflow-y-auto">
-                              {log.responseBody}
-                            </pre>
-                          </div>
+                          <FormattedJsonBody content={log.responseBody} title={t("dt.responseBody")} t={t} />
                         ) : !hasPayload && (
                           <div className="py-2 px-2.5 rounded bg-subtle/50 border border-border/40 text-[11px] text-muted italic">
                             {log.resourceType === "image" || log.resourceType === "stylesheet" || log.resourceType === "font"
@@ -1427,6 +2096,141 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Pr
             )}
           </div>
         )}
+
+        {/* STORAGE TAB */}
+        {activeTab === "Storage" && (() => {
+          const currentStore = storageType === "local" ? (storageData?.localStorage || {}) : (storageData?.sessionStorage || {});
+          const entries = Object.entries(currentStore).filter(([k, v]) => {
+            if (!logSearch) return true;
+            const q = logSearch.toLowerCase();
+            return k.toLowerCase().includes(q) || String(v).toLowerCase().includes(q);
+          });
+          const localCount = Object.keys(storageData?.localStorage || {}).length;
+          const sessionCount = Object.keys(storageData?.sessionStorage || {}).length;
+
+          const handleCopyAllStorage = () => {
+            try {
+              navigator.clipboard.writeText(JSON.stringify(currentStore, null, 2));
+              setCopiedAllStorage(true);
+              setTimeout(() => setCopiedAllStorage(false), 2000);
+            } catch {}
+          };
+
+          const handleCopyKey = (key: string, val: string) => {
+            try {
+              navigator.clipboard.writeText(val);
+              setCopiedStorageKey(key);
+              setTimeout(() => setCopiedStorageKey(null), 2000);
+            } catch {}
+          };
+
+          return (
+            <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+              {/* Storage Switcher Toolbar */}
+              <div className="p-3 border-b border-border bg-subtle/20 flex items-center justify-between gap-2 shrink-0">
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setStorageType("local")}
+                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+                      storageType === "local"
+                        ? "bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800/40 font-semibold"
+                        : "text-muted hover:text-foreground border border-transparent"
+                    }`}
+                  >
+                    {t("dt.localStorage") || "Local Storage"} ({localCount})
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setStorageType("session")}
+                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${
+                      storageType === "session"
+                        ? "bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800/40 font-semibold"
+                        : "text-muted hover:text-foreground border border-transparent"
+                    }`}
+                  >
+                    {t("dt.sessionStorage") || "Session Storage"} ({sessionCount})
+                  </button>
+                </div>
+                {entries.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={handleCopyAllStorage}
+                    className="px-2 py-1 rounded text-xs font-medium text-muted hover:text-foreground bg-subtle hover:bg-subtle/80 border border-border transition-colors flex items-center gap-1 cursor-pointer shrink-0"
+                  >
+                    {copiedAllStorage ? (
+                      <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{t("dt.urlCopied") || "Copied!"}</span>
+                    ) : (
+                      <>
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        <span>{t("dt.copyAll") || "Copy All"}</span>
+                      </>
+                    )}
+                  </button>
+                )}
+              </div>
+
+              {/* Storage Entries */}
+              <div className="flex-1 min-h-0 overflow-y-auto">
+                {entries.length === 0 ? (
+                  <div className="py-14 text-center text-xs text-muted">
+                    {t("dt.noStorage") || "No storage data recorded"}
+                  </div>
+                ) : (
+                  <div className="divide-y divide-border/60">
+                    {entries.map(([key, rawValue]) => {
+                      const valStr = String(rawValue);
+                      const isCopied = copiedStorageKey === key;
+                      let isJson = false;
+                      let prettyVal = valStr;
+                      const trimmed = valStr.trim();
+                      if ((trimmed.startsWith("{") && trimmed.endsWith("}")) || (trimmed.startsWith("[") && trimmed.endsWith("]"))) {
+                        try {
+                          prettyVal = JSON.stringify(JSON.parse(trimmed), null, 2);
+                          isJson = true;
+                        } catch {}
+                      }
+
+                      return (
+                        <div key={key} className="p-3 text-xs hover:bg-subtle/40 transition-colors space-y-1.5">
+                          <div className="flex items-center justify-between gap-2 min-w-0">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <span className="font-mono font-semibold text-foreground text-xs truncate max-w-sm" title={key}>
+                                {key}
+                              </span>
+                              {isJson && (
+                                <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/40">
+                                  JSON
+                                </span>
+                              )}
+                              <span className="text-[9px] font-mono text-muted">
+                                ({valStr.length} chars)
+                              </span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleCopyKey(key, prettyVal)}
+                              className="px-1.5 py-0.5 rounded text-[10px] text-muted hover:text-foreground bg-subtle hover:bg-subtle/80 border border-border transition-colors flex items-center gap-1 cursor-pointer shrink-0"
+                            >
+                              {isCopied ? (
+                                <span className="text-emerald-600 dark:text-emerald-400 font-medium">{t("dt.urlCopied") || "Copied!"}</span>
+                              ) : (
+                                <span>{t("dt.copy") || "Copy"}</span>
+                              )}
+                            </button>
+                          </div>
+                          <pre className="p-2 rounded bg-subtle border border-border font-mono text-[10px] leading-relaxed whitespace-pre-wrap break-all max-h-36 overflow-y-auto select-all">
+                            {prettyVal}
+                          </pre>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
