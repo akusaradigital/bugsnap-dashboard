@@ -751,7 +751,7 @@ export default function MediaViewer({
 
             {/* Speed selector (.playback-speed-label) */}
             <div className="flex items-center gap-1 shrink-0">
-              <label htmlFor="video-playback-speed" className="text-[11px] text-zinc-400 dark:text-zinc-500 font-medium hidden sm:inline">
+              <label htmlFor="video-playback-speed" className="text-[11px] text-zinc-600 dark:text-zinc-400 font-medium hidden sm:inline">
                 {t("mv.speed")}
               </label>
               <select

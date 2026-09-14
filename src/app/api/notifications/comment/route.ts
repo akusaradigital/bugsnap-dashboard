@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-server";
+import { renderCommentEmail } from "@/lib/email-templates";
 
 export const runtime = "nodejs";
 
@@ -137,40 +138,32 @@ export async function POST(req: Request) {
       }
     };
 
-    const bodyHtml = commentBody.replace(/\n/g, "<br>");
-
-    // Mentioned users each get a "you were mentioned" email
+    // Mentioned users each get a professional "you were mentioned" notification email
     for (const email of Array.from(mentionEmails)) {
-      await sendResend(
-        email,
-        `[BugSnap] You were mentioned in a comment on "${capture.title || "Untitled"}"`,
-        `<div style="font-family: system-ui, -apple-system, sans-serif; max-width: 560px; margin: auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px;">
-          <img src="${appUrl}/icon.png" width="40" height="40" alt="BugSnap" style="display: block; margin-bottom: 20px;" />
-          <h2 style="font-size: 20px; font-weight: 600; color: #0f172a; margin-top: 0;">You were mentioned</h2>
-          <p style="color: #475569; font-size: 15px; line-height: 24px;"><strong>${author_name || "Someone"}</strong> mentioned you on <strong>${capture.title || "Untitled"}</strong>:</p>
-          <blockquote style="margin: 16px 0; padding: 12px 16px; border-left: 4px solid #10b981; background-color: #f8fafc; color: #1e293b; font-size: 15px; border-radius: 0 4px 4px 0;">${bodyHtml}</blockquote>
-          <div style="margin-top: 24px;"><a href="${captureUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: #2563eb; color: #ffffff; padding: 10px 18px; font-weight: 500; font-size: 14px; text-decoration: none; border-radius: 6px;">View Capture & Reply</a></div>
-          <hr style="margin: 24px 0; border: 0; border-top: 1px solid #e2e8f0;" />
-          <p style="color: #94a3b8; font-size: 12px; margin-bottom: 0;">This is an automated notification from BugSnap.</p>
-        </div>`
-      );
+      const emailContent = renderCommentEmail({
+        appUrl,
+        captureTitle: capture.title || "Untitled",
+        captureUrl,
+        workspaceName: workspace.name,
+        authorName: String(author_name || "A collaborator"),
+        commentBody,
+        isMention: true,
+      });
+      await sendResend(email, emailContent.subject, emailContent.html);
     }
 
     // Owner gets the standard "New Comment" email unless they are the author or already mentioned
     if (!skipOwner) {
-      await sendResend(
-        owner.email,
-        `[BugSnap] New Comment on "${capture.title || "Untitled"}"`,
-        `<div style="font-family: system-ui, -apple-system, sans-serif; max-width: 560px; margin: auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 8px;">
-          <img src="${appUrl}/icon.png" width="40" height="40" alt="BugSnap" style="display: block; margin-bottom: 20px;" />
-          <h2 style="font-size: 20px; font-weight: 600; color: #0f172a; margin-top: 0;">New comment on your capture</h2>
-          <p style="color: #475569; font-size: 15px; line-height: 24px;"><strong>${author_name || "Someone"}</strong> commented on <strong>${capture.title || "Untitled"}</strong>:</p>
-          <blockquote style="margin: 16px 0; padding: 12px 16px; border-left: 4px solid #3b82f6; background-color: #f8fafc; color: #1e293b; font-size: 15px; border-radius: 0 4px 4px 0;">${bodyHtml}</blockquote>
-          <div style="margin-top: 24px;"><a href="${captureUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; background-color: #2563eb; color: #ffffff; padding: 10px 18px; font-weight: 500; font-size: 14px; text-decoration: none; border-radius: 6px;">View Capture & Reply</a></div>
-          <hr style="margin: 24px 0; border: 0; border-top: 1px solid #e2e8f0;" />
-          <p style="color: #94a3b8; font-size: 12px; margin-bottom: 0;">This is an automated notification from BugSnap.</p>
-        </div>`
-      );
+      const emailContent = renderCommentEmail({
+        appUrl,
+        captureTitle: capture.title || "Untitled",
+        captureUrl,
+        workspaceName: workspace.name,
+        authorName: String(author_name || "A collaborator"),
+        commentBody,
+        isMention: false,
+      });
+      await sendResend(owner.email, emailContent.subject, emailContent.html);
     }
 
     // ponytail: no `mentions` in the response - it leaked member emails to any

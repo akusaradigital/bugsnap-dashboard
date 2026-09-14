@@ -63,14 +63,14 @@ export default function LoginPage() {
 
   if (loadingSession) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-background">
         <div className="w-7 h-7 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white flex items-center justify-center p-6">
+    <div className="min-h-screen bg-white dark:bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-sm">
         {/* Brand */}
         <div className="flex flex-col items-center text-center mb-8">
@@ -83,12 +83,12 @@ export default function LoginPage() {
         </div>
 
         {/* Card */}
-        <div className="rounded-2xl border border-border bg-white shadow-sm p-6 space-y-4">
+        <div className="rounded-2xl border border-border bg-white dark:bg-subtle shadow-sm p-6 space-y-4">
           {/* Google SSO button */}
           <button
             onClick={signInWithGoogle}
             disabled={signingIn}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg border border-border bg-white text-sm font-semibold text-foreground hover:bg-subtle transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg border border-border bg-white dark:bg-subtle text-sm font-semibold text-foreground hover:bg-subtle dark:hover:bg-border/30 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
           >
             <GoogleLogo />
             {signingIn ? "Connecting to Google..." : "Continue with Google"}

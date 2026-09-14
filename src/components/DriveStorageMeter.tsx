@@ -98,7 +98,7 @@ export default function DriveStorageMeter() {
     : "bg-indigo-600 dark:bg-indigo-500";
 
   return (
-    <div className="p-3 mx-2 mb-2 rounded-xl border border-border bg-subtle/40 space-y-2 text-xs">
+    <div className="p-3 mx-2 mb-2 rounded-xl border border-border bg-subtle shadow-xs space-y-2 text-xs">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5 font-medium text-foreground">
           <svg className="w-3.5 h-3.5 text-muted" viewBox="0 0 24 24" fill="currentColor">

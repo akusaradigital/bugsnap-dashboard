@@ -49,7 +49,7 @@ export default function HelpPage() {
         {/* Contact/Support Box Right Column */}
         <div className="space-y-6">
           <div className="creative-surface rounded-2xl p-6 space-y-4">
-            <div className="w-10 h-10 bg-indigo-100 rounded flex items-center justify-center text-xl text-indigo-600">
+            <div className="w-10 h-10 bg-indigo-100 dark:bg-indigo-950/60 rounded flex items-center justify-center text-xl text-indigo-600 dark:text-indigo-400">
               💬
             </div>
             <h3 className="text-base font-bold text-foreground">Still need help?</h3>
@@ -76,7 +76,7 @@ export default function HelpPage() {
             </a>
             <a
               href="/pricing"
-              className="block text-center border border-border bg-white hover:bg-subtle text-foreground text-sm font-semibold py-2.5 rounded-lg transition-colors"
+              className="block text-center border border-border bg-white dark:bg-subtle hover:bg-subtle dark:hover:bg-border/30 text-foreground text-sm font-semibold py-2.5 rounded-lg transition-colors"
             >
               See Pricing
             </a>

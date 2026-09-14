@@ -310,7 +310,24 @@ export default function DashboardLayout({
       );
     };
     window.addEventListener("bugsnap:profile-updated", onProfileUpdated);
-    return () => window.removeEventListener("bugsnap:profile-updated", onProfileUpdated);
+
+    const onWorkspaceUpdated = (e: Event) => {
+      const detail = (e as CustomEvent<{ id: string; name?: string; avatarUrl?: string | null }>).detail;
+      if (!detail?.id) return;
+      setWorkspaces((prev) =>
+        prev.map((ws) =>
+          ws.id === detail.id
+            ? { ...ws, name: detail.name ?? ws.name, avatar_url: detail.avatarUrl !== undefined ? detail.avatarUrl : ws.avatar_url }
+            : ws
+        )
+      );
+    };
+    window.addEventListener("bugsnap:workspace-updated", onWorkspaceUpdated);
+
+    return () => {
+      window.removeEventListener("bugsnap:profile-updated", onProfileUpdated);
+      window.removeEventListener("bugsnap:workspace-updated", onWorkspaceUpdated);
+    };
   }, []);
 
   // Keep workspace state synchronized with browser back/forward navigation.
@@ -950,8 +967,8 @@ export default function DashboardLayout({
                       key={n.comment_id}
                       className={`px-3 py-2 text-xs rounded-lg transition-colors cursor-pointer ${
                         isRead
-                          ? "text-muted/60 hover:bg-subtle/50 opacity-60"
-                          : "text-foreground bg-indigo-50/40 dark:bg-indigo-950/20 hover:bg-indigo-50/80 font-medium"
+                          ? "text-muted hover:bg-subtle"
+                          : "text-foreground bg-indigo-50/40 dark:bg-indigo-950/30 hover:bg-indigo-50/80 dark:hover:bg-indigo-950/50 font-medium"
                       }`}
                       onClick={() => {
                         markRead(n.capture_id);
@@ -964,7 +981,7 @@ export default function DashboardLayout({
                         <p className="truncate font-semibold text-[11px] flex-1">
                           {n.capture_title || "Untitled capture"}
                         </p>
-                        <span className="text-[9px] text-muted/70 shrink-0">
+                        <span className="text-[9px] text-muted shrink-0">
                           {new Date(n.created_at).toLocaleDateString([], { month: "short", day: "numeric" })}
                         </span>
                       </div>
@@ -987,7 +1004,7 @@ export default function DashboardLayout({
         <div ref={workspaceMenuRef} className="px-3 pt-4 relative">
           <button
             onClick={() => setWsOpen((o) => !o)}
-            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium rounded-xl border border-border bg-subtle hover:bg-subtle transition-colors text-left"
+            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium rounded-xl border border-border bg-subtle hover:bg-border/30 transition-colors text-left"
           >
             {activeWs?.avatar_url ? (
               /* eslint-disable-next-line @next/next/no-img-element */
@@ -1012,7 +1029,7 @@ export default function DashboardLayout({
                     /* eslint-disable-next-line @next/next/no-img-element */
                     <img src={activeWs.avatar_url} alt={activeWs.name} className="w-10 h-10 rounded-xl object-cover shrink-0 bg-subtle border border-border" />
                   ) : (
-                    <span className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 text-lg font-semibold flex items-center justify-center shrink-0">
+                    <span className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 text-lg font-semibold flex items-center justify-center shrink-0">
                       {initialOf(activeWs?.name)}
                     </span>
                   )}
@@ -1254,7 +1271,7 @@ export default function DashboardLayout({
                         setSidebarOpen(false);
                       }}
                       className={`flex-1 flex items-center gap-2.5 px-2 py-2 text-xs truncate ${
-                        isActiveFolder ? "text-indigo-600 font-semibold" : "text-muted hover:text-foreground"
+                        isActiveFolder ? "text-indigo-600 dark:text-indigo-400 font-semibold" : "text-muted hover:text-foreground"
                       }`}
                     >
                       <span className="text-xs shrink-0">📁</span>

@@ -3,7 +3,7 @@
  * anon key (same as the production extension). Verifies every RPC the app
  * depends on, plus RLS isolation. All created rows are cleaned up after.
  *
- * Run:  node --test tests/
+ * Run:  node --test tests/rpc.test.mjs
  */
 import { test, before, after } from "node:test";
 import assert from "node:assert/strict";
@@ -39,13 +39,16 @@ test("insert_capture_by_email: rejects empty owner_email (23502)", async () => {
   assert.equal(error.code, "23502", "expected owner_email required code");
 });
 
-test("insert_capture_by_email: rejects unknown email (P0002)", async () => {
+test("insert_capture_by_email: auto-provisions user & workspace for new email", async () => {
+  const newEmail = randomEmail("newuser");
   const { data, error } = await insertTestCapture({
-    p_owner_email: randomEmail("nobody"),
+    p_owner_email: newEmail,
+    p_title: `${TEST_PREFIX} auto-provision check`,
   });
-  assert.equal(data, null);
-  assert.ok(error, "expected an error");
-  assert.equal(error.code, "P0002", "expected no-account code");
+  assert.equal(error, null, `expected auto-provisioning to succeed, got: ${error?.message}`);
+  assert.ok(data, "expected a capture id back");
+  assert.match(data, /^[0-9a-f-]{36}$/i, "expected UUID");
+  trackCapture(data);
 });
 
 test("insert_capture_by_email: stores os/browser/site_url/duration", async () => {
@@ -68,12 +71,22 @@ test("insert_capture_by_email: stores os/browser/site_url/duration", async () =>
   assert.equal(row.owner_email, TEST_OWNER_EMAIL);
 });
 
-test("insert_capture_by_email: requires a real owner workspace", async () => {
-  // Unknown user => P0002 covers the workspace resolution path too.
-  const { error } = await insertTestCapture({
-    p_owner_email: randomEmail("wscheck"),
+test("insert_capture_by_email: handles multiple captures for auto-provisioned user", async () => {
+  const sharedEmail = randomEmail("multi");
+  const { data: id1, error: err1 } = await insertTestCapture({
+    p_owner_email: sharedEmail,
+    p_title: `${TEST_PREFIX} multi 1`,
   });
-  assert.ok(error, "expected error for user without workspace");
+  assert.equal(err1, null);
+  trackCapture(id1);
+
+  const { data: id2, error: err2 } = await insertTestCapture({
+    p_owner_email: sharedEmail,
+    p_title: `${TEST_PREFIX} multi 2`,
+  });
+  assert.equal(err2, null);
+  trackCapture(id2);
+  assert.notEqual(id1, id2, "distinct captures must receive distinct UUIDs");
 });
 
 // ---------------------------------------------------------------------------
@@ -95,15 +108,14 @@ test("get_public_capture: anon can read an unlocked capture", async () => {
   assert.ok(Array.isArray(data[0].dev_logs), "expected dev_logs array");
 });
 
-test("get_public_capture: returns empty array for unknown id", async () => {
-  // The RPC returns [] (not a row with status=not_found) for random ids -
-  // the frontend treats length===0 as not-found.
+test("get_public_capture: returns not_found status for unknown id", async () => {
   const { data, error } = await supabase.rpc("get_public_capture", {
     p_id: "00000000-0000-4000-8000-000000000000",
     p_password: null,
   });
   assert.equal(error, null);
-  assert.equal(data.length, 0, "expected empty array for unknown id");
+  assert.equal(data?.length, 1, "expected exactly one row with not_found status");
+  assert.equal(data[0].status, "not_found");
 });
 
 test("get_public_capture: password-protected capture hides content until unlock", async () => {
@@ -119,8 +131,6 @@ test("get_public_capture: password-protected capture hides content until unlock"
   assert.equal(locked.data[0].status, "needs_password");
   assert.equal(locked.data[0].drive_url, null, "must NOT leak drive_url");
   assert.equal(locked.data[0].dev_logs, null, "must NOT leak dev_logs");
-  // SQL NULL arrives as undefined/null over PostgREST - either is fine as
-  // long as no actual value leaks.
   assert.ok(locked.data[0].os == null, "must NOT leak os");
 
   // Wrong password -> still locked
@@ -147,27 +157,26 @@ test("get_public_capture: expired capture is hidden", async () => {
   assert.equal(data[0].status, "expired");
   assert.equal(data[0].drive_url, null, "expired must not leak content");
   assert.equal(data[0].dev_logs, null);
-  // SQL NULL arrives as undefined/null - either is fine as long as nothing leaks.
   assert.ok(data[0].site_url == null, "expired must not leak site_url");
 });
 
 // ---------------------------------------------------------------------------
 // 3. Workspace RPCs
 // ---------------------------------------------------------------------------
-test("get_my_workspaces: returns owner's workspace", async () => {
-  const { data, error } = await supabase.rpc("get_my_workspaces");
-  // NOTE: this call uses the anon key with no session -> RLS returns nothing
-  // for the anon role. That's expected; the dashboard calls it authenticated.
-  assert.equal(error, null, "RPC itself must not throw");
-  assert.ok(Array.isArray(data), "expected an array");
+test("get_my_workspaces: requires authentication (anon forbidden)", async () => {
+  const { error } = await supabase.rpc("get_my_workspaces");
+  // Security hardening revoked execute from anon role
+  assert.ok(error, "anon must be forbidden from calling get_my_workspaces");
+  assert.equal(error.code, "42501");
 });
 
-test("create_workspace: works when authenticated (dashboard flow)", async () => {
-  // Anon cannot create (auth.uid() is null), but RPC must not crash.
-  const { data, error } = await supabase.rpc("create_workspace", {
+test("create_workspace: requires authentication (anon forbidden)", async () => {
+  const { error } = await supabase.rpc("create_workspace", {
     p_name: `${TEST_PREFIX} ws ${Date.now()}`,
   });
-  assert.ok(error || data, "either fails for anon or returns id");
+  // Security hardening revoked execute from anon role
+  assert.ok(error, "anon must be forbidden from calling create_workspace");
+  assert.equal(error.code, "42501");
 });
 
 // ---------------------------------------------------------------------------
@@ -196,6 +205,7 @@ test("post_comment: rejects unknown capture (P0002)", async () => {
 });
 
 test("post_comment: succeeds and returns the row", async () => {
+  await sql("DELETE FROM public.comment_spam_guard").catch(() => {});
   const { data: id } = await insertTestCapture({ p_title: `${TEST_PREFIX} comment ok` });
   trackCapture(id);
   const { data, error } = await supabase.rpc("post_comment", {
@@ -211,6 +221,7 @@ test("post_comment: succeeds and returns the row", async () => {
 });
 
 test("post_comment: rate limit blocks 6th comment in 10 min", async () => {
+  await sql("DELETE FROM public.comment_spam_guard").catch(() => {});
   const { data: id } = await insertTestCapture({ p_title: `${TEST_PREFIX} rate` });
   trackCapture(id);
   const ref = `rl${Date.now()}`;
@@ -233,6 +244,7 @@ test("post_comment: rate limit blocks 6th comment in 10 min", async () => {
 });
 
 test("post_comment: stores valid video timestamps and rejects invalid ones", async () => {
+  await sql("DELETE FROM public.comment_spam_guard").catch(() => {});
   const { data: id } = await insertTestCapture({ p_title: `${TEST_PREFIX} timestamp` });
   trackCapture(id);
   const valid = await supabase.rpc("post_comment", {
@@ -255,6 +267,7 @@ test("post_comment: stores valid video timestamps and rejects invalid ones", asy
 });
 
 test("post_comment: reply with parent_id works", async () => {
+  await sql("DELETE FROM public.comment_spam_guard").catch(() => {});
   const { data: id } = await insertTestCapture({ p_title: `${TEST_PREFIX} reply` });
   trackCapture(id);
   const parent = await supabase.rpc("post_comment", {
@@ -291,4 +304,5 @@ test("record_view + get_view_count work together", async () => {
 // ---------------------------------------------------------------------------
 after(async () => {
   await cleanupTestData();
+  await sql("DELETE FROM public.comment_spam_guard").catch(() => {});
 });

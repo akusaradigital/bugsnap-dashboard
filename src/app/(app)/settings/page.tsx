@@ -13,162 +13,177 @@ import { pickAvatar, isRealAvatar, initialOf } from "@/lib/avatar";
 import { Dropdown } from "@/components/Dropdown";
 import { ShimmerLockBadge } from "@/components/ShimmerLockBadge";
 
+interface IntegrationField {
+  key: string;
+  label: string;
+  type: "text" | "password" | "url";
+  placeholder: string;
+  hint?: string;
+  required?: boolean;
+}
+
+interface IntegrationDef {
+  id: string;
+  name: string;
+  desc: string;
+  iconSrc: string;
+  fields: IntegrationField[];
+}
+
 // ── Integration catalogue (same order as extension editor.html) ─────────────
-const INTEGRATIONS = [
+const INTEGRATIONS: IntegrationDef[] = [
   {
     id: "aksora",
     name: "Aksora",
     desc: "Connect your Aksora QA Workspace to push bug tickets directly.",
-    icon: (
-      <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none">
-        <rect width="24" height="24" rx="5" fill="#6366F1" />
-        <path d="M7 17L12 7L17 17M9 14H15" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-      </svg>
-    ),
+    iconSrc: "/integrations/aksora.png",
+    fields: [
+      { key: "url", label: "Instance URL", type: "url", placeholder: "https://your-aksora-instance.com", required: true },
+      { key: "apiKey", label: "API Key / Token", type: "password", placeholder: "aksora_...", hint: "Generate an API key with write permissions from Aksora > Settings > API Keys.", required: true },
+    ],
   },
   {
     id: "snaptest",
     name: "SnapTest AI",
     desc: "Forward captures directly into automated test suites and test runs.",
-    icon: (
-      <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none">
-        <rect width="24" height="24" rx="5" fill="#EC4899" />
-        <path d="M13 3L4 14H11L10 21L19 10H12L13 3Z" fill="white" />
-      </svg>
-    ),
+    iconSrc: "/integrations/snaptest.png",
+    fields: [
+      { key: "url", label: "Runner / Server URL", type: "url", placeholder: "http://localhost:3000", required: true },
+      { key: "apiKey", label: "API Key / Token", type: "password", placeholder: "Token (optional)", required: false },
+    ],
   },
   {
     id: "slack",
     name: "Slack",
-    desc: "Send bug captures directly to Slack channels.",
-    icon: (
-      <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none">
-        <path d="M5.042 15.165a2.528 2.528 0 01-2.52 2.523A2.528 2.528 0 010 15.165a2.527 2.527 0 012.522-2.52h2.52v2.52zM6.313 15.165a2.527 2.527 0 012.521-2.52 2.527 2.527 0 012.521 2.52v6.313A2.528 2.528 0 018.834 24a2.528 2.528 0 01-2.521-2.522v-6.313zM8.834 5.042a2.528 2.528 0 01-2.521-2.52A2.528 2.528 0 018.834 0a2.527 2.527 0 012.521 2.522v2.52H8.834zM8.834 6.313a2.527 2.527 0 012.521 2.521 2.527 2.527 0 01-2.521 2.521H2.522A2.528 2.528 0 010 8.834a2.528 2.528 0 012.522-2.521h6.312zM18.956 8.834a2.528 2.528 0 012.522-2.521A2.528 2.528 0 0124 8.834a2.527 2.527 0 01-2.522 2.521h-2.522V8.834zM17.687 8.834a2.527 2.527 0 01-2.521 2.521 2.527 2.527 0 01-2.521-2.521V2.522A2.528 2.528 0 0115.166 0a2.528 2.528 0 012.521 2.522v6.312zM15.166 18.956a2.528 2.528 0 012.521 2.522A2.528 2.528 0 0115.166 24a2.527 2.527 0 01-2.521-2.522v-2.522h2.521zM15.166 17.687a2.527 2.527 0 01-2.521-2.521 2.527 2.527 0 012.521-2.522h6.313A2.528 2.528 0 0124 15.166a2.528 2.528 0 01-2.522 2.521h-6.312z" fill="#E01E5A" />
-      </svg>
-    ),
+    desc: "Send bug captures and reports directly to Slack channels.",
+    iconSrc: "/integrations/slack.png",
+    fields: [
+      { key: "webhookUrl", label: "Incoming Webhook URL", type: "url", placeholder: "https://hooks.slack.com/services/...", hint: "Create an Incoming Webhook in your Slack App configurations.", required: true },
+      { key: "channel", label: "Default Channel", type: "text", placeholder: "#bug-reports (optional)", required: false },
+    ],
   },
   {
-    id: "jira",
-    name: "Jira",
-    desc: "Create Jira tickets automatically from captures.",
-    icon: (
-      <svg viewBox="0 0 32 32" className="w-6 h-6" fill="none">
-        <path d="M15.977 0L8.065 7.91c-.44.441-.44 1.157 0 1.598L16 17.44l7.935-7.934a1.13 1.13 0 000-1.598L15.977 0z" fill="#2684FF" />
-        <path d="M8.065 9.508L0 17.572a1.13 1.13 0 000 1.598l7.912 7.912L16 19.14 8.065 9.508z" fill="url(#jira_b)" />
-        <path d="M23.935 9.508L16 17.44l8.088 8.088L32 17.572a1.13 1.13 0 000-1.598l-8.065-8.466z" fill="url(#jira_a)" />
-        <defs>
-          <linearGradient id="jira_a" x1="24.176" y1="17.38" x2="20.29" y2="21.262" gradientUnits="userSpaceOnUse"><stop stopColor="#0052CC" /><stop offset="1" stopColor="#2684FF" /></linearGradient>
-          <linearGradient id="jira_b" x1="7.817" y1="17.38" x2="11.697" y2="21.256" gradientUnits="userSpaceOnUse"><stop stopColor="#0052CC" /><stop offset="1" stopColor="#2684FF" /></linearGradient>
-        </defs>
-      </svg>
-    ),
+    id: "webhook",
+    name: "Webhooks",
+    desc: "Send capture alerts to custom Slack, Discord, Zapier, or HTTP endpoints.",
+    iconSrc: "/integrations/webhook.svg",
+    fields: [
+      { key: "url", label: "Webhook URL", type: "url", placeholder: "https://hooks.slack.com/... or https://discord.com/api/webhooks/...", hint: "We POST a JSON payload with capture URL, thumbnail, DevTools error diagnostics, and system metadata.", required: true },
+    ],
   },
   {
     id: "github",
     name: "GitHub",
-    desc: "Open GitHub issues directly from a capture.",
-    icon: (
-      <svg viewBox="0 0 24 24" className="w-6 h-6" fill="currentColor">
-        <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z" />
-      </svg>
-    ),
+    desc: "Open GitHub issues directly from bug captures with diagnostic data.",
+    iconSrc: "/integrations/github.png",
+    fields: [
+      { key: "token", label: "Personal Access Token (PAT)", type: "password", placeholder: "ghp_...", hint: "Requires 'repo' scope or fine-grained token with 'Issues: Read and Write'.", required: true },
+      { key: "repo", label: "Repository (owner/repo)", type: "text", placeholder: "owner/repository", hint: "e.g. your-org/frontend-app", required: true },
+    ],
   },
   {
     id: "linear",
     name: "Linear",
-    desc: "Create Linear issues from bug captures instantly.",
-    icon: (
-      <svg viewBox="0 0 100 100" className="w-6 h-6" fill="none">
-        <path d="M1.22 51.5a50 50 0 0047.29 47.29L1.22 51.5zM.14 41.38l58.49 58.49A50 50 0 0087.5 85.53L14.47 12.5A50 50 0 00.14 41.38zM22.37 6.33l71.3 71.3A50 50 0 0022.37 6.33zm17.9-5.38L99.05 59.73A50 50 0 0040.27.95z" fill="#5E6AD2" />
-      </svg>
-    ),
+    desc: "Create Linear issues from bug captures with full metadata instantly.",
+    iconSrc: "/integrations/linear.png",
+    fields: [
+      { key: "apiKey", label: "Linear API Key", type: "password", placeholder: "lin_api_...", hint: "Generate from Linear Settings > Account > Security & API.", required: true },
+      { key: "teamId", label: "Team Key or ID", type: "text", placeholder: "ENG (or Team ID)", required: true },
+    ],
   },
   {
-    id: "claude",
-    name: "Claude",
-    desc: "Use Claude AI to summarize bug reports automatically.",
-    icon: (
-      <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none">
-        <rect width="24" height="24" rx="4" fill="#D97706" />
-        <text x="12" y="16" textAnchor="middle" fill="white" fontSize="10" fontWeight="bold">C</text>
-      </svg>
-    ),
-  },
-  {
-    id: "chatgpt",
-    name: "ChatGPT",
-    desc: "Generate AI bug reports and summaries via ChatGPT.",
-    icon: (
-      <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none">
-        <rect width="24" height="24" rx="4" fill="#10A37F" />
-        <text x="12" y="16" textAnchor="middle" fill="white" fontSize="8" fontWeight="bold">GPT</text>
-      </svg>
-    ),
-  },
-  {
-    id: "clickup",
-    name: "ClickUp",
-    desc: "Create ClickUp tasks from captures with one click.",
-    icon: (
-      <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none">
-        <rect width="24" height="24" rx="4" fill="#7B68EE" />
-        <text x="12" y="15" textAnchor="middle" fill="white" fontSize="7" fontWeight="bold">CU</text>
-      </svg>
-    ),
-  },
-  {
-    id: "notion",
-    name: "Notion",
-    desc: "Log captures as Notion pages in your workspace.",
-    icon: (
-      <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none">
-        <rect width="24" height="24" rx="4" fill="#1A1A1A" />
-        <text x="12" y="15.5" textAnchor="middle" fill="white" fontSize="7" fontWeight="bold">N</text>
-      </svg>
-    ),
-  },
-  {
-    id: "asana",
-    name: "Asana",
-    desc: "Create Asana tasks and attach captures automatically.",
-    icon: (
-      <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none">
-        <rect width="24" height="24" rx="4" fill="#F06A6A" />
-        <text x="12" y="15" textAnchor="middle" fill="white" fontSize="7" fontWeight="bold">A</text>
-      </svg>
-    ),
-  },
-  {
-    id: "azure",
-    name: "Azure DevOps",
-    desc: "File Azure DevOps work items directly from captures.",
-    icon: (
-      <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none">
-        <rect width="24" height="24" rx="4" fill="#0078D4" />
-        <text x="12" y="15" textAnchor="middle" fill="white" fontSize="6" fontWeight="bold">ADO</text>
-      </svg>
-    ),
+    id: "jira",
+    name: "Jira",
+    desc: "Create Jira issue tickets automatically from captured bugs.",
+    iconSrc: "/integrations/jira.png",
+    fields: [
+      { key: "host", label: "Atlassian Site URL", type: "url", placeholder: "https://yourcompany.atlassian.net", required: true },
+      { key: "email", label: "Atlassian Account Email", type: "text", placeholder: "user@company.com", required: true },
+      { key: "token", label: "Atlassian API Token", type: "password", placeholder: "ATATT3...", hint: "Generate from id.atlassian.com/manage-profile/security/api-tokens.", required: true },
+      { key: "projectKey", label: "Jira Project Key", type: "text", placeholder: "BUG (or PROJ)", required: true },
+    ],
   },
   {
     id: "gitlab",
     name: "GitLab",
     desc: "Open GitLab issues from bug captures instantly.",
-    icon: (
-      <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none">
-        <path d="M23.955 13.587l-1.342-4.135-2.664-8.189a.455.455 0 00-.867 0L16.418 9.45H7.582L4.918 1.263a.455.455 0 00-.867 0L1.386 9.449.044 13.587a.924.924 0 00.331 1.023L12 23.054l11.625-8.444a.92.92 0 00.33-1.023z" fill="#FC6D26" />
-      </svg>
-    ),
+    iconSrc: "/integrations/gitlab.png",
+    fields: [
+      { key: "url", label: "GitLab Host URL", type: "url", placeholder: "https://gitlab.com", hint: "Leave as https://gitlab.com or provide self-hosted URL.", required: true },
+      { key: "token", label: "Personal / Project Access Token", type: "password", placeholder: "glpat-...", hint: "Requires 'api' scope.", required: true },
+      { key: "project", label: "Project Path or ID", type: "text", placeholder: "group/project-name or 123456", required: true },
+    ],
+  },
+  {
+    id: "notion",
+    name: "Notion",
+    desc: "Log bug captures as database pages in your Notion workspace.",
+    iconSrc: "/integrations/notion.png",
+    fields: [
+      { key: "token", label: "Internal Integration Secret", type: "password", placeholder: "secret_...", hint: "Create at notion.so/my-integrations and connect it to your database.", required: true },
+      { key: "databaseId", label: "Database ID", type: "text", placeholder: "32-character database id from URL", required: true },
+    ],
+  },
+  {
+    id: "clickup",
+    name: "ClickUp",
+    desc: "Create ClickUp tasks from captures with one click.",
+    iconSrc: "/integrations/clickup.png",
+    fields: [
+      { key: "token", label: "Personal API Token", type: "password", placeholder: "pk_...", hint: "Generate from ClickUp Settings > Apps > API Token.", required: true },
+      { key: "listId", label: "List ID", type: "text", placeholder: "123456789", hint: "Found in your ClickUp List URL.", required: true },
+    ],
+  },
+  {
+    id: "asana",
+    name: "Asana",
+    desc: "Create Asana tasks and attach captures automatically.",
+    iconSrc: "/integrations/asana.png",
+    fields: [
+      { key: "token", label: "Personal Access Token", type: "password", placeholder: "1/...", hint: "Generate from Asana Developer Console.", required: true },
+      { key: "projectId", label: "Project GID", type: "text", placeholder: "1234567890", hint: "Found in your Asana project URL.", required: true },
+    ],
+  },
+  {
+    id: "azure",
+    name: "Azure DevOps",
+    desc: "File Azure DevOps work items directly from bug captures.",
+    iconSrc: "/integrations/azure.png",
+    fields: [
+      { key: "orgUrl", label: "Organization URL", type: "url", placeholder: "https://dev.azure.com/my-org", required: true },
+      { key: "token", label: "Personal Access Token (PAT)", type: "password", placeholder: "Personal Access Token", hint: "Requires Work Items (Read & Write) scope.", required: true },
+      { key: "project", label: "Project Name", type: "text", placeholder: "MyProject", required: true },
+    ],
+  },
+  {
+    id: "claude",
+    name: "Claude AI",
+    desc: "Use Anthropic Claude AI to generate root cause summaries and repro steps.",
+    iconSrc: "/integrations/claude.png",
+    fields: [
+      { key: "apiKey", label: "Anthropic API Key", type: "password", placeholder: "sk-ant-...", hint: "Generate from console.anthropic.com.", required: true },
+      { key: "model", label: "Model Name", type: "text", placeholder: "claude-3-5-sonnet-latest (optional)", required: false },
+    ],
+  },
+  {
+    id: "chatgpt",
+    name: "ChatGPT",
+    desc: "Generate AI bug summaries, repro steps, and analysis via OpenAI.",
+    iconSrc: "/integrations/chatgpt.png",
+    fields: [
+      { key: "apiKey", label: "OpenAI API Key", type: "password", placeholder: "sk-...", hint: "Generate from platform.openai.com/api-keys.", required: true },
+      { key: "model", label: "Model Name", type: "text", placeholder: "gpt-4o-mini (optional)", required: false },
+    ],
   },
 ];
 
-type Tab = "general" | "members" | "billing" | "integrations" | "webhooks" | "account" | "notifications";
+type Tab = "general" | "members" | "billing" | "integrations" | "account" | "notifications";
 
 const TAB_TITLES: Record<Tab, { title: string; subtitle: string }> = {
   general: { title: "General", subtitle: "Manage your workspace name, access, and data controls." },
   members: { title: "Members", subtitle: "Manage who has access to your workspace captures." },
   billing: { title: "Billing", subtitle: "Your current plan and usage." },
   integrations: { title: "Integrations", subtitle: "Connect your bug captures to your favourite tools." },
-  webhooks: { title: "Webhooks", subtitle: "Receive notifications when new captures are saved." },
   account: { title: "Account", subtitle: "Your personal profile information." },
   notifications: { title: "Notifications", subtitle: "Choose which emails BugSnap sends you." },
 };
@@ -183,8 +198,8 @@ function SettingsContent() {
   const { theme, setTheme } = useTheme();
 
   const wsParam = searchParams.get("ws") || "";
-  const rawTab = searchParams.get("tab") as Tab | null;
-  const activeTab: Tab = rawTab && ["general","members","billing","integrations","webhooks","account","notifications"].includes(rawTab) ? rawTab : "general";
+  const rawTab = searchParams.get("tab") as string | null;
+  const activeTab: Tab = rawTab === "webhooks" ? "integrations" : rawTab && ["general","members","billing","integrations","account","notifications"].includes(rawTab) ? (rawTab as Tab) : "general";
 
   useEffect(() => {
     // no-op: referrer-based navigation handled inline in the button
@@ -194,11 +209,7 @@ function SettingsContent() {
   const [workspaceName, setWorkspaceName] = useState("My Workspace");
   const [workspaceAvatar, setWorkspaceAvatar] = useState("");
   const [editingWsName, setEditingWsName] = useState(false);
-  const [ssoRequired, setSsoRequired] = useState(false);
-  const [defaultLinkAccess, setDefaultLinkAccess] = useState<"anyone" | "team" | "private">("anyone");
-  const [allowAi, setAllowAi] = useState(true);
   const [autoDeleteEnabled, setAutoDeleteEnabled] = useState(false);
-  const [auditLogsEnabled, setAuditLogsEnabled] = useState(false);
   const [brandName, setBrandName] = useState("BugSnap");
   const [logoUrl, setLogoUrl] = useState("");
   const [hideWatermark, setHideWatermark] = useState(false);
@@ -210,6 +221,8 @@ function SettingsContent() {
   const [profileSaving, setProfileSaving] = useState(false);
   const [profileSaved, setProfileSaved] = useState(false);
   const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
+  const [accountDeleting, setAccountDeleting] = useState(false);
+  const [deleteAccountModalOpen, setDeleteAccountModalOpen] = useState(false);
   const [userPlan, setUserPlan] = useState<Plan>("free");
   const [trialInfo, setTrialInfo] = useState<{ isTrial: boolean; trialDaysLeft: number }>({ isTrial: false, trialDaysLeft: 0 });
   const [checkoutStatus, setCheckoutStatus] = useState<string | null>(null);
@@ -218,8 +231,13 @@ function SettingsContent() {
   const [lastName, setLastName] = useState("");
   const [jobRole, setJobRole] = useState("");
   const [roleMenuOpen, setRoleMenuOpen] = useState(false);
-  const [notifPrefs, setNotifPrefs] = useState<{ comment: boolean; mention: boolean; digest: boolean }>({ comment: true, mention: true, digest: true });
-  const [notifSaving, setNotifSaving] = useState(false);
+  const [notifPrefs, setNotifPrefs] = useState<{ comment: boolean; mention: boolean; digest: boolean }>({
+    comment: true,
+    mention: true,
+    digest: true,
+  });
+  const [notifSavingKey, setNotifSavingKey] = useState<string | null>(null);
+  const [notifSyncStatus, setNotifSyncStatus] = useState<"synced" | "saving" | "error">("synced");
   const [userAvatar, setUserAvatar] = useState("");
   const activeWsId = searchParams.get("ws");
 
@@ -232,12 +250,6 @@ function SettingsContent() {
   const [driveError, setDriveError] = useState<string | null>(null);
   const [driveSuccess, setDriveSuccess] = useState<string | null>(null);
   const [connectDriveModalOpen, setConnectDriveModalOpen] = useState(false);
-  const [integrationsHealth, setIntegrationsHealth] = useState<{
-    drive: { state: "healthy" | "action_required" | "not_configured"; status: "connected" | "reconnect_required" | "not_connected"; email: string | null; message: string };
-    email: { state: "healthy" | "action_required" | "not_configured"; provider: string | null; message: string };
-    ai: { state: "healthy" | "action_required" | "not_configured"; provider: string | null; message: string };
-  } | null>(null);
-  const [integrationsLoading, setIntegrationsLoading] = useState(true);
 
   // Webhook
   const [webhookUrl, setWebhookUrl] = useState("");
@@ -250,13 +262,16 @@ function SettingsContent() {
   const [inviteRoleMenuOpen, setInviteRoleMenuOpen] = useState(false);
   const [inviting, setInviting] = useState(false);
   const [inviteMsg, setInviteMsg] = useState<{type:"ok"|"err"; text:string} | null>(null);
+  const [updatingMemberId, setUpdatingMemberId] = useState<string | null>(null);
+  const [removingMemberId, setRemovingMemberId] = useState<string | null>(null);
+  const [memberToRemove, setMemberToRemove] = useState<{ user_id: string; email: string; role: string } | null>(null);
 
   // Integration search & settings
   const [intSearch, setIntSearch] = useState("");
   const [wsIntegrations, setWsIntegrations] = useState<Record<string, Record<string, string> | string>>({});
   const [driveFolderName, setDriveFolderName] = useState("BugSnap Captures");
   const [activeModalInt, setActiveModalInt] = useState<string | null>(null);
-  const [intModalForm, setIntModalForm] = useState<{ url: string; apiKey: string }>({ url: "", apiKey: "" });
+  const [intModalForm, setIntModalForm] = useState<Record<string, string>>({});
   const [intModalSaving, setIntModalSaving] = useState(false);
 
   // Webhook test state
@@ -315,7 +330,14 @@ function SettingsContent() {
           setLastName(rrest.join(" "));
         }
         if (row?.job_role) setJobRole(row.job_role);
-        if (row?.notification_prefs) setNotifPrefs((prev) => ({ ...prev, ...row.notification_prefs }));
+        if (row?.notification_prefs && typeof row.notification_prefs === "object") {
+          const p = row.notification_prefs as Record<string, unknown>;
+          setNotifPrefs({
+            comment: typeof p.comment === "boolean" ? p.comment : true,
+            mention: typeof p.mention === "boolean" ? p.mention : true,
+            digest: typeof p.digest === "boolean" ? p.digest : true,
+          });
+        }
       }
       setUserPlan(plan);
       if (activeWsId) {
@@ -326,7 +348,8 @@ function SettingsContent() {
         if (wsData?.name) setWorkspaceName(wsData.name);
         if (wsData?.avatar_url) setWorkspaceAvatar(wsData.avatar_url);
         if (wsSet) {
-          setWebhookUrl(wsSet.webhook_url || "");
+          const loadedWebhook = wsSet.webhook_url || "";
+          setWebhookUrl(loadedWebhook);
           setBrandName(wsSet.brand_name || "BugSnap");
           setLogoUrl(wsSet.custom_logo_url || "");
           setHideWatermark(!!wsSet.hide_watermark);
@@ -335,11 +358,19 @@ function SettingsContent() {
           setAutoDeleteMonths(months > 0 ? months : 3);
           setAutoDeleteEnabled(months > 0);
           if (wsSet.integrations && typeof wsSet.integrations === "object") {
-            const integrationsObj = wsSet.integrations as Record<string, Record<string, string> | string>;
+            const integrationsObj = { ...(wsSet.integrations as Record<string, Record<string, string> | string>) };
+            if (loadedWebhook && !integrationsObj.webhook) {
+              integrationsObj.webhook = { url: loadedWebhook };
+            } else if (integrationsObj.webhook && typeof integrationsObj.webhook === "object") {
+              const hookUrl = (integrationsObj.webhook as Record<string, string>).url;
+              if (hookUrl) setWebhookUrl(hookUrl);
+            }
             setWsIntegrations(integrationsObj);
             if (typeof integrationsObj.drive_folder_name === "string" && integrationsObj.drive_folder_name.trim()) {
               setDriveFolderName(integrationsObj.drive_folder_name.trim());
             }
+          } else if (loadedWebhook) {
+            setWsIntegrations({ webhook: { url: loadedWebhook } });
           }
         }
       } else {
@@ -403,18 +434,6 @@ function SettingsContent() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  useEffect(() => {
-    let c = false;
-    driveRequest("/api/integrations/health")
-      .then((r) => {
-        if (!c) setIntegrationsHealth(r as typeof integrationsHealth);
-      })
-      .catch(() => {})
-      .finally(() => { if (!c) setIntegrationsLoading(false); });
-    return () => { c = true; };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   async function connectDrive() {
     if (driveActionLoading) return;
     setDriveActionLoading(true); setDriveError(null);
@@ -431,7 +450,6 @@ function SettingsContent() {
     try {
       await driveRequest("/api/google-drive/disconnect", { method: "DELETE" });
       setDriveStatus("not_connected"); setDriveEmail(null); setDriveQuota(null);
-      setIntegrationsHealth((prev) => prev ? { ...prev, drive: { state: "not_configured", status: "not_connected", email: null, message: "Google Drive is not connected" } } : prev);
       showToast("Drive disconnected", "success");
     } catch (e) { setDriveError(e instanceof Error ? e.message : t("settings.disconnectError")); showToast("Drive disconnect failed", "error"); }
     finally { setDriveActionLoading(false); }
@@ -445,10 +463,14 @@ function SettingsContent() {
 
       // Update workspace name if changed
       if (workspaceName.trim() || workspaceAvatar !== undefined) {
-        await supabase.from("workspaces").update({ 
+        const { error: wsError } = await supabase.from("workspaces").update({
           name: workspaceName.trim() || undefined,
           avatar_url: workspaceAvatar.trim() || null
         }).eq("id", activeWsId);
+        if (wsError) throw wsError;
+        window.dispatchEvent(new CustomEvent("bugsnap:workspace-updated", {
+          detail: { id: activeWsId, name: workspaceName.trim() || undefined, avatarUrl: workspaceAvatar.trim() || null }
+        }));
       }
 
       const effectiveAutoDelete = autoDeleteEnabled ? autoDeleteMonths : 0;
@@ -481,6 +503,54 @@ function SettingsContent() {
     finally { setSaving(false); }
   }
 
+  async function handleWorkspaceIconUpload(file: File) {
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      showToast("Image file size must be less than 2MB", "error");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = async () => {
+      if (typeof reader.result === "string") {
+        const dataUrl = reader.result;
+        const previousAvatar = workspaceAvatar;
+        setWorkspaceAvatar(dataUrl);
+        if (activeWsId) {
+          try {
+            const { error } = await supabase.from("workspaces").update({ avatar_url: dataUrl }).eq("id", activeWsId);
+            if (error) throw error;
+            window.dispatchEvent(new CustomEvent("bugsnap:workspace-updated", {
+              detail: { id: activeWsId, name: workspaceName.trim() || undefined, avatarUrl: dataUrl }
+            }));
+            showToast("Workspace icon updated", "success");
+          } catch (err) {
+            setWorkspaceAvatar(previousAvatar);
+            showToast(err instanceof Error ? err.message : "Failed to save workspace icon", "error");
+          }
+        }
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function handleWorkspaceIconDelete() {
+    const previousAvatar = workspaceAvatar;
+    setWorkspaceAvatar("");
+    if (activeWsId) {
+      try {
+        const { error } = await supabase.from("workspaces").update({ avatar_url: null }).eq("id", activeWsId);
+        if (error) throw error;
+        window.dispatchEvent(new CustomEvent("bugsnap:workspace-updated", {
+          detail: { id: activeWsId, name: workspaceName.trim() || undefined, avatarUrl: null }
+        }));
+        showToast("Workspace icon removed", "success");
+      } catch (err) {
+        setWorkspaceAvatar(previousAvatar);
+        showToast(err instanceof Error ? err.message : "Failed to remove workspace icon", "error");
+      }
+    }
+  }
+
   async function handleSaveProfile(e: React.FormEvent) {
     e.preventDefault();
     setProfileSaving(true);
@@ -509,7 +579,7 @@ function SettingsContent() {
       const result = await response.json().catch(() => ({})) as { full_name?: string; avatar_url?: string; job_role?: string; error?: string };
       if (!response.ok) throw new Error(result.error || "Failed to save profile");
 
-      if (isRealAvatar(result.avatar_url)) setUserAvatar(result.avatar_url);
+      if (result.avatar_url !== undefined) setUserAvatar(result.avatar_url || "");
       if (result.job_role !== undefined) setJobRole(result.job_role || "");
       window.dispatchEvent(new CustomEvent("bugsnap:profile-updated", { detail: { fullName, avatarUrl: result.avatar_url ?? avatarUrl } }));
       setProfileSaved(true);
@@ -520,6 +590,32 @@ function SettingsContent() {
       showToast("Profile save failed", "error");
     } finally {
       setProfileSaving(false);
+    }
+  }
+
+  async function handleDeleteAccount() {
+    setAccountDeleting(true);
+    try {
+      const { data } = await supabase.auth.getSession();
+      const token = data.session?.access_token;
+      if (!token) throw new Error("Session expired");
+
+      const res = await fetch("/api/account/delete", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const result = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(result.error || "Failed to delete account");
+
+      showToast("Account deleted successfully", "success");
+      await supabase.auth.signOut();
+      window.location.assign("/login");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Failed to delete account", "error");
+      setAccountDeleting(false);
+      setDeleteAccountModalOpen(false);
     }
   }
 
@@ -547,6 +643,65 @@ function SettingsContent() {
     finally { setInviting(false); }
   }
 
+  async function handleUpdateMemberRole(userId: string, newRole: "creator" | "viewer") {
+    if (!activeWsId || updatingMemberId) return;
+    setUpdatingMemberId(userId);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error("Session expired");
+
+      const res = await fetch("/api/settings/members", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          workspaceId: activeWsId,
+          userId,
+          role: newRole,
+        }),
+      });
+      const json = (await res.json().catch(() => ({}))) as { success?: boolean; error?: string };
+      if (!res.ok) throw new Error(json.error || "Failed to update member role");
+
+      setMembers((prev) => prev.map((m) => (m.user_id === userId ? { ...m, role: newRole } : m)));
+      showToast(`Member role updated to ${newRole === "creator" ? "Creator" : "Viewer"}`, "success");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Failed to update member role", "error");
+    } finally {
+      setUpdatingMemberId(null);
+    }
+  }
+
+  async function handleRemoveMember(member: { user_id: string; email: string; role: string }) {
+    if (!activeWsId || member.role === "owner" || removingMemberId) return;
+    setRemovingMemberId(member.user_id);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error("Session expired");
+
+      const res = await fetch(`/api/settings/members?workspaceId=${encodeURIComponent(activeWsId)}&userId=${encodeURIComponent(member.user_id)}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const json = (await res.json().catch(() => ({}))) as { success?: boolean; error?: string };
+      if (!res.ok) throw new Error(json.error || "Failed to remove member");
+
+      setMembers((prev) => prev.filter((m) => m.user_id !== member.user_id));
+      setMemberToRemove(null);
+      showToast(`${member.email} removed from workspace`, "success");
+    } catch (err) {
+      showToast(err instanceof Error ? err.message : "Failed to remove member", "error");
+    } finally {
+      setRemovingMemberId(null);
+    }
+  }
+
   async function handleSaveIntegration(id: string) {
     if (!activeWsId) {
       showToast(t("settings.noWs"), "error");
@@ -554,23 +709,33 @@ function SettingsContent() {
     }
     setIntModalSaving(true);
     try {
+      const sanitizedForm: Record<string, string> = {};
+      Object.entries(intModalForm).forEach(([k, v]) => {
+        if (typeof v === "string") sanitizedForm[k] = v.trim();
+      });
+
       const updatedIntegrations = {
         ...wsIntegrations,
-        [id]: {
-          url: intModalForm.url.trim(),
-          apiKey: intModalForm.apiKey.trim(),
-        }
+        [id]: sanitizedForm,
       };
 
-      const { error } = await supabase.from("workspace_settings").upsert({
+      const payload: Record<string, unknown> = {
         workspace_id: activeWsId,
         integrations: updatedIntegrations,
         updated_at: new Date().toISOString(),
-      });
+      };
+
+      if (id === "webhook") {
+        payload.webhook_url = sanitizedForm.url || "";
+        setWebhookUrl(sanitizedForm.url || "");
+      }
+
+      const { error } = await supabase.from("workspace_settings").upsert(payload);
       if (error) throw error;
       setWsIntegrations(updatedIntegrations);
       setActiveModalInt(null);
-      showToast(`${id === "aksora" ? "Aksora" : "SnapTest"} integration saved`, "success");
+      const intDef = INTEGRATIONS.find(i => i.id === id);
+      showToast(`${intDef?.name || "Integration"} saved successfully`, "success");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to save integration";
       showToast(msg, "error");
@@ -586,11 +751,18 @@ function SettingsContent() {
       const updatedIntegrations = { ...wsIntegrations };
       delete updatedIntegrations[id];
 
-      const { error } = await supabase.from("workspace_settings").upsert({
+      const payload: Record<string, unknown> = {
         workspace_id: activeWsId,
         integrations: updatedIntegrations,
         updated_at: new Date().toISOString(),
-      });
+      };
+
+      if (id === "webhook") {
+        payload.webhook_url = "";
+        setWebhookUrl("");
+      }
+
+      const { error } = await supabase.from("workspace_settings").upsert(payload);
       if (error) throw error;
       setWsIntegrations(updatedIntegrations);
       setActiveModalInt(null);
@@ -681,6 +853,82 @@ function SettingsContent() {
     }
   }, [activeTab, activeWsId, loadBugsnapApiKeys]);
 
+  useEffect(() => {
+    if (activeTab !== "notifications") return;
+    let isMounted = true;
+    (async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session?.access_token || !isMounted) return;
+        const res = await fetch("/api/account/notifications", {
+          headers: { Authorization: `Bearer ${session.access_token}` },
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data?.notification_prefs && isMounted) {
+          setNotifPrefs(data.notification_prefs);
+          setNotifSyncStatus("synced");
+        }
+      } catch {
+        // Keep existing loaded state if fetch fails
+      }
+    })();
+    return () => {
+      isMounted = false;
+    };
+  }, [activeTab]);
+
+  const handleToggleNotifPref = async (key: "comment" | "mention" | "digest") => {
+    const previous = { ...notifPrefs };
+    const nextVal = !notifPrefs[key];
+    const next = { ...notifPrefs, [key]: nextVal };
+
+    setNotifPrefs(next);
+    setNotifSavingKey(key);
+    setNotifSyncStatus("saving");
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+
+      let saved = false;
+      if (token) {
+        const res = await fetch("/api/account/notifications", {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ [key]: nextVal }),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json.success && json.notification_prefs) {
+            setNotifPrefs(json.notification_prefs);
+            saved = true;
+          }
+        }
+      }
+
+      if (!saved) {
+        const { error: rpcError } = await supabase.rpc("update_user_notification_prefs", {
+          p_prefs: { [key]: nextVal },
+        });
+        if (rpcError) throw rpcError;
+      }
+
+      setNotifSyncStatus("synced");
+      showToast("Notification preferences updated", "success");
+    } catch (err) {
+      console.error("Failed to update notification preferences:", err);
+      setNotifPrefs(previous);
+      setNotifSyncStatus("error");
+      showToast("Failed to save notification preference", "error");
+    } finally {
+      setNotifSavingKey(null);
+    }
+  };
+
   // ── Helper ────────────────────────────────────────────────────────────────
   function setTab(tab: Tab) {
     const url = new URL(window.location.href);
@@ -692,8 +940,10 @@ function SettingsContent() {
     <button
       type="button"
       onClick={() => setTab(tab)}
-      className={`w-full flex items-center gap-2.5 px-3 py-2 text-sm rounded-lg transition-colors text-left ${
-        activeTab === tab ? "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300 font-semibold" : "text-muted hover:bg-border/30 hover:text-foreground"
+      className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg border-l-2 transition-colors text-left ${
+        activeTab === tab
+          ? "bg-indigo-50 dark:bg-indigo-950/30 border-indigo-500 text-indigo-600 dark:text-indigo-400"
+          : "border-transparent text-muted hover:text-foreground hover:bg-border/30"
       }`}
     >
       <span className="shrink-0 w-4 h-4 flex items-center justify-center">{icon}</span>
@@ -710,56 +960,55 @@ function SettingsContent() {
   return (
     <div className="flex h-full bg-background overflow-hidden">
       {/* Sidebar - desktop only */}
-      <aside className="hidden lg:flex w-64 shrink-0 border-r border-border bg-background px-4 py-7 flex-col gap-7 h-full overflow-y-auto">
-        <div className="px-3 py-1 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/icon.svg" alt="BugSnap" className="w-7 h-7 shrink-0 object-contain" />
-            <div>
-              <h1 className="text-sm font-bold tracking-tight text-foreground leading-none">
-                BugSnap
-              </h1>
-              <p className="text-[9px] text-muted mt-1 leading-none font-medium">Workspace Settings</p>
-            </div>
+      <aside className="hidden lg:flex w-60 shrink-0 border-r border-border bg-subtle flex-col h-full overflow-hidden">
+        <div className="px-5 py-5 border-b border-border flex items-center gap-2.5 shrink-0">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/icon.svg" alt="BugSnap" className="w-7 h-7 shrink-0 object-contain" />
+          <div>
+            <h1 className="text-sm font-bold tracking-tight text-foreground leading-none">
+              BugSnap
+            </h1>
+            <p className="text-[10px] text-muted mt-1 leading-none font-medium">Workspace Settings</p>
           </div>
         </div>
 
-        <div className="border-t border-border pt-5">
-          <button
-            type="button"
-            onClick={() => {
-              if (typeof window !== "undefined" && window.history.length > 1) {
-                router.back();
-              } else {
-                router.push(wsParam ? `/captures?ws=${wsParam}` : "/captures");
-              }
-            }}
-            className="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted hover:text-foreground hover:bg-border/30 rounded-lg transition-colors text-left font-medium"
-          >
-            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-            </svg>
-            Back to app
-          </button>
-        </div>
+        <div className="flex-1 px-3 py-4 space-y-4 overflow-y-auto">
+          <div>
+            <button
+              type="button"
+              onClick={() => {
+                if (typeof window !== "undefined" && window.history.length > 1) {
+                  router.back();
+                } else {
+                  router.push(wsParam ? `/captures?ws=${wsParam}` : "/captures");
+                }
+              }}
+              className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-muted hover:text-foreground hover:bg-border/30 rounded-lg transition-colors text-left"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+              Back to app
+            </button>
+          </div>
 
-        <div>
-          <p className="px-3 mb-1.5 text-[10px] font-bold uppercase tracking-widest text-muted">Workspace</p>
-          {navItem("general","General",<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>)}
-          {navItem("members","Members",<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>)}
-          {navItem("billing","Billing",<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>)}
-        </div>
+          <div className="space-y-1">
+            <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-wider text-muted">Workspace</p>
+            {navItem("general","General",<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>)}
+            {navItem("members","Members",<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>)}
+            {navItem("billing","Billing",<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>)}
+          </div>
 
-        <div>
-          <p className="px-3 mb-1.5 text-[10px] font-bold uppercase tracking-widest text-muted">Apps & Tools</p>
-          {navItem("integrations","Integrations",<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>)}
-          {navItem("webhooks","Webhooks",<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>)}
-        </div>
+          <div className="space-y-1">
+            <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-wider text-muted">Apps & Tools</p>
+            {navItem("integrations","Integrations",<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>)}
+          </div>
 
-        <div>
-          <p className="px-3 mb-1.5 text-[10px] font-bold uppercase tracking-widest text-muted">Account</p>
-          {navItem("account","Account",<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>)}
-          {navItem("notifications","Notifications",<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>)}
+          <div className="space-y-1">
+            <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-wider text-muted">Account</p>
+            {navItem("account","Account",<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>)}
+            {navItem("notifications","Notifications",<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>)}
+          </div>
         </div>
       </aside>
 
@@ -798,7 +1047,6 @@ function SettingsContent() {
               { id: "members", label: "Members" },
               { id: "billing", label: "Billing" },
               { id: "integrations", label: "Integrations" },
-              { id: "webhooks", label: "Webhooks" },
               { id: "account", label: "Account" },
               { id: "notifications", label: "Notifications" },
             ].map((t) => (
@@ -832,167 +1080,117 @@ function SettingsContent() {
 
         <div className="max-w-5xl mx-auto w-full p-4 sm:p-6 lg:p-10">
 
-        {/* ── General (Jam.dev styled) ────────────────────────────── */}
+        {/* ── General ────────────────────────────── */}
         {activeTab === "general" && (
           <form onSubmit={handleSave} className="space-y-6">
 
             {/* Workspace Name & Avatar Section */}
-            <div className="rounded-xl border border-border bg-background p-5 space-y-5">
-              <div>
-                <h2 className="text-sm font-bold text-foreground mb-3">Workspace name</h2>
-                <div className="flex items-center gap-3.5">
+            <div className="rounded-xl border border-border bg-subtle p-5 shadow-xs">
+              <h2 className="text-sm font-bold text-foreground mb-3">Workspace name</h2>
+              <div className="flex items-center gap-4">
+                {/* Workspace Avatar with Hover Upload/Delete (like Account profile) */}
+                <div className="group relative w-14 h-14 shrink-0 rounded-xl overflow-hidden border-2 border-border bg-subtle shadow-sm">
                   {workspaceAvatar ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={workspaceAvatar} alt={workspaceName} className="w-11 h-11 rounded-lg object-cover shrink-0 border border-border" />
+                    <img
+                      src={workspaceAvatar}
+                      alt={workspaceName}
+                      referrerPolicy="no-referrer"
+                      onError={() => setWorkspaceAvatar("")}
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
-                    <div className="w-11 h-11 rounded-lg bg-indigo-600 text-white font-bold text-lg flex items-center justify-center shadow-sm shrink-0 uppercase select-none">
+                    <div className="w-full h-full bg-indigo-600 text-white font-bold text-xl flex items-center justify-center shadow-sm uppercase select-none">
                       {(workspaceName || "W").charAt(0)}
                     </div>
                   )}
-                  {editingWsName ? (
-                    <input
-                      autoFocus
-                      type="text"
-                      value={workspaceName}
-                      onChange={(e) => setWorkspaceName(e.target.value)}
-                      onBlur={() => setEditingWsName(false)}
-                      onKeyDown={(e) => e.key === "Enter" && setEditingWsName(false)}
-                      placeholder="My Workspace"
-                      className="flex-1 text-sm font-medium rounded-lg border border-border px-3.5 py-2.5 outline-none focus:border-indigo-500 bg-background text-foreground transition-colors shadow-sm"
-                    />
-                  ) : (
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-semibold text-foreground truncate">{workspaceName || "My Workspace"}</p>
-                      <p className="text-xs text-muted mt-0.5">This is the name of your workspace.</p>
+                  <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex flex-col">
+                    <label className={`w-full flex items-center justify-center bg-blue-600/90 hover:bg-blue-600 text-white text-[10px] font-semibold cursor-pointer transition-colors ${workspaceAvatar ? "h-1/2" : "h-full"}`}>
+                      Upload
+                      <input
+                        type="file"
+                        accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                        className="hidden"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) handleWorkspaceIconUpload(file);
+                        }}
+                      />
+                    </label>
+                    {workspaceAvatar && (
+                      <button
+                        type="button"
+                        onClick={handleWorkspaceIconDelete}
+                        className="w-full h-1/2 flex items-center justify-center bg-blue-950/90 hover:bg-blue-900 text-white text-[10px] font-semibold transition-colors"
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {editingWsName ? (
+                  <input
+                    autoFocus
+                    type="text"
+                    value={workspaceName}
+                    onChange={(e) => setWorkspaceName(e.target.value)}
+                    onBlur={() => setEditingWsName(false)}
+                    onKeyDown={(e) => e.key === "Enter" && setEditingWsName(false)}
+                    placeholder="My Workspace"
+                    className="flex-1 text-sm font-medium rounded-lg border border-border px-3.5 py-2.5 outline-none focus:border-indigo-500 bg-background text-foreground transition-colors shadow-sm"
+                  />
+                ) : (
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-foreground truncate">{workspaceName || "My Workspace"}</p>
+                    <p className="text-xs text-muted mt-0.5">This is the name of your workspace.</p>
+                    <div className="flex items-center gap-2 mt-1.5">
+                      <label className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer">
+                        Upload icon
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) handleWorkspaceIconUpload(file);
+                          }}
+                        />
+                      </label>
+                      {workspaceAvatar && (
+                        <>
+                          <span className="text-muted text-[11px]">·</span>
+                          <button
+                            type="button"
+                            onClick={handleWorkspaceIconDelete}
+                            className="text-[11px] font-medium text-red-600 dark:text-red-400 hover:underline"
+                          >
+                            Remove icon
+                          </button>
+                        </>
+                      )}
+                      <span className="text-muted text-[11px]">· Square image up to 2MB</span>
                     </div>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => setEditingWsName((v) => !v)}
-                    className="text-xs font-semibold rounded-lg border border-border px-3.5 py-2 bg-background hover:bg-border/30 transition-colors shrink-0"
-                  >
-                    {editingWsName ? "Done" : "Edit"}
-                  </button>
-                </div>
-              </div>
-              
-              <div className="border-t border-border pt-4">
-                <label className="block text-xs font-semibold text-foreground mb-1">Workspace Icon URL</label>
-                <input
-                  type="url"
-                  value={workspaceAvatar}
-                  onChange={(e) => setWorkspaceAvatar(e.target.value)}
-                  placeholder="https://example.com/logo.png"
-                  className="w-full text-xs rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-subtle font-mono text-foreground"
-                />
-                <p className="text-[11px] text-muted mt-1.5">Leave blank to use the default initial letter icon. Square images work best.</p>
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setEditingWsName((v) => !v)}
+                  className="text-xs font-semibold rounded-lg border border-border px-3.5 py-2 bg-background hover:bg-border/30 transition-colors shrink-0"
+                >
+                  {editingWsName ? "Done" : "Edit"}
+                </button>
               </div>
             </div>
 
-            {/* Access Section */}
-            <div className="rounded-xl border border-border bg-background p-5 space-y-4">
+            {/* Data Retention Section */}
+            <div className="rounded-xl border border-border bg-subtle p-5 space-y-4 shadow-xs">
               <h2 className="text-sm font-bold text-foreground border-b border-border pb-2.5">
-                Access
+                Data retention
               </h2>
-
-              {/* Single Sign-On (SSO) */}
-              <div className="flex items-start justify-between gap-4 pt-1">
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-foreground">Single Sign-On</span>
-                    <span className="text-[10px] font-semibold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/40 px-1.5 py-0.5 rounded">
-                      Enterprise
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted">
-                    Require workspace members to authenticate using SAML / Okta SSO.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={ssoRequired}
-                  onClick={() => {
-                    if (userPlan !== "enterprise") {
-                      router.push("/upgrade");
-                      return;
-                    }
-                    setSsoRequired(!ssoRequired);
-                  }}
-                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out mt-0.5 ${
-                    ssoRequired ? "bg-indigo-600" : "bg-border"
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-background shadow ring-0 transition duration-200 ease-in-out ${
-                      ssoRequired ? "translate-x-4" : "translate-x-0.5"
-                    } mt-0.5`}
-                  />
-                </button>
-              </div>
-
-              {/* Default Link Access */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-border/60">
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-foreground">Default link access</span>
-                    <span className="text-[10px] font-semibold text-indigo-700 dark:text-indigo-300 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/40 px-1.5 py-0.5 rounded">
-                      Team
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted">
-                    Default visibility applied when recording links are generated.
-                  </p>
-                </div>
-                <Dropdown
-                  variant="field"
-                  className="w-full sm:w-56"
-                  value={defaultLinkAccess}
-                  onChange={(v) => setDefaultLinkAccess(v as "anyone" | "team" | "private")}
-                  options={[
-                    { value: "anyone", label: "Anyone with link can view" },
-                    { value: "team", label: "Workspace members only" },
-                    { value: "private", label: "Only invited participants" },
-                  ]}
-                />
-              </div>
-            </div>
-
-            {/* Data Section */}
-            <div className="rounded-xl border border-border bg-background p-5 space-y-4">
-              <h2 className="text-sm font-bold text-foreground border-b border-border pb-2.5">
-                Data
-              </h2>
-
-              {/* AI summaries */}
-              <div className="flex items-start justify-between gap-4 pt-1">
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-foreground">AI Summaries & Repro Steps</span>
-                  </div>
-                  <p className="text-xs text-muted">
-                    Allow AI generated summaries and repro steps on new captures.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={allowAi}
-                  onClick={() => setAllowAi(!allowAi)}
-                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out mt-0.5 ${
-                    allowAi ? "bg-indigo-600" : "bg-border"
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-background shadow ring-0 transition duration-200 ease-in-out ${
-                      allowAi ? "translate-x-4" : "translate-x-0.5"
-                    } mt-0.5`}
-                  />
-                </button>
-              </div>
 
               {/* Auto-delete captures */}
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-3 border-t border-border/60">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-foreground">Auto-delete captures</span>
@@ -1021,7 +1219,7 @@ function SettingsContent() {
                     }`}
                   >
                     <span
-                      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-background shadow ring-0 transition duration-200 ease-in-out ${
+                      className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
                         autoDeleteEnabled ? "translate-x-4" : "translate-x-0.5"
                       } mt-0.5`}
                     />
@@ -1037,75 +1235,10 @@ function SettingsContent() {
                   )}
                 </div>
               </div>
-
-              {/* Audit logs */}
-              <div className="flex items-start justify-between gap-4 pt-3 border-t border-border/60">
-                <div className="space-y-0.5">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-foreground">Audit logs</span>
-                    {userPlan !== "enterprise" ? (
-                      <ShimmerLockBadge label="ENTERPRISE" onClick={() => router.push("/upgrade")} />
-                    ) : (
-                      <span className="text-[10px] font-semibold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/40 px-1.5 py-0.5 rounded">
-                        Enterprise
-                      </span>
-                    )}
-                  </div>
-                  <p className="text-xs text-muted">
-                    Track workspace events, captures access, exports, and security audits.
-                  </p>
-                </div>
-                <button
-                  type="button"
-                  role="switch"
-                  aria-checked={auditLogsEnabled}
-                  onClick={() => {
-                    if (userPlan !== "enterprise") {
-                      router.push("/upgrade");
-                      return;
-                    }
-                    setAuditLogsEnabled(!auditLogsEnabled);
-                  }}
-                  className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out mt-0.5 ${
-                    auditLogsEnabled ? "bg-indigo-600" : "bg-border"
-                  }`}
-                >
-                  <span
-                    className={`pointer-events-none inline-block h-4 w-4 transform rounded-full bg-background shadow ring-0 transition duration-200 ease-in-out ${
-                      auditLogsEnabled ? "translate-x-4" : "translate-x-0.5"
-                    } mt-0.5`}
-                  />
-                </button>
-              </div>
-            </div>
-
-            {/* Google Drive Destination Folder */}
-            <div className="rounded-xl border border-border bg-background p-5 space-y-4">
-              <div className="flex items-center justify-between border-b border-border pb-2.5">
-                <div className="flex items-center gap-2">
-                  <svg className="w-4 h-4 text-muted" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z" />
-                  </svg>
-                  <h2 className="text-sm font-bold text-foreground">Google Drive Destination Folder</h2>
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs font-medium text-muted mb-1.5">Destination Folder Name</label>
-                <input
-                  type="text"
-                  value={driveFolderName}
-                  onChange={(e) => setDriveFolderName(e.target.value)}
-                  placeholder="BugSnap Captures"
-                  className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-background text-foreground shadow-sm"
-                />
-                <p className="text-[11px] text-muted mt-1.5">
-                  Captures recorded or uploaded to this workspace will be automatically stored inside this Google Drive folder.
-                </p>
-              </div>
             </div>
 
             {/* Custom Branding (Integrated) */}
-            <div className="rounded-xl border border-border bg-background p-5 space-y-4">
+            <div className="rounded-xl border border-border bg-subtle p-5 space-y-4 shadow-xs">
               <div className="flex items-center justify-between border-b border-border pb-2.5">
                 <h2 className="text-sm font-bold text-foreground">
                   Custom branding
@@ -1130,16 +1263,97 @@ function SettingsContent() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-muted mb-1.5">Logo URL</label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-medium text-muted">Logo URL or Image</label>
+                    <div className="flex items-center gap-2">
+                      <label className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer">
+                        Upload file
+                        <input
+                          type="file"
+                          accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              if (file.size > 2 * 1024 * 1024) {
+                                showToast("Logo file size must be less than 2MB", "error");
+                                return;
+                              }
+                              const reader = new FileReader();
+                              reader.onload = () => {
+                                if (typeof reader.result === "string") {
+                                  setLogoUrl(reader.result);
+                                }
+                              };
+                              reader.readAsDataURL(file);
+                            }
+                          }}
+                        />
+                      </label>
+                      {logoUrl && (
+                        <>
+                          <span className="text-muted text-[11px]">·</span>
+                          <button
+                            type="button"
+                            onClick={() => setLogoUrl("")}
+                            className="text-[11px] font-medium text-red-600 dark:text-red-400 hover:underline"
+                          >
+                            Clear
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
                   <input
-                    type="url"
+                    type="text"
                     value={logoUrl}
                     onChange={(e) => setLogoUrl(e.target.value)}
-                    placeholder="https://logo.png"
+                    placeholder="https://example.com/logo.png"
                     className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-background text-foreground shadow-sm"
                   />
                 </div>
               </div>
+
+              {/* Live Preview of Header & Watermark on /v/[id] */}
+              <div className="rounded-xl border border-border bg-subtle/50 p-3.5 space-y-2.5">
+                <div className="flex items-center justify-between text-[11px] font-medium text-muted">
+                  <span>Preview on public capture page (<code className="font-mono text-[10px]">/v/[id]</code>)</span>
+                  <span className="text-[10px] px-2 py-0.5 rounded font-mono bg-background border border-border text-foreground">
+                    {hideWatermark ? "Watermark & promo: Hidden" : "Watermark & promo: Visible"}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-background shadow-xs">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    {logoUrl.trim() ? (
+                      <img
+                        src={logoUrl}
+                        alt="Logo preview"
+                        className="h-7 w-auto max-w-[130px] object-contain"
+                        onError={(e) => {
+                          (e.currentTarget as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <img src="/icon.svg" alt="BugSnap" className="w-6 h-6 shrink-0 object-contain" />
+                        <span className="text-sm font-bold tracking-tight text-foreground truncate max-w-[180px]">
+                          {brandName.trim() || "BugSnap"}
+                        </span>
+                      </div>
+                    )}
+                    {!hideWatermark && (
+                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium text-muted bg-subtle border border-border shrink-0 select-none">
+                        <img src="/icon.svg" alt="" className="w-2.5 h-2.5 object-contain opacity-70" />
+                        <span>Powered by BugSnap</span>
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-[11px] text-muted font-medium shrink-0">
+                    Header Preview
+                  </div>
+                </div>
+              </div>
+
               <label className="flex items-center gap-3 cursor-pointer">
                 <input
                   type="checkbox"
@@ -1182,9 +1396,30 @@ function SettingsContent() {
               <button
                 type="submit"
                 disabled={saving}
-                className="rounded-xl bg-indigo-600 px-6 py-2.5 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60 transition-all shadow-sm active:scale-[0.99] min-w-[130px]"
+                className={`rounded-xl px-6 py-2.5 text-sm font-semibold transition-all shadow-sm active:scale-[0.99] min-w-[145px] flex items-center justify-center gap-2 ${
+                  saved
+                    ? "bg-emerald-600 text-white"
+                    : "bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60"
+                }`}
               >
-                {saving ? "Saving…" : saved ? "Saved" : "Save changes"}
+                {saving ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    <span>Saving…</span>
+                  </>
+                ) : saved ? (
+                  <>
+                    <svg className="w-4 h-4 text-white" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    <span>Saved</span>
+                  </>
+                ) : (
+                  <span>Save changes</span>
+                )}
               </button>
             </div>
           </form>
@@ -1195,7 +1430,7 @@ function SettingsContent() {
           <div className="space-y-7">
 
             {/* Invite */}
-            <div className="rounded-xl border border-border bg-background p-6 space-y-5 shadow-sm">
+            <div className="rounded-xl border border-border bg-subtle p-6 space-y-5 shadow-sm">
               <div>
                 <h2 className="text-lg font-bold tracking-tight text-foreground">Invite member</h2>
                 <p className="text-[15px] text-muted mt-3">If they don&apos;t have an account yet, we&apos;ll send them a join link + extension download.</p>
@@ -1204,10 +1439,10 @@ function SettingsContent() {
                 <input type="email" value={inviteEmail} onChange={e=>setInviteEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleInvite()}
                   disabled={seatLimit(userPlan) !== null && members.length >= (seatLimit(userPlan) ?? 0)}
                   placeholder="Enter email address"
-                  className="h-12 min-w-0 text-[15px] rounded-lg border border-border px-4 outline-none focus:border-indigo-500 bg-background disabled:bg-border/30 disabled:cursor-not-allowed" />
+                  className="h-12 min-w-0 text-[15px] rounded-lg border border-border px-4 outline-none focus:border-indigo-500 bg-subtle disabled:bg-border/30 disabled:cursor-not-allowed" />
                 <div className="relative">
                   <button type="button" onClick={() => setInviteRoleMenuOpen(o => !o)}
-                    className="h-12 w-full flex items-center justify-between text-[15px] rounded-lg border border-border px-4 bg-background hover:bg-border/30 transition-colors">
+                    className="h-12 w-full flex items-center justify-between text-[15px] rounded-lg border border-border px-4 bg-subtle hover:bg-border/30 transition-colors">
                     {inviteRole === "creator" ? "Creator" : "Viewer"}
                     <svg className={`w-4 h-4 text-muted transition-transform ${inviteRoleMenuOpen ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
@@ -1216,7 +1451,7 @@ function SettingsContent() {
                   {inviteRoleMenuOpen && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setInviteRoleMenuOpen(false)} />
-                      <div className="absolute right-0 mt-1 w-64 rounded-lg border border-border bg-background shadow-lg z-50 py-1">
+                      <div className="absolute right-0 mt-1 w-64 rounded-lg border border-border bg-subtle shadow-lg z-50 py-1">
                         {([
                           { value: "creator", label: "Creator", hint: "Can create and comment" },
                           { value: "viewer", label: "Viewer", hint: "Can view and comment" },
@@ -1239,15 +1474,25 @@ function SettingsContent() {
                   )}
                 </div>
                 <button type="button" onClick={handleInvite} disabled={inviting || !inviteEmail.trim()}
-                  className="h-12 rounded-lg bg-indigo-600 text-white text-[15px] font-semibold hover:bg-indigo-700 disabled:opacity-50">
-                  {inviting ? "Sending…" : "Invite"}
+                  className="h-12 px-6 rounded-lg bg-indigo-600 text-white text-[15px] font-semibold hover:bg-indigo-700 disabled:opacity-50 min-w-[110px] flex items-center justify-center gap-2">
+                  {inviting ? (
+                    <>
+                      <svg className="w-4 h-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      <span>Sending…</span>
+                    </>
+                  ) : (
+                    <span>Invite</span>
+                  )}
                 </button>
               </div>
               {inviteMsg && <p className={`text-sm ${inviteMsg.type==="ok" ? "text-emerald-600" : "text-red-600"}`}>{inviteMsg.text}</p>}
             </div>
 
             {/* Members list */}
-            <div className="rounded-xl border border-border bg-background overflow-hidden shadow-sm">
+            <div className="rounded-xl border border-border bg-subtle overflow-hidden shadow-sm">
               <div className="px-6 py-4 border-b border-border flex items-center justify-between">
                 <h2 className="text-lg font-bold tracking-tight text-foreground">{membersLoading ? "Loading…" : `${members.length} member${members.length !== 1 ? "s" : ""}`}</h2>
               </div>
@@ -1264,17 +1509,74 @@ function SettingsContent() {
                 <div className="py-12 text-center text-sm text-muted">No members yet. Invite someone above.</div>
               ) : (
                 <ul className="divide-y divide-border/60">
-                  {members.map(m => (
-                    <li key={m.user_id} className="flex items-center gap-5 px-6 py-5">
-                      <div className="w-12 h-12 rounded-full bg-indigo-50 text-indigo-700 text-base font-bold flex items-center justify-center shrink-0">
-                        {(m.email || "?").charAt(0).toUpperCase()}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[15px] font-bold text-foreground truncate">{m.email}</p>
-                      </div>
-                      <span className="text-xs font-bold uppercase tracking-wider text-muted">{m.role==="owner" ? "Owner" : m.role==="viewer" ? "Viewer" : "Creator"}</span>
-                    </li>
-                  ))}
+                  {members.map((m) => {
+                    const isOwner = m.role === "owner";
+                    const isUpdating = updatingMemberId === m.user_id;
+                    const isRemoving = removingMemberId === m.user_id;
+
+                    return (
+                      <li key={m.user_id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-4">
+                        <div className="flex items-center gap-4 min-w-0">
+                          <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/40 text-sm font-bold flex items-center justify-center shrink-0 shadow-2xs">
+                            {(m.email || "?").charAt(0).toUpperCase()}
+                          </div>
+                          <div className="min-w-0">
+                            <p className="text-sm font-bold text-foreground truncate">{m.email}</p>
+                            <p className="text-xs text-muted">
+                              {isOwner
+                                ? "Full workspace administrator"
+                                : m.role === "viewer"
+                                ? "Can view captures and participate in discussions"
+                                : "Can record, upload, and comment"}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 self-end sm:self-center shrink-0">
+                          {isOwner ? (
+                            <span className="px-3 py-1 rounded-lg text-xs font-semibold uppercase tracking-wider bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700 select-none">
+                              Owner
+                            </span>
+                          ) : (
+                            <div className="flex items-center gap-2">
+                              {/* Role Selector */}
+                              <div className="relative">
+                                <select
+                                  value={m.role === "viewer" ? "viewer" : "creator"}
+                                  disabled={isUpdating || isRemoving}
+                                  onChange={(e) => handleUpdateMemberRole(m.user_id, e.target.value as "creator" | "viewer")}
+                                  className="text-xs font-semibold rounded-lg border border-border bg-background px-2.5 py-1.5 outline-none focus:border-indigo-500 text-foreground cursor-pointer disabled:opacity-50 transition-colors shadow-2xs"
+                                >
+                                  <option value="creator">Creator</option>
+                                  <option value="viewer">Viewer</option>
+                                </select>
+                              </div>
+
+                              {/* Remove Button */}
+                              <button
+                                type="button"
+                                onClick={() => setMemberToRemove(m)}
+                                disabled={isUpdating || isRemoving}
+                                className="px-2.5 py-1.5 text-xs font-semibold text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors disabled:opacity-50 inline-flex items-center gap-1"
+                              >
+                                {isRemoving ? (
+                                  <>
+                                    <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                                    </svg>
+                                    <span>Removing…</span>
+                                  </>
+                                ) : (
+                                  <span>Remove</span>
+                                )}
+                              </button>
+                            </div>
+                          )}
+                        </div>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </div>
@@ -1324,7 +1626,7 @@ function SettingsContent() {
               </div>
             )}
 
-            <div className="rounded-xl border border-border bg-background p-6 flex items-center justify-between gap-4">
+            <div className="rounded-xl border border-border bg-subtle p-6 flex items-center justify-between gap-4 shadow-xs">
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <p className="text-xs text-muted uppercase tracking-widest font-semibold">{t("settings.currentPlan")}</p>
@@ -1350,7 +1652,7 @@ function SettingsContent() {
             </div>
 
             {/* Customer Portal Management */}
-            <div className="rounded-xl border border-border bg-background p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="rounded-xl border border-border bg-subtle p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
               <div>
                 <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                   {t("settings.customerPortal")}
@@ -1386,7 +1688,7 @@ function SettingsContent() {
               </div>
             )}
 
-            <div className="rounded-xl border border-border bg-background p-4 space-y-3">
+            <div className="rounded-xl border border-border bg-subtle p-4 space-y-3 shadow-xs">
               <h2 className="text-sm font-semibold text-foreground border-b border-border pb-2">Plan features</h2>
               {[
                 { label:"Weekly capture quota", value: userPlan==="free" ? "5 captures/week" : "Unlimited" },
@@ -1407,10 +1709,10 @@ function SettingsContent() {
         {activeTab === "integrations" && (
           <div className="space-y-6">
             <input type="text" placeholder="Search integrations…" value={intSearch} onChange={e=>setIntSearch(e.target.value)}
-              className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-background" />
+              className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-subtle text-foreground" />
 
             {/* Drive */}
-            <div className="rounded-xl border border-border bg-background p-4 space-y-3">
+            <div className="rounded-xl border border-border bg-subtle p-4 space-y-3 shadow-xs">
               <div className="flex items-center justify-between">
                 <div>
                   <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
@@ -1445,93 +1747,48 @@ function SettingsContent() {
               {driveError && <p className="text-xs text-red-600">{driveError}</p>}
             </div>
 
-            <div className="rounded-xl border border-border bg-background p-4 space-y-3">
-              <div>
-                <h2 className="text-sm font-semibold text-foreground">{t("settings.integrationsHealth")}</h2>
-                <p className="text-xs text-muted mt-0.5">{t("settings.integrationsHealthHint")}</p>
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {[
-                  { label: "Email delivery", item: integrationsHealth?.email, meta: integrationsHealth?.email?.provider || null },
-                  { label: "AI summaries", item: integrationsHealth?.ai, meta: integrationsHealth?.ai?.provider || null },
-                ].map(({ label, item, meta }) => {
-                  const state = item?.state;
-                  const badge = integrationsLoading
-                    ? "Checking..."
-                    : state === "healthy"
-                    ? t("settings.healthHealthy")
-                    : state === "action_required"
-                    ? t("settings.healthActionRequired")
-                    : t("settings.healthNotConfigured");
-                  const badgeClass = integrationsLoading
-                    ? "text-muted bg-background border-border"
-                    : state === "healthy"
-                    ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/40"
-                    : state === "action_required"
-                    ? "text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/40"
-                    : "text-muted bg-background border-border";
-                  return (
-                    <div key={label} className="rounded-lg border border-border bg-background dark:bg-background p-3 space-y-2">
-                      <div className="flex items-start justify-between gap-3">
-                        <p className="text-sm font-semibold text-foreground">{label}</p>
-                        <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${badgeClass}`}>{badge}</span>
-                      </div>
-                      <p className="text-xs text-muted leading-snug">{integrationsLoading ? "Checking integration health..." : item?.message || "No status available."}</p>
-                      {meta && <p className="text-[11px] text-foreground/80 font-medium break-all">{meta}</p>}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {filteredIntegrations.map(int => {
-                const isCustomConfigurable = int.id === "aksora" || int.id === "snaptest";
                 const rawConfig = wsIntegrations[int.id];
-                const config = rawConfig && typeof rawConfig === "object" ? rawConfig : null;
-                const isConnected = !!(config && (config.url || config.apiKey));
+                const config = rawConfig && typeof rawConfig === "object" ? (rawConfig as Record<string, string>) : null;
+                const isConnected = !!(config && Object.values(config).some(v => typeof v === "string" && v.trim().length > 0));
 
                 return (
-                  <div key={int.id} className="rounded-xl border border-border bg-background p-4 flex items-start gap-3 hover:border-indigo-200 transition-colors">
-                    <div className="shrink-0 w-10 h-10 rounded-lg border border-border bg-background flex items-center justify-center">
-                      {int.icon}
+                  <div key={int.id} className="rounded-xl border border-border bg-subtle p-4 flex items-start gap-3 hover:border-indigo-200 transition-colors shadow-xs">
+                    <div className="shrink-0 w-10 h-10 rounded-lg border border-border bg-subtle flex items-center justify-center p-2">
+                      <img src={int.iconSrc} alt={int.name} className="w-6 h-6 object-contain" />
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-semibold text-foreground">{int.name}</p>
-                        {isCustomConfigurable && isConnected && (
+                        {isConnected && (
                           <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-800/40 px-1.5 py-0.2 rounded-full">
                             Connected
                           </span>
                         )}
                       </div>
                       <p className="text-xs text-muted mt-0.5 leading-snug">{int.desc}</p>
-                      {isCustomConfigurable && isConnected && config.url && (
-                        <p className="text-[11px] text-muted font-mono truncate mt-1">{config.url}</p>
+                      {isConnected && (config?.repo || config?.channel || config?.project || config?.projectKey || config?.url || config?.webhookUrl) && (
+                        <p className="text-[11px] text-muted font-mono truncate mt-1">
+                          {config?.repo || config?.channel || config?.project || config?.projectKey || config?.url || config?.webhookUrl}
+                        </p>
                       )}
                     </div>
-                    {isCustomConfigurable ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActiveModalInt(int.id);
-                          setIntModalForm({
-                            url: config?.url || (int.id === "snaptest" ? "http://localhost:3000" : ""),
-                            apiKey: config?.apiKey || ""
-                          });
-                        }}
-                        className={`shrink-0 text-xs font-semibold hover:underline mt-0.5 ${isConnected ? "text-muted hover:text-foreground" : "text-indigo-600"}`}
-                      >
-                        {isConnected ? "Configure" : "Connect"}
-                      </button>
-                    ) : (
-                      <button
-                        type="button"
-                        onClick={() => alert(`${int.name} integration coming soon!`)}
-                        className="shrink-0 text-xs font-semibold text-indigo-600 hover:underline mt-0.5"
-                      >
-                        Connect
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setActiveModalInt(int.id);
+                        setWebhookTestResult(null);
+                        const initialForm: Record<string, string> = {};
+                        int.fields.forEach(f => {
+                          initialForm[f.key] = config?.[f.key] || (f.key === "url" && int.id === "webhook" ? webhookUrl : f.key === "url" && int.id === "gitlab" ? "https://gitlab.com" : f.key === "url" && int.id === "snaptest" ? "http://localhost:3000" : "");
+                        });
+                        setIntModalForm(initialForm);
+                      }}
+                      className={`shrink-0 text-xs font-semibold hover:underline mt-0.5 ${isConnected ? "text-muted hover:text-foreground" : "text-indigo-600"}`}
+                    >
+                      {isConnected ? "Configure" : "Connect"}
+                    </button>
                   </div>
                 );
               })}
@@ -1539,7 +1796,7 @@ function SettingsContent() {
             {filteredIntegrations.length === 0 && <p className="text-sm text-muted text-center py-8">No integrations match your search.</p>}
 
             {/* ── BugSnap Public API Keys ─────────────────────────────────── */}
-            <div className="rounded-xl border border-border bg-background p-4 space-y-4 pt-5 border-t-2">
+            <div className="rounded-xl border border-border bg-subtle p-4 space-y-4 pt-5 border-t-2 shadow-xs">
               <div>
                 <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
                   <span>BugSnap API Keys</span>
@@ -1594,9 +1851,19 @@ function SettingsContent() {
                 <button
                   type="submit"
                   disabled={creatingKey || !newKeyName.trim()}
-                  className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shrink-0"
+                  className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shrink-0 min-w-[115px] inline-flex items-center justify-center gap-1.5"
                 >
-                  {creatingKey ? "Generating…" : "Generate Key"}
+                  {creatingKey ? (
+                    <>
+                      <svg className="w-3.5 h-3.5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      <span>Generating…</span>
+                    </>
+                  ) : (
+                    <span>Generate Key</span>
+                  )}
                 </button>
               </form>
 
@@ -1637,71 +1904,10 @@ function SettingsContent() {
           </div>
         )}
 
-        {/* ── Webhooks ───────────────────────────────────────────────────── */}
-        {activeTab === "webhooks" && (
-          <form onSubmit={handleSave} className="space-y-6">
-            <div className="rounded-xl border border-border bg-background p-4 space-y-3">
-              <div className="flex items-center justify-between border-b border-border pb-2">
-                <h2 className="text-sm font-semibold text-foreground">Slack / Discord / Zapier</h2>
-                {webhookUrl.trim() ? (
-                  <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-800/40 px-2 py-0.5 rounded-full">Active</span>
-                ) : (
-                  <span className="text-[10px] font-semibold text-muted bg-background border border-border px-2 py-0.5 rounded-full">Not configured</span>
-                )}
-              </div>
-              <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Webhook URL</label>
-              <div className="flex flex-col sm:flex-row gap-2">
-                <input type="url" value={webhookUrl} onChange={e=>{setWebhookUrl(e.target.value); setWebhookTestResult(null);}}
-                  placeholder="https://hooks.slack.com/services/... or https://discord.com/api/webhooks/..."
-                  className="flex-1 text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-background font-mono" />
-                <button
-                  type="button"
-                  disabled={!webhookUrl.trim() || testingWebhook}
-                  onClick={async () => {
-                    setTestingWebhook(true);
-                    setWebhookTestResult(null);
-                    try {
-                      const res = await fetch("/api/webhooks/test", {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ url: webhookUrl }),
-                      });
-                      const json = await res.json().catch(() => ({}));
-                      if (res.ok) {
-                        setWebhookTestResult({ ok: true, msg: "Test payload delivered successfully! Check your channel." });
-                      } else {
-                        setWebhookTestResult({ ok: false, msg: json.error || "Failed to deliver test payload" });
-                      }
-                    } catch (err) {
-                      setWebhookTestResult({ ok: false, msg: err instanceof Error ? err.message : "Network error" });
-                    } finally {
-                      setTestingWebhook(false);
-                    }
-                  }}
-                  className="rounded-lg border border-border bg-subtle px-4 py-2 text-xs font-semibold text-foreground hover:bg-subtle/80 hover:border-accent/40 disabled:opacity-50 transition-all shrink-0"
-                >
-                  {testingWebhook ? "Testing…" : "Send Test"}
-                </button>
-              </div>
-              {webhookTestResult && (
-                <div className={`p-2.5 rounded-lg text-xs font-medium border ${webhookTestResult.ok ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40" : "bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/40"}`}>
-                  {webhookTestResult.ok ? "✓ " : "✕ "}
-                  {webhookTestResult.msg}
-                </div>
-              )}
-              <p className="text-[11px] text-muted">We POST a JSON payload with capture URL, thumbnail, DevTools error diagnostics, and system metadata when a new bug is saved.</p>
-            </div>
-            {saveError && <p className="text-xs text-red-600">{saveError}</p>}
-            <div>
-              <button type="submit" disabled={saving} className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60 transition-colors min-w-[100px]">{saving ? "Saving…" : saved ? "Saved" : "Save"}</button>
-            </div>
-          </form>
-        )}
-
         {/* ── Account ────────────────────────────────────────────────────── */}
         {activeTab === "account" && (
           <form onSubmit={handleSaveProfile} className="space-y-6">
-            <div className="rounded-xl border border-border bg-background p-4 space-y-4">
+            <div className="rounded-xl border border-border bg-subtle p-4 space-y-4 shadow-xs">
               <div className="flex items-center justify-between gap-3 border-b border-border pb-2">
                 <h2 className="text-sm font-semibold text-foreground">Profile</h2>
                 {profileSaved && <span className="text-xs text-emerald-600 font-medium">✓ Saved</span>}
@@ -1715,15 +1921,15 @@ function SettingsContent() {
                       alt="Profile Avatar"
                       referrerPolicy="no-referrer"
                       onError={() => setUserAvatar("")}
-                      className="h-16 w-16 rounded-full object-cover border-2 border-border bg-background shadow-sm"
+                      className="h-16 w-16 rounded-full object-cover border-2 border-border bg-subtle shadow-sm"
                     />
                   ) : (
                     <div className="h-16 w-16 rounded-full border-2 border-border bg-indigo-600 text-white text-xl font-semibold flex items-center justify-center shadow-sm">
                       {initialOf(`${firstName} ${lastName}`.trim() || userEmail)}
                     </div>
                   )}
-                  <div className="absolute inset-0 rounded-full overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-150">
-                    <label className="absolute inset-x-0 top-0 h-1/2 flex items-center justify-center bg-amber-700/90 hover:bg-amber-700 text-white text-[9px] font-semibold cursor-pointer">
+                  <div className="absolute inset-0 rounded-full overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex flex-col">
+                    <label className={`w-full flex items-center justify-center bg-blue-600/90 hover:bg-blue-600 text-white text-[10px] font-semibold cursor-pointer transition-colors ${userAvatar ? "h-1/2" : "h-full"}`}>
                       Upload
                       <input
                         type="file"
@@ -1746,13 +1952,15 @@ function SettingsContent() {
                         }}
                       />
                     </label>
-                    <button
-                      type="button"
-                      onClick={() => setUserAvatar("")}
-                      className="absolute inset-x-0 bottom-0 h-1/2 flex items-center justify-center bg-amber-900/90 hover:bg-amber-900 text-white text-[9px] font-semibold"
-                    >
-                      Delete
-                    </button>
+                    {userAvatar && (
+                      <button
+                        type="button"
+                        onClick={() => setUserAvatar("")}
+                        className="w-full h-1/2 flex items-center justify-center bg-blue-950/90 hover:bg-blue-900 text-white text-[10px] font-semibold transition-colors"
+                      >
+                        Delete
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1831,8 +2039,8 @@ function SettingsContent() {
                       aria-pressed={theme === opt.id}
                       className={`flex flex-col items-center gap-1.5 rounded-lg border px-3 py-3 text-xs font-semibold transition-colors ${
                         theme === opt.id
-                          ? "border-indigo-400 bg-indigo-50  text-indigo-700 dark:text-indigo-300"
-                          : "border-border bg-background text-muted hover:text-foreground hover:bg-neutral-200/60 dark:hover:bg-neutral-800/60"
+                          ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 shadow-xs"
+                          : "border-border bg-subtle text-muted hover:text-foreground hover:bg-border/30"
                       }`}
                     >
                       {opt.icon}
@@ -1861,19 +2069,74 @@ function SettingsContent() {
 
             {profileSaveError && <p className="text-xs text-red-600">{profileSaveError}</p>}
             <div>
-              <button type="submit" disabled={profileSaving} className="rounded-lg bg-indigo-600 px-5 py-2 text-sm font-semibold text-white hover:bg-indigo-700 disabled:opacity-60 transition-colors min-w-[120px]">
-                {profileSaving ? "Saving…" : profileSaved ? "Saved" : "Save profile"}
+              <button
+                type="submit"
+                disabled={profileSaving}
+                className={`rounded-lg px-5 py-2 text-sm font-semibold transition-all shadow-sm active:scale-[0.99] min-w-[130px] inline-flex items-center justify-center gap-2 ${
+                  profileSaved
+                    ? "bg-emerald-600 text-white"
+                    : "bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60"
+                }`}
+              >
+                {profileSaving ? (
+                  <>
+                    <svg className="w-4 h-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    <span>Saving…</span>
+                  </>
+                ) : profileSaved ? (
+                  <>
+                    <svg className="w-4 h-4 text-white" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                    </svg>
+                    <span>Saved</span>
+                  </>
+                ) : (
+                  <span>Save profile</span>
+                )}
               </button>
             </div>
 
-            <div className="rounded-xl border border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-950/20 p-4 space-y-3">
-              <h2 className="text-sm font-semibold text-red-700 dark:text-red-400 border-b border-red-200 dark:border-red-800/40 pb-2">Danger zone</h2>
-              <p className="text-xs text-red-600 dark:text-red-400">Permanently delete your BugSnap account and all associated data. This cannot be undone.</p>
-              <button type="button"
-                onClick={() => { if (confirm("Delete your BugSnap account permanently? This cannot be undone.")) { supabase.auth.signOut().then(() => window.location.assign("/")); }}}
-                className="text-xs font-semibold text-red-600 dark:text-red-400 border border-red-300 dark:border-red-800/40 px-3 py-1.5 rounded-lg hover:bg-red-100 dark:hover:bg-red-950/30 transition-colors">
-                Delete Account
-              </button>
+            {/* Danger Zone */}
+            <div className="rounded-2xl border border-red-200/80 dark:border-red-900/40 bg-subtle overflow-hidden shadow-xs">
+              <div className="px-5 py-3.5 border-b border-red-100 dark:border-red-900/30 bg-red-50/50 dark:bg-red-950/20 flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-lg bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                  </div>
+                  <div>
+                    <h2 className="text-sm font-bold text-red-700 dark:text-red-400 leading-none">Danger Zone</h2>
+                    <p className="text-[11px] text-muted mt-0.5">Destructive and irreversible actions</p>
+                  </div>
+                </div>
+                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-red-100/80 dark:bg-red-900/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800/40">
+                  Irreversible
+                </span>
+              </div>
+
+              <div className="p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <h3 className="text-sm font-semibold text-foreground">Delete Account</h3>
+                  <p className="text-xs text-muted leading-relaxed max-w-lg">
+                    Permanently delete your personal BugSnap account and remove all personal captures, settings, and profile data. Once deleted, this account cannot be recovered.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setDeleteAccountModalOpen(true)}
+                  disabled={accountDeleting}
+                  className="shrink-0 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-red-600 hover:bg-red-700 text-white shadow-xs transition-all active:scale-[0.98] disabled:opacity-50"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  Delete Account
+                </button>
+              </div>
             </div>
           </form>
         )}
@@ -1881,34 +2144,131 @@ function SettingsContent() {
         {/* ── Notifications ─────────────────────────────────────────────── */}
         {activeTab === "notifications" && (
           <div className="space-y-6">
-            <div className="rounded-xl border border-border bg-background p-4 space-y-1">
-              {([
-                { key: "comment", label: "When someone comments on your capture" },
-                { key: "mention", label: "When you're @mentioned in a comment" },
-                { key: "digest", label: "Weekly digest email" },
-              ] as { key: keyof typeof notifPrefs; label: string }[]).map((row, i) => (
-                <div key={row.key} className={`flex items-center justify-between gap-4 py-3 ${i > 0 ? "border-t border-border" : ""}`}>
-                  <span className="text-sm text-foreground">{row.label}</span>
-                  <button
-                    type="button"
-                    role="switch"
-                    aria-checked={notifPrefs[row.key]}
-                    disabled={notifSaving}
-                    onClick={async () => {
-                      const next = { ...notifPrefs, [row.key]: !notifPrefs[row.key] };
-                      setNotifPrefs(next);
-                      setNotifSaving(true);
-                      try {
-                        await supabase.rpc("update_user_notification_prefs", { p_prefs: next });
-                      } catch { showToast("Preference save failed", "error"); }
-                      finally { setNotifSaving(false); }
-                    }}
-                    className={`relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-60 ${notifPrefs[row.key] ? "bg-indigo-600" : "bg-border"}`}
-                  >
-                    <span className={`absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-background shadow transition-transform ${notifPrefs[row.key] ? "translate-x-5" : "translate-x-0"}`} />
-                  </button>
+            <div className="rounded-2xl border border-border bg-subtle overflow-hidden shadow-xs">
+              {/* Header card with sync status */}
+              <div className="p-5 sm:p-6 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2.5">
+                    <h2 className="text-base font-bold text-foreground">Email Notifications</h2>
+                    {notifSyncStatus === "saving" && (
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/50">
+                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 dark:bg-indigo-400 animate-pulse" />
+                        Saving…
+                      </span>
+                    )}
+                    {notifSyncStatus === "synced" && (
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50">
+                        <svg className="w-3 h-3 text-emerald-600 dark:text-emerald-400" viewBox="0 0 20 20" fill="currentColor">
+                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                        </svg>
+                        Synced
+                      </span>
+                    )}
+                    {notifSyncStatus === "error" && (
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50">
+                        Sync failed
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted leading-relaxed max-w-xl">
+                    Control which email updates are sent to <span className="font-medium text-foreground">{userEmail || "your account email"}</span>. Preferences are automatically synchronized with our notification engine.
+                  </p>
                 </div>
-              ))}
+              </div>
+
+              {/* Preferences list */}
+              <div className="divide-y divide-border">
+                {([
+                  {
+                    key: "comment" as const,
+                    title: "Comments on your captures",
+                    description: "Get an email notification whenever a team member or collaborator leaves a comment on your capture.",
+                    icon: (
+                      <svg className="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    key: "mention" as const,
+                    title: "Mentions in discussions",
+                    description: "Receive an immediate email whenever someone mentions you using @username in any thread or comment.",
+                    icon: (
+                      <svg className="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                      </svg>
+                    ),
+                  },
+                  {
+                    key: "digest" as const,
+                    title: "Weekly activity digest",
+                    description: "A weekly summary delivered every Monday showing capture views, new screen recordings, and comments across your workspace.",
+                    icon: (
+                      <svg className="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                      </svg>
+                    ),
+                  },
+                ]).map((item) => {
+                  const isChecked = !!notifPrefs[item.key];
+                  const isUpdating = notifSavingKey === item.key;
+                  return (
+                    <div
+                      key={item.key}
+                      className="p-5 sm:p-6 flex items-start sm:items-center justify-between gap-4 hover:bg-border/10 transition-colors"
+                    >
+                      <div className="flex items-start gap-3.5">
+                        <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/40 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
+                          {item.icon}
+                        </div>
+                        <div className="space-y-1">
+                          <label
+                            htmlFor={`notif-${item.key}`}
+                            className="text-sm font-semibold text-foreground cursor-pointer select-none"
+                          >
+                            {item.title}
+                          </label>
+                          <p className="text-xs text-muted leading-relaxed max-w-xl">
+                            {item.description}
+                          </p>
+                        </div>
+                      </div>
+
+                      <button
+                        id={`notif-${item.key}`}
+                        type="button"
+                        role="switch"
+                        aria-checked={isChecked}
+                        disabled={isUpdating}
+                        onClick={() => handleToggleNotifPref(item.key)}
+                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
+                          isChecked ? "bg-indigo-600" : "bg-neutral-300 dark:bg-neutral-700"
+                        }`}
+                      >
+                        <span className="sr-only">{item.title}</span>
+                        <span
+                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-md ring-0 transition duration-200 ease-in-out ${
+                            isChecked ? "translate-x-5" : "translate-x-0"
+                          }`}
+                        />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Footer info note */}
+              <div className="px-5 py-3.5 bg-background border-t border-border flex items-center justify-between text-[11px] text-muted">
+                <span className="flex items-center gap-1.5">
+                  <svg className="w-3.5 h-3.5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Transactional notices and security alerts cannot be disabled.
+                </span>
+                <span className="hidden sm:inline text-[11px] text-muted font-mono">
+                  Engine: Active
+                </span>
+              </div>
             </div>
           </div>
         )}
@@ -1931,89 +2291,144 @@ function SettingsContent() {
         </div>
       )}
 
-      {/* Integration Modal (Aksora & SnapTest) */}
-      {activeModalInt && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
-          <button className="absolute inset-0 bg-black/40 backdrop-blur-xs" aria-label="Close" onClick={() => !intModalSaving && setActiveModalInt(null)} />
-          <div className="relative w-full max-w-md rounded-xl border border-border bg-background p-6 shadow-xl space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="shrink-0 w-8 h-8 rounded-lg border border-border bg-background flex items-center justify-center">
-                {INTEGRATIONS.find(i => i.id === activeModalInt)?.icon}
-              </div>
-              <div>
-                <h2 className="text-base font-bold text-foreground">
-                  {activeModalInt === "aksora" ? "Aksora QA Workspace" : "SnapTest AI QA Suite"}
-                </h2>
-                <p className="text-xs text-muted">Configure workspace integration credentials</p>
-              </div>
-            </div>
+      {/* Dynamic Integration Modal for all platforms */}
+      {activeModalInt && (() => {
+        const activeDef = INTEGRATIONS.find(i => i.id === activeModalInt);
+        const rawConfig = wsIntegrations[activeModalInt];
+        const config = rawConfig && typeof rawConfig === "object" ? (rawConfig as Record<string, string>) : null;
+        const isConnected = !!(config && Object.values(config).some(v => typeof v === "string" && v.trim().length > 0));
 
-            <div className="space-y-3 pt-1">
-              <div>
-                <label className="block text-xs font-semibold text-foreground mb-1">
-                  Instance URL
-                </label>
-                <input
-                  type="url"
-                  placeholder={activeModalInt === "aksora" ? "https://your-aksora-instance.com" : "http://localhost:3000"}
-                  value={intModalForm.url}
-                  onChange={(e) => setIntModalForm(prev => ({ ...prev, url: e.target.value }))}
-                  className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-background font-mono text-xs"
-                />
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+            <button className="absolute inset-0 bg-black/40 backdrop-blur-xs" aria-label="Close" onClick={() => !intModalSaving && setActiveModalInt(null)} />
+            <div className="relative w-full max-w-md rounded-xl border border-border bg-background p-6 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center gap-3">
+                <div className="shrink-0 w-10 h-10 rounded-lg border border-border bg-background flex items-center justify-center p-2">
+                  {activeDef?.iconSrc && <img src={activeDef.iconSrc} alt={activeDef.name} className="w-6 h-6 object-contain" />}
+                </div>
+                <div>
+                  <h2 className="text-base font-bold text-foreground">
+                    {activeDef?.name || "Integration"}
+                  </h2>
+                  <p className="text-xs text-muted">{activeDef?.desc || "Configure workspace credentials"}</p>
+                </div>
               </div>
 
-              <div>
-                <label className="block text-xs font-semibold text-foreground mb-1">
-                  API Key / Token {activeModalInt === "snaptest" && <span className="text-muted font-normal">(Optional)</span>}
-                </label>
-                <input
-                  type="password"
-                  placeholder={activeModalInt === "aksora" ? "aksora_..." : "Token (optional)"}
-                  value={intModalForm.apiKey}
-                  onChange={(e) => setIntModalForm(prev => ({ ...prev, apiKey: e.target.value }))}
-                  className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-background font-mono text-xs"
-                />
-                {activeModalInt === "aksora" && (
-                  <p className="text-[11px] text-muted mt-1">
-                    Generate an API key with write permissions from Aksora &gt; Settings &gt; API Keys.
-                  </p>
+              <div className="space-y-3 pt-1">
+                {activeDef?.fields.map((f) => (
+                  <div key={f.key}>
+                    <label className="block text-xs font-semibold text-foreground mb-1">
+                      {f.label} {!f.required && <span className="text-muted font-normal">(Optional)</span>}
+                    </label>
+                    <input
+                      type={f.type || "text"}
+                      placeholder={f.placeholder}
+                      value={intModalForm[f.key] || ""}
+                      onChange={(e) => {
+                        setIntModalForm(prev => ({ ...prev, [f.key]: e.target.value }));
+                        if (activeModalInt === "webhook") setWebhookTestResult(null);
+                      }}
+                      className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-background font-mono text-xs text-foreground"
+                    />
+                    {f.hint && (
+                      <p className="text-[11px] text-muted mt-1 leading-normal">
+                        {f.hint}
+                      </p>
+                    )}
+                  </div>
+                ))}
+
+                {activeModalInt === "webhook" && (
+                  <div className="pt-2 border-t border-border space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-muted">Test webhook delivery</span>
+                      <button
+                        type="button"
+                        disabled={!intModalForm.url?.trim() || testingWebhook}
+                        onClick={async () => {
+                          setTestingWebhook(true);
+                          setWebhookTestResult(null);
+                          try {
+                            const { data: { session } } = await supabase.auth.getSession();
+                            const res = await fetch("/api/webhooks/test", {
+                              method: "POST",
+                              headers: {
+                                "Content-Type": "application/json",
+                                ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+                              },
+                              body: JSON.stringify({ url: intModalForm.url?.trim() }),
+                            });
+                            const json = await res.json().catch(() => ({}));
+                            if (res.ok) {
+                              setWebhookTestResult({ ok: true, msg: "Test payload delivered successfully! Check your channel." });
+                            } else {
+                              setWebhookTestResult({ ok: false, msg: json.error || "Failed to deliver test payload" });
+                            }
+                          } catch (err) {
+                            setWebhookTestResult({ ok: false, msg: err instanceof Error ? err.message : "Network error" });
+                          } finally {
+                            setTestingWebhook(false);
+                          }
+                        }}
+                        className="rounded-lg border border-border bg-subtle px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-subtle/80 hover:border-accent/40 disabled:opacity-50 transition-all shrink-0"
+                      >
+                        {testingWebhook ? "Testing…" : "Send Test"}
+                      </button>
+                    </div>
+                    {webhookTestResult && (
+                      <div className={`p-2.5 rounded-lg text-xs font-medium border ${webhookTestResult.ok ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40" : "bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/40"}`}>
+                        {webhookTestResult.ok ? "✓ " : "✕ "}
+                        {webhookTestResult.msg}
+                      </div>
+                    )}
+                  </div>
                 )}
               </div>
-            </div>
 
-            <div className="flex items-center justify-between gap-3 pt-4 border-t border-border">
-              {wsIntegrations[activeModalInt] ? (
-                <button
-                  type="button"
-                  onClick={() => handleDisconnectIntegration(activeModalInt)}
-                  disabled={intModalSaving}
-                  className="text-xs font-semibold text-red-600 hover:underline disabled:opacity-50"
-                >
-                  Disconnect
-                </button>
-              ) : <div />}
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setActiveModalInt(null)}
-                  disabled={intModalSaving}
-                  className="px-3 py-1.5 text-xs font-medium text-foreground hover:bg-border/30 rounded-lg disabled:opacity-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleSaveIntegration(activeModalInt)}
-                  disabled={intModalSaving}
-                  className="px-4 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 disabled:opacity-50"
-                >
-                  {intModalSaving ? "Saving..." : "Save Credentials"}
-                </button>
+              <div className="flex items-center justify-between gap-3 pt-4 border-t border-border">
+                {isConnected ? (
+                  <button
+                    type="button"
+                    onClick={() => handleDisconnectIntegration(activeModalInt)}
+                    disabled={intModalSaving}
+                    className="text-xs font-semibold text-red-600 hover:underline disabled:opacity-50"
+                  >
+                    Disconnect
+                  </button>
+                ) : <div />}
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setActiveModalInt(null)}
+                    disabled={intModalSaving}
+                    className="px-3 py-1.5 text-xs font-medium text-foreground hover:bg-border/30 rounded-lg disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleSaveIntegration(activeModalInt)}
+                    disabled={intModalSaving}
+                    className="px-4 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 disabled:opacity-50 min-w-[130px] inline-flex items-center justify-center gap-1.5"
+                  >
+                    {intModalSaving ? (
+                      <>
+                        <svg className="w-3.5 h-3.5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                        </svg>
+                        <span>Saving…</span>
+                      </>
+                    ) : (
+                      <span>Save Credentials</span>
+                    )}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {/* Churn Prevention Downsell Retention Modal (Feature 5) */}
       {showRetentionModal && (
@@ -2074,6 +2489,120 @@ function SettingsContent() {
                   {t("settings.churnContinueCancel")}
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Account Confirmation Modal */}
+      {deleteAccountModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+          <button
+            className="absolute inset-0 bg-black/40 backdrop-blur-xs"
+            aria-label="Close"
+            onClick={() => !accountDeleting && setDeleteAccountModalOpen(false)}
+          />
+          <div className="relative w-full max-w-md rounded-2xl border border-border bg-subtle p-6 shadow-2xl space-y-4">
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+              </div>
+              <div className="space-y-1 min-w-0 flex-1">
+                <h2 className="text-base font-bold text-foreground">Delete BugSnap Account?</h2>
+                <p className="text-xs text-muted leading-relaxed">
+                  Are you sure you want to permanently delete your account? All your recordings, captures, workspace memberships, and personal data will be completely erased.
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-red-200/80 dark:border-red-900/40 bg-red-50/60 dark:bg-red-950/20 p-3.5 text-xs text-red-700 dark:text-red-300">
+              <span className="font-semibold">Irreversible:</span> This action cannot be undone or recovered later.
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-border">
+              <button
+                type="button"
+                onClick={() => setDeleteAccountModalOpen(false)}
+                disabled={accountDeleting}
+                className="px-4 py-2 text-xs font-semibold text-foreground hover:bg-border/30 rounded-xl transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteAccount}
+                disabled={accountDeleting}
+                className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold transition-colors disabled:opacity-50 flex items-center gap-1.5 shadow-xs"
+              >
+                {accountDeleting ? (
+                  <>
+                    <svg className="w-3.5 h-3.5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    <span>Deleting…</span>
+                  </>
+                ) : (
+                  <span>Yes, delete account</span>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Remove Member Confirmation Modal */}
+      {memberToRemove && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+          <button
+            className="absolute inset-0 bg-black/40 backdrop-blur-xs"
+            aria-label="Close"
+            onClick={() => !removingMemberId && setMemberToRemove(null)}
+          />
+          <div className="relative w-full max-w-md rounded-2xl border border-border bg-subtle p-6 shadow-2xl space-y-4">
+            <div className="flex items-start gap-3.5">
+              <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+              </div>
+              <div className="space-y-1 min-w-0 flex-1">
+                <h2 className="text-base font-bold text-foreground">Remove Member?</h2>
+                <p className="text-xs text-muted leading-relaxed">
+                  Are you sure you want to remove <span className="font-semibold text-foreground">{memberToRemove.email}</span> from this workspace? They will immediately lose access to all captures and team discussions.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-border">
+              <button
+                type="button"
+                onClick={() => setMemberToRemove(null)}
+                disabled={Boolean(removingMemberId)}
+                className="px-4 py-2 text-xs font-semibold text-foreground hover:bg-border/30 rounded-xl transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => handleRemoveMember(memberToRemove)}
+                disabled={Boolean(removingMemberId)}
+                className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold transition-colors disabled:opacity-50 flex items-center gap-1.5 shadow-xs"
+              >
+                {removingMemberId === memberToRemove.user_id ? (
+                  <>
+                    <svg className="w-3.5 h-3.5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    <span>Removing…</span>
+                  </>
+                ) : (
+                  <span>Remove member</span>
+                )}
+              </button>
             </div>
           </div>
         </div>

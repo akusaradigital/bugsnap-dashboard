@@ -61,7 +61,7 @@ export default function ContactPage() {
             </a>
             <a
               href="/pricing"
-              className="block text-center border border-border bg-white hover:bg-subtle text-foreground text-sm font-semibold py-2.5 rounded-lg transition-colors"
+              className="block text-center border border-border bg-white dark:bg-subtle hover:bg-subtle dark:hover:bg-border/30 text-foreground text-sm font-semibold py-2.5 rounded-lg transition-colors"
             >
               See Pricing
             </a>

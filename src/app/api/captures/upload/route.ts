@@ -129,6 +129,10 @@ export async function POST(req: Request) {
     const folderName = String(form.get("folderName") || "").trim() || null;
     const description = String(form.get("description") || "").trim();
     if (!(file instanceof File)) return NextResponse.json({ error: "Missing file" }, { status: 400 });
+    const MAX_UPLOAD_SIZE = 100 * 1024 * 1024; // 100MB ceiling
+    if (file.size > MAX_UPLOAD_SIZE) {
+      return NextResponse.json({ error: "File size exceeds 100MB limit" }, { status: 413 });
+    }
     if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
       return NextResponse.json({ error: "Only image and video files are supported" }, { status: 415 });
     }

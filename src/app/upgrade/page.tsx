@@ -196,27 +196,27 @@ function UpgradeContent() {
                 </p>
                 <ul className="space-y-3.5 text-xs text-neutral-700 dark:text-neutral-300">
                   <li className="flex items-center gap-3">
-                    <svg className="w-4 h-4 text-neutral-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <svg className="w-4 h-4 text-neutral-600 dark:text-neutral-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
                       <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     <span>5 captures / week</span>
                   </li>
                   <li className="flex items-center gap-3">
-                    <svg className="w-4 h-4 text-neutral-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <svg className="w-4 h-4 text-neutral-600 dark:text-neutral-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
                     </svg>
                     <span>5 Recording Links</span>
                   </li>
                   <li className="flex items-center gap-3">
-                    <svg className="w-4 h-4 text-neutral-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <svg className="w-4 h-4 text-neutral-600 dark:text-neutral-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                       <circle cx="12" cy="12" r="10" />
                       <polyline points="12 6 12 12 16 14" />
                     </svg>
                     <span>5 minute recording time</span>
                   </li>
                   <li className="flex items-center gap-3">
-                    <svg className="w-4 h-4 text-neutral-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <svg className="w-4 h-4 text-neutral-600 dark:text-neutral-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                       <rect x="3" y="3" width="7" height="7" rx="1" />
                       <rect x="14" y="3" width="7" height="7" rx="1" />
                       <rect x="14" y="14" width="7" height="7" rx="1" />
@@ -225,7 +225,7 @@ function UpgradeContent() {
                     <span>Connect Jira, Linear and more</span>
                   </li>
                   <li className="flex items-center gap-3">
-                    <svg className="w-4 h-4 text-neutral-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <svg className="w-4 h-4 text-neutral-600 dark:text-neutral-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
                     </svg>
                     <span>Debug via Console & Network Logs</span>
@@ -318,7 +318,7 @@ function UpgradeContent() {
                     "Upgrade to Team"
                   )}
                 </button>
-                <p className="text-[11px] text-neutral-400 text-center mt-2">
+                <p className="text-[11px] text-neutral-600 dark:text-neutral-400 text-center mt-2">
                   Taxes (VAT / PPN) calculated automatically at checkout.
                 </p>
 

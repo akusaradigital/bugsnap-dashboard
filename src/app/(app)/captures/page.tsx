@@ -1054,7 +1054,7 @@ function CapturesContent() {
         </div>
       </div>
 
-      {/* Filter & Selection Row (Jam.dev style) - sticky so filters and multi-select actions stay accessible while scrolling */}
+      {/* Filter & Selection Row - sticky so filters and multi-select actions stay accessible while scrolling */}
       <div className="sticky top-0 z-30 flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 pt-3 border-b border-border bg-background">
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
         <div ref={typeMenuRef} className="relative min-w-0">
@@ -1553,7 +1553,7 @@ function CapturesContent() {
                     </div>
                   )}
 
-                  {/* Bottom Right Duration (Jam.dev style) - Only shows for video */}
+                  {/* Bottom Right Duration - Only shows for video */}
                   {item.type === "video" && (
                     <div className="absolute bottom-2.5 right-2.5 bg-black/70 backdrop-blur-sm text-white text-[11px] font-medium px-2 py-1 rounded flex items-center gap-1.5 shadow-sm">
                       <svg className="w-3.5 h-3.5 text-white fill-current" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>

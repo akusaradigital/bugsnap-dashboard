@@ -389,7 +389,7 @@ export default function FloatingSupport() {
                 <div>
                   <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 mb-1">
                     {t("support.emailLabel")}{" "}
-                    <span className="font-normal lowercase text-slate-400">{t("support.emailHint")}</span>{" "}
+                    <span className="font-normal lowercase text-slate-500 dark:text-zinc-400">{t("support.emailHint")}</span>{" "}
                     <span className="text-rose-500">*</span>
                   </label>
                   <input
@@ -401,7 +401,7 @@ export default function FloatingSupport() {
                       if (errorMessage) setErrorMessage(null);
                     }}
                     placeholder="nama@perusahaan.com"
-                    className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition-colors"
+                    className="w-full text-xs rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition-colors"
                   />
                 </div>
 
@@ -415,7 +415,7 @@ export default function FloatingSupport() {
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
                     placeholder={activeCategoryMeta.subjectPlaceholder}
-                    className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition-colors"
+                    className="w-full text-xs rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition-colors"
                   />
                 </div>
 
@@ -433,7 +433,7 @@ export default function FloatingSupport() {
                       if (errorMessage) setErrorMessage(null);
                     }}
                     placeholder={activeCategoryMeta.placeholder}
-                    className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition-colors resize-none leading-relaxed"
+                    className="w-full text-xs rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition-colors resize-none leading-relaxed"
                   />
                 </div>
 
@@ -462,7 +462,7 @@ export default function FloatingSupport() {
                 </div>
 
                 {/* Direct mailto fallback link */}
-                <div className="pt-2 text-center border-t border-slate-100 dark:border-zinc-900 text-[11px] text-slate-400 dark:text-zinc-500">
+                <div className="pt-2 text-center border-t border-slate-100 dark:border-zinc-800 text-[11px] text-slate-600 dark:text-zinc-400">
                   {t("support.urgent")}{" "}
                   <a
                     href={`mailto:support@bugsnap.akusaraproject.my.id?subject=[BugSnap%20Support]&body=${encodeURIComponent(message || "")}`}

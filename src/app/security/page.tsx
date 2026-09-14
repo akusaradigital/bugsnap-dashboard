@@ -49,7 +49,7 @@ export default function SecurityPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {highlights.map((h) => (
             <div key={h.title} className="creative-surface rounded-2xl p-5 space-y-3">
-              <div className="w-10 h-10 rounded-lg bg-white border border-border flex items-center justify-center text-lg">
+              <div className="w-10 h-10 rounded-lg bg-white dark:bg-subtle border border-border flex items-center justify-center text-lg">
                 {h.icon}
               </div>
               <h3 className="font-semibold text-sm text-foreground">{h.title}</h3>
@@ -58,7 +58,7 @@ export default function SecurityPage() {
           ))}
         </div>
 
-        <div className="border border-emerald-200 bg-emerald-50/50 rounded-xl p-6 flex items-start gap-4">
+        <div className="border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20 rounded-xl p-6 flex items-start gap-4">
           <span className="text-2xl">🔐</span>
           <div className="space-y-1">
             <h3 className="font-semibold text-sm text-foreground">What we store vs. what we never store</h3>

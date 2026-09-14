@@ -100,7 +100,7 @@ export function PricingToggle() {
           return (
             <div
               key={tier.name}
-              className={`rounded-2xl border bg-white overflow-hidden relative flex flex-col ${
+              className={`rounded-2xl border bg-white dark:bg-subtle overflow-hidden relative flex flex-col ${
                 tier.popular ? "border-indigo-500 shadow-lg md:-translate-y-2" : "border-border shadow-sm"
               }`}
             >
@@ -127,7 +127,7 @@ export function PricingToggle() {
                   className={`block w-full text-center font-semibold text-sm px-6 py-2.5 rounded-lg transition-colors shadow-sm ${
                     tier.popular
                       ? "bg-indigo-600 hover:bg-indigo-700 text-white"
-                      : "border border-border bg-white hover:bg-subtle text-foreground"
+                      : "border border-border bg-white dark:bg-subtle hover:bg-subtle dark:hover:bg-border/30 text-foreground"
                   }`}
                 >
                   {tier.cta}

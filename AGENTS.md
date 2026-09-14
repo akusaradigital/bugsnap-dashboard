@@ -23,7 +23,7 @@
 
 ## Project Overview
 
-BugSnap is a screen-recorder + bug-reporting SaaS (like Jam.dev / Loom):
+BugSnap is a screen-recorder + bug-reporting SaaS (like Loom):
 
 - **`bugsnap-extension/`** - Chrome MV3 extension. Captures screenshots/recordings, annotates in a canvas editor, uploads to Google Drive, and registers metadata in Supabase.
 - **`bugsnap-dashboard/`** - Next.js 14 (App Router) web app. Login via Google OAuth (Supabase), analytics dashboard, captures library, public share pages, comments, AI bug reports, workspace/team management.

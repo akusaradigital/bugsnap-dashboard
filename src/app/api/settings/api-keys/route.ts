@@ -10,6 +10,16 @@ async function requireOwner(request: Request, workspaceId: string) {
   if (!user) return null;
 
   const db = createServiceClient();
+  const { data: ws } = await db
+    .from("workspaces")
+    .select("owner_user_id")
+    .eq("id", workspaceId)
+    .maybeSingle();
+
+  if (ws && ws.owner_user_id === user.id) {
+    return user;
+  }
+
   const { data } = await db
     .from("workspace_members")
     .select("role")

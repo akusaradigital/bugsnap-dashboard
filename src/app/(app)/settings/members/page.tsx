@@ -243,9 +243,9 @@ export default function TeamManagementPage() {
           </div>
         </div>
         {cap !== null && members.length >= cap && (
-          <p className="text-xs text-indigo-600 mt-2">{t("members.seatLimit", { cap })}</p>
+          <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-2">{t("members.seatLimit", { cap })}</p>
         )}
-        {error && <p className="text-xs text-red-600 mt-2">{error}</p>}
+        {error && <p className="text-xs text-red-600 dark:text-red-400 mt-2">{error}</p>}
       </div>
 
       {/* Member list */}
@@ -290,10 +290,10 @@ export default function TeamManagementPage() {
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-medium text-foreground truncate">
                     {m.full_name || m.email}
-                    {m.role === "owner" && <span className="ml-2 text-[10px] font-semibold text-muted bg-subtle px-1.5 py-0.5 rounded">{t("members.owner")}</span>}
-                    {m.role === "admin" && <span className="ml-2 text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30 px-1.5 py-0.5 rounded">{t("members.admin")}</span>}
-                    {(m.role === "member" || m.role === "creator") && <span className="ml-2 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-1.5 py-0.5 rounded">Creator</span>}
-                    {m.role === "viewer" && <span className="ml-2 text-[10px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 px-1.5 py-0.5 rounded">Viewer</span>}
+                    {m.role === "owner" && <span className="ml-2 text-[10px] font-semibold text-muted bg-muted/10 border border-border px-1.5 py-0.5 rounded">{t("members.owner")}</span>}
+                    {m.role === "admin" && <span className="ml-2 text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/40 px-1.5 py-0.5 rounded">{t("members.admin")}</span>}
+                    {(m.role === "member" || m.role === "creator") && <span className="ml-2 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 px-1.5 py-0.5 rounded">Creator</span>}
+                    {m.role === "viewer" && <span className="ml-2 text-[10px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 px-1.5 py-0.5 rounded">Viewer</span>}
                   </p>
                   <p className="text-xs text-muted truncate">{m.email}</p>
                 </div>

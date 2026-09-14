@@ -112,6 +112,13 @@ function Toast({ toast, onDismiss }: { toast: ToastItem; onDismiss: (id: number)
     info: "bg-neutral-900/95 text-white border-neutral-800 shadow-2xl",
   };
 
+  const closeButtonStyles: Record<ToastType, string> = {
+    success: "text-slate-400 hover:text-slate-600 dark:text-zinc-400 dark:hover:text-zinc-200",
+    error: "text-white/75 hover:text-white",
+    loading: "text-slate-400 hover:text-slate-600 dark:text-zinc-400 dark:hover:text-zinc-200",
+    info: "text-neutral-400 hover:text-white",
+  };
+
   return (
     <div
       className={`pointer-events-auto relative flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-medium border backdrop-blur-md shadow-xl transition-all duration-200 animate-in fade-in slide-in-from-bottom-3 overflow-hidden ${styles[toast.type]}`}
@@ -148,7 +155,7 @@ function Toast({ toast, onDismiss }: { toast: ToastItem; onDismiss: (id: number)
           e.stopPropagation();
           onDismiss(toast.id);
         }}
-        className="ml-auto text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-1"
+        className={`ml-auto transition-colors p-1 ${closeButtonStyles[toast.type]}`}
         aria-label="Close"
       >
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

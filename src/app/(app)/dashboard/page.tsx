@@ -405,7 +405,7 @@ function DashboardContent() {
           </div>
           <Link
             href="/settings?tab=billing"
-            className="shrink-0 px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs transition-colors"
+            className="shrink-0 px-3 py-1.5 rounded-lg bg-amber-700 hover:bg-amber-800 text-white font-semibold text-xs transition-colors shadow-xs"
           >
             {t("settings.updatePayment")}
           </Link>
@@ -642,7 +642,7 @@ function DashboardContent() {
                         style={{ height: `${Math.max(8, (d.count / maxDayCount) * 125)}px` }}
                       />
                     ) : (
-                      <div className="w-full max-w-[20px] rounded-t-sm bg-neutral-100 dark:bg-neutral-800/60 h-1.5 group-hover:bg-neutral-300 dark:group-hover:bg-neutral-700 transition-colors" />
+                      <div className="w-full max-w-[20px] rounded-t-sm bg-neutral-200 dark:bg-neutral-700/60 h-1.5 group-hover:bg-neutral-300 dark:group-hover:bg-neutral-600 transition-colors" />
                     )}
                     <span className="text-[9px] sm:text-[10px] text-muted font-medium mt-1 select-none">{d.label}</span>
                   </div>
