@@ -1,69 +1,71 @@
-# CLAUDE.md - BugSnap Dashboard Rules
+# CLAUDE.md — BugSnap Dashboard
 
-> Single source of truth for Claude Code and AI agents working on the **BugSnap** dashboard codebase.
+> Rules for Claude Code and AI agents on `bugsnap-dashboard` (Next.js 14, Supabase, App Router).
 
-## 1. System & Tool Rules (CRITICAL)
+## 1. Critical Rules
 
-1. **Wajib Pelajari Graphify Sebelum Eksplorasi (MANDATORY)**: Seluruh arsitektur dashboard telah dipetakan di `../graphify-out/GRAPH_REPORT.md` (dan `manifest.json`). AI agent **WAJIB** membaca laporan Graphify tersebut terlebih dahulu untuk menavigasi modul App Router, route handlers (`src/app/api/...`), komponen UI, library hooks (`useT()`, Supabase client), serta RPC database sebelum membuka file. Dilarang membaca ulang seluruh file (*blind re-reading*) secara massal jika lokasinya sudah dipetakan di Graphify.
-2. **Tooling Standards**: Use officially declared tools (`PowerShell`/`Bash`, `Read`, `Edit`, `Write`, `Grep`, `Glob`, `Agent`). Never call legacy or nonexistent tool names (`Bash_ide`, `Agent_ide`, etc.).
-3. **Do NOT use shell command `cat`** to read files. Always use the dedicated `Read` tool.
-4. **NEVER run `git push`** unless the user explicitly asks in that exact turn.
-5. **Platform Windows 11 / PowerShell 5.1**: In PowerShell 5.1, the pipeline chaining operator `&&` causes a syntax error. Use `;` for sequential commands or use POSIX Bash.
-6. **Development Server**: Next.js 14 App Router provides automatic HMR. Only restart the dev server process if `.env.local` changes, `next.config.mjs` changes, or if the process becomes unresponsive.
-7. **Product & Monetization ("BugSnap Tetap Free Dulu")**: All entitlement checks in `src/lib/tiers.ts` and `src/lib/quota.ts` are deliberately stubbed to return `true` / `unlimited`. Do NOT "fix" these stubs or add feature gating / paywalls unless explicitly instructed by the user.
-8. **Wajib Pake i18n**: Seluruh teks antarmuka, label form, pesan status, modal, banner, dan komponen UI di BugSnap **WAJIB** menggunakan sistem i18n (`src/lib/i18n.ts`, `I18nProvider`, `useT()`). Bahasa harus otomatis mendeteksi locale browser pengguna (`navigator.language.startsWith('id')` → `"id"`, selain itu `"en"`), atau mengikuti preferensi bahasa yang disimpan (`BugSnap.locale`). Setiap penambahan key baru harus disertakan pada kamus `en` dan `id`. Dilarang menulis teks UI langsung (*hardcoded string*).
-9. **Etika Produk & Desain**: Dilarang keras membanding-bandingkan produk dengan kompetitor di UI atau dokumentasi publik. Gunakan warna solid (tanpa gradient berlebihan), bersih, konsisten dengan token Tailwind, dan mendukung mode gelap/terang.
+1. **Graphify MANDATORY**: Read `../graphify-out/GRAPH_REPORT.md` before opening any file.
+2. **Tooling**: `PowerShell`/`Bash`, `Read`, `Edit`, `Write`, `Grep`, `Glob`, `Agent`. No `cat`.
+3. **No auto-push**: NEVER `git push` without explicit user instruction.
+4. **PowerShell 5.1**: `&&` not supported — use `;` or Bash tool.
+5. **Free tier stubs**: `tiers.ts` + `quota.ts` are intentionally unlimited — do NOT add paywalls.
+6. **i18n MANDATORY**: All UI text via `src/lib/i18n.ts` + `useT()`. Both `en` + `id` keys. No hardcoded strings.
+7. **Design**: Solid colors, Tailwind tokens, dark/light mode. No heavy gradients.
+8. **Ethics**: Never compare BugSnap to competitors in UI or docs.
+9. **No `any` TS type**: Use proper types. `@typescript-eslint/no-explicit-any` is enforced.
 
-## 2. Versioning (SemVer - bump before every production deploy)
+## 2. Versioning (SemVer)
 
-- **Semantic Versioning**: `MAJOR.MINOR.PATCH`. Bump is REQUIRED whenever changes are about to ship to production.
-  - **MAJOR**: breaking change (API schema break, breaking auth, breaking UI flow). E.g. `0.2.0` → `1.0.0`.
-  - **MINOR**: new user-facing feature (new route, new module, new integration). E.g. `0.5.0` → `0.6.0`.
-  - **PATCH**: bugfix, hotfix, copy update, dependency bump. E.g. `0.5.7` → `0.5.8`.
-- Version lives in `package.json` (+ sync `package-lock.json` top-level `version` and `packages[""].version`).
+Bump `package.json` + `package-lock.json` (top-level + `packages[""].version`) before every production deploy.
+
+- **PATCH** `0.5.8 → 0.5.9`: bugfix, hotfix, copy, asset, dependency.
+- **MINOR** `0.5.x → 0.6.0`: new user-facing feature, route, module.
+- **MAJOR** `0.x → 1.0.0`: breaking API/auth/UI change.
+
+Current version: **`0.5.9`**
 
 ## 3. Architecture & Data Flow
 
 ```
-Extension (capture → Google Drive upload)
-   │  anon key + email (from chrome.storage.local "user_email")
-   ▼
-   Supabase RPC: insert_capture_by_email(...)   ← SECURITY DEFINER, bypasses RLS
-   │
-   ▼
-   tables: captures, comments, workspaces, workspace_members, workspace_settings, capture_views
-   ▲
-   Dashboard (Next.js, Supabase client with user session, RLS-scoped reads)
+Extension → Supabase RPC insert_capture_by_email()  [SECURITY DEFINER]
+         → tables: captures, comments, workspaces, workspace_members, capture_views
+         ← Dashboard (Next.js, user session, RLS-scoped reads)
 ```
 
-- **Key bridge (email-link)**: The extension has no Supabase session. It inserts captures via the RPC `insert_capture_by_email` (`SECURITY DEFINER`), which resolves the user by email and links the capture to their workspace.
-- **DevTools & AI Clue**: The `captures.dev_logs` (JSONB) column stores Console logs, Network requests, Storage keys, and System info. Dashboard displays these in a 4-tab DevTools inspector and feeds them to the AI Root Cause Clue analyzer.
-- **DOM Replay**: Session replay payloads recorded via `rrweb` are rendered using the dashboard's DOM replay player.
+- **Admin Supabase Monitor**: `/admin/supabase` + `/api/admin/supabase-stats` — real-time DB size, storage, connection pool metrics.
+- **DevTools**: `captures.dev_logs` (JSONB) → 4-tab panel (Console, Network, Storage, System) + AI Clue.
+- **Network 1st/3rd-party**: Resolve relative URLs with `new URL(url, captureOrigin)`, normalize `www.`, default to 1st-party on error. See `isFirstPartyUrl` in `DevToolsPanel.tsx`.
+- **DOM Replay**: `rrweb` events stored + played back in dashboard.
+- **`src/lib/redact.ts`**: Server-side only — never import into client components.
 
-## 4. Domain & DNS (SINGLE SOURCE OF TRUTH)
+## 4. Domain & DNS
 
-- **THE ONLY domain that may SERVE the BugSnap app is `bugsnap.akusaraproject.my.id`** - no other subdomain (no `app.*`, no `www.*`) may serve the app.
-- **`dashboard.akusaraproject.my.id` is allowed ONLY as a 301 redirect alias** → `bugsnap.akusaraproject.my.id`. It must NEVER serve the app directly.
-- Vercel project: `bugsnap` (`prj_07vmHWiKLnvJ3EacILxkznfkMIxt`) - production deploy = `vercel deploy --prod`.
-- Cloudflare DNS: `CNAME bugsnap.akusaraproject.my.id → cname.vercel-dns.com` (proxied=false).
+- App: `bugsnap.akusaraproject.my.id` only (Vercel: `prj_07vmHWiKLnvJ3EacILxkznfkMIxt`).
+- `dashboard.akusaraproject.my.id` → 301 redirect only, never serves app directly.
+- Cloudflare: `CNAME → cname.vercel-dns.com` (proxied=false).
 
-## 5. Security & Credential Rules (ENFORCED)
+## 5. Security Rules
 
-1. **NEVER commit secrets**: `.env.local`, Supabase service role keys, Google client secrets, `sbp_*` PATs. All are gitignored.
-2. **RLS must stay enforced**: Never widen a policy to `true` for tables containing user data.
-3. **Extension has no Supabase session**: Always go through RPCs, never direct table inserts from the extension.
-4. **Keep the design system**: Tailwind tokens `bg-background`, `text-foreground`, `text-muted`, `border-border`, `bg-subtle`, `bg-indigo-600`, `bg-emerald-400`, white cards.
-5. **Never hardcode environment-specific values**: Use `process.env` in dashboard and `CONFIG` in extension.
-6. **Password & expires_at never leave the server**: Public share pages go through `get_public_capture` RPC which nulls sensitive fields when locked/expired.
-7. **Service role key is server-only**: Only in `process.env.SUPABASE_SERVICE_ROLE_KEY` on server side (Route Handlers / Server Actions). Never expose to client components.
-8. **Build must pass clean before every push**: `npm run build` must have zero errors and zero warnings.
-9. **No `any` type in TypeScript**: Use proper types or interfaces. `@typescript-eslint/no-explicit-any` is enforced.
-10. **Supabase project is fixed**: `kkmvanwgywrqsudvspge.supabase.co`.
+1. Never commit secrets: `.env.local`, service role keys, `sbp_*` PATs.
+2. RLS must stay enforced — never widen a policy to `true` for user tables.
+3. Extension has no Supabase session — always use RPCs, never direct inserts.
+4. Service role key: `process.env.SUPABASE_SERVICE_ROLE_KEY` — server Route Handlers only.
+5. `get_public_capture` RPC nulls `password` + `expires_at` before serving to public.
+6. Supabase project: `kkmvanwgywrqsudvspge.supabase.co` (fixed).
 
-## 6. Build & Test Commands
+## 6. Image & Asset Safety
 
-- Run test suite: `npm test` (executes 19 unit and contract suites via Node test runner)
-- Run production build: `npm run build`
-- Run linter: `npm run lint`
-- Run TypeScript type check: `npm run typecheck`
-- Run local dev server: `npm run dev`
+- All icons/images referenced in JSX must exist in `public/`. Audit: `node tests/check-assets.js`.
+- All `<img>` rendering OAuth avatars, workspace logos, or custom branding URLs **must** have `onError` fallback to initial-letter badge or `/icon.svg`. Use states: `failedAvatars`, `failedWsAvatars`, `brandLogoFailed`, `logoPreviewError`.
+- `no-img-element` Next.js lint warnings are expected and suppressed via `// eslint-disable-next-line` for dynamic external URLs where `next/image` cannot be used.
+
+## 7. Build & Test Commands
+
+```bash
+npm test           # 20+ unit & contract suites (Node test runner)
+npm run build      # Production build — must exit with 0 errors
+npm run lint       # ESLint
+npm run typecheck  # tsc --noEmit
+npm run dev        # Local dev (HMR auto — restart only if .env.local or next.config.mjs changes)
+node tests/check-assets.js  # Audit static asset paths in public/
+```
