@@ -82,7 +82,6 @@ export default function FloatingSupport() {
         widgetIdRef.current = ts.render(turnstileRef.current, {
           sitekey: TURNSTILE_SITEKEY,
           theme: "light",
-          size: "invisible",
           callback: (token: string) => {
             setCfToken(token);
           },
@@ -267,7 +266,11 @@ export default function FloatingSupport() {
   return (
     <div ref={containerRef} className="fixed bottom-5 right-5 z-50 select-none">
       {/* Invisible Cloudflare Turnstile Container */}
-      <div ref={turnstileRef} className="hidden" aria-hidden="true" />
+      <div
+        ref={turnstileRef}
+        style={{ position: "absolute", left: "-9999px", top: "-9999px", width: "1px", height: "1px", opacity: 0, pointerEvents: "none" }}
+        aria-hidden="true"
+      />
 
       {/* Support Pop-up Modal Card */}
       {isOpen && (

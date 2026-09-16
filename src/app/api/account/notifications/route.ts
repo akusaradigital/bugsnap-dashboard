@@ -22,11 +22,21 @@ export async function GET(req: Request) {
   }
 
   const db = createServiceClient();
-  const { data: userRow, error } = await db
+  let { data: userRow, error } = await db
     .from("users")
     .select("notification_prefs")
-    .or(`id.eq.${user.id},email.ilike.${user.email}`)
+    .eq("id", user.id)
     .maybeSingle();
+
+  if (!userRow && user.email) {
+    const fallback = await db
+      .from("users")
+      .select("notification_prefs")
+      .eq("email", user.email)
+      .maybeSingle();
+    userRow = fallback.data;
+    if (fallback.error) error = fallback.error;
+  }
 
   if (error) {
     console.error("Failed to fetch notification prefs:", error);
@@ -59,11 +69,21 @@ export async function PATCH(req: Request) {
 
   const db = createServiceClient();
 
-  const { data: userRow, error: selectError } = await db
+  let { data: userRow, error: selectError } = await db
     .from("users")
     .select("id, notification_prefs")
-    .or(`id.eq.${user.id},email.ilike.${user.email}`)
+    .eq("id", user.id)
     .maybeSingle();
+
+  if (!userRow && user.email) {
+    const fallback = await db
+      .from("users")
+      .select("id, notification_prefs")
+      .eq("email", user.email)
+      .maybeSingle();
+    userRow = fallback.data;
+    if (fallback.error) selectError = fallback.error;
+  }
 
   if (selectError) {
     console.error("Failed to query user for notification prefs:", selectError);

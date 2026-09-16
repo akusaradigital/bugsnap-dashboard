@@ -320,7 +320,7 @@ export default function AdminSupportPage() {
                         }}
                         className="px-2.5 py-1 text-xs font-semibold rounded bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300"
                       >
-                        Detail & Balas →
+                        Detail & Balas
                       </button>
                     </td>
                   </tr>

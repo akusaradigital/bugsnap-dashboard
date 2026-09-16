@@ -509,7 +509,7 @@ export default function AdminRevenuePage() {
                             href="/admin/users"
                             className="text-[11px] font-semibold text-indigo-600 hover:underline"
                           >
-                            Manage User →
+                            Manage User
                           </a>
                         </td>
                       </tr>
@@ -588,7 +588,7 @@ export default function AdminRevenuePage() {
                                 hour: "2-digit",
                                 minute: "2-digit",
                               })
-                            : "—"}
+                            : "-"}
                         </td>
                         <td className="py-3 px-4 text-right whitespace-nowrap">
                           <a
@@ -674,7 +674,7 @@ export default function AdminRevenuePage() {
                                 hour: "2-digit",
                                 minute: "2-digit",
                               })
-                            : "—"}
+                            : "-"}
                         </td>
                         <td className="py-3 px-4 text-right whitespace-nowrap">
                           <a
@@ -763,7 +763,7 @@ export default function AdminRevenuePage() {
                           <td className="py-3 px-4 text-right whitespace-nowrap text-slate-500 dark:text-zinc-400 text-[11px] font-mono">
                             {Object.entries(vStats.conversions_by_goal || {})
                               .map(([g, c]) => `${g}: ${c}`)
-                              .join(", ") || "—"}
+                              .join(", ") || "-"}
                           </td>
                         </tr>
                       ))

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-server";
+import { isSuperAdminEmail } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
 
@@ -12,13 +13,7 @@ export async function GET(req: Request) {
     const { data: { user } } = await supabase.auth.getUser(token);
     if (!user || !user.email) return NextResponse.json({ isAdmin: false });
 
-    const adminEmails = (process.env.SUPER_ADMIN_EMAILS || "contact.akusaraproject@gmail.com")
-      .split(",")
-      .map((e) => e.trim().toLowerCase())
-      .filter(Boolean);
-
-    const isAdmin = adminEmails.includes(user.email.trim().toLowerCase());
-    return NextResponse.json({ isAdmin });
+    return NextResponse.json({ isAdmin: isSuperAdminEmail(user.email) });
   } catch {
     return NextResponse.json({ isAdmin: false });
   }

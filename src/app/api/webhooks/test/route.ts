@@ -1,12 +1,20 @@
 import { NextResponse } from "next/server";
 import { authenticatedUser } from "@/lib/google-drive";
 import { assertPublicUrl } from "@/lib/safe-url";
+import { isRateLimited } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   const user = await authenticatedUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  if (await isRateLimited(`webhook-test:${user.id}`, 10, 60)) {
+    return NextResponse.json(
+      { error: "Too many webhook test attempts. Please wait a minute." },
+      { status: 429 }
+    );
+  }
 
   try {
     const { url } = (await req.json()) as { url?: string };

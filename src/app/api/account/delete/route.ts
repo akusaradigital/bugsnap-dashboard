@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceClient, getAuthenticatedUser } from "@/lib/supabase-server";
 import { logSecurityEvent } from "@/lib/security-audit";
+import { isSuperAdminEmail } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
 
@@ -13,6 +14,13 @@ export async function POST(req: Request) {
 
     const userId = user.id;
     const userEmail = user.email;
+
+    if (isSuperAdminEmail(userEmail)) {
+      return NextResponse.json(
+        { error: "Akun Super Admin tidak dapat dihapus secara mandiri." },
+        { status: 403 }
+      );
+    }
     const db = createServiceClient();
 
     // 1. Remove Google Drive integrations & state tokens

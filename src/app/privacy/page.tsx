@@ -11,8 +11,8 @@ export default function PrivacyPolicyPage() {
     <StaticShell
       title="Privacy Policy"
       subtitle="Last updated: August 8, 2026"
-      ctaLabel="← Back to Home"
-      ctaHref="/"
+
+
     >
       <main className="mx-auto max-w-4xl px-6 py-12 leading-relaxed">
         <div className="space-y-8 text-sm text-foreground/90">

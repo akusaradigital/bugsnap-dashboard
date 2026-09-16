@@ -146,6 +146,8 @@ export default function AdminSecurityAuditPage() {
           >
             <option value="all">All Event Types</option>
             <option value="admin_action">⚡ Admin Actions</option>
+            <option value="admin_password_change">🔒 Admin Password Change</option>
+            <option value="rate_limit">⏱️ Rate Limit</option>
             <option value="honeypot_trap">🪤 Honeypot Bot Trap</option>
             <option value="spam_email">🚫 Disposable Email Block</option>
             <option value="turnstile_fail">🛡️ Turnstile Fail</option>
@@ -201,6 +203,11 @@ export default function AdminSecurityAuditPage() {
                             ⚡ ADMIN ACTION
                           </span>
                         )}
+                        {log.type === "admin_password_change" && (
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-400">
+                            🔒 PASSWORD CHANGE
+                          </span>
+                        )}
                         {log.type === "honeypot_trap" && (
                           <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400">
                             🪤 HONEYPOT
@@ -239,7 +246,7 @@ export default function AdminSecurityAuditPage() {
                         {log.detail}
                       </td>
                       <td className="py-3 px-4 whitespace-nowrap font-mono text-slate-500 dark:text-zinc-400">
-                        {log.ip || "—"}
+                        {log.ip || "-"}
                       </td>
                       <td className="py-3 px-4 text-right whitespace-nowrap text-slate-400 font-mono text-[11px]">
                         {new Date(log.created_at).toLocaleString("id-ID", {

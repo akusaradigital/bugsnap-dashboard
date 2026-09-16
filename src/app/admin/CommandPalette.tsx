@@ -129,6 +129,15 @@ export function CommandPalette({
       action: () => router.push("/admin/security-audit"),
     },
     {
+      id: "nav-supabase",
+      category: "nav",
+      title: t("admin.navSupabase"),
+      subtitle: "/admin/supabase",
+      icon: "⚡",
+      keywords: ["supabase", "database", "storage", "quota", "tables", "vacuum", "connections", "db"],
+      action: () => router.push("/admin/supabase"),
+    },
+    {
       id: "nav-system",
       category: "nav",
       title: t("admin.systemDrive"),

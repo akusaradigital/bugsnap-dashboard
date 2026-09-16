@@ -4,7 +4,11 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
 
-// Turnstile anti-bot config — widget + managed siteverify Worker (Spin).
+// Turnstile anti-bot config - widget + managed siteverify Worker (Spin).
+// Keep long threads from stretching the page; older items stay one click away.
+const COLLAPSE_AFTER = 5;
+const REPLIES_COLLAPSE_AFTER = 3;
+
 const TURNSTILE_SITEKEY = "0x4AAAAAAEKHTA3AvZpK27ig";
 const TURNSTILE_WORKER = "https://turnstile-siteverify-bugsnap.akusaraproject.workers.dev";
 
@@ -22,7 +26,7 @@ export interface CommentRow {
   id: string;
   capture_id: string;
   author_name: string | null;
-  author_email: string | null;
+  author_email?: string | null;
   body: string;
   video_timestamp: number | null; // seconds into the video; null for screenshots / non-timestamped
   created_at: string;
@@ -30,6 +34,8 @@ export interface CommentRow {
   tag?: string | null; // e.g. bug / feature-request / wip
   status?: string | null; // e.g. open / in-progress / fixed
   resolved?: boolean;
+  pin_x?: number | null;
+  pin_y?: number | null;
 }
 
 interface CommentsProps {
@@ -99,7 +105,7 @@ export default function Comments({
   getCurrentTime,
   onSeek,
 }: CommentsProps) {
-  const { t } = useT();
+  const { t, locale } = useT();
   const [comments, setComments] = useState<CommentRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [body, setBody] = useState("");
@@ -110,6 +116,13 @@ export default function Comments({
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
   const [replyBody, setReplyBody] = useState("");
   const [replying, setReplying] = useState(false);
+  const [showAllComments, setShowAllComments] = useState(false);
+  const [expandedReplies, setExpandedReplies] = useState<string[]>([]);
+  const [highlightId, setHighlightId] = useState<string | null>(null);
+  const onCommentsChangeRef = useRef(onCommentsChange);
+  useEffect(() => {
+    onCommentsChangeRef.current = onCommentsChange;
+  }, [onCommentsChange]);
 
   // Turnstile anti-bot: widget state + token gate before posting.
   const [cfToken, setCfToken] = useState<string | null>(null);
@@ -125,23 +138,26 @@ export default function Comments({
 
     const renderWidget = () => {
       if (cancelled || !window.turnstile || !turnstileRef.current) return;
-      widgetIdRef.current = window.turnstile.render(turnstileRef.current, {
-        sitekey: TURNSTILE_SITEKEY,
-        theme: "light",
-        size: "invisible",
-        callback: (token: string) => {
-          setCfToken(token);
-          setCfError("");
-        },
-        "expired-callback": () => {
-          setCfToken(null);
-          setCfError("Anti-bot check expired. Try again.");
-        },
-        "error-callback": () => {
-          setCfToken(null);
-          setCfError("Anti-bot check failed. Try again.");
-        },
-      });
+      try {
+        widgetIdRef.current = window.turnstile.render(turnstileRef.current, {
+          sitekey: TURNSTILE_SITEKEY,
+          theme: "light",
+          callback: (token: string) => {
+            setCfToken(token);
+            setCfError("");
+          },
+          "expired-callback": () => {
+            setCfToken(null);
+            setCfError("Anti-bot check expired. Try again.");
+          },
+          "error-callback": () => {
+            setCfToken(null);
+            setCfError("Anti-bot check failed. Try again.");
+          },
+        });
+      } catch (err) {
+        console.warn("[Turnstile] Render error:", err);
+      }
     };
 
     if (window.turnstile) {
@@ -243,18 +259,19 @@ export default function Comments({
     const load = async () => {
       const { data, error } = await supabase
         .from("comments")
-        .select("id, capture_id, parent_id, author_name, body, video_timestamp, created_at")
+        .select("id, capture_id, parent_id, author_name, body, video_timestamp, created_at, pin_x, pin_y")
         .eq("capture_id", captureId)
         .order("created_at", { ascending: true });
       if (cancelled) return;
       setLoading(false);
       if (error) {
+        console.error("Failed to load comments:", error);
         setError(t("cm.errorLoad"));
         return;
       }
       const loadedComments = (data as CommentRow[]) ?? [];
       setComments(loadedComments);
-      onCommentsChange?.(loadedComments);
+      onCommentsChangeRef.current?.(loadedComments);
     };
 
     load();
@@ -272,7 +289,17 @@ export default function Comments({
       if (timer) clearInterval(timer);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
-  }, [captureId, t, onCommentsChange]);
+  }, [captureId, t]);
+
+  // Scroll the freshly posted comment into view and flash it briefly.
+  useEffect(() => {
+    if (!highlightId) return;
+    document
+      .querySelector(`[data-comment-id="${highlightId}"]`)
+      ?.scrollIntoView({ behavior: "smooth", block: "center" });
+    const timer = setTimeout(() => setHighlightId(null), 2000);
+    return () => clearTimeout(timer);
+  }, [highlightId]);
 
   async function handleSubmit() {
     const text = body.trim();
@@ -315,7 +342,7 @@ export default function Comments({
 
     setComments((prev) => {
       const updated = [...prev, nextComment];
-      onCommentsChange?.(updated);
+      onCommentsChangeRef.current?.(updated);
       return updated;
     });
     setBody("");
@@ -323,6 +350,8 @@ export default function Comments({
     setTimestampOn(false);
     setError("");
     setSubmitting(true);
+    setShowAllComments(true);
+    setHighlightId(optimisticId);
 
     try {
       // Use the rate-limited RPC so anonymous users can't spam comments.
@@ -354,14 +383,15 @@ export default function Comments({
       fetch("/api/notifications/comment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ comment: data }),
+        body: JSON.stringify({ comment: data, locale }),
       }).catch((err) => console.error("Failed to send comment notification:", err));
 
       setComments((prev) => {
         const updated = prev.map((c) => (c.id === optimisticId ? (data as CommentRow) : c));
-        onCommentsChange?.(updated);
+        onCommentsChangeRef.current?.(updated);
         return updated;
       });
+      setHighlightId((data as CommentRow).id);
       // Consume the token; a fresh one is issued on the next interaction.
       setCfToken(null);
       if (widgetIdRef.current && window.turnstile) {
@@ -370,7 +400,7 @@ export default function Comments({
     } catch (err) {
       setComments((prev) => {
         const updated = prev.filter((c) => c.id !== optimisticId);
-        onCommentsChange?.(updated);
+        onCommentsChangeRef.current?.(updated);
         return updated;
       });
       setError(
@@ -420,10 +450,12 @@ export default function Comments({
       fetch("/api/notifications/comment", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ comment: data }),
+        body: JSON.stringify({ comment: data, locale }),
       }).catch((err) => console.error("Failed to send comment notification:", err));
 
       setComments((prev) => [...prev, data as CommentRow]);
+      setExpandedReplies((prev) => (prev.includes(parentId) ? prev : [...prev, parentId]));
+      setHighlightId((data as CommentRow).id);
       setReplyBody("");
       setReplyingTo(null);
       // Consume the token after a successful reply.
@@ -437,6 +469,10 @@ export default function Comments({
       setReplying(false);
     }
   }
+
+  const topLevel = comments.filter((c) => !c.parent_id);
+  const hiddenCount = showAllComments ? 0 : Math.max(0, topLevel.length - COLLAPSE_AFTER);
+  const visibleComments = hiddenCount > 0 ? topLevel.slice(-COLLAPSE_AFTER) : topLevel;
 
   return (
     <div className="space-y-3">
@@ -455,6 +491,223 @@ export default function Comments({
             {comments.length}
           </span>
         </div>
+      </div>
+
+      {/* Invisible Turnstile container positioned offscreen so execution is not blocked by display:none */}
+      <div
+        ref={turnstileRef}
+        style={{ position: "absolute", left: "-9999px", top: "-9999px", width: "1px", height: "1px", opacity: 0, pointerEvents: "none" }}
+        data-action="turnstile-spin-v1"
+        aria-hidden="true"
+      />
+
+      {/* List */}
+      <div className="space-y-2.5">
+        {loading ? (
+          <div className="flex items-center justify-center py-4 text-xs text-muted gap-2">
+            <svg className="h-4 w-4 animate-spin text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <circle cx="12" cy="12" r="10" strokeDasharray="32" strokeDashoffset="12" />
+            </svg>
+            <span>{t("cm.loading") || "Loading comments..."}</span>
+          </div>
+        ) : comments.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-border/70 py-2.5 px-3 text-center bg-subtle/10">
+            <p className="text-xs text-muted flex items-center justify-center gap-1.5">
+              <svg className="h-3.5 w-3.5 shrink-0 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
+              </svg>
+              <span>{t("cm.none") || "No comments yet."}</span>
+            </p>
+          </div>
+        ) : (
+          <ul className="space-y-3">
+            {hiddenCount > 0 && (
+              <li>
+                <button
+                  type="button"
+                  onClick={() => setShowAllComments(true)}
+                  className="w-full rounded-lg border border-dashed border-border/70 py-2 text-[11px] font-semibold text-muted hover:text-indigo-600 hover:border-indigo-300 transition-colors"
+                >
+                  {t("cm.showPrevious", { count: hiddenCount })}
+                </button>
+              </li>
+            )}
+            {visibleComments
+              .map((c) => {
+                const name = c.author_name || t("cm.guest");
+                const seed = c.author_email || c.author_name || c.id;
+                const ts = c.video_timestamp;
+                const replies = comments.filter((r) => r.parent_id === c.id);
+                const hiddenReplies = expandedReplies.includes(c.id)
+                  ? 0
+                  : Math.max(0, replies.length - REPLIES_COLLAPSE_AFTER);
+                const visibleReplies =
+                  hiddenReplies > 0 ? replies.slice(-REPLIES_COLLAPSE_AFTER) : replies;
+                const isCurrentUser = Boolean(
+                  (authorEmail && c.author_email === authorEmail) ||
+                  (authorName && c.author_name === authorName)
+                );
+
+                return (
+                  <li key={c.id} className="space-y-2">
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 shadow-xs ${avatarColor(seed)}`}
+                      >
+                        {name.charAt(0).toUpperCase()}
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div
+                          data-comment-id={c.id}
+                          className={`rounded-xl border bg-white dark:bg-zinc-900/60 p-3.5 shadow-xs transition-all ${
+                            highlightId === c.id
+                              ? "border-indigo-500 ring-2 ring-indigo-500/20"
+                              : "border-border/70 hover:border-border"
+                          }`}
+                        >
+                          <div className="flex items-center justify-between gap-2 flex-wrap mb-1.5">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <span className="text-xs font-bold text-foreground">{name}</span>
+                              {isCurrentUser && (
+                                <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[9px] font-semibold text-indigo-600 border border-indigo-100 dark:bg-indigo-950/60 dark:border-indigo-800 dark:text-indigo-300">
+                                  You
+                                </span>
+                              )}
+                              {ts != null && (
+                                <button
+                                  type="button"
+                                  onClick={() => onSeek?.(ts)}
+                                  title={t("cm.jumpTo", { time: formatTimestamp(ts) })}
+                                  className="inline-flex items-center gap-1 rounded-md bg-indigo-50 px-1.5 py-0.5 text-[10px] font-mono font-semibold text-indigo-600 border border-indigo-100 hover:bg-indigo-100 dark:bg-indigo-950 dark:text-indigo-300 transition-colors"
+                                >
+                                  <svg className="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                    <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
+                                  </svg>
+                                  <span>@ {formatTimestamp(ts)}</span>
+                                </button>
+                              )}
+                            </div>
+                            <span className="text-[10px] font-medium text-muted">{formatDate(c.created_at)}</span>
+                          </div>
+
+                          <p className={`text-xs whitespace-pre-wrap break-words leading-relaxed ${
+                            c.resolved ? "text-muted line-through opacity-50" : "text-foreground"
+                          }`}>
+                            {c.body}
+                          </p>
+
+                          <div className="mt-2.5 flex items-center gap-3 pt-2 border-t border-border/40">
+                            <button
+                              type="button"
+                              onClick={() => setReplyingTo(replyingTo === c.id ? null : c.id)}
+                              className="inline-flex items-center gap-1 text-[11px] font-medium text-muted hover:text-indigo-600 transition-colors"
+                            >
+                              <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                                <path d="m9 14-4-4 4-4"/><path d="M5 10h11a4 4 0 1 1 0 8h-1"/>
+                              </svg>
+                              <span>{t("cm.reply") || "Reply"}</span>
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Reply Composer */}
+                        {replyingTo === c.id && (
+                          <div className="mt-2.5 flex items-center gap-2 pl-3 border-l-2 border-indigo-500/50">
+                            <input
+                              value={replyBody}
+                              onChange={(e) => setReplyBody(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter" && !e.shiftKey) {
+                                  e.preventDefault();
+                                  handleReply(c.id);
+                                }
+                              }}
+                              placeholder={t("cm.replyTo", { name }) || `Reply to ${name}...`}
+                              className="flex-1 text-xs rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-white dark:bg-zinc-900 shadow-xs"
+                              autoFocus
+                            />
+                            <button
+                              type="button"
+                              onClick={() => handleReply(c.id)}
+                              disabled={replying || !replyBody.trim()}
+                              className="px-3 py-2 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 disabled:opacity-40 transition-colors shrink-0"
+                            >
+                              {replying ? (t("cm.posting") || "...") : (t("cm.reply") || "Reply")}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setReplyingTo(null)}
+                              className="px-2 py-2 text-xs font-medium text-muted hover:text-foreground transition-colors"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        )}
+
+                        {/* Nested Replies */}
+                        {replies.length > 0 && (
+                          <div className="mt-2.5 space-y-2.5 pl-3 border-l-2 border-border/60">
+                            {hiddenReplies > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => setExpandedReplies((prev) => [...prev, c.id])}
+                                className="text-[11px] font-semibold text-muted hover:text-indigo-600 transition-colors"
+                              >
+                                {t("cm.showReplies", { count: hiddenReplies })}
+                              </button>
+                            )}
+                            {visibleReplies.map((r) => {
+                              const rName = r.author_name || t("cm.guest");
+                              const rSeed = r.author_email || r.author_name || r.id;
+                              const isReplyUser = Boolean(
+                                (authorEmail && r.author_email === authorEmail) ||
+                                (authorName && r.author_name === authorName)
+                              );
+
+                              return (
+                                <div key={r.id} className="flex items-start gap-2.5">
+                                  <div
+                                    className={`h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 shadow-xs ${avatarColor(rSeed)}`}
+                                  >
+                                    {rName.charAt(0).toUpperCase()}
+                                  </div>
+
+                                  <div
+                                    data-comment-id={r.id}
+                                    className={`flex-1 min-w-0 rounded-lg border bg-subtle/30 dark:bg-zinc-900/40 p-2.5 transition-all ${
+                                      highlightId === r.id
+                                        ? "border-indigo-500 ring-2 ring-indigo-500/20"
+                                        : "border-border/50"
+                                    }`}
+                                  >
+                                    <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="text-xs font-semibold text-foreground">{rName}</span>
+                                        {isReplyUser && (
+                                          <span className="rounded-full bg-indigo-50 px-1.5 py-0.5 text-[8px] font-semibold text-indigo-600 border border-indigo-100">
+                                            You
+                                          </span>
+                                        )}
+                                      </div>
+                                      <span className="text-[10px] text-muted">{formatDate(r.created_at)}</span>
+                                    </div>
+                                    <p className="text-xs text-foreground whitespace-pre-wrap break-words leading-relaxed">
+                                      {r.body}
+                                    </p>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+          </ul>
+        )}
       </div>
 
       {/* Composer (always visible) */}
@@ -545,186 +798,6 @@ export default function Comments({
             </div>
           </div>
         </div>
-      </div>
-
-      {/* Invisible Turnstile container (0px height, background only) */}
-      <div
-        ref={turnstileRef}
-        className="hidden"
-        style={{ display: "none" }}
-        data-action="turnstile-spin-v1"
-        aria-hidden="true"
-      />
-
-      {/* List */}
-      <div className="max-h-[320px] overflow-y-auto pr-1 -mr-1 space-y-2.5">
-        {loading ? (
-          <div className="flex items-center justify-center py-4 text-xs text-muted gap-2">
-            <svg className="h-4 w-4 animate-spin text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10" strokeDasharray="32" strokeDashoffset="12" />
-            </svg>
-            <span>{t("cm.loading") || "Loading comments..."}</span>
-          </div>
-        ) : comments.length === 0 ? (
-          <div className="rounded-lg border border-dashed border-border/70 py-2.5 px-3 text-center bg-subtle/10">
-            <p className="text-xs text-muted flex items-center justify-center gap-1.5">
-              <svg className="h-3.5 w-3.5 shrink-0 opacity-60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
-              </svg>
-              <span>{t("cm.none") || "No comments yet."}</span>
-            </p>
-          </div>
-        ) : (
-          <ul className="space-y-3">
-            {comments
-              .filter((c) => !c.parent_id)
-              .map((c) => {
-                const name = c.author_name || t("cm.guest");
-                const seed = c.author_email || c.author_name || c.id;
-                const ts = c.video_timestamp;
-                const replies = comments.filter((r) => r.parent_id === c.id);
-                const isCurrentUser = Boolean(
-                  (authorEmail && c.author_email === authorEmail) ||
-                  (authorName && c.author_name === authorName)
-                );
-
-                return (
-                  <li key={c.id} className="space-y-2">
-                    <div className="flex items-start gap-3">
-                      <div
-                        className={`h-8 w-8 rounded-full flex items-center justify-center text-xs font-bold shrink-0 shadow-xs ${avatarColor(seed)}`}
-                      >
-                        {name.charAt(0).toUpperCase()}
-                      </div>
-
-                      <div className="flex-1 min-w-0">
-                        <div className="rounded-xl border border-border/70 bg-white dark:bg-zinc-900/60 p-3.5 shadow-xs transition-all hover:border-border">
-                          <div className="flex items-center justify-between gap-2 flex-wrap mb-1.5">
-                            <div className="flex items-center gap-1.5 flex-wrap">
-                              <span className="text-xs font-bold text-foreground">{name}</span>
-                              {isCurrentUser && (
-                                <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[9px] font-semibold text-indigo-600 border border-indigo-100 dark:bg-indigo-950/60 dark:border-indigo-800 dark:text-indigo-300">
-                                  You
-                                </span>
-                              )}
-                              {ts != null && (
-                                <button
-                                  type="button"
-                                  onClick={() => onSeek?.(ts)}
-                                  title={t("cm.jumpTo", { time: formatTimestamp(ts) })}
-                                  className="inline-flex items-center gap-1 rounded-md bg-indigo-50 px-1.5 py-0.5 text-[10px] font-mono font-semibold text-indigo-600 border border-indigo-100 hover:bg-indigo-100 dark:bg-indigo-950 dark:text-indigo-300 transition-colors"
-                                >
-                                  <svg className="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
-                                  </svg>
-                                  <span>@ {formatTimestamp(ts)}</span>
-                                </button>
-                              )}
-                            </div>
-                            <span className="text-[10px] font-medium text-muted">{formatDate(c.created_at)}</span>
-                          </div>
-
-                          <p className={`text-xs whitespace-pre-wrap break-words leading-relaxed ${
-                            c.resolved ? "text-muted line-through opacity-50" : "text-foreground"
-                          }`}>
-                            {c.body}
-                          </p>
-
-                          <div className="mt-2.5 flex items-center gap-3 pt-2 border-t border-border/40">
-                            <button
-                              type="button"
-                              onClick={() => setReplyingTo(replyingTo === c.id ? null : c.id)}
-                              className="inline-flex items-center gap-1 text-[11px] font-medium text-muted hover:text-indigo-600 transition-colors"
-                            >
-                              <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path d="m9 14-4-4 4-4"/><path d="M5 10h11a4 4 0 1 1 0 8h-1"/>
-                              </svg>
-                              <span>{t("cm.reply") || "Reply"}</span>
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* Reply Composer */}
-                        {replyingTo === c.id && (
-                          <div className="mt-2.5 flex items-center gap-2 pl-3 border-l-2 border-indigo-500/50">
-                            <input
-                              value={replyBody}
-                              onChange={(e) => setReplyBody(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === "Enter" && !e.shiftKey) {
-                                  e.preventDefault();
-                                  handleReply(c.id);
-                                }
-                              }}
-                              placeholder={t("cm.replyTo", { name }) || `Reply to ${name}...`}
-                              className="flex-1 text-xs rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-white dark:bg-zinc-900 shadow-xs"
-                              autoFocus
-                            />
-                            <button
-                              type="button"
-                              onClick={() => handleReply(c.id)}
-                              disabled={replying || !replyBody.trim()}
-                              className="px-3 py-2 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 disabled:opacity-40 transition-colors shrink-0"
-                            >
-                              {replying ? (t("cm.posting") || "...") : (t("cm.reply") || "Reply")}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setReplyingTo(null)}
-                              className="px-2 py-2 text-xs font-medium text-muted hover:text-foreground transition-colors"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        )}
-
-                        {/* Nested Replies */}
-                        {replies.length > 0 && (
-                          <div className="mt-2.5 space-y-2.5 pl-3 border-l-2 border-border/60">
-                            {replies.map((r) => {
-                              const rName = r.author_name || t("cm.guest");
-                              const rSeed = r.author_email || r.author_name || r.id;
-                              const isReplyUser = Boolean(
-                                (authorEmail && r.author_email === authorEmail) ||
-                                (authorName && r.author_name === authorName)
-                              );
-
-                              return (
-                                <div key={r.id} className="flex items-start gap-2.5">
-                                  <div
-                                    className={`h-6 w-6 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 shadow-xs ${avatarColor(rSeed)}`}
-                                  >
-                                    {rName.charAt(0).toUpperCase()}
-                                  </div>
-
-                                  <div className="flex-1 min-w-0 rounded-lg border border-border/50 bg-subtle/30 dark:bg-zinc-900/40 p-2.5">
-                                    <div className="flex items-center justify-between gap-2 flex-wrap mb-1">
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="text-xs font-semibold text-foreground">{rName}</span>
-                                        {isReplyUser && (
-                                          <span className="rounded-full bg-indigo-50 px-1.5 py-0.5 text-[8px] font-semibold text-indigo-600 border border-indigo-100">
-                                            You
-                                          </span>
-                                        )}
-                                      </div>
-                                      <span className="text-[10px] text-muted">{formatDate(r.created_at)}</span>
-                                    </div>
-                                    <p className="text-xs text-foreground whitespace-pre-wrap break-words leading-relaxed">
-                                      {r.body}
-                                    </p>
-                                  </div>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </li>
-                );
-              })}
-          </ul>
-        )}
       </div>
     </div>
   );

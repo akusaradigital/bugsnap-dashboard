@@ -36,12 +36,28 @@ export async function POST(req: Request) {
   }
 
   try {
-    const body = await req.json();
-    const subject = body?.subject?.trim();
-    const rawContent = (body?.html || body?.body || "").trim();
+    const body = (await req.json().catch(() => null)) as {
+      subject?: unknown;
+      html?: unknown;
+      body?: unknown;
+    } | null;
+    const subject = typeof body?.subject === "string" ? body.subject.trim() : "";
+    const rawContent = typeof body?.html === "string"
+      ? body.html.trim()
+      : typeof body?.body === "string"
+        ? body.body.trim()
+        : "";
 
     if (!subject || !rawContent) {
       return NextResponse.json({ error: "Subject and message body are required" }, { status: 400 });
+    }
+
+    if (subject.length > 200) {
+      return NextResponse.json({ error: "Subject must not exceed 200 characters" }, { status: 400 });
+    }
+
+    if (rawContent.length > 50000) {
+      return NextResponse.json({ error: "Message body must not exceed 50,000 characters" }, { status: 400 });
     }
 
     const htmlBody = rawContent.startsWith("<")
@@ -52,8 +68,11 @@ export async function POST(req: Request) {
           <p style="font-size: 12px; color: #94a3b8;">Email ini dikirim oleh tim BugSnap.</p>
         </div>`;
 
-    // Fetch all active user emails
-    const { data: users, error: usersErr } = await supabase.from("users").select("email").is("suspended", false);
+    // Fetch all active user emails (including those where suspended is null or false)
+    const { data: users, error: usersErr } = await supabase
+      .from("users")
+      .select("email")
+      .or("suspended.eq.false,suspended.is.null");
     if (usersErr) throw usersErr;
 
     const emails = Array.from(new Set((users || []).map((u) => u.email).filter(Boolean)));

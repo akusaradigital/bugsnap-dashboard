@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { isRequestAdminAuthenticated } from "@/lib/admin-auth";
+import { getAdminSessionFromRequest } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -12,6 +12,10 @@ export const dynamic = "force-dynamic";
  * is never returned — that is the whole point.
  */
 export async function GET(req: Request) {
-  const ok = await isRequestAdminAuthenticated(req);
-  return NextResponse.json({ authenticated: ok }, { status: ok ? 200 : 401 });
+  const session = getAdminSessionFromRequest(req);
+  const ok = Boolean(session);
+  return NextResponse.json(
+    { authenticated: ok, username: session?.username || null },
+    { status: ok ? 200 : 401 }
+  );
 }

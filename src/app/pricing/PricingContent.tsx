@@ -11,8 +11,8 @@ export function PricingContent() {
     <StaticShell
       title={t("pricing.title")}
       subtitle={t("pricing.subtitle")}
-      ctaLabel="← Home"
-      ctaHref="/"
+
+
     >
       <div className="mx-auto max-w-6xl px-6 py-12">
         <PricingToggle />
@@ -23,7 +23,7 @@ export function PricingContent() {
             {t("pricing.customDesc")}
           </p>
           <div className="pt-2">
-            <a href="/contact" className="text-sm font-semibold text-indigo-600 hover:underline">
+            <a href="/contact" className="inline-flex items-center text-sm font-semibold text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors">
               {t("pricing.contactSales")}
             </a>
           </div>

@@ -3,78 +3,116 @@
 import { StaticShell } from "@/components/StaticShell";
 import { useT } from "@/components/I18nProvider";
 
+const CARD = "group rounded-2xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle p-6 shadow-lg shadow-slate-200/50 dark:shadow-none backdrop-blur-sm flex flex-col justify-between space-y-5 hover:-translate-y-1 hover:shadow-xl hover:border-indigo-500/40 transition-all duration-300";
+const PREVIEW = "rounded-xl border border-border/60 bg-slate-50/90 dark:bg-subtle/60 p-3.5 space-y-2 group-hover:border-indigo-500/30 transition-colors";
+
 export default function HowItWorksPage() {
   const { t } = useT();
 
   return (
-    <StaticShell
-      title={t("howItWorks.title")}
-      subtitle={t("howItWorks.subtitle")}
-      ctaLabel="← Home"
-      ctaHref="/"
-    >
+    <StaticShell title={t("howItWorks.title")} subtitle={t("howItWorks.subtitle")}>
       <div className="mx-auto max-w-5xl px-6 py-12 space-y-12">
         {/* 3 Step Process Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {/* Step 1 */}
-          <div className="creative-surface rounded-2xl p-6 flex flex-col justify-between space-y-4 border border-border">
-            <div className="space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-base">
-                1
+          <div className={CARD}>
+            <div className="space-y-3.5">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:shadow-indigo-500/25 transition-all duration-300">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                  <circle cx="12" cy="13" r="4" />
+                </svg>
               </div>
-              <h3 className="text-base font-bold text-foreground">{t("howItWorks.step1Title")}</h3>
-              <p className="text-xs text-muted leading-relaxed">{t("howItWorks.step1Desc")}</p>
+              <h3 className="text-base font-bold text-slate-900 dark:text-foreground group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors">
+                {t("howItWorks.step1Title")}
+              </h3>
+              <p className="text-xs text-slate-600 dark:text-muted leading-relaxed">
+                {t("howItWorks.step1Desc")}
+              </p>
             </div>
-            <div className="rounded-xl border border-border/70 bg-subtle/60 p-3 font-mono text-[11px] text-muted space-y-1">
-              <div>📸 Ctrl + Shift + S</div>
-              <div>🎥 Ctrl + Shift + F</div>
+            <div className={PREVIEW}>
+              <div className="flex items-center gap-2 text-[11px] text-slate-700 dark:text-slate-300 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                <span>{t("howItWorks.preview1Hotkeys")}</span>
+              </div>
+              <div className="flex items-center gap-2 text-[11px] text-slate-700 dark:text-slate-300 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-violet-500" />
+                <span>{t("howItWorks.preview1HotkeysVideo")}</span>
+              </div>
             </div>
           </div>
 
           {/* Step 2 */}
-          <div className="creative-surface rounded-2xl p-6 flex flex-col justify-between space-y-4 border border-border">
-            <div className="space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-50 dark:bg-amber-950/50 flex items-center justify-center text-amber-600 dark:text-amber-400 font-bold text-base">
-                2
+          <div className={CARD}>
+            <div className="space-y-3.5">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 text-white flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:shadow-orange-500/25 transition-all duration-300">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+                  <polyline points="16 18 22 12 16 6" />
+                  <polyline points="8 6 2 12 8 18" />
+                </svg>
               </div>
-              <h3 className="text-base font-bold text-foreground">{t("howItWorks.step2Title")}</h3>
-              <p className="text-xs text-muted leading-relaxed">{t("howItWorks.step2Desc")}</p>
+              <h3 className="text-base font-bold text-slate-900 dark:text-foreground group-hover:text-amber-600 dark:group-hover:text-amber-400 transition-colors">
+                {t("howItWorks.step2Title")}
+              </h3>
+              <p className="text-xs text-slate-600 dark:text-muted leading-relaxed">
+                {t("howItWorks.step2Desc")}
+              </p>
             </div>
-            <div className="rounded-xl border border-border/70 bg-subtle/60 p-3 font-mono text-[11px] text-muted space-y-1">
-              <div className="text-red-500">✖ Console Errors</div>
-              <div className="text-emerald-600 dark:text-emerald-400">⚡ Network Requests</div>
+            <div className={PREVIEW}>
+              <div className="flex items-center gap-2 text-[11px] text-red-600 dark:text-red-400 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                <span>{t("howItWorks.preview2Console")}</span>
+              </div>
+              <div className="flex items-center gap-2 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span>{t("howItWorks.preview2Network")}</span>
+              </div>
             </div>
           </div>
 
           {/* Step 3 */}
-          <div className="creative-surface rounded-2xl p-6 flex flex-col justify-between space-y-4 border border-border">
-            <div className="space-y-3">
-              <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/50 flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold text-base">
-                3
+          <div className={CARD}>
+            <div className="space-y-3.5">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 text-white flex items-center justify-center shadow-lg group-hover:scale-110 group-hover:shadow-emerald-500/25 transition-all duration-300">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-6 h-6">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+                </svg>
               </div>
-              <h3 className="text-base font-bold text-foreground">{t("howItWorks.step3Title")}</h3>
-              <p className="text-xs text-muted leading-relaxed">{t("howItWorks.step3Desc")}</p>
+              <h3 className="text-base font-bold text-slate-900 dark:text-foreground group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+                {t("howItWorks.step3Title")}
+              </h3>
+              <p className="text-xs text-slate-600 dark:text-muted leading-relaxed">
+                {t("howItWorks.step3Desc")}
+              </p>
             </div>
-            <div className="rounded-xl border border-border/70 bg-subtle/60 p-3 font-mono text-[11px] text-muted space-y-1">
-              <div>🔒 Google Drive Storage</div>
-              <div>🔗 Instant Share Link</div>
+            <div className={PREVIEW}>
+              <div className="flex items-center gap-2 text-[11px] text-slate-700 dark:text-slate-300 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span>{t("howItWorks.preview3Drive")}</span>
+              </div>
+              <div className="flex items-center gap-2 text-[11px] text-slate-700 dark:text-slate-300 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-teal-500" />
+                <span>{t("howItWorks.preview3Share")}</span>
+              </div>
             </div>
           </div>
         </div>
 
         {/* CTA Banner */}
-        <div className="creative-surface rounded-2xl p-8 text-center space-y-4 border border-border">
-          <h2 className="text-xl font-bold text-foreground">{t("footer.captureBugsFaster")}</h2>
-          <p className="text-xs text-muted max-w-lg mx-auto">{t("footer.captureDesc")}</p>
+        <div className="rounded-2xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle p-8 text-center space-y-4 shadow-lg shadow-slate-200/50 dark:shadow-none backdrop-blur-sm hover:shadow-xl transition-all duration-300">
+          <h2 className="text-xl font-bold text-slate-900 dark:text-foreground">{t("footer.captureBugsFaster")}</h2>
+          <p className="text-xs text-slate-600 dark:text-muted max-w-lg mx-auto leading-relaxed">{t("footer.captureDesc")}</p>
           <div className="pt-2">
             <a
               href="https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-sm font-semibold shadow-md transition-all"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-sm font-semibold shadow-md hover:shadow-lg transition-all"
             >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/icons/chrome.svg" alt="Chrome" className="w-4 h-4 shrink-0" />
               <span>{t("footer.addToChrome")}</span>
-              <span>→</span>
             </a>
           </div>
         </div>

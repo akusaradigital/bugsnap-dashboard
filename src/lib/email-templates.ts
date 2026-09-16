@@ -25,6 +25,7 @@ interface CommentEmailOptions {
   authorName: string;
   commentBody: string;
   isMention?: boolean;
+  locale?: string;
 }
 
 export function renderCommentEmail({
@@ -35,20 +36,32 @@ export function renderCommentEmail({
   authorName,
   commentBody,
   isMention = false,
+  locale = "en",
 }: CommentEmailOptions): { subject: string; html: string } {
   const safeTitle = escapeHtml(captureTitle || "Untitled capture");
   const safeAuthor = escapeHtml(authorName || "A collaborator");
   const safeWorkspace = workspaceName ? escapeHtml(workspaceName) : "Your Workspace";
   const safeBody = escapeHtml(commentBody).replace(/\n/g, "<br>");
   const settingsUrl = `${appUrl.replace(/\/$/, "")}/settings?tab=notifications`;
+  const safeCaptureUrl = escapeHtml(captureUrl);
+  const safeSettingsUrl = escapeHtml(settingsUrl);
+  const safeAppUrl = escapeHtml(appUrl);
 
-  const subject = isMention
-    ? `${safeAuthor} mentioned you on "${safeTitle}"`
-    : `New comment on "${safeTitle}" by ${safeAuthor}`;
+  const isId = locale === "id";
+  const subject = isId
+    ? (isMention ? `${safeAuthor} menyebut Anda di "${safeTitle}"` : `Komentar baru pada "${safeTitle}" oleh ${safeAuthor}`)
+    : (isMention ? `${safeAuthor} mentioned you on "${safeTitle}"` : `New comment on "${safeTitle}" by ${safeAuthor}`);
 
-  const headerContext = isMention
-    ? "Mention in discussion"
-    : "New comment on capture";
+  const headerContext = isId
+    ? (isMention ? "Penyebutan dalam diskusi" : "Komentar baru pada capture")
+    : (isMention ? "Mention in discussion" : "New comment on capture");
+
+  const buttonText = isId ? "Lihat komentar di BugSnap" : "View comment in BugSnap";
+  const directLinkText = isId ? "Tautan langsung:" : "Direct link:";
+  const footerReason = isId
+    ? `Anda menerima email ini karena preferensi notifikasi BugSnap Anda diatur untuk memberi tahu tentang ${isMention ? "penyebutan (@mention)" : "komentar"}.`
+    : `You received this email because your BugSnap notification preferences are set to notify you of ${isMention ? "@mentions" : "comments"}.`;
+  const manageSettingsText = isId ? "Kelola pengaturan notifikasi" : "Manage notification settings";
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -103,25 +116,25 @@ export function renderCommentEmail({
       <table role="presentation" border="0" cellpadding="0" cellspacing="0">
         <tr>
           <td align="center" style="border-radius: 6px; background-color: #4f46e5;">
-            <a href="${captureUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 11px 22px; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 6px; background-color: #4f46e5;">
-              View comment in BugSnap
+            <a href="${safeCaptureUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 11px 22px; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 6px; background-color: #4f46e5;">
+              ${buttonText}
             </a>
           </td>
         </tr>
       </table>
 
       <p style="margin: 24px 0 0; font-size: 13px; color: #64748b; line-height: 1.5;">
-        Direct link: <a href="${captureUrl}" style="color: #4f46e5; text-decoration: underline;">${captureUrl}</a>
+        ${directLinkText} <a href="${safeCaptureUrl}" style="color: #4f46e5; text-decoration: underline;">${safeCaptureUrl}</a>
       </p>
     </div>
 
     <!-- Footer -->
     <div style="padding: 20px 32px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; font-size: 12px; line-height: 1.5; color: #64748b;">
       <p style="margin: 0 0 8px;">
-        You received this email because your BugSnap notification preferences are set to notify you of ${isMention ? "@mentions" : "comments"}.
+        ${footerReason}
       </p>
       <p style="margin: 0;">
-        <a href="${settingsUrl}" style="color: #4f46e5; text-decoration: underline;">Manage notification settings</a> · <a href="${appUrl}" style="color: #4f46e5; text-decoration: underline;">BugSnap Dashboard</a>
+        <a href="${safeSettingsUrl}" style="color: #4f46e5; text-decoration: underline;">${manageSettingsText}</a> · <a href="${safeAppUrl}" style="color: #4f46e5; text-decoration: underline;">BugSnap Dashboard</a>
       </p>
     </div>
   </div>
@@ -151,6 +164,9 @@ export function renderWeeklyDigestEmail({
   const safeWorkspace = escapeHtml(workspaceName);
   const dashboardUrl = `${appUrl.replace(/\/$/, "")}/dashboard`;
   const settingsUrl = `${appUrl.replace(/\/$/, "")}/settings?tab=notifications`;
+  const safeDashboardUrl = escapeHtml(dashboardUrl);
+  const safeSettingsUrl = escapeHtml(settingsUrl);
+  const safeAppUrl = escapeHtml(appUrl);
 
   const subject = `Weekly Activity Summary: ${safeWorkspace}`;
 
@@ -242,7 +258,7 @@ export function renderWeeklyDigestEmail({
       <table role="presentation" border="0" cellpadding="0" cellspacing="0">
         <tr>
           <td align="center" style="border-radius: 6px; background-color: #4f46e5;">
-            <a href="${dashboardUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 11px 22px; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 6px; background-color: #4f46e5;">
+            <a href="${safeDashboardUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 11px 22px; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 6px; background-color: #4f46e5;">
               Open workspace dashboard
             </a>
           </td>
@@ -256,7 +272,7 @@ export function renderWeeklyDigestEmail({
         You received this weekly report because you are an owner of <strong>${safeWorkspace}</strong> with digest notifications enabled.
       </p>
       <p style="margin: 0;">
-        <a href="${settingsUrl}" style="color: #4f46e5; text-decoration: underline;">Manage notification settings</a> · <a href="${appUrl}" style="color: #4f46e5; text-decoration: underline;">BugSnap Dashboard</a>
+        <a href="${safeSettingsUrl}" style="color: #4f46e5; text-decoration: underline;">Manage notification settings</a> · <a href="${safeAppUrl}" style="color: #4f46e5; text-decoration: underline;">BugSnap Dashboard</a>
       </p>
     </div>
   </div>
@@ -283,6 +299,9 @@ export function renderWorkspaceInviteEmail({
 }: WorkspaceInviteOptions): { subject: string; html: string } {
   const safeWorkspace = escapeHtml(workspaceName);
   const safeInviter = escapeHtml(inviterEmail);
+  const safeLoginUrl = escapeHtml(loginUrl);
+  const safeExtensionUrl = escapeHtml(extensionUrl);
+  const safeAppUrl = escapeHtml(appUrl);
 
   const subject = `Invitation to join ${safeWorkspace} on BugSnap`;
 
@@ -320,12 +339,12 @@ export function renderWorkspaceInviteEmail({
       <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
         <tr>
           <td align="center" style="border-radius: 6px; background-color: #4f46e5; padding-right: 12px;">
-            <a href="${loginUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 11px 22px; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 6px; background-color: #4f46e5;">
+            <a href="${safeLoginUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 11px 22px; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 6px; background-color: #4f46e5;">
               Accept invitation & log in
             </a>
           </td>
           <td align="center" style="border-radius: 6px; background-color: #f1f5f9;">
-            <a href="${extensionUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 11px 18px; font-size: 14px; font-weight: 600; color: #334155; text-decoration: none; border-radius: 6px; background-color: #f1f5f9;">
+            <a href="${safeExtensionUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 11px 18px; font-size: 14px; font-weight: 600; color: #334155; text-decoration: none; border-radius: 6px; background-color: #f1f5f9;">
               Install Chrome extension
             </a>
           </td>
@@ -343,7 +362,7 @@ export function renderWorkspaceInviteEmail({
         If you did not expect this invitation, you can safely disregard this email.
       </p>
       <p style="margin: 0;">
-        BugSnap · <a href="${appUrl}" style="color: #4f46e5; text-decoration: underline;">bugsnap.akusaraproject.my.id</a>
+        BugSnap · <a href="${safeAppUrl}" style="color: #4f46e5; text-decoration: underline;">bugsnap.akusaraproject.my.id</a>
       </p>
     </div>
   </div>

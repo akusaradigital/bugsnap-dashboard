@@ -1,28 +1,10 @@
 import { NextResponse } from "next/server";
-import { createServiceClient } from "@/lib/supabase-server";
-import { isRequestAdminAuthenticated } from "@/lib/admin-auth";
+import { checkAdminAuth } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
 
 export async function GET(req: Request) {
-  const isAdminAuthenticated = await isRequestAdminAuthenticated(req);
-  const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-
-  let authorized = isAdminAuthenticated;
-  const serviceClient = createServiceClient();
-
-  if (!authorized && token) {
-    const { data: { user }, error: authError } = await serviceClient.auth.getUser(token);
-    if (!authError && user?.email) {
-      const adminEmails = (process.env.SUPER_ADMIN_EMAILS || "")
-        .split(",")
-        .map((e) => e.trim().toLowerCase())
-        .filter(Boolean);
-      if (adminEmails.includes(user.email.toLowerCase())) {
-        authorized = true;
-      }
-    }
-  }
+  const { authorized, supabase: serviceClient } = await checkAdminAuth(req);
 
   if (!authorized) {
     return NextResponse.json({ error: "Forbidden: Super Admin only" }, { status: 403 });

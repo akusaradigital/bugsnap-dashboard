@@ -164,14 +164,33 @@ export async function getDriveConnectionHealth(userId: string): Promise<DriveCon
         };
       }
     }
-    const about = await aboutRes.json().catch(() => ({})) as { storageQuota?: { limit?: string; usage?: string; usageInDrive?: string } };
-    const quota = aboutRes.ok
-      ? {
-          // ponytail: prefer usageInDrive for individual drive file quota, fallback to general usage
-          usedBytes: about.storageQuota?.usageInDrive ? Number(about.storageQuota.usageInDrive) : about.storageQuota?.usage ? Number(about.storageQuota.usage) : null,
-          totalBytes: about.storageQuota?.limit ? Number(about.storageQuota.limit) : null,
-        }
+    const about = await aboutRes.json().catch(() => ({})) as {
+      storageQuota?: {
+        limit?: string;
+        usage?: string;
+        usageInDrive?: string;
+        usageInDriveTrash?: string;
+      };
+    };
+
+    let totalBytes: number | null = about.storageQuota?.limit ? Number(about.storageQuota.limit) : null;
+    // In Google Workspace with pooled storage, about.storageQuota.limit returns the domain-wide
+    // pooled limit (e.g. 294 TB across all users). Standard individual user storage allocations (Google Workspace
+    // Business Standard or Google One) are 2 TB. If the reported limit exceeds single-user maximums (5 TB),
+    // normalize totalBytes to the standard individual user quota of 2 TB.
+    const POOLED_DOMAIN_THRESHOLD = 5 * 1024 * 1024 * 1024 * 1024; // 5 TB
+    const STANDARD_USER_WORKSPACE_QUOTA = 2 * 1024 * 1024 * 1024 * 1024; // 2 TB
+    if (totalBytes && totalBytes > POOLED_DOMAIN_THRESHOLD) {
+      totalBytes = STANDARD_USER_WORKSPACE_QUOTA;
+    }
+
+    const usedBytes = about.storageQuota?.usageInDrive
+      ? Number(about.storageQuota.usageInDrive)
+      : about.storageQuota?.usage
+      ? Number(about.storageQuota.usage)
       : null;
+
+    const quota = aboutRes.ok ? { usedBytes, totalBytes } : null;
     return {
       status: "connected",
       email: connection.google_email ?? null,

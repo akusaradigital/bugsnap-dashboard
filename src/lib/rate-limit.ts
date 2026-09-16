@@ -36,8 +36,9 @@ export async function isRateLimited(
 /** First forwarded client IP, or "unknown". Used to key anonymous limits. */
 export function clientIp(req: Request): string {
   return (
+    req.headers.get("cf-connecting-ip")?.trim() ||
+    req.headers.get("x-real-ip")?.trim() ||
     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
-    req.headers.get("cf-connecting-ip") ||
     "unknown"
   );
 }

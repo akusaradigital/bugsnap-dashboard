@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-server";
 import { isRequestAdminAuthenticated } from "@/lib/admin-auth";
+import { sanitizeErrorMessage } from "@/lib/redact";
 
 export const runtime = "nodejs";
 
@@ -36,7 +37,7 @@ export async function GET(req: Request) {
         category: "Database & Session",
         status: "degraded",
         latencyMs,
-        message: `Error: ${error.message}`,
+        message: `Database error: ${sanitizeErrorMessage(error.message, "Query failed")}`,
       });
     } else {
       results.push({
@@ -57,7 +58,7 @@ export async function GET(req: Request) {
       category: "Database & Session",
       status: "down",
       latencyMs: Date.now() - dbStart,
-      message: (err as Error)?.message || "Supabase database unreachable",
+      message: sanitizeErrorMessage(err, "Supabase database unreachable"),
     });
   }
 
@@ -111,7 +112,7 @@ export async function GET(req: Request) {
         category: "Cloud Storage",
         status: "down",
         latencyMs: Date.now() - gdriveStart,
-        message: (err as Error)?.message || "Google OAuth unreachable",
+        message: sanitizeErrorMessage(err, "Google OAuth unreachable"),
       });
     }
   }
@@ -165,7 +166,7 @@ export async function GET(req: Request) {
         category: "Notification & Email",
         status: "down",
         latencyMs: Date.now() - resendStart,
-        message: (err as Error)?.message || "api.resend.com unreachable",
+        message: sanitizeErrorMessage(err, "api.resend.com unreachable"),
       });
     }
   }
@@ -210,7 +211,7 @@ export async function GET(req: Request) {
       category: "Security & Anti-Bot",
       status: "down",
       latencyMs: Date.now() - cfStart,
-      message: (err as Error)?.message || "Cloudflare unreachable",
+      message: sanitizeErrorMessage(err, "Cloudflare unreachable"),
     });
   }
 

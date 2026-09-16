@@ -12,10 +12,28 @@ function isPrivateAddress(ip: string): boolean {
   if (ip.includes(":")) {
     const v6 = ip.toLowerCase();
     if (v6 === "::1" || v6 === "::") return true;
-    if (v6.startsWith("fe80") || v6.startsWith("fc") || v6.startsWith("fd")) return true;
-    // IPv4-mapped (::ffff:169.254.169.254)
+    if (
+      /^(fe[89ab]|fc|fd|ff)/i.test(v6) ||
+      v6.startsWith("100:") ||
+      v6.startsWith("2001:db8:")
+    ) {
+      return true;
+    }
+    // IPv4-mapped dotted-decimal (::ffff:169.254.169.254)
     const mapped = v6.match(/(\d+\.\d+\.\d+\.\d+)$/);
-    return mapped ? isPrivateAddress(mapped[1]) : false;
+    if (mapped) return isPrivateAddress(mapped[1]);
+
+    // IPv4-mapped hex (e.g. ::ffff:7f00:1 or ::ffff:a9fe:a9fe)
+    const hexMapped = v6.match(/(?:^|:)ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/i);
+    if (hexMapped) {
+      const high = parseInt(hexMapped[1], 16);
+      const low = parseInt(hexMapped[2], 16);
+      return isPrivateAddress(
+        `${(high >> 8) & 0xff}.${high & 0xff}.${(low >> 8) & 0xff}.${low & 0xff}`
+      );
+    }
+
+    return false;
   }
 
   const p = ip.split(".").map(Number);

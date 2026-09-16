@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedUser, createServiceClient } from "@/lib/supabase-server";
 import { signDownload } from "@/lib/download-signing";
+import { isUuid } from "@/lib/google-drive-values";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -23,10 +24,13 @@ export async function POST(req: Request) {
   }
 
   const db = createServiceClient();
+  const filter = isUuid(fileId)
+    ? `drive_file_id.eq.${fileId},id.eq.${fileId}`
+    : `drive_file_id.eq.${fileId}`;
   const { data: cap } = await db
     .from("captures")
     .select("user_id, workspace_id, expires_at")
-    .or(`drive_file_id.eq.${fileId},id.eq.${fileId}`)
+    .or(filter)
     .limit(1)
     .maybeSingle();
 
@@ -37,13 +41,23 @@ export async function POST(req: Request) {
 
   let allowed = cap.user_id === user.id;
   if (!allowed && cap.workspace_id) {
-    const { data: member } = await db
-      .from("workspace_members")
-      .select("user_id")
-      .eq("workspace_id", cap.workspace_id)
-      .eq("user_id", user.id)
+    const { data: ws } = await db
+      .from("workspaces")
+      .select("owner_user_id")
+      .eq("id", cap.workspace_id)
       .maybeSingle();
-    allowed = !!member;
+
+    if (ws?.owner_user_id === user.id) {
+      allowed = true;
+    } else {
+      const { data: member } = await db
+        .from("workspace_members")
+        .select("user_id")
+        .eq("workspace_id", cap.workspace_id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+      allowed = !!member;
+    }
   }
   if (!allowed) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 

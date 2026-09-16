@@ -2,15 +2,21 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-server";
 import { decompressDevLogs } from "@/lib/devlogs-compression";
 import { assertPublicUrl } from "@/lib/safe-url";
+import { isUuid } from "@/lib/google-drive-values";
+import { isRateLimited } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const captureId = body?.capture_id;
-    if (!captureId) {
-      return NextResponse.json({ error: "Missing capture_id" }, { status: 400 });
+    const captureId = typeof body?.capture_id === "string" ? body.capture_id.trim() : null;
+    if (!captureId || !isUuid(captureId)) {
+      return NextResponse.json({ error: "Missing or invalid capture_id" }, { status: 400 });
+    }
+
+    if (await isRateLimited(`notif-capture:${captureId}`, 5, 60)) {
+      return NextResponse.json({ error: "Rate limit exceeded" }, { status: 429 });
     }
 
     const supabase = createServiceClient();

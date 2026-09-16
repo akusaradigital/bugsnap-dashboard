@@ -1,36 +1,9 @@
 import { NextResponse } from "next/server";
-import { createServiceClient } from "@/lib/supabase-server";
-import { isRequestAdminAuthenticated } from "@/lib/admin-auth";
+import { checkAdminAuth } from "@/lib/admin-auth";
 import { logSecurityEvent } from "@/lib/security-audit";
+import { sanitizePostgrestFilter } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
-
-const getAdminEmails = () =>
-  (process.env.SUPER_ADMIN_EMAILS || "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-
-async function checkAdminAuth(req: Request) {
-  const isAdminAuthenticated = await isRequestAdminAuthenticated(req);
-  const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-  let authorized = isAdminAuthenticated;
-  let callerEmail: string | null = null;
-
-  const supabase = createServiceClient();
-
-  if (!authorized && token) {
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (!authError && user?.email) {
-      if (getAdminEmails().includes(user.email.toLowerCase())) {
-        authorized = true;
-        callerEmail = user.email;
-      }
-    }
-  }
-
-  return { authorized, callerEmail, supabase };
-}
 
 export async function GET(req: Request) {
   const { authorized, supabase } = await checkAdminAuth(req);
@@ -113,7 +86,7 @@ export async function GET(req: Request) {
   // Paginated Workspaces List
   const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
   const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20", 10)));
-  const search = (searchParams.get("search") || "").trim();
+  const search = sanitizePostgrestFilter(searchParams.get("search"));
 
   const from = (page - 1) * limit;
   const to = from + limit - 1;
@@ -196,7 +169,7 @@ export async function PATCH(req: Request) {
         .from("workspaces")
         .update({ name: newName, updated_at: new Date().toISOString() })
         .eq("id", workspace_id)
-        .select()
+        .select("id, name, slug, owner_user_id, owner_email, created_at, updated_at")
         .single();
 
       if (error) throw error;
@@ -236,7 +209,7 @@ export async function PATCH(req: Request) {
           updated_at: new Date().toISOString(),
         })
         .eq("id", workspace_id)
-        .select()
+        .select("id, name, slug, owner_user_id, owner_email, created_at, updated_at")
         .single();
 
       if (updateErr) throw updateErr;

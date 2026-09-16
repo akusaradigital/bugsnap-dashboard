@@ -12,9 +12,26 @@ function isPrivateAddress(ip) {
   if (ip.includes(":")) {
     const v6 = ip.toLowerCase();
     if (v6 === "::1" || v6 === "::") return true;
-    if (v6.startsWith("fe80") || v6.startsWith("fc") || v6.startsWith("fd")) return true;
+    if (
+      /^(fe[89ab]|fc|fd|ff)/i.test(v6) ||
+      v6.startsWith("100:") ||
+      v6.startsWith("2001:db8:")
+    ) {
+      return true;
+    }
     const mapped = v6.match(/(\d+\.\d+\.\d+\.\d+)$/);
-    return mapped ? isPrivateAddress(mapped[1]) : false;
+    if (mapped) return isPrivateAddress(mapped[1]);
+
+    const hexMapped = v6.match(/(?:^|:)ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/i);
+    if (hexMapped) {
+      const high = parseInt(hexMapped[1], 16);
+      const low = parseInt(hexMapped[2], 16);
+      return isPrivateAddress(
+        `${(high >> 8) & 0xff}.${high & 0xff}.${(low >> 8) & 0xff}.${low & 0xff}`
+      );
+    }
+
+    return false;
   }
 
   const p = ip.split(".").map(Number);
@@ -46,8 +63,16 @@ test("webhook SSRF guard blocks internal and metadata addresses", () => {
     "224.0.0.1",
     "::1",
     "fe80::1",
+    "fe90::1", // expanded link-local
     "fd00::1",
-    "::ffff:169.254.169.254", // IPv4-mapped metadata
+    "ff02::1", // multicast
+    "100::1", // discard prefix
+    "2001:db8::1", // documentation prefix
+    "::ffff:169.254.169.254", // IPv4-mapped metadata dotted-decimal
+    "::ffff:a9fe:a9fe", // IPv4-mapped metadata hex (169.254.169.254)
+    "::ffff:7f00:1", // IPv4-mapped loopback hex (127.0.0.1)
+    "::ffff:a00:1", // IPv4-mapped private 10.0.0.1 hex
+    "::ffff:0:0", // IPv4-mapped 0.0.0.0 hex
     "not-an-ip",
   ];
   for (const ip of blocked) {
@@ -63,6 +88,7 @@ test("webhook SSRF guard allows real public addresses", () => {
     "13.107.42.14",
     "172.32.0.1", // just outside the private 172.16/12 range
     "2606:4700::1111",
+    "::ffff:808:808", // IPv4-mapped public 8.8.8.8 hex
   ];
   for (const ip of allowed) {
     assert.equal(isPrivateAddress(ip), false, `${ip} must be allowed`);

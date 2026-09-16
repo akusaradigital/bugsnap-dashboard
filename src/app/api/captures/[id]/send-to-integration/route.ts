@@ -3,6 +3,8 @@ import { authenticatedUser } from "@/lib/google-drive";
 import { createServiceClient } from "@/lib/supabase-server";
 import { decompressDevLogs } from "@/lib/devlogs-compression";
 import { assertPublicUrl } from "@/lib/safe-url";
+import { redactString } from "@/lib/redact";
+import { isUuid } from "@/lib/google-drive-values";
 
 export const runtime = "nodejs";
 
@@ -12,7 +14,10 @@ function summarizeDevLogs(devLogs: unknown): string {
     const errorLogs = devLogs
       .filter((l) => l && typeof l === "object" && (l.type === "console" || l.level === "error" || l.status >= 400))
       .slice(0, 10)
-      .map((l) => `- [${l.type || l.level || "error"}] ${l.message || l.text || l.url || JSON.stringify(l)}`);
+      .map((l) => {
+        const raw = `[${l.type || l.level || "error"}] ${l.message || l.text || l.url || JSON.stringify(l)}`;
+        return `- ${redactString(raw)}`;
+      });
     return errorLogs.length ? `\n\n### Console & Network Errors\n${errorLogs.join("\n")}` : "";
   }
   if (typeof devLogs === "object") {
@@ -21,7 +26,7 @@ function summarizeDevLogs(devLogs: unknown): string {
     if (summary.errors) parts.push(`Errors count: ${summary.errors}`);
     if (summary.failedRequests) parts.push(`Failed requests: ${summary.failedRequests}`);
     if (Array.isArray(summary.topErrors) && summary.topErrors.length) {
-      parts.push(`Top errors:\n${summary.topErrors.map((e) => `- ${e}`).join("\n")}`);
+      parts.push(`Top errors:\n${summary.topErrors.map((e) => `- ${redactString(e)}`).join("\n")}`);
     }
     return parts.length ? `\n\n### DevTools Summary\n${parts.join("\n")}` : "";
   }
@@ -37,6 +42,9 @@ export async function POST(
 
   try {
     const { id } = await Promise.resolve(params);
+    if (!id || !isUuid(id)) {
+      return NextResponse.json({ error: "Invalid capture ID" }, { status: 400 });
+    }
     const body = await req.json().catch(() => ({}));
     const service = (body.service || "").toLowerCase();
 
@@ -57,16 +65,24 @@ export async function POST(
     if (!capture) return NextResponse.json({ error: "Capture not found" }, { status: 404 });
     if (!capture.workspace_id) return NextResponse.json({ error: "Capture is not assigned to a workspace" }, { status: 400 });
 
-    // 2. Confirm user is a team member
-    const { data: membership, error: memError } = await supabase
-      .from("workspace_members")
-      .select("role")
-      .eq("workspace_id", capture.workspace_id)
-      .eq("user_id", user.id)
+    // 2. Confirm user is workspace owner or team member
+    const { data: ws } = await supabase
+      .from("workspaces")
+      .select("owner_user_id")
+      .eq("id", capture.workspace_id)
       .maybeSingle();
 
-    if (memError) throw memError;
-    if (!membership) return NextResponse.json({ error: "Access denied to capture workspace" }, { status: 403 });
+    if (ws?.owner_user_id !== user.id) {
+      const { data: membership, error: memError } = await supabase
+        .from("workspace_members")
+        .select("role")
+        .eq("workspace_id", capture.workspace_id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (memError) throw memError;
+      if (!membership) return NextResponse.json({ error: "Access denied to capture workspace" }, { status: 403 });
+    }
 
     // 3. Read workspace integrations config
     const { data: wsSettings, error: wsError } = await supabase
@@ -136,6 +152,8 @@ export async function POST(
               },
             ],
           }),
+          redirect: "manual",
+          signal: AbortSignal.timeout(10000),
         });
         if (!slackRes.ok) throw new Error(`Slack webhook error: ${slackRes.statusText}`);
         return NextResponse.json({ ok: true, message: "Sent to Slack channel successfully!" });
@@ -222,6 +240,8 @@ export async function POST(
               issuetype: { name: "Bug" },
             },
           }),
+          redirect: "manual",
+          signal: AbortSignal.timeout(10000),
         });
         const jiraData = await jiraRes.json().catch(() => ({}));
         if (!jiraRes.ok) throw new Error(JSON.stringify(jiraData.errors || jiraData.errorMessages || "Failed to create Jira issue"));
@@ -245,6 +265,8 @@ export async function POST(
             description: fullDescription,
             labels: "bug",
           }),
+          redirect: "manual",
+          signal: AbortSignal.timeout(10000),
         });
         const glData = await glRes.json().catch(() => ({}));
         if (!glRes.ok) throw new Error(glData.message || "Failed to create GitLab issue");
@@ -328,6 +350,7 @@ export async function POST(
         if (!config.orgUrl || !config.token || !config.project) {
           throw new Error("Azure DevOps requires organization URL, personal access token, and project name");
         }
+        await assertPublicUrl(config.orgUrl);
         const cleanOrg = config.orgUrl.trim().replace(/\/+$/, "");
         const authHeader = `Basic ${Buffer.from(`:${config.token.trim()}`).toString("base64")}`;
         const azureRes = await fetch(
@@ -346,6 +369,8 @@ export async function POST(
                 value: `<p>${(capture.description || "Bug captured via BugSnap").replace(/\n/g, "<br/>")}</p><p><a href="${captureLink}">View BugSnap Capture</a></p>`,
               },
             ]),
+            redirect: "manual",
+            signal: AbortSignal.timeout(10000),
           }
         );
         const azData = await azureRes.json().catch(() => ({}));
@@ -355,6 +380,7 @@ export async function POST(
 
       case "aksora": {
         if (!config.url || !config.apiKey) throw new Error("Aksora URL and API key are required");
+        await assertPublicUrl(config.url);
         const targetUrl = `${config.url.trim().replace(/\/+$/, "")}/api/public/v1/tasks`;
         const aksoraRes = await fetch(targetUrl, {
           method: "POST",
@@ -375,6 +401,8 @@ export async function POST(
               evidence: captureLink,
             },
           }),
+          redirect: "manual",
+          signal: AbortSignal.timeout(10000),
         });
         const aksoraData = await aksoraRes.json().catch(() => ({}));
         if (!aksoraRes.ok) throw new Error(aksoraData.error || "Failed to create task in Aksora");
@@ -383,6 +411,7 @@ export async function POST(
 
       case "snaptest": {
         if (!config.url) throw new Error("SnapTest URL is required");
+        await assertPublicUrl(config.url);
         const snapRes = await fetch(`${config.url.trim().replace(/\/+$/, "")}/api/webhook/bugsnap`, {
           method: "POST",
           headers: {
@@ -395,6 +424,8 @@ export async function POST(
             driveUrl: captureLink,
             devLogs: resolvedLogs,
           }),
+          redirect: "manual",
+          signal: AbortSignal.timeout(10000),
         });
         const snapData = await snapRes.json().catch(() => ({}));
         if (!snapRes.ok) throw new Error(snapData.error || "Failed to forward capture to SnapTest");

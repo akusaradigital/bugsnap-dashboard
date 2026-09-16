@@ -114,7 +114,7 @@ export function UpgradeModal({
             }}
             className="text-amber-800 dark:text-amber-400 font-bold hover:underline shrink-0 text-left sm:text-right"
           >
-            {t("upgrade.claimDiscount")} →
+            {t("upgrade.claimDiscount")}
           </button>
         </div>
 

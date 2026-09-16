@@ -39,7 +39,7 @@ export default function StatusPage() {
         </div>
 
         {/* System Component Breakdown */}
-        <div className="creative-surface rounded-2xl overflow-hidden">
+        <div className="rounded-2xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle shadow-lg shadow-slate-200/50 dark:shadow-none backdrop-blur-sm overflow-hidden">
           <div className="bg-subtle/50 px-5 py-3 border-b border-border text-xs font-bold uppercase tracking-wider text-muted">
             Service Components
           </div>
@@ -57,7 +57,7 @@ export default function StatusPage() {
         </div>
 
         {/* Historical bar */}
-        <div className="creative-surface rounded-2xl p-6 space-y-4">
+        <div className="rounded-2xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle p-6 space-y-4 shadow-lg shadow-slate-200/50 dark:shadow-none backdrop-blur-sm">
           <div className="flex items-center justify-between text-xs text-muted">
             <span>Uptime History (Last 90 Days)</span>
             <span className="font-semibold text-foreground">99.98%</span>
@@ -78,7 +78,7 @@ export default function StatusPage() {
         </div>
 
         {/* CTA */}
-        <div className="creative-surface rounded-2xl p-8 text-center space-y-4">
+        <div className="rounded-2xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle p-8 text-center space-y-4 shadow-lg shadow-slate-200/50 dark:shadow-none backdrop-blur-sm">
           <h3 className="text-lg font-bold text-foreground">All systems ready for your bug reports</h3>
           <p className="text-sm text-muted max-w-md mx-auto">
             Install the BugSnap extension free - captures are saved to your own Google Drive.

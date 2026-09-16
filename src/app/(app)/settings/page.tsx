@@ -212,6 +212,7 @@ function SettingsContent() {
   const [autoDeleteEnabled, setAutoDeleteEnabled] = useState(false);
   const [brandName, setBrandName] = useState("BugSnap");
   const [logoUrl, setLogoUrl] = useState("");
+  const [logoPreviewError, setLogoPreviewError] = useState(false);
   const [hideWatermark, setHideWatermark] = useState(false);
   const [customDomain, setCustomDomain] = useState("");
   const [autoDeleteMonths, setAutoDeleteMonths] = useState(3);
@@ -377,10 +378,13 @@ function SettingsContent() {
         const { data: myWs } = await supabase.rpc("get_my_workspaces");
         if (myWs && myWs.length > 0) {
           setWorkspaceName(myWs[0].name || "My Workspace");
+          const url = new URL(window.location.href);
+          url.searchParams.set("ws", myWs[0].id);
+          router.replace(`${url.pathname}${url.search}`, { scroll: false });
         }
       }
     });
-  }, [activeWsId]);
+  }, [activeWsId, router]);
 
   useEffect(() => {
     if (!activeWsId || activeTab !== "members") return;
@@ -1324,14 +1328,12 @@ function SettingsContent() {
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-background shadow-xs">
                   <div className="flex items-center gap-2.5 min-w-0">
-                    {logoUrl.trim() ? (
+                    {logoUrl.trim() && !logoPreviewError ? (
                       <img
                         src={logoUrl}
                         alt="Logo preview"
                         className="h-7 w-auto max-w-[130px] object-contain"
-                        onError={(e) => {
-                          (e.currentTarget as HTMLImageElement).style.display = "none";
-                        }}
+                        onError={() => setLogoPreviewError(true)}
                       />
                     ) : (
                       <div className="flex items-center gap-2">
@@ -1340,12 +1342,6 @@ function SettingsContent() {
                           {brandName.trim() || "BugSnap"}
                         </span>
                       </div>
-                    )}
-                    {!hideWatermark && (
-                      <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium text-muted bg-subtle border border-border shrink-0 select-none">
-                        <img src="/icon.svg" alt="" className="w-2.5 h-2.5 object-contain opacity-70" />
-                        <span>Powered by BugSnap</span>
-                      </span>
                     )}
                   </div>
                   <div className="text-[11px] text-muted font-medium shrink-0">
@@ -2338,25 +2334,26 @@ function SettingsContent() {
                   </div>
                 ))}
 
-                {activeModalInt === "webhook" && (
+                {(activeModalInt === "webhook" || activeModalInt === "slack") && (
                   <div className="pt-2 border-t border-border space-y-2">
                     <div className="flex items-center justify-between">
                       <span className="text-xs text-muted">Test webhook delivery</span>
                       <button
                         type="button"
-                        disabled={!intModalForm.url?.trim() || testingWebhook}
+                        disabled={!(intModalForm.url?.trim() || intModalForm.webhookUrl?.trim()) || testingWebhook}
                         onClick={async () => {
                           setTestingWebhook(true);
                           setWebhookTestResult(null);
                           try {
                             const { data: { session } } = await supabase.auth.getSession();
+                            const targetUrl = (intModalForm.url || intModalForm.webhookUrl)?.trim();
                             const res = await fetch("/api/webhooks/test", {
                               method: "POST",
                               headers: {
                                 "Content-Type": "application/json",
                                 ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
                               },
-                              body: JSON.stringify({ url: intModalForm.url?.trim() }),
+                              body: JSON.stringify({ url: targetUrl }),
                             });
                             const json = await res.json().catch(() => ({}));
                             if (res.ok) {

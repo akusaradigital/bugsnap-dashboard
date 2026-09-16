@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { driveAccessToken } from "@/lib/google-drive";
+import { driveAccessToken, isUuid } from "@/lib/google-drive";
 import { createServiceClient, getAuthenticatedUser } from "@/lib/supabase-server";
 import { verifyDownloadSig } from "@/lib/download-signing";
 
@@ -17,8 +17,22 @@ const capCache = new Map<string, { data: CachedCap | null; expiresAt: number }>(
 
 function safeFilename(value: string, type: string) {
   const ext = type === "video" ? ".webm" : type === "logs" ? ".json" : ".png";
-  const base = (value || "capture").replace(/[\\/:*?"<>| - ]/g, "-").trim().slice(0, 180) || "capture";
+  const base = (value || "capture")
+    .replace(/[\r\n"\\/;:*?<>|\s]+/g, "-")
+    .trim()
+    .slice(0, 180) || "capture";
   return base.toLowerCase().endsWith(ext) ? base : `${base}${ext}`;
+}
+
+function resolveMime(type: string, upstreamType: string | null): string {
+  const raw = (upstreamType || "").toLowerCase().trim();
+  if (type === "video") {
+    return !raw || raw === "application/octet-stream" ? "video/webm" : raw;
+  }
+  if (type === "logs") {
+    return !raw || raw === "application/octet-stream" ? "application/json" : raw;
+  }
+  return !raw || raw === "application/octet-stream" ? "image/png" : raw;
 }
 
 export async function GET(req: Request) {
@@ -38,13 +52,20 @@ export async function GET(req: Request) {
     cap = cached.data;
   } else {
     const supabase = createServiceClient();
+    const filter = isUuid(id)
+      ? `drive_file_id.eq.${id},id.eq.${id},drive_url.ilike.%${id}%`
+      : `drive_file_id.eq.${id},drive_url.ilike.%${id}%`;
     const { data } = await supabase
       .from("captures")
       .select("user_id, workspace_id, expires_at, access_mode")
-      .or(`drive_file_id.eq.${id},id.eq.${id},drive_url.ilike.%${id}%`)
+      .or(filter)
       .limit(1)
       .maybeSingle();
     cap = (data as CachedCap | null) ?? null;
+    if (capCache.size >= 500) {
+      const oldestKey = capCache.keys().next().value;
+      if (oldestKey) capCache.delete(oldestKey);
+    }
     capCache.set(id, { data: cap, expiresAt: Date.now() + 60_000 });
   }
 
@@ -64,13 +85,23 @@ export async function GET(req: Request) {
         allowed = cap.user_id === user.id;
         if (!allowed && cap.workspace_id) {
           const supabase = createServiceClient();
-          const { data: member } = await supabase
-            .from("workspace_members")
-            .select("user_id")
-            .eq("workspace_id", cap.workspace_id)
-            .eq("user_id", user.id)
+          const { data: ws } = await supabase
+            .from("workspaces")
+            .select("owner_user_id")
+            .eq("id", cap.workspace_id)
             .maybeSingle();
-          allowed = !!member;
+
+          if (ws?.owner_user_id === user.id) {
+            allowed = true;
+          } else {
+            const { data: member } = await supabase
+              .from("workspace_members")
+              .select("user_id")
+              .eq("workspace_id", cap.workspace_id)
+              .eq("user_id", user.id)
+              .maybeSingle();
+            allowed = !!member;
+          }
         }
       }
     }
@@ -102,12 +133,23 @@ export async function GET(req: Request) {
           cache: "no-store",
         });
 
+        // Handle 416 Range Not Satisfiable explicitly so seeking beyond EOF returns 416 instead of falling through to 403
+        if (authRes.status === 416) {
+          const contentRange = authRes.headers.get("content-range");
+          const resHeaders: Record<string, string> = {
+            "Accept-Ranges": "bytes",
+            "Content-Type": type === "video" ? "video/webm" : "application/octet-stream",
+          };
+          if (contentRange) resHeaders["Content-Range"] = contentRange;
+          return new NextResponse(null, {
+            status: 416,
+            headers: resHeaders,
+          });
+        }
+
         if (authRes.ok && authRes.body) {
-          const rawAuthType = authRes.headers.get("content-type") || "";
-          const finalContentType =
-            type === "video" && (!rawAuthType || rawAuthType === "application/octet-stream")
-              ? "video/webm"
-              : (rawAuthType || (type === "video" ? "video/webm" : type === "logs" ? "application/json" : "image/png"));
+          const rawAuthType = authRes.headers.get("content-type");
+          const finalContentType = resolveMime(type, rawAuthType);
           const contentDisp = disposition === "inline" ? "inline" : `attachment; filename="${safeFilename(url.searchParams.get("filename") || "capture", type)}"`;
           const resHeaders: Record<string, string> = {
             "Content-Type": finalContentType,
@@ -142,10 +184,7 @@ export async function GET(req: Request) {
 
     if (driveRes.ok && driveRes.body && !isHtmlChallenge) {
       const contentDisp = disposition === "inline" ? "inline" : `attachment; filename="${safeFilename(url.searchParams.get("filename") || "capture", type)}"`;
-      const resolvedContentType =
-        type === "video" && (!contentType || contentType === "application/octet-stream")
-          ? "video/webm"
-          : (contentType || (type === "video" ? "video/webm" : type === "logs" ? "application/json" : "image/png"));
+      const resolvedContentType = resolveMime(type, contentType);
       const resHeaders: Record<string, string> = {
         "Content-Type": resolvedContentType,
         "Content-Disposition": contentDisp,
@@ -183,12 +222,23 @@ export async function GET(req: Request) {
           cache: "no-store",
         });
 
+        // Handle 416 Range Not Satisfiable explicitly so seeking beyond EOF returns 416 instead of falling through to 403
+        if (authRes.status === 416) {
+          const contentRange = authRes.headers.get("content-range");
+          const resHeaders: Record<string, string> = {
+            "Accept-Ranges": "bytes",
+            "Content-Type": type === "video" ? "video/webm" : "application/octet-stream",
+          };
+          if (contentRange) resHeaders["Content-Range"] = contentRange;
+          return new NextResponse(null, {
+            status: 416,
+            headers: resHeaders,
+          });
+        }
+
         if (authRes.ok && authRes.body) {
-          const rawAuthType = authRes.headers.get("content-type") || "";
-          const finalContentType =
-            type === "video" && (!rawAuthType || rawAuthType === "application/octet-stream")
-              ? "video/webm"
-              : (rawAuthType || (type === "video" ? "video/webm" : type === "logs" ? "application/json" : "image/png"));
+          const rawAuthType = authRes.headers.get("content-type");
+          const finalContentType = resolveMime(type, rawAuthType);
           const contentDisp = disposition === "inline" ? "inline" : `attachment; filename="${safeFilename(url.searchParams.get("filename") || "capture", type)}"`;
           const resHeaders: Record<string, string> = {
             "Content-Type": finalContentType,

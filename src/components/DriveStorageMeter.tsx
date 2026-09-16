@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { useT } from "@/components/I18nProvider";
 
 interface DriveQuota {
   usedBytes: number | null;
@@ -24,11 +25,14 @@ function formatBytes(bytes: number | null): string {
     val /= 1024;
     i++;
   }
-  const decimals = val >= 100 || i === 0 ? 0 : 1;
+  // Check if it's an exact integer or close to it (e.g. 2 TB, 15 GB, 100 GB)
+  const isInteger = Math.abs(val - Math.round(val)) < 0.05;
+  const decimals = isInteger || i === 0 ? 0 : 1;
   return `${val.toFixed(decimals)} ${units[i]}`;
 }
 
 export default function DriveStorageMeter() {
+  const { t } = useT();
   const [data, setData] = useState<DriveStatusResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -104,30 +108,59 @@ export default function DriveStorageMeter() {
           <svg className="w-3.5 h-3.5 text-muted" viewBox="0 0 24 24" fill="currentColor">
             <path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z" />
           </svg>
-          <span className="text-[11px]">Drive Storage</span>
+          <span className="text-[11px]">{t("drive.storage")}</span>
         </div>
-        <span className={`text-[10px] font-semibold tabular-nums ${isNearlyFull ? "text-red-600 dark:text-red-400 font-bold" : isWarning ? "text-amber-600 dark:text-amber-400" : "text-muted"}`}>
-          {pct.toFixed(pct < 1 ? 1 : 0)}%
+        <span
+          className={`text-[10px] font-semibold tabular-nums ${
+            isNearlyFull
+              ? "text-red-600 dark:text-red-400 font-bold"
+              : isWarning
+              ? "text-amber-600 dark:text-amber-400"
+              : "text-muted"
+          }`}
+        >
+          {pct < 0.1 && pct > 0 ? "< 0.1%" : `${pct.toFixed(pct < 10 ? 1 : 0)}%`}
         </span>
       </div>
 
       <div className="h-1.5 rounded-full bg-border overflow-hidden">
-        <div className={`h-full rounded-full transition-all duration-300 ${barColor}`} style={{ width: `${pct}%` }} />
+        <div
+          className={`h-full rounded-full transition-all duration-300 ${barColor}`}
+          style={{
+            width: used > 0 ? `${Math.max(pct, 1.2)}%` : "0%",
+            minWidth: used > 0 ? "4px" : "0",
+          }}
+        />
       </div>
 
       <div className="flex items-center justify-between text-[10px] text-muted">
-        <span className="truncate">{formatBytes(used)} of {formatBytes(total)}</span>
-        <Link href="/settings" className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium shrink-0 ml-1">
-          Manage
+        <span className="truncate">
+          {t("drive.storageUsed", { used: formatBytes(used), total: formatBytes(total) })}
+        </span>
+        <Link
+          href="/settings"
+          className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium shrink-0 ml-1"
+        >
+          {t("drive.manage")}
         </Link>
       </div>
 
       {isNearlyFull && (
         <div className="pt-0.5 flex items-start gap-1 text-[10px] text-red-600 dark:text-red-400 font-medium leading-tight">
-          <svg className="w-3 h-3 shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          <svg
+            className="w-3 h-3 shrink-0 mt-0.5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth="2.5"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
           </svg>
-          <span>Almost full. Delete old captures to keep recording.</span>
+          <span>{t("drive.almostFull")}</span>
         </div>
       )}
     </div>

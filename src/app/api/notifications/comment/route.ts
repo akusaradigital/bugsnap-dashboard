@@ -11,9 +11,15 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
     }
 
-    const { comment } = body;
-    const { capture_id, author_name, body: commentBody, id: commentId } =
-      comment as { capture_id?: unknown; author_name?: unknown; body?: string; id?: string };
+    const commentObj = body.comment as {
+      capture_id?: unknown;
+      author_name?: unknown;
+      author_email?: string | null;
+      body?: string;
+      id?: string;
+    };
+    const clientLocale = typeof (body as { locale?: unknown }).locale === "string" ? (body as { locale: string }).locale : undefined;
+    const { capture_id, author_name, body: commentBody, id: commentId } = commentObj;
 
     if (!capture_id || typeof commentBody !== "string" || typeof commentId !== "string") {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
@@ -79,6 +85,7 @@ export async function POST(req: Request) {
     // 4. Parse @mentions from the comment body and resolve workspace members
     const mentionedTokens = (commentBody.match(/@([a-zA-Z0-9_.-]+)/g) || []).map((m: string) => m.slice(1).toLowerCase());
     const mentionEmails = new Set<string>();
+    const mentionLocaleMap = new Map<string, string>();
 
     if (mentionedTokens.length > 0) {
       const { data: members } = await supabase
@@ -93,7 +100,7 @@ export async function POST(req: Request) {
           .select("email, full_name, notification_prefs")
           .in("id", memberUserIds);
 
-        const commenterEmail = comment.author_email ? comment.author_email.toLowerCase() : "";
+        const commenterEmail = commentObj.author_email ? commentObj.author_email.toLowerCase() : "";
         if (users) {
           for (const u of users) {
             const uEmail = (u.email || "").toLowerCase();
@@ -104,14 +111,18 @@ export async function POST(req: Request) {
             const isMentioned = mentionedTokens.some(
               (t: string) => uEmail === t || emailPrefix === t || nameTokens.includes(t)
             );
-            if (isMentioned) mentionEmails.add(u.email);
+            if (isMentioned) {
+              mentionEmails.add(u.email);
+              const loc = (u.notification_prefs as { locale?: string } | null)?.locale;
+              if (loc === "id" || loc === "en") mentionLocaleMap.set(u.email, loc);
+            }
           }
         }
       }
     }
 
     const ownerEmailLower = owner.email.toLowerCase();
-    const commenterEmail = comment.author_email ? comment.author_email.toLowerCase() : "";
+    const commenterEmail = commentObj.author_email ? commentObj.author_email.toLowerCase() : "";
     const skipOwner = commenterEmail === ownerEmailLower || mentionEmails.has(owner.email) || mentionEmails.has(ownerEmailLower) || owner.notification_prefs?.comment === false;
 
     // 5. Send emails via Resend API
@@ -138,8 +149,14 @@ export async function POST(req: Request) {
       }
     };
 
-    // Mentioned users each get a professional "you were mentioned" notification email
+    const ownerLocale =
+      (owner.notification_prefs && typeof owner.notification_prefs === "object" && "locale" in owner.notification_prefs && ((owner.notification_prefs as { locale?: string }).locale === "id" || (owner.notification_prefs as { locale?: string }).locale === "en") ? (owner.notification_prefs as { locale?: string }).locale : null) ||
+      (typeof clientLocale === "string" && (clientLocale === "id" || clientLocale === "en") ? clientLocale : null) ||
+      "id";
+
+    // Mentioned users each get a clear notification email in their preferred locale
     for (const email of Array.from(mentionEmails)) {
+      const recipientLocale = mentionLocaleMap.get(email) || ownerLocale;
       const emailContent = renderCommentEmail({
         appUrl,
         captureTitle: capture.title || "Untitled",
@@ -148,8 +165,13 @@ export async function POST(req: Request) {
         authorName: String(author_name || "A collaborator"),
         commentBody,
         isMention: true,
+        locale: recipientLocale,
       });
-      await sendResend(email, emailContent.subject, emailContent.html);
+      try {
+        await sendResend(email, emailContent.subject, emailContent.html);
+      } catch (sendErr) {
+        console.error(`Failed to send mention email to ${email}:`, sendErr);
+      }
     }
 
     // Owner gets the standard "New Comment" email unless they are the author or already mentioned
@@ -162,8 +184,13 @@ export async function POST(req: Request) {
         authorName: String(author_name || "A collaborator"),
         commentBody,
         isMention: false,
+        locale: ownerLocale,
       });
-      await sendResend(owner.email, emailContent.subject, emailContent.html);
+      try {
+        await sendResend(owner.email, emailContent.subject, emailContent.html);
+      } catch (sendErr) {
+        console.error(`Failed to send comment email to owner ${owner.email}:`, sendErr);
+      }
     }
 
     // ponytail: no `mentions` in the response - it leaked member emails to any

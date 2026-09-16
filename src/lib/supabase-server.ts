@@ -47,3 +47,13 @@ export async function getAuthenticatedUser(req: Request): Promise<AuthUserRow | 
     suspended: row?.suspended ?? false,
   };
 }
+
+/**
+ * Strip PostgREST reserved delimiter characters (`[,().\\]`) from user search input
+ * before building raw PostgREST filter strings (e.g. .or(), .ilike()).
+ * Prevents PostgREST query injection and filter syntax errors.
+ */
+export function sanitizePostgrestFilter(input?: string | null): string {
+  if (!input || typeof input !== "string") return "";
+  return input.replace(/[\\,[\]().]/g, "").trim().slice(0, 100);
+}

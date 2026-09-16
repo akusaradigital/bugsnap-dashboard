@@ -1,13 +1,8 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-server";
-import { createAdminToken, ADMIN_COOKIE_NAME } from "@/lib/admin-auth";
+import { createAdminToken, ADMIN_COOKIE_NAME, isSuperAdminEmail } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
-
-const ALLOWED_ADMIN_EMAIL = (process.env.SUPER_ADMIN_EMAILS || "contact.akusaraproject@gmail.com")
-  .split(",")[0]
-  .trim()
-  .toLowerCase();
 
 export async function POST(req: Request) {
   try {
@@ -26,11 +21,11 @@ export async function POST(req: Request) {
     const user = authRes.data.user;
     const userEmail = (user.email || "").trim().toLowerCase();
 
-    // STRICT WHITELIST: Only contact.akusaraproject@gmail.com is allowed
-    if (userEmail !== ALLOWED_ADMIN_EMAIL && userEmail !== "contact.akusaraproject@gmail.com") {
+    // STRICT WHITELIST: Only authorized Super Admin emails are allowed
+    if (!isSuperAdminEmail(userEmail)) {
       return NextResponse.json(
         {
-          error: `Akses ditolak: Email "${user.email}" tidak diizinkan mengakses Admin Console. Hanya ${ALLOWED_ADMIN_EMAIL} yang berhak masuk.`,
+          error: `Akses ditolak: Email "${user.email}" tidak diizinkan mengakses Admin Console. Hanya akun Super Admin yang berhak masuk.`,
         },
         { status: 403 }
       );
@@ -41,7 +36,6 @@ export async function POST(req: Request) {
     const response = NextResponse.json({
       ok: true,
       username: userEmail,
-      token: adminToken,
       message: "Login admin via Google berhasil.",
     });
 

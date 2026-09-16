@@ -2,7 +2,7 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
@@ -97,12 +97,14 @@ function getOwnerInitial(email: string | null | undefined): string {
   return (char || "M").toUpperCase();
 }
 
-function driveFileId(driveUrl: string): string | null {
+function driveFileId(driveUrl: string | null | undefined): string | null {
+  if (!driveUrl) return null;
   const m = driveUrl.match(/[?&]id=([^&]+)/) || driveUrl.match(/\/d\/([^/]+)/);
   return m ? decodeURIComponent(m[1]) : null;
 }
 
-function driveThumbUrl(driveUrl: string, size = 400): string | null {
+function driveThumbUrl(driveUrl: string | null | undefined, size = 800): string | null {
+  if (!driveUrl) return null;
   const id = driveFileId(driveUrl);
   return id ? `https://drive.google.com/thumbnail?id=${id}&sz=w${size}` : null;
 }
@@ -154,9 +156,16 @@ function EditModal({ capture, onClose, onSaved }: EditModalProps) {
     setError(null);
 
     const originalExpiry = expiryToOption(capture.expires_at, capture.created_at);
-    let expiresAt: string | null = expiry === originalExpiry ? capture.expires_at ?? null : null;
-    if (expiry !== originalExpiry && expiry === "24h") expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-    if (expiry !== originalExpiry && expiry === "7d") expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    let expiresAt: string | null = null;
+    if (expiry === "never") {
+      expiresAt = null;
+    } else if (expiry === originalExpiry) {
+      expiresAt = capture.expires_at ?? null;
+    } else if (expiry === "24h") {
+      expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    } else if (expiry === "7d") {
+      expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+    }
 
     const allowed_domains = allowedDomainsText.trim() 
       ? allowedDomainsText.split(",").map(d => d.trim().toLowerCase()).filter(Boolean)
@@ -166,7 +175,7 @@ function EditModal({ capture, onClose, onSaved }: EditModalProps) {
       ? allowedIpsText.split(",").map(ip => ip.trim()).filter(Boolean)
       : null;
 
-    const { data, error } = await supabase
+    const { error } = await supabase
       .from("captures")
       .update({
         title: title.trim() || capture.title,
@@ -179,9 +188,7 @@ function EditModal({ capture, onClose, onSaved }: EditModalProps) {
         allowed_domains,
         allowed_ips,
       })
-      .eq("id", capture.id)
-      .select()
-      .single();
+      .eq("id", capture.id);
 
     if (error) {
       console.warn("Error updating capture:", error);
@@ -190,7 +197,18 @@ function EditModal({ capture, onClose, onSaved }: EditModalProps) {
       setSaving(false);
       return;
     }
-    onSaved(data as Capture);
+    onSaved({
+      ...capture,
+      title: title.trim() || capture.title,
+      description: description.trim() || null,
+      password: password.trim() || null,
+      expires_at: expiresAt,
+      tag: tag || null,
+      status: status || null,
+      burn_after_read: burnAfterRead,
+      allowed_domains,
+      allowed_ips,
+    } as Capture);
     showToast("Capture saved", "success");
     onClose();
   }
@@ -402,6 +420,7 @@ export default function CapturesList() {
 function CapturesContent() {
   const { t } = useT();
   const { showToast } = useToast();
+  const router = useRouter();
   const searchParams = useSearchParams();
   const wsParam = searchParams.get("ws");
   const folderParam = searchParams.get("folder");
@@ -455,14 +474,20 @@ function CapturesContent() {
   const [moveTargetFolderName, setMoveTargetFolderName] = useState<string>("");
   const [moveWorkspaces, setMoveWorkspaces] = useState<Array<{ id: string; name: string }>>([]);
   const [moveFolders, setMoveFolders] = useState<string[]>([]);
+  const [isCreatingMoveFolder, setIsCreatingMoveFolder] = useState(false);
+  const [newMoveFolderName, setNewMoveFolderName] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const clearSelection = useCallback(() => {
+    setSelectedIds(new Set());
+  }, []);
   const [dragActive, setDragActive] = useState(false);
   const [thumbFailed, setThumbFailed] = useState<Record<string, boolean>>({});
+  // Prevent transient thumbnail 403 or network lag from triggering false ghost deletion
   const missingDriveIds = useMemo(() => {
     return captures
-      .filter((c) => thumbFailed[c.id] || (Boolean(c.drive_url) && !driveFileId(c.drive_url)))
+      .filter((c) => Boolean(c.drive_url) && !driveFileId(c.drive_url) && c.source !== "demo")
       .map((c) => c.id);
-  }, [captures, thumbFailed]);
+  }, [captures]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [activeHoverId, setActiveHoverId] = useState<string | null>(null);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
@@ -602,10 +627,10 @@ function CapturesContent() {
           clearSelection();
         }
       }
-    }
+    };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedIds.size, moveToOpen, deleteRequest, editing]);
+  }, [selectedIds.size, moveToOpen, deleteRequest, editing, clearSelection]);
 
   // IntersectionObserver: Callback Ref to safely load more when the sentinel enters the viewport
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -642,7 +667,6 @@ function CapturesContent() {
       setTimeout(() => setCopiedId(null), 2000);
     } catch {
       showToast(t("cap.copyError"), "error");
-      setDeleteError(t("cap.copyError"));
     }
   };
 
@@ -746,10 +770,6 @@ function CapturesContent() {
       else next.add(id);
       return next;
     });
-  }
-
-  function clearSelection() {
-    setSelectedIds(new Set());
   }
 
   async function uploadSelectedFile(file: File) {
@@ -872,6 +892,8 @@ function CapturesContent() {
 
   async function openMoveToModal() {
     setUploadError(null);
+    setIsCreatingMoveFolder(false);
+    setNewMoveFolderName("");
     const { data: wsRows, error: wsError } = await supabase.rpc("get_my_workspaces");
     if (wsError) {
       setUploadError(wsError.message);
@@ -893,7 +915,7 @@ function CapturesContent() {
       }
       const folderList = ((folderRows ?? []) as Array<{ name: string }>).map((f) => f.name);
       setMoveFolders(folderList);
-      setMoveTargetFolderName(folderList[0] || "");
+      setMoveTargetFolderName("");
     } else {
       setMoveFolders([]);
       setMoveTargetFolderName("");
@@ -903,6 +925,8 @@ function CapturesContent() {
 
   async function loadMoveFolders(workspaceId: string) {
     setMoveTargetWorkspaceId(workspaceId);
+    setIsCreatingMoveFolder(false);
+    setNewMoveFolderName("");
     const { data: folderRows, error: folderError } = await supabase
       .from("workspace_folders")
       .select("name")
@@ -914,7 +938,7 @@ function CapturesContent() {
     }
     const folderList = ((folderRows ?? []) as Array<{ name: string }>).map((f) => f.name);
     setMoveFolders(folderList);
-    setMoveTargetFolderName(folderList[0] || "");
+    setMoveTargetFolderName("");
   }
 
   async function submitMoveTo() {
@@ -923,26 +947,80 @@ function CapturesContent() {
     setUploadError(null);
     try {
       const ids = Array.from(selectedIds);
-      for (const captureId of ids) {
-        const { error } = await supabase.rpc("move_capture_to_workspace_folder", {
-          p_capture_id: captureId,
-          p_target_workspace_id: moveTargetWorkspaceId,
-          p_target_folder_name: moveTargetFolderName || null,
-        });
-        if (error) throw error;
+      const targetFolder = moveTargetFolderName || null;
+
+      const results = await Promise.allSettled(
+        ids.map((captureId) =>
+          supabase.rpc("move_capture_to_workspace_folder", {
+            p_capture_id: captureId,
+            p_target_workspace_id: moveTargetWorkspaceId,
+            p_target_folder_name: targetFolder,
+          })
+        )
+      );
+
+      const failed = results.filter(
+        (r) => r.status === "rejected" || (r.status === "fulfilled" && r.value.error)
+      );
+      if (failed.length > 0 && failed.length === ids.length) {
+        const firstErr =
+          failed[0].status === "rejected"
+            ? failed[0].reason
+            : (failed[0] as PromiseFulfilledResult<{ error?: { message?: string } }>).value.error?.message;
+        throw new Error(firstErr || "Failed moving captures");
       }
-      const movedCount = ids.length;
+
+      // Optimistically update local captures state
+      setCaptures((prev) =>
+        prev
+          .map((c) => {
+            if (!selectedIds.has(c.id)) return c;
+            return {
+              ...c,
+              workspace_id: moveTargetWorkspaceId,
+              folder_name: targetFolder,
+            };
+          })
+          .filter((c) => {
+            if (workspaceParam && c.workspace_id !== workspaceParam) return false;
+            if (folderParam && c.folder_name !== folderParam) return false;
+            return true;
+          })
+      );
+
+      const movedCount = ids.length - failed.length;
       setMoveToOpen(false);
       clearSelection();
       await loadPage(true);
-      showToast(`${movedCount} capture${movedCount === 1 ? "" : "s"} moved`, "success");
+      if (failed.length > 0) {
+        showToast(t("cap.movedWithFailures", { moved: movedCount, failed: failed.length }), "info");
+      } else {
+        showToast(
+          movedCount === 1
+            ? t("cap.movedCount", { count: movedCount })
+            : t("cap.movedCountPlural", { count: movedCount }),
+          "success"
+        );
+      }
     } catch (error) {
       setUploadError(error instanceof Error ? error.message : "Failed moving captures");
-      showToast("Move failed", "error");
+      showToast(t("cap.moveFailed"), "error");
     } finally {
       setMoving(false);
     }
   }
+
+  const handleBulkCopyLinks = useCallback(() => {
+    if (selectedIds.size === 0) return;
+    const links = Array.from(selectedIds)
+      .map((id) => `${window.location.origin}/v/${id}`)
+      .join("\n");
+    navigator.clipboard?.writeText(links).then(() => {
+      showToast(t("cap.copyLinksSuccess", { count: selectedIds.size }), "success");
+    }).catch(() => {
+      showToast(t("cap.copyLinksFailed"), "error");
+    });
+  }, [selectedIds, showToast, t]);
 
   const activeFilterCount =
     (showVideo || showScreenshot ? 1 : 0) + (filterTag ? 1 : 0) + (filterStatus ? 1 : 0) + (search.trim() ? 1 : 0);
@@ -952,6 +1030,12 @@ function CapturesContent() {
     setFilterTag("");
     setFilterStatus("");
     setSearch("");
+    if (folderParam || projectParam) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("folder");
+      url.searchParams.delete("project");
+      router.replace(`${url.pathname}${url.search}`, { scroll: false });
+    }
   }
 
   const filteredCaptures = workspaceCaptures.filter((item) => {
@@ -965,13 +1049,23 @@ function CapturesContent() {
     const matchesStatus = !filterStatus || item.status === filterStatus;
 
     const q = search.trim().toLowerCase();
-    const matchesSearch = !q || item.title.toLowerCase().includes(q);
+    const matchesSearch = !q || (item.title || "").toLowerCase().includes(q);
 
     return matchesType && matchesTag && matchesStatus && matchesSearch;
   });
 
   const videoCount = workspaceCaptures.filter((c) => c.type === "video").length;
   const screenshotCount = workspaceCaptures.filter((c) => c.type === "screenshot").length;
+
+  const toggleSelectAllVisible = useCallback(() => {
+    if (filteredCaptures.length === 0) return;
+    const allSelected = filteredCaptures.every((c) => selectedIds.has(c.id));
+    if (allSelected) {
+      clearSelection();
+    } else {
+      setSelectedIds(new Set(filteredCaptures.map((c) => c.id)));
+    }
+  }, [filteredCaptures, selectedIds, clearSelection]);
 
   return (
     <div
@@ -1089,7 +1183,7 @@ function CapturesContent() {
                 </div>
                 <div className="w-7 h-7 rounded-md bg-rose-100 dark:bg-rose-950/30 flex items-center justify-center shrink-0">
                   <svg className="w-4 h-4 text-rose-500 dark:text-rose-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
                 <div className="flex-1">
@@ -1164,45 +1258,20 @@ function CapturesContent() {
             {t("cap.clearFilters")}
           </button>
         )}
-        </div>
 
-        {/* Sticky Batch Selection Actions */}
-        {selectedIds.size > 0 && (
-          <div className="flex flex-wrap items-center gap-2 rounded-xl border border-border bg-subtle px-3 py-1.5 w-full sm:w-auto shadow-sm justify-between">
-            <div className="flex items-center gap-2 text-foreground font-medium text-xs">
-              <span className="w-5 h-5 rounded-md bg-indigo-600 text-white flex items-center justify-center text-[11px] font-bold shadow-sm">
-                ✓
-              </span>
-              <span className="font-semibold text-foreground">{selectedIds.size} selected</span>
-              <button
-                type="button"
-                onClick={clearSelection}
-                className="text-[11px] text-muted hover:text-foreground underline ml-1 cursor-pointer"
-                title="Press Escape to deselect"
-              >
-                Deselect (Esc)
-              </button>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <button
-                onClick={() => void openMoveToModal()}
-                disabled={moving || deleting}
-                className="h-7.5 px-2.5 rounded-lg border border-border bg-background text-xs font-semibold text-foreground hover:bg-subtle/80 disabled:opacity-40 transition-colors flex items-center gap-1 cursor-pointer"
-              >
-                <svg className="w-3.5 h-3.5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" /></svg>
-                Move
-              </button>
-              <button
-                onClick={() => openDeleteConfirmation(Array.from(selectedIds))}
-                disabled={selectedIds.size === 0 || deleting}
-                className="h-7.5 px-2.5 rounded-lg border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/30 text-red-600 dark:text-red-400 text-xs font-semibold hover:bg-red-100 dark:hover:bg-red-900/50 disabled:opacity-40 transition-colors flex items-center gap-1 cursor-pointer"
-              >
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
-                Delete
-              </button>
-            </div>
-          </div>
+        {/* Quick Select All in Filter Bar (only visible when no items are selected) */}
+        {filteredCaptures.length > 0 && selectedIds.size === 0 && (
+          <button
+            type="button"
+            onClick={toggleSelectAllVisible}
+            className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-border bg-subtle text-muted hover:text-foreground hover:bg-subtle/80 transition-colors cursor-pointer"
+            title={t("cap.selectAll")}
+          >
+            <span className="w-3.5 h-3.5 rounded border border-slate-300 dark:border-zinc-600 flex items-center justify-center text-[10px]" />
+            <span>{t("cap.selectAll")}</span>
+          </button>
         )}
+        </div>
       </div>
 
       {/* Upload Progress Animation Banner */}
@@ -1402,9 +1471,10 @@ function CapturesContent() {
               href={CHROME_WEB_STORE_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-1 px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors"
+              className="mt-1 px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors inline-flex items-center gap-2"
             >
-              {t("cap.install")}
+              <img src="/icons/chrome.svg" alt="Chrome" className="w-4 h-4 shrink-0" />
+              <span>{t("cap.install")}</span>
             </a>
           )}
         </div>
@@ -1502,7 +1572,13 @@ function CapturesContent() {
                     <div className={`items-center gap-2 transition-opacity ${isSelected ? "hidden" : "flex group-hover:hidden"}`}>
                       {isMe && myProfile?.avatar ? (
                         // eslint-disable-next-line @next/next/no-img-element
-                        <img src={myProfile.avatar} alt="" referrerPolicy="no-referrer" className="w-7 h-7 rounded-full object-cover shadow-sm border border-white/20 shrink-0" />
+                        <img
+                          src={myProfile.avatar}
+                          alt=""
+                          referrerPolicy="no-referrer"
+                          onError={() => setMyProfile((prev) => (prev ? { ...prev, avatar: "" } : null))}
+                          className="w-7 h-7 rounded-full object-cover shadow-sm border border-white/20 shrink-0"
+                        />
                       ) : (
                         <div className={`w-7 h-7 rounded-full ${getAvatarColor(item.owner_email)} text-white text-xs font-bold flex items-center justify-center shadow-sm border border-white/20 shrink-0`}>
                           {isMe ? initialOf(myProfile?.name) : getOwnerInitial(item.owner_email)}
@@ -1612,9 +1688,9 @@ function CapturesContent() {
       )}
 
       {/* Infinite scroll sentinel + loading indicator.
-          Sentinel always stays mounted so IntersectionObserver keeps working;
-          it just renders nothing visually when there's nothing to load. */}
-      {!loading && filteredCaptures.length > 0 && (
+          Sentinel always stays mounted when hasMore is true so IntersectionObserver
+          can trigger loading subsequent batches even if current batch yielded 0 filter matches. */}
+      {!loading && hasMore && (
         <div ref={sentinelRef} className="py-8 flex items-center justify-center">
           {loadingMore && hasMore && (
             <div className="flex flex-col items-center gap-2">
@@ -1670,9 +1746,11 @@ function CapturesContent() {
             <div className="flex items-center justify-between px-6 py-5 border-b border-border">
               <div>
                 <h2 id="move-captures-title" className="text-xl font-bold text-foreground">
-                  Move {selectedIds.size} capture{selectedIds.size > 1 ? "s" : ""} to
+                  {selectedIds.size === 1
+                    ? t("cap.moveToTitle", { count: selectedIds.size })
+                    : t("cap.moveToTitlePlural", { count: selectedIds.size })}
                 </h2>
-                <p className="text-xs text-muted mt-0.5">Select a destination workspace and folder</p>
+                <p className="text-xs text-muted mt-0.5">{t("cap.moveToSubtitle")}</p>
               </div>
               <button
                 type="button"
@@ -1690,7 +1768,9 @@ function CapturesContent() {
                 {/* Left Column: Folders */}
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-2.5">
-                    Folder in {moveWorkspaces.find((ws) => ws.id === moveTargetWorkspaceId)?.name || "Workspace"}
+                    {t("cap.folderInWs", {
+                      name: moveWorkspaces.find((ws) => ws.id === moveTargetWorkspaceId)?.name || "Workspace",
+                    })}
                   </label>
                   <div className="space-y-2">
                     {/* Root / Default Folder Option */}
@@ -1707,7 +1787,7 @@ function CapturesContent() {
                         <svg className="w-4 h-4 shrink-0 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                           <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
                         </svg>
-                        <span className="text-sm font-medium truncate">No folder (General)</span>
+                        <span className="text-sm font-medium truncate">{t("cap.noFolderGeneral")}</span>
                       </span>
                     </button>
 
@@ -1736,19 +1816,73 @@ function CapturesContent() {
                           </span>
                           {isCurrent && (
                             <span className="shrink-0 text-[10px] uppercase tracking-wide font-semibold px-2 py-0.5 rounded border border-border text-muted bg-background">
-                              Current
+                              {t("cap.current")}
                             </span>
                           )}
                         </button>
                       );
                     })}
+
+                    {/* Create New Folder Inline */}
+                    {isCreatingMoveFolder ? (
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          const trimmed = newMoveFolderName.trim();
+                          if (trimmed) {
+                            if (!moveFolders.includes(trimmed)) {
+                              setMoveFolders((prev) => [...prev, trimmed].sort());
+                            }
+                            setMoveTargetFolderName(trimmed);
+                            setNewMoveFolderName("");
+                            setIsCreatingMoveFolder(false);
+                          }
+                        }}
+                        className="flex items-center gap-2 pt-1"
+                      >
+                        <input
+                          autoFocus
+                          type="text"
+                          value={newMoveFolderName}
+                          onChange={(e) => setNewMoveFolderName(e.target.value)}
+                          placeholder={t("cap.newFolderPlaceholder")}
+                          className="flex-1 rounded-xl border border-border bg-white dark:bg-zinc-800 text-foreground px-3 py-2 text-xs outline-none focus:ring-1 focus:ring-indigo-500"
+                        />
+                        <button
+                          type="submit"
+                          disabled={!newMoveFolderName.trim()}
+                          className="px-3 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 disabled:opacity-50 cursor-pointer"
+                        >
+                          {t("cap.add")}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsCreatingMoveFolder(false);
+                            setNewMoveFolderName("");
+                          }}
+                          className="px-2 py-2 text-xs text-muted hover:text-foreground cursor-pointer"
+                        >
+                          {t("common.cancel")}
+                        </button>
+                      </form>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setIsCreatingMoveFolder(true)}
+                        className="w-full flex items-center gap-2 rounded-xl border border-dashed border-border px-3.5 py-2 text-left text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 transition-all cursor-pointer"
+                      >
+                        <span className="text-sm leading-none">+</span>
+                        <span>{t("cap.newFolder")}</span>
+                      </button>
+                    )}
                   </div>
                 </div>
 
                 {/* Right Column: Workspaces */}
                 <div>
                   <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-2.5">
-                    Target Workspace
+                    {t("cap.targetWorkspace")}
                   </label>
                   <div className="rounded-xl border border-border bg-slate-50/50 dark:bg-background/40 p-1.5 space-y-1">
                     {moveWorkspaces.map((ws) => {
@@ -1800,7 +1934,7 @@ function CapturesContent() {
                 disabled={moving || !moveTargetWorkspaceId}
                 className="px-5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-sm"
               >
-                {moving ? "Moving..." : "Move"}
+                {moving ? t("cap.moving") : t("cap.move")}
               </button>
             </div>
           </div>
@@ -1850,6 +1984,89 @@ function CapturesContent() {
                 {deleting ? t("layout.deleting") : t("cap.confirmDelete")}
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Batch Selection Actions Toolbar */}
+      {selectedIds.size > 0 && (
+        <div
+          onClick={(e) => e.stopPropagation()}
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[94%] max-w-2xl bg-white/95 dark:bg-zinc-900/95 text-foreground backdrop-blur-md rounded-2xl shadow-xl dark:shadow-2xl px-4 py-2.5 border border-border dark:border-zinc-800 flex flex-wrap items-center justify-between gap-2.5 animate-in slide-in-from-bottom-5 duration-200"
+        >
+          <div className="flex items-center gap-2 sm:gap-2.5">
+            <span className="w-5 h-5 rounded-md bg-indigo-600 text-white flex items-center justify-center text-[11px] font-bold shadow-xs shrink-0">
+              ✓
+            </span>
+            <span className="font-bold text-xs text-foreground whitespace-nowrap">
+              {selectedIds.size === filteredCaptures.length
+                ? t("cap.allSelected", { count: selectedIds.size })
+                : t("cap.selectedOfTotal", { count: selectedIds.size, total: filteredCaptures.length })}
+            </span>
+
+            <span className="text-border text-xs select-none">|</span>
+
+            {selectedIds.size < filteredCaptures.length && (
+              <button
+                type="button"
+                onClick={() => setSelectedIds(new Set(filteredCaptures.map((c) => c.id)))}
+                className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:underline transition-colors cursor-pointer whitespace-nowrap"
+              >
+                {t("cap.selectAllCount", { count: filteredCaptures.length })}
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={clearSelection}
+              className="text-xs text-muted hover:text-foreground underline underline-offset-2 transition-colors cursor-pointer whitespace-nowrap"
+              title={t("cap.deselect")}
+            >
+              {t("cap.deselect")}
+            </button>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-1.5">
+            {/* Copy Links */}
+            <button
+              type="button"
+              onClick={handleBulkCopyLinks}
+              disabled={moving || deleting}
+              className="h-8 px-2.5 rounded-xl border border-border bg-subtle hover:bg-background hover:border-indigo-300 dark:hover:border-indigo-700 text-xs font-semibold text-foreground hover:text-indigo-600 dark:hover:text-indigo-400 disabled:opacity-40 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+              title={t("cap.copyAllLinks")}
+            >
+              <svg className="w-3.5 h-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
+              </svg>
+              <span>{t("cap.bulkLinks")}</span>
+            </button>
+
+            {/* Move */}
+            <button
+              type="button"
+              onClick={() => void openMoveToModal()}
+              disabled={moving || deleting}
+              className="h-8 px-2.5 rounded-xl border border-border bg-subtle hover:bg-background hover:border-indigo-300 dark:hover:border-indigo-700 text-xs font-semibold text-foreground hover:text-indigo-600 dark:hover:text-indigo-400 disabled:opacity-40 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+            >
+              <svg className="w-3.5 h-3.5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+              </svg>
+              <span>{t("cap.bulkMove")}</span>
+            </button>
+
+            {/* Delete */}
+            <button
+              type="button"
+              onClick={() => openDeleteConfirmation(Array.from(selectedIds))}
+              disabled={selectedIds.size === 0 || deleting}
+              className="h-8 px-2.5 rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 text-xs font-semibold disabled:opacity-40 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+            >
+              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              <span>{t("cap.bulkDelete")}</span>
+            </button>
           </div>
         </div>
       )}

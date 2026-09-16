@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
@@ -32,6 +32,7 @@ interface Capture {
   browser?: string | null;
   site_url?: string | null;
   workspace_id?: string | null;
+  folder_name?: string | null;
   tag?: string | null;
   status?: string | null;
   allowed_domains?: string[] | null;
@@ -62,6 +63,7 @@ const INTEGRATION_METADATA: Record<string, { name: string; iconSrc: string }> = 
   snaptest: { name: "SnapTest", iconSrc: "/integrations/snaptest.png" },
   claude: { name: "Claude AI", iconSrc: "/integrations/claude.png" },
   chatgpt: { name: "ChatGPT", iconSrc: "/integrations/chatgpt.png" },
+  webhook: { name: "Webhook", iconSrc: "/integrations/webhook.svg" },
 };
 
 const viewCountCache = new Map<string, { value: number; expiresAt: number }>();
@@ -104,11 +106,7 @@ function WebsiteFavicon({ url, className }: { url?: string | null; className?: s
 
   if (!url || failed || sources.length === 0 || srcIndex >= sources.length) {
     return (
-      <svg className={className || "h-3.5 w-3.5 text-indigo-500 shrink-0"} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-        <circle cx="12" cy="12" r="10" />
-        <line x1="2" y1="12" x2="22" y2="12" />
-        <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z" />
-      </svg>
+      <img src="/icons/globe.svg" alt="" className={className || "h-3.5 w-3.5 shrink-0"} />
     );
   }
 
@@ -348,15 +346,19 @@ function SingleViewContent() {
   const [viewerEmail, setViewerEmail] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [brand, setBrand] = useState({ name: "BugSnap", logo: "", hideWatermark: false });
+  const [brandLogoFailed, setBrandLogoFailed] = useState(false);
 
   // Timeline Sync between Video Playback and DevToolsPanel
   const [playbackTime, setPlaybackTime] = useState<number>(0);
   const [seekTargetTime, setSeekTargetTime] = useState<number | null>(null);
+  const handlePlaybackTimeUpdate = useCallback((t: number) => {
+    setPlaybackTime(t);
+  }, []);
 
   const errorMarkers = useMemo<ErrorMarker[]>(() => {
     if (!capture || capture.type !== "video" || !capture.dev_logs) return [];
 
-    let rawLogs: Array<{ type?: string; level?: string; message?: string; status?: number; time?: string | number; timestamp?: string | number; url?: string }> = [];
+    let rawLogs: Array<{ type?: string; level?: string; message?: string; status?: number; time?: string | number; timestamp?: string | number; url?: string; method?: string }> = [];
     if (Array.isArray(capture.dev_logs)) {
       rawLogs = capture.dev_logs;
     }
@@ -367,12 +369,12 @@ function SingleViewContent() {
       return Number.isFinite(ts) && ts > 0 && (min === 0 || ts < min) ? ts : min;
     }, 0);
 
-    const markers: ErrorMarker[] = [];
+    const rawMarkers: ErrorMarker[] = [];
     for (const log of rawLogs) {
       if (isIgnoredUrl(log.url) || isIgnoredUrl(log.message)) continue;
-      const isErr = (log.type === "console" && (log.level === "error" || log.level === "warn")) ||
-                    (log.type === "network" && (Number(log.status) >= 400 || Number(log.status) === 0));
-      if (!isErr) continue;
+      const isNetErr = log.type === "network" && (Number(log.status) >= 400 || Number(log.status) === 0);
+      const isConsoleErr = log.type === "console" && (log.level === "error" || log.level === "warn");
+      if (!isNetErr && !isConsoleErr) continue;
 
       let sec = 0;
       const val = log.time || log.timestamp;
@@ -383,17 +385,83 @@ function SingleViewContent() {
         sec = (val - earliest) / 1000;
       }
 
+      const statusNum = Number(log.status) || 0;
+      let badgeText = "err";
+      let category: "network" | "console" | "warn" = "console";
+      let popupTitle = "1 Error";
+
+      if (isNetErr) {
+        category = "network";
+        if (statusNum > 0) {
+          badgeText = String(statusNum);
+          popupTitle = "1 Network Error";
+        } else {
+          badgeText = "xhr";
+          popupTitle = "1 Network Error";
+        }
+      } else if (log.level === "warn") {
+        category = "warn";
+        badgeText = "warn";
+        popupTitle = "1 Warning";
+      } else {
+        category = "console";
+        badgeText = "err";
+        popupTitle = "1 Console Error";
+      }
+
       const label = (log.type === "network" ? `${log.status || "ERR"} ${log.url || ""}` : (log.message || "Error")).slice(0, 50);
-      markers.push({ timeSec: Math.max(0, sec), label, type: log.level === "warn" ? "warn" : "error" });
+      rawMarkers.push({
+        timeSec: Math.max(0, sec),
+        label,
+        type: log.level === "warn" ? "warn" : "error",
+        badgeText,
+        category,
+        status: statusNum || undefined,
+        count: 1,
+        popupTitle,
+      });
     }
 
-    return markers.slice(0, 30);
+    rawMarkers.sort((a, b) => a.timeSec - b.timeSec);
+
+    // Group closely-spaced errors within 1.2s to prevent overlapping badges and match Image #19
+    const clustered: ErrorMarker[] = [];
+    for (const m of rawMarkers) {
+      const prev = clustered[clustered.length - 1];
+      if (prev && Math.abs(prev.timeSec - m.timeSec) <= 1.2) {
+        prev.count = (prev.count || 1) + 1;
+        const total = prev.count;
+        if (prev.category === "network" && m.category === "network") {
+          prev.popupTitle = `${total} Network Errors`;
+        } else {
+          prev.popupTitle = `${total} Errors`;
+        }
+        // Prominence: 5xx > 4xx > xhr > err > warn
+        const prevPrio = (prev.status && prev.status >= 500 ? 5 : prev.status && prev.status >= 400 ? 4 : prev.badgeText === "xhr" ? 3 : prev.category === "console" ? 2 : 1);
+        const currPrio = (m.status && m.status >= 500 ? 5 : m.status && m.status >= 400 ? 4 : m.badgeText === "xhr" ? 3 : m.category === "console" ? 2 : 1);
+        if (currPrio > prevPrio) {
+          prev.badgeText = m.badgeText;
+          prev.status = m.status;
+          prev.category = m.category;
+          prev.type = m.type;
+        }
+      } else {
+        clustered.push({ ...m });
+      }
+    }
+
+    return clustered.slice(0, 30);
   }, [capture]);
 
   const initialDuration = useMemo(() => {
     if (!capture || capture.type !== "video") return 0;
     if (typeof capture.duration === "number" && capture.duration > 0) {
       return capture.duration;
+    }
+    // Check object payload if dev_logs was offloaded to Drive as summary object
+    if (capture.dev_logs && !Array.isArray(capture.dev_logs) && typeof (capture.dev_logs as { duration?: number }).duration === "number") {
+      const objDur = (capture.dev_logs as { duration: number }).duration;
+      if (objDur > 0) return Math.round(objDur > 1000 ? objDur / 1000 : objDur);
     }
     if (!capture.dev_logs || !Array.isArray(capture.dev_logs)) return 0;
 
@@ -419,7 +487,7 @@ function SingleViewContent() {
     }
 
     const span = earliest > 0 && latest > earliest ? Math.ceil((latest - earliest) / 1000) : 0;
-    return Math.max(maxSec, span);
+    return maxSec > 0 ? maxSec : span;
   }, [capture]);
 
   // Close menus on outside click
@@ -519,7 +587,7 @@ function SingleViewContent() {
               b.configuredIntegrations.forEach((k) => {
                 const meta = INTEGRATION_METADATA[k] || {
                   name: k.charAt(0).toUpperCase() + k.slice(1),
-                  iconSrc: `/integrations/${k}.png`,
+                  iconSrc: "/icons/link.svg",
                 };
                 activeList.push({ id: k, name: meta.name, iconSrc: meta.iconSrc });
               });
@@ -564,15 +632,27 @@ function SingleViewContent() {
           }
 
           if (wsId) {
-            const { data: members } = await supabase.rpc("get_workspace_members", {
-              p_workspace_id: wsId,
-            });
-            const memberList = (members ?? []) as { user_id: string; role?: string }[];
-            const currentMember = memberList.find((member) => member.user_id === userId);
-            if (currentMember) {
+            const { data: wsInfo } = await supabase
+              .from("workspaces")
+              .select("owner_user_id")
+              .eq("id", wsId)
+              .maybeSingle();
+
+            if (wsInfo?.owner_user_id === userId) {
               bypass = true;
               setIsTeamMember(true);
-              setIsWorkspaceOwner(currentMember.role === "owner");
+              setIsWorkspaceOwner(true);
+            } else {
+              const { data: members } = await supabase.rpc("get_workspace_members", {
+                p_workspace_id: wsId,
+              });
+              const memberList = (members ?? []) as { user_id: string; role?: string }[];
+              const currentMember = memberList.find((member) => member.user_id === userId);
+              if (currentMember) {
+                bypass = true;
+                setIsTeamMember(true);
+                setIsWorkspaceOwner(currentMember.role === "owner");
+              }
             }
           }
           }
@@ -586,7 +666,7 @@ function SingleViewContent() {
           const { data: directData } = await supabase
             .from("captures")
             .select(
-              "id, title, type, drive_url, description, dev_logs, os, browser, site_url, window_size, created_at, workspace_id, tag, status, allowed_domains, allowed_ips, burn_after_read, expires_at, project_id, source, access_mode, duration"
+              "id, title, type, drive_url, description, dev_logs, os, browser, site_url, window_size, created_at, workspace_id, folder_name, tag, status, allowed_domains, allowed_ips, burn_after_read, expires_at, project_id, source, access_mode, duration"
             )
             .eq("id", id)
             .single();
@@ -664,7 +744,7 @@ function SingleViewContent() {
         const activeList: Array<{ id: string; name: string; iconSrc: string }> = [];
         Object.entries(integrations).forEach(([k, v]) => {
           if (v && typeof v === "object" && Object.values(v).some(val => typeof val === "string" && val.trim().length > 0)) {
-            const meta = INTEGRATION_METADATA[k] || { name: k.charAt(0).toUpperCase() + k.slice(1), iconSrc: `/integrations/${k}.png` };
+            const meta = INTEGRATION_METADATA[k] || { name: k.charAt(0).toUpperCase() + k.slice(1), iconSrc: "/icons/link.svg" };
             activeList.push({ id: k, name: meta.name, iconSrc: meta.iconSrc });
           }
         });
@@ -781,7 +861,7 @@ function SingleViewContent() {
     setEditTitle(capture.title || "");
     setEditDesc(capture.description || "");
     setEditTag(capture.tag || "");
-    setEditStatus(capture.status || "open");
+    setEditStatus(capture.status && STATUS_OPTIONS.includes(capture.status) ? capture.status : "open");
     setEditAllowedDomains((capture.allowed_domains || []).join(", "));
     setEditAllowedIps((capture.allowed_ips || []).join(", "));
     setEditModalOpen(true);
@@ -795,7 +875,7 @@ function SingleViewContent() {
       const parsedDomains = editAllowedDomains.split(",").map((s) => s.trim().toLowerCase()).filter(Boolean);
       const parsedIps = editAllowedIps.split(",").map((s) => s.trim()).filter(Boolean);
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from("captures")
         .update({
           title: editTitle.trim() || capture.title,
@@ -805,11 +885,21 @@ function SingleViewContent() {
           allowed_domains: parsedDomains.length > 0 ? parsedDomains : null,
           allowed_ips: parsedIps.length > 0 ? parsedIps : null,
         })
-        .eq("id", capture.id)
-        .select()
-        .single();
+        .eq("id", capture.id);
       if (error) throw error;
-      setCapture(data as Capture);
+      setCapture((prev) =>
+        prev
+          ? {
+              ...prev,
+              title: editTitle.trim() || prev.title,
+              description: editDesc.trim() || null,
+              tag: editTag || null,
+              status: editStatus || null,
+              allowed_domains: parsedDomains.length > 0 ? parsedDomains : null,
+              allowed_ips: parsedIps.length > 0 ? parsedIps : null,
+            }
+          : prev
+      );
       setEditModalOpen(false);
       showToast("Capture saved", "success");
     } catch (err) {
@@ -851,6 +941,7 @@ function SingleViewContent() {
         p_target_folder_name: folderName,
       });
       if (error) throw error;
+      setCapture((prev) => (prev ? { ...prev, folder_name: folderName } : prev));
       setMoveSubmenuOpen(false);
       setNewFolderMode(false);
       showToast(folderName ? `Moved to "${folderName}"` : "Removed from folder", "success");
@@ -866,14 +957,14 @@ function SingleViewContent() {
     const name = newFolderName.trim();
     if (!name || !capture?.workspace_id) return;
     try {
-      const { error } = await supabase.from("workspace_folders").insert({ workspace_id: capture.workspace_id, name });
-      if (error) throw error;
+      await supabase.from("workspace_folders").insert({ workspace_id: capture.workspace_id, name });
       setCapFolders((prev) => Array.from(new Set([...prev, name])).sort());
       setNewFolderName("");
       await handleMoveCapture(name);
     } catch (err) {
       console.warn("Failed to create folder:", err);
-      showToast("Folder create failed", "error");
+      // RPC also auto-creates the folder if needed, so proceed to move
+      await handleMoveCapture(name);
     }
   }
 
@@ -966,25 +1057,43 @@ function SingleViewContent() {
   }
 
   return (
-    <div className="h-screen bg-white dark:bg-background flex flex-col font-sans overflow-y-auto lg:overflow-hidden">
-      <header className="h-16 border-b border-border px-4 sm:px-6 flex items-center justify-between shrink-0 bg-white dark:bg-background">
+    <div
+      className={`min-h-screen font-sans flex flex-col selection:bg-indigo-500 selection:text-white ${
+        status === "ready"
+          ? "h-screen bg-white dark:bg-background overflow-y-auto lg:overflow-hidden"
+          : "bg-[radial-gradient(ellipse_at_top_left,#eef2ff_0%,#ffffff_40%,#f0fdf4_100%)] dark:bg-none dark:bg-background text-slate-900 dark:text-foreground relative justify-between overflow-x-hidden"
+      }`}
+    >
+      {status !== "ready" && (
+        <>
+          <div className="pointer-events-none absolute -top-32 left-1/2 -z-10 h-80 w-[42rem] -translate-x-1/2 rounded-full bg-gradient-to-tr from-indigo-400/20 via-violet-300/20 to-emerald-300/15 blur-3xl dark:from-indigo-900/20 dark:via-purple-900/15 dark:to-emerald-900/10 animate-pulse-slow" />
+          <div className="pointer-events-none absolute -bottom-32 right-1/4 -z-10 h-80 w-[36rem] rounded-full bg-gradient-to-br from-indigo-300/15 to-purple-400/15 blur-3xl dark:from-indigo-950/20 dark:to-purple-950/20" />
+        </>
+      )}
+
+      <header className="h-16 border-b border-border/80 bg-white/80 dark:bg-background/80 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between shrink-0 sticky top-0 z-30">
         <div className="flex items-center gap-3 min-w-0">
-          <Link href={isTeamMember ? "/dashboard" : "/"} className="flex items-center gap-2.5 hover:opacity-90 transition-opacity min-w-0">
-            {brand.logo ? (
+          <Link href={isTeamMember ? "/dashboard" : "/"} className="flex items-center gap-2.5 hover:opacity-90 transition-opacity min-w-0 group">
+            {brand.logo && !brandLogoFailed ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={brand.logo} alt={brand.name} className="h-8 w-auto max-w-[140px] object-contain" />
+              <img
+                src={brand.logo}
+                alt={brand.name}
+                className="h-8 w-auto max-w-[140px] object-contain"
+                onError={() => setBrandLogoFailed(true)}
+              />
             ) : (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/icon.svg" alt="BugSnap" className="w-8 h-8 shrink-0 object-contain" />
+                <img src="/icon.svg" alt="BugSnap" className="w-8 h-8 shrink-0 object-contain transition-transform duration-200 group-hover:scale-105" />
                 <div className="min-w-0">
                   <span className="text-sm font-bold tracking-tight text-foreground leading-none truncate block">{brand.name}</span>
                 </div>
               </>
             )}
           </Link>
-          {!brand.hideWatermark && (
-            <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-medium text-muted bg-subtle border border-border shrink-0 select-none">
+          {!brand.hideWatermark && (brand.logo || brand.name !== "BugSnap") && (
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium text-muted bg-subtle/80 border border-border shrink-0 select-none shadow-2xs">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/icon.svg" alt="" className="w-3 h-3 object-contain opacity-70" />
               <span>Powered by BugSnap</span>
@@ -992,109 +1101,24 @@ function SingleViewContent() {
           )}
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
-          {isTeamMember && (
-            <Link
-              href="/captures"
-              className="px-3 sm:px-4 py-2 rounded-lg border border-border text-xs font-semibold text-foreground hover:bg-subtle flex items-center gap-1.5 sm:gap-2 transition-colors shadow-sm shrink-0"
-            >
-              <svg className="w-4 h-4 text-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 12H5M12 19l-7-7 7-7" />
-              </svg>
-              <span className="hidden sm:inline">{t("v.backToDashboard")}</span>
-              <span className="sm:hidden">{t("nav.captures")}</span>
-            </Link>
-          )}
-        </div>
-      </header>
-
-      {status !== "ready" && (
-        <div className="flex-1 flex flex-col items-center justify-center p-6">
-          {status === "loading" && (
-            <div className="w-full max-w-5xl flex flex-col gap-6 animate-pulse">
-              <div className="h-[clamp(16rem,40vh,28rem)] sm:h-[clamp(28rem,72vh,60rem)] bg-subtle rounded-2xl border border-border/70" />
-              <div className="h-40 bg-subtle rounded-xl border border-border/70" />
-            </div>
-          )}
-
-          {status === "notfound" && (
-            <div className="text-center max-w-sm">
-              <svg className="w-12 h-12 mx-auto text-muted/40 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <h1 className="text-lg font-semibold text-foreground">{t("v.notFoundTitle")}</h1>
-              <p className="text-sm text-muted mt-1 mb-4">{t("v.notFoundHint")}</p>
-              <Link href="/" className="text-sm text-indigo-600 font-medium hover:underline">{t("v.loginToBugSnap")}</Link>
-            </div>
-          )}
-
-          {status === "expired" && (
-            <div className="text-center max-w-sm">
-              <svg className="w-12 h-12 mx-auto text-muted/40 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <h1 className="text-lg font-semibold text-foreground">{t("v.expiredTitle")}</h1>
-              <p className="text-sm text-muted mt-1 mb-4">{t("v.expiredHint")}</p>
-              <Link href="/" className="text-sm text-indigo-600 font-medium hover:underline">{t("v.loginToBugSnap")}</Link>
-            </div>
-          )}
-
-          {status === "unauthorized_ip" && (
-            <div className="text-center max-w-sm">
-              <h1 className="text-lg font-semibold text-foreground">{t("v.accessRestricted")}</h1>
-              <p className="text-sm text-muted mt-1">{t("v.ipNotAuthorized")}</p>
-            </div>
-          )}
-
-          {status === "needs_login" && (
-            <div className="text-center max-w-sm">
-              <h1 className="text-lg font-semibold text-foreground">{t("v.loginRequired")}</h1>
-              <p className="text-sm text-muted mt-1 mb-6">{accessMode === "members" ? t("v.membersOnlyRestricted") : t("v.domainRestricted")}</p>
-              <a href="/" className="px-5 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-semibold">{t("v.signIn")}</a>
-            </div>
-          )}
-
-          {status === "unauthorized_domain" && (
-            <div className="text-center max-w-sm">
-              <h1 className="text-lg font-semibold text-foreground">{t("v.accessDenied")}</h1>
-              <p className="text-sm text-muted mt-1">{t("v.domainNotAuthorized")}</p>
-            </div>
-          )}
-
-          {status === "locked" && (
-            <div className="w-full max-w-sm text-center">
-              <h1 className="text-lg font-semibold text-foreground mb-4">{t("v.passwordProtected")}</h1>
-              <form onSubmit={submitPassword} className="flex flex-col gap-3">
-                <input
-                  type="password"
-                  value={passwordInput}
-                  onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(false); }}
-                  placeholder={t("v.passwordPlaceholder")}
-                  className={`w-full text-sm rounded-lg border px-3 py-2.5 outline-none bg-white dark:bg-zinc-900 text-foreground placeholder:text-muted ${passwordError ? "border-red-400" : "border-border focus:border-indigo-500"}`}
-                />
-                {passwordError && <p className="text-xs text-red-600 dark:text-red-400 text-left">{t("v.incorrectPassword")}</p>}
-                <button type="submit" disabled={checkingPassword} className="w-full rounded-lg bg-indigo-600 py-2.5 text-sm font-medium text-white disabled:opacity-50">
-                  {checkingPassword ? t("v.unlocking") : t("v.unlock")}
-                </button>
-              </form>
-            </div>
-          )}
-        </div>
-      )}
-
-      {status === "ready" && capture && (
-        <main className="flex-1 overflow-y-auto bg-[#fbfbfd] dark:bg-background flex flex-col justify-between">
-          <div className="mx-auto flex w-full max-w-[1560px] flex-col gap-3 px-3 sm:px-6 pt-3 sm:pt-4 pb-12 sm:pb-16 lg:pb-20">
-            <div className="flex flex-wrap items-center justify-between sm:justify-end gap-2 w-full">
+          {status === "ready" && capture && (
+            <div className="flex items-center gap-2">
               {isTeamMember && configuredIntegrations.length === 1 && (
                 <button
                   type="button"
                   disabled={!!sendingIntegration}
                   onClick={() => handleSendToIntegration(configuredIntegrations[0].id)}
                   title={`Send capture to ${configuredIntegrations[0].name}`}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-white dark:bg-background px-3.5 py-2 text-xs font-semibold text-foreground shadow-sm hover:bg-subtle disabled:opacity-50 transition flex-1 sm:flex-initial"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-white dark:bg-background px-3 sm:px-3.5 py-1.5 sm:py-2 text-xs font-semibold text-foreground shadow-xs hover:bg-subtle disabled:opacity-50 transition cursor-pointer"
                 >
-                  <img src={configuredIntegrations[0].iconSrc} alt="" className="h-4 w-4 object-contain" />
-                  <span className="truncate">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={configuredIntegrations[0].iconSrc}
+                    alt=""
+                    className="h-4 w-4 object-contain"
+                    onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/icons/link.svg"; }}
+                  />
+                  <span className="truncate hidden md:inline">
                     {sendingIntegration === configuredIntegrations[0].id
                       ? "Sending..."
                       : sentIntegrations[configuredIntegrations[0].id]
@@ -1104,19 +1128,17 @@ function SingleViewContent() {
                 </button>
               )}
               {isTeamMember && configuredIntegrations.length > 1 && (
-                <div ref={integrationMenuRef} className="relative flex-1 sm:flex-initial">
+                <div ref={integrationMenuRef} className="relative">
                   <button
                     type="button"
                     onClick={() => setIntegrationMenuOpen((o) => !o)}
-                    className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-white dark:bg-background px-3.5 py-2 text-xs font-semibold text-foreground shadow-sm hover:bg-subtle"
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-white dark:bg-background px-3 sm:px-3.5 py-1.5 sm:py-2 text-xs font-semibold text-foreground shadow-xs hover:bg-subtle cursor-pointer"
                   >
-                    <svg className="h-4 w-4 text-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                    </svg>
-                    <span>Push to Integration</span>
-                    <svg className={`h-3 w-3 text-muted transition-transform ${integrationMenuOpen ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/icons/send.svg" alt="" className="h-4 w-4 shrink-0" />
+                    <span className="hidden md:inline">Push to Integration</span>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/icons/chevron-down.svg" alt="" className={`h-3 w-3 transition-transform ${integrationMenuOpen ? "rotate-180" : ""}`} />
                   </button>
                   {integrationMenuOpen && (
                     <div className="absolute right-0 top-full z-50 mt-2 w-52 rounded-xl border border-border bg-white dark:bg-background p-1 shadow-xl space-y-0.5">
@@ -1126,9 +1148,15 @@ function SingleViewContent() {
                           type="button"
                           disabled={!!sendingIntegration}
                           onClick={() => handleSendToIntegration(intItem.id)}
-                          className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs font-medium text-foreground hover:bg-subtle disabled:opacity-50 transition-colors"
+                          className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2 text-left text-xs font-medium text-foreground hover:bg-subtle disabled:opacity-50 transition-colors cursor-pointer"
                         >
-                          <img src={intItem.iconSrc} alt="" className="w-4 h-4 object-contain shrink-0" />
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={intItem.iconSrc}
+                            alt=""
+                            className="w-4 h-4 object-contain shrink-0"
+                            onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/icons/link.svg"; }}
+                          />
                           <span className="truncate flex-1">
                             {sendingIntegration === intItem.id ? "Sending..." : intItem.name}
                           </span>
@@ -1141,42 +1169,347 @@ function SingleViewContent() {
                   )}
                 </div>
               )}
-              {isWorkspaceOwner && (
-                <div ref={moveMenuRef} className="relative flex-1 sm:flex-initial">
-                  <button type="button" onClick={() => { setMoveSubmenuOpen((o) => !o); if (capFolders.length === 0) loadCapFolders(); }} className="w-full inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-white dark:bg-background px-3.5 py-2 text-xs font-semibold text-foreground shadow-sm hover:bg-subtle">
-                    <svg className="h-4 w-4 text-muted shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/></svg>
-                    <span>{t("v.moveToFolder")}</span>
+              {isTeamMember && (
+                <div ref={moveMenuRef} className="relative">
+                  <button
+                    type="button"
+                    onClick={() => { setMoveSubmenuOpen((o) => !o); if (capFolders.length === 0) loadCapFolders(); }}
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-white dark:bg-background px-3 sm:px-3.5 py-1.5 sm:py-2 text-xs font-semibold text-foreground shadow-xs hover:bg-subtle cursor-pointer transition-colors"
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/icons/folder.svg" alt="" className="h-4 w-4 shrink-0" />
+                    <span>{capture?.folder_name || t("v.moveToFolder")}</span>
                   </button>
                   {moveSubmenuOpen && (
                     <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-xl border border-border bg-white dark:bg-zinc-900 p-1 shadow-xl">
-                      <button type="button" disabled={movingCapture} onClick={() => handleMoveCapture(null)} className="w-full rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50">{t("v.noFolder")}</button>
-                      {capFolders.map((folder) => (
-                        <button key={folder} type="button" disabled={movingCapture} onClick={() => handleMoveCapture(folder)} className="w-full truncate rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50">{folder}</button>
-                      ))}
+                      <button
+                        type="button"
+                        disabled={movingCapture}
+                        onClick={() => handleMoveCapture(null)}
+                        className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50 cursor-pointer ${!capture?.folder_name ? "font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/20" : ""}`}
+                      >
+                        <span>{t("v.noFolder")}</span>
+                        {!capture?.folder_name && <span className="text-xs">✓</span>}
+                      </button>
+                      {capFolders.map((folder) => {
+                        const isCurrent = capture?.folder_name === folder;
+                        return (
+                          <button
+                            key={folder}
+                            type="button"
+                            disabled={movingCapture}
+                            onClick={() => handleMoveCapture(folder)}
+                            className={`w-full flex items-center justify-between truncate rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50 cursor-pointer ${isCurrent ? "font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/20" : ""}`}
+                          >
+                            <span className="truncate">{folder}</span>
+                            {isCurrent && <span className="text-xs shrink-0 ml-1">✓</span>}
+                          </button>
+                        );
+                      })}
                       {newFolderMode ? (
-                        <form onSubmit={(e) => { e.preventDefault(); handleCreateFolderAndMove(); }} className="p-2">
+                        <form onSubmit={(e) => { e.preventDefault(); handleCreateFolderAndMove(); }} className="p-2 border-t border-border mt-1">
                           <input autoFocus value={newFolderName} onChange={(e) => setNewFolderName(e.target.value)} placeholder={t("v.folderName")} className="w-full rounded-md border border-border bg-white dark:bg-zinc-800 text-foreground px-2 py-1 text-xs outline-none" />
                         </form>
                       ) : (
-                        <button type="button" onClick={() => setNewFolderMode(true)} className="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40">{t("v.newFolder")}</button>
+                        <button type="button" onClick={() => setNewFolderMode(true)} className="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 cursor-pointer border-t border-border mt-1">{t("v.newFolder")}</button>
                       )}
                     </div>
                   )}
                 </div>
               )}
-              <button type="button" onClick={handleCopyLink} className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-indigo-700 flex-1 sm:flex-initial">
-                <svg className="h-4 w-4 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              <button
+                type="button"
+                onClick={handleCopyLink}
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-3 sm:px-3.5 py-1.5 sm:py-2 text-xs font-semibold text-white shadow-xs hover:bg-indigo-700 transition cursor-pointer"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icons/link-white.svg" alt="" className="h-4 w-4 shrink-0" />
                 <span>{copied ? t("v.copied") : t("v.copyLinkBtn")}</span>
               </button>
             </div>
+          )}
+          {status !== "ready" && isTeamMember && (
+            <Link
+              href="/captures"
+              className="px-3 sm:px-4 py-2 rounded-xl border border-border bg-subtle/80 hover:bg-background text-xs font-semibold text-foreground flex items-center transition-all shadow-2xs hover:shadow-xs shrink-0"
+            >
+              <span className="hidden sm:inline">{t("v.backToDashboard")}</span>
+              <span className="sm:hidden">{t("nav.captures")}</span>
+            </Link>
+          )}
+          {!isTeamMember && (
+            <div className="flex items-center gap-2">
+              <Link
+                href="/login"
+                className="px-3 sm:px-3.5 py-1.5 rounded-xl border border-border bg-subtle/80 hover:bg-background text-xs font-semibold text-foreground transition-all shadow-2xs hover:shadow-xs"
+              >
+                {t("v.signIn")}
+              </Link>
+              <Link
+                href="/"
+                className="px-3 sm:px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-xs font-semibold text-white transition-all shadow-xs active:scale-95"
+              >
+                {t("login.backToHome")}
+              </Link>
+            </div>
+          )}
+        </div>
+      </header>
 
-            <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_440px]">
+      {status !== "ready" && (
+        <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 my-auto">
+          {status === "loading" && (
+            <div className="w-full max-w-5xl flex flex-col gap-6 animate-pulse">
+              <div className="h-[clamp(16rem,40vh,28rem)] sm:h-[clamp(28rem,72vh,60rem)] bg-subtle/80 rounded-3xl border border-border/70 backdrop-blur-md" />
+              <div className="h-36 bg-subtle/80 rounded-2xl border border-border/70 backdrop-blur-md" />
+            </div>
+          )}
+
+          {status === "notfound" && (
+            <div className="relative w-full max-w-md mx-auto rounded-3xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle/80 backdrop-blur-xl shadow-2xl shadow-slate-200/60 dark:shadow-none p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
+              <div className="relative mx-auto mb-5 flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-900/50 text-amber-600 dark:text-amber-400 shadow-xs">
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase bg-slate-100 dark:bg-zinc-800 text-muted mb-3 border border-border/60">
+                404 • Not Found
+              </span>
+
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">
+                {t("v.notFoundTitle")}
+              </h1>
+              <p className="text-sm text-muted mt-2 mb-8 leading-relaxed max-w-xs mx-auto">
+                {t("v.notFoundHint")}
+              </p>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full">
+                <Link
+                  href={isTeamMember ? "/captures" : "/"}
+                  className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-md shadow-indigo-600/20 hover:shadow-lg transition-all"
+                >
+                  <span>{isTeamMember ? t("v.backToDashboard") : t("login.backToHome")}</span>
+                </Link>
+                <Link
+                  href="/login"
+                  className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-border bg-subtle hover:bg-background active:scale-95 text-foreground text-xs sm:text-sm font-semibold shadow-2xs hover:shadow-xs transition-all"
+                >
+                  <span>{t("v.loginToBugSnap")}</span>
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {status === "expired" && (
+            <div className="relative w-full max-w-md mx-auto rounded-3xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle/80 backdrop-blur-xl shadow-2xl shadow-slate-200/60 dark:shadow-none p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
+              <div className="relative mx-auto mb-5 flex items-center justify-center w-16 h-16 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200/60 dark:border-red-900/50 text-red-600 dark:text-red-400 shadow-xs">
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 mb-3 border border-red-200/60 dark:border-red-900/60">
+                Expired
+              </span>
+
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">
+                {t("v.expiredTitle")}
+              </h1>
+              <p className="text-sm text-muted mt-2 mb-8 leading-relaxed max-w-xs mx-auto">
+                {t("v.expiredHint")}
+              </p>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full">
+                <Link
+                  href="/"
+                  className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-md shadow-indigo-600/20 hover:shadow-lg transition-all"
+                >
+                  <span>{t("login.backToHome")}</span>
+                </Link>
+                <Link
+                  href="/login"
+                  className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-border bg-subtle hover:bg-background active:scale-95 text-foreground text-xs sm:text-sm font-semibold shadow-2xs hover:shadow-xs transition-all"
+                >
+                  <span>{t("v.loginToBugSnap")}</span>
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {status === "unauthorized_ip" && (
+            <div className="relative w-full max-w-md mx-auto rounded-3xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle/80 backdrop-blur-xl shadow-2xl shadow-slate-200/60 dark:shadow-none p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
+              <div className="relative mx-auto mb-5 flex items-center justify-center w-16 h-16 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200/60 dark:border-red-900/50 text-red-600 dark:text-red-400 shadow-xs">
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m0 0v2m0-2h2m-2 0H10m11-3.5a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 mb-3 border border-red-200/60 dark:border-red-900/60">
+                IP Restricted
+              </span>
+
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">
+                {t("v.accessRestricted")}
+              </h1>
+              <p className="text-sm text-muted mt-2 mb-8 leading-relaxed max-w-xs mx-auto">
+                {t("v.ipNotAuthorized")}
+              </p>
+
+              <Link
+                href="/"
+                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-md shadow-indigo-600/20 transition-all"
+              >
+                <span>{t("login.backToHome")}</span>
+              </Link>
+            </div>
+          )}
+
+          {status === "needs_login" && (
+            <div className="relative w-full max-w-md mx-auto rounded-3xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle/80 backdrop-blur-xl shadow-2xl shadow-slate-200/60 dark:shadow-none p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
+              <div className="relative mx-auto mb-5 flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200/60 dark:border-indigo-900/50 text-indigo-600 dark:text-indigo-400 shadow-xs">
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+              </div>
+
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 mb-3 border border-indigo-200/60 dark:border-indigo-900/60">
+                Members Only
+              </span>
+
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">
+                {t("v.loginRequired")}
+              </h1>
+              <p className="text-sm text-muted mt-2 mb-8 leading-relaxed max-w-xs mx-auto">
+                {accessMode === "members" ? t("v.membersOnlyRestricted") : t("v.domainRestricted")}
+              </p>
+
+              <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full">
+                <a
+                  href="/login"
+                  className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-md shadow-indigo-600/20 hover:shadow-lg transition-all"
+                >
+                  <span>{t("v.signIn")}</span>
+                </a>
+                <Link
+                  href="/"
+                  className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-border bg-subtle hover:bg-background active:scale-95 text-foreground text-xs sm:text-sm font-semibold shadow-2xs hover:shadow-xs transition-all"
+                >
+                  <span>{t("login.backToHome")}</span>
+                </Link>
+              </div>
+            </div>
+          )}
+
+          {status === "unauthorized_domain" && (
+            <div className="relative w-full max-w-md mx-auto rounded-3xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle/80 backdrop-blur-xl shadow-2xl shadow-slate-200/60 dark:shadow-none p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
+              <div className="relative mx-auto mb-5 flex items-center justify-center w-16 h-16 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200/60 dark:border-red-900/50 text-red-600 dark:text-red-400 shadow-xs">
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                </svg>
+              </div>
+
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 mb-3 border border-red-200/60 dark:border-red-900/60">
+                Domain Restricted
+              </span>
+
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">
+                {t("v.accessDenied")}
+              </h1>
+              <p className="text-sm text-muted mt-2 mb-8 leading-relaxed max-w-xs mx-auto">
+                {t("v.domainNotAuthorized")}
+              </p>
+
+              <Link
+                href="/"
+                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-md shadow-indigo-600/20 transition-all"
+              >
+                <span>{t("login.backToHome")}</span>
+              </Link>
+            </div>
+          )}
+
+          {status === "locked" && (
+            <div className="relative w-full max-w-md mx-auto rounded-3xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle/80 backdrop-blur-xl shadow-2xl shadow-slate-200/60 dark:shadow-none p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
+              <div className="relative mx-auto mb-5 flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200/60 dark:border-indigo-900/50 text-indigo-600 dark:text-indigo-400 shadow-xs">
+                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+                </svg>
+              </div>
+
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase bg-slate-100 dark:bg-zinc-800 text-muted mb-3 border border-border/60">
+                Protected
+              </span>
+
+              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground mb-2">
+                {t("v.passwordProtected")}
+              </h1>
+              <p className="text-sm text-muted mb-6 leading-relaxed">
+                Please enter the password to view this capture.
+              </p>
+
+              <form onSubmit={submitPassword} className="flex flex-col gap-3.5">
+                <div className="relative">
+                  <input
+                    type="password"
+                    value={passwordInput}
+                    onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(false); }}
+                    placeholder={t("v.passwordPlaceholder")}
+                    className={`w-full text-sm rounded-xl border px-4 py-3 outline-none bg-subtle text-foreground placeholder:text-muted transition-all ${passwordError ? "border-red-500 focus:ring-2 focus:ring-red-500/20" : "border-border focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"}`}
+                  />
+                </div>
+                {passwordError && (
+                  <p className="text-xs text-red-600 dark:text-red-400 text-left font-medium">
+                    {t("v.incorrectPassword")}
+                  </p>
+                )}
+                <button
+                  type="submit"
+                  disabled={checkingPassword || !passwordInput.trim()}
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 py-3 text-sm font-semibold text-white shadow-md shadow-indigo-600/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {checkingPassword ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      <span>{t("v.unlocking")}</span>
+                    </>
+                  ) : (
+                    <span>{t("v.unlock")}</span>
+                  )}
+                </button>
+              </form>
+            </div>
+          )}
+        </div>
+      )}
+
+      {status !== "ready" && (
+        <footer className="py-6 text-center text-xs text-muted/70 border-t border-border/40 shrink-0">
+          BugSnap &mdash; From Click to Fix
+        </footer>
+      )}
+
+      {status === "ready" && capture && (
+        <main className="flex-1 overflow-y-auto bg-[#fbfbfd] dark:bg-background flex flex-col justify-between">
+          <div className="mx-auto flex w-full max-w-[1560px] flex-col gap-3 px-3 sm:px-6 pt-3 sm:pt-4 pb-12 sm:pb-16 lg:pb-20">
+            {isTeamMember && (
+              <div className="flex items-center justify-between gap-2 w-full">
+                <Link
+                  href="/captures"
+                  className="inline-flex items-center justify-center rounded-lg border border-border bg-white dark:bg-background px-3.5 py-2 text-xs font-semibold text-foreground shadow-sm hover:bg-subtle transition-colors"
+                >
+                  <span>{t("v.backToDashboard")}</span>
+                </Link>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_440px] xl:items-start">
               <section className="rounded-xl border border-border bg-white p-4 sm:p-6 lg:p-7 shadow-sm dark:bg-background">
                 <MediaViewer
                   type={capture.type}
                   driveUrl={capture.drive_url}
                   title={capture.title}
-                  onTimeUpdate={(t) => setPlaybackTime(t)}
+                  onTimeUpdate={handlePlaybackTimeUpdate}
                   seekToTime={seekTargetTime}
                   errorMarkers={errorMarkers}
                   accessMode={accessMode}
@@ -1197,9 +1530,7 @@ function SingleViewContent() {
                       </h2>
                       {isTeamMember && (
                         <span className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-xs font-medium text-muted flex items-center gap-1 shrink-0 mt-0.5 rounded-md border border-border/60 bg-white dark:bg-background px-2 py-0.5 shadow-sm">
-                          <svg className="h-3.5 w-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
-                          </svg>
+                          <img src="/icons/edit.svg" alt="" className="h-3.5 w-3.5" />
                           Edit
                         </span>
                       )}
@@ -1210,7 +1541,7 @@ function SingleViewContent() {
                       <p className="mt-1 text-xs italic text-muted/60">{t("v.addDescription")}</p>
                     ) : null}
                     <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted">
-                      {capture.site_url && (
+                      {capture.site_url && /^https?:\/\//i.test(capture.site_url) ? (
                         <a
                           href={capture.site_url}
                           target="_blank"
@@ -1221,7 +1552,11 @@ function SingleViewContent() {
                           <WebsiteFavicon url={capture.site_url} className="h-3.5 w-3.5 rounded-sm object-contain shrink-0" />
                           <span>{hostnameOf(capture.site_url)}</span>
                         </a>
-                      )}
+                      ) : capture.site_url ? (
+                        <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 px-2.5 py-1 font-medium text-indigo-600">
+                          <span>{capture.site_url}</span>
+                        </span>
+                      ) : null}
                       <span>•</span>
                       <span>{new Date(capture.created_at).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: "Asia/Jakarta", timeZoneName: "short" })}</span>
                       {viewCount !== null && <><span>•</span><span>{t("v.viewCount", { count: viewCount })}</span></>}
@@ -1229,20 +1564,27 @@ function SingleViewContent() {
                     {capture.expires_at && <p className="mt-2 text-[11px] font-medium text-muted">{getExpiryCountdown(capture.expires_at, t)}</p>}
                   </div>
                   <div className="border-t border-border pt-3">
-                    <Comments captureId={capture.id} isVideo={capture.type === "video"} authorName={viewerEmail ? viewerEmail.split("@")[0] : undefined} authorEmail={viewerEmail || undefined} />
+                    <Comments
+                      captureId={capture.id}
+                      isVideo={capture.type === "video"}
+                      authorName={viewerEmail ? viewerEmail.split("@")[0] : undefined}
+                      authorEmail={viewerEmail || undefined}
+                      onSeek={(t) => setSeekTargetTime((prev) => (prev === t ? t + 0.0001 : t))}
+                      getCurrentTime={() => playbackTime}
+                    />
                   </div>
                 </div>
               </section>
 
-              <aside className="flex flex-col gap-3 xl:h-full">
+              <aside className="flex flex-col gap-3 xl:sticky xl:top-4 xl:self-start">
                 {!hideDevTools && (
                   <DevToolsPanel
                     capture={capture as unknown as React.ComponentProps<typeof DevToolsPanel>["capture"]}
                     currentTime={playbackTime}
-                    onSeekToTime={(t) => setSeekTargetTime(t)}
+                    onSeekToTime={(t) => setSeekTargetTime((prev) => (prev === t ? t + 0.0001 : t))}
                   />
                 )}
-                <section className="rounded-xl border border-border bg-white p-5 shadow-sm dark:bg-background xl:h-full xl:flex-1 flex flex-col justify-between">
+                <section className="rounded-xl border border-border bg-white p-5 shadow-sm dark:bg-background">
                   <div>
                     <h3 className="mb-4 text-base font-bold text-foreground">{t("v.shareCapture")}</h3>
                     <div className="grid grid-cols-2 gap-3 sm:gap-5 text-center">
@@ -1261,8 +1603,8 @@ function SingleViewContent() {
                       <label className="mb-2 block text-xs font-semibold text-muted">{t("v.generalAccess")}</label>
                       <div ref={accessMenuRef} className="relative">
                         <button type="button" onClick={() => setAccessOpen((open) => !open)} className="flex w-full items-center justify-between rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-subtle">
-                          <span className="flex items-center gap-2"><svg className="h-4 w-4 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 0 20M12 2a15.3 15.3 0 0 0 0 20"/></svg>{accessMode === "members" ? t("v.membersOnly") : t("v.anyoneWithLink")}</span>
-                          <svg className="h-3 w-3 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="m6 9 6 6 6-6"/></svg>
+                          <span className="flex items-center gap-2"><img src="/icons/globe.svg" alt="" className="h-4 w-4" />{accessMode === "members" ? t("v.membersOnly") : t("v.anyoneWithLink")}</span>
+                          <img src="/icons/chevron-down.svg" alt="" className="h-3 w-3" />
                         </button>
                         {accessOpen && (
                           <div className="absolute left-0 right-0 top-full z-50 mt-2 rounded-xl border border-border bg-white dark:bg-zinc-900 p-1 shadow-xl">
@@ -1275,7 +1617,7 @@ function SingleViewContent() {
                   </div>
                   <div className="mt-6 pt-2">
                     <button type="button" onClick={handleCopyLink} className="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700">
-                      <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                      <img src="/icons/link-white.svg" alt="" className="h-4 w-4" />
                       {copied ? t("v.copiedLink") : t("v.copyLinkBtn")}
                     </button>
                     {isWorkspaceOwner && (
@@ -1284,7 +1626,7 @@ function SingleViewContent() {
                         onClick={handleDeleteCapture}
                         className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 dark:border-red-900/60 bg-white dark:bg-red-950/20 py-2.5 text-xs font-semibold text-red-600 dark:text-red-400 shadow-sm hover:bg-red-50 dark:hover:bg-red-950/40 hover:border-red-300 transition-colors"
                       >
-                        <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m19 6-1 14H6L5 6"/></svg>
+                        <img src="/icons/trash.svg" alt="" className="h-3.5 w-3.5" />
                         {t("v.deleteCapture")}
                       </button>
                     )}
@@ -1396,9 +1738,7 @@ function SingleViewContent() {
           <div className="absolute inset-0 bg-black/40" onClick={() => { if (!deletingCapture) { setDeleteCaptureModalOpen(false); setDeleteOperationId(null); } }} />
           <div className="relative w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-xl bg-white dark:bg-zinc-900 shadow-xl border border-border p-6 text-center">
             <div className="mx-auto mb-4 w-12 h-12 rounded-full bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 flex items-center justify-center text-red-600 dark:text-red-400">
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
+              <img src="/icons/trash.svg" alt="" className="w-6 h-6" />
             </div>
             <h2 className="text-lg font-bold text-foreground mb-2">{t("v.deleteCaptureQ")}</h2>
             <p className="text-xs text-muted leading-relaxed mb-4">

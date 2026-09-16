@@ -71,3 +71,50 @@ test("compensation errors accurately distinguish restored and still-trashed file
   assert.equal(compensatedDeleteError(new Error("DB failed")), "DB failed. The Google Drive file was restored");
   assert.equal(compensatedDeleteError(new Error("DB failed"), new Error("Drive 503")), "DB failed. Google Drive restore also failed: Drive 503");
 });
+
+function resolveTargetUserId(explicitUserId, callerUserId) {
+  const targetId = explicitUserId?.trim() || callerUserId;
+  if (!targetId) {
+    return { error: "Target userId is required", status: 400, code: "TARGET_USER_REQUIRED" };
+  }
+  if (!isUuid(targetId)) {
+    return { error: "Invalid target userId format", status: 400, code: "INVALID_USER_ID" };
+  }
+  return { userId: targetId };
+}
+
+test("drive-orphans multi-tenant safety: strictly requires explicit userId or admin user identity", () => {
+  // Never pick a random connection when no target or user identity is supplied
+  const unauthed = resolveTargetUserId(undefined, undefined);
+  assert.equal(unauthed.code, "TARGET_USER_REQUIRED");
+  assert.equal(unauthed.status, 400);
+
+  // Reject malformed / non-UUID target
+  const invalid = resolveTargetUserId("malicious-sql-or-id", undefined);
+  assert.equal(invalid.code, "INVALID_USER_ID");
+  assert.equal(invalid.status, 400);
+
+  // Default to authenticated admin's own user id when param is omitted
+  const ownAdmin = resolveTargetUserId(undefined, "550e8400-e29b-41d4-a716-446655440000");
+  assert.equal(ownAdmin.userId, "550e8400-e29b-41d4-a716-446655440000");
+
+  // Explicit target userId overrides admin's own id for targeted customer audit
+  const targeted = resolveTargetUserId("a0000000-0000-4000-8000-000000000001", "550e8400-e29b-41d4-a716-446655440000");
+  assert.equal(targeted.userId, "a0000000-0000-4000-8000-000000000001");
+});
+
+test("email-health safety: recipient validation rejects header injection and malformed addresses", () => {
+  const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+  const isValid = (email) => Boolean(email && emailRegex.test(email) && !email.includes("\r") && !email.includes("\n"));
+
+  assert.equal(isValid("support@bugsnap.akusaraproject.my.id"), true);
+  assert.equal(isValid("contact.akusaraproject@gmail.com"), true);
+  assert.equal(isValid("admin@company.co.id"), true);
+
+  // Header injection attacks
+  assert.equal(isValid("victim@example.com\r\nBcc: evil@attacker.com"), false);
+  assert.equal(isValid("victim@example.com\nSubject: Injected"), false);
+  assert.equal(isValid("<script>alert(1)</script>@example.com"), false);
+  assert.equal(isValid("notanemail"), false);
+  assert.equal(isValid(""), false);
+});

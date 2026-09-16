@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceClient, getAuthenticatedUser } from "@/lib/supabase-server";
 import { renderWorkspaceInviteEmail } from "@/lib/email-templates";
+import { isRateLimited } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -10,6 +11,13 @@ export async function POST(req: Request) {
   const user = await getAuthenticatedUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+  if (await isRateLimited(`invite-email:${user.id}`, 15, 600)) {
+    return NextResponse.json(
+      { error: "Terlalu banyak undangan dikirim. Silakan tunggu beberapa menit." },
+      { status: 429 }
+    );
+  }
+
   const { email, workspaceId } = await req.json().catch(() => ({}));
   const targetEmail = String(email || "").trim().toLowerCase();
   const wsId = String(workspaceId || "").trim();
@@ -18,18 +26,20 @@ export async function POST(req: Request) {
   const supabase = createServiceClient();
   const { data: workspace, error: wsError } = await supabase
     .from("workspaces")
-    .select("id, name")
+    .select("id, name, owner_user_id")
     .eq("id", wsId)
     .maybeSingle();
   if (wsError || !workspace) return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
 
-  const { data: member } = await supabase
-    .from("workspace_members")
-    .select("role")
-    .eq("workspace_id", wsId)
-    .eq("user_id", user.id)
-    .maybeSingle();
-  if (!member) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (workspace.owner_user_id !== user.id) {
+    const { data: member } = await supabase
+      .from("workspace_members")
+      .select("role")
+      .eq("workspace_id", wsId)
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (!member || member.role === "viewer") return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://bugsnap.akusaraproject.my.id";
   const from = process.env.RESEND_FROM_EMAIL || "BugSnap <no-reply@bugsnap.akusaraproject.my.id>";

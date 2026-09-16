@@ -42,6 +42,10 @@ next-env.d.ts
 # Supabase CLI generated state
 supabase/.temp/
 
+# Claude CLI worktrees and state
+.claude/
+
+
 # Local agent / test artifacts
 .zcode/
 test-results/

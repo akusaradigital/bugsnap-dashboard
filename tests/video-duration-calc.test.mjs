@@ -28,7 +28,7 @@ function getApproxDurationFromLogs(logs, explicitDuration) {
   }
 
   const span = earliest > 0 && latest > earliest ? Math.ceil((latest - earliest) / 1000) : 0;
-  return Math.max(maxSec, span);
+  return maxSec > 0 ? maxSec : span;
 }
 
 // 1. Explicit duration wins
@@ -53,7 +53,13 @@ assert.equal(getApproxDurationFromLogs([
   { timestamp: base + 9100, message: "end" }
 ]), 10);
 
-// 4. Empty or invalid logs return 0
+// 4. Prefer relative log time over broader page lifecycle timestamp span
+assert.equal(getApproxDurationFromLogs([
+  { timestamp: base, time: "0:02", message: "click" },
+  { timestamp: base + 26000, time: "0:16", message: "end" }
+]), 16);
+
+// 5. Empty or invalid logs return 0
 assert.equal(getApproxDurationFromLogs([]), 0);
 assert.equal(getApproxDurationFromLogs(null), 0);
 

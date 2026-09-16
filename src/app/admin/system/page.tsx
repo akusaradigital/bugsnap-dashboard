@@ -15,6 +15,7 @@ interface PingService {
 }
 
 interface OrphanData {
+  targetUserId?: string;
   totalDriveFiles: number;
   linkedCaptureFiles: number;
   orphanCount: number;
@@ -37,6 +38,7 @@ export default function AdminSystemPage() {
   const [cleaningDrive, setCleaningDrive] = useState(false);
   const [orphanData, setOrphanData] = useState<OrphanData | null>(null);
   const [driveError, setDriveError] = useState<string | null>(null);
+  const [targetUserIdInput, setTargetUserIdInput] = useState("");
 
   // Schema integrity
   const [integrityData, setIntegrityData] = useState<unknown>(cachedAudit?.integrityData || null);
@@ -91,7 +93,9 @@ export default function AdminSystemPage() {
     setDriveError(null);
     try {
       const headers = await getAdminHeaders();
-      const res = await fetch("/api/admin/drive-orphans", { headers });
+      const targetId = targetUserIdInput.trim();
+      const query = targetId ? `?userId=${encodeURIComponent(targetId)}` : "";
+      const res = await fetch(`/api/admin/drive-orphans${query}`, { headers });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Gagal memindai Google Drive");
 
@@ -114,10 +118,11 @@ export default function AdminSystemPage() {
     setCleaningDrive(true);
     try {
       const headers = await getAdminHeaders();
+      const targetUserId = orphanData.targetUserId || targetUserIdInput.trim() || undefined;
       const res = await fetch("/api/admin/drive-orphans", {
         method: "POST",
         headers,
-        body: JSON.stringify({ fileIds }),
+        body: JSON.stringify({ fileIds, userId: targetUserId }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Gagal membersihkan file orphan.");
@@ -232,18 +237,28 @@ export default function AdminSystemPage() {
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-200 flex items-center gap-2">
                 <span>📁 Google Drive Orphan Storage Cleaner</span>
               </h3>
-              <button
-                type="button"
-                onClick={handleScanDrive}
-                disabled={scanningDrive || cleaningDrive}
-                className="px-3 py-1 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 transition-colors cursor-pointer"
-              >
-                {scanningDrive ? "Memindai..." : "Pindai File 🔍"}
-              </button>
             </div>
             <p className="text-[11px] text-slate-500 dark:text-zinc-400 leading-relaxed">
               Mendeteksi rekaman di Google Drive yang datanya telah terhapus dari database BugSnap namun masih memakan kuota cloud storage.
             </p>
+
+            <div className="flex gap-2 mt-2">
+              <input
+                type="text"
+                placeholder="Target User UUID (opsional jika login dengan akun admin)"
+                value={targetUserIdInput}
+                onChange={(e) => setTargetUserIdInput(e.target.value)}
+                className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200 flex-1 font-mono placeholder:font-sans placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+              />
+              <button
+                type="button"
+                onClick={handleScanDrive}
+                disabled={scanningDrive || cleaningDrive}
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 transition-colors cursor-pointer shrink-0"
+              >
+                {scanningDrive ? "Memindai..." : "Pindai File 🔍"}
+              </button>
+            </div>
 
             {driveError && (
               <div className="mt-3 p-3 rounded-lg border border-rose-200 dark:border-rose-900 bg-rose-50 dark:bg-rose-950/30 text-xs text-rose-600 dark:text-rose-400">
@@ -253,6 +268,11 @@ export default function AdminSystemPage() {
 
             {orphanData && (
               <div className="mt-4 space-y-3">
+                {orphanData.targetUserId && (
+                  <div className="text-[11px] text-slate-500 dark:text-zinc-400 font-mono">
+                    Target User ID: <span className="text-indigo-600 dark:text-indigo-400 font-bold">{orphanData.targetUserId}</span>
+                  </div>
+                )}
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800">
                     <span className="text-[10px] text-slate-400 uppercase font-bold">Total File</span>

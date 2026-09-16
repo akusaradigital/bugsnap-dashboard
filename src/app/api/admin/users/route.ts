@@ -1,40 +1,11 @@
 ﻿import { isDisposableEmail } from "@/lib/disposable-email";
 import { resolvePlanWithExpiry } from "@/lib/tiers";
 import { NextResponse } from "next/server";
-import { createServiceClient } from "@/lib/supabase-server";
-import { isRequestAdminAuthenticated } from "@/lib/admin-auth";
+import { checkAdminAuth, isSuperAdminEmail } from "@/lib/admin-auth";
 import { logSecurityEvent } from "@/lib/security-audit";
+import { sanitizePostgrestFilter } from "@/lib/supabase-server";
 
 export const runtime = "nodejs";
-
-const getAdminEmails = () =>
-  (process.env.SUPER_ADMIN_EMAILS || "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-
-async function checkAdminAuth(req: Request) {
-  const isAdminAuthenticated = await isRequestAdminAuthenticated(req);
-  const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-  let authorized = isAdminAuthenticated;
-  let callerUserId: string | null = null;
-  let callerEmail: string | null = null;
-
-  const supabase = createServiceClient();
-
-  if (!authorized && token) {
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (!authError && user?.email) {
-      if (getAdminEmails().includes(user.email.toLowerCase())) {
-        authorized = true;
-        callerUserId = user.id;
-        callerEmail = user.email;
-      }
-    }
-  }
-
-  return { authorized, callerUserId, callerEmail, supabase };
-}
 
 export async function GET(req: Request) {
   const { authorized, supabase } = await checkAdminAuth(req);
@@ -122,7 +93,7 @@ export async function GET(req: Request) {
   // Paginated Users List
   const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
   const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "25", 10)));
-  const search = (searchParams.get("search") || "").trim();
+  const search = sanitizePostgrestFilter(searchParams.get("search"));
   const plan = searchParams.get("plan") || "all";
   const status = searchParams.get("status") || "all";
 
@@ -201,7 +172,7 @@ export async function GET(req: Request) {
 }
 
 export async function PATCH(req: Request) {
-  const { authorized, callerEmail, supabase } = await checkAdminAuth(req);
+  const { authorized, callerUserId, callerEmail, supabase } = await checkAdminAuth(req);
   if (!authorized) {
     return NextResponse.json({ error: "Forbidden: Super Admin only" }, { status: 403 });
   }
@@ -337,6 +308,27 @@ export async function PATCH(req: Request) {
     // 2. Toggle Suspend
     if (action === "toggle_suspend") {
       const isSuspended = Boolean(suspended);
+
+      if (isSuspended) {
+        const { data: targetUser } = await supabase
+          .from("users")
+          .select("id, email")
+          .eq("id", user_id)
+          .maybeSingle();
+
+        if (targetUser) {
+          if (
+            (callerUserId && user_id === callerUserId) ||
+            (callerEmail && targetUser.email?.toLowerCase() === callerEmail.toLowerCase())
+          ) {
+            return NextResponse.json({ error: "You cannot suspend your own account" }, { status: 400 });
+          }
+          if (isSuperAdminEmail(targetUser.email)) {
+            return NextResponse.json({ error: "Super admin accounts cannot be suspended" }, { status: 400 });
+          }
+        }
+      }
+
       const { data, error } = await supabase
         .from("users")
         .update({ suspended: isSuspended })
@@ -367,7 +359,7 @@ export async function PATCH(req: Request) {
         return NextResponse.json({ error: "User not found" }, { status: 404 });
       }
 
-      const origin = req.headers.get("origin") || "https://bugsnap.site";
+      const origin = (process.env.NEXT_PUBLIC_APP_URL || "https://bugsnap.akusaraproject.my.id").replace(/\/+$/, "");
       const { error: resetErr } = await supabase.auth.resetPasswordForEmail(user.email, {
         redirectTo: `${origin}/login?reset=true`,
       });
@@ -405,18 +397,47 @@ export async function DELETE(req: Request) {
       return NextResponse.json({ error: "Missing userId" }, { status: 400 });
     }
 
-    if (callerUserId && userId === callerUserId) {
-      return NextResponse.json({ error: "You cannot delete your own admin account" }, { status: 400 });
-    }
-
-    // Get user email before deletion for audit log
+    // Get user email before deletion for authorization and audit log
     const { data: user } = await supabase
       .from("users")
       .select("email")
       .eq("id", userId)
       .maybeSingle();
 
+    if (
+      (callerUserId && userId === callerUserId) ||
+      (callerEmail && user?.email && user.email.toLowerCase() === callerEmail.toLowerCase())
+    ) {
+      return NextResponse.json({ error: "You cannot delete your own admin account" }, { status: 400 });
+    }
+
+    if (user?.email && isSuperAdminEmail(user.email)) {
+      return NextResponse.json({ error: "Cannot delete a Super Admin account" }, { status: 400 });
+    }
+
     const userEmail = user?.email || userId;
+
+    // Clean up associated relations to prevent foreign key violations
+    await supabase.from("google_drive_connections").delete().eq("user_id", userId);
+    await supabase.from("google_drive_oauth_states").delete().eq("user_id", userId);
+    await supabase.from("comments").delete().eq("user_id", userId);
+
+    const { data: ownedWorkspaces } = await supabase
+      .from("workspaces")
+      .select("id")
+      .eq("owner_user_id", userId);
+
+    const ownedWsIds = (ownedWorkspaces || []).map((w) => w.id);
+    if (ownedWsIds.length > 0) {
+      await supabase.from("captures").delete().in("workspace_id", ownedWsIds);
+      await supabase.from("workspace_settings").delete().in("workspace_id", ownedWsIds);
+      await supabase.from("workspace_members").delete().in("workspace_id", ownedWsIds);
+      await supabase.from("bugsnap_api_keys").delete().in("workspace_id", ownedWsIds);
+      await supabase.from("workspaces").delete().in("id", ownedWsIds);
+    }
+
+    await supabase.from("captures").delete().eq("user_id", userId);
+    await supabase.from("workspace_members").delete().eq("user_id", userId);
 
     // Delete from auth.users (cascades or service role handles)
     try {

@@ -491,7 +491,7 @@ export default function AdminUsersPage() {
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 className="px-2.5 py-1 rounded border border-slate-200 dark:border-zinc-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-zinc-800"
               >
-                ← Prev
+                Prev
               </button>
               <button
                 type="button"
@@ -499,7 +499,7 @@ export default function AdminUsersPage() {
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 className="px-2.5 py-1 rounded border border-slate-200 dark:border-zinc-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-zinc-800"
               >
-                Next →
+                Next
               </button>
             </div>
           </div>
@@ -511,7 +511,7 @@ export default function AdminUsersPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
           <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-2xl space-y-4">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-              {t("admin.changePlan")} — {planModalUser.email}
+              {t("admin.changePlan")} - {planModalUser.email}
             </h3>
             <p className="text-xs text-slate-500 dark:text-zinc-400">
               Ubah paket langganan secara manual untuk akun ini. Perubahan akan langsung aktif di database.
@@ -739,7 +739,7 @@ export default function AdminUsersPage() {
                             rel="noreferrer"
                             className="text-[11px] font-semibold text-indigo-600 hover:underline"
                           >
-                            View →
+                            View
                           </a>
                         </div>
                       ))}

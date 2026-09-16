@@ -57,6 +57,9 @@ export default function DashboardLayout({
   const [creating, setCreating] = useState(false);
   const [members, setMembers] = useState<Record<string, string[]>>({});
   const [folders, setFolders] = useState<string[]>([]);
+  const [failedWsAvatars, setFailedWsAvatars] = useState<Record<string, boolean>>({});
+  const [defaultFolders, setDefaultFolders] = useState<Set<string>>(new Set());
+  const activeWsRole = workspaces.find((w) => w.id === activeWsId)?.role;
   const [draggedFolder, setDraggedFolder] = useState<string | null>(null);
   const [dragOverFolder, setDragOverFolder] = useState<string | null>(null);
   const [, setProjects] = useState<{ id: string; name: string; description: string; is_default: boolean }[]>([]);
@@ -113,7 +116,7 @@ export default function DashboardLayout({
   }
 
   // ponytail: sidebar <aside> has a `transform` class, which makes it the
-  // containing block for `fixed` descendants — a `fixed inset-0` click-catcher
+  // containing block for `fixed` descendants - a `fixed inset-0` click-catcher
   // nested inside it only covers the sidebar's box, not the viewport. A
   // document-level capture-phase pointerdown is immune to that, so every
   // sidebar dropdown (workspace switcher, notifications, folder menu) closes
@@ -153,7 +156,7 @@ export default function DashboardLayout({
     } catch { return 0; }
   });
 
-  // Poll notifications — returns per-capture items within the last 7 days.
+  // Poll notifications - returns per-capture items within the last 7 days.
   useEffect(() => {
     const email = session.user?.email;
     if (!email) return;
@@ -291,7 +294,7 @@ export default function DashboardLayout({
   }, [router]);
 
   // Settings saves the profile on a separate page instance of this same
-  // layout — sync in place instead of requiring a reload to see it.
+  // layout - sync in place instead of requiring a reload to see it.
   useEffect(() => {
     const onProfileUpdated = (e: Event) => {
       const detail = (e as CustomEvent<{ fullName?: string; avatarUrl?: string }>).detail;
@@ -501,6 +504,8 @@ export default function DashboardLayout({
         if (active) {
           const typedProjects = (projectsData || []) as { id: string; name: string; description?: string | null; is_default?: boolean }[];
           setProjects(typedProjects.map((p) => ({ id: p.id, name: p.name, description: p.description || "", is_default: !!p.is_default })));
+          const defSet = new Set((customFoldersData || []).filter((f) => f.is_default).map((f) => f.name));
+          setDefaultFolders(defSet);
           setFolders(
             uniqueFolders.sort((a, b) => {
               if (a === defaultName || b === defaultName) return a === defaultName ? -1 : 1;
@@ -724,6 +729,10 @@ export default function DashboardLayout({
   };
 
   const handleDeleteFolder = (folderName: string) => {
+    if (defaultFolders.has(folderName)) {
+      showToast("Default folder cannot be deleted", "error");
+      return;
+    }
     setFolderToDelete(folderName);
     setDeleteFolderModalOpen(true);
   };
@@ -1006,9 +1015,14 @@ export default function DashboardLayout({
             onClick={() => setWsOpen((o) => !o)}
             className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium rounded-xl border border-border bg-subtle hover:bg-border/30 transition-colors text-left"
           >
-            {activeWs?.avatar_url ? (
+            {activeWs?.avatar_url && !failedWsAvatars[activeWs.id] ? (
               /* eslint-disable-next-line @next/next/no-img-element */
-              <img src={activeWs.avatar_url} alt={activeWs.name} className="w-6 h-6 rounded-md object-cover shrink-0 bg-subtle border border-border" />
+              <img
+                src={activeWs.avatar_url}
+                alt={activeWs.name}
+                onError={() => setFailedWsAvatars((prev) => ({ ...prev, [activeWs.id]: true }))}
+                className="w-6 h-6 rounded-md object-cover shrink-0 bg-subtle border border-border"
+              />
             ) : (
               <span className="w-6 h-6 rounded-md bg-indigo-600 text-white text-[11px] font-semibold flex items-center justify-center shrink-0">
                 {initialOf(activeWs?.name)}
@@ -1025,9 +1039,14 @@ export default function DashboardLayout({
               <div className="fixed inset-0 z-40" onClick={closeWorkspaceMenus} />
               <div className="absolute left-3 right-3 top-[calc(100%+8px)] z-50 rounded-2xl border border-border bg-subtle shadow-xl overflow-visible">
                 <div className="p-4 flex items-center gap-3 border-b border-border">
-                  {activeWs?.avatar_url ? (
+                  {activeWs?.avatar_url && !failedWsAvatars[activeWs.id] ? (
                     /* eslint-disable-next-line @next/next/no-img-element */
-                    <img src={activeWs.avatar_url} alt={activeWs.name} className="w-10 h-10 rounded-xl object-cover shrink-0 bg-subtle border border-border" />
+                    <img
+                      src={activeWs.avatar_url}
+                      alt={activeWs.name}
+                      onError={() => setFailedWsAvatars((prev) => ({ ...prev, [activeWs.id]: true }))}
+                      className="w-10 h-10 rounded-xl object-cover shrink-0 bg-subtle border border-border"
+                    />
                   ) : (
                     <span className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 text-lg font-semibold flex items-center justify-center shrink-0">
                       {initialOf(activeWs?.name)}
@@ -1091,9 +1110,14 @@ export default function DashboardLayout({
                           }}
                           className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm text-left transition-colors ${activeWsId === ws.id ? "bg-subtle text-foreground font-semibold" : "text-foreground hover:bg-subtle"}`}
                         >
-                          {ws.avatar_url ? (
+                          {ws.avatar_url && !failedWsAvatars[ws.id] ? (
                             /* eslint-disable-next-line @next/next/no-img-element */
-                            <img src={ws.avatar_url} alt={ws.name} className="w-7 h-7 rounded-lg object-cover shrink-0 bg-subtle border border-border" />
+                            <img
+                              src={ws.avatar_url}
+                              alt={ws.name}
+                              onError={() => setFailedWsAvatars((prev) => ({ ...prev, [ws.id]: true }))}
+                              className="w-7 h-7 rounded-lg object-cover shrink-0 bg-subtle border border-border"
+                            />
                           ) : (
                             <span className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 text-sm font-semibold flex items-center justify-center shrink-0">{ws.name.charAt(0)}</span>
                           )}
@@ -1212,12 +1236,14 @@ export default function DashboardLayout({
                 </svg>
                 {t("layout.folders")}
               </p>
-              <button
-                onClick={() => setCreateFolderModalOpen(true)}
-                className="text-[10px] font-bold text-indigo-600 hover:underline"
-              >
-                {t("layout.create")}
-              </button>
+              {activeWsRole === "owner" && (
+                <button
+                  onClick={() => setCreateFolderModalOpen(true)}
+                  className="text-[10px] font-bold text-indigo-600 hover:underline"
+                >
+                  {t("layout.create")}
+                </button>
+              )}
             </div>
             
             <div className="max-h-40 overflow-y-auto space-y-0.5">
@@ -1312,16 +1338,18 @@ export default function DashboardLayout({
                               >
                                 Rename
                               </button>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setFolderMenuOpen(null);
-                                  handleDeleteFolder(folder);
-                                }}
-                                className="block w-full px-3 py-2 text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
-                              >
-                                Delete
-                              </button>
+                              {!defaultFolders.has(folder) && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setFolderMenuOpen(null);
+                                    handleDeleteFolder(folder);
+                                  }}
+                                  className="block w-full px-3 py-2 text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
+                                >
+                                  Delete
+                                </button>
+                              )}
                             </div>
                         )}
                       </div>
@@ -1329,16 +1357,18 @@ export default function DashboardLayout({
                   </div>
                 );
               })}
-              
+
               {folders.length === 0 && (
                 <div className="px-3 py-2 text-center rounded-lg border border-dashed border-border/80 mx-1 bg-subtle/30">
                   <p className="text-[10px] text-muted">{t("layout.noFolders")}</p>
-                  <button
-                    onClick={() => setCreateFolderModalOpen(true)}
-                    className="text-[10px] font-semibold text-indigo-600 hover:underline mt-1"
-                  >
-                    {t("layout.createFolder")}
-                  </button>
+                  {activeWsRole === "owner" && (
+                    <button
+                      onClick={() => setCreateFolderModalOpen(true)}
+                      className="text-[10px] font-semibold text-indigo-600 hover:underline mt-1"
+                    >
+                      {t("layout.createFolder")}
+                    </button>
+                  )}
                 </div>
               )}
             </div>
@@ -1447,7 +1477,7 @@ export default function DashboardLayout({
         </div>
       )}
 
-      {/* Upgrade CTA — read-only; upgrades activate via the Stripe webhook
+      {/* Upgrade CTA - read-only; upgrades activate via the Stripe webhook
           (checkout.session.completed → users.plan). No client-side plan flip. */}
       {billingModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
@@ -1477,15 +1507,15 @@ export default function DashboardLayout({
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setCreateProjectModalOpen(false)} />
           <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-6">
-            <h2 className="text-lg font-bold text-foreground mb-1">Create Project</h2>
-            <p className="text-sm text-muted mb-5">Organize captures inside this workspace.</p>
+            <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.createProjectTitle")}</h2>
+            <p className="text-sm text-muted mb-5">{t("layout.createProjectSubtitle")}</p>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">Project name</label>
+              <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("layout.projectName")}</label>
               <input
                 type="text"
                 value={newProjectName}
                 onChange={(e) => setNewProjectName(e.target.value)}
-                placeholder="e.g. Checkout Flow"
+                placeholder={t("layout.projectNamePlaceholder")}
                 className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-subtle"
                 autoFocus
                 onKeyDown={(e) => {
@@ -1510,7 +1540,7 @@ export default function DashboardLayout({
                 disabled={!newProjectName.trim() || creatingProject}
                 className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
               >
-                {creatingProject ? "Creating..." : "Create Project"}
+                {creatingProject ? t("layout.creating") : t("layout.createProject")}
               </button>
             </div>
           </div>
@@ -1522,10 +1552,10 @@ export default function DashboardLayout({
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setProjectToRename(null)} />
           <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-6">
-            <h2 className="text-lg font-bold text-foreground mb-1">Rename Project</h2>
-            <p className="text-sm text-muted mb-5">Update the project name for this workspace.</p>
+            <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.renameProjectTitle")}</h2>
+            <p className="text-sm text-muted mb-5">{t("layout.renameProjectSubtitle")}</p>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">Project name</label>
+              <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("layout.projectName")}</label>
               <input
                 type="text"
                 value={renameProjectName}
@@ -1541,7 +1571,7 @@ export default function DashboardLayout({
             <div className="flex items-center justify-end gap-3 mt-6">
               <button onClick={() => setProjectToRename(null)} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors">{t("common.cancel")}</button>
               <button onClick={submitRenameProject} disabled={!renameProjectName.trim() || renamingProject} className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors">
-                {renamingProject ? "Saving..." : "Save"}
+                {renamingProject ? t("common.saving") : t("common.save")}
               </button>
             </div>
           </div>
@@ -1553,12 +1583,12 @@ export default function DashboardLayout({
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setProjectToDelete(null)} />
           <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-6 text-center">
-            <h2 className="text-lg font-bold text-foreground mb-2">Delete Project?</h2>
-            <p className="text-xs text-muted leading-relaxed mb-6">{projectToDelete.name} will be removed and captures will stay unassigned.</p>
+            <h2 className="text-lg font-bold text-foreground mb-2">{t("layout.deleteProjectTitle")}</h2>
+            <p className="text-xs text-muted leading-relaxed mb-6">{t("layout.deleteProjectConfirm", { name: projectToDelete.name })}</p>
             <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
               <button onClick={() => setProjectToDelete(null)} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors">{t("common.cancel")}</button>
               <button onClick={submitDeleteProject} disabled={deletingProject} className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 disabled:opacity-50 transition-colors">
-                {deletingProject ? "Deleting..." : "Delete"}
+                {deletingProject ? t("layout.deleting") : t("common.delete")}
               </button>
             </div>
           </div>

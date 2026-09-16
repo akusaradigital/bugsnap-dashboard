@@ -1,7 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { useT } from "@/components/I18nProvider";
 
 function getSafeRedirectPath(): string {
   if (typeof window === "undefined") return "/dashboard";
@@ -13,18 +15,15 @@ function getSafeRedirectPath(): string {
 }
 
 // Official Google "G" logo (4-color)
-function GoogleLogo({ className = "w-5 h-5" }: { className?: string }) {
+function GoogleLogo({ className = "w-5 h-5 shrink-0" }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 48 48" aria-hidden="true">
-      <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z" />
-      <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z" />
-      <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z" />
-      <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z" />
-    </svg>
+    // eslint-disable-next-line @next/next/no-img-element
+    <img src="/icons/google.svg" alt="Google" className={className} />
   );
 }
 
 export default function LoginPage() {
+  const { t } = useT();
   const [signingIn, setSigningIn] = useState(false);
   const [loadingSession, setLoadingSession] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,10 +32,13 @@ export default function LoginPage() {
   useEffect(() => {
     const target = getSafeRedirectPath();
     setRedirectPath(target);
-    supabase.auth.getSession().then(({ data }) => {
-      setLoadingSession(false);
-      if (data.session?.user) window.location.assign(target);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        setLoadingSession(false);
+        if (data.session?.user) window.location.assign(target);
+      })
+      .catch(() => setLoadingSession(false));
   }, []);
 
   async function signInWithGoogle() {
@@ -45,17 +47,17 @@ export default function LoginPage() {
     try {
       const target = redirectPath.startsWith("/") ? redirectPath : "/dashboard";
       const redirectTo = `${window.location.origin}${target}`;
-      const { error } = await supabase.auth.signInWithOAuth({
+      const { error: authError } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: { redirectTo },
       });
-      if (error) {
-        console.warn("Google sign-in failed:", error.message);
-        setError("Google sign-in is currently unavailable. Please try again.");
+      if (authError) {
+        console.warn("Google sign-in failed:", authError.message);
+        setError(t("login.errorGoogle"));
       }
     } catch (err) {
       console.error("Auth error:", err);
-      setError("Something went wrong. Please try again.");
+      setError(t("login.errorGeneric"));
     } finally {
       setSigningIn(false);
     }
@@ -63,61 +65,157 @@ export default function LoginPage() {
 
   if (loadingSession) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-background">
-        <div className="w-7 h-7 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-[radial-gradient(ellipse_at_top_left,#eef2ff_0%,#ffffff_40%,#f0fdf4_100%)] dark:bg-none dark:bg-background">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs font-semibold text-muted">{t("landing.redirecting")}</span>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-white dark:bg-background flex items-center justify-center p-6">
-      <div className="w-full max-w-sm">
-        {/* Brand */}
-        <div className="flex flex-col items-center text-center mb-8">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icon.svg" alt="BugSnap" className="w-14 h-14 object-contain mb-4" />
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">Welcome to BugSnap</h1>
-          <p className="text-sm text-muted mt-2">
-            Capture screen recordings with full DevTools context - saved directly to your own Google Drive.
-          </p>
-        </div>
+    <div className="min-h-screen bg-[radial-gradient(ellipse_at_top_left,#eef2ff_0%,#ffffff_40%,#f0fdf4_100%)] text-slate-900 font-sans dark:bg-none dark:bg-background dark:text-foreground relative flex flex-col justify-between overflow-hidden selection:bg-indigo-500 selection:text-white">
+      {/* Ambient background glow */}
+      <div className="pointer-events-none absolute -top-32 left-1/2 -z-10 h-80 w-[42rem] -translate-x-1/2 rounded-full bg-gradient-to-tr from-indigo-400/20 via-violet-300/20 to-emerald-300/15 blur-3xl dark:from-indigo-900/20 dark:via-purple-900/15 dark:to-emerald-900/10 animate-pulse-slow" />
+      <div className="pointer-events-none absolute -bottom-32 right-1/4 -z-10 h-80 w-[36rem] rounded-full bg-gradient-to-br from-indigo-300/15 to-purple-400/15 blur-3xl dark:from-indigo-950/20 dark:to-purple-950/20" />
 
-        {/* Card */}
-        <div className="rounded-2xl border border-border bg-white dark:bg-subtle shadow-sm p-6 space-y-4">
-          {/* Google SSO button */}
-          <button
-            onClick={signInWithGoogle}
-            disabled={signingIn}
-            className="w-full flex items-center justify-center gap-3 px-4 py-3 rounded-lg border border-border bg-white dark:bg-subtle text-sm font-semibold text-foreground hover:bg-subtle dark:hover:bg-border/30 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+      {/* Top Bar Navigation */}
+      <header className="w-full border-b border-white/60 dark:border-border/60 bg-white/40 dark:bg-background/40 backdrop-blur-md">
+        <div className="mx-auto max-w-5xl flex items-center justify-between px-6 py-4">
+          <Link href="/" className="group flex items-center gap-2.5">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/icon.svg"
+              alt="BugSnap"
+              className="w-8 h-8 object-contain transition-transform duration-300 group-hover:scale-105"
+            />
+            <span className="text-lg font-bold tracking-tight group-hover:text-indigo-600 dark:group-hover:text-indigo-400 transition-colors duration-200">
+              BugSnap
+            </span>
+          </Link>
+
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-muted hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors px-3 py-1.5 rounded-lg hover:bg-white/60 dark:hover:bg-subtle"
           >
-            <GoogleLogo />
-            {signingIn ? "Connecting to Google..." : "Continue with Google"}
-          </button>
+            <svg
+              className="w-3.5 h-3.5"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M19 12H5M12 19l-7-7 7-7" />
+            </svg>
+            <span>{t("login.backToHome")}</span>
+          </Link>
+        </div>
+      </header>
 
-          {error && (
-            <p className="text-xs text-red-600 text-center" role="alert">
-              {error}
-            </p>
-          )}
-
-          <div className="pt-2 border-t border-border">
-            <p className="text-[11px] text-muted text-center leading-relaxed">
-              Sign in with Google to get started.
-              <br />
-              Your captures are stored in your own Google Drive - your data stays yours.
+      {/* Main Form Content */}
+      <main className="flex-1 flex items-center justify-center px-6 py-12">
+        <div className="w-full max-w-md">
+          {/* Brand & Heading */}
+          <div className="flex flex-col items-center text-center mb-8">
+            <div className="relative mb-5">
+              <div className="absolute -inset-2 rounded-2xl bg-indigo-500/20 blur-lg opacity-70 dark:opacity-30 animate-pulse-slow" />
+              <Link
+                href="/"
+                className="relative flex items-center justify-center w-16 h-16 rounded-2xl bg-white/90 dark:bg-subtle border border-white/80 dark:border-border shadow-lg shadow-slate-200/50 dark:shadow-none backdrop-blur-xl transition-transform hover:scale-105"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/icon.svg" alt="BugSnap" className="w-10 h-10 object-contain" />
+              </Link>
+            </div>
+            <h1 className="text-3xl sm:text-4xl font-black tracking-[-0.035em] text-slate-900 dark:text-foreground">
+              {t("login.welcomeTitle")}
+            </h1>
+            <p className="text-sm text-slate-600 dark:text-muted mt-3 max-w-sm leading-relaxed">
+              {t("login.welcomeSubtitle")}
             </p>
           </div>
-        </div>
 
-        {/* Links */}
-        <div className="mt-6 flex items-center justify-center gap-4 text-xs text-muted">
-          <a href="/privacy" className="hover:text-foreground transition-colors">Privacy</a>
-          <span aria-hidden="true">·</span>
-          <a href="/terms" className="hover:text-foreground transition-colors">Terms</a>
-          <span aria-hidden="true">·</span>
-          <a href="/" className="hover:text-foreground transition-colors">← Back to Home</a>
+          {/* Interactive Modern Card */}
+          <div className="relative rounded-3xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle/80 backdrop-blur-xl shadow-2xl shadow-slate-200/60 dark:shadow-none p-8 space-y-6">
+            {/* Google SSO button */}
+            <button
+              onClick={signInWithGoogle}
+              disabled={signingIn}
+              className="w-full group relative inline-flex items-center justify-center gap-3 px-6 py-4 rounded-2xl bg-white dark:bg-background border border-slate-200/90 dark:border-border hover:border-indigo-400 dark:hover:border-indigo-500 hover:bg-slate-50 dark:hover:bg-subtle text-slate-800 dark:text-foreground text-sm font-bold transition-all duration-200 shadow-md shadow-slate-200/50 dark:shadow-none hover:shadow-xl hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              <GoogleLogo className="w-5 h-5 shrink-0 transition-transform duration-200 group-hover:scale-110" />
+              <span>{signingIn ? t("login.connecting") : t("login.continueGoogle")}</span>
+            </button>
+
+            {error && (
+              <div
+                className="p-3.5 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs text-center font-medium leading-relaxed"
+                role="alert"
+              >
+                {error}
+              </div>
+            )}
+
+            <div className="pt-4 border-t border-slate-200/80 dark:border-border/80 space-y-4">
+              <p className="text-xs text-slate-500 dark:text-muted text-center leading-relaxed">
+                {t("login.secureNote")}
+              </p>
+
+              {/* Feature trust strip */}
+              <div className="pt-1 grid grid-cols-3 gap-2 text-center text-[10px] text-slate-600 dark:text-muted font-medium">
+                <div className="p-2.5 rounded-xl bg-slate-50/80 dark:bg-background/60 border border-slate-100 dark:border-border/50">
+                  <span className="block font-bold text-slate-800 dark:text-foreground">100%</span>
+                  <span className="text-[9px] line-clamp-1">{t("login.badgeData")}</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-50/80 dark:bg-background/60 border border-slate-100 dark:border-border/50">
+                  <span className="block font-bold text-indigo-600 dark:text-indigo-400">DevTools</span>
+                  <span className="text-[9px] line-clamp-1">{t("login.badgeDevTools")}</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-50/80 dark:bg-background/60 border border-slate-100 dark:border-border/50">
+                  <span className="block font-bold text-emerald-600 dark:text-emerald-400">Drive</span>
+                  <span className="text-[9px] line-clamp-1">{t("login.badgeDrive")}</span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="w-full border-t border-white/60 dark:border-border/60 bg-white/40 dark:bg-background/40 backdrop-blur-md py-6 px-6">
+        <div className="mx-auto max-w-5xl flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500 dark:text-muted">
+          <p>© {new Date().getFullYear()} BugSnap. All rights reserved.</p>
+          <div className="flex items-center gap-6">
+            <Link
+              href="/privacy"
+              className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors font-medium"
+            >
+              {t("login.privacy")}
+            </Link>
+            <Link
+              href="/terms"
+              className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors font-medium"
+            >
+              {t("login.terms")}
+            </Link>
+            <Link
+              href="/help"
+              className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors font-medium"
+            >
+              {t("login.help")}
+            </Link>
+            <Link
+              href="/"
+              className="hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors font-medium"
+            >
+              {t("login.backToHome")}
+            </Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

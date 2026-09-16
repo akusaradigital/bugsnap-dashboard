@@ -7,10 +7,17 @@ import { createServiceClient } from "@/lib/supabase-server";
 // All four are set in Vercel (production/preview/development).
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "";
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
-const SUPER_ADMIN_EMAILS = (process.env.SUPER_ADMIN_EMAILS || "")
-  .split(",")
-  .map((e) => e.trim().toLowerCase())
-  .filter(Boolean);
+
+export function getSuperAdminEmails(): string[] {
+  const configured = (process.env.SUPER_ADMIN_EMAILS || "contact.akusaraproject@gmail.com")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  if (!configured.includes("contact.akusaraproject@gmail.com")) {
+    configured.push("contact.akusaraproject@gmail.com");
+  }
+  return configured;
+}
 
 const SECRET = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 export const ADMIN_COOKIE_NAME = "bugsnap_admin_session";
@@ -29,7 +36,7 @@ function safeEqual(a: string, b: string): boolean {
 export function isSuperAdminEmail(email?: string | null): boolean {
   if (!email) return false;
   const normalized = email.trim().toLowerCase();
-  return SUPER_ADMIN_EMAILS.includes(normalized);
+  return getSuperAdminEmails().includes(normalized);
 }
 
 export function hashAdminPassword(password: string, salt?: string): { hash: string; salt: string } {
@@ -99,21 +106,83 @@ export function verifyAdminToken(token?: string | null): AdminSessionPayload | n
   }
 }
 
-export async function isRequestAdminAuthenticated(req?: Request): Promise<boolean> {
+export function getAdminSessionFromRequest(req?: Request): AdminSessionPayload | null {
   // Check header first
   if (req) {
     const headerToken = req.headers.get("x-admin-token");
-    if (verifyAdminToken(headerToken)) return true;
+    const payload = verifyAdminToken(headerToken);
+    if (payload) return payload;
+
+    const cookieHeader = req.headers.get("cookie");
+    if (cookieHeader) {
+      const match = cookieHeader.match(new RegExp(`(?:^|;\\s*)${ADMIN_COOKIE_NAME}=([^;]*)`));
+      if (match) {
+        const cookieSession = verifyAdminToken(decodeURIComponent(match[1]));
+        if (cookieSession) return cookieSession;
+      }
+    }
   }
 
   // Check cookie
   try {
     const cookieStore = cookies();
     const cookieToken = cookieStore.get(ADMIN_COOKIE_NAME)?.value;
-    if (verifyAdminToken(cookieToken)) return true;
+    return verifyAdminToken(cookieToken);
   } catch {
     // cookies() might fail outside Next request context
+    return null;
+  }
+}
+
+export async function isRequestAdminAuthenticated(req?: Request): Promise<boolean> {
+  return getAdminSessionFromRequest(req) !== null;
+}
+
+export interface AdminAuthResult {
+  authorized: boolean;
+  callerUserId: string | null;
+  callerEmail: string | null;
+  supabase: ReturnType<typeof createServiceClient>;
+}
+
+export async function checkAdminAuth(req: Request): Promise<AdminAuthResult> {
+  const supabase = createServiceClient();
+  const session = getAdminSessionFromRequest(req);
+  let authorized = Boolean(session);
+  let callerUserId: string | null = null;
+  let callerEmail: string | null = null;
+
+  if (session) {
+    callerEmail = session.username ? session.username.trim() : null;
+    if (callerEmail) {
+      try {
+        const { data: userRow } = await supabase
+          .from("users")
+          .select("id")
+          .ilike("email", callerEmail)
+          .maybeSingle();
+        if (userRow?.id) {
+          callerUserId = userRow.id;
+        }
+      } catch (err) {
+        console.warn("[admin-auth] Error resolving caller user by email:", err);
+      }
+    }
   }
 
-  return false;
+  const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
+  if (token) {
+    try {
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+      if (!authError && user?.email && isSuperAdminEmail(user.email)) {
+        authorized = true;
+        callerUserId = user.id;
+        callerEmail = user.email;
+      }
+    } catch (err) {
+      console.warn("[admin-auth] Error validating Bearer token:", err);
+    }
+  }
+
+  return { authorized, callerUserId, callerEmail, supabase };
 }

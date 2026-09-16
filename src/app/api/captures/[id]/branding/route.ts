@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-server";
+import { isUuid } from "@/lib/google-drive-values";
 
 export const runtime = "nodejs";
 
@@ -9,8 +10,8 @@ export async function GET(
 ) {
   const resolvedParams = await params;
   const captureId = resolvedParams?.id?.trim();
-  if (!captureId) {
-    return NextResponse.json({ error: "Missing capture ID" }, { status: 400 });
+  if (!captureId || !isUuid(captureId)) {
+    return NextResponse.json({ error: "Invalid capture ID" }, { status: 400 });
   }
 
   const db = createServiceClient();

@@ -41,7 +41,6 @@ export async function POST(req: Request) {
     const response = NextResponse.json({
       ok: true,
       username,
-      token,
       message: "Login admin berhasil.",
     });
 

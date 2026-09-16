@@ -240,7 +240,7 @@ export default function AdminAiAnalyticsPage() {
                         href="/admin/users"
                         className="px-2.5 py-1 rounded text-[11px] font-semibold bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400 hover:bg-indigo-100 transition-colors"
                       >
-                        Manage User →
+                        Manage User
                       </a>
                     </td>
                   </tr>

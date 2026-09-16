@@ -405,8 +405,8 @@ function FormattedErrorMessage({ msg }: { msg: string }) {
 
 export function buildCurlCommand(log: NetworkLog): string {
   const method = (log.method || "GET").toUpperCase();
-  const url = log.url || "";
-  let cmd = `curl -X ${method} "${url}"`;
+  const safeUrl = (log.url || "").replace(/(["\\$`])/g, "\\$1");
+  let cmd = `curl -X ${method} "${safeUrl}"`;
   if (log.requestBody) {
     const escaped = log.requestBody.replace(/'/g, "'\\''");
     cmd += ` -H "Content-Type: application/json" -d '${escaped}'`;
@@ -475,10 +475,7 @@ function FormattedJsonBody({
             <span className="text-emerald-600 dark:text-emerald-400 font-medium">{t("dt.urlCopied") || "Copied!"}</span>
           ) : (
             <>
-              <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-              </svg>
+              <img src="/icons/copy.svg" alt="" className="w-2.5 h-2.5" />
               <span>{t("dt.copy") || "Copy"}</span>
             </>
           )}
@@ -855,10 +852,7 @@ ${stack}` : body);
             failedRequests: 0,
           } satisfies DevLogSummary);
         });
-      return;
-    }
-
-    if (typeof capture.dev_logs === "string" && capture.dev_logs.startsWith("gz:")) {
+    } else if (typeof capture.dev_logs === "string" && capture.dev_logs.startsWith("gz:")) {
       decompressDevLogs(capture.dev_logs).then((res) => {
         if (!cancelled && res) setDecompressedLogs(res as CapturedLogs);
       });
@@ -904,9 +898,12 @@ ${stack}` : body);
   // Both are dependencies of the memos below, so they need stable identities of
   // their own or those memos never hit cache.
   const getRelativeTime = useCallback((log: TimedLog) => {
-    // If it's a screenshot, there is no "video duration", so we just want absolute wall clock time.
-    if (capture.type === "screenshot" && log.timestamp && Number(log.timestamp)) {
-      return new Date(Number(log.timestamp)).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    // If it's not a video (e.g. screenshot or image), there is no video timeline, so display absolute wall clock time.
+    const isStaticCapture = capture.type !== "video";
+    const rawTs = log.timestamp;
+    const parsedTs = typeof rawTs === "number" ? rawTs : rawTs ? new Date(rawTs).getTime() : NaN;
+    if (isStaticCapture && !isNaN(parsedTs) && parsedTs > 0) {
+      return new Date(parsedTs).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
     }
     const value = log.time || log.timestamp;
     if (!value) return "-";
@@ -1011,28 +1008,9 @@ ${stack}` : body);
     return Math.abs(currentTime - sec) < 1.5;
   };
 
-  // The time badge was the only way to jump the video, and nobody finds a 10px
-  // pill. Whole row is the target now; the badge stays as the visible affordance.
-  const seekProps = (log: TimedLog) => {
-    const sec = getLogSeconds(log);
-    if (!onSeekToTime || sec === null || capture.type !== "video") return {};
-    const jump = () => onSeekToTime(sec);
-    return {
-      onClick: jump,
-      // A div is not focusable or Enter-activatable on its own, and this is the
-      // primary way to navigate the capture - it has to reach the keyboard.
-      role: "button" as const,
-      tabIndex: 0,
-      onKeyDown: (e: React.KeyboardEvent) => {
-        if (e.key === "Enter" || e.key === " ") {
-          e.preventDefault();
-          jump();
-        }
-      },
-      title: t("dt.jumpVideoTo", { time: getRelativeTime(log) }),
-      className: "cursor-pointer",
-    };
-  };
+  // Video timeline navigation is triggered exclusively via the visible time badge button
+  // (renderTimeBadge). The log row itself remains unattached to click handlers so users
+  // can select text, inspect stack traces, or expand details without jumping the video.
 
   const renderTimeBadge = (log: TimedLog) => {
     const relTime = getRelativeTime(log);
@@ -1082,7 +1060,7 @@ ${stack}` : body);
     [logs]
   );
   const networkLogs = useMemo(
-    () => allNetworkLogs.filter((l) => matchesSearch(l.url || "")),
+    () => allNetworkLogs.filter((l) => matchesSearch(`${l.url || ""} ${l.method || ""} ${l.status || ""}`)),
     [allNetworkLogs, matchesSearch]
   );
 
@@ -1240,38 +1218,27 @@ ${stack}` : body);
   }, [showTzMenu]);
 
   // Formats date according to selected timezone mode
-  const formatDateWithTz = (dateStr: string) => {
+  // withSeconds=false is for the Info row, where the full string wrapped mid-date at 360px.
+  const formatDateWithTz = (dateStr: string, withSeconds = true) => {
     const d = new Date(dateStr);
     if (isNaN(d.getTime())) return "-";
 
-    if (timeZoneMode === "utc") {
-      return d.toLocaleString("en-US", {
-        month: "short", day: "numeric", year: "numeric",
-        hour: "2-digit", minute: "2-digit", second: "2-digit",
-        timeZone: "UTC",
-        timeZoneName: "short",
-      });
-    }
-
-    if (timeZoneMode === "capture") {
-      // Indonesia / Default capture timezone or standard capture locale
-      return d.toLocaleString("en-US", {
-        month: "short", day: "numeric", year: "numeric",
-        hour: "2-digit", minute: "2-digit", second: "2-digit",
-        timeZone: "Asia/Jakarta",
-        timeZoneName: "short",
-      });
-    }
-
-    // "local" mode uses viewer's local browser timezone
-    return d.toLocaleString("en-US", {
+    const opts: Intl.DateTimeFormatOptions = {
       month: "short", day: "numeric", year: "numeric",
-      hour: "2-digit", minute: "2-digit", second: "2-digit",
+      hour: "2-digit", minute: "2-digit",
+      ...(withSeconds ? { second: "2-digit" as const } : {}),
       timeZoneName: "short",
-    });
+    };
+
+    if (timeZoneMode === "utc") return d.toLocaleString("en-US", { ...opts, timeZone: "UTC" });
+    // Indonesia / Default capture timezone or standard capture locale
+    if (timeZoneMode === "capture") return d.toLocaleString("en-US", { ...opts, timeZone: "Asia/Jakarta" });
+    // "local" mode uses viewer's local browser timezone
+    return d.toLocaleString("en-US", opts);
   };
 
   const createdAt = formatDateWithTz(capture.created_at);
+  const createdAtShort = formatDateWithTz(capture.created_at, false);
 
   const legacyLogsText = JSON.stringify(capture.dev_logs || []);
   const detectedOs = capture.os || (legacyLogsText.toLowerCase().includes("macintosh") || legacyLogsText.toLowerCase().includes("mac os") ? "macOS" : "Windows");
@@ -1501,9 +1468,7 @@ ${stack}` : body);
         {activeTab !== "Info" && (
           <div className="p-3 border-b border-border bg-subtle/30 flex flex-col gap-2 shrink-0">
             <div className="relative">
-              <svg className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-              </svg>
+              <img src="/icons/search.svg" alt="" className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5" />
               <input
                 type="text"
                 placeholder={t("dt.search", { tab: tabLabel(activeTab) })}
@@ -1669,9 +1634,7 @@ ${stack}` : body);
                     className="px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors bg-subtle hover:bg-subtle/80 text-muted hover:text-foreground border border-border flex items-center gap-1 cursor-pointer ml-auto"
                     title={t("dt.exportHar") || "Export network session as HTTP Archive (.har)"}
                   >
-                    <svg className="w-3 h-3 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                    </svg>
+                    <img src="/icons/download.svg" alt="" className="w-3 h-3" />
                     <span>{t("dt.exportHar") || "Export HAR"}</span>
                   </button>
                 )}
@@ -1790,7 +1753,6 @@ ${stack}` : body);
                         }`}
                       >
                         <summary
-                          onClick={seekProps(nLog).onClick}
                           className="p-3 cursor-pointer list-none flex items-center justify-between gap-2 min-w-0"
                         >
                           <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -1869,24 +1831,28 @@ ${stack}` : body);
             {capture.site_url && (
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-muted mb-1.5">URL</p>
-                <a
-                  href={capture.site_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block text-[11px] font-mono text-indigo-600 hover:underline bg-subtle/60 border border-border rounded-lg px-3 py-2 truncate"
-                >
-                  {capture.site_url}
-                </a>
+                {/^https?:\/\//i.test(capture.site_url) ? (
+                  <a
+                    href={capture.site_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block text-[11px] font-mono text-indigo-600 hover:underline bg-subtle/60 border border-border rounded-lg px-3 py-2 truncate"
+                  >
+                    {capture.site_url}
+                  </a>
+                ) : (
+                  <span className="block text-[11px] font-mono text-muted bg-subtle/60 border border-border rounded-lg px-3 py-2 truncate">
+                    {capture.site_url}
+                  </span>
+                )}
               </div>
             )}
 
             <div className="rounded-xl border border-border overflow-visible bg-subtle shadow-sm">
               {/* Timestamp Row with Timezone Switcher Dropdown */}
-              <div className="relative flex items-center justify-between px-3 py-2 border-b border-border/60">
-                <div className="flex items-center gap-2 text-muted">
-                  <svg className="w-3.5 h-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
-                  </svg>
+              <div className="relative flex items-center justify-between gap-2 px-3 py-2 border-b border-border/60">
+                <div className="flex items-center gap-2 text-muted shrink-0">
+                  <img src="/icons/clock.svg" alt="" className="w-3.5 h-3.5 shrink-0" />
                   <span className="text-xs">{t("dt.timestamp")}</span>
                 </div>
 
@@ -1894,19 +1860,15 @@ ${stack}` : body);
                   <button
                     type="button"
                     onClick={() => setShowTzMenu((prev) => !prev)}
-                    className="flex items-center gap-1 text-xs font-medium text-foreground hover:text-indigo-600 dark:hover:text-indigo-400 px-1.5 py-0.5 rounded hover:bg-subtle/80 transition-colors group cursor-pointer"
-                    title={t("dt.changeTz")}
+                    className="flex items-center gap-1 text-[11px] sm:text-xs font-medium text-foreground hover:text-indigo-600 dark:hover:text-indigo-400 px-1.5 py-0.5 rounded hover:bg-subtle/80 transition-colors group cursor-pointer"
+                    title={`${createdAt} · ${t("dt.changeTz")}`}
                   >
-                    <span>{createdAt}</span>
-                    <svg
-                      className={`w-3 h-3 text-muted group-hover:text-foreground transition-transform ${showTzMenu ? "rotate-180" : ""}`}
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <polyline points="6 9 12 15 18 9" />
-                    </svg>
+                    <span className="whitespace-nowrap">{createdAtShort}</span>
+                    <img
+                      src="/icons/chevron-down.svg"
+                      alt=""
+                      className={`w-3 h-3 transition-transform ${showTzMenu ? "rotate-180" : ""}`}
+                    />
                   </button>
 
                   {showTzMenu && (
@@ -1927,9 +1889,7 @@ ${stack}` : body);
                           <p className="text-[10px] text-muted mt-0.5 font-normal">Asia/Jakarta (GMT+7)</p>
                         </div>
                         {timeZoneMode === "capture" && (
-                          <svg className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
+                          <img src="/icons/check.svg" alt="" className="w-3.5 h-3.5 shrink-0" />
                         )}
                       </button>
 
@@ -1947,9 +1907,7 @@ ${stack}` : body);
                           </p>
                         </div>
                         {timeZoneMode === "local" && (
-                          <svg className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
+                          <img src="/icons/check.svg" alt="" className="w-3.5 h-3.5 shrink-0" />
                         )}
                       </button>
 
@@ -1965,9 +1923,7 @@ ${stack}` : body);
                           <p className="text-[10px] text-muted mt-0.5 font-normal">UTC / GMT+0</p>
                         </div>
                         {timeZoneMode === "utc" && (
-                          <svg className="w-3.5 h-3.5 text-indigo-600 dark:text-indigo-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
+                          <img src="/icons/check.svg" alt="" className="w-3.5 h-3.5 shrink-0" />
                         )}
                       </button>
                     </div>
@@ -1975,47 +1931,50 @@ ${stack}` : body);
                 </div>
               </div>
 
-              {[
-                {
-                  icon: (
-                    <svg className="w-3.5 h-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-                    </svg>
-                  ),
-                  labelKey: "dt.location",
-                  value: "Indonesia",
-                },
-                {
-                  icon: (
-                    <svg className="w-3.5 h-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
-                    </svg>
-                  ),
-                  labelKey: "dt.os",
-                  value: detectedOs,
-                },
-                {
-                  icon: (
-                    <svg className="w-3.5 h-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="4"/>
-                      <line x1="21.17" y1="8" x2="12" y2="8"/><line x1="3.95" y1="6.06" x2="8.54" y2="14"/>
-                      <line x1="10.88" y1="21.94" x2="15.46" y2="14"/>
-                    </svg>
-                  ),
-                  labelKey: "dt.browser",
-                  value: detectedBrowser,
-                },
-                {
-                  icon: (
-                    <svg className="w-3.5 h-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <rect x="3" y="3" width="18" height="13" rx="2"/>
-                      <path d="M12 16v5M8 21h8"/>
-                    </svg>
-                  ),
-                  labelKey: "dt.windowSize",
-                  value: capture.window_size || "-",
-                },
-              ].map((row) => (
+              {(() => {
+                const osLower = (detectedOs || "").toLowerCase();
+                const osIcon = osLower.includes("win")
+                  ? "/icons/windows.svg"
+                  : osLower.includes("mac") || osLower.includes("apple") || osLower.includes("ios")
+                  ? "/icons/apple.svg"
+                  : osLower.includes("linux")
+                  ? "/icons/linux.svg"
+                  : "/icons/monitor.svg";
+
+                const browserLower = (detectedBrowser || "").toLowerCase();
+                const browserIcon = browserLower.includes("chrome")
+                  ? "/icons/chrome.svg"
+                  : browserLower.includes("firefox")
+                  ? "/icons/firefox.svg"
+                  : browserLower.includes("safari")
+                  ? "/icons/safari.svg"
+                  : browserLower.includes("edge")
+                  ? "/icons/edge.svg"
+                  : "/icons/browser.svg";
+
+                return [
+                  {
+                    icon: <img src="/icons/location.svg" alt="" className="w-3.5 h-3.5 shrink-0" />,
+                    labelKey: "dt.location",
+                    value: "Indonesia",
+                  },
+                  {
+                    icon: <img src={osIcon} alt={detectedOs} className="w-3.5 h-3.5 shrink-0" />,
+                    labelKey: "dt.os",
+                    value: detectedOs,
+                  },
+                  {
+                    icon: <img src={browserIcon} alt={detectedBrowser} className="w-3.5 h-3.5 shrink-0" />,
+                    labelKey: "dt.browser",
+                    value: detectedBrowser,
+                  },
+                  {
+                    icon: <img src="/icons/window-size.svg" alt="" className="w-3.5 h-3.5 shrink-0" />,
+                    labelKey: "dt.windowSize",
+                    value: capture.window_size || "-",
+                  },
+                ];
+              })().map((row) => (
                 <div key={row.labelKey} className="flex items-center justify-between px-3 py-2 border-b border-border/60 last:border-0">
                   <div className="flex items-center gap-2 text-muted">
                     {row.icon}
@@ -2076,12 +2035,12 @@ ${stack}` : body);
               >
                 {copiedBugReport ? (
                   <>
-                    <svg className="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                    <img src="/icons/check.svg" alt="" className="w-3.5 h-3.5" />
                     <span>{t("dt.bugReportCopied") || "Report Copied!"}</span>
                   </>
                 ) : (
                   <>
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    <img src="/icons/copy.svg" alt="" className="w-3.5 h-3.5" />
                     <span>{t("dt.copyBugReport") || "Copy Bug Report"}</span>
                   </>
                 )}
@@ -2150,12 +2109,10 @@ ${stack}` : body);
                     : log.message || ("url" in log ? log.url : "") || (log.type === "screenshot" ? t("dt.screenshotTaken") : t("dt.navigation"));
                   const fullText = log.type === "console" ? consoleText(log) : detail;
                   const active = isLogActive(log);
-                  const seek = seekProps(log);
                   return (
                     <div
                       key={log.srcIdx}
-                      {...seek}
-                      className={`group p-3 text-xs transition-all ${seek.className || ""} ${
+                      className={`group p-3 text-xs transition-all ${
                         active ? "ring-2 ring-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/40 rounded-sm" : isWarn ? "bg-amber-50/40 dark:bg-amber-950/20 hover:bg-amber-50/70 dark:hover:bg-amber-950/30" : isErr ? "bg-red-50/40 dark:bg-red-950/20 hover:bg-red-50/70 dark:hover:bg-red-950/30" : "hover:bg-subtle/50"
                       }`}
                     >
@@ -2200,9 +2157,9 @@ ${stack}` : body);
                           className="shrink-0 p-1 rounded text-muted opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-foreground hover:bg-subtle transition-all"
                         >
                           {copiedConsole === (log.type === "console" ? consoleText(log) : log.message || ("url" in log ? log.url || "" : "")) ? (
-                            <svg className="w-3.5 h-3.5 text-emerald-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12"/></svg>
+                            <img src="/icons/check.svg" alt="" className="w-3.5 h-3.5" />
                           ) : (
-                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                            <img src="/icons/copy.svg" alt="" className="w-3.5 h-3.5" />
                           )}
                         </button>
                       </div>
@@ -2270,7 +2227,6 @@ ${stack}` : body);
                   return (
                     <details key={`${log.method || "GET"}|${log.status ?? "FAILED"}|${log.url}`} className={`group hover:bg-subtle/50 transition-all ${active ? "ring-2 ring-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/40 rounded-sm" : ""}`}>
                       <summary
-                        onClick={seekProps(log).onClick}
                         className="p-3 cursor-pointer list-none flex items-center justify-between gap-2 min-w-0"
                       >
                         <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -2344,7 +2300,7 @@ ${stack}` : body);
                               >
                                 {copiedCurl === log.url ? (
                                   <>
-                                    <svg className="w-3 h-3 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                                    <img src="/icons/check.svg" alt="" className="w-3 h-3" />
                                     <span className="text-emerald-600 dark:text-emerald-400 font-medium">{t("dt.curlCopied") || "Copied!"}</span>
                                   </>
                                 ) : (
@@ -2362,12 +2318,12 @@ ${stack}` : body);
                               >
                                 {copiedUrl === log.url ? (
                                   <>
-                                    <svg className="w-3 h-3 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><polyline points="20 6 9 17 4 12" /></svg>
+                                    <img src="/icons/check.svg" alt="" className="w-3 h-3" />
                                     <span className="text-emerald-600 dark:text-emerald-400 font-medium">{t("dt.urlCopied")}</span>
                                   </>
                                 ) : (
                                   <>
-                                    <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                                    <img src="/icons/copy.svg" alt="" className="w-3 h-3" />
                                     <span>{t("dt.copyUrl")}</span>
                                   </>
                                 )}
@@ -2457,12 +2413,10 @@ ${stack}` : body);
                     ? t("dt.screenshotTaken")
                     : cleanActionMessage(log.message) || log.message || "";
 
-                  const seek = seekProps(log);
                   return (
                     <div
                       key={log.srcIdx}
-                      {...seek}
-                      className={`group flex items-start gap-2.5 p-2.5 rounded-lg border transition-all ${seek.className || ""} ${
+                      className={`group flex items-start gap-2.5 p-2.5 rounded-lg border transition-all ${
                         active
                           ? "ring-2 ring-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800/60 shadow-xs"
                           : "bg-background hover:bg-subtle/50 border-border/80"
@@ -2480,21 +2434,13 @@ ${stack}` : body);
                         }`}
                       >
                         {isScreenshot ? (
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                          </svg>
+                          <img src="/icons/screenshot.svg" alt="" className="w-3.5 h-3.5" />
                         ) : isClick ? (
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5" />
-                          </svg>
+                          <img src="/icons/click.svg" alt="" className="w-3.5 h-3.5" />
                         ) : isType ? (
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
+                          <img src="/icons/keyboard.svg" alt="" className="w-3.5 h-3.5" />
                         ) : (
-                          <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                            <circle cx="12" cy="12" r="3" fill="currentColor" />
-                          </svg>
+                          <span className="w-2 h-2 rounded-full bg-current" />
                         )}
                       </div>
                       <div className="flex-1 min-w-0">
@@ -2557,9 +2503,10 @@ ${stack}` : body);
             } catch {}
           };
 
-          const handleCopyKey = (key: string, val: string) => {
+          const handleCopyKey = (key: string, val: unknown) => {
             try {
-              navigator.clipboard.writeText(val);
+              const textToCopy = typeof val === "object" && val !== null ? JSON.stringify(val, null, 2) : String(val ?? "");
+              navigator.clipboard.writeText(textToCopy);
               setCopiedStorageKey(key);
               setTimeout(() => setCopiedStorageKey(null), 2000);
             } catch {}
@@ -2603,7 +2550,7 @@ ${stack}` : body);
                       <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{t("dt.urlCopied") || "Copied!"}</span>
                     ) : (
                       <>
-                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        <img src="/icons/copy.svg" alt="" className="w-3 h-3" />
                         <span>{t("dt.copyAll") || "Copy All"}</span>
                       </>
                     )}

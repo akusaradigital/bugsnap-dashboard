@@ -120,16 +120,21 @@ export async function POST(req: Request) {
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   try {
+    const contentLength = Number(req.headers.get("content-length") || 0);
+    const MAX_UPLOAD_SIZE = 100 * 1024 * 1024; // 100MB ceiling
+    if (contentLength > MAX_UPLOAD_SIZE) {
+      return NextResponse.json({ error: "File size exceeds 100MB limit" }, { status: 413 });
+    }
     const form = await req.formData();
     const file = form.get("file");
     const title = String(form.get("title") || "Untitled").trim();
-    const type = String(form.get("type") || "screenshot");
+    const type = form.get("type") === "video" ? "video" : "screenshot";
     let workspaceId = String(form.get("workspaceId") || "").trim();
     const projectId = String(form.get("projectId") || "").trim() || null;
-    const folderName = String(form.get("folderName") || "").trim() || null;
+    const rawFolder = String(form.get("folderName") || "").trim();
+    const folderName = rawFolder && rawFolder !== "No folder" ? rawFolder : null;
     const description = String(form.get("description") || "").trim();
     if (!(file instanceof File)) return NextResponse.json({ error: "Missing file" }, { status: 400 });
-    const MAX_UPLOAD_SIZE = 100 * 1024 * 1024; // 100MB ceiling
     if (file.size > MAX_UPLOAD_SIZE) {
       return NextResponse.json({ error: "File size exceeds 100MB limit" }, { status: 413 });
     }
@@ -232,7 +237,7 @@ export async function POST(req: Request) {
         description: description || null,
         workspace_id: workspaceId,
         project_id: projectId,
-        folder_name: folderName || (configuredFolder !== "No folder" ? configuredFolder : null),
+        folder_name: folderName || (configuredFolder && configuredFolder !== "No folder" ? configuredFolder : null),
         user_id: user.id,
         owner_email: user.email,
         source: "web_upload",

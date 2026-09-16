@@ -7,6 +7,11 @@ const nextConfig = {
         destination: '/v/:id',
         permanent: true,
       },
+      {
+        source: '/embed/:id',
+        destination: '/v/:id?embed=true',
+        permanent: true,
+      },
     ];
   },
 };

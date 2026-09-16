@@ -43,7 +43,7 @@ export async function GET(req: Request) {
       .maybeSingle();
 
     if (error) throw error;
-    if (!rawCapture) {
+    if (!rawCapture || (rawCapture as { status?: string }).status !== "ok") {
       return NextResponse.json({ error: "Capture not found or private" }, { status: 404 });
     }
 

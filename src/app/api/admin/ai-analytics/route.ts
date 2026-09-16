@@ -1,34 +1,8 @@
 ﻿import { NextResponse } from "next/server";
-import { createServiceClient } from "@/lib/supabase-server";
-import { isRequestAdminAuthenticated } from "@/lib/admin-auth";
+import { checkAdminAuth } from "@/lib/admin-auth";
 import { resolvePlanWithExpiry } from "@/lib/tiers";
 
 export const runtime = "nodejs";
-
-const getAdminEmails = () =>
-  (process.env.SUPER_ADMIN_EMAILS || "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-
-async function checkAdminAuth(req: Request) {
-  const isAdminAuthenticated = await isRequestAdminAuthenticated(req);
-  const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-  let authorized = isAdminAuthenticated;
-
-  const supabase = createServiceClient();
-
-  if (!authorized && token) {
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (!authError && user?.email) {
-      if (getAdminEmails().includes(user.email.toLowerCase())) {
-        authorized = true;
-      }
-    }
-  }
-
-  return { authorized, supabase };
-}
 
 export async function GET(req: Request) {
   const { authorized, supabase } = await checkAdminAuth(req);

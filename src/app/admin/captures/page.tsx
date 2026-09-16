@@ -342,7 +342,7 @@ export default function AdminCapturesPage() {
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 className="px-2.5 py-1 rounded border border-slate-200 dark:border-zinc-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-zinc-800"
               >
-                ← Prev
+                Prev
               </button>
               <button
                 type="button"
@@ -350,7 +350,7 @@ export default function AdminCapturesPage() {
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 className="px-2.5 py-1 rounded border border-slate-200 dark:border-zinc-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-zinc-800"
               >
-                Next →
+                Next
               </button>
             </div>
           </div>

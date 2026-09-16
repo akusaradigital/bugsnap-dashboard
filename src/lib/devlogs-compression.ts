@@ -40,8 +40,22 @@ export async function decompressDevLogs(payload: unknown): Promise<unknown> {
       }
       const stream = new Blob([bytes]).stream();
       const decompressedStream = stream.pipeThrough(new DecompressionStream("gzip"));
-      const response = new Response(decompressedStream);
-      const jsonText = await response.text();
+      const reader = decompressedStream.getReader();
+      const chunks: Uint8Array[] = [];
+      let totalBytes = 0;
+      const MAX_DECOMPRESSED_BYTES = 10 * 1024 * 1024; // 10MB safe ceiling
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        totalBytes += value.byteLength;
+        if (totalBytes > MAX_DECOMPRESSED_BYTES) {
+          console.warn("DevLogs decompressed size exceeds 10MB ceiling");
+          return null;
+        }
+        chunks.push(value);
+      }
+      const decompressedBlob = new Blob(chunks as unknown as BlobPart[]);
+      const jsonText = await decompressedBlob.text();
       return JSON.parse(jsonText);
     } catch (err) {
       console.warn("DevLogs decompression failed:", err);

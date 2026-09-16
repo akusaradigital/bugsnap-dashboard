@@ -1,33 +1,7 @@
 import { NextResponse } from "next/server";
-import { createServiceClient } from "@/lib/supabase-server";
-import { isRequestAdminAuthenticated } from "@/lib/admin-auth";
+import { checkAdminAuth } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
-
-const getAdminEmails = () =>
-  (process.env.SUPER_ADMIN_EMAILS || "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-
-async function checkAdminAuth(req: Request) {
-  const isAdminAuthenticated = await isRequestAdminAuthenticated(req);
-  const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-  let authorized = isAdminAuthenticated;
-
-  const supabase = createServiceClient();
-
-  if (!authorized && token) {
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (!authError && user?.email) {
-      if (getAdminEmails().includes(user.email.toLowerCase())) {
-        authorized = true;
-      }
-    }
-  }
-
-  return { authorized, supabase };
-}
 
 // Plan monthly pricing estimates in USD
 const PLAN_PRICES: Record<string, number> = {
@@ -51,7 +25,8 @@ export async function GET(req: Request) {
       .select(
         "id, email, full_name, plan, created_at, suspended, paywall_hits, last_paywall_feature, last_paywall_at, checkout_status, last_checkout_plan, checkout_initiated_at, referred_by_capture_id, extension_last_seen, extension_version"
       )
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(5000);
 
     if (error) throw error;
 

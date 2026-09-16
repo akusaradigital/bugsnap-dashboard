@@ -51,7 +51,11 @@ export async function GET(req: Request) {
   // functions existed but nothing ever called them, so the rows only grew.
   // Best-effort: a failure here must not stop the capture cleanup below.
   try {
-    await Promise.all([supabase.rpc("prune_admin_logs"), supabase.rpc("prune_rate_limits")]);
+    await Promise.all([
+      supabase.rpc("prune_admin_logs"),
+      supabase.rpc("prune_rate_limits"),
+      supabase.rpc("prune_capture_views"),
+    ]);
   } catch (pruneErr) {
     console.warn("[Cron cleanup] prune RPC failed:", pruneErr);
   }
@@ -70,13 +74,32 @@ export async function GET(req: Request) {
       .not("dev_logs", "is", null)
       .limit(200);
 
-    for (const row of stale ?? []) {
-      // Trash the Drive-hosted copy too, or the bytes just stay in Drive.
+    const staleRows = stale ?? [];
+    const directNullIds: string[] = [];
+    const withDriveFile: Array<{ row: (typeof staleRows)[number]; logFileId: string }> = [];
+
+    for (const row of staleRows) {
       const logs = (row.dev_logs ?? {}) as Record<string, unknown>;
       const logFileId =
         (typeof logs.driveFileId === "string" ? logs.driveFileId : null) ??
         parseDriveFileId(typeof logs.driveUrl === "string" ? logs.driveUrl : null);
       if (logFileId) {
+        withDriveFile.push({ row, logFileId });
+      } else {
+        directNullIds.push(row.id);
+      }
+    }
+
+    if (directNullIds.length > 0) {
+      const { error } = await supabase
+        .from("captures")
+        .update({ dev_logs: null })
+        .in("id", directNullIds);
+      if (!error) devLogsPurged += directNullIds.length;
+    }
+
+    if (withDriveFile.length > 0) {
+      for (const { row, logFileId } of withDriveFile) {
         const token = await resolveUserDriveToken(row.user_id);
         if (token) {
           try {
@@ -86,8 +109,13 @@ export async function GET(req: Request) {
           }
         }
       }
-      const { error } = await supabase.from("captures").update({ dev_logs: null }).eq("id", row.id);
-      if (!error) devLogsPurged++;
+
+      const driveRowIds = withDriveFile.map(({ row }) => row.id);
+      const { error } = await supabase
+        .from("captures")
+        .update({ dev_logs: null })
+        .in("id", driveRowIds);
+      if (!error) devLogsPurged += driveRowIds.length;
     }
   } catch (ttlErr) {
     console.warn("[Cron cleanup] dev_logs TTL sweep failed:", ttlErr);

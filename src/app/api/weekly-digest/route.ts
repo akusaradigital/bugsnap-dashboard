@@ -37,7 +37,10 @@ export async function GET(req: Request) {
       const email = workspace.owner_user_id ? ownerEmails.get(workspace.owner_user_id) : null;
       if (!email || !ownerDigestOptIn.get(workspace.owner_user_id!)) return [];
       const s = stats[i];
-      if (s.error) throw s.error;
+      if (s.error) {
+        console.error(`Stats RPC error for workspace ${workspace.id}:`, s.error);
+        return [];
+      }
       const v = (s.data ?? {}) as { captures?: number; videos?: number; comments?: number; views?: number };
       return [{
         email,
@@ -52,30 +55,39 @@ export async function GET(req: Request) {
     if (!process.env.RESEND_API_KEY) return NextResponse.json({ ok: true, dryRun: true, workspaces: digests.length });
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://bugsnap.akusaraproject.my.id";
 
+    let sentCount = 0;
     for (const digest of digests) {
-      const emailContent = renderWeeklyDigestEmail({
-        appUrl,
-        workspaceName: digest.workspace,
-        captures: digest.captures,
-        videos: digest.videos,
-        comments: digest.comments,
-        views: digest.views,
-      });
+      try {
+        const emailContent = renderWeeklyDigestEmail({
+          appUrl,
+          workspaceName: digest.workspace,
+          captures: digest.captures,
+          videos: digest.videos,
+          comments: digest.comments,
+          views: digest.views,
+        });
 
-      const response = await fetch("https://api.resend.com/emails", {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
-        body: JSON.stringify({
-          from: process.env.RESEND_FROM_EMAIL || "BugSnap <no-reply@bugsnap.akusaraproject.my.id>",
-          to: [digest.email],
-          subject: emailContent.subject,
-          html: emailContent.html,
-        }),
-      });
-      if (!response.ok) throw new Error(`Resend failed (${response.status})`);
+        const response = await fetch("https://api.resend.com/emails", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+          body: JSON.stringify({
+            from: process.env.RESEND_FROM_EMAIL || "BugSnap <no-reply@bugsnap.akusaraproject.my.id>",
+            to: [digest.email],
+            subject: emailContent.subject,
+            html: emailContent.html,
+          }),
+        });
+        if (!response.ok) {
+          console.error(`Resend failed for ${digest.email} (${response.status})`);
+        } else {
+          sentCount++;
+        }
+      } catch (sendErr) {
+        console.error(`Failed to send digest to ${digest.email}:`, sendErr);
+      }
     }
 
-    return NextResponse.json({ ok: true, workspaces: digests.length });
+    return NextResponse.json({ ok: true, workspaces: digests.length, sent: sentCount });
   } catch (error) {
     console.error("Weekly digest failed", error);
     return NextResponse.json({ error: "Digest failed" }, { status: 500 });

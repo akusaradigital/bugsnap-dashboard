@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { authenticatedUser } from "@/lib/google-drive";
 import { createServiceClient } from "@/lib/supabase-server";
 import { decompressDevLogs } from "@/lib/devlogs-compression";
+import { assertPublicUrl } from "@/lib/safe-url";
+import { redactString } from "@/lib/redact";
+import { isUuid } from "@/lib/google-drive-values";
 
 export const runtime = "nodejs";
 
@@ -12,7 +15,10 @@ function summarizeDevLogs(devLogs: unknown): string {
     const errorLogs = devLogs
       .filter((l) => l && typeof l === "object" && (l.type === "console" || l.level === "error" || l.status >= 400))
       .slice(0, 10)
-      .map((l) => `- [${l.type || l.level || "error"}] ${l.message || l.text || l.url || JSON.stringify(l)}`);
+      .map((l) => {
+        const raw = `[${l.type || l.level || "error"}] ${l.message || l.text || l.url || JSON.stringify(l)}`;
+        return `- ${redactString(raw)}`;
+      });
     return errorLogs.length ? `\n\n### Console & Network Errors\n${errorLogs.join("\n")}` : "";
   }
   if (typeof devLogs === "object") {
@@ -21,7 +27,7 @@ function summarizeDevLogs(devLogs: unknown): string {
     if (summary.errors) parts.push(`Errors count: ${summary.errors}`);
     if (summary.failedRequests) parts.push(`Failed requests: ${summary.failedRequests}`);
     if (Array.isArray(summary.topErrors) && summary.topErrors.length) {
-      parts.push(`Top errors:\n${summary.topErrors.map((e) => `- ${e}`).join("\n")}`);
+      parts.push(`Top errors:\n${summary.topErrors.map((e) => `- ${redactString(e)}`).join("\n")}`);
     }
     return parts.length ? `\n\n### DevTools Summary\n${parts.join("\n")}` : "";
   }
@@ -37,6 +43,9 @@ export async function POST(
 
   try {
     const { id } = await Promise.resolve(params);
+    if (!id || !isUuid(id)) {
+      return NextResponse.json({ error: "Invalid capture ID" }, { status: 400 });
+    }
     const supabase = createServiceClient();
 
     // 1. Fetch capture
@@ -50,16 +59,24 @@ export async function POST(
     if (!capture) return NextResponse.json({ error: "Capture not found" }, { status: 404 });
     if (!capture.workspace_id) return NextResponse.json({ error: "Capture is not assigned to a workspace" }, { status: 400 });
 
-    // 2. Confirm user is a team member
-    const { data: membership, error: memError } = await supabase
-      .from("workspace_members")
-      .select("role")
-      .eq("workspace_id", capture.workspace_id)
-      .eq("user_id", user.id)
+    // 2. Confirm user is workspace owner or team member
+    const { data: ws } = await supabase
+      .from("workspaces")
+      .select("owner_user_id")
+      .eq("id", capture.workspace_id)
       .maybeSingle();
 
-    if (memError) throw memError;
-    if (!membership) return NextResponse.json({ error: "Access denied to capture workspace" }, { status: 403 });
+    if (ws?.owner_user_id !== user.id) {
+      const { data: membership, error: memError } = await supabase
+        .from("workspace_members")
+        .select("role")
+        .eq("workspace_id", capture.workspace_id)
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (memError) throw memError;
+      if (!membership) return NextResponse.json({ error: "Access denied to capture workspace" }, { status: 403 });
+    }
 
     // 3. Read workspace settings for Aksora integration credentials
     const { data: wsSettings, error: wsError } = await supabase
@@ -109,6 +126,7 @@ export async function POST(
       evidence: capture.drive_url || undefined,
     };
 
+    await assertPublicUrl(aksora.url);
     const targetUrl = `${aksora.url.replace(/\/+$/, "")}/api/public/v1/tasks`;
     const aksoraRes = await fetch(targetUrl, {
       method: "POST",
@@ -117,6 +135,8 @@ export async function POST(
         Authorization: `Bearer ${aksora.apiKey}`,
       },
       body: JSON.stringify({ data: taskPayload }),
+      redirect: "manual",
+      signal: AbortSignal.timeout(10000),
     });
 
     const aksoraData = await aksoraRes.json().catch(() => ({}));

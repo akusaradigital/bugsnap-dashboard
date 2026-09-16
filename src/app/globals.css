@@ -243,9 +243,15 @@ a:active {
 }
 
 /* Scrollbar styling - thin & subtle */
+/* Firefox has no ::-webkit-scrollbar, so it was rendering the OS default width. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in srgb, var(--muted) 45%, transparent) transparent;
+}
+
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 5px;
+  height: 5px;
 }
 
 ::-webkit-scrollbar-track {

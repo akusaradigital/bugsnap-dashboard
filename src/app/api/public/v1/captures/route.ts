@@ -11,6 +11,11 @@ const RATE_LIMIT_MAX = 30;
 
 function checkRateLimit(key: string): boolean {
   const now = Date.now();
+  if (rateLimitMap.size > 1000) {
+    rateLimitMap.forEach((ts: number[], k: string) => {
+      if (ts.every((t: number) => now - t >= RATE_LIMIT_WINDOW_MS)) rateLimitMap.delete(k);
+    });
+  }
   const timestamps = (rateLimitMap.get(key) || []).filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
   if (timestamps.length >= RATE_LIMIT_MAX) return false;
   timestamps.push(now);
@@ -46,6 +51,15 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Field "evidenceUrl" is required' }, { status: 400 });
     }
 
+    try {
+      const parsed = new URL(evidenceUrl.trim());
+      if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+        return NextResponse.json({ error: 'Field "evidenceUrl" must be an http or https URL' }, { status: 400 });
+      }
+    } catch {
+      return NextResponse.json({ error: 'Field "evidenceUrl" must be a valid URL' }, { status: 400 });
+    }
+
     const captureTitle = (typeof title === "string" && title.trim()) ? title.trim() : "Imported Capture";
     const captureType = type === "video" ? "video" : "screenshot";
     const db = createServiceClient();
@@ -57,8 +71,6 @@ export async function POST(request: Request) {
       description: typeof description === "string" ? description.trim() : "",
       workspace_id: auth.workspaceId,
       source: "api",
-      is_starred: false,
-      is_archived: false,
     };
 
     const { data, error } = await db

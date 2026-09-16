@@ -643,7 +643,7 @@ export default function AdminOverviewPage() {
           <span className="text-[11px] text-slate-400">Privileged Super Admin Modules</span>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          <a
+          <Link
             href="/admin/users"
             className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-indigo-500/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
           >
@@ -652,9 +652,9 @@ export default function AdminOverviewPage() {
               {t("admin.manageUsers")}
             </p>
             <span className="text-[10px] text-slate-400 block truncate">Plan & 360° Profile</span>
-          </a>
+          </Link>
 
-          <a
+          <Link
             href="/admin/workspaces"
             className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-indigo-500/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
           >
@@ -663,9 +663,9 @@ export default function AdminOverviewPage() {
               {t("admin.navWorkspaces")}
             </p>
             <span className="text-[10px] text-slate-400 block truncate">Teams & Ownership</span>
-          </a>
+          </Link>
 
-          <a
+          <Link
             href="/admin/captures"
             className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-indigo-500/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
           >
@@ -674,9 +674,9 @@ export default function AdminOverviewPage() {
               {t("admin.navCaptures")}
             </p>
             <span className="text-[10px] text-slate-400 block truncate">Audit & Takedown</span>
-          </a>
+          </Link>
 
-          <a
+          <Link
             href="/admin/revenue"
             className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-indigo-500/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
           >
@@ -685,9 +685,9 @@ export default function AdminOverviewPage() {
               {t("admin.navRevenue")}
             </p>
             <span className="text-[10px] text-slate-400 block truncate">MRR & Stripe Health</span>
-          </a>
+          </Link>
 
-          <a
+          <Link
             href="/admin/ai-analytics"
             className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-indigo-500/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
           >
@@ -696,9 +696,9 @@ export default function AdminOverviewPage() {
               {t("admin.navAiAnalytics")}
             </p>
             <span className="text-[10px] text-slate-400 block truncate">Tokens & API Keys</span>
-          </a>
+          </Link>
 
-          <a
+          <Link
             href="/admin/security-audit"
             className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-indigo-500/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
           >
@@ -707,7 +707,7 @@ export default function AdminOverviewPage() {
               {t("admin.auditTitle")}
             </p>
             <span className="text-[10px] text-slate-400 block truncate">Action Audit Trail</span>
-          </a>
+          </Link>
         </div>
       </div>
 

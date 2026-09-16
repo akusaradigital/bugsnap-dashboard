@@ -1,11 +1,16 @@
-import { NextResponse } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
 /**
- * Security headers for every response.
+ * Security headers and transport-level controls for every response.
  *
- * There was no middleware at all before this, so the app shipped with no CSP,
- * no clickjacking protection and no HSTS. Each API route still does its own
- * authorization — this only adds transport/browser-level defence on top.
+ * Route interception note:
+ * 1. UI routes at /admin/* handle authentication client-side within src/app/admin/layout.tsx
+ *    by rendering an in-place login lock screen when unauthenticated. Middleware must NOT
+ *    redirect or block /admin page requests, which would break login form rendering.
+ * 2. API routes at /api/admin/* enforce authorization directly in their respective route handlers
+ *    to support dual authentication (bugsnap_admin_session cookie + Google/Supabase Bearer tokens)
+ *    without incurring external auth network hops on the Edge runtime.
+ * 3. Mutating requests to /api/admin/* enforce early CSRF origin verification here.
  */
 
 const SUPABASE_ORIGIN = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
@@ -43,7 +48,39 @@ function buildCsp(): string {
   ].join("; ");
 }
 
-export function middleware() {
+export function middleware(req: NextRequest) {
+  const { pathname } = req.nextUrl;
+
+  // Early CSRF protection for mutating admin API requests: reject cross-origin callers
+  if (pathname.startsWith("/api/admin/") && ["POST", "PUT", "DELETE", "PATCH"].includes(req.method)) {
+    const origin = req.headers.get("origin");
+    const host = req.headers.get("host");
+    if (origin && host) {
+      try {
+        const originHost = new URL(origin).host;
+        if (originHost !== host) {
+          return new NextResponse(JSON.stringify({ error: "Forbidden: Cross-origin request rejected" }), {
+            status: 403,
+            headers: {
+              "Content-Type": "application/json",
+              "X-Frame-Options": "DENY",
+              "Content-Security-Policy": "frame-ancestors 'none'",
+            },
+          });
+        }
+      } catch {
+        return new NextResponse(JSON.stringify({ error: "Forbidden: Invalid origin" }), {
+          status: 403,
+          headers: {
+            "Content-Type": "application/json",
+            "X-Frame-Options": "DENY",
+            "Content-Security-Policy": "frame-ancestors 'none'",
+          },
+        });
+      }
+    }
+  }
+
   const res = NextResponse.next();
 
   res.headers.set("Content-Security-Policy", buildCsp());

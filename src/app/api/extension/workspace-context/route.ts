@@ -45,7 +45,9 @@ export async function POST(request: Request) {
     projects = (projectRows ?? []) as unknown[];
     if (settingsRow?.integrations && typeof settingsRow.integrations === "object") {
       const raw = settingsRow.integrations as Record<string, Record<string, unknown> | string>;
-      // Sanitize: only forward fields the extension needs; drop sensitive third-party tokens
+      const currentWs = list.find((w) => w.id === selectedWorkspaceId);
+      const canAccessKeys = Boolean(currentWs && currentWs.role !== "viewer");
+      // Sanitize: only forward fields the extension needs; drop sensitive third-party tokens for viewers
       const safe: Record<string, unknown> = {};
       if (typeof raw.drive_folder_name === "string") {
         safe.drive_folder_name = raw.drive_folder_name;
@@ -53,13 +55,13 @@ export async function POST(request: Request) {
       if (raw.aksora && typeof raw.aksora === "object") {
         safe.aksora = {
           url: typeof raw.aksora.url === "string" ? raw.aksora.url : undefined,
-          apiKey: typeof raw.aksora.apiKey === "string" ? raw.aksora.apiKey : undefined,
+          apiKey: canAccessKeys && typeof raw.aksora.apiKey === "string" ? raw.aksora.apiKey : undefined,
         };
       }
       if (raw.snaptest && typeof raw.snaptest === "object") {
         safe.snaptest = {
           url: typeof raw.snaptest.url === "string" ? raw.snaptest.url : undefined,
-          apiKey: typeof raw.snaptest.apiKey === "string" ? raw.snaptest.apiKey : undefined,
+          apiKey: canAccessKeys && typeof raw.snaptest.apiKey === "string" ? raw.snaptest.apiKey : undefined,
         };
       }
       integrations = safe;

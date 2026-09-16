@@ -33,6 +33,7 @@ export default function TeamManagementPage() {
   const [roleMenuOpen, setRoleMenuOpen] = useState(false);
   const [inviting, setInviting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [failedAvatars, setFailedAvatars] = useState<Record<string, boolean>>({});
   const [plan, setPlan] = useState<Plan>("free");
   const cap = seatLimit(plan); // null on PRO+ = unlimited
 
@@ -279,9 +280,15 @@ export default function TeamManagementPage() {
           <ul className="divide-y divide-border/60">
             {members.map((m) => (
               <li key={m.user_id} className="flex items-center gap-3 px-5 py-3">
-                {m.avatar_url ? (
+                {m.avatar_url && !failedAvatars[m.user_id] ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={m.avatar_url} alt="" referrerPolicy="no-referrer" className="w-9 h-9 rounded-full object-cover shrink-0" />
+                  <img
+                    src={m.avatar_url}
+                    alt=""
+                    referrerPolicy="no-referrer"
+                    onError={() => setFailedAvatars((prev) => ({ ...prev, [m.user_id]: true }))}
+                    className="w-9 h-9 rounded-full object-cover shrink-0"
+                  />
                 ) : (
                   <div className="w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 text-xs font-bold flex items-center justify-center shrink-0">
                     {(m.full_name || m.email || "?").charAt(0).toUpperCase()}

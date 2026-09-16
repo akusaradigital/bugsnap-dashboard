@@ -1,11 +1,27 @@
 import { NextResponse } from "next/server";
 import { isRequestAdminAuthenticated } from "@/lib/admin-auth";
+import { sanitizeErrorMessage } from "@/lib/redact";
 
 export const runtime = "nodejs";
 
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const RESEND_FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "BugSnap CS <support@bugsnap.akusaraproject.my.id>";
 const CS_EMAIL = process.env.CS_EMAIL || process.env.SUPER_ADMIN_EMAILS || "contact.akusaraproject@gmail.com";
+
+function maskApiKey(key?: string): string {
+  if (!key) return "Not Set";
+  if (key.length <= 10) return "••••••••";
+  return `${key.slice(0, 6)}••••••••${key.slice(-4)}`;
+}
+
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
 
 // GET /api/admin/email-health
 export async function GET(req: Request) {
@@ -14,9 +30,7 @@ export async function GET(req: Request) {
   }
 
   const hasApiKey = Boolean(RESEND_API_KEY);
-  const maskedKey = RESEND_API_KEY
-    ? `${RESEND_API_KEY.slice(0, 7)}••••••••${RESEND_API_KEY.slice(-4)}`
-    : "Not Set";
+  const maskedKey = maskApiKey(RESEND_API_KEY);
 
   let apiReachable = false;
   let latencyMs = 0;
@@ -28,6 +42,7 @@ export async function GET(req: Request) {
     try {
       const res = await fetch("https://api.resend.com/domains", {
         headers: { Authorization: `Bearer ${RESEND_API_KEY}` },
+        signal: AbortSignal.timeout(5000),
       });
       latencyMs = Date.now() - start;
 
@@ -37,11 +52,11 @@ export async function GET(req: Request) {
         domains = Array.isArray(data?.data) ? data.data : [];
       } else {
         const errJson = await res.json().catch(() => ({}));
-        apiError = errJson?.message || `HTTP ${res.status}`;
+        apiError = sanitizeErrorMessage(errJson?.message || `HTTP ${res.status}`, "Resend API error");
       }
     } catch (err: unknown) {
       latencyMs = Date.now() - start;
-      apiError = (err as Error)?.message || "Resend endpoint unreachable";
+      apiError = sanitizeErrorMessage(err, "Resend endpoint unreachable");
     }
   }
 
@@ -70,9 +85,22 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json().catch(() => ({}));
-    const recipient = String(body?.recipient || CS_EMAIL).trim();
+    const rawRecipient = typeof body?.recipient === "string" ? body.recipient.trim() : "";
+    const recipient = rawRecipient || CS_EMAIL;
+
+    // Strict validation against header injection and malformed emails
+    if (
+      !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(recipient) ||
+      recipient.includes("\r") ||
+      recipient.includes("\n")
+    ) {
+      return NextResponse.json({ error: "Invalid recipient email address" }, { status: 400 });
+    }
 
     const start = Date.now();
+    const safeRecipient = escapeHtml(recipient);
+    const safeFrom = escapeHtml(RESEND_FROM_EMAIL);
+
     const html = `
       <div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 24px; max-width: 540px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 10px;">
         <h2 style="color: #0f172a; margin-top: 0;">🧪 BugSnap Email Health Diagnostic Probe</h2>
@@ -80,8 +108,8 @@ export async function POST(req: Request) {
           Email ini adalah pengujian langsung (health probe) dari BugSnap Admin Console.
         </p>
         <div style="background: #f1f5f9; padding: 12px 16px; border-radius: 6px; font-family: monospace; font-size: 12px; color: #334155;">
-          <div><strong>Sender:</strong> ${RESEND_FROM_EMAIL}</div>
-          <div><strong>Recipient:</strong> ${recipient}</div>
+          <div><strong>Sender:</strong> ${safeFrom}</div>
+          <div><strong>Recipient:</strong> ${safeRecipient}</div>
           <div><strong>Timestamp:</strong> ${new Date().toISOString()}</div>
         </div>
         <p style="font-size: 12px; color: #10b981; font-weight: bold; margin-top: 16px;">
@@ -102,6 +130,7 @@ export async function POST(req: Request) {
         subject: `[PROBE] BugSnap Email Delivery Health Test - ${new Date().toLocaleTimeString("id-ID")}`,
         html,
       }),
+      signal: AbortSignal.timeout(5000),
     });
 
     const latencyMs = Date.now() - start;
@@ -109,7 +138,7 @@ export async function POST(req: Request) {
 
     if (!res.ok) {
       return NextResponse.json(
-        { ok: false, error: resData.message || `Resend Error HTTP ${res.status}`, latencyMs },
+        { ok: false, error: sanitizeErrorMessage(resData.message || `Resend Error HTTP ${res.status}`), latencyMs },
         { status: res.status }
       );
     }
@@ -121,6 +150,6 @@ export async function POST(req: Request) {
       latencyMs,
     });
   } catch (err: unknown) {
-    return NextResponse.json({ error: (err as Error)?.message || "Failed to send test probe" }, { status: 500 });
+    return NextResponse.json({ error: sanitizeErrorMessage(err, "Failed to send test probe") }, { status: 500 });
   }
 }
