@@ -11,10 +11,8 @@ export default function PrivacyPolicyPage() {
     <StaticShell
       title="Privacy Policy"
       subtitle="Last updated: August 8, 2026"
-
-
     >
-      <main className="mx-auto max-w-4xl px-6 py-12 leading-relaxed">
+      <div className="mx-auto max-w-5xl px-4 sm:px-8 py-10 sm:py-12 leading-relaxed">
         <div className="space-y-8 text-sm text-foreground/90">
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-foreground">1. Overview</h2>
@@ -31,7 +29,7 @@ export default function PrivacyPolicyPage() {
 
             <div className="border border-border rounded-lg p-4 bg-subtle/30 space-y-4">
               <div>
-                <h3 className="font-semibold text-foreground text-xs uppercase tracking-wider text-indigo-600 mb-1">A. User Account & Identity</h3>
+                <h3 className="font-semibold text-xs uppercase tracking-wider text-[#6B9A35] dark:text-[#A8D666] mb-1">A. User Account & Identity</h3>
                 <p>
                   <strong>Data:</strong> Your Google Account email address and Google Profile ID.
                 </p>
@@ -41,7 +39,7 @@ export default function PrivacyPolicyPage() {
               </div>
 
               <div>
-                <h3 className="font-semibold text-foreground text-xs uppercase tracking-wider text-indigo-600 mb-1">B. Screen Captures & Video Media</h3>
+                <h3 className="font-semibold text-xs uppercase tracking-wider text-[#6B9A35] dark:text-[#A8D666] mb-1">B. Screen Captures & Video Media</h3>
                 <p>
                   <strong>Data:</strong> Screenshots (PNG) and screen recordings (WebM) captured explicitly when you initiate a capture action.
                 </p>
@@ -51,7 +49,7 @@ export default function PrivacyPolicyPage() {
               </div>
 
               <div>
-                <h3 className="font-semibold text-foreground text-xs uppercase tracking-wider text-indigo-600 mb-1">C. Technical Metadata & DevLogs</h3>
+                <h3 className="font-semibold text-xs uppercase tracking-wider text-[#6B9A35] dark:text-[#A8D666] mb-1">C. Technical Metadata & DevLogs</h3>
                 <p>
                   <strong>Data:</strong> Capture title, duration, window dimensions, OS name, browser version, timestamp, and optional developer logs (console errors and failed network request details captured during active recording).
                 </p>
@@ -103,7 +101,7 @@ export default function PrivacyPolicyPage() {
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-foreground">6. Limited Use Disclosure</h2>
             <p>
-              BugSnap&apos;s use and transfer to any other app of information received from Google APIs will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy#additional_requirements_for_specific_api_scopes" target="_blank" rel="noopener noreferrer" className="text-indigo-600 underline">Google API Services User Data Policy</a>, including the Limited Use requirements.
+              BugSnap&apos;s use and transfer to any other app of information received from Google APIs will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy#additional_requirements_for_specific_api_scopes" target="_blank" rel="noopener noreferrer" className="text-[#6B9A35] hover:text-[#58802A] dark:text-[#A8D666] dark:hover:text-[#C2E688] underline">Google API Services User Data Policy</a>, including the Limited Use requirements.
             </p>
           </section>
 
@@ -112,12 +110,12 @@ export default function PrivacyPolicyPage() {
             <p>
               If you have any questions or privacy inquiries regarding BugSnap, please contact us at:
             </p>
-            <p className="font-medium text-indigo-600">
+            <p className="font-medium text-[#6B9A35] dark:text-[#A8D666]">
               <a href="mailto:support@akusaradigital.com" className="underline">support@akusaradigital.com</a> · <a href="https://akusaradigital.com" target="_blank" rel="noopener noreferrer" className="underline">akusaradigital.com</a>
             </p>
           </section>
         </div>
-      </main>
+      </div>
     </StaticShell>
   );
 }

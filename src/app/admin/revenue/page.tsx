@@ -247,7 +247,7 @@ export default function AdminRevenuePage() {
           <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">
             {metrics?.payingCustomersCount || 0}
           </p>
-          <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold mt-0.5 block">
+          <span className="text-[10px] text-[#6B9A35] dark:text-[#A8D666] font-semibold mt-0.5 block">
             {metrics?.conversionRate} conversion rate
           </span>
         </div>
@@ -296,15 +296,15 @@ export default function AdminRevenuePage() {
           <span className="text-[10px] text-slate-400">$0 / user</span>
         </div>
         <div className="p-3.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-center">
-          <span className="text-[10px] uppercase font-bold text-indigo-500 tracking-wider">Pro Tier</span>
-          <p className="text-xl font-black text-indigo-600 dark:text-indigo-400 mt-0.5">
+          <span className="text-[10px] uppercase font-bold text-[#6B9A35] dark:text-[#A8D666] tracking-wider">Pro Tier</span>
+          <p className="text-xl font-black text-[#6B9A35] dark:text-[#A8D666] mt-0.5">
             {metrics?.planCounts?.pro || 0}
           </p>
           <span className="text-[10px] text-slate-400">$12 / mo</span>
         </div>
         <div className="p-3.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-center">
-          <span className="text-[10px] uppercase font-bold text-purple-500 tracking-wider">Team / Pro+</span>
-          <p className="text-xl font-black text-purple-600 dark:text-purple-400 mt-0.5">
+          <span className="text-[10px] uppercase font-bold text-slate-700 dark:text-slate-300 tracking-wider">Team / Pro+</span>
+          <p className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-0.5">
             {(metrics?.planCounts?.pro_plus || 0) + (metrics?.planCounts?.team || 0)}
           </p>
           <span className="text-[10px] text-slate-400">$24 / mo</span>
@@ -348,7 +348,7 @@ export default function AdminRevenuePage() {
             }`}
           >
             <span>💰 {t("admin.tabSubscribers")}</span>
-            <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-bold">
+            <span className="px-1.5 py-0.5 rounded-md text-[10px] bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-bold">
               {payingCustomers.length}
             </span>
           </button>
@@ -364,7 +364,7 @@ export default function AdminRevenuePage() {
           >
             <span>🔥 {t("admin.tabProspects")}</span>
             <span
-              className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+              className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
                 hotProspects.length > 0
                   ? "bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300"
                   : "bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300"
@@ -385,7 +385,7 @@ export default function AdminRevenuePage() {
           >
             <span>🛒 {t("admin.tabAbandoned")}</span>
             <span
-              className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+              className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
                 abandonedCheckouts.length > 0
                   ? "bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300"
                   : "bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300"
@@ -406,9 +406,9 @@ export default function AdminRevenuePage() {
           >
             <span>🧪 {t("admin.tabExperiments")}</span>
             <span
-              className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold ${
+              className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
                 Object.keys(data?.abExperiments || {}).length > 0
-                  ? "bg-indigo-100 text-indigo-800 dark:bg-indigo-950/80 dark:text-indigo-300"
+                  ? "bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40"
                   : "bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300"
               }`}
             >
@@ -479,7 +479,7 @@ export default function AdminRevenuePage() {
                           </div>
                         </td>
                         <td className="py-3 px-4 whitespace-nowrap">
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40">
                             {cust.plan}
                           </span>
                         </td>
@@ -507,7 +507,7 @@ export default function AdminRevenuePage() {
                         <td className="py-3 px-4 text-right whitespace-nowrap">
                           <a
                             href="/admin/users"
-                            className="text-[11px] font-semibold text-indigo-600 hover:underline"
+                            className="text-[11px] font-semibold text-[#6B9A35] hover:text-[#557A2B] dark:text-[#A8D666] dark:hover:text-[#C2E688] hover:underline"
                           >
                             Manage User
                           </a>
@@ -570,7 +570,7 @@ export default function AdminRevenuePage() {
                           </div>
                         </td>
                         <td className="py-3 px-4 whitespace-nowrap">
-                          <span className="px-2.5 py-1 rounded-full text-xs font-black bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300">
+                          <span className="px-2.5 py-1 rounded-md text-xs font-black bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300">
                             {lead.paywall_hits} {lead.paywall_hits === 1 ? "hit" : "hits"}
                           </span>
                         </td>
@@ -593,7 +593,7 @@ export default function AdminRevenuePage() {
                         <td className="py-3 px-4 text-right whitespace-nowrap">
                           <a
                             href={`mailto:${lead.email}?subject=Exclusive%20BugSnap%20Pro%20Offer&body=Hi%20${encodeURIComponent(lead.full_name || "")},%20we%20noticed%20you%20were%20exploring%20${encodeURIComponent(lead.last_paywall_feature)}...`}
-                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-[11px] transition-colors"
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] text-white font-semibold text-[11px] shadow-xs shadow-[#89BD49]/25 transition-colors"
                           >
                             ✉️ {t("admin.contactLead")}
                           </a>
@@ -656,7 +656,7 @@ export default function AdminRevenuePage() {
                           </div>
                         </td>
                         <td className="py-3 px-4 whitespace-nowrap">
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-purple-50 text-purple-700 dark:bg-purple-950/60 dark:text-purple-300">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40">
                             {cart.attempted_plan}
                           </span>
                         </td>
@@ -744,7 +744,7 @@ export default function AdminRevenuePage() {
                             <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
                               varId === "control"
                                 ? "bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300"
-                                : "bg-indigo-100 text-indigo-800 dark:bg-indigo-950/80 dark:text-indigo-300"
+                                : "bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40"
                             }`}>
                               {varId}
                             </span>

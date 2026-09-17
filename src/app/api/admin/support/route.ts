@@ -169,7 +169,7 @@ export async function POST(req: Request) {
     if (RESEND_API_KEY && ticket.userEmail) {
       const emailHtml = `
         <div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #1e293b; line-height: 1.6;">
-          <div style="border-bottom: 2px solid #4f46e5; padding-bottom: 12px; margin-bottom: 20px;">
+          <div style="border-bottom: 2px solid #89BD49; padding-bottom: 12px; margin-bottom: 20px;">
             <h2 style="color: #0f172a; margin: 0; font-size: 18px;">Tanggapan Customer Support BugSnap</h2>
             <p style="color: #64748b; font-size: 12px; margin: 4px 0 0;">Mengenai: ${ticket.subject}</p>
           </div>

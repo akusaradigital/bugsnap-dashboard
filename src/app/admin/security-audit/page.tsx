@@ -124,10 +124,10 @@ export default function AdminSecurityAuditPage() {
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         {[
           { label: "Total Events", value: stats.total, color: "text-slate-900 dark:text-white", border: "border-slate-200 dark:border-zinc-800" },
-          { label: "Admin Actions", value: stats.admin_action, color: "text-indigo-600 dark:text-indigo-400", border: "border-indigo-200 dark:border-indigo-900/50" },
+          { label: "Admin Actions", value: stats.admin_action, color: "text-[#6B9A35] dark:text-[#A8D666]", border: "border-[#89BD49]/30 dark:border-[#89BD49]/40" },
           { label: "Bot Honeypots", value: stats.honeypot, color: "text-rose-600 dark:text-rose-400", border: "border-rose-200 dark:border-rose-900/50" },
           { label: "Disposable Emails", value: stats.spam_email, color: "text-amber-600 dark:text-amber-400", border: "border-amber-200 dark:border-amber-900/50" },
-          { label: "Turnstile Fails", value: stats.turnstile_fail, color: "text-purple-600 dark:text-purple-400", border: "border-purple-200 dark:border-purple-900/50" },
+          { label: "Turnstile Fails", value: stats.turnstile_fail, color: "text-slate-700 dark:text-slate-300", border: "border-slate-300 dark:border-zinc-700" },
         ].map((s) => (
           <div key={s.label} className={`rounded-xl border ${s.border} bg-white dark:bg-zinc-900 p-3.5 shadow-sm`}>
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">{s.label}</span>
@@ -162,7 +162,7 @@ export default function AdminSecurityAuditPage() {
             placeholder="Search IP, title, details..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-indigo-500 text-slate-900 dark:text-white"
+            className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 text-slate-900 dark:text-white"
           />
         </div>
       </div>
@@ -199,7 +199,7 @@ export default function AdminSecurityAuditPage() {
                     <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
                       <td className="py-3 px-4 whitespace-nowrap">
                         {log.type === "admin_action" && (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-400">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40">
                             ⚡ ADMIN ACTION
                           </span>
                         )}
@@ -219,7 +219,7 @@ export default function AdminSecurityAuditPage() {
                           </span>
                         )}
                         {log.type === "turnstile_fail" && (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-400">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300 border border-slate-300 dark:border-zinc-700">
                             🛡️ TURNSTILE
                           </span>
                         )}

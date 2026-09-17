@@ -161,7 +161,7 @@ export default function TeamManagementPage() {
           <h1 className="text-2xl font-bold tracking-tight text-foreground">{t("members.title")}</h1>
           <p className="text-sm text-muted mt-1">{t("members.subtitle")}</p>
         </div>
-        <Link href="/settings" className="text-sm text-indigo-600 font-medium hover:underline">
+        <Link href="/settings" className="text-sm text-[#6B9A35] dark:text-[#A8D666] hover:text-[#557A2B] dark:hover:text-[#C2E688] font-medium hover:underline">
           {t("members.backToSettings")}
         </Link>
       </div>
@@ -191,14 +191,14 @@ export default function TeamManagementPage() {
             placeholder="teammate@company.com"
             onKeyDown={(e) => e.key === "Enter" && handleInvite()}
             disabled={cap !== null && members.length >= cap}
-            className="flex-1 text-sm rounded-lg border border-border px-3.5 py-2.5 outline-none focus:border-indigo-500 bg-subtle disabled:bg-subtle disabled:cursor-not-allowed"
+            className="flex-1 text-sm rounded-lg border border-border px-3.5 py-2.5 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 bg-subtle text-foreground placeholder:text-muted disabled:bg-subtle disabled:cursor-not-allowed"
           />
           <div className="flex items-center gap-2">
             <div className="relative flex-1 sm:flex-none">
               <button
                 type="button"
                 onClick={() => setRoleMenuOpen((o) => !o)}
-                className="w-full sm:w-auto flex items-center justify-between gap-1.5 text-sm rounded-lg border border-border px-3.5 py-2.5 bg-subtle hover:bg-border/30 transition-colors"
+                className="w-full sm:auto flex items-center justify-between gap-1.5 text-sm rounded-lg border border-border px-3.5 py-2.5 bg-subtle hover:bg-border/30 text-foreground transition-colors"
               >
                 {inviteRole === "creator" ? "Creator" : "Viewer"}
                 <svg className={`w-3.5 h-3.5 text-muted transition-transform ${roleMenuOpen ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -224,7 +224,7 @@ export default function TeamManagementPage() {
                           <span className="block text-xs text-muted">{opt.hint}</span>
                         </span>
                         {inviteRole === opt.value && (
-                          <svg className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <svg className="w-4 h-4 text-[#89BD49] shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                             <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                           </svg>
                         )}
@@ -237,14 +237,14 @@ export default function TeamManagementPage() {
             <button
               onClick={handleInvite}
               disabled={inviting || !inviteEmail.trim() || (cap !== null && members.length >= cap)}
-              className="px-5 py-2.5 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors shrink-0"
+              className="px-5 py-2.5 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] shadow-xs shadow-[#89BD49]/25 disabled:opacity-50 transition-colors shrink-0"
             >
               {inviting ? t("members.inviting") : t("members.invite")}
             </button>
           </div>
         </div>
         {cap !== null && members.length >= cap && (
-          <p className="text-xs text-indigo-600 dark:text-indigo-400 mt-2">{t("members.seatLimit", { cap })}</p>
+          <p className="text-xs text-[#6B9A35] dark:text-[#A8D666] mt-2">{t("members.seatLimit", { cap })}</p>
         )}
         {error && <p className="text-xs text-red-600 dark:text-red-400 mt-2">{error}</p>}
       </div>
@@ -290,7 +290,7 @@ export default function TeamManagementPage() {
                     className="w-9 h-9 rounded-full object-cover shrink-0"
                   />
                 ) : (
-                  <div className="w-9 h-9 rounded-full bg-indigo-100 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-300 text-xs font-bold flex items-center justify-center shrink-0">
+                  <div className="w-9 h-9 rounded-full bg-[#89BD49]/15 dark:bg-[#89BD49]/25 text-[#6B9A35] dark:text-[#A8D666] text-xs font-bold flex items-center justify-center shrink-0">
                     {(m.full_name || m.email || "?").charAt(0).toUpperCase()}
                   </div>
                 )}
@@ -298,7 +298,7 @@ export default function TeamManagementPage() {
                   <p className="text-sm font-medium text-foreground truncate">
                     {m.full_name || m.email}
                     {m.role === "owner" && <span className="ml-2 text-[10px] font-semibold text-muted bg-muted/10 border border-border px-1.5 py-0.5 rounded">{t("members.owner")}</span>}
-                    {m.role === "admin" && <span className="ml-2 text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-800/40 px-1.5 py-0.5 rounded">{t("members.admin")}</span>}
+                    {m.role === "admin" && <span className="ml-2 text-[10px] font-semibold text-[#6B9A35] dark:text-[#A8D666] bg-[#89BD49]/10 dark:bg-[#89BD49]/20 border border-[#89BD49]/30 dark:border-[#89BD49]/40 px-1.5 py-0.5 rounded">{t("members.admin")}</span>}
                     {(m.role === "member" || m.role === "creator") && <span className="ml-2 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 px-1.5 py-0.5 rounded">Creator</span>}
                     {m.role === "viewer" && <span className="ml-2 text-[10px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 px-1.5 py-0.5 rounded">Viewer</span>}
                   </p>

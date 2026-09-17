@@ -287,7 +287,7 @@ export function CommandPalette({
                     onMouseEnter={() => setSelectedIndex(idx)}
                     className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs transition-colors cursor-pointer text-left ${
                       isSelected
-                        ? "bg-[#1f3bb3]/10 dark:bg-indigo-950/60 text-[#1f3bb3] dark:text-indigo-400 font-semibold"
+                        ? "bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] font-semibold"
                         : "text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-850"
                     }`}
                   >

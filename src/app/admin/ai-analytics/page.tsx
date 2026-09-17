@@ -108,7 +108,7 @@ export default function AdminAiAnalyticsPage() {
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
             {t("admin.totalAiCalls")}
           </span>
-          <p className="text-2xl font-black text-indigo-600 dark:text-indigo-400 mt-1">
+          <p className="text-2xl font-black text-[#6B9A35] dark:text-[#A8D666] mt-1">
             {aiStats?.totalSummaries?.toLocaleString() || 0}
           </p>
           <span className="text-[10px] text-slate-400 mt-0.5 block">
@@ -238,7 +238,7 @@ export default function AdminAiAnalyticsPage() {
                     <td className="py-3 px-4 text-right whitespace-nowrap">
                       <a
                         href="/admin/users"
-                        className="px-2.5 py-1 rounded text-[11px] font-semibold bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400 hover:bg-indigo-100 transition-colors"
+                        className="px-2.5 py-1 rounded text-[11px] font-semibold bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40 hover:bg-[#89BD49]/20 transition-colors"
                       >
                         Manage User
                       </a>
@@ -314,7 +314,7 @@ export default function AdminAiAnalyticsPage() {
                           href={`/v/${item.id}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-indigo-600 hover:underline text-[11px] font-semibold"
+                          className="text-[#6B9A35] hover:text-[#557A2B] dark:text-[#A8D666] dark:hover:text-[#C2E688] hover:underline text-[11px] font-semibold"
                         >
                           Open ↗
                         </a>

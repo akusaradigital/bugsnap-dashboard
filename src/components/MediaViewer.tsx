@@ -1018,7 +1018,7 @@ export default function MediaViewer({
               <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
             </span>
             <span>Interactive Error Timeline</span>
-            <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+            <span className={`rounded-md px-2 py-0.5 text-[10px] font-semibold ${
               inFs
                 ? "bg-rose-500/20 text-rose-300 border border-rose-500/30"
                 : "bg-rose-100 dark:bg-rose-950/50 text-rose-600 dark:text-rose-400"
@@ -1035,7 +1035,7 @@ export default function MediaViewer({
         <button
           type="button"
           onClick={togglePlayPause}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-indigo-600 hover:bg-indigo-700 text-white shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-indigo-500/40"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-md shadow-[#89BD49]/25 hover:scale-105 active:scale-95 transition-all cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-[#89BD49]/40"
           aria-label={isPlaying ? t("mv.pause") : t("mv.play")}
           title={isPlaying ? t("mv.pause") : t("mv.play")}
         >
@@ -1066,7 +1066,7 @@ export default function MediaViewer({
             {/* Progress bar */}
             <div
               ref={inFs ? fsProgressBarRef : progressBarRef}
-              className={`h-full bg-indigo-600 rounded-full ${
+              className={`h-full bg-[#89BD49] rounded-full ${
                 isScrubbing || isPlaying ? "transition-none" : "transition-all duration-75"
               }`}
               style={{ width: `${effectiveDuration > 0 ? (currentPlaybackTime / effectiveDuration) * 100 : 0}%` }}
@@ -1076,7 +1076,7 @@ export default function MediaViewer({
           {/* Scrubber Playhead thumb (.trim-playhead) */}
           <div
             ref={inFs ? fsPlayheadRef : playheadRef}
-            className={`absolute w-3.5 h-3.5 rounded-full bg-indigo-600 border-2 border-white dark:border-zinc-900 shadow-md pointer-events-none top-1/2 -translate-y-1/2 -translate-x-1/2 group-hover/track:scale-125 ${
+            className={`absolute w-3.5 h-3.5 rounded-full bg-[#89BD49] border-2 border-white dark:border-zinc-900 shadow-md pointer-events-none top-1/2 -translate-y-1/2 -translate-x-1/2 group-hover/track:scale-125 ${
               isScrubbing || isPlaying ? "transition-none" : "transition-transform duration-75"
             } ${isScrubbing ? "scale-125" : ""}`}
             style={{ left: `${effectiveDuration > 0 ? (currentPlaybackTime / effectiveDuration) * 100 : 0}%` }}
@@ -1138,7 +1138,7 @@ export default function MediaViewer({
                   }}
                   onMouseEnter={() => setHoveredMarker(marker)}
                   onMouseLeave={() => setHoveredMarker(null)}
-                  className={`relative flex items-center justify-center min-w-[22px] h-[22px] px-1 rounded-full text-white text-[10px] font-bold border-2 border-white dark:border-zinc-900 shadow-md transition-transform hover:scale-125 focus:outline-hidden cursor-pointer ${badgeBg} ${
+                  className={`relative flex items-center justify-center min-w-[22px] h-[22px] px-1.5 rounded-md text-white text-[10px] font-bold border-2 border-white dark:border-zinc-900 shadow-md transition-transform hover:scale-125 focus:outline-hidden cursor-pointer ${badgeBg} ${
                     isNearActive ? "scale-115 ring-2 ring-rose-500/50" : ""
                   }`}
                   title={`[${formatSec(marker.timeSec)}] ${marker.label}`}
@@ -1177,7 +1177,7 @@ export default function MediaViewer({
               setPlaybackRate(val);
               if (videoRef.current) videoRef.current.playbackRate = val;
             }}
-            className={`text-xs rounded-md px-1.5 py-1 cursor-pointer focus:outline-hidden focus:ring-1 focus:ring-indigo-500 ${
+            className={`text-xs rounded-md px-1.5 py-1 cursor-pointer focus:outline-hidden focus:ring-1 focus:ring-[#89BD49] ${
               inFs
                 ? "bg-white/10 text-white border border-white/20 hover:bg-white/20"
                 : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700"
@@ -1236,7 +1236,7 @@ export default function MediaViewer({
             onChange={handleVolumeChange}
             onClick={(e) => e.stopPropagation()}
             aria-label="Volume"
-            className="w-14 sm:w-16 h-1.5 accent-indigo-600 bg-zinc-200 dark:bg-zinc-700 rounded-lg cursor-pointer"
+            className="w-14 sm:w-16 h-1.5 accent-[#89BD49] bg-zinc-200 dark:bg-zinc-700 rounded-lg cursor-pointer"
           />
         </div>
 
@@ -1250,8 +1250,8 @@ export default function MediaViewer({
             }}
             className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors cursor-pointer focus:outline-hidden ${
               inFs
-                ? isPip ? "text-indigo-400 bg-white/20" : "text-white hover:bg-white/20 hover:text-white"
-                : isPip ? "text-indigo-600 bg-indigo-50 dark:bg-indigo-950/50" : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+                ? isPip ? "text-[#A8D666] bg-white/20" : "text-white hover:bg-white/20 hover:text-white"
+                : isPip ? "text-[#6B9A35] dark:text-[#A8D666] bg-[#89BD49]/10 dark:bg-[#89BD49]/20" : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
             }`}
             aria-label={t("mv.pip")}
             title={t("mv.pip")}
@@ -1509,8 +1509,8 @@ export default function MediaViewer({
                       : "opacity-0 -translate-y-4 pointer-events-none"
                   }`}
                 >
-                  <div className="flex items-center gap-2 rounded-full bg-black/75 backdrop-blur-md px-3.5 py-1.5 text-xs text-white/90 border border-white/15 shadow-xl">
-                    <span className="h-2 w-2 rounded-full bg-indigo-500 animate-pulse" />
+                  <div className="flex items-center gap-2 rounded-xl bg-black/75 backdrop-blur-md px-3.5 py-1.5 text-xs text-white/90 border border-white/15 shadow-xl">
+                    <span className="h-2 w-2 rounded-full bg-[#89BD49] animate-pulse" />
                     <span className="font-medium truncate max-w-xs sm:max-w-md">{title || "Video Capture"}</span>
                   </div>
 
@@ -1520,7 +1520,7 @@ export default function MediaViewer({
                       e.stopPropagation();
                       toggleFullscreen();
                     }}
-                    className="flex items-center gap-1.5 rounded-full bg-black/75 hover:bg-black/90 active:scale-95 backdrop-blur-md px-3.5 py-1.5 text-xs font-semibold text-white border border-white/20 hover:border-white/40 transition-all shadow-xl cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-white/40"
+                    className="flex items-center gap-1.5 rounded-xl bg-black/75 hover:bg-black/90 active:scale-95 backdrop-blur-md px-3.5 py-1.5 text-xs font-semibold text-white border border-white/20 hover:border-white/40 transition-all shadow-xl cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-white/40"
                     title={t("mv.exitFullscreen")}
                     aria-label={t("mv.exitFullscreen")}
                   >
@@ -1572,14 +1572,14 @@ export default function MediaViewer({
             <button
               type="button"
               ref={lightboxTriggerRef}
-              className="relative flex h-full w-full items-center justify-center cursor-zoom-in select-none bg-transparent border-0 p-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-600 rounded-lg"
+              className="relative flex h-full w-full items-center justify-center cursor-zoom-in select-none bg-transparent border-0 p-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#89BD49] rounded-lg"
               onClick={() => setLightboxOpen(true)}
               aria-label={t("mv.openViewer", { name: title || "screenshot" })}
               title={t("mv.openFullscreen")}
             >
               {!imageLoaded && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="w-6 h-6 border-2 border-indigo-300 border-t-indigo-600 rounded-full animate-spin" />
+                  <div className="w-6 h-6 border-2 border-[#89BD49]/30 border-t-[#89BD49] rounded-full animate-spin" />
                 </div>
               )}
               {/* eslint-disable-next-line @next/next/no-img-element */}

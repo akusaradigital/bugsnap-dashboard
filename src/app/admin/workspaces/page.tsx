@@ -186,7 +186,7 @@ export default function AdminWorkspacesPage() {
         <div>
           <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
             <span>🏢 {t("admin.workspacesTitle")}</span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 font-normal">
+            <span className="text-xs px-2 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 font-normal">
               {totalCount.toLocaleString()} {t("admin.workspaces")}
             </span>
           </h2>
@@ -212,11 +212,11 @@ export default function AdminWorkspacesPage() {
             placeholder="Search workspace or owner..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-indigo-500 text-slate-900 dark:text-white"
+            className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 text-slate-900 dark:text-white"
           />
           <button
             type="submit"
-            className="px-3 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700 cursor-pointer shrink-0"
+            className="px-3 py-2 bg-[#89BD49] hover:bg-[#6B9A35] text-white rounded-lg text-xs font-semibold shadow-xs shadow-[#89BD49]/25 transition-colors cursor-pointer shrink-0"
           >
             {t("common.search")}
           </button>
@@ -266,7 +266,7 @@ export default function AdminWorkspacesPage() {
                       </span>
                     </td>
                     <td className="py-3 px-4 whitespace-nowrap">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-indigo-50 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40">
                         📹 {ws.capture_count}
                       </span>
                     </td>
@@ -367,7 +367,7 @@ export default function AdminWorkspacesPage() {
                 value={newOwnerEmail}
                 onChange={(e) => setNewOwnerEmail(e.target.value)}
                 placeholder="user@example.com"
-                className="w-full text-xs rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2.5 outline-none focus:border-indigo-500 text-slate-900 dark:text-white font-mono"
+                className="w-full text-xs rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2.5 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 text-slate-900 dark:text-white font-mono"
               />
             </div>
 
@@ -382,7 +382,7 @@ export default function AdminWorkspacesPage() {
               <button
                 type="submit"
                 disabled={transferring}
-                className="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 shadow-sm"
+                className="px-4 py-2 rounded-xl text-xs font-semibold bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-xs shadow-[#89BD49]/25 transition-colors disabled:opacity-50"
               >
                 {transferring ? t("common.loading") : t("admin.transferOwner")}
               </button>
@@ -478,7 +478,7 @@ export default function AdminWorkspacesPage() {
                             href={`/v/${cap.id}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-[11px] font-semibold text-indigo-600 hover:underline"
+                            className="text-[11px] font-semibold text-[#6B9A35] hover:text-[#557A2B] dark:text-[#A8D666] dark:hover:text-[#C2E688] hover:underline"
                           >
                             View
                           </a>

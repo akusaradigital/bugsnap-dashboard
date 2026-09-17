@@ -119,11 +119,11 @@ export function UpgradeModal({
         </div>
 
         {/* Regional PPP Banner */}
-        <div className="mb-4 rounded-2xl border border-indigo-200/80 dark:border-indigo-900/50 bg-indigo-50/60 dark:bg-indigo-950/30 p-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+        <div className="mb-4 rounded-2xl border border-[#89BD49]/30 dark:border-[#89BD49]/40 bg-[#89BD49]/10 dark:bg-[#89BD49]/15 p-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
           <div className="flex items-center gap-2">
             <span>🌏</span>
             <span className="text-neutral-700 dark:text-neutral-300">
-              <strong>Regional Pricing:</strong> Indonesian creators get 40% off with code <code className="font-mono bg-white dark:bg-neutral-800 px-1 py-0.5 rounded font-bold text-indigo-600 dark:text-indigo-400">INDO40</code>
+              <strong>Regional Pricing:</strong> Indonesian creators get 40% off with code <code className="font-mono bg-white dark:bg-neutral-800 px-1 py-0.5 rounded font-bold text-[#6B9A35] dark:text-[#A8D666]">INDO40</code>
             </span>
           </div>
           <button
@@ -132,7 +132,7 @@ export function UpgradeModal({
               setPromoCode("INDO40");
               setShowPromoInput(true);
             }}
-            className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline shrink-0 text-left sm:text-right"
+            className="text-[#6B9A35] dark:text-[#A8D666] font-bold hover:underline shrink-0 text-left sm:text-right"
           >
             Apply Code
           </button>
@@ -252,7 +252,7 @@ export function UpgradeModal({
                   <button
                     type="button"
                     onClick={() => setShowPromoInput(true)}
-                    className="text-neutral-600 dark:text-neutral-400 hover:text-indigo-600 dark:hover:text-indigo-400 underline flex items-center gap-1"
+                    className="text-neutral-600 dark:text-neutral-400 hover:text-[#6B9A35] dark:hover:text-[#A8D666] underline flex items-center gap-1"
                   >
                     <span>Have a promo code?</span>
                   </button>
@@ -263,7 +263,7 @@ export function UpgradeModal({
                       value={promoCode}
                       onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
                       placeholder="e.g. INDO40 / LAUNCH50"
-                      className="w-full px-2.5 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 text-xs text-foreground uppercase tracking-wide font-mono focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 text-xs text-foreground uppercase tracking-wide font-mono focus:outline-none focus:ring-1 focus:ring-[#89BD49]"
                     />
                     {promoCode && (
                       <button
@@ -284,10 +284,10 @@ export function UpgradeModal({
                   type="button"
                   onClick={() => handleUpgrade("pro")}
                   disabled={loading}
-                  className="w-full py-2.5 px-4 rounded-xl bg-[#a3e635] hover:bg-[#93d625] active:scale-[0.99] text-neutral-950 font-bold text-sm transition-all shadow-sm hover:shadow text-center flex items-center justify-center gap-2"
+                  className="w-full py-2.5 px-4 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] active:scale-[0.99] text-white font-bold text-sm transition-all shadow-sm shadow-[#89BD49]/25 hover:shadow text-center flex items-center justify-center gap-2"
                 >
                   {loading ? (
-                    <div className="w-4 h-4 border-2 border-neutral-900 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   ) : (
                     "Upgrade to Team"
                   )}
@@ -345,7 +345,7 @@ export function UpgradeModal({
                     <span>200 AI bug summaries</span>
                   </li>
                   <li className="flex items-center gap-3 font-medium">
-                    <svg className="w-4 h-4 text-indigo-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <svg className="w-4 h-4 text-[#6B9A35] dark:text-[#A8D666] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                       <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                       <path d="M7 11V7a5 5 0 0110 0v4" />
                     </svg>
@@ -357,7 +357,7 @@ export function UpgradeModal({
                   <button
                     type="button"
                     onClick={() => setShowAllFeatures(!showAllFeatures)}
-                    className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold hover:underline flex items-center gap-1"
+                    className="text-xs text-[#6B9A35] dark:text-[#A8D666] font-semibold hover:underline flex items-center gap-1"
                   >
                     <span>{showAllFeatures ? "Hide feature details" : "See all features"}</span>
                     <svg className={`w-3.5 h-3.5 transition-transform ${showAllFeatures ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -384,7 +384,7 @@ export function UpgradeModal({
         {/* Footer info */}
         <div className="mt-8 text-center text-xs text-neutral-500 dark:text-neutral-400">
           Looking for our Enterprise plan?{" "}
-          <Link href="/contact" onClick={onClose} className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">
+          <Link href="/contact" onClick={onClose} className="text-[#6B9A35] dark:text-[#A8D666] font-semibold hover:underline">
             Contact sales
           </Link>
         </div>

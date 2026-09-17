@@ -242,7 +242,7 @@ export default function AdminEmailHealthPage() {
                       </p>
                     </div>
                     <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
                         dom.status === "verified"
                           ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400"
                           : "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400"
@@ -279,7 +279,7 @@ export default function AdminEmailHealthPage() {
                 value={testRecipient}
                 onChange={(e) => setTestRecipient(e.target.value)}
                 placeholder="contact.akusaraproject@gmail.com"
-                className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2.5 outline-none focus:border-indigo-500"
+                className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2.5 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20"
               />
             </div>
 
@@ -290,7 +290,7 @@ export default function AdminEmailHealthPage() {
               <button
                 type="submit"
                 disabled={sendingProbe || !testRecipient.trim() || !data?.configured}
-                className="px-4 py-2 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 transition-colors shadow-sm"
+                className="px-4 py-2 text-xs font-bold rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-xs shadow-[#89BD49]/25 disabled:opacity-50 transition-colors"
               >
                 {sendingProbe ? "Mengirim Probe..." : "Kirim Email Diagnostik 🚀"}
               </button>
@@ -337,7 +337,7 @@ export default function AdminEmailHealthPage() {
               value={broadcastSubject}
               onChange={(e) => setBroadcastSubject(e.target.value)}
               placeholder="Contoh: [Pembaruan] Fitur Baru BugSnap & Pemeliharaan Terjadwal"
-              className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2.5 outline-none focus:border-indigo-500"
+              className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2.5 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20"
             />
           </div>
 
@@ -351,7 +351,7 @@ export default function AdminEmailHealthPage() {
               value={broadcastBody}
               onChange={(e) => setBroadcastBody(e.target.value)}
               placeholder="<p>Halo Pengguna BugSnap,</p><p>Kami memperbarui sistem...</p>"
-              className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2.5 outline-none focus:border-indigo-500 font-mono text-[11px] leading-relaxed"
+              className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2.5 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 font-mono text-[11px] leading-relaxed"
             />
           </div>
 
@@ -362,7 +362,7 @@ export default function AdminEmailHealthPage() {
             <button
               type="submit"
               disabled={broadcasting || !broadcastSubject.trim() || !broadcastBody.trim()}
-              className="px-4 py-2 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 transition-colors shadow-sm cursor-pointer"
+              className="px-4 py-2 text-xs font-bold rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-xs shadow-[#89BD49]/25 disabled:opacity-50 transition-colors cursor-pointer"
             >
               {broadcasting ? "Mengirimkan Broadcast..." : "Kirim Broadcast Email 🚀"}
             </button>

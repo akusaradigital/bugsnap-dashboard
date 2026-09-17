@@ -96,7 +96,7 @@ export function renderCommentEmail({
         ${isMention ? `<strong>${safeAuthor}</strong> mentioned you in a discussion on:` : `<strong>${safeAuthor}</strong> added a comment on:`}
       </p>
 
-      <div style="margin: 0 0 24px; padding: 12px 16px; background-color: #f8fafc; border-left: 3px solid #4f46e5; border-radius: 0 4px 4px 0;">
+      <div style="margin: 0 0 24px; padding: 12px 16px; background-color: #f8fafc; border-left: 3px solid #89BD49; border-radius: 0 4px 4px 0;">
         <span style="font-size: 14px; font-weight: 600; color: #0f172a; display: block;">
           ${safeTitle}
         </span>
@@ -115,8 +115,8 @@ export function renderCommentEmail({
       <!-- Action Button -->
       <table role="presentation" border="0" cellpadding="0" cellspacing="0">
         <tr>
-          <td align="center" style="border-radius: 6px; background-color: #4f46e5;">
-            <a href="${safeCaptureUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 11px 22px; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 6px; background-color: #4f46e5;">
+          <td align="center" style="border-radius: 6px; background-color: #89BD49;">
+            <a href="${safeCaptureUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 11px 22px; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 6px; background-color: #89BD49;">
               ${buttonText}
             </a>
           </td>
@@ -124,7 +124,7 @@ export function renderCommentEmail({
       </table>
 
       <p style="margin: 24px 0 0; font-size: 13px; color: #64748b; line-height: 1.5;">
-        ${directLinkText} <a href="${safeCaptureUrl}" style="color: #4f46e5; text-decoration: underline;">${safeCaptureUrl}</a>
+        ${directLinkText} <a href="${safeCaptureUrl}" style="color: #89BD49; text-decoration: underline;">${safeCaptureUrl}</a>
       </p>
     </div>
 
@@ -134,7 +134,7 @@ export function renderCommentEmail({
         ${footerReason}
       </p>
       <p style="margin: 0;">
-        <a href="${safeSettingsUrl}" style="color: #4f46e5; text-decoration: underline;">${manageSettingsText}</a> · <a href="${safeAppUrl}" style="color: #4f46e5; text-decoration: underline;">BugSnap Dashboard</a>
+        <a href="${safeSettingsUrl}" style="color: #89BD49; text-decoration: underline;">${manageSettingsText}</a> · <a href="${safeAppUrl}" style="color: #89BD49; text-decoration: underline;">BugSnap Dashboard</a>
       </p>
     </div>
   </div>
@@ -257,8 +257,8 @@ export function renderWeeklyDigestEmail({
       <!-- Action Button -->
       <table role="presentation" border="0" cellpadding="0" cellspacing="0">
         <tr>
-          <td align="center" style="border-radius: 6px; background-color: #4f46e5;">
-            <a href="${safeDashboardUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 11px 22px; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 6px; background-color: #4f46e5;">
+          <td align="center" style="border-radius: 6px; background-color: #89BD49;">
+            <a href="${safeDashboardUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 11px 22px; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 6px; background-color: #89BD49;">
               Open workspace dashboard
             </a>
           </td>
@@ -272,7 +272,7 @@ export function renderWeeklyDigestEmail({
         You received this weekly report because you are an owner of <strong>${safeWorkspace}</strong> with digest notifications enabled.
       </p>
       <p style="margin: 0;">
-        <a href="${safeSettingsUrl}" style="color: #4f46e5; text-decoration: underline;">Manage notification settings</a> · <a href="${safeAppUrl}" style="color: #4f46e5; text-decoration: underline;">BugSnap Dashboard</a>
+        <a href="${safeSettingsUrl}" style="color: #89BD49; text-decoration: underline;">Manage notification settings</a> · <a href="${safeAppUrl}" style="color: #89BD49; text-decoration: underline;">BugSnap Dashboard</a>
       </p>
     </div>
   </div>
@@ -338,8 +338,8 @@ export function renderWorkspaceInviteEmail({
       <!-- Action Buttons -->
       <table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin-bottom: 24px;">
         <tr>
-          <td align="center" style="border-radius: 6px; background-color: #4f46e5; padding-right: 12px;">
-            <a href="${safeLoginUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 11px 22px; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 6px; background-color: #4f46e5;">
+          <td align="center" style="border-radius: 6px; background-color: #89BD49; padding-right: 12px;">
+            <a href="${safeLoginUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 11px 22px; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 6px; background-color: #89BD49;">
               Accept invitation & log in
             </a>
           </td>
@@ -362,7 +362,7 @@ export function renderWorkspaceInviteEmail({
         If you did not expect this invitation, you can safely disregard this email.
       </p>
       <p style="margin: 0;">
-        BugSnap · <a href="${safeAppUrl}" style="color: #4f46e5; text-decoration: underline;">bugsnap.akusaraproject.my.id</a>
+        BugSnap · <a href="${safeAppUrl}" style="color: #89BD49; text-decoration: underline;">bugsnap.akusaraproject.my.id</a>
       </p>
     </div>
   </div>

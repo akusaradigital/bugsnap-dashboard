@@ -108,7 +108,7 @@ function Toast({ toast, onDismiss }: { toast: ToastItem; onDismiss: (id: number)
   const styles: Record<ToastType, string> = {
     success: "bg-white/95 text-slate-900 border-slate-200/80 dark:bg-zinc-900/95 dark:text-white dark:border-zinc-800/80 shadow-2xl",
     error: "bg-red-600/95 text-white border-red-700 shadow-2xl",
-    loading: "bg-white/95 text-slate-900 border-indigo-200 dark:bg-zinc-900/95 dark:text-white dark:border-indigo-900/60 shadow-2xl",
+    loading: "bg-white/95 text-slate-900 border-[#89BD49]/30 dark:bg-zinc-900/95 dark:text-white dark:border-[#89BD49]/40 shadow-2xl",
     info: "bg-neutral-900/95 text-white border-neutral-800 shadow-2xl",
   };
 
@@ -137,7 +137,7 @@ function Toast({ toast, onDismiss }: { toast: ToastItem; onDismiss: (id: number)
         </span>
       )}
       {toast.type === "loading" && (
-        <span className="flex h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-indigo-600 border-t-transparent dark:border-indigo-400 dark:border-t-transparent" />
+        <span className="flex h-4 w-4 shrink-0 animate-spin rounded-full border-2 border-[#89BD49] border-t-transparent dark:border-[#A8D666] dark:border-t-transparent" />
       )}
       {toast.type === "info" && (
         <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-neutral-800 text-neutral-300 text-xs font-bold">

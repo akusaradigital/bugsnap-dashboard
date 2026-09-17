@@ -367,7 +367,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-zinc-950">
         <div className="flex flex-col items-center gap-3">
-          <div className="h-8 w-8 rounded-full border-2 border-indigo-600 border-t-transparent animate-spin" />
+          <div className="h-8 w-8 rounded-full border-2 border-[#89BD49] border-t-transparent animate-spin" />
           <p className="text-xs text-slate-500 font-medium">{t("layout.loading")}</p>
         </div>
       </div>
@@ -428,7 +428,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   value={usernameInput}
                   onChange={(e) => setUsernameInput(e.target.value)}
                   placeholder="akusaradigital"
-                  className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2.5 outline-none focus:border-[#1f3bb3] transition-colors"
+                  className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2.5 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 transition-colors"
                 />
               </div>
 
@@ -443,7 +443,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   value={passwordInput}
                   onChange={(e) => setPasswordInput(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2.5 outline-none focus:border-[#1f3bb3] transition-colors"
+                  className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2.5 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 transition-colors"
                 />
               </div>
 
@@ -456,7 +456,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <button
                 type="submit"
                 disabled={loggingIn || signingInGoogle || !usernameInput || !passwordInput}
-                className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#1f3bb3] hover:bg-[#182f8f] disabled:opacity-50 text-white text-xs font-semibold py-2.5 transition-colors shadow-sm"
+                className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] disabled:opacity-50 text-white text-xs font-semibold py-2.5 transition-colors shadow-xs shadow-[#89BD49]/25"
               >
                 {loggingIn ? (
                   <>
@@ -473,7 +473,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="mt-6 pt-4 border-t border-slate-100 dark:border-zinc-800 text-center">
             <Link
               href="/dashboard"
-              className="text-xs text-slate-500 dark:text-zinc-400 hover:text-[#1f3bb3] transition-colors"
+              className="text-xs text-slate-500 dark:text-zinc-400 hover:text-[#6B9A35] dark:hover:text-[#A8D666] transition-colors"
             >
               Kembali ke Dashboard User
             </Link>
@@ -505,7 +505,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         {/* Brand Header with Official BugSnap Logo */}
         <div className="h-16 px-4 flex items-center justify-between border-b border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shrink-0">
           <div className="flex items-center gap-3 min-w-0">
-            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-indigo-50 dark:bg-zinc-800 shrink-0 p-1.5 shadow-xs border border-indigo-100 dark:border-zinc-700">
+            <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#89BD49]/10 dark:bg-zinc-800 shrink-0 p-1.5 shadow-xs border border-[#89BD49]/20 dark:border-zinc-700">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/icon.svg" alt="BugSnap" className="h-6 w-6 object-contain" />
             </div>
@@ -547,7 +547,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   prefetch={true}
                   className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-all ${
                     isHubActive
-                      ? "bg-[#1f3bb3]/10 dark:bg-indigo-950/60 text-[#1f3bb3] dark:text-indigo-400 font-bold border border-[#1f3bb3]/20 dark:border-indigo-800/40 shadow-xs"
+                      ? "bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] font-bold border border-[#89BD49]/30 dark:border-[#89BD49]/40 shadow-xs"
                       : "text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-zinc-100 font-semibold"
                   }`}
                 >
@@ -557,7 +557,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   </div>
 
                   {sidebarOpen && badgeCount > 0 && (
-                    <span className="px-1.5 py-0.5 rounded-full text-[10px] font-black bg-rose-500 text-white shadow-xs">
+                    <span className="px-1.5 py-0.5 rounded-md text-[10px] font-black bg-rose-500 text-white shadow-xs">
                       {badgeCount}
                     </span>
                   )}
@@ -576,13 +576,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                           prefetch={true}
                           className={`flex items-center justify-between py-1 px-2 rounded-md text-[11px] transition-colors ${
                             isSubActive
-                              ? "text-[#1f3bb3] dark:text-indigo-400 font-bold bg-[#1f3bb3]/10 dark:bg-indigo-950/40"
+                              ? "text-[#6B9A35] dark:text-[#A8D666] font-bold bg-[#89BD49]/10 dark:bg-[#89BD49]/20"
                               : "text-slate-500 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800/50 font-medium"
                           }`}
                         >
                           <span className="truncate">{sub.label}</span>
                           {subBadge > 0 && (
-                            <span className="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-rose-500 text-white">
+                            <span className="px-1.5 py-0.2 rounded-md text-[9px] font-black bg-rose-500 text-white">
                               {subBadge}
                             </span>
                           )}
@@ -695,7 +695,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               >
                 <span className="text-base">🔔</span>
                 {notifCount > 0 && (
-                  <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-white text-[9px] font-black animate-pulse">
+                  <span className="absolute top-1 right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-md bg-rose-500 text-white text-[9px] font-black animate-pulse">
                     {notifCount}
                   </span>
                 )}
@@ -715,7 +715,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <button
                       type="button"
                       onClick={loadNotifications}
-                      className="text-[11px] text-[#1f3bb3] dark:text-blue-400 font-semibold hover:underline"
+                      className="text-[11px] text-[#6B9A35] dark:text-[#A8D666] font-semibold hover:underline"
                     >
                       Segarkan ⟳
                     </button>
@@ -771,7 +771,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <Link
                       href="/admin/support"
                       onClick={() => setNotifOpen(false)}
-                      className="text-xs font-semibold text-[#1f3bb3] dark:text-blue-400 hover:underline block"
+                      className="text-xs font-semibold text-[#6B9A35] dark:text-[#A8D666] hover:underline block"
                     >
                       {t("admin.viewAllInbox")}
                     </Link>
@@ -788,14 +788,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 className="flex items-center gap-2 text-left hover:opacity-90 transition-opacity cursor-pointer p-1 rounded-lg"
                 title="Admin Account Menu"
               >
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#1f3bb3] text-white text-xs font-bold uppercase shadow-sm">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#89BD49] text-white text-xs font-bold uppercase shadow-sm">
                   {adminIdentity[0] || "A"}
                 </div>
                 <div className="hidden lg:block">
                   <p className="text-xs font-bold text-slate-900 dark:text-white leading-tight truncate max-w-[130px]">
                     {adminIdentity}
                   </p>
-                  <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold uppercase">
+                  <span className="text-[10px] text-[#6B9A35] dark:text-[#A8D666] font-semibold uppercase">
                     Super Admin
                   </span>
                 </div>
@@ -809,7 +809,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <p className="text-xs font-bold text-slate-900 dark:text-white truncate">
                       {adminIdentity}
                     </p>
-                    <span className="text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 uppercase">
+                    <span className="text-[10px] font-semibold text-[#6B9A35] dark:text-[#A8D666] uppercase">
                       Super Administrator
                     </span>
                   </div>
@@ -895,7 +895,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#1f3bb3]"
+                  className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20"
                 />
               </div>
 
@@ -910,7 +910,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="Minimal 8 karakter"
-                  className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#1f3bb3]"
+                  className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20"
                 />
               </div>
 
@@ -924,7 +924,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Ulangi password baru"
-                  className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#1f3bb3]"
+                  className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20"
                 />
               </div>
 
@@ -939,7 +939,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <button
                   type="submit"
                   disabled={savingPassword || !currentPassword || !newPassword}
-                  className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-[#1f3bb3] text-white hover:bg-[#182f8f] disabled:opacity-50 transition-colors shadow-sm"
+                  className="px-4 py-1.5 text-xs font-semibold rounded-lg bg-[#89BD49] text-white hover:bg-[#6B9A35] disabled:opacity-50 transition-colors shadow-xs shadow-[#89BD49]/25"
                 >
                   {savingPassword ? t("admin.savingPassword") : t("admin.savePassword")}
                 </button>

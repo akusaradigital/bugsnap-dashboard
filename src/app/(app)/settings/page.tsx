@@ -946,7 +946,7 @@ function SettingsContent() {
       onClick={() => setTab(tab)}
       className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg border-l-2 transition-colors text-left ${
         activeTab === tab
-          ? "bg-indigo-50 dark:bg-indigo-950/30 border-indigo-500 text-indigo-600 dark:text-indigo-400"
+          ? "bg-[#89BD49]/10 dark:bg-[#89BD49]/20 border-[#89BD49] text-[#6B9A35] dark:text-[#A8D666]"
           : "border-transparent text-muted hover:text-foreground hover:bg-border/30"
       }`}
     >
@@ -1060,7 +1060,7 @@ function SettingsContent() {
                 onClick={() => setTab(t.id as Tab)}
                 className={`shrink-0 px-3 py-1.5 text-xs rounded-lg font-medium transition-all ${
                   activeTab === t.id
-                    ? "bg-indigo-600 text-white font-semibold shadow-xs"
+                    ? "bg-[#89BD49] text-white font-semibold shadow-xs shadow-[#89BD49]/25"
                     : "text-muted hover:text-foreground hover:bg-subtle"
                 }`}
               >
@@ -1104,7 +1104,7 @@ function SettingsContent() {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-full bg-indigo-600 text-white font-bold text-xl flex items-center justify-center shadow-sm uppercase select-none">
+                    <div className="w-full h-full bg-[#89BD49] text-white font-bold text-xl flex items-center justify-center shadow-sm uppercase select-none">
                       {(workspaceName || "W").charAt(0)}
                     </div>
                   )}
@@ -1142,14 +1142,14 @@ function SettingsContent() {
                     onBlur={() => setEditingWsName(false)}
                     onKeyDown={(e) => e.key === "Enter" && setEditingWsName(false)}
                     placeholder="My Workspace"
-                    className="flex-1 text-sm font-medium rounded-lg border border-border px-3.5 py-2.5 outline-none focus:border-indigo-500 bg-background text-foreground transition-colors shadow-sm"
+                    className="flex-1 text-sm font-medium rounded-lg border border-border px-3.5 py-2.5 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 bg-background text-foreground transition-colors shadow-sm"
                   />
                 ) : (
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-foreground truncate">{workspaceName || "My Workspace"}</p>
                     <p className="text-xs text-muted mt-0.5">This is the name of your workspace.</p>
                     <div className="flex items-center gap-2 mt-1.5">
-                      <label className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer">
+                      <label className="text-[11px] font-medium text-[#6B9A35] dark:text-[#A8D666] hover:underline cursor-pointer">
                         Upload icon
                         <input
                           type="file"
@@ -1198,7 +1198,7 @@ function SettingsContent() {
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
                     <span className="text-sm font-semibold text-foreground">Auto-delete captures</span>
-                    <span className="text-[10px] font-semibold text-purple-700 dark:text-purple-300 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/40 px-1.5 py-0.5 rounded">
+                    <span className="text-[10px] font-semibold text-[#6B9A35] dark:text-[#A8D666] bg-[#89BD49]/10 dark:bg-[#89BD49]/20 border border-[#89BD49]/30 dark:border-[#89BD49]/40 px-1.5 py-0.5 rounded">
                       Enterprise
                     </span>
                   </div>
@@ -1219,7 +1219,7 @@ function SettingsContent() {
                       setAutoDeleteEnabled(!autoDeleteEnabled);
                     }}
                     className={`relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full transition-colors duration-200 ease-in-out ${
-                      autoDeleteEnabled ? "bg-indigo-600" : "bg-border"
+                      autoDeleteEnabled ? "bg-[#89BD49]" : "bg-border"
                     }`}
                   >
                     <span
@@ -1250,7 +1250,7 @@ function SettingsContent() {
                 {!hasBranding(userPlan) ? (
                   <ShimmerLockBadge label="PRO+" onClick={() => router.push("/upgrade")} />
                 ) : (
-                  <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 px-2 py-0.5 rounded-md">
                     Included
                   </span>
                 )}
@@ -1263,14 +1263,14 @@ function SettingsContent() {
                     value={brandName}
                     onChange={(e) => setBrandName(e.target.value)}
                     placeholder="Acme Corp"
-                    className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-background text-foreground shadow-sm"
+                    className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 bg-background text-foreground shadow-sm"
                   />
                 </div>
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
                     <label className="text-xs font-medium text-muted">Logo URL or Image</label>
                     <div className="flex items-center gap-2">
-                      <label className="text-[11px] font-medium text-indigo-600 dark:text-indigo-400 hover:underline cursor-pointer">
+                      <label className="text-[11px] font-medium text-[#6B9A35] dark:text-[#A8D666] hover:underline cursor-pointer">
                         Upload file
                         <input
                           type="file"
@@ -1313,7 +1313,7 @@ function SettingsContent() {
                     value={logoUrl}
                     onChange={(e) => setLogoUrl(e.target.value)}
                     placeholder="https://example.com/logo.png"
-                    className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-background text-foreground shadow-sm"
+                    className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 bg-background text-foreground shadow-sm"
                   />
                 </div>
               </div>
@@ -1361,7 +1361,7 @@ function SettingsContent() {
                     }
                     setHideWatermark(e.target.checked);
                   }}
-                  className="w-4 h-4 rounded border-border text-indigo-600 focus:ring-indigo-500"
+                  className="w-4 h-4 rounded border-border text-[#89BD49] focus:ring-[#89BD49]/20"
                 />
                 <span className="text-xs font-medium text-foreground flex items-center gap-2">
                   <span>Hide &quot;Powered by BugSnap&quot; watermark</span>
@@ -1382,20 +1382,20 @@ function SettingsContent() {
                   value={customDomain}
                   onChange={(e) => setCustomDomain(e.target.value)}
                   placeholder="captures.yourcompany.com"
-                  className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-background text-foreground font-mono shadow-sm"
+                  className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 bg-background text-foreground font-mono shadow-sm"
                 />
               </div>
             </div>
 
-            {saveError && <p className="text-xs text-red-600">{saveError}</p>}
+            {saveError && <p className="text-xs text-red-600 dark:text-red-400">{saveError}</p>}
             <div className="pt-2">
               <button
                 type="submit"
                 disabled={saving}
-                className={`rounded-xl px-6 py-2.5 text-sm font-semibold transition-all shadow-sm active:scale-[0.99] min-w-[145px] flex items-center justify-center gap-2 ${
+                className={`rounded-xl px-6 py-2.5 text-sm font-semibold transition-all shadow-xs shadow-[#89BD49]/25 active:scale-[0.99] min-w-[145px] flex items-center justify-center gap-2 ${
                   saved
                     ? "bg-emerald-600 text-white"
-                    : "bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60"
+                    : "bg-[#89BD49] text-white hover:bg-[#6B9A35] disabled:opacity-60"
                 }`}
               >
                 {saving ? (
@@ -1435,7 +1435,7 @@ function SettingsContent() {
                 <input type="email" value={inviteEmail} onChange={e=>setInviteEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleInvite()}
                   disabled={seatLimit(userPlan) !== null && members.length >= (seatLimit(userPlan) ?? 0)}
                   placeholder="Enter email address"
-                  className="h-12 min-w-0 text-[15px] rounded-lg border border-border px-4 outline-none focus:border-indigo-500 bg-subtle disabled:bg-border/30 disabled:cursor-not-allowed" />
+                  className="h-12 min-w-0 text-[15px] rounded-lg border border-border px-4 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 bg-subtle disabled:bg-border/30 disabled:cursor-not-allowed" />
                 <div className="relative">
                   <button type="button" onClick={() => setInviteRoleMenuOpen(o => !o)}
                     className="h-12 w-full flex items-center justify-between text-[15px] rounded-lg border border-border px-4 bg-subtle hover:bg-border/30 transition-colors">
@@ -1459,7 +1459,7 @@ function SettingsContent() {
                               <span className="block text-xs text-muted">{opt.hint}</span>
                             </span>
                             {inviteRole === opt.value && (
-                              <svg className="w-4 h-4 text-indigo-600 shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <svg className="w-4 h-4 text-[#6B9A35] dark:text-[#A8D666] shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                               </svg>
                             )}
@@ -1470,7 +1470,7 @@ function SettingsContent() {
                   )}
                 </div>
                 <button type="button" onClick={handleInvite} disabled={inviting || !inviteEmail.trim()}
-                  className="h-12 px-6 rounded-lg bg-indigo-600 text-white text-[15px] font-semibold hover:bg-indigo-700 disabled:opacity-50 min-w-[110px] flex items-center justify-center gap-2">
+                  className="h-12 px-6 rounded-lg bg-[#89BD49] text-white text-[15px] font-semibold hover:bg-[#6B9A35] shadow-xs shadow-[#89BD49]/25 disabled:opacity-50 min-w-[110px] flex items-center justify-center gap-2">
                   {inviting ? (
                     <>
                       <svg className="w-4 h-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
@@ -1484,7 +1484,7 @@ function SettingsContent() {
                   )}
                 </button>
               </div>
-              {inviteMsg && <p className={`text-sm ${inviteMsg.type==="ok" ? "text-emerald-600" : "text-red-600"}`}>{inviteMsg.text}</p>}
+              {inviteMsg && <p className={`text-sm ${inviteMsg.type==="ok" ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>{inviteMsg.text}</p>}
             </div>
 
             {/* Members list */}
@@ -1513,7 +1513,7 @@ function SettingsContent() {
                     return (
                       <li key={m.user_id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-4">
                         <div className="flex items-center gap-4 min-w-0">
-                          <div className="w-10 h-10 rounded-full bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/40 text-sm font-bold flex items-center justify-center shrink-0 shadow-2xs">
+                          <div className="w-10 h-10 rounded-full bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40 text-sm font-bold flex items-center justify-center shrink-0 shadow-2xs">
                             {(m.email || "?").charAt(0).toUpperCase()}
                           </div>
                           <div className="min-w-0">
@@ -1541,7 +1541,7 @@ function SettingsContent() {
                                   value={m.role === "viewer" ? "viewer" : "creator"}
                                   disabled={isUpdating || isRemoving}
                                   onChange={(e) => handleUpdateMemberRole(m.user_id, e.target.value as "creator" | "viewer")}
-                                  className="text-xs font-semibold rounded-lg border border-border bg-background px-2.5 py-1.5 outline-none focus:border-indigo-500 text-foreground cursor-pointer disabled:opacity-50 transition-colors shadow-2xs"
+                                  className="text-xs font-semibold rounded-lg border border-border bg-background px-2.5 py-1.5 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 text-foreground cursor-pointer disabled:opacity-50 transition-colors shadow-2xs"
                                 >
                                   <option value="creator">Creator</option>
                                   <option value="viewer">Viewer</option>
@@ -1627,7 +1627,7 @@ function SettingsContent() {
                 <div className="flex items-center gap-2 mb-1">
                   <p className="text-xs text-muted uppercase tracking-widest font-semibold">{t("settings.currentPlan")}</p>
                   {trialInfo.isTrial && (
-                    <span className="text-[10px] font-bold bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full">
+                    <span className="text-[10px] font-bold bg-amber-50 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-800 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-md">
                       {t("settings.trialDaysLeft", { days: trialInfo.trialDaysLeft })}
                     </span>
                   )}
@@ -1640,7 +1640,7 @@ function SettingsContent() {
               {(userPlan === "free" || trialInfo.isTrial) && (
                 <Link
                   href="/upgrade"
-                  className="shrink-0 px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors inline-block"
+                  className="shrink-0 px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] shadow-xs shadow-[#89BD49]/25 transition-colors inline-block"
                 >
                   {t("settings.upgradeToPro")}
                 </Link>
@@ -1652,7 +1652,7 @@ function SettingsContent() {
               <div>
                 <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                   {t("settings.customerPortal")}
-                  <span className="text-[10px] uppercase tracking-wider font-bold bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 px-2 py-0.5 rounded-full border border-neutral-200 dark:border-neutral-700">
+                  <span className="text-[10px] uppercase tracking-wider font-bold bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 px-2 py-0.5 rounded-md border border-neutral-200 dark:border-neutral-700">
                     Paddle Billing
                   </span>
                 </h3>
@@ -1705,7 +1705,7 @@ function SettingsContent() {
         {activeTab === "integrations" && (
           <div className="space-y-6">
             <input type="text" placeholder="Search integrations…" value={intSearch} onChange={e=>setIntSearch(e.target.value)}
-              className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-subtle text-foreground" />
+              className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 bg-subtle text-foreground" />
 
             {/* Drive */}
             <div className="rounded-xl border border-border bg-subtle p-4 space-y-3 shadow-xs">
@@ -1713,12 +1713,12 @@ function SettingsContent() {
                 <div>
                   <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
                     Google Drive
-                    {!driveLoading && <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${driveStatus === "connected" ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/40" : driveStatus === "reconnect_required" ? "text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/40" : "text-muted bg-background border-border"}`}>{driveStatus === "connected" ? t("settings.connected") : driveStatus === "reconnect_required" ? t("settings.reconnectRequired") : t("settings.notConnected")}</span>}
+                    {!driveLoading && <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border ${driveStatus === "connected" ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/40" : driveStatus === "reconnect_required" ? "text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/40" : "text-muted bg-background border-border"}`}>{driveStatus === "connected" ? t("settings.connected") : driveStatus === "reconnect_required" ? t("settings.reconnectRequired") : t("settings.notConnected")}</span>}
                   </h2>
                   <p className="text-xs text-muted mt-0.5">{driveLoading ? "Checking..." : driveStatus === "connected" ? `Dashboard actions using ${driveEmail || "connected account"}` : driveStatus === "reconnect_required" ? "Reconnect Drive for server-side actions." : "Connect for server-side Drive actions."}</p>
                   {!driveLoading && driveStatus === "connected" && driveQuota?.usedBytes != null && driveQuota?.totalBytes != null && driveQuota.totalBytes > 0 && (() => {
                     const pct = Math.max(0, Math.min(100, (driveQuota.usedBytes / driveQuota.totalBytes) * 100));
-                    const barColor = pct >= 90 ? "bg-red-500" : pct >= 75 ? "bg-amber-500" : "bg-indigo-500";
+                    const barColor = pct >= 90 ? "bg-red-500" : pct >= 75 ? "bg-amber-500" : "bg-[#89BD49]";
                     return (
                       <div className="mt-2 space-y-1.5">
                         <div className="flex items-center justify-between">
@@ -1734,13 +1734,13 @@ function SettingsContent() {
                   <p className="text-[11px] text-muted">Extension connection is managed separately.</p>
                 </div>
                 {driveStatus === "connected" ? (
-                  <button type="button" onClick={disconnectDrive} disabled={driveActionLoading} className="text-xs font-semibold text-red-600 hover:underline disabled:opacity-50">{driveActionLoading ? "Disconnecting…" : "Disconnect"}</button>
+                  <button type="button" onClick={disconnectDrive} disabled={driveActionLoading} className="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline disabled:opacity-50">{driveActionLoading ? "Disconnecting…" : "Disconnect"}</button>
                 ) : (
-                  <button type="button" onClick={() => setConnectDriveModalOpen(true)} disabled={driveLoading || driveActionLoading} className="text-xs font-semibold text-indigo-600 hover:underline disabled:opacity-50">{driveStatus === "reconnect_required" ? "Reconnect" : "Connect"}</button>
+                  <button type="button" onClick={() => setConnectDriveModalOpen(true)} disabled={driveLoading || driveActionLoading} className="text-xs font-semibold text-[#6B9A35] dark:text-[#A8D666] hover:underline disabled:opacity-50">{driveStatus === "reconnect_required" ? "Reconnect" : "Connect"}</button>
                 )}
               </div>
-              {driveSuccess && <p className="text-xs text-emerald-600">{driveSuccess}</p>}
-              {driveError && <p className="text-xs text-red-600">{driveError}</p>}
+              {driveSuccess && <p className="text-xs text-emerald-600 dark:text-emerald-400">{driveSuccess}</p>}
+              {driveError && <p className="text-xs text-red-600 dark:text-red-400">{driveError}</p>}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -1750,7 +1750,7 @@ function SettingsContent() {
                 const isConnected = !!(config && Object.values(config).some(v => typeof v === "string" && v.trim().length > 0));
 
                 return (
-                  <div key={int.id} className="rounded-xl border border-border bg-subtle p-4 flex items-start gap-3 hover:border-indigo-200 transition-colors shadow-xs">
+                  <div key={int.id} className="rounded-xl border border-border bg-subtle p-4 flex items-start gap-3 hover:border-[#89BD49]/40 transition-colors shadow-xs">
                     <div className="shrink-0 w-10 h-10 rounded-lg border border-border bg-subtle flex items-center justify-center p-2">
                       <img src={int.iconSrc} alt={int.name} className="w-6 h-6 object-contain" />
                     </div>
@@ -1758,7 +1758,7 @@ function SettingsContent() {
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-semibold text-foreground">{int.name}</p>
                         {isConnected && (
-                          <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-800/40 px-1.5 py-0.2 rounded-full">
+                          <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-800/40 px-1.5 py-0.2 rounded-md">
                             Connected
                           </span>
                         )}
@@ -1781,7 +1781,7 @@ function SettingsContent() {
                         });
                         setIntModalForm(initialForm);
                       }}
-                      className={`shrink-0 text-xs font-semibold hover:underline mt-0.5 ${isConnected ? "text-muted hover:text-foreground" : "text-indigo-600"}`}
+                      className={`shrink-0 text-xs font-semibold hover:underline mt-0.5 ${isConnected ? "text-muted hover:text-foreground" : "text-[#6B9A35] dark:text-[#A8D666]"}`}
                     >
                       {isConnected ? "Configure" : "Connect"}
                     </button>
@@ -1796,7 +1796,7 @@ function SettingsContent() {
               <div>
                 <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
                   <span>BugSnap API Keys</span>
-                  <span className="text-[10px] font-semibold text-indigo-600 bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200 dark:border-indigo-800/40 px-2 py-0.5 rounded-full">
+                  <span className="text-[10px] font-semibold text-[#6B9A35] dark:text-[#A8D666] bg-[#89BD49]/10 dark:bg-[#89BD49]/20 border border-[#89BD49]/30 dark:border-[#89BD49]/40 px-2 py-0.5 rounded-md">
                     Inbound API
                   </span>
                 </h2>
@@ -1809,7 +1809,7 @@ function SettingsContent() {
                 <div className="p-3.5 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-900 dark:text-amber-200 space-y-2">
                   <p className="text-xs font-semibold">Save your BugSnap API Key: &ldquo;{revealedBugsnapKey.name}&rdquo;</p>
                   <p className="text-[11px] text-amber-800/80 dark:text-amber-300/80">
-                    This key will never be shown again. Copy it now to authenticate requests with <code className="font-mono bg-black/10 px-1 py-0.5 rounded">Authorization: Bearer bugsnap_...</code>
+                    This key will never be shown again. Copy it now to authenticate requests with <code className="font-mono bg-black/10 dark:bg-black/40 px-1 py-0.5 rounded">Authorization: Bearer bugsnap_...</code>
                   </p>
                   <div className="flex items-center gap-2 pt-1">
                     <code className="flex-1 px-3 py-1.5 bg-black/10 dark:bg-black/40 rounded text-xs font-mono select-all overflow-x-auto">
@@ -1842,12 +1842,12 @@ function SettingsContent() {
                   placeholder="Key name (e.g. SnapTest AI Integration)"
                   value={newKeyName}
                   onChange={(e) => setNewKeyName(e.target.value)}
-                  className="flex-1 text-xs rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-background"
+                  className="flex-1 text-xs rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 bg-background"
                 />
                 <button
                   type="submit"
                   disabled={creatingKey || !newKeyName.trim()}
-                  className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shrink-0 min-w-[115px] inline-flex items-center justify-center gap-1.5"
+                  className="px-4 py-2.5 bg-[#89BD49] hover:bg-[#6B9A35] shadow-xs shadow-[#89BD49]/25 disabled:opacity-50 text-white rounded-lg text-xs font-semibold shrink-0 min-w-[115px] inline-flex items-center justify-center gap-1.5"
                 >
                   {creatingKey ? (
                     <>
@@ -1887,7 +1887,7 @@ function SettingsContent() {
                           type="button"
                           onClick={() => handleRevokeBugsnapApiKey(k.id)}
                           disabled={revokingKeyId === k.id}
-                          className="text-xs text-red-600 hover:underline disabled:opacity-50 shrink-0"
+                          className="text-xs text-red-600 dark:text-red-400 hover:underline disabled:opacity-50 shrink-0"
                         >
                           {revokingKeyId === k.id ? "Revoking…" : "Revoke"}
                         </button>
@@ -1906,7 +1906,7 @@ function SettingsContent() {
             <div className="rounded-xl border border-border bg-subtle p-4 space-y-4 shadow-xs">
               <div className="flex items-center justify-between gap-3 border-b border-border pb-2">
                 <h2 className="text-sm font-semibold text-foreground">Profile</h2>
-                {profileSaved && <span className="text-xs text-emerald-600 font-medium">✓ Saved</span>}
+                {profileSaved && <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">✓ Saved</span>}
               </div>
               <div className="pb-2 flex items-center gap-3">
                 <div className="group relative h-16 w-16 shrink-0">
@@ -1920,7 +1920,7 @@ function SettingsContent() {
                       className="h-16 w-16 rounded-full object-cover border-2 border-border bg-subtle shadow-sm"
                     />
                   ) : (
-                    <div className="h-16 w-16 rounded-full border-2 border-border bg-indigo-600 text-white text-xl font-semibold flex items-center justify-center shadow-sm">
+                    <div className="h-16 w-16 rounded-full border-2 border-border bg-[#89BD49] text-white text-xl font-semibold flex items-center justify-center shadow-sm">
                       {initialOf(`${firstName} ${lastName}`.trim() || userEmail)}
                     </div>
                   )}
@@ -1964,12 +1964,12 @@ function SettingsContent() {
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">First name</label>
                 <input type="text" value={firstName} onChange={e=>setFirstName(e.target.value)}
-                  className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-background" />
+                  className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 bg-background" />
               </div>
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Last name</label>
                 <input type="text" value={lastName} onChange={e=>setLastName(e.target.value)}
-                  className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-background" />
+                  className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 bg-background" />
               </div>
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Role</label>
@@ -1997,7 +1997,7 @@ function SettingsContent() {
                           >
                             <span>{opt}</span>
                             {jobRole === opt && (
-                              <svg className="w-3.5 h-3.5 shrink-0 text-indigo-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <svg className="w-3.5 h-3.5 shrink-0 text-[#6B9A35] dark:text-[#A8D666]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M20 6L9 17l-5-5" />
                               </svg>
                             )}
@@ -2035,7 +2035,7 @@ function SettingsContent() {
                       aria-pressed={theme === opt.id}
                       className={`flex flex-col items-center gap-1.5 rounded-lg border px-3 py-3 text-xs font-semibold transition-colors ${
                         theme === opt.id
-                          ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 shadow-xs"
+                          ? "border-[#89BD49] bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] shadow-xs"
                           : "border-border bg-subtle text-muted hover:text-foreground hover:bg-border/30"
                       }`}
                     >
@@ -2054,7 +2054,7 @@ function SettingsContent() {
                   {userPlan === "free" && (
                     <Link
                       href="/upgrade"
-                      className="text-xs text-indigo-600 hover:underline font-semibold"
+                      className="text-xs text-[#6B9A35] dark:text-[#A8D666] hover:underline font-semibold"
                     >
                       Upgrade
                     </Link>
@@ -2063,7 +2063,7 @@ function SettingsContent() {
               </div>
             </div>
 
-            {profileSaveError && <p className="text-xs text-red-600">{profileSaveError}</p>}
+            {profileSaveError && <p className="text-xs text-red-600 dark:text-red-400">{profileSaveError}</p>}
             <div>
               <button
                 type="submit"
@@ -2071,7 +2071,7 @@ function SettingsContent() {
                 className={`rounded-lg px-5 py-2 text-sm font-semibold transition-all shadow-sm active:scale-[0.99] min-w-[130px] inline-flex items-center justify-center gap-2 ${
                   profileSaved
                     ? "bg-emerald-600 text-white"
-                    : "bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-60"
+                    : "bg-[#89BD49] text-white hover:bg-[#6B9A35] shadow-xs shadow-[#89BD49]/25 disabled:opacity-60"
                 }`}
               >
                 {profileSaving ? (
@@ -2109,7 +2109,7 @@ function SettingsContent() {
                     <p className="text-[11px] text-muted mt-0.5">Destructive and irreversible actions</p>
                   </div>
                 </div>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-red-100/80 dark:bg-red-900/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800/40">
+                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-md bg-red-100/80 dark:bg-red-900/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800/40">
                   Irreversible
                 </span>
               </div>
@@ -2147,13 +2147,13 @@ function SettingsContent() {
                   <div className="flex items-center gap-2.5">
                     <h2 className="text-base font-bold text-foreground">Email Notifications</h2>
                     {notifSyncStatus === "saving" && (
-                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/50">
-                        <span className="w-1.5 h-1.5 rounded-full bg-indigo-600 dark:bg-indigo-400 animate-pulse" />
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40">
+                        <span className="w-1.5 h-1.5 rounded-full bg-[#89BD49] animate-pulse" />
                         Saving…
                       </span>
                     )}
                     {notifSyncStatus === "synced" && (
-                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50">
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50">
                         <svg className="w-3 h-3 text-emerald-600 dark:text-emerald-400" viewBox="0 0 20 20" fill="currentColor">
                           <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
                         </svg>
@@ -2161,7 +2161,7 @@ function SettingsContent() {
                       </span>
                     )}
                     {notifSyncStatus === "error" && (
-                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[11px] font-medium bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50">
+                      <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border border-red-200 dark:border-red-800/50">
                         Sync failed
                       </span>
                     )}
@@ -2180,7 +2180,7 @@ function SettingsContent() {
                     title: "Comments on your captures",
                     description: "Get an email notification whenever a team member or collaborator leaves a comment on your capture.",
                     icon: (
-                      <svg className="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <svg className="w-4 h-4 text-[#6B9A35] dark:text-[#A8D666]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
                       </svg>
                     ),
@@ -2190,7 +2190,7 @@ function SettingsContent() {
                     title: "Mentions in discussions",
                     description: "Receive an immediate email whenever someone mentions you using @username in any thread or comment.",
                     icon: (
-                      <svg className="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <svg className="w-4 h-4 text-[#6B9A35] dark:text-[#A8D666]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
                       </svg>
                     ),
@@ -2200,7 +2200,7 @@ function SettingsContent() {
                     title: "Weekly activity digest",
                     description: "A weekly summary delivered every Monday showing capture views, new screen recordings, and comments across your workspace.",
                     icon: (
-                      <svg className="w-4 h-4 text-indigo-600 dark:text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <svg className="w-4 h-4 text-[#6B9A35] dark:text-[#A8D666]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
                       </svg>
                     ),
@@ -2214,7 +2214,7 @@ function SettingsContent() {
                       className="p-5 sm:p-6 flex items-start sm:items-center justify-between gap-4 hover:bg-border/10 transition-colors"
                     >
                       <div className="flex items-start gap-3.5">
-                        <div className="w-9 h-9 rounded-xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-100 dark:border-indigo-900/40 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
+                        <div className="w-9 h-9 rounded-xl bg-[#89BD49]/10 dark:bg-[#89BD49]/20 border border-[#89BD49]/30 dark:border-[#89BD49]/40 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
                           {item.icon}
                         </div>
                         <div className="space-y-1">
@@ -2237,8 +2237,8 @@ function SettingsContent() {
                         aria-checked={isChecked}
                         disabled={isUpdating}
                         onClick={() => handleToggleNotifPref(item.key)}
-                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
-                          isChecked ? "bg-indigo-600" : "bg-neutral-300 dark:bg-neutral-700"
+                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus-visible:ring-2 focus-visible:ring-[#89BD49] focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
+                          isChecked ? "bg-[#89BD49]" : "bg-neutral-300 dark:bg-neutral-700"
                         }`}
                       >
                         <span className="sr-only">{item.title}</span>
@@ -2278,10 +2278,10 @@ function SettingsContent() {
           <div className="relative w-full max-w-sm rounded-xl border border-border bg-background p-6 shadow-xl">
             <h2 className="text-lg font-bold text-foreground">{t("settings.connectDriveQ")}</h2>
             <p className="text-sm text-muted mt-2">{t("settings.connectDriveDesc")}</p>
-            {driveError && <p className="text-xs text-red-600 mt-3">{driveError}</p>}
+            {driveError && <p className="text-xs text-red-600 dark:text-red-400 mt-3">{driveError}</p>}
             <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-border">
               <button type="button" onClick={() => setConnectDriveModalOpen(false)} disabled={driveActionLoading} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-border/30 rounded-lg disabled:opacity-50">{t("common.cancel")}</button>
-              <button type="button" onClick={connectDrive} disabled={driveActionLoading} className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50">{driveActionLoading ? t("settings.connecting") : driveStatus === "reconnect_required" ? "Reconnect with Google" : t("settings.continueToGoogle")}</button>
+              <button type="button" onClick={connectDrive} disabled={driveActionLoading} className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] shadow-xs shadow-[#89BD49]/25 disabled:opacity-50">{driveActionLoading ? t("settings.connecting") : driveStatus === "reconnect_required" ? "Reconnect with Google" : t("settings.continueToGoogle")}</button>
             </div>
           </div>
         </div>
@@ -2324,7 +2324,7 @@ function SettingsContent() {
                         setIntModalForm(prev => ({ ...prev, [f.key]: e.target.value }));
                         if (activeModalInt === "webhook") setWebhookTestResult(null);
                       }}
-                      className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-background font-mono text-xs text-foreground"
+                      className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 bg-background font-mono text-xs text-foreground"
                     />
                     {f.hint && (
                       <p className="text-[11px] text-muted mt-1 leading-normal">
@@ -2388,7 +2388,7 @@ function SettingsContent() {
                     type="button"
                     onClick={() => handleDisconnectIntegration(activeModalInt)}
                     disabled={intModalSaving}
-                    className="text-xs font-semibold text-red-600 hover:underline disabled:opacity-50"
+                    className="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline disabled:opacity-50"
                   >
                     Disconnect
                   </button>
@@ -2406,7 +2406,7 @@ function SettingsContent() {
                     type="button"
                     onClick={() => handleSaveIntegration(activeModalInt)}
                     disabled={intModalSaving}
-                    className="px-4 py-1.5 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 disabled:opacity-50 min-w-[130px] inline-flex items-center justify-center gap-1.5"
+                    className="px-4 py-1.5 rounded-lg bg-[#89BD49] text-white text-xs font-semibold hover:bg-[#6B9A35] shadow-xs shadow-[#89BD49]/25 disabled:opacity-50 min-w-[130px] inline-flex items-center justify-center gap-1.5"
                   >
                     {intModalSaving ? (
                       <>
@@ -2456,7 +2456,7 @@ function SettingsContent() {
                     setShowRetentionModal(false);
                   }, 800);
                 }}
-                className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-700 hover:to-violet-700 text-white font-bold text-xs shadow-md transition-all flex items-center justify-center gap-2 active:scale-98"
+                className="w-full py-2.5 px-4 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] text-white font-bold text-xs shadow-xs shadow-[#89BD49]/25 transition-all flex items-center justify-center gap-2 active:scale-98"
               >
                 <span>{copiedRetentionCode ? "✓ Copied SAVE50!" : t("settings.churnApplyCode")}</span>
               </button>

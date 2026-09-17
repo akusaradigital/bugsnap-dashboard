@@ -179,11 +179,11 @@ export default function AdminSystemPage() {
             </p>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 font-bold">
+            <span className="text-[11px] px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400 font-bold">
               {healthyCount} Online
             </span>
             {issueCount > 0 && (
-              <span className="text-[11px] px-2 py-0.5 rounded-full bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 font-bold">
+              <span className="text-[11px] px-2 py-0.5 rounded-md bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 font-bold">
                 {issueCount} Terkendala
               </span>
             )}
@@ -203,7 +203,7 @@ export default function AdminSystemPage() {
                   <div className="flex items-center justify-between">
                     <span className="text-xl">{s.icon}</span>
                     <span
-                      className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${
+                      className={`text-[9px] font-bold px-2 py-0.5 rounded-md ${
                         isOnline
                           ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400"
                           : "bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400"
@@ -248,13 +248,13 @@ export default function AdminSystemPage() {
                 placeholder="Target User UUID (opsional jika login dengan akun admin)"
                 value={targetUserIdInput}
                 onChange={(e) => setTargetUserIdInput(e.target.value)}
-                className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200 flex-1 font-mono placeholder:font-sans placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200 flex-1 font-mono placeholder:font-sans placeholder:text-slate-400 focus:outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20"
               />
               <button
                 type="button"
                 onClick={handleScanDrive}
                 disabled={scanningDrive || cleaningDrive}
-                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 transition-colors cursor-pointer shrink-0"
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-xs shadow-[#89BD49]/25 disabled:opacity-50 transition-colors cursor-pointer shrink-0"
               >
                 {scanningDrive ? "Memindai..." : "Pindai File 🔍"}
               </button>
@@ -270,7 +270,7 @@ export default function AdminSystemPage() {
               <div className="mt-4 space-y-3">
                 {orphanData.targetUserId && (
                   <div className="text-[11px] text-slate-500 dark:text-zinc-400 font-mono">
-                    Target User ID: <span className="text-indigo-600 dark:text-indigo-400 font-bold">{orphanData.targetUserId}</span>
+                    Target User ID: <span className="text-[#6B9A35] dark:text-[#A8D666] font-bold">{orphanData.targetUserId}</span>
                   </div>
                 )}
                 <div className="grid grid-cols-3 gap-2 text-center">
@@ -335,7 +335,7 @@ export default function AdminSystemPage() {
                 type="button"
                 onClick={loadAudit}
                 disabled={loadingAudit}
-                className="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-semibold cursor-pointer"
+                className="text-xs text-[#6B9A35] hover:text-[#557A2B] dark:text-[#A8D666] dark:hover:text-[#C2E688] hover:underline font-semibold cursor-pointer"
               >
                 {loadingAudit ? "Memeriksa..." : "Audit Ulang ⟳"}
               </button>

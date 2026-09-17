@@ -217,7 +217,7 @@ export default function AdminSupportPage() {
             placeholder="Cari email, subjek, isi..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-indigo-500"
+            className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20"
           />
         </div>
       </div>
@@ -263,7 +263,7 @@ export default function AdminSupportPage() {
                         </span>
                       )}
                       {t.category === "feature" && (
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-700 dark:bg-purple-950/60 dark:text-purple-400">
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40">
                           💡 FITUR
                         </span>
                       )}
@@ -284,7 +284,7 @@ export default function AdminSupportPage() {
                     <td className="py-3 px-4 whitespace-nowrap">
                       <div className="font-medium text-slate-800 dark:text-zinc-200">{t.userEmail}</div>
                       {t.userPlan && (
-                        <span className="text-[9px] uppercase font-bold text-indigo-600 dark:text-indigo-400">
+                        <span className="text-[9px] uppercase font-bold text-[#6B9A35] dark:text-[#A8D666]">
                           {t.userPlan}
                         </span>
                       )}
@@ -380,7 +380,7 @@ export default function AdminSupportPage() {
                       href={selectedTicket.pageUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-indigo-600 dark:text-indigo-400 underline"
+                      className="text-[#6B9A35] hover:text-[#557A2B] dark:text-[#A8D666] dark:hover:text-[#C2E688] underline"
                     >
                       {selectedTicket.pageUrl}
                     </a>
@@ -404,7 +404,7 @@ export default function AdminSupportPage() {
                     onClick={() => handleStatusChange(selectedTicket.id, st)}
                     className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition-colors ${
                       selectedTicket.status === st
-                        ? "border-indigo-600 bg-indigo-600 text-white"
+                        ? "border-[#89BD49] bg-[#89BD49] text-white"
                         : "border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800"
                     }`}
                   >
@@ -423,10 +423,10 @@ export default function AdminSupportPage() {
                     {selectedTicket.replies.map((rep) => (
                       <div
                         key={rep.id}
-                        className="p-3 rounded-lg border border-indigo-200 dark:border-indigo-900/50 bg-indigo-50/50 dark:bg-indigo-950/20 text-xs"
+                        className="p-3 rounded-lg border border-[#89BD49]/30 dark:border-[#89BD49]/40 bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-xs"
                       >
                         <div className="flex items-center justify-between mb-1">
-                          <span className="font-bold text-indigo-700 dark:text-indigo-300">{rep.sender}</span>
+                          <span className="font-bold text-[#6B9A35] dark:text-[#A8D666]">{rep.sender}</span>
                           <span className="text-[10px] text-slate-400">
                             {new Date(rep.created_at).toLocaleString("id-ID")}
                           </span>
@@ -449,7 +449,7 @@ export default function AdminSupportPage() {
                   value={replyMessage}
                   onChange={(e) => setReplyMessage(e.target.value)}
                   placeholder="Tuliskan respon resmi solusi atau klarifikasi bug ini..."
-                  className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-3 outline-none focus:border-indigo-500 resize-none"
+                  className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-3 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 resize-none"
                 />
                 <div className="flex items-center justify-between">
                   <p className="text-[10px] text-slate-400">
@@ -458,7 +458,7 @@ export default function AdminSupportPage() {
                   <button
                     type="submit"
                     disabled={sendingReply || !replyMessage.trim()}
-                    className="px-4 py-2 text-xs font-semibold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 transition-colors"
+                    className="px-4 py-2 text-xs font-semibold rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-xs shadow-[#89BD49]/25 disabled:opacity-50 transition-colors"
                   >
                     {sendingReply ? "Mengirim via Email..." : "Kirim Balasan ✉"}
                   </button>

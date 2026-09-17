@@ -126,11 +126,11 @@ function UpgradeContent() {
         </div>
 
         {/* Purchasing Power Parity (PPP) Banner */}
-        <div className="mb-3 rounded-2xl border border-indigo-200/80 dark:border-indigo-900/50 bg-indigo-50/60 dark:bg-indigo-950/30 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
+        <div className="mb-3 rounded-2xl border border-[#89BD49]/30 dark:border-[#89BD49]/20 bg-[#89BD49]/5 dark:bg-[#89BD49]/10 p-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2.5">
             <span className="text-base">🌏</span>
             <span className="text-neutral-700 dark:text-neutral-300">
-              <strong>Regional Pricing:</strong> Indonesian & regional creators get 40% off with coupon code <code className="font-mono bg-white dark:bg-neutral-800 px-1.5 py-0.5 rounded font-bold text-indigo-600 dark:text-indigo-400">INDO40</code>
+              <strong>Regional Pricing:</strong> Indonesian & regional creators get 40% off with coupon code <code className="font-mono bg-white dark:bg-neutral-800 px-1.5 py-0.5 rounded font-bold text-[#6B9A35] dark:text-[#A8D666]">INDO40</code>
             </span>
           </div>
           <button
@@ -139,7 +139,7 @@ function UpgradeContent() {
               setPromoCode("INDO40");
               setShowPromoInput(true);
             }}
-            className="text-indigo-600 dark:text-indigo-400 font-bold hover:underline shrink-0 text-left sm:text-right"
+            className="text-[#6B9A35] dark:text-[#A8D666] font-bold hover:underline shrink-0 text-left sm:text-right"
           >
             Apply Code
           </button>
@@ -278,7 +278,7 @@ function UpgradeContent() {
                   <button
                     type="button"
                     onClick={() => setShowPromoInput(true)}
-                    className="text-neutral-500 hover:text-indigo-600 dark:hover:text-indigo-400 underline flex items-center gap-1"
+                    className="text-neutral-500 hover:text-[#6B9A35] dark:hover:text-[#A8D666] underline flex items-center gap-1"
                   >
                     <span>Have a promo code?</span>
                   </button>
@@ -289,13 +289,13 @@ function UpgradeContent() {
                       value={promoCode}
                       onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
                       placeholder="e.g. INDO40 / LAUNCH50"
-                      className="w-full px-2.5 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 text-xs text-foreground uppercase tracking-wide font-mono focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 text-xs text-foreground uppercase tracking-wide font-mono focus:outline-none focus:ring-1 focus:ring-[#89BD49]"
                     />
                     {promoCode && (
                       <button
                         type="button"
                         onClick={() => setPromoCode("")}
-                        className="text-neutral-400 hover:text-neutral-600 text-xs shrink-0"
+                        className="text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-200 text-xs shrink-0"
                       >
                         Clear
                       </button>
@@ -310,10 +310,10 @@ function UpgradeContent() {
                   type="button"
                   onClick={() => handleUpgrade("pro")}
                   disabled={loading}
-                  className="w-full py-2.5 px-4 rounded-xl bg-[#a3e635] hover:bg-[#93d625] active:scale-[0.99] text-neutral-950 font-bold text-sm transition-all shadow-sm hover:shadow text-center flex items-center justify-center gap-2"
+                  className="w-full py-2.5 px-4 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] active:scale-[0.99] text-white font-bold text-sm transition-all shadow-sm hover:shadow text-center flex items-center justify-center gap-2 shadow-[#89BD49]/25"
                 >
                   {loading ? (
-                    <div className="w-4 h-4 border-2 border-neutral-900 border-t-transparent rounded-full animate-spin" />
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   ) : (
                     "Upgrade to Team"
                   )}
@@ -371,7 +371,7 @@ function UpgradeContent() {
                     <span>200 AI bug summaries</span>
                   </li>
                   <li className="flex items-center gap-3 font-medium">
-                    <svg className="w-4 h-4 text-indigo-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                    <svg className="w-4 h-4 text-[#89BD49] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                       <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                       <path d="M7 11V7a5 5 0 0110 0v4" />
                     </svg>
@@ -383,7 +383,7 @@ function UpgradeContent() {
                   <button
                     type="button"
                     onClick={() => setShowAllFeatures(!showAllFeatures)}
-                    className="text-xs text-indigo-600 dark:text-indigo-400 font-semibold hover:underline flex items-center gap-1"
+                    className="text-xs text-[#6B9A35] dark:text-[#A8D666] font-semibold hover:underline flex items-center gap-1"
                   >
                     <span>{showAllFeatures ? "Hide feature details" : "See all features"}</span>
                     <svg className={`w-3.5 h-3.5 transition-transform ${showAllFeatures ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
@@ -412,7 +412,7 @@ function UpgradeContent() {
             <span className="text-xs sm:text-sm font-bold text-neutral-900 dark:text-white">
               {t("upgrade.stickyHeader")}
             </span>
-            <span className="text-[11px] sm:text-xs text-neutral-500 font-medium">
+            <span className="text-[11px] sm:text-xs text-neutral-500 dark:text-neutral-400 font-medium">
               · Team: ${isYearly ? "10" : "14"}/mo
             </span>
           </div>
@@ -420,21 +420,21 @@ function UpgradeContent() {
             type="button"
             onClick={() => handleUpgrade("pro")}
             disabled={loading}
-            className="px-4 py-1.5 rounded-xl bg-[#a3e635] hover:bg-[#93d625] active:scale-95 text-neutral-950 font-bold text-xs shadow-xs transition-all"
+            className="px-4 py-1.5 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] active:scale-95 text-white font-bold text-xs shadow-xs transition-all shadow-[#89BD49]/25"
           >
             {loading ? "..." : "Upgrade to Team"}
           </button>
         </div>
 
         {/* Limited Lifetime Deal Card (Feature 4) */}
-        <div className="mt-8 rounded-3xl border-2 border-indigo-500/40 dark:border-indigo-500/30 bg-gradient-to-br from-indigo-50/70 via-purple-50/40 to-background dark:from-indigo-950/40 dark:via-purple-950/20 dark:to-neutral-900/40 p-6 sm:p-8 shadow-sm">
+        <div className="mt-8 rounded-3xl border-2 border-[#89BD49]/40 dark:border-[#89BD49]/30 bg-gradient-to-br from-[#89BD49]/10 via-emerald-50/30 to-background dark:from-[#89BD49]/10 dark:via-emerald-950/20 dark:to-neutral-900/40 p-6 sm:p-8 shadow-sm">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="space-y-2">
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-indigo-600 text-white shadow-xs">
+                <span className="px-2.5 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider bg-[#89BD49] text-white shadow-xs">
                   Early Supporter LTD
                 </span>
-                <span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">
+                <span className="text-xs font-semibold text-[#6B9A35] dark:text-[#A8D666]">
                   🔥 27/100 spots remaining
                 </span>
               </div>
@@ -458,7 +458,7 @@ function UpgradeContent() {
                 type="button"
                 onClick={() => handleUpgrade("pro")}
                 disabled={loading}
-                className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs sm:text-sm shadow-md transition-all hover:scale-105 active:scale-95 text-center"
+                className="px-6 py-2.5 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] text-white font-bold text-xs sm:text-sm shadow-md transition-all hover:scale-105 active:scale-95 text-center shadow-[#89BD49]/25"
               >
                 {t("upgrade.lifetimeCta")}
               </button>
@@ -478,7 +478,7 @@ function UpgradeContent() {
                 type="button"
                 onClick={() => handleBuyAddon("ai_summaries")}
                 disabled={loading}
-                className="px-3.5 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-xs font-semibold text-neutral-800 dark:text-neutral-200 hover:border-indigo-500 transition-colors shadow-sm"
+                className="px-3.5 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-xs font-semibold text-neutral-800 dark:text-neutral-200 hover:border-[#89BD49] transition-colors shadow-sm"
               >
                 +100 AI Summaries ($3)
               </button>
@@ -486,7 +486,7 @@ function UpgradeContent() {
                 type="button"
                 onClick={() => handleBuyAddon("captures_pack")}
                 disabled={loading}
-                className="px-3.5 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-xs font-semibold text-neutral-800 dark:text-neutral-200 hover:border-indigo-500 transition-colors shadow-sm"
+                className="px-3.5 py-2 rounded-xl border border-neutral-200 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-xs font-semibold text-neutral-800 dark:text-neutral-200 hover:border-[#89BD49] transition-colors shadow-sm"
               >
                 +50 Captures Pack ($5)
               </button>
@@ -498,7 +498,7 @@ function UpgradeContent() {
       {/* Footer info */}
       <footer className="w-full text-center text-xs text-neutral-500 dark:text-neutral-400 py-4">
         Looking for our Enterprise plan?{" "}
-        <Link href="/contact" className="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline">
+        <Link href="/contact" className="text-[#6B9A35] hover:text-[#58802A] dark:text-[#A8D666] dark:hover:text-[#C2E688] font-semibold hover:underline">
           Contact sales
         </Link>
       </footer>

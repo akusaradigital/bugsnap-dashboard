@@ -458,7 +458,7 @@ function FormattedJsonBody({
         <div className="flex items-center gap-1.5 font-semibold text-muted uppercase tracking-wider">
           <span>{title || "Body"}</span>
           {isJson && (
-            <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/40">
+            <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40">
               JSON
             </span>
           )}
@@ -481,7 +481,7 @@ function FormattedJsonBody({
           )}
         </button>
       </div>
-      <pre className="p-2 rounded-lg bg-subtle border border-border font-mono text-[10px] leading-relaxed whitespace-pre-wrap break-all max-h-48 overflow-y-auto select-all">
+      <pre className="p-2 rounded-lg bg-subtle text-foreground border border-border font-mono text-[10px] leading-relaxed whitespace-pre-wrap break-all max-h-48 overflow-y-auto select-all">
         {formatted}
       </pre>
     </div>
@@ -1025,10 +1025,10 @@ ${stack}` : body);
             e.stopPropagation();
             onSeekToTime(sec);
           }}
-          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-zinc-100 hover:bg-indigo-100 text-muted hover:text-indigo-600 dark:bg-zinc-800 dark:hover:bg-indigo-900/60 dark:hover:text-indigo-300 border border-border/80 transition-colors cursor-pointer shrink-0"
+          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-zinc-100 hover:bg-[#89BD49]/20 text-muted hover:text-[#6B9A35] dark:bg-zinc-800 dark:hover:bg-[#89BD49]/25 dark:hover:text-[#A8D666] border border-border/80 transition-colors cursor-pointer shrink-0"
           title={t("dt.jumpVideoTo", { time: relTime })}
         >
-          <span className="text-[8px] text-indigo-500">▶</span>
+          <span className="text-[8px] text-[#6B9A35] dark:text-[#A8D666]">▶</span>
           <span>{relTime}</span>
         </button>
       );
@@ -1375,7 +1375,7 @@ ${stack}` : body);
           {/* <details> instead of a bare pill: the number alone never said what it
               counted. Native disclosure - no state, no outside-click handler. */}
           <details ref={eventMenuRef} className="relative group">
-            <summary className="list-none cursor-pointer flex items-center gap-1 text-[10px] font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/30 px-2 py-0.5 rounded-full border border-indigo-100 dark:border-indigo-800/40 hover:bg-indigo-100 dark:hover:bg-indigo-900/40 transition-colors">
+            <summary className="list-none cursor-pointer flex items-center gap-1 text-[10px] font-semibold text-[#6B9A35] dark:text-[#A8D666] bg-[#89BD49]/10 dark:bg-[#89BD49]/20 px-2 py-0.5 rounded-md border border-[#89BD49]/25 dark:border-[#89BD49]/30 hover:bg-[#89BD49]/20 dark:hover:bg-[#89BD49]/30 transition-colors">
               <span className="tabular-nums">{eventBreakdown.label}</span>
               <svg className="w-2.5 h-2.5 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden="true">
                 <polyline points="6 9 12 15 18 9" />
@@ -1426,7 +1426,7 @@ ${stack}` : body);
                 activeTab === tab
                   ? isIssues && hasIssues
                     ? "text-red-600 dark:text-red-400 font-semibold"
-                    : "text-indigo-600 font-semibold"
+                    : "text-[#6B9A35] dark:text-[#A8D666] font-semibold"
                   : isIssues && hasIssues
                   ? "text-red-600/90 dark:text-red-400/90 hover:text-red-700 font-medium"
                   : "text-muted hover:text-foreground"
@@ -1438,7 +1438,7 @@ ${stack}` : body);
                   isIssues
                     ? "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400"
                     : activeTab === tab
-                    ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300"
+                    ? "bg-[#89BD49]/15 text-[#6B9A35] dark:bg-[#89BD49]/20 dark:text-[#A8D666]"
                     : "bg-subtle text-muted"
                 }`}>{count}</span>
               )}
@@ -1448,7 +1448,7 @@ ${stack}` : body);
               {activeTab === tab && (
                 <span
                   className={`absolute bottom-0 left-0 right-0 h-0.5 rounded-full ${
-                    isIssues && hasIssues ? "bg-red-600" : "bg-indigo-600"
+                    isIssues && hasIssues ? "bg-red-600" : "bg-[#89BD49]"
                   }`}
                 />
               )}
@@ -1474,7 +1474,7 @@ ${stack}` : body);
                 placeholder={t("dt.search", { tab: tabLabel(activeTab) })}
                 value={logSearch}
                 onChange={(e) => setLogSearch(e.target.value)}
-                className="w-full pl-8 pr-8 py-1.5 rounded-lg border border-border text-xs bg-subtle outline-none focus:border-indigo-500 shadow-sm"
+                className="w-full pl-8 pr-8 py-1.5 rounded-lg border border-border text-xs bg-subtle outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/30 shadow-sm"
               />
               {logSearch && (
                 <button
@@ -1503,7 +1503,7 @@ ${stack}` : body);
                   onClick={() => setConsoleErrorsOnly(false)}
                   className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors ${
                     !consoleErrorsOnly
-                      ? "bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800/40 font-semibold"
+                      ? "bg-[#89BD49]/15 text-[#6B9A35] border border-[#89BD49]/30 dark:bg-[#89BD49]/20 dark:text-[#A8D666] dark:border-[#89BD49]/40 font-semibold"
                       : "text-muted hover:text-foreground border border-transparent"
                   }`}
                 >
@@ -1542,7 +1542,7 @@ ${stack}` : body);
                         aria-pressed={on}
                         className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors cursor-pointer ${
                           on
-                            ? "bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800/40 font-semibold"
+                            ? "bg-[#89BD49]/15 text-[#6B9A35] border border-[#89BD49]/30 dark:bg-[#89BD49]/20 dark:text-[#A8D666] dark:border-[#89BD49]/40 font-semibold"
                             : "text-muted hover:text-foreground border border-transparent"
                         }`}
                       >
@@ -1648,7 +1648,7 @@ ${stack}` : body);
           <div className="flex-1 min-h-0 overflow-y-auto">
             {totalIssuesCount === 0 ? (
               <div className="py-14 flex flex-col items-center gap-2 text-center text-xs text-muted p-4">
-                <div className="w-10 h-10 rounded-full bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                   </svg>
@@ -1659,7 +1659,7 @@ ${stack}` : body);
             ) : summary ? (
               <div className="p-4 space-y-3">
                 <div className="flex items-center gap-2.5 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200/80 dark:border-red-800/40 px-3.5 py-2.5 shadow-sm">
-                  <div className="w-7 h-7 rounded-full bg-red-100 dark:bg-red-950/40 border border-red-200 dark:border-red-800/40 flex items-center justify-center shrink-0 text-red-600 dark:text-red-400 text-xs font-bold">
+                  <div className="w-7 h-7 rounded-lg bg-red-100 dark:bg-red-950/40 border border-red-200 dark:border-red-800/40 flex items-center justify-center shrink-0 text-red-600 dark:text-red-400 text-xs font-bold">
                     {totalIssuesCount}
                   </div>
                   <div className="min-w-0 flex-1">
@@ -1713,7 +1713,7 @@ ${stack}` : body);
                         <div
                           key={id}
                           className={`p-3 text-xs transition-all ${
-                            active ? "ring-2 ring-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/40" : "bg-red-50/30 dark:bg-red-950/10 hover:bg-red-50/60 dark:hover:bg-red-950/20"
+                            active ? "ring-2 ring-[#89BD49] bg-[#89BD49]/10 dark:bg-[#89BD49]/20" : "bg-red-50/30 dark:bg-red-950/10 hover:bg-red-50/60 dark:hover:bg-red-950/20"
                           }`}
                         >
                           <div className="flex items-start gap-2.5 min-w-0">
@@ -1749,7 +1749,7 @@ ${stack}` : body);
                       <details
                         key={id}
                         className={`group transition-all ${
-                          active ? "ring-2 ring-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/40" : "bg-red-50/20 dark:bg-red-950/10 hover:bg-red-50/50 dark:hover:bg-red-950/20"
+                          active ? "ring-2 ring-[#89BD49] bg-[#89BD49]/10 dark:bg-[#89BD49]/20" : "bg-red-50/20 dark:bg-red-950/10 hover:bg-red-50/50 dark:hover:bg-red-950/20"
                         }`}
                       >
                         <summary
@@ -1796,7 +1796,7 @@ ${stack}` : body);
                                   <span className="text-emerald-600 dark:text-emerald-400 font-medium">{t("dt.curlCopied") || "Copied!"}</span>
                                 ) : (
                                   <>
-                                    <span className="font-mono text-[9px] font-bold text-indigo-500">cURL</span>
+                                    <span className="font-mono text-[9px] font-bold text-[#6B9A35] dark:text-[#A8D666]">cURL</span>
                                     <span>{t("dt.copyCurl") || "Copy as cURL"}</span>
                                   </>
                                 )}
@@ -1836,7 +1836,7 @@ ${stack}` : body);
                     href={capture.site_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block text-[11px] font-mono text-indigo-600 hover:underline bg-subtle/60 border border-border rounded-lg px-3 py-2 truncate"
+                    className="block text-[11px] font-mono text-[#6B9A35] dark:text-[#A8D666] hover:underline bg-subtle/60 border border-border rounded-lg px-3 py-2 truncate"
                   >
                     {capture.site_url}
                   </a>
@@ -1860,7 +1860,7 @@ ${stack}` : body);
                   <button
                     type="button"
                     onClick={() => setShowTzMenu((prev) => !prev)}
-                    className="flex items-center gap-1 text-[11px] sm:text-xs font-medium text-foreground hover:text-indigo-600 dark:hover:text-indigo-400 px-1.5 py-0.5 rounded hover:bg-subtle/80 transition-colors group cursor-pointer"
+                    className="flex items-center gap-1 text-[11px] sm:text-xs font-medium text-foreground hover:text-[#6B9A35] dark:hover:text-[#A8D666] px-1.5 py-0.5 rounded hover:bg-subtle/80 transition-colors group cursor-pointer"
                     title={`${createdAt} · ${t("dt.changeTz")}`}
                   >
                     <span className="whitespace-nowrap">{createdAtShort}</span>
@@ -1881,7 +1881,7 @@ ${stack}` : body);
                         type="button"
                         onClick={() => { setTimeZoneMode("capture"); setShowTzMenu(false); }}
                         className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left transition-colors ${
-                          timeZoneMode === "capture" ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-semibold" : "text-foreground hover:bg-subtle/70"
+                          timeZoneMode === "capture" ? "bg-[#89BD49]/15 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] font-semibold" : "text-foreground hover:bg-subtle/70"
                         }`}
                       >
                         <div>
@@ -1897,7 +1897,7 @@ ${stack}` : body);
                         type="button"
                         onClick={() => { setTimeZoneMode("local"); setShowTzMenu(false); }}
                         className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left transition-colors ${
-                          timeZoneMode === "local" ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-semibold" : "text-foreground hover:bg-subtle/70"
+                          timeZoneMode === "local" ? "bg-[#89BD49]/15 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] font-semibold" : "text-foreground hover:bg-subtle/70"
                         }`}
                       >
                         <div>
@@ -1915,7 +1915,7 @@ ${stack}` : body);
                         type="button"
                         onClick={() => { setTimeZoneMode("utc"); setShowTzMenu(false); }}
                         className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left transition-colors ${
-                          timeZoneMode === "utc" ? "bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 font-semibold" : "text-foreground hover:bg-subtle/70"
+                          timeZoneMode === "utc" ? "bg-[#89BD49]/15 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] font-semibold" : "text-foreground hover:bg-subtle/70"
                         }`}
                       >
                         <div>
@@ -2018,10 +2018,10 @@ ${stack}` : body);
             )}
 
             {/* Quick Export Bug Report Card */}
-            <div className="p-3 rounded-xl border border-indigo-200/80 dark:border-indigo-900/40 bg-indigo-50/40 dark:bg-indigo-950/20 flex items-center justify-between gap-3 shadow-2xs">
+            <div className="p-3 rounded-xl border border-[#89BD49]/30 dark:border-[#89BD49]/40 bg-[#89BD49]/10 dark:bg-[#89BD49]/15 flex items-center justify-between gap-3 shadow-2xs">
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                  <span className="text-indigo-600 dark:text-indigo-400">📋</span>
+                  <span className="text-[#6B9A35] dark:text-[#A8D666]">📋</span>
                   <span>Markdown Bug Report</span>
                 </p>
                 <p className="text-[11px] text-muted truncate mt-0.5">
@@ -2031,7 +2031,7 @@ ${stack}` : body);
               <button
                 type="button"
                 onClick={handleCopyBugReport}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white shadow-xs transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer"
+                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-xs shadow-[#89BD49]/25 transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer"
               >
                 {copiedBugReport ? (
                   <>
@@ -2066,7 +2066,7 @@ ${stack}` : body);
                     <>
                       {/* Summary alert banner */}
                       <div className="flex items-center gap-2.5 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200/80 dark:border-red-800/40 px-3.5 py-2.5 shadow-sm">
-                        <div className="w-7 h-7 rounded-full bg-red-100 dark:bg-red-950/40 border border-red-200 dark:border-red-800/40 flex items-center justify-center shrink-0 text-red-600 dark:text-red-400 text-xs font-bold">
+                        <div className="w-7 h-7 rounded-lg bg-red-100 dark:bg-red-950/40 border border-red-200 dark:border-red-800/40 flex items-center justify-center shrink-0 text-red-600 dark:text-red-400 text-xs font-bold">
                           {summary.errors}
                         </div>
                         <div className="min-w-0 flex-1">
@@ -2113,7 +2113,7 @@ ${stack}` : body);
                     <div
                       key={log.srcIdx}
                       className={`group p-3 text-xs transition-all ${
-                        active ? "ring-2 ring-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/40 rounded-sm" : isWarn ? "bg-amber-50/40 dark:bg-amber-950/20 hover:bg-amber-50/70 dark:hover:bg-amber-950/30" : isErr ? "bg-red-50/40 dark:bg-red-950/20 hover:bg-red-50/70 dark:hover:bg-red-950/30" : "hover:bg-subtle/50"
+                        active ? "ring-2 ring-[#89BD49] bg-[#89BD49]/10 dark:bg-[#89BD49]/20 rounded-sm" : isWarn ? "bg-amber-50/40 dark:bg-amber-950/20 hover:bg-amber-50/70 dark:hover:bg-amber-950/30" : isErr ? "bg-red-50/40 dark:bg-red-950/20 hover:bg-red-50/70 dark:hover:bg-red-950/30" : "hover:bg-subtle/50"
                       }`}
                     >
                       <div className="flex items-start gap-2.5 min-w-0">
@@ -2145,7 +2145,7 @@ ${stack}` : body);
                           ) : null}
                         </div>
                         {logCount(log) > 1 && (
-                          <span className="px-1.5 py-0.5 rounded-full bg-subtle text-[10px] font-bold text-muted border border-border shrink-0">
+                          <span className="px-1.5 py-0.5 rounded-md bg-subtle text-[10px] font-bold text-muted border border-border shrink-0">
                             ×{logCount(log)}
                           </span>
                         )}
@@ -2186,7 +2186,7 @@ ${stack}` : body);
                   ) : (
                     <>
                       <div className="flex items-center gap-2.5 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200/80 dark:border-red-800/40 px-3.5 py-2.5 shadow-sm">
-                        <div className="w-7 h-7 rounded-full bg-red-100 dark:bg-red-950/40 border border-red-200 dark:border-red-800/40 flex items-center justify-center shrink-0 text-red-600 dark:text-red-400 text-xs font-bold">
+                        <div className="w-7 h-7 rounded-lg bg-red-100 dark:bg-red-950/40 border border-red-200 dark:border-red-800/40 flex items-center justify-center shrink-0 text-red-600 dark:text-red-400 text-xs font-bold">
                           {summary.failedRequests}
                         </div>
                         <p className="text-xs font-semibold text-red-800 dark:text-red-300 leading-tight">
@@ -2225,7 +2225,7 @@ ${stack}` : body);
                   const effectiveStatusText = log.statusText || statusLabel(t, log.status) || undefined;
                   const hasPayload = log.requestBody != null || Boolean(log.responseBody);
                   return (
-                    <details key={`${log.method || "GET"}|${log.status ?? "FAILED"}|${log.url}`} className={`group hover:bg-subtle/50 transition-all ${active ? "ring-2 ring-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/40 rounded-sm" : ""}`}>
+                    <details key={`${log.method || "GET"}|${log.status ?? "FAILED"}|${log.url}`} className={`group hover:bg-subtle/50 transition-all ${active ? "ring-2 ring-[#89BD49] bg-[#89BD49]/10 dark:bg-[#89BD49]/20 rounded-sm" : ""}`}>
                       <summary
                         className="p-3 cursor-pointer list-none flex items-center justify-between gap-2 min-w-0"
                       >
@@ -2270,7 +2270,7 @@ ${stack}` : body);
                         <div className="flex items-center gap-1.5 shrink-0">
                           {renderTimeBadge(log)}
                           {count > 1 && (
-                            <span className="px-1.5 py-0.5 rounded-full bg-subtle text-[10px] font-bold text-muted border border-border">
+                            <span className="px-1.5 py-0.5 rounded-md bg-subtle text-[10px] font-bold text-muted border border-border">
                               ×{count}
                             </span>
                           )}
@@ -2305,7 +2305,7 @@ ${stack}` : body);
                                   </>
                                 ) : (
                                   <>
-                                    <span className="font-mono text-[9px] font-bold text-indigo-500">cURL</span>
+                                    <span className="font-mono text-[9px] font-bold text-[#6B9A35] dark:text-[#A8D666]">cURL</span>
                                     <span>{t("dt.copyCurl") || "Copy as cURL"}</span>
                                   </>
                                 )}
@@ -2418,7 +2418,7 @@ ${stack}` : body);
                       key={log.srcIdx}
                       className={`group flex items-start gap-2.5 p-2.5 rounded-lg border transition-all ${
                         active
-                          ? "ring-2 ring-indigo-500 bg-indigo-50/70 dark:bg-indigo-950/40 border-indigo-200 dark:border-indigo-800/60 shadow-xs"
+                          ? "ring-2 ring-[#89BD49] bg-[#89BD49]/10 dark:bg-[#89BD49]/20 border-[#89BD49]/30 dark:border-[#89BD49]/40 shadow-xs"
                           : "bg-background hover:bg-subtle/50 border-border/80"
                       }`}
                     >
@@ -2427,7 +2427,7 @@ ${stack}` : body);
                           isScreenshot
                             ? "bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40"
                             : isClick
-                            ? "bg-indigo-100 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200 dark:border-indigo-800/40"
+                            ? "bg-[#89BD49]/20 dark:bg-[#89BD49]/25 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40"
                             : isType
                             ? "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40"
                             : "bg-subtle text-muted border border-border"
@@ -2450,7 +2450,7 @@ ${stack}` : body);
                               isScreenshot
                                 ? "bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 border border-rose-200/80 dark:border-rose-800/40"
                                 : isClick
-                                ? "bg-indigo-50 dark:bg-indigo-950/30 text-indigo-700 dark:text-indigo-400 border border-indigo-200/80 dark:border-indigo-800/40"
+                                ? "bg-[#89BD49]/15 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40"
                                 : isType
                                 ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/40"
                                 : "bg-subtle text-muted border border-border"
@@ -2522,7 +2522,7 @@ ${stack}` : body);
                     onClick={() => setStorageType("local")}
                     className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${
                       storageType === "local"
-                        ? "bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800/40 font-semibold"
+                        ? "bg-[#89BD49]/15 text-[#6B9A35] border border-[#89BD49]/30 dark:bg-[#89BD49]/20 dark:text-[#A8D666] dark:border-[#89BD49]/40 font-semibold"
                         : "text-muted hover:text-foreground border border-transparent"
                     }`}
                   >
@@ -2533,7 +2533,7 @@ ${stack}` : body);
                     onClick={() => setStorageType("session")}
                     className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${
                       storageType === "session"
-                        ? "bg-indigo-50 text-indigo-700 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800/40 font-semibold"
+                        ? "bg-[#89BD49]/15 text-[#6B9A35] border border-[#89BD49]/30 dark:bg-[#89BD49]/20 dark:text-[#A8D666] dark:border-[#89BD49]/40 font-semibold"
                         : "text-muted hover:text-foreground border border-transparent"
                     }`}
                   >
@@ -2599,7 +2599,7 @@ ${stack}` : body);
                                 {key}
                               </span>
                               {isJson && (
-                                <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-indigo-50 dark:bg-indigo-950/40 text-indigo-600 dark:text-indigo-400 border border-indigo-200/60 dark:border-indigo-800/40">
+                                <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40">
                                   JSON
                                 </span>
                               )}
@@ -2624,7 +2624,7 @@ ${stack}` : body);
                               )}
                             </button>
                           </div>
-                          <pre className="p-2 rounded bg-subtle border border-border font-mono text-[10px] leading-relaxed whitespace-pre-wrap break-all max-h-36 overflow-y-auto select-all">
+                          <pre className="p-2 rounded bg-subtle text-foreground border border-border font-mono text-[10px] leading-relaxed whitespace-pre-wrap break-all max-h-36 overflow-y-auto select-all">
                             {prettyVal}
                           </pre>
                         </div>

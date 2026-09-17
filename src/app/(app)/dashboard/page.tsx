@@ -212,8 +212,8 @@ function DashboardContent() {
 
       const totalOs = Math.max(1, Array.from(osMap.values()).reduce((a, b) => a + b, 0));
       const osColors: Record<string, string> = {
-        Windows: "bg-indigo-500",
-        "macOS / iOS": "bg-purple-500",
+        Windows: "bg-blue-500",
+        "macOS / iOS": "bg-slate-700 dark:bg-slate-300",
         Linux: "bg-amber-500",
         Android: "bg-emerald-500",
         Other: "bg-zinc-400"
@@ -360,7 +360,7 @@ function DashboardContent() {
         </div>
         <Link
           href="/captures"
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs transition-all hover:shadow-md"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#89BD49] hover:bg-[#6B9A35] active:scale-95 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs shadow-[#89BD49]/25 transition-all hover:shadow-md"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
             <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
@@ -414,18 +414,18 @@ function DashboardContent() {
 
       {/* 7-Day Reverse Trial Banner */}
       {trialInfo.isTrial && (
-        <div className="rounded-2xl border border-indigo-200 dark:border-indigo-800 bg-gradient-to-r from-indigo-50 dark:from-indigo-950/40 via-purple-50 dark:via-purple-950/30 to-background p-4 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="rounded-2xl border border-[#89BD49]/30 dark:border-[#89BD49]/40 bg-[#89BD49]/10 dark:bg-[#89BD49]/15 p-4 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 text-xs sm:text-sm">
             <span className="text-lg">✨</span>
             <div>
-              <p className="font-semibold text-indigo-950 dark:text-indigo-200">
+              <p className="font-semibold text-foreground dark:text-white">
                 {t("dash.trialBanner", { days: trialInfo.trialDaysLeft })}
               </p>
             </div>
           </div>
           <Link
             href="/upgrade"
-            className="shrink-0 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs transition-colors shadow-xs"
+            className="shrink-0 px-3.5 py-1.5 rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] text-white font-bold text-xs transition-colors shadow-xs shadow-[#89BD49]/25"
           >
             {t("dash.trialUpgradeBtn")}
           </Link>
@@ -447,8 +447,8 @@ function DashboardContent() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
               </svg>
             ),
-            accent: "bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800/40",
-            hoverAccent: "hover:border-indigo-400 hover:shadow-indigo-50/50",
+            accent: "bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border-[#89BD49]/30 dark:border-[#89BD49]/40",
+            hoverAccent: "hover:border-[#89BD49] hover:shadow-xs",
           },
           {
             labelKey: "dash.recordings",
@@ -463,7 +463,7 @@ function DashboardContent() {
               </svg>
             ),
             accent: "bg-rose-50 dark:bg-rose-950/30 text-rose-500 dark:text-rose-400 border-rose-200 dark:border-rose-800/40",
-            hoverAccent: "hover:border-rose-400 hover:shadow-rose-50/50",
+            hoverAccent: "hover:border-rose-400 hover:shadow-rose-50/50 dark:hover:shadow-none",
           },
           {
             labelKey: "dash.screenshots",
@@ -478,7 +478,7 @@ function DashboardContent() {
               </svg>
             ),
             accent: "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40",
-            hoverAccent: "hover:border-emerald-400 hover:shadow-emerald-50/50",
+            hoverAccent: "hover:border-emerald-400 hover:shadow-emerald-50/50 dark:hover:shadow-none",
           },
           {
             labelKey: "dash.storage",
@@ -491,7 +491,7 @@ function DashboardContent() {
               </svg>
             ),
             accent: "bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800/40",
-            hoverAccent: "hover:border-amber-400 hover:shadow-amber-50/50",
+            hoverAccent: "hover:border-amber-400 hover:shadow-amber-50/50 dark:hover:shadow-none",
           },
         ].map((stat) => (
           <div
@@ -570,7 +570,7 @@ function DashboardContent() {
             </div>
 
             <div className="flex items-center gap-1.5 text-xs text-muted font-medium bg-subtle px-2.5 py-1 rounded-lg border border-border">
-              <span className="w-2.5 h-2.5 rounded-full bg-indigo-500" />
+              <span className="w-2.5 h-2.5 rounded-full bg-[#89BD49]" />
               {t("dash.totalCaptures")}
             </div>
           </div>
@@ -606,13 +606,13 @@ function DashboardContent() {
                   return (
                   <div key={d.day} className="flex-1 min-w-0 flex flex-col items-center gap-1.5 group h-full justify-end relative cursor-pointer">
                     {/* Tooltip on hover */}
-                    <div className={`opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none bg-neutral-900 text-white text-[11px] font-semibold px-2.5 py-1 rounded-lg shadow-xl mb-2 absolute bottom-full ${tooltipPos} z-30 whitespace-nowrap`}>
-                      {MONTH_NAMES[selectedMonth]} {d.day}: <span className="font-bold text-indigo-300">{d.count}</span>
+                    <div className={`opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none bg-neutral-900 text-white text-[11px] font-semibold px-2.5 py-1 rounded-lg border border-neutral-700 shadow-xl mb-2 absolute bottom-full ${tooltipPos} z-30 whitespace-nowrap`}>
+                      {MONTH_NAMES[selectedMonth]} {d.day}: <span className="font-bold text-[#A8D666]">{d.count}</span>
                       <div className={`absolute top-full ${arrowPos} -mt-1 border-4 border-transparent border-t-neutral-900`} />
                     </div>
                     {d.count > 0 ? (
                       <div
-                        className="w-full max-w-[20px] rounded-t-md bg-gradient-to-t from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 hover:scale-110 shadow-xs hover:shadow-md transition-all duration-200"
+                        className="w-full max-w-[20px] rounded-t-md bg-[#89BD49] hover:bg-[#6B9A35] hover:scale-110 shadow-xs hover:shadow-md transition-all duration-200"
                         style={{ height: `${Math.max(8, (d.count / maxDayCount) * 125)}px` }}
                       />
                     ) : (
@@ -634,8 +634,8 @@ function DashboardContent() {
           <div>
             <div className="flex items-center gap-2">
               <h2 className="text-base font-bold text-foreground">{t("qa.title")}</h2>
-              <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 dark:bg-indigo-950/40 px-2.5 py-0.5 text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 border border-indigo-100 dark:border-indigo-900/50">
-                <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
+              <span className="inline-flex items-center gap-1 rounded-md bg-[#89BD49]/10 dark:bg-[#89BD49]/20 px-2.5 py-0.5 text-[11px] font-semibold text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/25 dark:border-[#89BD49]/30">
+                <span className="h-1.5 w-1.5 rounded-full bg-[#89BD49] animate-pulse" />
                 {t("qa.liveTelemetry")}
               </span>
             </div>
@@ -645,7 +645,7 @@ function DashboardContent() {
           </div>
           <Link
             href="/captures"
-            className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+            className="text-xs font-semibold text-[#6B9A35] dark:text-[#A8D666] hover:underline flex items-center gap-1"
           >
             <span>{t("qa.triage")}</span>
             <span></span>
@@ -747,7 +747,7 @@ function DashboardContent() {
                       className="flex items-center justify-between gap-2 p-2 rounded-xl hover:bg-background border border-transparent hover:border-border transition-all group"
                     >
                       <div className="min-w-0 flex-1">
-                        <p className="text-xs font-semibold text-foreground truncate group-hover:text-indigo-600 dark:group-hover:text-indigo-400">
+                        <p className="text-xs font-semibold text-foreground truncate group-hover:text-[#6B9A35] dark:group-hover:text-[#A8D666]">
                           {page.domain}
                         </p>
                         {page.path && (

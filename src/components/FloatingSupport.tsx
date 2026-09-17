@@ -25,7 +25,31 @@ function getTurnstile(): TurnstileApi | undefined {
 export default function FloatingSupport() {
   const { t, locale, setLocale } = useT();
   const [isOpen, setIsOpen] = useState(false);
+  const [showPrompt, setShowPrompt] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+
+  // Proactive prompt after 5 seconds
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem("cs_prompt_dismissed") === "1") return;
+    } catch {
+      // sessionStorage unavailable
+    }
+    const timer = setTimeout(() => {
+      setShowPrompt(true);
+    }, 5000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const dismissPrompt = useCallback((e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setShowPrompt(false);
+    try {
+      sessionStorage.setItem("cs_prompt_dismissed", "1");
+    } catch {
+      // sessionStorage unavailable
+    }
+  }, []);
 
   const [category, setCategory] = useState<SupportCategory>("bug");
   const [email, setEmail] = useState("");
@@ -264,7 +288,7 @@ export default function FloatingSupport() {
   };
 
   return (
-    <div ref={containerRef} className="fixed bottom-5 right-5 z-50 select-none">
+    <div ref={containerRef} className="fixed bottom-4 right-4 sm:bottom-5 sm:right-5 z-50 select-none">
       {/* Invisible Cloudflare Turnstile Container */}
       <div
         ref={turnstileRef}
@@ -274,16 +298,18 @@ export default function FloatingSupport() {
 
       {/* Support Pop-up Modal Card */}
       {isOpen && (
-        <div className="absolute bottom-16 right-0 w-[92vw] sm:w-[390px] max-h-[85vh] flex flex-col rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-2xl overflow-hidden transition-all duration-200">
-          {/* Header - Solid Color, No Gradient */}
-          <div className="flex items-center justify-between border-b border-indigo-700 dark:border-zinc-800 bg-indigo-600 dark:bg-zinc-900 px-5 py-4 text-white">
+        <div className="absolute bottom-14 sm:bottom-16 right-0 w-[calc(100vw-2rem)] sm:w-[390px] max-w-[390px] max-h-[85vh] flex flex-col rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-2xl overflow-hidden transition-all duration-200">
+          {/* Header - Brand Green Accent */}
+          <div className="flex items-center justify-between border-b border-[#6B9A35] dark:border-zinc-800 bg-[#89BD49] dark:bg-zinc-900 px-5 py-4 text-white">
             <div className="flex items-center gap-2.5">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-indigo-700/60 dark:bg-zinc-800 text-sm">
-                🎧
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#6B9A35]/60 dark:bg-zinc-800 text-white">
+                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
               </span>
               <div>
-                <h3 className="text-sm font-bold leading-tight">{t("support.title")}</h3>
-                <p className="text-[11px] text-indigo-100 dark:text-zinc-400 leading-tight">
+                <h3 className="text-sm font-bold leading-tight text-white">{t("support.title")}</h3>
+                <p className="text-[11px] text-white/80 dark:text-zinc-400 leading-tight">
                   {t("support.subtitle")}
                 </p>
               </div>
@@ -338,7 +364,7 @@ export default function FloatingSupport() {
                   <button
                     type="button"
                     onClick={handleReset}
-                    className="w-full rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold py-2.5 transition-colors shadow-sm"
+                    className="w-full rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] text-white text-xs font-semibold py-2.5 transition-colors shadow-sm"
                   >
                     {t("support.sendAnother")}
                   </button>
@@ -373,7 +399,7 @@ export default function FloatingSupport() {
                           onClick={() => setCategory(cat.id)}
                           className={`flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all ${
                             isActive
-                              ? "bg-white dark:bg-zinc-800 text-indigo-600 dark:text-indigo-400 shadow-xs"
+                              ? "bg-white dark:bg-zinc-800 text-[#6B9A35] dark:text-[#A8D666] shadow-xs"
                               : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
                           }`}
                         >
@@ -404,7 +430,7 @@ export default function FloatingSupport() {
                       if (errorMessage) setErrorMessage(null);
                     }}
                     placeholder="nama@perusahaan.com"
-                    className="w-full text-xs rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition-colors"
+                    className="w-full text-xs rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-[#89BD49] transition-colors"
                   />
                 </div>
 
@@ -418,7 +444,7 @@ export default function FloatingSupport() {
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
                     placeholder={activeCategoryMeta.subjectPlaceholder}
-                    className="w-full text-xs rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition-colors"
+                    className="w-full text-xs rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-[#89BD49] transition-colors"
                   />
                 </div>
 
@@ -436,7 +462,7 @@ export default function FloatingSupport() {
                       if (errorMessage) setErrorMessage(null);
                     }}
                     placeholder={activeCategoryMeta.placeholder}
-                    className="w-full text-xs rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-indigo-500 transition-colors resize-none leading-relaxed"
+                    className="w-full text-xs rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-[#89BD49] transition-colors resize-none leading-relaxed"
                   />
                 </div>
 
@@ -446,12 +472,12 @@ export default function FloatingSupport() {
                   </div>
                 )}
 
-                {/* Submit Button - Solid Indigo */}
+                {/* Submit Button - Brand Green */}
                 <div className="pt-1">
                   <button
                     type="submit"
                     disabled={submitting || !email.trim() || !message.trim()}
-                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white text-xs font-semibold py-2.5 transition-colors shadow-sm"
+                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] disabled:opacity-50 text-white text-xs font-bold py-2.5 transition-colors shadow-sm"
                   >
                     {submitting ? (
                       <>
@@ -469,7 +495,7 @@ export default function FloatingSupport() {
                   {t("support.urgent")}{" "}
                   <a
                     href={`mailto:support@bugsnap.akusaraproject.my.id?subject=[BugSnap%20Support]&body=${encodeURIComponent(message || "")}`}
-                    className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
+                    className="text-[#6B9A35] dark:text-[#A8D666] hover:underline font-medium"
                   >
                     support@bugsnap.akusaraproject.my.id
                   </a>
@@ -480,21 +506,67 @@ export default function FloatingSupport() {
         </div>
       )}
 
-      {/* Floating Trigger Button - Icon Only */}
+      {/* Proactive Speech Bubble Prompt */}
+      {showPrompt && !isOpen && (
+        <div
+          onClick={() => {
+            setIsOpen(true);
+            dismissPrompt();
+          }}
+          className="absolute bottom-13 sm:bottom-14 right-0 mb-1 flex items-center gap-2.5 rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3.5 sm:px-4 py-2 sm:py-2.5 shadow-2xl animate-in fade-in slide-in-from-bottom-2 duration-300 text-xs font-semibold text-slate-800 dark:text-zinc-100 cursor-pointer hover:border-[#89BD49] dark:hover:border-[#89BD49] transition-all group max-w-[calc(100vw-2.5rem)] sm:max-w-xs z-50"
+        >
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666] text-sm">
+            👋
+          </span>
+          <div className="flex-1 min-w-0">
+            <p className="text-[12px] font-bold leading-tight group-hover:text-[#6B9A35] dark:group-hover:text-[#A8D666] transition-colors">
+              {t("support.helpPrompt")}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={dismissPrompt}
+            className="text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 p-1 rounded-md transition-colors"
+            title={t("support.close")}
+            aria-label="Dismiss"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
+      {/* Floating Trigger Button - Sleek rectangular badge (no pills) */}
       <button
         type="button"
-        onClick={() => setIsOpen((prev) => !prev)}
-        className={`relative flex h-11 w-11 items-center justify-center rounded-full shadow-lg transition-transform hover:scale-105 active:scale-95 ${
+        onClick={() => {
+          setIsOpen((prev) => !prev);
+          if (showPrompt) dismissPrompt();
+        }}
+        className={`relative flex items-center gap-2 px-3.5 sm:px-4 h-11 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 border border-white/20 ${
           isOpen
             ? "bg-slate-900 dark:bg-zinc-800 text-white"
-            : "bg-indigo-600 hover:bg-indigo-700 text-white"
+            : "bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-[#89BD49]/25"
         }`}
         title={isOpen ? t("support.close") : t("support.btn")}
         aria-label={t("support.btn")}
       >
-        <span className={`text-base select-none ${isOpen ? "" : "animate-pulse"}`}>
-          {isOpen ? "✕" : "🎧"}
-        </span>
+        {isOpen ? (
+          <span className="text-sm font-bold">✕</span>
+        ) : (
+          <>
+            {/* Live Online Pulse Indicator */}
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+            </span>
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+            <span className="hidden sm:inline text-xs font-bold tracking-tight">
+              {t("support.btn")}
+            </span>
+          </>
+        )}
       </button>
     </div>
   );

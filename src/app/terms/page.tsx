@@ -11,10 +11,8 @@ export default function TermsPage() {
     <StaticShell
       title="Terms of Service"
       subtitle="Last updated: August 8, 2026"
-
-
     >
-      <main className="mx-auto max-w-4xl px-6 py-12 leading-relaxed">
+      <div className="mx-auto max-w-5xl px-4 sm:px-8 py-10 sm:py-12 leading-relaxed">
         <div className="space-y-8 text-sm text-foreground/90">
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-foreground">1. Acceptance of Terms</h2>
@@ -104,11 +102,11 @@ export default function TermsPage() {
           <section className="space-y-3">
             <h2 className="text-lg font-semibold text-foreground">12. Contact</h2>
             <p>
-              For questions about these Terms, contact us at <a href="mailto:support@akusaradigital.com" className="text-indigo-600 underline">support@akusaradigital.com</a>.
+              For questions about these Terms, contact us at <a href="mailto:support@akusaradigital.com" className="text-[#6B9A35] hover:text-[#58802A] dark:text-[#A8D666] dark:hover:text-[#C2E688] underline">support@akusaradigital.com</a>.
             </p>
           </section>
         </div>
-      </main>
+      </div>
     </StaticShell>
   );
 }

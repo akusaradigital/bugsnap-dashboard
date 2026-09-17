@@ -277,7 +277,7 @@ export default function AdminUsersPage() {
         <div>
           <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
             <span>👥 {t("admin.manageUsers")}</span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 font-normal">
+            <span className="text-xs px-2 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 font-normal">
               {totalCount.toLocaleString()} {t("admin.user")}
             </span>
           </h2>
@@ -333,11 +333,11 @@ export default function AdminUsersPage() {
             placeholder={t("admin.searchUserPlaceholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-indigo-500 text-slate-900 dark:text-white"
+            className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 text-slate-900 dark:text-white"
           />
           <button
             type="submit"
-            className="px-3 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700 cursor-pointer shrink-0"
+            className="px-3 py-2 bg-[#89BD49] hover:bg-[#6B9A35] text-white rounded-lg text-xs font-semibold shadow-xs shadow-[#89BD49]/25 transition-colors cursor-pointer shrink-0"
           >
             {t("common.search")}
           </button>
@@ -400,7 +400,7 @@ export default function AdminUsersPage() {
                             setSelectedNewPlan(u.plan || "free");
                             setSelectedDuration("permanent");
                           }}
-                          className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300 hover:ring-1 hover:ring-indigo-400 cursor-pointer transition-all"
+                          className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40 hover:ring-1 hover:ring-[#89BD49]/40 cursor-pointer transition-all"
                           title={t("admin.changePlan")}
                         >
                           {u.plan || "free"} ✎
@@ -523,7 +523,7 @@ export default function AdminUsersPage() {
                   key={p}
                   className={`flex items-center justify-between p-3 rounded-xl border text-xs cursor-pointer transition-all ${
                     selectedNewPlan === p
-                      ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-950/40 font-bold text-indigo-700 dark:text-indigo-300"
+                      ? "border-[#89BD49] bg-[#89BD49]/10 dark:bg-[#89BD49]/20 font-bold text-[#6B9A35] dark:text-[#A8D666]"
                       : "border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800"
                   }`}
                 >
@@ -534,7 +534,7 @@ export default function AdminUsersPage() {
                     value={p}
                     checked={selectedNewPlan === p}
                     onChange={(e) => setSelectedNewPlan(e.target.value)}
-                    className="accent-indigo-600"
+                    className="accent-[#89BD49]"
                   />
                 </label>
               ))}
@@ -572,7 +572,7 @@ export default function AdminUsersPage() {
                 type="button"
                 disabled={savingPlan}
                 onClick={handleSavePlan}
-                className="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 shadow-sm"
+                className="px-4 py-2 rounded-xl text-xs font-semibold bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-xs shadow-[#89BD49]/25 transition-colors disabled:opacity-50"
               >
                 {savingPlan ? t("common.loading") : t("admin.savePlan")}
               </button>
@@ -589,7 +589,7 @@ export default function AdminUsersPage() {
               <div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   <span>{t("admin.userProfileTitle")}</span>
-                  <span className="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+                  <span className="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40">
                     {selectedUser.plan}
                   </span>
                 </h3>
@@ -646,7 +646,7 @@ export default function AdminUsersPage() {
                         Billing & Subscription Status
                       </span>
                       <p className="text-[11px] text-slate-500 dark:text-zinc-400">
-                        Paket: <span className="font-bold text-indigo-600 dark:text-indigo-400 uppercase">{selectedUser.plan}</span>
+                        Paket: <span className="font-bold text-[#6B9A35] dark:text-[#A8D666] uppercase">{selectedUser.plan}</span>
                         {selectedUser.plan_expires_at ? (
                           <span className="ml-1 text-slate-400">
                             (Expires: {new Date(selectedUser.plan_expires_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })})
@@ -660,7 +660,7 @@ export default function AdminUsersPage() {
                       type="button"
                       disabled={syncingSubscription}
                       onClick={() => handleSyncSubscription(selectedUser)}
-                      className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white hover:bg-indigo-700 disabled:opacity-50 transition-all flex items-center gap-1.5 shadow-xs"
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-xs shadow-[#89BD49]/25 disabled:opacity-50 transition-all flex items-center gap-1.5"
                       title="Tarik status langganan live dari Stripe/Paddle"
                     >
                       {syncingSubscription ? "Syncing..." : "⚡ Sync from Gateway"}
@@ -673,7 +673,7 @@ export default function AdminUsersPage() {
                       href={selectedUser.stripe_search_url || `https://dashboard.stripe.com/customers?query=${encodeURIComponent(selectedUser.email)}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+                      className="text-[11px] font-semibold text-[#6B9A35] hover:text-[#557A2B] dark:text-[#A8D666] dark:hover:text-[#C2E688] hover:underline flex items-center gap-1"
                     >
                       <span>Stripe Dashboard</span>
                       <span className="text-[10px]">↗</span>
@@ -683,7 +683,7 @@ export default function AdminUsersPage() {
                       href={selectedUser.paddle_search_url || "https://vendors.paddle.com/customers"}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-[11px] font-semibold text-indigo-600 dark:text-indigo-400 hover:underline flex items-center gap-1"
+                      className="text-[11px] font-semibold text-[#6B9A35] hover:text-[#557A2B] dark:text-[#A8D666] dark:hover:text-[#C2E688] hover:underline flex items-center gap-1"
                     >
                       <span>Paddle Dashboard</span>
                       <span className="text-[10px]">↗</span>
@@ -737,7 +737,7 @@ export default function AdminUsersPage() {
                             href={`/v/${cap.id}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-[11px] font-semibold text-indigo-600 hover:underline"
+                            className="text-[11px] font-semibold text-[#6B9A35] hover:text-[#557A2B] dark:text-[#A8D666] dark:hover:text-[#C2E688] hover:underline"
                           >
                             View
                           </a>

@@ -134,7 +134,7 @@ export default function AdminExtensionFleetPage() {
                   value={config.latestVersion}
                   onChange={(e) => setConfig({ ...config, latestVersion: e.target.value })}
                   placeholder="1.0.24"
-                  className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2.5 outline-none focus:border-indigo-500 font-mono"
+                  className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2.5 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 font-mono"
                 />
                 <span className="text-[10px] text-slate-400 mt-1 block">
                   Nomor rilis versi terbaru di Chrome Web Store.
@@ -151,7 +151,7 @@ export default function AdminExtensionFleetPage() {
                   value={config.minVersion}
                   onChange={(e) => setConfig({ ...config, minVersion: e.target.value })}
                   placeholder="1.0.20"
-                  className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2.5 outline-none focus:border-indigo-500 font-mono"
+                  className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2.5 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 font-mono"
                 />
                 <span className="text-[10px] text-slate-400 mt-1 block">
                   Pengguna dengan versi di bawah ini akan diwajibkan update.
@@ -169,7 +169,7 @@ export default function AdminExtensionFleetPage() {
                 value={config.updateUrl}
                 onChange={(e) => setConfig({ ...config, updateUrl: e.target.value })}
                 placeholder="https://chromewebstore.google.com/detail/..."
-                className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2.5 outline-none focus:border-indigo-500 font-mono"
+                className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2.5 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 font-mono"
               />
             </div>
 
@@ -180,7 +180,7 @@ export default function AdminExtensionFleetPage() {
                   type="checkbox"
                   checked={config.forceUpdate}
                   onChange={(e) => setConfig({ ...config, forceUpdate: e.target.checked })}
-                  className="mt-0.5 w-4 h-4 rounded border-slate-300 text-indigo-600 focus:ring-indigo-500"
+                  className="mt-0.5 w-4 h-4 rounded border-slate-300 text-[#89BD49] focus:ring-[#89BD49] accent-[#89BD49]"
                 />
                 <div>
                   <span className="text-xs font-bold text-slate-900 dark:text-white block">
@@ -220,7 +220,7 @@ export default function AdminExtensionFleetPage() {
                 value={config.announcement}
                 onChange={(e) => setConfig({ ...config, announcement: e.target.value })}
                 placeholder="Contoh: Fitur rekaman AI Bug Summary telah diperbarui ke model terbaru!"
-                className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2.5 outline-none focus:border-indigo-500 resize-none"
+                className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2.5 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 resize-none"
               />
             </div>
 
@@ -228,7 +228,7 @@ export default function AdminExtensionFleetPage() {
               <button
                 type="submit"
                 disabled={saving}
-                className="px-4 py-2 text-xs font-bold rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white disabled:opacity-50 transition-colors shadow-sm"
+                className="px-4 py-2 text-xs font-bold rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-xs shadow-[#89BD49]/25 disabled:opacity-50 transition-colors"
               >
                 {saving ? "Menyimpan Konfigurasi..." : "Simpan Kebijakan Fleet ✓"}
               </button>

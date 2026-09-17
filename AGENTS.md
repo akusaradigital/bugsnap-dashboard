@@ -15,8 +15,8 @@
 ## Versioning (SemVer)
 
 Bump `package.json` + `package-lock.json` before every production deploy:
-- Current: **`0.5.9`**
-- PATCH `0.5.8 → 0.5.9` | MINOR `0.5.x → 0.6.0` | MAJOR `0.x → 1.0.0`
+- Current: **`0.5.10`**
+- PATCH `0.5.9 → 0.5.10` | MINOR `0.5.x → 0.6.0` | MAJOR `0.x → 1.0.0`
 
 ## Architecture
 

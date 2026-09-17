@@ -21,10 +21,10 @@ export default function StatusPage() {
       title="System Status & API Health"
       subtitle="Real-time operational status for all BugSnap services, database cluster, and cloud integrations."
     >
-      <div className="mx-auto max-w-5xl px-6 py-12 space-y-8">
+      <div className="mx-auto max-w-5xl px-4 sm:px-8 py-10 sm:py-12 space-y-8">
 
         {/* Main Status Header */}
-        <div className="border border-emerald-200 bg-emerald-50/50 rounded-xl p-6 flex items-center justify-between">
+        <div className="border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/20 rounded-xl p-4 sm:p-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <span className="relative flex h-3.5 w-3.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -49,7 +49,7 @@ export default function StatusPage() {
                 <span className="text-sm font-medium text-foreground">{svc.name}</span>
                 <div className="flex items-center gap-2">
                   <span className={`w-2 h-2 rounded-full ${svc.badge}`} />
-                  <span className="text-xs font-medium text-emerald-600">{svc.status}</span>
+                  <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">{svc.status}</span>
                 </div>
               </div>
             ))}
@@ -57,12 +57,12 @@ export default function StatusPage() {
         </div>
 
         {/* Historical bar */}
-        <div className="rounded-2xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle p-6 space-y-4 shadow-lg shadow-slate-200/50 dark:shadow-none backdrop-blur-sm">
+        <div className="rounded-2xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle p-4 sm:p-6 space-y-4 shadow-lg shadow-slate-200/50 dark:shadow-none backdrop-blur-sm">
           <div className="flex items-center justify-between text-xs text-muted">
             <span>Uptime History (Last 90 Days)</span>
             <span className="font-semibold text-foreground">99.98%</span>
           </div>
-          <div className="flex gap-1 h-8">
+          <div className="flex gap-0.5 sm:gap-1 h-8">
             {Array.from({ length: 45 }).map((_, i) => (
               <div
                 key={i}
@@ -88,11 +88,11 @@ export default function StatusPage() {
               href="https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf"
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold px-6 py-2.5 transition-colors shadow-sm"
+              className="inline-flex items-center rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] text-white text-sm font-semibold px-6 py-2.5 transition-colors shadow-sm shadow-[#89BD49]/25"
             >
               Install Extension Free
             </a>
-            <a href="/pricing" className="text-sm font-semibold text-indigo-600 hover:underline">
+            <a href="/pricing" className="text-sm font-semibold text-[#6B9A35] hover:text-[#58802A] dark:text-[#A8D666] dark:hover:text-[#C2E688] hover:underline">
               See Pricing
             </a>
           </div>

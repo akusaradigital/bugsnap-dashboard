@@ -11,8 +11,9 @@ function walk(dir) {
   return files;
 }
 
-const srcFiles = walk("bugsnap-dashboard/src");
-const publicDir = path.resolve("bugsnap-dashboard/public");
+const baseDir = fs.existsSync("src") ? "." : (fs.existsSync("bugsnap-dashboard/src") ? "bugsnap-dashboard" : ".");
+const srcFiles = walk(path.join(baseDir, "src"));
+const publicDir = path.resolve(path.join(baseDir, "public"));
 const missing = new Set();
 const checked = new Set();
 
@@ -27,7 +28,7 @@ for (const file of srcFiles) {
     checked.add(assetPath);
     const resolved = path.join(publicDir, assetPath.replace(/^\//, ""));
     if (!fs.existsSync(resolved)) {
-      missing.add(`${assetPath} (in ${path.relative("bugsnap-dashboard", file)})`);
+      missing.add(`${assetPath} (in ${path.relative(baseDir, file)})`);
     }
   }
 }

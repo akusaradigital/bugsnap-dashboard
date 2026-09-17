@@ -297,13 +297,13 @@ export default function AdminOverviewPage() {
               href="/admin/revenue"
               className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg font-medium transition-all ${
                 abandonedCarts > 0
-                  ? "bg-indigo-100 hover:bg-indigo-200 dark:bg-indigo-950/70 dark:hover:bg-indigo-900/80 text-indigo-700 dark:text-indigo-300 font-semibold shadow-2xs"
+                  ? "bg-[#89BD49]/10 hover:bg-[#89BD49]/20 dark:bg-[#89BD49]/10 dark:hover:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] font-semibold shadow-2xs"
                   : "bg-slate-100 dark:bg-zinc-800/60 text-slate-500 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-800"
               }`}
             >
               <span>🛒</span>
               <span>{t("admin.abandonedCartsLabel")}:</span>
-              <span className={`px-1.5 py-0.2 rounded font-bold text-[10px] sm:text-[11px] ${abandonedCarts > 0 ? "bg-indigo-600 text-white" : "bg-slate-200 dark:bg-zinc-700 text-slate-700 dark:text-zinc-300"}`}>
+              <span className={`px-1.5 py-0.2 rounded font-bold text-[10px] sm:text-[11px] ${abandonedCarts > 0 ? "bg-[#89BD49] text-white" : "bg-slate-200 dark:bg-zinc-700 text-slate-700 dark:text-zinc-300"}`}>
                 {abandonedCarts}
               </span>
             </Link>
@@ -425,11 +425,11 @@ export default function AdminOverviewPage() {
             <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">
               {stats?.totalCaptures?.toLocaleString() ?? "0"}
             </p>
-            <span className="text-[10px] text-indigo-600 dark:text-indigo-400 font-semibold mt-0.5 block">
+            <span className="text-[10px] text-[#6B9A35] dark:text-[#A8D666] font-semibold mt-0.5 block">
               {t("admin.recentCaptures14", { count: stats?.recentCapturesCount ?? 0 })}
             </span>
           </div>
-          <Sparkline data={capturePoints} color="#4f46e5" />
+          <Sparkline data={capturePoints} color="#89BD49" />
         </div>
 
         {/* CARD 3: TOTAL WORKSPACES */}
@@ -457,11 +457,11 @@ export default function AdminOverviewPage() {
             <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">
               {stats?.totalUsers?.toLocaleString() ?? "0"}
             </p>
-            <span className="text-[10px] text-purple-600 dark:text-purple-400 font-semibold mt-0.5 block">
+            <span className="text-[10px] text-[#6B9A35] dark:text-[#A8D666] font-semibold mt-0.5 block">
               {t("admin.usersSub")}
             </span>
           </div>
-          <Sparkline data={userPoints} color="#9333ea" />
+          <Sparkline data={userPoints} color="#89BD49" />
         </div>
       </div>
 
@@ -479,8 +479,8 @@ export default function AdminOverviewPage() {
               </p>
             </div>
             <div className="flex items-center gap-3 text-xs font-semibold">
-              <span className="flex items-center gap-1.5 text-indigo-600 dark:text-indigo-400">
-                <span className="h-2 w-4 rounded-full bg-[#4f46e5]" />
+              <span className="flex items-center gap-1.5 text-[#6B9A35] dark:text-[#A8D666]">
+                <span className="h-2 w-4 rounded-full bg-[#89BD49]" />
                 <span>{t("admin.chartCaptures")}</span>
               </span>
               <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
@@ -538,7 +538,7 @@ export default function AdminOverviewPage() {
               {/* Capture Path (Indigo) */}
               <polyline
                 fill="none"
-                stroke="#4f46e5"
+                stroke="#89BD49"
                 strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -553,7 +553,7 @@ export default function AdminOverviewPage() {
               {/* Data points for Captures */}
               {capturePathPoints.map((p, i) => (
                 <g key={`c-${i}`}>
-                  <circle cx={p.x} cy={p.y} r="3.5" fill="#4f46e5" />
+                  <circle cx={p.x} cy={p.y} r="3.5" fill="#89BD49" />
                   {/* Date Label on X Axis */}
                   <text
                     x={p.x}
@@ -593,9 +593,9 @@ export default function AdminOverviewPage() {
             <div className="space-y-3 mt-4">
               {[
                 { label: "Free Tier", count: plans.free, color: "bg-slate-400" },
-                { label: "Pro Tier", count: plans.pro, color: "bg-indigo-600" },
+                { label: "Pro Tier", count: plans.pro, color: "bg-[#89BD49]" },
                 { label: "Team Tier", count: plans.team, color: "bg-blue-600" },
-                { label: "Enterprise", count: plans.enterprise, color: "bg-purple-600" },
+                { label: "Enterprise", count: plans.enterprise, color: "bg-slate-700 dark:bg-slate-300" },
               ].map((tier) => {
                 const pct = totalUsers > 0 ? Math.round((tier.count / totalUsers) * 100) : 0;
                 return (
@@ -645,10 +645,10 @@ export default function AdminOverviewPage() {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           <Link
             href="/admin/users"
-            className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-indigo-500/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
+            className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#89BD49]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
           >
             <span className="text-xl">👥</span>
-            <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-indigo-600 transition-colors">
+            <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#6B9A35] dark:group-hover:text-[#A8D666] transition-colors">
               {t("admin.manageUsers")}
             </p>
             <span className="text-[10px] text-slate-400 block truncate">Plan & 360° Profile</span>
@@ -656,10 +656,10 @@ export default function AdminOverviewPage() {
 
           <Link
             href="/admin/workspaces"
-            className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-indigo-500/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
+            className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#89BD49]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
           >
             <span className="text-xl">🏢</span>
-            <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-indigo-600 transition-colors">
+            <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#6B9A35] dark:group-hover:text-[#A8D666] transition-colors">
               {t("admin.navWorkspaces")}
             </p>
             <span className="text-[10px] text-slate-400 block truncate">Teams & Ownership</span>
@@ -667,10 +667,10 @@ export default function AdminOverviewPage() {
 
           <Link
             href="/admin/captures"
-            className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-indigo-500/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
+            className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#89BD49]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
           >
             <span className="text-xl">📸</span>
-            <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-indigo-600 transition-colors">
+            <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#6B9A35] dark:group-hover:text-[#A8D666] transition-colors">
               {t("admin.navCaptures")}
             </p>
             <span className="text-[10px] text-slate-400 block truncate">Audit & Takedown</span>
@@ -678,10 +678,10 @@ export default function AdminOverviewPage() {
 
           <Link
             href="/admin/revenue"
-            className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-indigo-500/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
+            className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#89BD49]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
           >
             <span className="text-xl">💰</span>
-            <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-indigo-600 transition-colors">
+            <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#6B9A35] dark:group-hover:text-[#A8D666] transition-colors">
               {t("admin.navRevenue")}
             </p>
             <span className="text-[10px] text-slate-400 block truncate">MRR & Stripe Health</span>
@@ -689,10 +689,10 @@ export default function AdminOverviewPage() {
 
           <Link
             href="/admin/ai-analytics"
-            className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-indigo-500/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
+            className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#89BD49]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
           >
             <span className="text-xl">🤖</span>
-            <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-indigo-600 transition-colors">
+            <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#6B9A35] dark:group-hover:text-[#A8D666] transition-colors">
               {t("admin.navAiAnalytics")}
             </p>
             <span className="text-[10px] text-slate-400 block truncate">Tokens & API Keys</span>
@@ -700,10 +700,10 @@ export default function AdminOverviewPage() {
 
           <Link
             href="/admin/security-audit"
-            className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-indigo-500/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
+            className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#89BD49]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
           >
             <span className="text-xl">🛡️</span>
-            <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-indigo-600 transition-colors">
+            <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#6B9A35] dark:group-hover:text-[#A8D666] transition-colors">
               {t("admin.auditTitle")}
             </p>
             <span className="text-[10px] text-slate-400 block truncate">Action Audit Trail</span>
@@ -734,7 +734,7 @@ export default function AdminOverviewPage() {
                     <p className="text-[11px] text-slate-500 dark:text-zinc-400 truncate">{w.owner_email}</p>
                   </div>
                   <div className="flex items-center gap-1 shrink-0 ml-3">
-                    <span className="text-xs font-black text-[#1f3bb3] dark:text-blue-400">{w.capture_count}</span>
+                    <span className="text-xs font-black text-[#6B9A35] dark:text-[#A8D666]">{w.capture_count}</span>
                     <span className="text-[10px] text-slate-400">{t("admin.capLabel")}</span>
                   </div>
                 </li>
@@ -760,7 +760,7 @@ export default function AdminOverviewPage() {
               value={promoMessage}
               onChange={(e) => setPromoMessage(e.target.value)}
               placeholder={t("admin.promoBannerPlaceholder")}
-              className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-3 outline-none focus:border-[#1f3bb3] resize-none leading-relaxed"
+              className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-3 outline-none focus:border-[#89BD49] resize-none leading-relaxed"
             />
           </div>
 
@@ -770,7 +770,7 @@ export default function AdminOverviewPage() {
                 type="checkbox"
                 checked={promoEnabled}
                 onChange={(e) => setPromoEnabled(e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 text-[#1f3bb3] focus:ring-[#1f3bb3]"
+                className="w-4 h-4 rounded border-slate-300 text-[#89BD49] focus:ring-[#89BD49]"
               />
               <span>{t("admin.enableBanner")}</span>
             </label>
@@ -779,7 +779,7 @@ export default function AdminOverviewPage() {
               type="button"
               onClick={savePromo}
               disabled={savingPromo}
-              className="px-4 py-1.5 text-xs font-semibold bg-[#1f3bb3] text-white rounded-lg hover:bg-[#182f8f] disabled:opacity-50 transition-colors shadow-sm cursor-pointer"
+              className="px-4 py-1.5 text-xs font-semibold bg-[#89BD49] text-white rounded-lg hover:bg-[#6B9A35] disabled:opacity-50 transition-colors shadow-sm cursor-pointer"
             >
               {savingPromo ? t("admin.savingBanner") : t("admin.saveBanner")}
             </button>

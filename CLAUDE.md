@@ -18,11 +18,11 @@
 
 Bump `package.json` + `package-lock.json` (top-level + `packages[""].version`) before every production deploy.
 
-- **PATCH** `0.5.8 → 0.5.9`: bugfix, hotfix, copy, asset, dependency.
+- **PATCH** `0.5.10 → 0.5.11`: bugfix, hotfix, copy, asset, dependency.
 - **MINOR** `0.5.x → 0.6.0`: new user-facing feature, route, module.
 - **MAJOR** `0.x → 1.0.0`: breaking API/auth/UI change.
 
-Current version: **`0.5.9`**
+Current version: **`0.5.11`**
 
 ## 3. Architecture & Data Flow
 

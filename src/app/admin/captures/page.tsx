@@ -131,7 +131,7 @@ export default function AdminCapturesPage() {
         <div>
           <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
             <span>🛡️ {t("admin.capturesTitle")}</span>
-            <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 font-normal">
+            <span className="text-xs px-2 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 font-normal">
               {totalCount.toLocaleString()} {t("admin.captures")}
             </span>
           </h2>
@@ -185,11 +185,11 @@ export default function AdminCapturesPage() {
             placeholder="Search title, site URL..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-indigo-500 text-slate-900 dark:text-white"
+            className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 text-slate-900 dark:text-white"
           />
           <button
             type="submit"
-            className="px-3 py-2 bg-indigo-600 text-white rounded-lg text-xs font-semibold hover:bg-indigo-700 cursor-pointer shrink-0"
+            className="px-3 py-2 bg-[#89BD49] hover:bg-[#6B9A35] text-white rounded-lg text-xs font-semibold shadow-xs shadow-[#89BD49]/25 transition-colors cursor-pointer shrink-0"
           >
             {t("common.search")}
           </button>
@@ -256,7 +256,7 @@ export default function AdminCapturesPage() {
                           href={cap.site_url}
                           target="_blank"
                           rel="noreferrer"
-                          className="hover:underline hover:text-indigo-600 truncate block font-mono text-[11px]"
+                          className="hover:underline hover:text-[#6B9A35] dark:hover:text-[#A8D666] truncate block font-mono text-[11px]"
                         >
                           {cap.site_url}
                         </a>
@@ -293,7 +293,7 @@ export default function AdminCapturesPage() {
                           href={`/v/${cap.id}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="px-2.5 py-1 rounded text-xs font-semibold border border-indigo-200 dark:border-indigo-900 text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 transition-colors"
+                          className="px-2.5 py-1 rounded text-xs font-semibold border border-[#89BD49]/30 dark:border-[#89BD49]/40 text-[#6B9A35] dark:text-[#A8D666] hover:bg-[#89BD49]/10 dark:hover:bg-[#89BD49]/20 transition-colors"
                           title="View share page"
                         >
                           Open ↗

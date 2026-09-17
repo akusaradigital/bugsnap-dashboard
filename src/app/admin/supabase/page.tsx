@@ -175,7 +175,7 @@ export default function AdminSupabasePage() {
             <h1 className="text-xl font-bold tracking-tight text-foreground sm:text-2xl">
               {t("admin.supabase.title")}
             </h1>
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+            <span className="inline-flex items-center gap-1.5 rounded-md border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-0.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
               {project?.status || "ACTIVE_HEALTHY"}
             </span>
@@ -238,7 +238,7 @@ export default function AdminSupabasePage() {
             <span className="text-xs font-semibold uppercase tracking-wider text-muted">
               {t("admin.supabase.diskUsage")}
             </span>
-            <span className="rounded bg-indigo-500/10 px-2 py-0.5 text-xs font-bold text-indigo-600 dark:text-indigo-400">
+            <span className="rounded bg-[#89BD49]/10 dark:bg-[#89BD49]/20 px-2 py-0.5 text-xs font-bold text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40">
               {stats?.total_size_pretty || "0 MB"} / {stats?.quota_pretty || "500 MB"}
             </span>
           </div>
@@ -325,7 +325,7 @@ export default function AdminSupabasePage() {
             <span className="text-xs font-semibold uppercase tracking-wider text-muted">
               {t("admin.supabase.zeroLoadTitle")}
             </span>
-            <span className="rounded bg-purple-500/10 px-2 py-0.5 text-xs font-bold text-purple-600 dark:text-purple-400">
+            <span className="rounded bg-[#89BD49]/10 dark:bg-[#89BD49]/20 px-2 py-0.5 text-xs font-bold text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40">
               Drive 100%
             </span>
           </div>
@@ -339,7 +339,7 @@ export default function AdminSupabasePage() {
           </div>
           <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-subtle">
             <div
-              className="h-full bg-purple-500 transition-all duration-500"
+              className="h-full bg-[#89BD49] transition-all duration-500"
               style={{
                 width: `${
                   stats?.captures.total_captures
@@ -370,7 +370,7 @@ export default function AdminSupabasePage() {
             <button
               onClick={() => handleMaintenance("vacuum")}
               disabled={Boolean(maintenanceLoading)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-indigo-700 disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] px-3 py-1.5 text-xs font-semibold text-white shadow-xs shadow-[#89BD49]/25 transition-colors disabled:opacity-50"
             >
               {maintenanceLoading === "vacuum" ? (
                 <span className="animate-spin">🔄</span>
@@ -414,14 +414,14 @@ export default function AdminSupabasePage() {
               placeholder={t("admin.supabase.searchTables")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground placeholder:text-muted focus:border-indigo-500 focus:outline-none"
+              className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground placeholder:text-muted focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 focus:outline-none"
             />
 
             {/* Schema Filter */}
             <select
               value={schemaFilter}
               onChange={(e) => setSchemaFilter(e.target.value)}
-              className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-indigo-500 focus:outline-none"
+              className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 focus:outline-none"
             >
               <option value="all">All Schemas</option>
               {uniqueSchemas.map((s) => (
@@ -435,7 +435,7 @@ export default function AdminSupabasePage() {
             <select
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value as "size" | "live_rows" | "dead_rows")}
-              className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-indigo-500 focus:outline-none"
+              className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 focus:outline-none"
             >
               <option value="size">Sort: Ukuran Total</option>
               <option value="live_rows">Sort: Baris Aktif</option>
@@ -474,7 +474,7 @@ export default function AdminSupabasePage() {
                           <span
                             className={`rounded px-1.5 py-0.5 font-mono text-[10px] font-semibold ${
                               table.schema_name === "public"
-                                ? "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400"
+                                ? "bg-[#89BD49]/10 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40"
                                 : table.schema_name === "auth"
                                 ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
                                 : "bg-zinc-500/10 text-zinc-600 dark:text-zinc-400"

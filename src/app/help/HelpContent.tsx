@@ -5,7 +5,7 @@ import Link from "next/link";
 import { StaticShell } from "@/components/StaticShell";
 import { useT } from "@/components/I18nProvider";
 
-const CARD = "group rounded-2xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle shadow-lg shadow-slate-200/50 dark:shadow-none backdrop-blur-sm transition-all duration-300 hover:border-indigo-500/40 hover:-translate-y-1 hover:shadow-xl";
+const CARD = "group rounded-2xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle shadow-lg shadow-slate-200/50 dark:shadow-none backdrop-blur-sm transition-all duration-300 hover:border-[#89BD49]/40 hover:-translate-y-1 hover:shadow-xl";
 
 export function HelpContent() {
   const { t } = useT();
@@ -23,7 +23,7 @@ export function HelpContent() {
       title={t("help.title")}
       subtitle={t("help.subtitle")}
     >
-      <div className="mx-auto max-w-5xl px-6 py-12 grid grid-cols-1 md:grid-cols-3 gap-10">
+      <div className="mx-auto max-w-5xl px-4 sm:px-8 py-10 sm:py-12 grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-10">
 
         {/* FAQ Left Column - Expandable Accordion */}
         <div className="md:col-span-2 space-y-6">
@@ -34,21 +34,21 @@ export function HelpContent() {
               return (
                 <div
                   key={i}
-                  className="rounded-2xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle shadow-md shadow-slate-200/40 dark:shadow-none backdrop-blur-sm transition-all duration-300 hover:border-indigo-500/40 overflow-hidden"
+                  className="rounded-2xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle shadow-md shadow-slate-200/40 dark:shadow-none backdrop-blur-sm transition-all duration-300 hover:border-[#89BD49]/40 overflow-hidden"
                 >
                   <button
                     type="button"
                     onClick={() => setOpenIndex(isOpen ? null : i)}
-                    className="w-full text-left p-5 flex items-center justify-between gap-4 focus:outline-none"
+                    className="w-full text-left p-4 sm:p-5 flex items-center justify-between gap-4 focus:outline-none"
                     aria-expanded={isOpen}
                     aria-label={isOpen ? t("help.closeFaq") : t("help.openFaq")}
                   >
-                    <span className="text-sm font-bold text-slate-900 dark:text-foreground hover:text-indigo-600 dark:hover:text-indigo-400 transition-colors">
+                    <span className="text-sm font-bold text-slate-900 dark:text-foreground hover:text-[#6B9A35] dark:hover:text-[#A8D666] transition-colors">
                       {faq.q}
                     </span>
-                    <span className="w-7 h-7 rounded-full bg-subtle flex items-center justify-center shrink-0 text-muted transition-transform duration-300">
+                    <span className="w-7 h-7 rounded-lg bg-subtle flex items-center justify-center shrink-0 text-muted transition-transform duration-300">
                       <svg
-                        className={`w-3.5 h-3.5 transform transition-transform duration-300 ${isOpen ? "rotate-180 text-indigo-600 dark:text-indigo-400" : ""}`}
+                        className={`w-3.5 h-3.5 transform transition-transform duration-300 ${isOpen ? "rotate-180 text-[#6B9A35] dark:text-[#A8D666]" : ""}`}
                         viewBox="0 0 16 16"
                         fill="none"
                         stroke="currentColor"
@@ -75,8 +75,8 @@ export function HelpContent() {
 
         {/* Right Column */}
         <div className="space-y-6">
-          <div className={`${CARD} p-6 space-y-4`}>
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 text-white flex items-center justify-center shadow-md group-hover:scale-110 group-hover:shadow-indigo-500/25 transition-all duration-300">
+          <div className={`${CARD} p-5 sm:p-6 space-y-4`}>
+            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#89BD49] to-[#6B9A35] text-white flex items-center justify-center shadow-md group-hover:scale-110 group-hover:shadow-[#89BD49]/25 transition-all duration-300">
               <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
                 <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
               </svg>
@@ -85,19 +85,19 @@ export function HelpContent() {
             <p className="text-xs text-muted leading-relaxed">{t("help.needHelpDesc")}</p>
             <a
               href="mailto:support@akusaradigital.com"
-              className="block text-center bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-sm font-semibold py-2.5 rounded-xl transition-all shadow-sm hover:shadow-md"
+              className="block text-center bg-[#89BD49] hover:bg-[#6B9A35] active:scale-95 text-white text-sm font-semibold py-2.5 rounded-xl transition-all shadow-sm hover:shadow-md shadow-[#89BD49]/25"
             >
               {t("help.emailSupport")}
             </a>
           </div>
 
-          <div className={`${CARD} p-6 space-y-3`}>
+          <div className={`${CARD} p-5 sm:p-6 space-y-3`}>
             <h3 className="text-sm font-bold text-foreground">{t("help.getStarted")}</h3>
             <a
               href="https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf"
               target="_blank"
               rel="noopener noreferrer"
-              className="block text-center bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-sm font-semibold py-2.5 rounded-xl transition-all shadow-sm hover:shadow-md"
+              className="block text-center bg-[#89BD49] hover:bg-[#6B9A35] active:scale-95 text-white text-sm font-semibold py-2.5 rounded-xl transition-all shadow-sm hover:shadow-md shadow-[#89BD49]/25"
             >
               {t("help.installFree")}
             </a>
@@ -109,21 +109,21 @@ export function HelpContent() {
             </Link>
           </div>
 
-          <div className={`${CARD} p-6 space-y-3`}>
+          <div className={`${CARD} p-5 sm:p-6 space-y-3`}>
             <h3 className="text-sm font-bold text-foreground">{t("help.resources")}</h3>
             <ul className="space-y-2.5 text-xs">
               <li>
-                <Link href="/docs" className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors">
+                <Link href="/docs" className="text-[#6B9A35] hover:text-[#58802A] dark:text-[#A8D666] dark:hover:text-[#C2E688] transition-colors">
                   {t("help.viewDocs")}
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors">
+                <Link href="/contact" className="text-[#6B9A35] hover:text-[#58802A] dark:text-[#A8D666] dark:hover:text-[#C2E688] transition-colors">
                   {t("help.contactForm")}
                 </Link>
               </li>
               <li>
-                <Link href="/status" className="text-indigo-600 hover:text-indigo-700 dark:text-indigo-400 dark:hover:text-indigo-300 transition-colors">
+                <Link href="/status" className="text-[#6B9A35] hover:text-[#58802A] dark:text-[#A8D666] dark:hover:text-[#C2E688] transition-colors">
                   {t("help.systemStatus")}
                 </Link>
               </li>

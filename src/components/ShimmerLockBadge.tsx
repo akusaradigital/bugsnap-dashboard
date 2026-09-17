@@ -23,7 +23,7 @@ export function ShimmerLockBadge({
     <Tag
       type={onClick ? "button" : undefined}
       onClick={onClick}
-      className={`relative inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider overflow-hidden border border-amber-300/80 dark:border-amber-600/60 bg-gradient-to-r from-amber-100 via-amber-50 to-amber-100 dark:from-amber-950/70 dark:via-amber-900/40 dark:to-amber-950/70 text-amber-800 dark:text-amber-300 shadow-xs transition-all hover:scale-105 active:scale-95 group ${
+      className={`relative inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wider overflow-hidden border border-amber-300/80 dark:border-amber-600/60 bg-gradient-to-r from-amber-100 via-amber-50 to-amber-100 dark:from-amber-950/70 dark:via-amber-900/40 dark:to-amber-950/70 text-amber-800 dark:text-amber-300 shadow-xs transition-all hover:scale-105 active:scale-95 group ${
         onClick ? "cursor-pointer" : ""
       } ${className}`}
       title="Pro feature - Click to upgrade"

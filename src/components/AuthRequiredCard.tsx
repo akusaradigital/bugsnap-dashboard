@@ -16,7 +16,7 @@ export function AuthRequiredCard({ title = "404 - Page Requires Authentication" 
         </div>
 
         {/* Lock Icon */}
-        <div className="mx-auto w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-800/40 flex items-center justify-center text-indigo-600 dark:text-indigo-400">
+        <div className="mx-auto w-16 h-16 rounded-2xl bg-[#89BD49]/10 dark:bg-[#89BD49]/15 border border-[#89BD49]/30 flex items-center justify-center text-[#6B9A35] dark:text-[#A8D666]">
           <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
             <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
           </svg>
@@ -34,7 +34,7 @@ export function AuthRequiredCard({ title = "404 - Page Requires Authentication" 
         <div className="space-y-3 pt-2">
           <Link
             href="/login"
-            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold shadow-sm transition-colors"
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] text-white text-sm font-semibold shadow-sm shadow-[#89BD49]/25 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />

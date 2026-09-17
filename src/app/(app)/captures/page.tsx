@@ -75,13 +75,13 @@ function formatDuration(sec: number | null | undefined): string {
 
 function getAvatarColor(seed: string | null | undefined): string {
   const colors = [
-    "bg-indigo-600",
+    "bg-[#89BD49]",
     "bg-emerald-600",
     "bg-rose-600",
     "bg-amber-600",
-    "bg-violet-600",
+    "bg-slate-700",
     "bg-teal-600",
-    "bg-fuchsia-600",
+    "bg-sky-600",
   ];
   let h = 0;
   const s = seed || "";
@@ -214,7 +214,7 @@ function EditModal({ capture, onClose, onSaved }: EditModalProps) {
   }
 
   const inputClasses =
-    "w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-subtle";
+    "w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 bg-subtle text-foreground placeholder:text-muted";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -313,7 +313,7 @@ function EditModal({ capture, onClose, onSaved }: EditModalProps) {
                       onClick={() => setExpiry(opt.value)}
                       className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
                         expiry === opt.value
-                          ? "bg-subtle text-foreground shadow-sm"
+                          ? "bg-background text-foreground shadow-sm"
                           : "text-muted hover:text-foreground"
                       }`}
                     >
@@ -343,7 +343,7 @@ function EditModal({ capture, onClose, onSaved }: EditModalProps) {
                     type="checkbox"
                     checked={burnAfterRead}
                     onChange={(e) => setBurnAfterRead(e.target.checked)}
-                    className="w-4 h-4 rounded border-border text-indigo-600 focus:ring-indigo-500"
+                    className="w-4 h-4 rounded border-border text-[#89BD49] focus:ring-[#89BD49]/20"
                   />
                   <div>
                     <p className="font-medium">{t("cap.burnAfterRead")}</p>
@@ -388,7 +388,7 @@ function EditModal({ capture, onClose, onSaved }: EditModalProps) {
 
         {/* Sticky Footer Actions */}
         <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-border shrink-0">
-          {error && <p className="mr-auto text-xs text-red-600">{error}</p>}
+          {error && <p className="mr-auto text-xs text-red-600 dark:text-red-400">{error}</p>}
           <button
             onClick={onClose}
             className="rounded-lg border border-border bg-subtle px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle transition-colors"
@@ -398,7 +398,7 @@ function EditModal({ capture, onClose, onSaved }: EditModalProps) {
           <button
             onClick={handleSave}
             disabled={saving}
-            className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-60 transition-colors"
+            className="rounded-lg bg-[#89BD49] px-4 py-2 text-sm font-medium text-white hover:bg-[#6B9A35] disabled:opacity-60 shadow-xs shadow-[#89BD49]/25 transition-colors"
           >
             {saving ? t("settings.saving") : t("cap.saveChanges")}
           </button>
@@ -1077,7 +1077,7 @@ function CapturesContent() {
     >
       {dragActive && (
         <div
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-indigo-950/40 dark:bg-black/60 backdrop-blur-sm border-4 border-dashed border-indigo-500 m-3 sm:m-6 rounded-3xl transition-all animate-in fade-in zoom-in-95 duration-200"
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950/40 dark:bg-black/60 backdrop-blur-sm border-4 border-dashed border-[#89BD49] m-3 sm:m-6 rounded-3xl transition-all animate-in fade-in zoom-in-95 duration-200"
           onDragOver={(e) => e.preventDefault()}
           onDragLeave={(e) => {
             if (e.currentTarget === e.target) {
@@ -1092,7 +1092,7 @@ function CapturesContent() {
           }}
         >
           <div className="bg-white dark:bg-zinc-900 border border-border p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 max-w-md text-center pointer-events-none transform transition-transform">
-            <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950/50 border border-indigo-100 dark:border-indigo-800/60 flex items-center justify-center text-indigo-600 dark:text-indigo-400 shadow-inner">
+            <div className="w-16 h-16 rounded-2xl bg-[#89BD49]/10 dark:bg-[#89BD49]/20 border border-[#89BD49]/30 dark:border-[#89BD49]/40 flex items-center justify-center text-[#6B9A35] dark:text-[#A8D666] shadow-inner">
               <svg className="w-8 h-8 animate-bounce" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
               </svg>
@@ -1124,13 +1124,13 @@ function CapturesContent() {
               placeholder={t("cap.search")}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="h-10 pl-9 pr-3 text-sm rounded-lg border border-border bg-subtle focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 w-full"
+              className="h-10 pl-9 pr-3 text-sm rounded-lg border border-border bg-subtle text-foreground placeholder:text-muted focus:outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 w-full"
             />
           </div>
-          <label className={`h-10 flex items-center justify-center gap-2 px-4 border border-border text-sm font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 ${uploading ? "bg-indigo-50 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800/40 cursor-wait" : "bg-subtle text-muted hover:text-foreground hover:bg-subtle/80 cursor-pointer"}`}>
+          <label className={`h-10 flex items-center justify-center gap-2 px-4 border border-border text-sm font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 ${uploading ? "bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border-[#89BD49]/30 dark:border-[#89BD49]/40 cursor-wait" : "bg-subtle text-muted hover:text-foreground hover:bg-subtle/80 cursor-pointer"}`}>
             <input type="file" className="hidden" onChange={handleManualUpload} accept="image/*,video/*" disabled={uploading} />
             {uploading ? (
-              <svg className="w-4 h-4 text-indigo-600 dark:text-indigo-400 animate-spin" fill="none" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 text-[#89BD49] animate-spin" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
               </svg>
@@ -1156,13 +1156,13 @@ function CapturesContent() {
             onClick={() => setTypeMenuOpen((o) => !o)}
             className={`flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors ${
               typeMenuOpen || showVideo || showScreenshot
-                ? "bg-subtle border-indigo-200 text-foreground"
+                ? "bg-subtle border-[#89BD49]/40 text-foreground"
                 : "bg-subtle border-border text-muted hover:text-foreground hover:bg-subtle"
             }`}
           >
             <span>{t("cap.type")}</span>
             {(showVideo || showScreenshot) && (
-              <span className="w-2 h-2 rounded-full bg-indigo-600 shrink-0" />
+              <span className="w-2 h-2 rounded-full bg-[#89BD49] shrink-0" />
             )}
             <svg className={`w-3.5 h-3.5 text-muted transition-transform ${typeMenuOpen ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
@@ -1177,7 +1177,7 @@ function CapturesContent() {
 
               {/* Screenshot row */}
               <label className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors text-sm ${showScreenshot ? "text-foreground" : "text-muted"}`}>
-                <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${showScreenshot ? "bg-indigo-600 border-indigo-600" : "border-border"}`}
+                <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${showScreenshot ? "bg-[#89BD49] border-[#89BD49]" : "border-border"}`}
                   onClick={() => setShowScreenshot((v) => !v)}>
                   {showScreenshot && <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>}
                 </div>
@@ -1195,12 +1195,12 @@ function CapturesContent() {
 
               {/* Video row */}
               <label className={`flex items-center gap-3 px-3 py-2.5 cursor-pointer transition-colors text-sm ${showVideo ? "text-foreground" : "text-muted"}`}>
-                <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${showVideo ? "bg-indigo-600 border-indigo-600" : "border-border"}`}
+                <div className={`w-4 h-4 rounded border-2 flex items-center justify-center shrink-0 transition-colors ${showVideo ? "bg-[#89BD49] border-[#89BD49]" : "border-border"}`}
                   onClick={() => setShowVideo((v) => !v)}>
                   {showVideo && <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7"/></svg>}
                 </div>
-                <div className="w-7 h-7 rounded-md bg-indigo-100 dark:bg-indigo-950/30 flex items-center justify-center shrink-0">
-                  <svg className="w-4 h-4 text-indigo-500 dark:text-indigo-400" fill="currentColor" viewBox="0 0 24 24">
+                <div className="w-7 h-7 rounded-md bg-[#89BD49]/15 dark:bg-[#89BD49]/20 flex items-center justify-center shrink-0">
+                  <svg className="w-4 h-4 text-[#89BD49] dark:text-[#A8D666]" fill="currentColor" viewBox="0 0 24 24">
                     <path d="M8 5v14l11-7z" />
                   </svg>
                 </div>
@@ -1252,7 +1252,7 @@ function CapturesContent() {
             onClick={clearAllFilters}
             className="flex items-center gap-1 text-xs text-muted hover:text-foreground transition-colors"
           >
-            <span className="w-4 h-4 rounded-full bg-indigo-600 text-white text-[10px] font-bold flex items-center justify-center">
+            <span className="w-4 h-4 rounded-md bg-[#89BD49] text-white text-[10px] font-bold flex items-center justify-center">
               {activeFilterCount}
             </span>
             {t("cap.clearFilters")}
@@ -1276,7 +1276,7 @@ function CapturesContent() {
 
       {/* Upload Progress Animation Banner */}
       {currentUpload && (
-        <div className="mb-6 overflow-hidden rounded-xl border border-indigo-200/80 dark:border-indigo-900/50 bg-white dark:bg-subtle p-4 shadow-sm transition-all animate-in fade-in slide-in-from-top-2 duration-300">
+        <div className="mb-6 overflow-hidden rounded-xl border border-[#89BD49]/30 dark:border-[#89BD49]/40 bg-white dark:bg-subtle p-4 shadow-sm transition-all animate-in fade-in slide-in-from-top-2 duration-300">
           <div className="flex items-start justify-between gap-3">
             <div className="flex items-center gap-3 min-w-0">
               <div
@@ -1285,7 +1285,7 @@ function CapturesContent() {
                     ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 ring-2 ring-emerald-500/20"
                     : currentUpload.status === "error"
                     ? "bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-400 ring-2 ring-red-500/20"
-                    : "bg-indigo-50 text-indigo-600 dark:bg-indigo-950/40 dark:text-indigo-400 ring-2 ring-indigo-500/20"
+                    : "bg-[#89BD49]/10 text-[#6B9A35] dark:bg-[#89BD49]/20 dark:text-[#A8D666] ring-2 ring-[#89BD49]/20"
                 }`}
               >
                 {currentUpload.status === "completed" ? (
@@ -1318,13 +1318,13 @@ function CapturesContent() {
                 <div className="text-xs text-muted flex items-center gap-1.5 mt-0.5">
                   {currentUpload.status === "uploading" && (
                     <>
-                      <span className="inline-block w-2 h-2 rounded-full bg-indigo-500 animate-ping" />
+                      <span className="inline-block w-2 h-2 rounded-full bg-[#89BD49] animate-ping" />
                       <span>Uploading to server...</span>
                     </>
                   )}
                   {currentUpload.status === "syncing" && (
                     <>
-                      <svg className="w-3.5 h-3.5 text-indigo-500 animate-spin" fill="none" viewBox="0 0 24 24">
+                      <svg className="w-3.5 h-3.5 text-[#89BD49] animate-spin" fill="none" viewBox="0 0 24 24">
                         <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                         <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                       </svg>
@@ -1352,7 +1352,7 @@ function CapturesContent() {
                     ? "text-emerald-600 dark:text-emerald-400"
                     : currentUpload.status === "error"
                     ? "text-red-600 dark:text-red-400"
-                    : "text-indigo-600 dark:text-indigo-400"
+                    : "text-[#6B9A35] dark:text-[#A8D666]"
                 }`}
               >
                 {currentUpload.status === "error" ? "Error" : `${currentUpload.progress}%`}
@@ -1380,7 +1380,7 @@ function CapturesContent() {
                   ? "bg-emerald-500"
                   : currentUpload.status === "error"
                   ? "bg-red-500"
-                  : "bg-gradient-to-r from-indigo-500 via-purple-500 to-indigo-600"
+                  : "bg-[#89BD49]"
               }`}
               style={{ width: `${currentUpload.progress}%` }}
             />
@@ -1445,39 +1445,113 @@ function CapturesContent() {
           ))}
         </div>
       ) : filteredCaptures.length === 0 ? (
-        <div className="px-4 py-14 sm:py-20 text-center rounded-xl border border-dashed border-border bg-subtle/50 flex flex-col items-center gap-3">
-          <div className="w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-800/40 flex items-center justify-center">
-            <svg className="w-8 h-8 text-indigo-400 dark:text-indigo-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-            </svg>
-          </div>
-          <div>
-            <h3 className="text-base font-semibold text-foreground">
-              {activeFilterCount > 0 ? t("cap.noMatch") : t("cap.empty")}
-            </h3>
-            <p className="text-xs text-muted mt-1 max-w-sm mx-auto text-balance">
-              {activeFilterCount > 0 ? t("cap.noMatchHint") : t("cap.emptyHint")}
-            </p>
-          </div>
-          {activeFilterCount > 0 ? (
+        activeFilterCount > 0 ? (
+          <div className="px-4 py-14 sm:py-20 text-center rounded-xl border border-dashed border-border bg-subtle/50 flex flex-col items-center gap-3">
+            <div className="w-16 h-16 rounded-2xl bg-[#89BD49]/10 dark:bg-[#89BD49]/20 border border-[#89BD49]/30 dark:border-[#89BD49]/40 flex items-center justify-center">
+              <svg className="w-8 h-8 text-[#6B9A35] dark:text-[#A8D666]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-foreground">
+                {t("cap.noMatch")}
+              </h3>
+              <p className="text-xs text-muted mt-1 max-w-sm mx-auto text-balance">
+                {t("cap.noMatchHint")}
+              </p>
+            </div>
             <button
               onClick={clearAllFilters}
               className="mt-1 px-4 py-2 rounded-lg border border-border bg-subtle text-sm font-semibold text-foreground hover:bg-subtle/80 transition-colors"
             >
               {t("cap.clearFilters")}
             </button>
-          ) : (
-            <a
-              href={CHROME_WEB_STORE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-1 px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 transition-colors inline-flex items-center gap-2"
-            >
-              <img src="/icons/chrome.svg" alt="Chrome" className="w-4 h-4 shrink-0" />
-              <span>{t("cap.install")}</span>
-            </a>
-          )}
-        </div>
+          </div>
+        ) : (
+          <div className="rounded-2xl border border-border/80 bg-white/80 dark:bg-subtle/70 p-6 sm:p-10 text-center shadow-lg shadow-slate-200/50 dark:shadow-none backdrop-blur-sm space-y-8">
+            <div className="max-w-xl mx-auto space-y-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg border border-[#89BD49]/30 bg-[#89BD49]/10 text-[#6B9A35] dark:text-[#A8D666] text-xs font-semibold">
+                <span>{t("cap.quickStartTitle")}</span>
+              </div>
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-foreground tracking-tight">
+                {t("cap.empty")}
+              </h2>
+              <p className="text-xs sm:text-sm text-muted leading-relaxed">
+                {t("cap.quickStartDesc")}
+              </p>
+            </div>
+
+            {/* 3 Step Onboarding Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
+              {/* Step 1 */}
+              <div className="rounded-xl border border-border bg-white dark:bg-subtle p-5 flex flex-col justify-between space-y-4 hover:border-[#89BD49]/40 transition-colors">
+                <div className="space-y-2.5">
+                  <div className="w-9 h-9 rounded-lg bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666] flex items-center justify-center font-bold text-sm">
+                    1
+                  </div>
+                  <h3 className="text-sm font-bold text-foreground">
+                    {t("cap.step1Title")}
+                  </h3>
+                  <p className="text-xs text-muted leading-relaxed">
+                    {t("cap.step1Desc")}
+                  </p>
+                </div>
+                <a
+                  href={CHROME_WEB_STORE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] text-white text-xs font-semibold shadow-xs shadow-[#89BD49]/25 transition-all w-full"
+                >
+                  <img src="/icons/chrome.svg" alt="Chrome" className="w-3.5 h-3.5 shrink-0" />
+                  <span>{t("cap.install")}</span>
+                </a>
+              </div>
+
+              {/* Step 2 */}
+              <div className="rounded-xl border border-border bg-white dark:bg-subtle p-5 flex flex-col justify-between space-y-4 hover:border-[#89BD49]/40 transition-colors">
+                <div className="space-y-2.5">
+                  <div className="w-9 h-9 rounded-lg bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666] flex items-center justify-center font-bold text-sm">
+                    2
+                  </div>
+                  <h3 className="text-sm font-bold text-foreground">
+                    {t("cap.step2Title")}
+                  </h3>
+                  <p className="text-xs text-muted leading-relaxed">
+                    {t("cap.step2Desc")}
+                  </p>
+                </div>
+                <div className="p-2.5 rounded-lg border border-border/80 bg-slate-50 dark:bg-subtle/50 flex items-center justify-center gap-2 text-xs">
+                  <span className="text-muted text-[11px]">Hotkey:</span>
+                  <kbd className="px-2 py-0.5 text-[11px] font-mono font-bold bg-white dark:bg-subtle text-foreground border border-slate-300 dark:border-border rounded-md shadow-2xs">
+                    Alt + Shift + S
+                  </kbd>
+                </div>
+              </div>
+
+              {/* Step 3 */}
+              <div className="rounded-xl border border-border bg-white dark:bg-subtle p-5 flex flex-col justify-between space-y-4 hover:border-[#89BD49]/40 transition-colors">
+                <div className="space-y-2.5">
+                  <div className="w-9 h-9 rounded-lg bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666] flex items-center justify-center font-bold text-sm">
+                    3
+                  </div>
+                  <h3 className="text-sm font-bold text-foreground">
+                    {t("cap.step3Title")}
+                  </h3>
+                  <p className="text-xs text-muted leading-relaxed">
+                    {t("cap.step3Desc")}
+                  </p>
+                </div>
+                <div className="p-2.5 rounded-lg border border-border/80 bg-slate-50 dark:bg-subtle/50 flex items-center justify-between text-xs text-muted">
+                  <span className="flex items-center gap-1.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
+                    <span className="w-1.5 h-1.5 rounded-sm bg-emerald-500" />
+                    Auto Google Drive Sync
+                  </span>
+                  <span className="text-[10px] font-mono">1-Click Share</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredCaptures.map((item) => {
@@ -1502,7 +1576,7 @@ function CapturesContent() {
               onMouseEnter={() => setActiveHoverId(item.id)}
               onMouseLeave={() => setActiveHoverId((prev) => (prev === item.id ? null : prev))}
               className={`group relative rounded-xl border bg-white dark:bg-subtle shadow-sm hover:shadow-md transition-all flex flex-col ${
-                isSelected ? "border-indigo-600 ring-2 ring-indigo-600/20" : "border-border"
+                isSelected ? "border-[#89BD49] ring-2 ring-[#89BD49]/20" : "border-border"
               }`}
             >
               <CardWrapper {...cardProps}>
@@ -1521,7 +1595,7 @@ function CapturesContent() {
                       {/* Play overlay for videos so the grid clearly shows what's a recording */}
                       {item.type === "video" ? (
                         <div className="absolute inset-0 z-10 pointer-events-none flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
-                          <div className="w-12 h-12 rounded-full bg-white/95 dark:bg-zinc-900/95 text-slate-900 dark:text-white shadow-xl flex items-center justify-center border border-white/30 group-hover:bg-indigo-600 group-hover:text-white group-hover:scale-110 group-hover:border-indigo-400 group-hover:shadow-indigo-500/40 transition-all duration-200">
+                          <div className="w-12 h-12 rounded-full bg-white/95 dark:bg-zinc-900/95 text-slate-900 dark:text-white shadow-xl flex items-center justify-center border border-white/30 group-hover:bg-[#89BD49] group-hover:text-white group-hover:scale-110 group-hover:border-[#89BD49]/40 group-hover:shadow-[#89BD49]/40 transition-all duration-200">
                             <svg className="w-6 h-6 fill-current" viewBox="0 0 24 24">
                               <path d="M8 5v14l11-7z" />
                             </svg>
@@ -1534,13 +1608,13 @@ function CapturesContent() {
                   ) : (
                     <div className="flex flex-col items-center gap-1.5">
                       {item.type === "video" ? (
-                        <div className="w-12 h-12 rounded-full bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 flex items-center justify-center group-hover:scale-110 transition-transform shadow-xs">
+                        <div className="w-12 h-12 rounded-full bg-[#89BD49]/15 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] flex items-center justify-center group-hover:scale-110 transition-transform shadow-xs">
                           <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
                             <path d="M8 5v14l11-7z" />
                           </svg>
                         </div>
                       ) : (
-                        <svg className="w-8 h-8 text-indigo-600/80 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg className="w-8 h-8 text-[#6B9A35]/80 group-hover:scale-110 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
                         </svg>
                       )}
@@ -1559,7 +1633,7 @@ function CapturesContent() {
                       aria-label="Select capture"
                       className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center transition-all shadow-sm ${
                         isSelected
-                          ? "bg-indigo-600 border-indigo-600 text-white opacity-100 flex"
+                          ? "bg-[#89BD49] border-[#89BD49] text-white opacity-100 flex"
                           : "bg-white/90 dark:bg-zinc-900/90 border-slate-300 dark:border-zinc-600 text-transparent opacity-0 group-hover:opacity-100 hidden group-hover:flex"
                       }`}
                     >
@@ -1601,7 +1675,7 @@ function CapturesContent() {
                         className="w-7 h-7 rounded-lg bg-white/90 hover:bg-white text-slate-700 dark:bg-zinc-900/90 dark:hover:bg-zinc-900 dark:text-slate-200 border border-slate-200/80 dark:border-zinc-700 flex items-center justify-center shadow-md transition-colors"
                       >
                         {copiedId === item.id ? (
-                          <svg className="w-3.5 h-3.5 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                          <svg className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
                         ) : (
                           <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
                         )}
@@ -1669,7 +1743,7 @@ function CapturesContent() {
                 {/* Meta Footer */}
                 <div className="p-3.5 flex items-center justify-between text-xs">
                   <div className="min-w-0 flex-1 pr-2">
-                    <h3 className="font-medium text-foreground truncate group-hover:text-indigo-600 transition-colors">
+                    <h3 className="font-medium text-foreground truncate group-hover:text-[#6B9A35] dark:group-hover:text-[#A8D666] transition-colors">
                       {item.title}
                     </h3>
                     {item.folder_name && (
@@ -1694,7 +1768,7 @@ function CapturesContent() {
         <div ref={sentinelRef} className="py-8 flex items-center justify-center">
           {loadingMore && hasMore && (
             <div className="flex flex-col items-center gap-2">
-              <div className="w-7 h-7 border-[3px] border-indigo-200 border-t-indigo-600 rounded-full animate-spin" />
+              <div className="w-7 h-7 border-[3px] border-[#89BD49]/20 border-t-[#89BD49] rounded-full animate-spin" />
               <span className="text-xs text-muted">{t("cap.loadingMore")}</span>
             </div>
           )}
@@ -1779,7 +1853,7 @@ function CapturesContent() {
                       onClick={() => setMoveTargetFolderName("")}
                       className={`w-full flex items-center justify-between rounded-xl border px-3.5 py-2.5 text-left transition-all ${
                         moveTargetFolderName === ""
-                          ? "border-indigo-600 bg-indigo-50/60 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 ring-1 ring-indigo-600"
+                          ? "border-[#89BD49] bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] ring-1 ring-[#89BD49]"
                           : "border-border bg-slate-50/50 dark:bg-background/50 hover:bg-slate-100 dark:hover:bg-background text-foreground"
                       }`}
                     >
@@ -1804,7 +1878,7 @@ function CapturesContent() {
                           onClick={() => setMoveTargetFolderName(folder)}
                           className={`w-full flex items-center justify-between rounded-xl border px-3.5 py-2.5 text-left transition-all ${
                             isSelected
-                              ? "border-indigo-600 bg-indigo-50/60 dark:bg-indigo-950/30 text-indigo-600 dark:text-indigo-400 ring-1 ring-indigo-600"
+                              ? "border-[#89BD49] bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] ring-1 ring-[#89BD49]"
                               : "border-border bg-slate-50/50 dark:bg-background/50 hover:bg-slate-100 dark:hover:bg-background text-foreground"
                           }`}
                         >
@@ -1846,12 +1920,12 @@ function CapturesContent() {
                           value={newMoveFolderName}
                           onChange={(e) => setNewMoveFolderName(e.target.value)}
                           placeholder={t("cap.newFolderPlaceholder")}
-                          className="flex-1 rounded-xl border border-border bg-white dark:bg-zinc-800 text-foreground px-3 py-2 text-xs outline-none focus:ring-1 focus:ring-indigo-500"
+                          className="flex-1 rounded-xl border border-border bg-white dark:bg-zinc-800 text-foreground px-3 py-2 text-xs outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/30"
                         />
                         <button
                           type="submit"
                           disabled={!newMoveFolderName.trim()}
-                          className="px-3 py-2 rounded-xl bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 disabled:opacity-50 cursor-pointer"
+                          className="px-3 py-2 rounded-xl bg-[#89BD49] text-white text-xs font-semibold hover:bg-[#6B9A35] shadow-xs shadow-[#89BD49]/25 disabled:opacity-50 cursor-pointer transition-colors"
                         >
                           {t("cap.add")}
                         </button>
@@ -1870,7 +1944,7 @@ function CapturesContent() {
                       <button
                         type="button"
                         onClick={() => setIsCreatingMoveFolder(true)}
-                        className="w-full flex items-center gap-2 rounded-xl border border-dashed border-border px-3.5 py-2 text-left text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/20 transition-all cursor-pointer"
+                        className="w-full flex items-center gap-2 rounded-xl border border-dashed border-border px-3.5 py-2 text-left text-xs font-semibold text-[#6B9A35] dark:text-[#A8D666] hover:bg-[#89BD49]/10 dark:hover:bg-[#89BD49]/20 transition-all cursor-pointer"
                       >
                         <span className="text-sm leading-none">+</span>
                         <span>{t("cap.newFolder")}</span>
@@ -1899,7 +1973,7 @@ function CapturesContent() {
                           }`}
                         >
                           <span className={`w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold shrink-0 ${
-                            isTargetWs ? "bg-indigo-600 text-white" : "bg-slate-200 dark:bg-zinc-800 text-foreground"
+                            isTargetWs ? "bg-[#89BD49] text-white" : "bg-slate-200 dark:bg-zinc-800 text-foreground"
                           }`}>
                             {ws.name.charAt(0).toUpperCase()}
                           </span>
@@ -1932,7 +2006,7 @@ function CapturesContent() {
                 type="button"
                 onClick={() => void submitMoveTo()}
                 disabled={moving || !moveTargetWorkspaceId}
-                className="px-5 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors shadow-sm"
+                className="px-5 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] shadow-xs shadow-[#89BD49]/25 disabled:opacity-50 transition-colors"
               >
                 {moving ? t("cap.moving") : t("cap.move")}
               </button>
@@ -1945,7 +2019,7 @@ function CapturesContent() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="delete-captures-title">
           <button className="absolute inset-0 bg-black/40" aria-label="Close confirmation" onClick={() => !deleting && setDeleteRequest(null)} />
           <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-xl bg-subtle shadow-xl border border-border p-6">
-            <div className="mb-4 w-12 h-12 rounded-full bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/40 flex items-center justify-center text-red-600 dark:text-red-400">
+            <div className="mb-4 w-12 h-12 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/40 flex items-center justify-center text-red-600 dark:text-red-400">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
             </div>
             <h2 id="delete-captures-title" className="text-lg font-bold text-foreground mb-1">
@@ -1956,13 +2030,13 @@ function CapturesContent() {
             </p>
 
             <div className="space-y-2">
-              <label className={`block rounded-lg border p-3 cursor-pointer ${deleteMode === "drive_trash" ? "border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/30" : "border-border"}`}>
+              <label className={`block rounded-lg border p-3 cursor-pointer ${deleteMode === "drive_trash" ? "border-[#89BD49] bg-[#89BD49]/10 dark:bg-[#89BD49]/20" : "border-border"}`}>
                 <span className="flex gap-3">
                   <input type="radio" name="delete-mode" value="drive_trash" checked={deleteMode === "drive_trash"} onChange={() => { setDeleteMode("drive_trash"); setDeleteRequest((request) => request ? { ...request, operationId: crypto.randomUUID() } : request); }} disabled={deleting} className="mt-1" />
                   <span><span className="block text-sm font-semibold text-foreground">{t("cap.moveToTrash")}</span><span className="block text-xs text-muted mt-0.5">{t("cap.trashHint")}</span></span>
                 </span>
               </label>
-              <label className={`block rounded-lg border p-3 cursor-pointer ${deleteMode === "app_only" ? "border-indigo-500 bg-indigo-50/50 dark:bg-indigo-950/30" : "border-border"}`}>
+              <label className={`block rounded-lg border p-3 cursor-pointer ${deleteMode === "app_only" ? "border-[#89BD49] bg-[#89BD49]/10 dark:bg-[#89BD49]/20" : "border-border"}`}>
                 <span className="flex gap-3">
                   <input type="radio" name="delete-mode" value="app_only" checked={deleteMode === "app_only"} onChange={() => { setDeleteMode("app_only"); setDeleteRequest((request) => request ? { ...request, operationId: crypto.randomUUID() } : request); setDriveIssue(null); setDeleteError(null); }} disabled={deleting} className="mt-1" />
                   <span><span className="block text-sm font-semibold text-foreground">{t("cap.BugSnapOnly")}</span><span className="block text-xs text-muted mt-0.5">{t("cap.BugSnapOnlyHint")}</span></span>
@@ -1973,7 +2047,7 @@ function CapturesContent() {
             {deleteError && <div className="mt-4 rounded-lg border border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-950/20 px-3 py-2 text-xs text-red-700 dark:text-red-400">{deleteError}</div>}
             {driveIssue && (
               <div className="mt-3 flex items-center gap-3">
-                <button onClick={() => void startDriveConnect()} className="text-sm font-semibold text-indigo-600 hover:underline">{driveIssue === "reconnect_required" ? t("cap.reconnectDrive") : t("cap.connectDrive")}</button>
+                <button onClick={() => void startDriveConnect()} className="text-sm font-semibold text-[#6B9A35] dark:text-[#A8D666] hover:underline">{driveIssue === "reconnect_required" ? t("cap.reconnectDrive") : t("cap.connectDrive")}</button>
                 <button onClick={() => { setDeleteMode("app_only"); setDriveIssue(null); setDeleteError(null); }} className="text-sm font-medium text-foreground hover:underline">{t("cap.useBugSnapOnly")}</button>
               </div>
             )}
@@ -1995,7 +2069,7 @@ function CapturesContent() {
           className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[94%] max-w-2xl bg-white/95 dark:bg-zinc-900/95 text-foreground backdrop-blur-md rounded-2xl shadow-xl dark:shadow-2xl px-4 py-2.5 border border-border dark:border-zinc-800 flex flex-wrap items-center justify-between gap-2.5 animate-in slide-in-from-bottom-5 duration-200"
         >
           <div className="flex items-center gap-2 sm:gap-2.5">
-            <span className="w-5 h-5 rounded-md bg-indigo-600 text-white flex items-center justify-center text-[11px] font-bold shadow-xs shrink-0">
+            <span className="w-5 h-5 rounded-md bg-[#89BD49] text-white flex items-center justify-center text-[11px] font-bold shadow-xs shrink-0">
               ✓
             </span>
             <span className="font-bold text-xs text-foreground whitespace-nowrap">
@@ -2010,7 +2084,7 @@ function CapturesContent() {
               <button
                 type="button"
                 onClick={() => setSelectedIds(new Set(filteredCaptures.map((c) => c.id)))}
-                className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300 hover:underline transition-colors cursor-pointer whitespace-nowrap"
+                className="text-xs font-semibold text-[#6B9A35] dark:text-[#A8D666] hover:text-[#557A2B] dark:hover:text-[#C2E688] hover:underline transition-colors cursor-pointer whitespace-nowrap"
               >
                 {t("cap.selectAllCount", { count: filteredCaptures.length })}
               </button>
@@ -2032,7 +2106,7 @@ function CapturesContent() {
               type="button"
               onClick={handleBulkCopyLinks}
               disabled={moving || deleting}
-              className="h-8 px-2.5 rounded-xl border border-border bg-subtle hover:bg-background hover:border-indigo-300 dark:hover:border-indigo-700 text-xs font-semibold text-foreground hover:text-indigo-600 dark:hover:text-indigo-400 disabled:opacity-40 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+              className="h-8 px-2.5 rounded-xl border border-border bg-subtle hover:bg-background hover:border-[#89BD49]/40 dark:hover:border-[#89BD49]/50 text-xs font-semibold text-foreground hover:text-[#6B9A35] dark:hover:text-[#A8D666] disabled:opacity-40 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
               title={t("cap.copyAllLinks")}
             >
               <svg className="w-3.5 h-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -2047,7 +2121,7 @@ function CapturesContent() {
               type="button"
               onClick={() => void openMoveToModal()}
               disabled={moving || deleting}
-              className="h-8 px-2.5 rounded-xl border border-border bg-subtle hover:bg-background hover:border-indigo-300 dark:hover:border-indigo-700 text-xs font-semibold text-foreground hover:text-indigo-600 dark:hover:text-indigo-400 disabled:opacity-40 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+              className="h-8 px-2.5 rounded-xl border border-border bg-subtle hover:bg-background hover:border-[#89BD49]/40 dark:hover:border-[#89BD49]/50 text-xs font-semibold text-foreground hover:text-[#6B9A35] dark:hover:text-[#A8D666] disabled:opacity-40 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
             >
               <svg className="w-3.5 h-3.5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />

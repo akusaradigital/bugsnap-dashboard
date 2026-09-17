@@ -529,7 +529,7 @@ export default function DashboardLayout({
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
-          <div className="h-7 w-7 rounded-full border-2 border-indigo-600 border-t-transparent animate-spin" aria-hidden="true" />
+          <div className="h-7 w-7 rounded-full border-2 border-[#89BD49] border-t-transparent animate-spin" aria-hidden="true" />
           <p className="text-sm text-muted">{t("layout.loading")}</p>
         </div>
       </div>
@@ -540,7 +540,7 @@ export default function DashboardLayout({
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-6">
         <div className="max-w-md w-full bg-subtle border border-border rounded-xl p-8 text-center shadow-sm">
-          <div className="mx-auto mb-4 w-14 h-14 rounded-full bg-red-50 border border-red-200 flex items-center justify-center text-red-600">
+          <div className="mx-auto mb-4 w-14 h-14 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 flex items-center justify-center text-red-600 dark:text-red-400">
             <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
             </svg>
@@ -773,16 +773,28 @@ export default function DashboardLayout({
     setCreating(true);
     setCreateWsError(null);
     try {
-      // RPC returns the new workspace UUID directly.
-      const { data: newWsId, error: wsErr } = await supabase.rpc(
+      // RPC returns either UUID directly or [{ id, name, slug }]
+      const { data: rpcResult, error: wsErr } = await supabase.rpc(
         "create_workspace",
         { p_name: name }
       );
       if (wsErr) throw wsErr;
+
+      let newId = "";
+      let newSlug: string | undefined = undefined;
+      if (Array.isArray(rpcResult) && rpcResult.length > 0) {
+        newId = String(rpcResult[0].id);
+        newSlug = rpcResult[0].slug;
+      } else if (rpcResult) {
+        newId = String(rpcResult);
+      }
+
+      if (!newId) throw new Error("No workspace ID returned");
+
       const created = {
-        id: String(newWsId),
+        id: newId,
         name,
-        slug: undefined,
+        slug: newSlug,
         owner_user_id: currentUser.id,
         created_at: new Date().toISOString(),
         role: "owner",
@@ -794,11 +806,11 @@ export default function DashboardLayout({
       router.replace(`${pathname}?ws=${created.id}`, { scroll: false });
       setNewWsName("");
       setCreateWsModalOpen(false);
-      showToast("Workspace created", "success");
+      showToast(t("layout.wsCreated"), "success");
     } catch (err) {
       console.warn("Failed to create workspace:", err);
-      setCreateWsError("Could not create workspace. Please try again.");
-      showToast("Workspace create failed", "error");
+      setCreateWsError(t("layout.wsCreateFailed"));
+      showToast(t("layout.wsCreateFailedToast"), "error");
     } finally {
       setCreating(false);
     }
@@ -854,7 +866,7 @@ export default function DashboardLayout({
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
       {promoBanner && promoBanner.enabled && promoBanner.message && !promoDismissed && (
-        <div className="shrink-0 bg-indigo-600 text-white px-4 py-2.5 flex items-center justify-between gap-4">
+        <div className="shrink-0 bg-[#89BD49] text-white px-4 py-2.5 flex items-center justify-between gap-4">
           <div className="flex-1 min-w-0 text-sm font-medium leading-snug text-center">
             {promoBanner.message}
           </div>
@@ -897,7 +909,7 @@ export default function DashboardLayout({
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
           </svg>
           {newCommentCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center">
+            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 rounded-md bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center">
               {newCommentCount}
             </span>
           )}
@@ -942,7 +954,7 @@ export default function DashboardLayout({
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
               </svg>
               {newCommentCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 rounded-full bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center">
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 rounded-md bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center">
                   {newCommentCount > 99 ? "99+" : newCommentCount}
                 </span>
               )}
@@ -961,7 +973,7 @@ export default function DashboardLayout({
               {notifications.length > 0 && (
                 <button
                   onClick={handleClearNotifications}
-                  className="text-[10px] font-semibold text-indigo-600 hover:underline"
+                  className="text-[10px] font-semibold text-[#6B9A35] dark:text-[#A8D666] hover:underline"
                 >
                   {t("layout.clearAll")}
                 </button>
@@ -977,7 +989,7 @@ export default function DashboardLayout({
                       className={`px-3 py-2 text-xs rounded-lg transition-colors cursor-pointer ${
                         isRead
                           ? "text-muted hover:bg-subtle"
-                          : "text-foreground bg-indigo-50/40 dark:bg-indigo-950/30 hover:bg-indigo-50/80 dark:hover:bg-indigo-950/50 font-medium"
+                          : "text-foreground bg-[#89BD49]/10 dark:bg-[#89BD49]/15 hover:bg-[#89BD49]/20 font-medium"
                       }`}
                       onClick={() => {
                         markRead(n.capture_id);
@@ -1024,7 +1036,7 @@ export default function DashboardLayout({
                 className="w-6 h-6 rounded-md object-cover shrink-0 bg-subtle border border-border"
               />
             ) : (
-              <span className="w-6 h-6 rounded-md bg-indigo-600 text-white text-[11px] font-semibold flex items-center justify-center shrink-0">
+              <span className="w-6 h-6 rounded-md bg-[#89BD49] text-white text-[11px] font-semibold flex items-center justify-center shrink-0">
                 {initialOf(activeWs?.name)}
               </span>
             )}
@@ -1048,7 +1060,7 @@ export default function DashboardLayout({
                       className="w-10 h-10 rounded-xl object-cover shrink-0 bg-subtle border border-border"
                     />
                   ) : (
-                    <span className="w-10 h-10 rounded-xl bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 text-lg font-semibold flex items-center justify-center shrink-0">
+                    <span className="w-10 h-10 rounded-xl bg-[#89BD49]/15 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] text-lg font-semibold flex items-center justify-center shrink-0">
                       {initialOf(activeWs?.name)}
                     </span>
                   )}
@@ -1119,7 +1131,7 @@ export default function DashboardLayout({
                               className="w-7 h-7 rounded-lg object-cover shrink-0 bg-subtle border border-border"
                             />
                           ) : (
-                            <span className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 text-sm font-semibold flex items-center justify-center shrink-0">{ws.name.charAt(0)}</span>
+                            <span className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 text-sm font-semibold flex items-center justify-center shrink-0">{ws.name.charAt(0)}</span>
                           )}
                           <span className="truncate flex-1">{ws.name}</span>
                           <span className="text-[11px] px-2 py-0.5 rounded-md border border-border text-muted shrink-0">{tierLabel(currentUser.plan)}</span>
@@ -1172,7 +1184,7 @@ export default function DashboardLayout({
                 onClick={() => setSidebarOpen(false)}
                 className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg border-l-2 transition-colors ${
                   active
-                    ? "bg-indigo-50 dark:bg-indigo-950/30 border-indigo-500 text-indigo-600 dark:text-indigo-400"
+                    ? "bg-[#89BD49]/10 dark:bg-[#89BD49]/15 border-[#89BD49] text-[#6B9A35] dark:text-[#A8D666]"
                     : "border-transparent text-muted hover:text-foreground hover:bg-subtle"
                 }`}
               >
@@ -1239,13 +1251,13 @@ export default function DashboardLayout({
               {activeWsRole === "owner" && (
                 <button
                   onClick={() => setCreateFolderModalOpen(true)}
-                  className="text-[10px] font-bold text-indigo-600 hover:underline"
+                  className="text-[10px] font-bold text-[#6B9A35] dark:text-[#A8D666] hover:underline"
                 >
                   {t("layout.create")}
                 </button>
               )}
             </div>
-            
+
             <div className="max-h-40 overflow-y-auto space-y-0.5">
               <Link
                 href={activeWsId ? `/captures?ws=${activeWsId}` : "/captures"}
@@ -1255,7 +1267,7 @@ export default function DashboardLayout({
                 }}
                 className={`flex items-center gap-2.5 rounded-lg border-l-2 px-3 py-2 text-xs transition-colors ${
                   pathname === "/captures" && !currentFolder
-                    ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30 font-semibold text-indigo-600 dark:text-indigo-400"
+                    ? "border-[#89BD49] bg-[#89BD49]/10 dark:bg-[#89BD49]/15 font-semibold text-[#6B9A35] dark:text-[#A8D666]"
                     : "border-transparent text-muted hover:bg-subtle hover:text-foreground"
                 }`}
               >
@@ -1285,8 +1297,8 @@ export default function DashboardLayout({
                       setDragOverFolder(null);
                     }}
                     className={`relative w-full flex items-center justify-between gap-1 px-1 rounded-lg border-l-2 group/folder transition-colors ${
-                      isActiveFolder ? "border-indigo-500 bg-indigo-50 dark:bg-indigo-950/30 font-semibold" : "border-transparent hover:bg-subtle"
-                    } ${dragOverFolder === folder && draggedFolder && draggedFolder !== folder ? "ring-2 ring-indigo-400" : ""} ${
+                      isActiveFolder ? "border-[#89BD49] bg-[#89BD49]/10 dark:bg-[#89BD49]/15 font-semibold" : "border-transparent hover:bg-subtle"
+                    } ${dragOverFolder === folder && draggedFolder && draggedFolder !== folder ? "ring-2 ring-[#89BD49]" : ""} ${
                       draggedFolder === folder ? "opacity-40" : ""
                     }`}
                   >
@@ -1297,7 +1309,7 @@ export default function DashboardLayout({
                         setSidebarOpen(false);
                       }}
                       className={`flex-1 flex items-center gap-2.5 px-2 py-2 text-xs truncate ${
-                        isActiveFolder ? "text-indigo-600 dark:text-indigo-400 font-semibold" : "text-muted hover:text-foreground"
+                        isActiveFolder ? "text-[#6B9A35] dark:text-[#A8D666] font-semibold" : "text-muted hover:text-foreground"
                       }`}
                     >
                       <span className="text-xs shrink-0">📁</span>
@@ -1364,7 +1376,7 @@ export default function DashboardLayout({
                   {activeWsRole === "owner" && (
                     <button
                       onClick={() => setCreateFolderModalOpen(true)}
-                      className="text-[10px] font-semibold text-indigo-600 hover:underline mt-1"
+                      className="text-[10px] font-semibold text-[#6B9A35] dark:text-[#A8D666] hover:underline mt-1"
                     >
                       {t("layout.createFolder")}
                     </button>
@@ -1400,12 +1412,12 @@ export default function DashboardLayout({
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   placeholder="colleague@example.com"
-                  className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-subtle"
+                  className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#89BD49] bg-subtle text-foreground placeholder:text-muted"
                   autoFocus
                 />
               </div>
               {inviteError && (
-                <p className="text-xs text-red-600">{inviteError}</p>
+                <p className="text-xs text-red-600 dark:text-red-400">{inviteError}</p>
               )}
             </div>
             <div className="flex items-center justify-end gap-3 mt-6">
@@ -1418,7 +1430,7 @@ export default function DashboardLayout({
               <button
                 onClick={handleInvite}
                 disabled={!inviteEmail.trim() || inviting}
-                className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors shadow-sm shadow-[#89BD49]/25"
               >
                 {t("layout.sendInvite")}
               </button>
@@ -1443,7 +1455,7 @@ export default function DashboardLayout({
                 value={newWsName}
                 onChange={(e) => setNewWsName(e.target.value)}
                 placeholder="e.g. QA Team"
-                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-subtle"
+                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#89BD49] bg-subtle text-foreground placeholder:text-muted"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && newWsName.trim()) {
@@ -1452,7 +1464,7 @@ export default function DashboardLayout({
                 }}
               />
               {createWsError && (
-                <p className="text-xs text-red-600 mt-1.5">{createWsError}</p>
+                <p className="text-xs text-red-600 dark:text-red-400 mt-1.5">{createWsError}</p>
               )}
             </div>
             <div className="flex items-center justify-end gap-3 mt-6">
@@ -1468,7 +1480,7 @@ export default function DashboardLayout({
                   if (name) handleCreateWorkspace(name);
                 }}
                 disabled={!newWsName.trim() || creating}
-                className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors shadow-sm shadow-[#89BD49]/25"
               >
                 {t("layout.createWorkspace")}
               </button>
@@ -1491,7 +1503,7 @@ export default function DashboardLayout({
             <Link
               href="/pricing"
               onClick={() => setBillingModalOpen(false)}
-              className="block w-full rounded-lg bg-indigo-600 text-white text-sm font-semibold px-6 py-3 hover:bg-indigo-700 transition-colors shadow-sm"
+              className="block w-full rounded-lg bg-[#89BD49] text-white text-sm font-semibold px-6 py-3 hover:bg-[#6B9A35] transition-colors shadow-sm shadow-[#89BD49]/25"
             >
               {t("layout.upgradeToPro")}
             </Link>
@@ -1516,7 +1528,7 @@ export default function DashboardLayout({
                 value={newProjectName}
                 onChange={(e) => setNewProjectName(e.target.value)}
                 placeholder={t("layout.projectNamePlaceholder")}
-                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-subtle"
+                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#89BD49] bg-subtle text-foreground placeholder:text-muted"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && newProjectName.trim()) {
@@ -1525,7 +1537,7 @@ export default function DashboardLayout({
                 }}
               />
               {createProjectError && (
-                <p className="text-xs text-red-600 mt-1.5">{createProjectError}</p>
+                <p className="text-xs text-red-600 dark:text-red-400 mt-1.5">{createProjectError}</p>
               )}
             </div>
             <div className="flex items-center justify-end gap-3 mt-6">
@@ -1538,7 +1550,7 @@ export default function DashboardLayout({
               <button
                 onClick={() => handleCreateProject(newProjectName.trim())}
                 disabled={!newProjectName.trim() || creatingProject}
-                className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors shadow-sm shadow-[#89BD49]/25"
               >
                 {creatingProject ? t("layout.creating") : t("layout.createProject")}
               </button>
@@ -1560,17 +1572,17 @@ export default function DashboardLayout({
                 type="text"
                 value={renameProjectName}
                 onChange={(e) => setRenameProjectName(e.target.value)}
-                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-subtle"
+                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#89BD49] bg-subtle text-foreground placeholder:text-muted"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && renameProjectName.trim()) submitRenameProject();
                 }}
               />
-              {renameProjectError && <p className="text-xs text-red-600 mt-1.5">{renameProjectError}</p>}
+              {renameProjectError && <p className="text-xs text-red-600 dark:text-red-400 mt-1.5">{renameProjectError}</p>}
             </div>
             <div className="flex items-center justify-end gap-3 mt-6">
               <button onClick={() => setProjectToRename(null)} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors">{t("common.cancel")}</button>
-              <button onClick={submitRenameProject} disabled={!renameProjectName.trim() || renamingProject} className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors">
+              <button onClick={submitRenameProject} disabled={!renameProjectName.trim() || renamingProject} className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors shadow-sm shadow-[#89BD49]/25">
                 {renamingProject ? t("common.saving") : t("common.save")}
               </button>
             </div>
@@ -1611,7 +1623,7 @@ export default function DashboardLayout({
                 value={newFolderName}
                 onChange={(e) => setNewFolderName(e.target.value)}
                 placeholder="e.g. Eyden - Quaker"
-                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-subtle"
+                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#89BD49] bg-subtle text-foreground placeholder:text-muted"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && newFolderName.trim()) {
@@ -1620,7 +1632,7 @@ export default function DashboardLayout({
                 }}
               />
               {createFolderError && (
-                <p className="text-xs text-red-600 mt-1.5">{createFolderError}</p>
+                <p className="text-xs text-red-600 dark:text-red-400 mt-1.5">{createFolderError}</p>
               )}
             </div>
             <div className="flex items-center justify-end gap-3 mt-6">
@@ -1633,7 +1645,7 @@ export default function DashboardLayout({
               <button
                 onClick={() => handleCreateFolder(newFolderName.trim())}
                 disabled={!newFolderName.trim() || creatingFolder}
-                className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors shadow-sm shadow-[#89BD49]/25"
               >
                 {creatingFolder ? t("layout.creating") : t("layout.createFolderTitle")}
               </button>
@@ -1658,7 +1670,7 @@ export default function DashboardLayout({
                 value={renameFolderNameInput}
                 onChange={(e) => setRenameFolderNameInput(e.target.value)}
                 placeholder="e.g. Eyden - Quaker"
-                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-indigo-500 bg-subtle"
+                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#89BD49] bg-subtle text-foreground placeholder:text-muted"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && renameFolderNameInput.trim()) {
@@ -1677,7 +1689,7 @@ export default function DashboardLayout({
               <button
                 onClick={submitRenameFolder}
                 disabled={!renameFolderNameInput.trim() || renameFolderNameInput.trim() === folderToRename}
-                className="px-4 py-2 rounded-lg bg-indigo-600 text-white text-sm font-semibold hover:bg-indigo-700 disabled:opacity-50 transition-colors"
+                className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors shadow-sm shadow-[#89BD49]/25"
               >
                 {t("layout.saveChanges")}
               </button>
@@ -1691,7 +1703,7 @@ export default function DashboardLayout({
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setDeleteFolderModalOpen(false)} />
           <div className="relative w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-xl bg-subtle shadow-xl border border-border p-6 text-center">
-            <div className="mx-auto mb-4 w-12 h-12 rounded-full bg-red-50 border border-red-200 flex items-center justify-center text-red-600">
+            <div className="mx-auto mb-4 w-12 h-12 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 flex items-center justify-center text-red-600 dark:text-red-400">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
               </svg>

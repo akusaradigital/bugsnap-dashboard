@@ -1058,16 +1058,16 @@ function SingleViewContent() {
 
   return (
     <div
-      className={`min-h-screen font-sans flex flex-col selection:bg-indigo-500 selection:text-white ${
+      className={`min-h-screen font-sans flex flex-col selection:bg-[#89BD49] selection:text-white ${
         status === "ready"
           ? "h-screen bg-white dark:bg-background overflow-y-auto lg:overflow-hidden"
-          : "bg-[radial-gradient(ellipse_at_top_left,#eef2ff_0%,#ffffff_40%,#f0fdf4_100%)] dark:bg-none dark:bg-background text-slate-900 dark:text-foreground relative justify-between overflow-x-hidden"
+          : "bg-[radial-gradient(ellipse_at_top_left,#f4f9ed_0%,#ffffff_40%,#f0fdf4_100%)] dark:bg-none dark:bg-background text-slate-900 dark:text-foreground relative justify-between overflow-x-hidden"
       }`}
     >
       {status !== "ready" && (
         <>
-          <div className="pointer-events-none absolute -top-32 left-1/2 -z-10 h-80 w-[42rem] -translate-x-1/2 rounded-full bg-gradient-to-tr from-indigo-400/20 via-violet-300/20 to-emerald-300/15 blur-3xl dark:from-indigo-900/20 dark:via-purple-900/15 dark:to-emerald-900/10 animate-pulse-slow" />
-          <div className="pointer-events-none absolute -bottom-32 right-1/4 -z-10 h-80 w-[36rem] rounded-full bg-gradient-to-br from-indigo-300/15 to-purple-400/15 blur-3xl dark:from-indigo-950/20 dark:to-purple-950/20" />
+          <div className="pointer-events-none absolute -top-32 left-1/2 -z-10 h-80 w-[42rem] -translate-x-1/2 rounded-full bg-gradient-to-tr from-[#89BD49]/15 via-slate-400/10 to-emerald-300/15 blur-3xl dark:from-[#89BD49]/10 dark:via-slate-800/15 dark:to-emerald-900/10 animate-pulse-slow" />
+          <div className="pointer-events-none absolute -bottom-32 right-1/4 -z-10 h-80 w-[36rem] rounded-full bg-gradient-to-br from-[#89BD49]/10 to-slate-400/10 blur-3xl dark:from-[#89BD49]/10 dark:to-slate-900/20" />
         </>
       )}
 
@@ -1093,7 +1093,7 @@ function SingleViewContent() {
             )}
           </Link>
           {!brand.hideWatermark && (brand.logo || brand.name !== "BugSnap") && (
-            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-medium text-muted bg-subtle/80 border border-border shrink-0 select-none shadow-2xs">
+            <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-medium text-muted bg-subtle/80 border border-border shrink-0 select-none shadow-2xs">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/icon.svg" alt="" className="w-3 h-3 object-contain opacity-70" />
               <span>Powered by BugSnap</span>
@@ -1161,7 +1161,7 @@ function SingleViewContent() {
                             {sendingIntegration === intItem.id ? "Sending..." : intItem.name}
                           </span>
                           {sentIntegrations[intItem.id] && (
-                            <span className="text-[10px] text-emerald-600 font-semibold">✓ Sent</span>
+                            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">✓ Sent</span>
                           )}
                         </button>
                       ))}
@@ -1186,7 +1186,7 @@ function SingleViewContent() {
                         type="button"
                         disabled={movingCapture}
                         onClick={() => handleMoveCapture(null)}
-                        className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50 cursor-pointer ${!capture?.folder_name ? "font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/20" : ""}`}
+                        className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50 cursor-pointer ${!capture?.folder_name ? "font-semibold text-[#6B9A35] dark:text-[#A8D666] bg-[#89BD49]/10 dark:bg-[#89BD49]/20" : ""}`}
                       >
                         <span>{t("v.noFolder")}</span>
                         {!capture?.folder_name && <span className="text-xs">✓</span>}
@@ -1199,7 +1199,7 @@ function SingleViewContent() {
                             type="button"
                             disabled={movingCapture}
                             onClick={() => handleMoveCapture(folder)}
-                            className={`w-full flex items-center justify-between truncate rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50 cursor-pointer ${isCurrent ? "font-semibold text-indigo-600 dark:text-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/20" : ""}`}
+                            className={`w-full flex items-center justify-between truncate rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50 cursor-pointer ${isCurrent ? "font-semibold text-[#6B9A35] dark:text-[#A8D666] bg-[#89BD49]/10 dark:bg-[#89BD49]/20" : ""}`}
                           >
                             <span className="truncate">{folder}</span>
                             {isCurrent && <span className="text-xs shrink-0 ml-1">✓</span>}
@@ -1211,7 +1211,7 @@ function SingleViewContent() {
                           <input autoFocus value={newFolderName} onChange={(e) => setNewFolderName(e.target.value)} placeholder={t("v.folderName")} className="w-full rounded-md border border-border bg-white dark:bg-zinc-800 text-foreground px-2 py-1 text-xs outline-none" />
                         </form>
                       ) : (
-                        <button type="button" onClick={() => setNewFolderMode(true)} className="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-950/40 cursor-pointer border-t border-border mt-1">{t("v.newFolder")}</button>
+                        <button type="button" onClick={() => setNewFolderMode(true)} className="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-[#6B9A35] dark:text-[#A8D666] hover:bg-[#89BD49]/10 dark:hover:bg-[#89BD49]/20 cursor-pointer border-t border-border mt-1">{t("v.newFolder")}</button>
                       )}
                     </div>
                   )}
@@ -1220,7 +1220,7 @@ function SingleViewContent() {
               <button
                 type="button"
                 onClick={handleCopyLink}
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-indigo-600 px-3 sm:px-3.5 py-1.5 sm:py-2 text-xs font-semibold text-white shadow-xs hover:bg-indigo-700 transition cursor-pointer"
+                className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#89BD49] px-3 sm:px-3.5 py-1.5 sm:py-2 text-xs font-semibold text-white shadow-xs shadow-[#89BD49]/25 hover:bg-[#6B9A35] transition cursor-pointer"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/icons/link-white.svg" alt="" className="h-4 w-4 shrink-0" />
@@ -1247,7 +1247,7 @@ function SingleViewContent() {
               </Link>
               <Link
                 href="/"
-                className="px-3 sm:px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-xs font-semibold text-white transition-all shadow-xs active:scale-95"
+                className="px-3 sm:px-3.5 py-1.5 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] text-xs font-semibold text-white transition-all shadow-xs shadow-[#89BD49]/25 active:scale-95"
               >
                 {t("login.backToHome")}
               </Link>
@@ -1273,7 +1273,7 @@ function SingleViewContent() {
                 </svg>
               </div>
 
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase bg-slate-100 dark:bg-zinc-800 text-muted mb-3 border border-border/60">
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase bg-slate-100 dark:bg-zinc-800 text-muted mb-3 border border-border/60">
                 404 • Not Found
               </span>
 
@@ -1287,7 +1287,7 @@ function SingleViewContent() {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full">
                 <Link
                   href={isTeamMember ? "/captures" : "/"}
-                  className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-md shadow-indigo-600/20 hover:shadow-lg transition-all"
+                  className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-md shadow-[#89BD49]/20 hover:shadow-lg transition-all"
                 >
                   <span>{isTeamMember ? t("v.backToDashboard") : t("login.backToHome")}</span>
                 </Link>
@@ -1309,7 +1309,7 @@ function SingleViewContent() {
                 </svg>
               </div>
 
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 mb-3 border border-red-200/60 dark:border-red-900/60">
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 mb-3 border border-red-200/60 dark:border-red-900/60">
                 Expired
               </span>
 
@@ -1323,7 +1323,7 @@ function SingleViewContent() {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full">
                 <Link
                   href="/"
-                  className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-md shadow-indigo-600/20 hover:shadow-lg transition-all"
+                  className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-md shadow-[#89BD49]/20 hover:shadow-lg transition-all"
                 >
                   <span>{t("login.backToHome")}</span>
                 </Link>
@@ -1345,7 +1345,7 @@ function SingleViewContent() {
                 </svg>
               </div>
 
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 mb-3 border border-red-200/60 dark:border-red-900/60">
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 mb-3 border border-red-200/60 dark:border-red-900/60">
                 IP Restricted
               </span>
 
@@ -1358,7 +1358,7 @@ function SingleViewContent() {
 
               <Link
                 href="/"
-                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-md shadow-indigo-600/20 transition-all"
+                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-md shadow-[#89BD49]/20 transition-all"
               >
                 <span>{t("login.backToHome")}</span>
               </Link>
@@ -1367,13 +1367,13 @@ function SingleViewContent() {
 
           {status === "needs_login" && (
             <div className="relative w-full max-w-md mx-auto rounded-3xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle/80 backdrop-blur-xl shadow-2xl shadow-slate-200/60 dark:shadow-none p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
-              <div className="relative mx-auto mb-5 flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200/60 dark:border-indigo-900/50 text-indigo-600 dark:text-indigo-400 shadow-xs">
+              <div className="relative mx-auto mb-5 flex items-center justify-center w-16 h-16 rounded-2xl bg-[#89BD49]/10 dark:bg-[#89BD49]/20 border border-[#89BD49]/30 dark:border-[#89BD49]/40 text-[#6B9A35] dark:text-[#A8D666] shadow-xs">
                 <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                 </svg>
               </div>
 
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase bg-indigo-50 dark:bg-indigo-950/50 text-indigo-600 dark:text-indigo-400 mb-3 border border-indigo-200/60 dark:border-indigo-900/60">
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] mb-3 border border-[#89BD49]/30 dark:border-[#89BD49]/40">
                 Members Only
               </span>
 
@@ -1387,7 +1387,7 @@ function SingleViewContent() {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full">
                 <a
                   href="/login"
-                  className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-md shadow-indigo-600/20 hover:shadow-lg transition-all"
+                  className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-md shadow-[#89BD49]/20 hover:shadow-lg transition-all"
                 >
                   <span>{t("v.signIn")}</span>
                 </a>
@@ -1409,7 +1409,7 @@ function SingleViewContent() {
                 </svg>
               </div>
 
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 mb-3 border border-red-200/60 dark:border-red-900/60">
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 mb-3 border border-red-200/60 dark:border-red-900/60">
                 Domain Restricted
               </span>
 
@@ -1422,7 +1422,7 @@ function SingleViewContent() {
 
               <Link
                 href="/"
-                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-md shadow-indigo-600/20 transition-all"
+                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-md shadow-[#89BD49]/20 transition-all"
               >
                 <span>{t("login.backToHome")}</span>
               </Link>
@@ -1431,13 +1431,13 @@ function SingleViewContent() {
 
           {status === "locked" && (
             <div className="relative w-full max-w-md mx-auto rounded-3xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle/80 backdrop-blur-xl shadow-2xl shadow-slate-200/60 dark:shadow-none p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
-              <div className="relative mx-auto mb-5 flex items-center justify-center w-16 h-16 rounded-2xl bg-indigo-50 dark:bg-indigo-950/40 border border-indigo-200/60 dark:border-indigo-900/50 text-indigo-600 dark:text-indigo-400 shadow-xs">
+              <div className="relative mx-auto mb-5 flex items-center justify-center w-16 h-16 rounded-2xl bg-[#89BD49]/10 dark:bg-[#89BD49]/20 border border-[#89BD49]/30 dark:border-[#89BD49]/40 text-[#6B9A35] dark:text-[#A8D666] shadow-xs">
                 <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
                 </svg>
               </div>
 
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-[11px] font-bold tracking-wide uppercase bg-slate-100 dark:bg-zinc-800 text-muted mb-3 border border-border/60">
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase bg-slate-100 dark:bg-zinc-800 text-muted mb-3 border border-border/60">
                 Protected
               </span>
 
@@ -1455,7 +1455,7 @@ function SingleViewContent() {
                     value={passwordInput}
                     onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(false); }}
                     placeholder={t("v.passwordPlaceholder")}
-                    className={`w-full text-sm rounded-xl border px-4 py-3 outline-none bg-subtle text-foreground placeholder:text-muted transition-all ${passwordError ? "border-red-500 focus:ring-2 focus:ring-red-500/20" : "border-border focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"}`}
+                    className={`w-full text-sm rounded-xl border px-4 py-3 outline-none bg-subtle text-foreground placeholder:text-muted transition-all ${passwordError ? "border-red-500 focus:ring-2 focus:ring-red-500/20" : "border-border focus:border-[#89BD49] focus:ring-2 focus:ring-[#89BD49]/20"}`}
                   />
                 </div>
                 {passwordError && (
@@ -1466,7 +1466,7 @@ function SingleViewContent() {
                 <button
                   type="submit"
                   disabled={checkingPassword || !passwordInput.trim()}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 py-3 text-sm font-semibold text-white shadow-md shadow-indigo-600/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] active:scale-95 py-3 text-sm font-semibold text-white shadow-md shadow-[#89BD49]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {checkingPassword ? (
                     <>
@@ -1525,7 +1525,7 @@ function SingleViewContent() {
                     title={isTeamMember ? "Click to edit capture details" : undefined}
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <h2 className="text-lg font-bold text-foreground group-hover:text-indigo-600 transition-colors">
+                      <h2 className="text-lg font-bold text-foreground group-hover:text-[#6B9A35] dark:group-hover:text-[#A8D666] transition-colors">
                         {capture.title}
                       </h2>
                       {isTeamMember && (
@@ -1547,13 +1547,13 @@ function SingleViewContent() {
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 px-2.5 py-1 font-medium text-indigo-600 hover:bg-indigo-100 transition-colors"
+                          className="inline-flex items-center gap-1.5 rounded-md border border-[#89BD49]/30 bg-[#89BD49]/10 px-2.5 py-1 font-medium text-[#6B9A35] dark:text-[#A8D666] hover:bg-[#89BD49]/20 transition-colors"
                         >
                           <WebsiteFavicon url={capture.site_url} className="h-3.5 w-3.5 rounded-sm object-contain shrink-0" />
                           <span>{hostnameOf(capture.site_url)}</span>
                         </a>
                       ) : capture.site_url ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-100 bg-indigo-50 px-2.5 py-1 font-medium text-indigo-600">
+                        <span className="inline-flex items-center gap-1.5 rounded-md border border-[#89BD49]/30 bg-[#89BD49]/10 px-2.5 py-1 font-medium text-[#6B9A35] dark:text-[#A8D666]">
                           <span>{capture.site_url}</span>
                         </span>
                       ) : null}
@@ -1588,13 +1588,13 @@ function SingleViewContent() {
                   <div>
                     <h3 className="mb-4 text-base font-bold text-foreground">{t("v.shareCapture")}</h3>
                     <div className="grid grid-cols-2 gap-3 sm:gap-5 text-center">
-                      <button type="button" onClick={() => setShareType("devtools")} className={`rounded-lg border p-3 sm:p-4 text-xs font-semibold ${shareType === "devtools" ? "border-indigo-500 text-indigo-600" : "border-border text-muted hover:text-foreground"}`}>
-                        <div className="mx-auto mb-2 sm:mb-3 flex h-10 sm:h-12 w-16 sm:w-20 items-center justify-center rounded-md border border-indigo-100 bg-indigo-50 text-indigo-500 text-xs sm:text-sm">▷ ▯</div>
+                      <button type="button" onClick={() => setShareType("devtools")} className={`rounded-lg border p-3 sm:p-4 text-xs font-semibold ${shareType === "devtools" ? "border-[#89BD49] text-[#6B9A35] dark:text-[#A8D666]" : "border-border text-muted hover:text-foreground"}`}>
+                        <div className="mx-auto mb-2 sm:mb-3 flex h-10 sm:h-12 w-16 sm:w-20 items-center justify-center rounded-md border border-[#89BD49]/30 bg-[#89BD49]/10 text-[#6B9A35] dark:text-[#A8D666] text-xs sm:text-sm">▷ ▯</div>
                         <span>{t("v.withDevTools")}</span>
                         <p className="mt-1 text-[10px] font-normal text-muted">{t("v.withDevToolsHint")}</p>
                       </button>
-                      <button type="button" onClick={() => setShareType("content")} className={`rounded-lg border p-3 sm:p-4 text-xs font-semibold ${shareType === "content" ? "border-indigo-500 text-indigo-600" : "border-border text-muted hover:text-foreground"}`}>
-                        <div className="mx-auto mb-2 sm:mb-3 flex h-10 sm:h-12 w-16 sm:w-20 items-center justify-center rounded-md border border-indigo-100 bg-indigo-50 text-indigo-500 text-xs sm:text-sm">▷</div>
+                      <button type="button" onClick={() => setShareType("content")} className={`rounded-lg border p-3 sm:p-4 text-xs font-semibold ${shareType === "content" ? "border-[#89BD49] text-[#6B9A35] dark:text-[#A8D666]" : "border-border text-muted hover:text-foreground"}`}>
+                        <div className="mx-auto mb-2 sm:mb-3 flex h-10 sm:h-12 w-16 sm:w-20 items-center justify-center rounded-md border border-[#89BD49]/30 bg-[#89BD49]/10 text-[#6B9A35] dark:text-[#A8D666] text-xs sm:text-sm">▷</div>
                         <span>{t("v.contentOnly")}</span>
                         <p className="mt-1 text-[10px] font-normal text-muted">{t("v.contentOnlyHint")}</p>
                       </button>
@@ -1616,7 +1616,7 @@ function SingleViewContent() {
                     </div>
                   </div>
                   <div className="mt-6 pt-2">
-                    <button type="button" onClick={handleCopyLink} className="flex w-full items-center justify-center gap-2 rounded-lg bg-indigo-600 py-3 text-sm font-semibold text-white shadow-sm hover:bg-indigo-700">
+                    <button type="button" onClick={handleCopyLink} className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] py-3 text-sm font-semibold text-white shadow-xs shadow-[#89BD49]/25">
                       <img src="/icons/link-white.svg" alt="" className="h-4 w-4" />
                       {copied ? t("v.copiedLink") : t("v.copyLinkBtn")}
                     </button>
@@ -1624,7 +1624,7 @@ function SingleViewContent() {
                       <button
                         type="button"
                         onClick={handleDeleteCapture}
-                        className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 dark:border-red-900/60 bg-white dark:bg-red-950/20 py-2.5 text-xs font-semibold text-red-600 dark:text-red-400 shadow-sm hover:bg-red-50 dark:hover:bg-red-950/40 hover:border-red-300 transition-colors"
+                        className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 dark:border-red-900/60 bg-white dark:bg-red-950/20 py-2.5 text-xs font-semibold text-red-600 dark:text-red-400 shadow-sm hover:bg-red-50 dark:hover:bg-red-950/40 hover:border-red-300 dark:hover:border-red-800 transition-colors"
                       >
                         <img src="/icons/trash.svg" alt="" className="h-3.5 w-3.5" />
                         {t("v.deleteCapture")}
@@ -1709,11 +1709,11 @@ function SingleViewContent() {
                   <p className="text-[10px] text-muted mt-1">{t("v.ipsHint")}</p>
                 </div>
               </div>
-              {editError && <p className="text-xs text-red-600">{editError}</p>}
+              {editError && <p className="text-xs text-red-600 dark:text-red-400">{editError}</p>}
             </div>
             <div className="flex justify-end gap-2 mt-6 pt-4 border-t border-border">
               <button onClick={() => setEditModalOpen(false)} className="px-4 py-2 text-xs font-medium text-muted hover:text-foreground">{t("common.cancel")}</button>
-              <button onClick={handleSaveEdit} disabled={savingEdit} className="px-4 py-2 text-xs font-semibold bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 min-w-[125px] inline-flex items-center justify-center gap-1.5">
+              <button onClick={handleSaveEdit} disabled={savingEdit} className="px-4 py-2 text-xs font-semibold bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-xs shadow-[#89BD49]/25 rounded-lg disabled:opacity-50 min-w-[125px] inline-flex items-center justify-center gap-1.5">
                 {savingEdit ? (
                   <>
                     <svg className="w-3.5 h-3.5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
@@ -1737,7 +1737,7 @@ function SingleViewContent() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => { if (!deletingCapture) { setDeleteCaptureModalOpen(false); setDeleteOperationId(null); } }} />
           <div className="relative w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-xl bg-white dark:bg-zinc-900 shadow-xl border border-border p-6 text-center">
-            <div className="mx-auto mb-4 w-12 h-12 rounded-full bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 flex items-center justify-center text-red-600 dark:text-red-400">
+            <div className="mx-auto mb-4 w-12 h-12 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 flex items-center justify-center text-red-600 dark:text-red-400">
               <img src="/icons/trash.svg" alt="" className="w-6 h-6" />
             </div>
             <h2 className="text-lg font-bold text-foreground mb-2">{t("v.deleteCaptureQ")}</h2>
@@ -1755,8 +1755,8 @@ function SingleViewContent() {
                 <span><span className="block text-xs font-semibold text-foreground">{t("v.BugSnapOnly")}</span><span className="block text-[11px] text-muted mt-0.5">{t("v.BugSnapOnlyHint")}</span></span>
               </label>
             </fieldset>
-            {driveIssue && <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg p-2 mb-3 flex items-center justify-between gap-3"><span>{driveIssue === "reconnect_required" ? t("cap.driveReconnectRequired") : t("v.driveNotConnected")}</span><button type="button" onClick={() => void startDriveConnect()} className="font-semibold text-indigo-600 hover:underline">{driveIssue === "reconnect_required" ? t("cap.reconnectDrive") : t("cap.connectDrive")}</button></div>}
-            {deleteCaptureError && <p role="alert" className="text-xs text-red-600 mb-3">{deleteCaptureError}</p>}
+            {driveIssue && <div className="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-lg p-2 mb-3 flex items-center justify-between gap-3"><span>{driveIssue === "reconnect_required" ? t("cap.driveReconnectRequired") : t("v.driveNotConnected")}</span><button type="button" onClick={() => void startDriveConnect()} className="font-semibold text-[#6B9A35] dark:text-[#A8D666] hover:underline">{driveIssue === "reconnect_required" ? t("cap.reconnectDrive") : t("cap.connectDrive")}</button></div>}
+            {deleteCaptureError && <p role="alert" className="text-xs text-red-600 dark:text-red-400 mb-3">{deleteCaptureError}</p>}
             
             <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
               <button

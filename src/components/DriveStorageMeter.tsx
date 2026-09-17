@@ -99,7 +99,7 @@ export default function DriveStorageMeter() {
     ? "bg-red-500 dark:bg-red-400"
     : isWarning
     ? "bg-amber-500 dark:bg-amber-400"
-    : "bg-indigo-600 dark:bg-indigo-500";
+    : "bg-[#89BD49]";
 
   return (
     <div className="p-3 mx-2 mb-2 rounded-xl border border-border bg-subtle shadow-xs space-y-2 text-xs">
@@ -139,7 +139,7 @@ export default function DriveStorageMeter() {
         </span>
         <Link
           href="/settings"
-          className="text-indigo-600 dark:text-indigo-400 hover:underline font-medium shrink-0 ml-1"
+          className="text-[#6B9A35] dark:text-[#A8D666] hover:underline font-medium shrink-0 ml-1"
         >
           {t("drive.manage")}
         </Link>

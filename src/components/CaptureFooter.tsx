@@ -19,7 +19,7 @@ function BrowserIllustration({ className = "w-28 h-20 shrink-0" }: { className?:
       aria-hidden="true"
     >
       {/* Background Soft Glow */}
-      <ellipse cx="70" cy="52" rx="46" ry="32" fill="#6366F1" fillOpacity="0.08" />
+      <ellipse cx="70" cy="52" rx="46" ry="32" fill="#89BD49" fillOpacity="0.12" />
 
       {/* Main Browser Window */}
       <g filter="drop-shadow(0 4px 10px rgba(15, 23, 42, 0.08))">
@@ -49,33 +49,33 @@ function BrowserIllustration({ className = "w-28 h-20 shrink-0" }: { className?:
       </g>
 
       {/* Overlapping Floating BugSnap Card Badge */}
-      <g filter="drop-shadow(0 6px 14px rgba(99, 102, 241, 0.28))">
+      <g filter="drop-shadow(0 6px 14px rgba(137, 189, 73, 0.25))">
         <rect
           x="88"
           y="22"
           width="42"
           height="42"
           rx="10"
-          className="fill-white dark:fill-zinc-800 stroke-indigo-200 dark:stroke-indigo-800/80"
+          className="fill-white dark:fill-zinc-800 stroke-[#89BD49]/30 dark:stroke-[#89BD49]/40"
           strokeWidth="1.5"
         />
         {/* BugSnap Icon on Badge */}
         <g transform="translate(98, 32) scale(0.9)">
-          <circle cx="12" cy="12" r="10.5" fill="#6366F1" fillOpacity="0.12" />
-          <circle cx="12" cy="12" r="6" stroke="#6366F1" strokeWidth="2" />
-          <circle cx="12" cy="12" r="2.5" fill="#6366F1" />
+          <circle cx="12" cy="12" r="10.5" fill="#89BD49" fillOpacity="0.15" />
+          <circle cx="12" cy="12" r="6" stroke="#89BD49" strokeWidth="2" />
+          <circle cx="12" cy="12" r="2.5" fill="#89BD49" />
           {/* Subtle Antennae */}
-          <line x1="12" y1="1" x2="12" y2="4.5" stroke="#6366F1" strokeWidth="1.8" strokeLinecap="round" />
-          <line x1="12" y1="19.5" x2="12" y2="23" stroke="#6366F1" strokeWidth="1.8" strokeLinecap="round" />
-          <line x1="1" y1="12" x2="4.5" y2="12" stroke="#6366F1" strokeWidth="1.8" strokeLinecap="round" />
-          <line x1="19.5" y1="12" x2="23" y2="12" stroke="#6366F1" strokeWidth="1.8" strokeLinecap="round" />
+          <line x1="12" y1="1" x2="12" y2="4.5" stroke="#89BD49" strokeWidth="1.8" strokeLinecap="round" />
+          <line x1="12" y1="19.5" x2="12" y2="23" stroke="#89BD49" strokeWidth="1.8" strokeLinecap="round" />
+          <line x1="1" y1="12" x2="4.5" y2="12" stroke="#89BD49" strokeWidth="1.8" strokeLinecap="round" />
+          <line x1="19.5" y1="12" x2="23" y2="12" stroke="#89BD49" strokeWidth="1.8" strokeLinecap="round" />
         </g>
       </g>
 
       {/* Dynamic Sparkle / Accent Rays (Top-Right of BugSnap Badge) */}
-      <path d="M136 18L142 14" stroke="#818CF8" strokeWidth="2" strokeLinecap="round" />
-      <path d="M141 26L147 25" stroke="#818CF8" strokeWidth="2" strokeLinecap="round" />
-      <path d="M131 10L132 4" stroke="#818CF8" strokeWidth="2" strokeLinecap="round" />
+      <path d="M136 18L142 14" stroke="#A8D666" strokeWidth="2" strokeLinecap="round" />
+      <path d="M141 26L147 25" stroke="#A8D666" strokeWidth="2" strokeLinecap="round" />
+      <path d="M131 10L132 4" stroke="#A8D666" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }
@@ -101,7 +101,7 @@ export default function CaptureFooter({ className = "" }: { className?: string }
                 href="https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-xs font-semibold shadow-xs hover:shadow-md transition-all duration-150 w-fit mt-2.5 group"
+                className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] active:scale-95 text-white text-xs font-semibold shadow-xs hover:shadow-md shadow-[#89BD49]/25 transition-all duration-150 w-fit mt-2.5 group"
                 title={t("footer.addToChrome")}
               >
                 <ChromeLogo className="w-3.5 h-3.5 shrink-0" />

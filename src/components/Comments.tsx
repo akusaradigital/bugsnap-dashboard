@@ -9,7 +9,7 @@ import { useT } from "@/components/I18nProvider";
 const COLLAPSE_AFTER = 5;
 const REPLIES_COLLAPSE_AFTER = 3;
 
-const TURNSTILE_SITEKEY = "0x4AAAAAAEKHTA3AvZpK27ig";
+const TURNSTILE_SITEKEY = process.env.NEXT_PUBLIC_TURNSTILE_SITEKEY ?? "0x4AAAAAAEKHTA3AvZpK27ig";
 const TURNSTILE_WORKER = "https://turnstile-siteverify-bugsnap.akusaraproject.workers.dev";
 
 declare global {
@@ -60,12 +60,12 @@ interface CommentsProps {
 }
 
 const AVATAR_COLORS = [
-  "bg-indigo-100 text-indigo-700",
+  "bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666]",
   "bg-emerald-100 text-emerald-700",
   "bg-amber-100 text-amber-700",
   "bg-rose-100 text-rose-700",
   "bg-sky-100 text-sky-700",
-  "bg-violet-100 text-violet-700",
+  "bg-teal-100 text-teal-700",
 ];
 
 function avatarColor(seed: string): string {
@@ -132,8 +132,9 @@ export default function Comments({
   const widgetIdRef = useRef<string | null>(null);
 
   // Load the Turnstile script once, then render the widget.
+  // Skip entirely for authenticated users — they bypass bot check.
   useEffect(() => {
-    if (!turnstileRef.current) return;
+    if (!turnstileRef.current || authorEmail) return;
     let cancelled = false;
 
     const renderWidget = () => {
@@ -479,7 +480,7 @@ export default function Comments({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="flex h-5 w-5 items-center justify-center rounded-md bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-400">
+          <div className="flex h-5 w-5 items-center justify-center rounded-md bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666]">
             <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z" />
             </svg>
@@ -487,19 +488,21 @@ export default function Comments({
           <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">
             {t("cm.comments") || "Comments"}
           </h3>
-          <span className="rounded-full bg-subtle px-1.5 py-0.2 text-[10px] font-semibold text-muted">
+          <span className="rounded-md bg-subtle px-1.5 py-0.2 text-[10px] font-semibold text-muted">
             {comments.length}
           </span>
         </div>
       </div>
 
-      {/* Invisible Turnstile container positioned offscreen so execution is not blocked by display:none */}
-      <div
-        ref={turnstileRef}
-        style={{ position: "absolute", left: "-9999px", top: "-9999px", width: "1px", height: "1px", opacity: 0, pointerEvents: "none" }}
-        data-action="turnstile-spin-v1"
-        aria-hidden="true"
-      />
+      {/* Invisible Turnstile container — only for anonymous/public viewers */}
+      {!authorEmail && (
+        <div
+          ref={turnstileRef}
+          style={{ position: "absolute", left: "-9999px", top: "-9999px", width: "1px", height: "1px", opacity: 0, pointerEvents: "none" }}
+          data-action="turnstile-spin-v1"
+          aria-hidden="true"
+        />
+      )}
 
       {/* List */}
       <div className="space-y-2.5">
@@ -526,7 +529,7 @@ export default function Comments({
                 <button
                   type="button"
                   onClick={() => setShowAllComments(true)}
-                  className="w-full rounded-lg border border-dashed border-border/70 py-2 text-[11px] font-semibold text-muted hover:text-indigo-600 hover:border-indigo-300 transition-colors"
+                  className="w-full rounded-lg border border-dashed border-border/70 py-2 text-[11px] font-semibold text-muted hover:text-[#6B9A35] hover:border-[#89BD49]/40 transition-colors"
                 >
                   {t("cm.showPrevious", { count: hiddenCount })}
                 </button>
@@ -562,7 +565,7 @@ export default function Comments({
                           data-comment-id={c.id}
                           className={`rounded-xl border bg-white dark:bg-zinc-900/60 p-3.5 shadow-xs transition-all ${
                             highlightId === c.id
-                              ? "border-indigo-500 ring-2 ring-indigo-500/20"
+                              ? "border-[#89BD49] ring-2 ring-[#89BD49]/20"
                               : "border-border/70 hover:border-border"
                           }`}
                         >
@@ -570,7 +573,7 @@ export default function Comments({
                             <div className="flex items-center gap-1.5 flex-wrap">
                               <span className="text-xs font-bold text-foreground">{name}</span>
                               {isCurrentUser && (
-                                <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-[9px] font-semibold text-indigo-600 border border-indigo-100 dark:bg-indigo-950/60 dark:border-indigo-800 dark:text-indigo-300">
+                                <span className="rounded-md bg-[#89BD49]/10 px-2 py-0.5 text-[9px] font-semibold text-[#6B9A35] border border-[#89BD49]/20 dark:bg-[#89BD49]/15 dark:border-[#89BD49]/30 dark:text-[#A8D666]">
                                   You
                                 </span>
                               )}
@@ -579,7 +582,7 @@ export default function Comments({
                                   type="button"
                                   onClick={() => onSeek?.(ts)}
                                   title={t("cm.jumpTo", { time: formatTimestamp(ts) })}
-                                  className="inline-flex items-center gap-1 rounded-md bg-indigo-50 px-1.5 py-0.5 text-[10px] font-mono font-semibold text-indigo-600 border border-indigo-100 hover:bg-indigo-100 dark:bg-indigo-950 dark:text-indigo-300 transition-colors"
+                                  className="inline-flex items-center gap-1 rounded-md bg-[#89BD49]/10 px-1.5 py-0.5 text-[10px] font-mono font-semibold text-[#6B9A35] border border-[#89BD49]/20 hover:bg-[#89BD49]/20 dark:bg-[#89BD49]/15 dark:text-[#A8D666] transition-colors"
                                 >
                                   <svg className="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                     <circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" />
@@ -601,7 +604,7 @@ export default function Comments({
                             <button
                               type="button"
                               onClick={() => setReplyingTo(replyingTo === c.id ? null : c.id)}
-                              className="inline-flex items-center gap-1 text-[11px] font-medium text-muted hover:text-indigo-600 transition-colors"
+                              className="inline-flex items-center gap-1 text-[11px] font-medium text-muted hover:text-[#6B9A35] transition-colors"
                             >
                               <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path d="m9 14-4-4 4-4"/><path d="M5 10h11a4 4 0 1 1 0 8h-1"/>
@@ -613,7 +616,7 @@ export default function Comments({
 
                         {/* Reply Composer */}
                         {replyingTo === c.id && (
-                          <div className="mt-2.5 flex items-center gap-2 pl-3 border-l-2 border-indigo-500/50">
+                          <div className="mt-2.5 flex items-center gap-2 pl-3 border-l-2 border-[#89BD49]/50">
                             <input
                               value={replyBody}
                               onChange={(e) => setReplyBody(e.target.value)}
@@ -624,14 +627,14 @@ export default function Comments({
                                 }
                               }}
                               placeholder={t("cm.replyTo", { name }) || `Reply to ${name}...`}
-                              className="flex-1 text-xs rounded-lg border border-border px-3 py-2 outline-none focus:border-indigo-500 bg-white dark:bg-zinc-900 shadow-xs"
+                              className="flex-1 text-xs rounded-lg border border-border px-3 py-2 outline-none focus:border-[#89BD49] bg-white dark:bg-zinc-900 shadow-xs"
                               autoFocus
                             />
                             <button
                               type="button"
                               onClick={() => handleReply(c.id)}
                               disabled={replying || !replyBody.trim()}
-                              className="px-3 py-2 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700 disabled:opacity-40 transition-colors shrink-0"
+                              className="px-3 py-2 rounded-lg bg-[#89BD49] text-white text-xs font-semibold hover:bg-[#6B9A35] shadow-xs shadow-[#89BD49]/25 disabled:opacity-40 transition-colors shrink-0"
                             >
                               {replying ? (t("cm.posting") || "...") : (t("cm.reply") || "Reply")}
                             </button>
@@ -652,7 +655,7 @@ export default function Comments({
                               <button
                                 type="button"
                                 onClick={() => setExpandedReplies((prev) => [...prev, c.id])}
-                                className="text-[11px] font-semibold text-muted hover:text-indigo-600 transition-colors"
+                                className="text-[11px] font-semibold text-muted hover:text-[#6B9A35] transition-colors"
                               >
                                 {t("cm.showReplies", { count: hiddenReplies })}
                               </button>
@@ -677,7 +680,7 @@ export default function Comments({
                                     data-comment-id={r.id}
                                     className={`flex-1 min-w-0 rounded-lg border bg-subtle/30 dark:bg-zinc-900/40 p-2.5 transition-all ${
                                       highlightId === r.id
-                                        ? "border-indigo-500 ring-2 ring-indigo-500/20"
+                                        ? "border-[#89BD49] ring-2 ring-[#89BD49]/20"
                                         : "border-border/50"
                                     }`}
                                   >
@@ -685,7 +688,7 @@ export default function Comments({
                                       <div className="flex items-center gap-1.5">
                                         <span className="text-xs font-semibold text-foreground">{rName}</span>
                                         {isReplyUser && (
-                                          <span className="rounded-full bg-indigo-50 px-1.5 py-0.5 text-[8px] font-semibold text-indigo-600 border border-indigo-100">
+                                          <span className="rounded-md bg-[#89BD49]/10 px-1.5 py-0.5 text-[8px] font-semibold text-[#6B9A35] border border-[#89BD49]/20 dark:bg-[#89BD49]/15 dark:border-[#89BD49]/30 dark:text-[#A8D666]">
                                             You
                                           </span>
                                         )}
@@ -718,7 +721,7 @@ export default function Comments({
           {effAuthorName.charAt(0).toUpperCase()}
         </div>
 
-        <div className="flex-1 min-w-0 rounded-xl border border-border bg-white dark:bg-zinc-950 shadow-xs transition-all focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-500/10 overflow-hidden">
+        <div className="flex-1 min-w-0 rounded-xl border border-border bg-white dark:bg-zinc-950 shadow-xs transition-all focus-within:border-[#89BD49] focus-within:ring-2 focus-within:ring-[#89BD49]/15 overflow-hidden">
           <textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
@@ -741,7 +744,7 @@ export default function Comments({
                   onClick={() => setTimestampOn(!timestampOn)}
                   className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-[10px] font-medium transition-colors ${
                     timestampOn
-                      ? "bg-indigo-100 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300 font-mono font-semibold"
+                      ? "bg-[#89BD49]/15 text-[#6B9A35] dark:bg-[#89BD49]/20 dark:text-[#A8D666] font-mono font-semibold"
                       : "text-muted hover:bg-subtle hover:text-foreground"
                   }`}
                   title={t("cm.atVideoTime") || "Link comment to video timestamp"}
@@ -770,14 +773,14 @@ export default function Comments({
             </div>
 
             <div className="flex items-center gap-2 ml-auto">
-              {error && <span className="text-[11px] text-red-600 font-medium">{error}</span>}
-              {cfError && !error && <span className="text-[11px] text-red-600 font-medium">{cfError}</span>}
+              {error && <span className="text-[11px] text-red-600 dark:text-red-400 font-medium">{error}</span>}
+              {cfError && !error && <span className="text-[11px] text-red-600 dark:text-red-400 font-medium">{cfError}</span>}
 
               <button
                 type="button"
                 onClick={handleSubmit}
                 disabled={submitting || cfVerifying || !body.trim()}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-indigo-600 px-3 py-1 text-xs font-semibold text-white shadow-xs hover:bg-indigo-700 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-[#89BD49] px-3 py-1 text-xs font-semibold text-white shadow-xs shadow-[#89BD49]/25 hover:bg-[#6B9A35] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               >
                 {submitting || cfVerifying ? (
                   <>

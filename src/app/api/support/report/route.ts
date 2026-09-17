@@ -135,7 +135,7 @@ export async function POST(req: Request) {
 
     const categoryLabels: Record<string, { label: string; badge: string; color: string }> = {
       bug: { label: "Laporan Bug (Bug Report)", badge: "🐛 BUG", color: "#dc2626" },
-      feature: { label: "Request Fitur Baru (New Feature)", badge: "💡 FITUR", color: "#7c3aed" },
+      feature: { label: "Request Fitur Baru (New Feature)", badge: "💡 FITUR", color: "#6B9A35" },
       other: { label: "Pertanyaan / Lain-lain (General)", badge: "💬 SUPPORT", color: "#2563eb" },
     };
 
@@ -177,13 +177,13 @@ export async function POST(req: Request) {
           <div style="background: #f1f5f9; border-radius: 8px; padding: 12px 16px; font-size: 12px; color: #475569; line-height: 1.6;">
             <div><strong>Pengirim:</strong> ${escapeHtml(userEmail)}</div>
             ${authUser?.plan ? `<div><strong>Paket User:</strong> ${escapeHtml(authUser.plan)}</div>` : ""}
-            ${pageUrl ? `<div><strong>Halaman:</strong> <a href="${escapeHtml(pageUrl)}" style="color: #4f46e5;">${escapeHtml(pageUrl)}</a></div>` : ""}
+            ${pageUrl ? `<div><strong>Halaman:</strong> <a href="${escapeHtml(pageUrl)}" style="color: #4d7c0f;">${escapeHtml(pageUrl)}</a></div>` : ""}
             ${userAgent ? `<div style="word-break: break-all;"><strong>Browser:</strong> ${escapeHtml(userAgent)}</div>` : ""}
             <div><strong>Waktu:</strong> ${new Date().toLocaleString("id-ID", { timeZone: "Asia/Jakarta" })} WIB</div>
           </div>
 
           <div style="margin-top: 24px; text-align: center;">
-            <a href="mailto:${encodeURIComponent(userEmail)}?subject=Re: ${encodeURIComponent(finalSubject)}" style="display: inline-block; background: #4f46e5; color: #ffffff; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 600;">
+            <a href="mailto:${encodeURIComponent(userEmail)}?subject=Re: ${encodeURIComponent(finalSubject)}" style="display: inline-block; background: #89BD49; color: #ffffff; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 600;">
               Balas ke ${escapeHtml(userEmail)}
             </a>
           </div>
