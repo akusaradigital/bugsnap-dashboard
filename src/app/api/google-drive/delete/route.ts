@@ -42,6 +42,21 @@ export async function POST(request: Request) {
     }
   }
 
+  // A capture's file lives in the Drive of whoever created it, not whoever is
+  // deleting it. A workspace owner clearing out a member's capture was sending
+  // their own token at someone else's file - Google answers 404 or 403 and the
+  // file was orphaned (or the whole delete hard-failed). Resolve per creator,
+  // cached so a 100-capture batch from one member costs one token fetch.
+  const tokenCache = new Map<string, string | null>([[user.id, accessToken]]);
+  const tokenFor = async (ownerId: string | null): Promise<string | null> => {
+    if (!ownerId) return accessToken;
+    const hit = tokenCache.get(ownerId);
+    if (hit !== undefined) return hit;
+    const token = await driveAccessToken(ownerId).catch(() => null);
+    tokenCache.set(ownerId, token);
+    return token ?? accessToken;
+  };
+
   const results: Result[] = [];
   const captureIdList = ids as string[];
 
@@ -55,6 +70,9 @@ export async function POST(request: Request) {
 
       let fileId: string | null = null;
       let trashed = false;
+      // Whichever token actually trashed the file is the one that has to untrash
+      // it if the DB delete then fails.
+      let fileToken: string | null = accessToken;
       try {
         if (mode === "drive_trash") {
           const { data, error } = await db.from("captures")
@@ -69,9 +87,10 @@ export async function POST(request: Request) {
           if (!isOwner && !isCreator) throw new Error("Not found or not owned");
 
           fileId = capture.drive_file_id ?? parseDriveFileId(capture.drive_url);
-          if (fileId && accessToken) {
+          fileToken = await tokenFor(capture.user_id);
+          if (fileId && fileToken) {
             try {
-              await trashDriveFile(accessToken, fileId);
+              await trashDriveFile(fileToken, fileId);
               trashed = true;
             } catch (driveErr: unknown) {
               const msg = driveErr instanceof Error ? driveErr.message : String(driveErr);
@@ -87,8 +106,8 @@ export async function POST(request: Request) {
             const logs = capture.dev_logs as Record<string, unknown>;
             devLogsFileId = (typeof logs.driveFileId === "string" ? logs.driveFileId : null) ?? parseDriveFileId(typeof logs.driveUrl === "string" ? logs.driveUrl : null);
           }
-          if (devLogsFileId && accessToken) {
-            try { await trashDriveFile(accessToken, devLogsFileId); } catch {}
+          if (devLogsFileId && fileToken) {
+            try { await trashDriveFile(fileToken, devLogsFileId); } catch {}
           }
         }
 
@@ -104,7 +123,7 @@ export async function POST(request: Request) {
         const enriched: Result = { ...result, driveOutcome: mode === "drive_trash" ? (trashed ? "trashed" : "kept") : "kept" };
         if (!enriched.ok && trashed) {
           const deleteError = new Error(enriched.error ?? "Database deletion failed");
-          try { await untrashDriveFile(accessToken!, fileId!); enriched.error = compensatedDeleteError(deleteError); enriched.driveOutcome = "kept"; }
+          try { await untrashDriveFile(fileToken!, fileId!); enriched.error = compensatedDeleteError(deleteError); enriched.driveOutcome = "kept"; }
           catch (compensationError) { enriched.error = compensatedDeleteError(deleteError, compensationError); enriched.driveOutcome = "unknown"; }
         }
         return enriched;
@@ -117,7 +136,7 @@ export async function POST(request: Request) {
           if (decision.action === "reconcile") {
             return { captureId, ok: false, outcome: "reconciliation_needed", driveOutcome: "unknown" as const, error: "Deletion status could not be confirmed; the Google Drive file remains trashed and reconciliation is required" };
           }
-          try { await untrashDriveFile(accessToken!, fileId!); message = compensatedDeleteError(caught); }
+          try { await untrashDriveFile(fileToken!, fileId!); message = compensatedDeleteError(caught); }
           catch (compensationError) { message = compensatedDeleteError(caught, compensationError); }
         }
         return { captureId, ok: false, outcome: "failed", driveOutcome: trashed ? ("unknown" as const) : (mode === "drive_trash" ? ("kept" as const) : ("kept" as const)), error: message.slice(0, 500) };

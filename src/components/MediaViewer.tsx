@@ -24,6 +24,9 @@ interface MediaViewerProps {
   errorMarkers?: ErrorMarker[];
   /** "members" makes the stream route require proof of access. */
   accessMode?: "public" | "members";
+  /** The password the viewer unlocked with, if the capture has one. The stream
+   *  route gates password-protected captures too, and this is what signs them. */
+  unlockPassword?: string | null;
   initialDuration?: number | null;
 }
 
@@ -94,6 +97,7 @@ export default function MediaViewer({
   errorMarkers = [],
   accessMode = "public",
   initialDuration = 0,
+  unlockPassword = null,
 }: MediaViewerProps) {
   const { t } = useT();
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -235,12 +239,12 @@ export default function MediaViewer({
     : null;
   // Public Drive URL: pointless for a members-only capture (the file is private
   // in Drive), and using it as a fallback would just render a broken tag.
-  const directUrl = fileId && accessMode !== "members" ? `https://drive.google.com/uc?export=download&id=${fileId}` : isDirectWebUrl ? driveUrl : null;
+  const directUrl = fileId && accessMode !== "members" && !unlockPassword ? `https://drive.google.com/uc?export=download&id=${fileId}` : isDirectWebUrl ? driveUrl : null;
   // For members-only captures the stream route rejects an unsigned request, and
   // <img>/<video> cannot send an Authorization header - so append a signature
   // fetched once below. Public captures need none and stay on the plain URL.
   const [sigQuery, setSigQuery] = useState("");
-  const needsSig = accessMode === "members";
+  const needsSig = accessMode === "members" || Boolean(unlockPassword);
   const sigReady = !needsSig || sigQuery !== "";
   const streamUrl = fileId && sigReady ? `/api/google-drive/download?id=${encodeURIComponent(fileId)}&type=${type === "video" ? "video" : "screenshot"}&disposition=inline${sigQuery}` : null;
   const downloadUrl = fileId && sigReady ? `/api/google-drive/download?id=${encodeURIComponent(fileId)}&type=${type === "video" ? "video" : "screenshot"}&filename=${encodeURIComponent(title || "capture")}${sigQuery}` : isDirectWebUrl ? driveUrl : null;
@@ -291,23 +295,32 @@ export default function MediaViewer({
   }, [isPlaying, videoDuration, updateScrubberDom]);
 
   useEffect(() => {
-    if (!fileId || !needsSig) { setSigQuery(""); return; }
+    if (!fileId) { setSigQuery(""); return; }
     let cancelled = false;
     (async () => {
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
-      if (!token) return;
+      // Either credential will do: a session for members-only, the unlock
+      // password for a protected public capture. Neither means no signature.
+      if (!token && !unlockPassword) return;
+      // Fetched even when `needsSig` is false: a member viewing their own
+      // password-protected capture skips the lock screen, so there is no unlock
+      // password to flag it - but the stream route still gates it. An extra
+      // signature on an unprotected capture is ignored.
       const res = await fetch("/api/google-drive/sign", {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ fileId }),
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ fileId, password: unlockPassword || undefined }),
       }).catch(() => null);
       if (!res?.ok || cancelled) return;
       const { sig, exp } = await res.json();
       if (!cancelled && sig) setSigQuery(`&sig=${encodeURIComponent(sig)}&exp=${exp}`);
     })();
     return () => { cancelled = true; };
-  }, [fileId, needsSig]);
+  }, [fileId, needsSig, unlockPassword]);
 
   function handleDownloadMedia(e: React.MouseEvent) {
     e.stopPropagation();
@@ -536,7 +549,7 @@ export default function MediaViewer({
         setPan((p) => clampPan(p.x, p.y + 40, zoom));
       } else if (e.key === "ArrowDown") {
         e.preventDefault();
-        setPan((p) => clampPan(p.x - 40, p.y, zoom));
+        setPan((p) => clampPan(p.x, p.y - 40, zoom));
       }
     };
     window.addEventListener("keydown", onKeyDown);

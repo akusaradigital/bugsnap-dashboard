@@ -298,7 +298,13 @@ function SingleViewContent() {
   const [capture, setCapture] = useState<Capture | null>(null);
   const [status, setStatus] = useState<"loading" | "locked" | "expired" | "notfound" | "unauthorized_ip" | "needs_login" | "unauthorized_domain" | "ready">("loading");
   const [passwordInput, setPasswordInput] = useState("");
+  // The password that actually unlocked this capture. MediaViewer trades it for
+  // a stream signature - the media route gates protected captures too now.
+  const [unlockedPassword, setUnlockedPassword] = useState<string | null>(null);
   const [passwordError, setPasswordError] = useState(false);
+  // get_public_capture throttles password guesses per (capture, IP) and returns
+  // this status instead of "needs_password" once the caller is over the cap.
+  const [passwordRateLimited, setPasswordRateLimited] = useState(false);
   const [checkingPassword, setCheckingPassword] = useState(false);
   const [viewCount, setViewCount] = useState<number | null>(null);
   const recordedViewRef = useRef<string | null>(null);
@@ -691,6 +697,11 @@ function SingleViewContent() {
             setCapture(row);
             setStatus("locked");
             break;
+          case "rate_limited":
+            setCapture(row);
+            setPasswordRateLimited(true);
+            setStatus("locked");
+            break;
           case "unauthorized_ip":
             setCapture(row);
             setStatus("unauthorized_ip");
@@ -790,20 +801,31 @@ function SingleViewContent() {
 
   function submitPassword(e: React.FormEvent) {
     e.preventDefault();
-    if (!passwordInput) return;
+    if (!passwordInput || passwordRateLimited) return;
     setCheckingPassword(true);
     setPasswordError(false);
     supabase
       .rpc("get_public_capture", { p_id: id, p_password: passwordInput })
       .then(({ data, error }) => {
         setCheckingPassword(false);
-        if (error || !data || data.length === 0) { setStatus("notfound"); return; }
+        // A failed RPC says nothing about the capture - it is still there, the
+        // request just did not land. Sending the viewer to a 404 loses the form
+        // and the link looks dead; keep the form and let them retry.
+        if (error || !data || data.length === 0) {
+          showToast(t("v.verifyFailed"), "error");
+          return;
+        }
 
         const row = data[0] as Capture & { status: string };
         setAccessMode(row.access_mode === "members" ? "members" : "public");
         if (row.status === "ok") {
+          setUnlockedPassword(passwordInput);
           setCapture(row);
           setStatus("ready");
+        } else if (row.status === "rate_limited") {
+          setCapture(row);
+          setPasswordRateLimited(true);
+          setPasswordError(false);
         } else if (row.status === "not_found") {
           setStatus("notfound");
         } else if (row.status === "expired") {
@@ -1455,17 +1477,22 @@ function SingleViewContent() {
                     value={passwordInput}
                     onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(false); }}
                     placeholder={t("v.passwordPlaceholder")}
-                    className={`w-full text-sm rounded-xl border px-4 py-3 outline-none bg-subtle text-foreground placeholder:text-muted transition-all ${passwordError ? "border-red-500 focus:ring-2 focus:ring-red-500/20" : "border-border focus:border-[#89BD49] focus:ring-2 focus:ring-[#89BD49]/20"}`}
+                    disabled={passwordRateLimited}
+                    className={`w-full text-sm rounded-xl border px-4 py-3 outline-none bg-subtle text-foreground placeholder:text-muted transition-all disabled:opacity-50 ${passwordError || passwordRateLimited ? "border-red-500 focus:ring-2 focus:ring-red-500/20" : "border-border focus:border-[#89BD49] focus:ring-2 focus:ring-[#89BD49]/20"}`}
                   />
                 </div>
-                {passwordError && (
+                {passwordRateLimited ? (
+                  <p className="text-xs text-red-600 dark:text-red-400 text-left font-medium">
+                    {t("v.tooManyAttempts")}
+                  </p>
+                ) : passwordError ? (
                   <p className="text-xs text-red-600 dark:text-red-400 text-left font-medium">
                     {t("v.incorrectPassword")}
                   </p>
-                )}
+                ) : null}
                 <button
                   type="submit"
-                  disabled={checkingPassword || !passwordInput.trim()}
+                  disabled={checkingPassword || passwordRateLimited || !passwordInput.trim()}
                   className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] active:scale-95 py-3 text-sm font-semibold text-white shadow-md shadow-[#89BD49]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {checkingPassword ? (
@@ -1513,6 +1540,7 @@ function SingleViewContent() {
                   seekToTime={seekTargetTime}
                   errorMarkers={errorMarkers}
                   accessMode={accessMode}
+                  unlockPassword={unlockedPassword}
                   initialDuration={initialDuration}
                 />
                 <div className="mt-5 sm:mt-7 space-y-4">
@@ -1581,6 +1609,7 @@ function SingleViewContent() {
                   <DevToolsPanel
                     capture={capture as unknown as React.ComponentProps<typeof DevToolsPanel>["capture"]}
                     currentTime={playbackTime}
+                    unlockPassword={unlockedPassword}
                     onSeekToTime={(t) => setSeekTargetTime((prev) => (prev === t ? t + 0.0001 : t))}
                   />
                 )}

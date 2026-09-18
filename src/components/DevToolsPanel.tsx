@@ -5,369 +5,60 @@ import { useT } from "@/components/I18nProvider";
 import { decompressDevLogs } from "@/lib/devlogs-compression";
 import { supabase } from "@/lib/supabase";
 import { isIgnoredUrl, TRACKER_PATTERNS } from "@/lib/ignored-urls";
+import {
+  type ActionLog,
+  type CaptureMeta,
+  type CapturedLogs,
+  type ConsoleLog,
+  type DeviceSpecsLog,
+  type DevLog,
+  type DevLogSummary,
+  type DriveExternalLogReference,
+  type NavigationLog,
+  type NetworkLog,
+  type PerformanceLog,
+  type ScreenshotLog,
+  type StorageLog,
+  type TimedLog,
+  actionKind,
+  canonicalUrl,
+  cleanActionMessage,
+  cleanStackTrace,
+  conciseConsoleText,
+  consoleDetail,
+  consoleText,
+  getTargetHost,
+  groupBy,
+  isConsoleError,
+  isFirstPartyUrl,
+  isNetworkFailed,
+  isSummary,
+  isTracker,
+  logCount,
+  networkLocation,
+  normalizeDevLog,
+  normalizeLevel,
+  statusLabel,
+  totalLogCount,
+} from "@/lib/devlogs";
+import { buildCurlCommand, buildHarExport, buildMarkdownBugReport } from "@/lib/devlogs-export";
 
-export { isIgnoredUrl, TRACKER_PATTERNS };
-
-interface TimedLog {
-  /** Position in the original `logs` array. Set when a derived list makes a
-   *  spread copy, so breadcrumb lookup does not need reference identity. */
-  srcIdx?: number;
-  time?: string | number;
-  timestamp?: string | number;
-  count?: number;
-}
-
-export interface ConsoleLog extends TimedLog {
-  type: "console";
-  level?: string;
-  message?: string;
-  text?: string;
-  stack?: string | null;
-}
-
-export interface NetworkLog extends TimedLog {
-  type: "network";
-  level?: string;
-  method?: string;
-  status?: number;
-  resourceType?: string;
-  url?: string;
-  statusText?: string;
-  duration?: number;
-  requestBody?: string | null;
-  responseBody?: string;
-  error?: string;
-}
-
-export interface ActionLog extends TimedLog {
-  type: "step";
-  message?: string;
-}
-
-// One place decides an action's kind, so the chip filter and the row badge can
-// never disagree about what a row is.
-function actionKind(log: { type: string; message?: string }): "click" | "typing" | "input" | "navigation" | "screenshot" | null {
-  const firstWord = (log.message || "").toLowerCase().split(/\s+/)[0];
-  return ACTION_KINDS[firstWord] || ACTION_KINDS[log.type] || null;
-}
-
-// Values are i18n keys, not display strings - the label is resolved at render.
-// The bare kind (right column) is what the UI branches on, so it stays stable
-// regardless of locale; only the visible label goes through t().
-const ACTION_KINDS: Record<string, "click" | "typing" | "input" | "navigation" | "screenshot"> = {
-  click: "click",
-  clicked: "click",
-  typing: "typing",
-  type: "typing",
-  typed: "typing",
-  input: "input",
-  navigate: "navigation",
-  navigation: "navigation",
-  navigated: "navigation",
-  screenshot: "screenshot",
-};
-
-export interface NavigationLog extends TimedLog {
-  type: "navigation";
-  message?: string;
-  url?: string;
-}
-
-export interface ScreenshotLog extends TimedLog {
-  type: "screenshot";
-  message?: string;
-  url?: string;
-}
-
-export interface PerformanceLog extends TimedLog {
-  type: "performance";
-  metrics?: {
-    domNodes?: number;
-    jsHeapUsedMB?: number | null;
-    jsHeapTotalMB?: number | null;
-    lcpMs?: number | null;
-    cls?: number;
-    inpMs?: number | null;
-    fcpMs?: number | null;
-    ttfbMs?: number | null;
-  };
-}
-
-export interface StorageLog extends TimedLog {
-  type: "storage";
-  storage?: {
-    localStorage?: Record<string, string>;
-    sessionStorage?: Record<string, string>;
-  };
-}
-
-export interface DeviceSpecsLog extends TimedLog {
-  type: "device_specs";
-  specs?: Record<string, unknown>;
-}
-
-export type DevLog = ConsoleLog | NetworkLog | ActionLog | NavigationLog | ScreenshotLog | PerformanceLog | StorageLog | DeviceSpecsLog;
-
-export function normalizeDevLog(log: Record<string, unknown>): DevLog {
-  const type = typeof log.type === "string" ? log.type.toLowerCase() : "";
-  const level = typeof log.level === "string" ? log.level : undefined;
-  const message = typeof log.message === "string" ? log.message : undefined;
-  const text = typeof log.text === "string" ? log.text : undefined;
-  const stack = typeof log.stack === "string" || log.stack === null ? log.stack : undefined;
-  const method = typeof log.method === "string" ? log.method : undefined;
-  const status = typeof log.status === "number" ? log.status : undefined;
-  const resourceType = typeof log.resourceType === "string" ? log.resourceType : undefined;
-  const url = typeof log.url === "string" ? log.url : undefined;
-  const statusText = typeof log.statusText === "string" ? log.statusText : undefined;
-  const duration = typeof log.duration === "number" ? log.duration : undefined;
-  const requestBody = typeof log.requestBody === "string" || log.requestBody === null ? log.requestBody : undefined;
-  const responseBody = typeof log.responseBody === "string" ? log.responseBody : undefined;
-  const error = typeof log.error === "string" ? log.error : undefined;
-  const time = typeof log.time === "string" || typeof log.time === "number" ? log.time : undefined;
-  const timestamp = typeof log.timestamp === "string" || typeof log.timestamp === "number" ? log.timestamp : undefined;
-  const count = typeof log.count === "number" ? log.count : undefined;
-  const metrics = typeof log.metrics === "object" && log.metrics !== null ? (log.metrics as PerformanceLog["metrics"]) : undefined;
-  const storage = typeof log.storage === "object" && log.storage !== null ? (log.storage as StorageLog["storage"]) : undefined;
-  const specs = typeof log.specs === "object" && log.specs !== null ? (log.specs as DeviceSpecsLog["specs"]) : undefined;
-
-  if (type === "performance") {
-    return { type: "performance", metrics, time, timestamp, count };
-  }
-  if (type === "storage") {
-    return { type: "storage", storage, time, timestamp, count };
-  }
-  if (type === "device_specs") {
-    return { type: "device_specs", specs, time, timestamp, count };
-  }
-  if (type === "console" || (type === "" && (level !== undefined || stack !== undefined || text !== undefined))) {
-    return { type: "console", level, message, text, stack, time, timestamp, count };
-  }
-  if (type === "network" || (type === "" && (method !== undefined || status !== undefined || requestBody !== undefined || responseBody !== undefined))) {
-    return { type: "network", level, method, status, resourceType, url, statusText, duration, requestBody, responseBody, error, time, timestamp, count };
-  }
-  if (type === "navigation") {
-    return { type: "navigation", message, url, time, timestamp, count };
-  }
-  if (type === "screenshot") {
-    return { type: "screenshot", message, url, time, timestamp, count };
-  }
-  return { type: "step", message: message || text || "", time, timestamp, count };
-}
-
-export interface DevLogSummary {
-  version: number;
-  errors: number;
-  warnings: number;
-  failedRequests: number;
-  topErrors?: string[];
-  failedUrls?: string[];
-}
-
-export interface DriveExternalLogReference {
-  driveFileId: string;
-  driveUrl?: string;
-  errors?: number;
-  warnings?: number;
-  totalLogs?: number;
-  duration?: number;
-}
-
-export type CapturedLogs = DevLog[] | DevLogSummary | DriveExternalLogReference | string | null;
-
-function isSummary(logs: unknown): logs is DevLogSummary {
-  return !!logs && typeof logs === "object" && typeof (logs as Record<string, unknown>).version === "number";
-}
+// Re-exported so existing importers of this module keep working.
+export { isIgnoredUrl, TRACKER_PATTERNS, normalizeDevLog, cleanStackTrace, isFirstPartyUrl };
+export { buildCurlCommand, buildHarExport, buildMarkdownBugReport };
+export type { ConsoleLog, NetworkLog, ActionLog, NavigationLog, ScreenshotLog, PerformanceLog, StorageLog, DeviceSpecsLog, DevLog, DevLogSummary, DriveExternalLogReference, CapturedLogs };
 
 interface Props {
-  capture: {
-    type?: string;
-    drive_url: string;
-    site_url?: string | null;
-    created_at: string;
-    window_size?: string | null;
-    os?: string | null;
-    browser?: string | null;
-    dev_logs?: CapturedLogs;
-  };
+  capture: CaptureMeta;
   currentTime?: number;
   onSeekToTime?: (timeSec: number) => void;
+  /** Unlock password for a protected public capture: externally-stored logs go
+   *  through the same gated stream route, which needs proof for those now. */
+  unlockPassword?: string | null;
 }
 
 const TABS = ["Info", "Console", "Network", "Actions", "Storage", "Issues"] as const;
 type Tab = typeof TABS[number];
-type Grouped<T> = { log: T; count: number };
-
-function normalizeText(value?: string) {
-  return (value || "").trim().replace(/\s+/g, " ").toLowerCase();
-}
-
-function normalizeLevel(level?: string) {
-  const normalized = normalizeText(level) || "error";
-  return normalized === "warning" ? "warn" : normalized;
-}
-
-function isConsoleError(log: ConsoleLog) {
-  const level = normalizeLevel(log.level);
-  return level === "error" || Boolean(log.stack) || /(uncaught|exception|error|failed)/i.test(consoleText(log));
-}
-
-function isNetworkFailed(log: NetworkLog) {
-  return !log.status || log.status >= 400 || log.status === 0 || Boolean(log.error);
-}
-
-function consoleDetail(log: ConsoleLog | NavigationLog | ScreenshotLog) {
-  return log.type === "console" ? consoleText(log) : log.message || ("url" in log ? log.url : "") || "";
-}
-
-function canonicalUrl(value?: string) {
-  return (value || "").split("#", 1)[0];
-}
-
-function logCount(log: TimedLog) {
-  return Math.max(1, Number(log.count) || 1);
-}
-
-function totalLogCount(items: TimedLog[]) {
-  return items.reduce((total, log) => total + logCount(log), 0);
-}
-
-function consoleText(log: ConsoleLog) {
-  return log.message || log.text || "";
-}
-
-function conciseConsoleText(log: ConsoleLog) {
-  const lines = consoleText(log)
-    .replace(/^\[console\]\s*Uncaught Exception:\s*/i, "")
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean);
-  const meaningful = lines.find((line, index) => index === 0 || !/(webpack|node_modules|react-dom|chrome-extension:|^at (?:__webpack|webpack))/i.test(line));
-  return meaningful || lines[0] || "";
-}
-
-function cleanStackTrace(stack?: string | null): string {
-  if (!stack || typeof stack !== "string") return "";
-  return stack
-    .split(/\r?\n/)
-    .filter((line) => {
-      const lower = line.toLowerCase();
-      return (
-        !lower.includes("chrome-extension://") &&
-        !lower.includes("moz-extension://") &&
-        !lower.includes("safari-extension://") &&
-        !lower.includes("edge-extension://") &&
-        !lower.includes("injected_logger.js") &&
-        !lower.includes("rrweb-record") &&
-        !lower.includes("record_controls")
-      );
-    })
-    .join("\n")
-    .trim();
-}
-
-function networkLocation(value?: string) {
-  try {
-    const url = new URL(value || "");
-    return { domain: url.hostname, path: `${url.pathname}${url.search}` || "/" };
-  } catch {
-    return { domain: value || "-", path: "" };
-  }
-}
-
-function getTargetHost(siteUrl?: string | null): string {
-  if (!siteUrl) return "";
-  try {
-    const parsed = new URL(siteUrl.startsWith("http") ? siteUrl : `https://${siteUrl}`);
-    // Strip www. so "www.example.com" matches a request to "example.com".
-    // The reverse already matches via the endsWith("." + target) check below.
-    return parsed.hostname.replace(/^www\./i, "");
-  } catch {
-    return "";
-  }
-}
-
-function isFirstPartyUrl(url?: string, targetHost?: string): boolean {
-  if (!url || !targetHost) return true;
-  const target = targetHost.toLowerCase();
-  try {
-    // Relative paths ("/api/orders") are the shape a first-party API call takes
-    // and throw without a base, so resolve against the site under test.
-    const host = new URL(url, `https://${target}`).hostname.toLowerCase();
-    // data: and blob: parse fine but have no hostname - they came from the page.
-    if (!host) return true;
-    return host === target || host.endsWith("." + target);
-  } catch {
-    return true;
-  }
-}
-
-const HTTP_STATUS_TEXT: Record<number, string> = {
-  200: "OK",
-  201: "Created",
-  204: "No Content",
-  301: "Moved Permanently",
-  302: "Found",
-  304: "Not Modified",
-  400: "Bad Request",
-  401: "Unauthorized",
-  403: "Forbidden",
-  404: "Not Found",
-  405: "Method Not Allowed",
-  408: "Request Timeout",
-  409: "Conflict",
-  422: "Unprocessable Entity",
-  429: "Too Many Requests",
-  500: "Internal Server Error",
-  502: "Bad Gateway",
-  503: "Service Unavailable",
-  504: "Gateway Timeout",
-};
-
-function statusLabel(t: (k: string) => string, status?: number): string {
-  if (!status) return "";
-  const key = `dt.st.${status}`;
-  const hit = t(key);
-  // translate() returns the key itself when there is no entry.
-  return hit === key ? HTTP_STATUS_TEXT[status] || `HTTP ${status}` : hit;
-}
-
-function isClassSoup(text: string) {
-  const tokens = text.split(/\s+/).filter(Boolean);
-  return tokens.length >= 3 && (tokens.filter((token) => /(?:^|:)(?:[a-z]+-)|\[|#|\//i.test(token)).length >= 2 || text.length > 50);
-}
-
-function cleanActionMessage(message?: string) {
-  const text = (message || "").trim();
-  if (!text) return "";
-
-  // Format "Clicked select: Select Category Type Automotive B2B..." -> "Clicked select: Select Category"
-  const selectMatch = text.match(/^(Clicked\s+select:\s*)([^\n]+)$/i);
-  if (selectMatch) {
-    const rawVal = selectMatch[2].trim();
-    const shortVal = rawVal.split(/\s{2,}|\t|\n/)[0].slice(0, 35);
-    return `${selectMatch[1]}${shortVal}`;
-  }
-
-  const match = text.match(/^(Clicked|Typed in)\s+([^:]+):\s+(.+)$/i);
-  if (!match) return text;
-  return isClassSoup(match[3]) ? `${match[1]} ${match[2]}` : text;
-}
-
-function groupBy<T extends TimedLog>(items: T[], keyFor: (item: T) => string, mapItem?: (item: T) => T): Grouped<T>[] {
-  const groups = new Map<string, Grouped<T>>();
-  items.forEach((item) => {
-    const key = keyFor(item);
-    const existing = groups.get(key);
-    const itemCount = logCount(item);
-    if (existing) existing.count += itemCount;
-    else groups.set(key, { log: mapItem ? mapItem(item) : item, count: itemCount });
-  });
-  return Array.from(groups.values());
-}
-
-function isTracker(url?: string) {
-  return isIgnoredUrl(url);
-}
 
 // Formats error messages cleanly (e.g. converts "POST\nhttps://..." into structured method + URL badges)
 function FormattedErrorMessage({ msg }: { msg: string }) {
@@ -403,18 +94,6 @@ function FormattedErrorMessage({ msg }: { msg: string }) {
   );
 }
 
-export function buildCurlCommand(log: NetworkLog): string {
-  const method = (log.method || "GET").toUpperCase();
-  const safeUrl = (log.url || "").replace(/(["\\$`])/g, "\\$1");
-  let cmd = `curl -X ${method} "${safeUrl}"`;
-  if (log.requestBody) {
-    const escaped = log.requestBody.replace(/'/g, "'\\''");
-    cmd += ` -H "Content-Type: application/json" -d '${escaped}'`;
-  }
-  return cmd;
-}
-
-export { cleanStackTrace, isFirstPartyUrl };
 
 function FormattedJsonBody({
   content,
@@ -488,205 +167,6 @@ function FormattedJsonBody({
   );
 }
 
-export function buildMarkdownBugReport({
-  capture,
-  targetHost,
-  detectedOs,
-  detectedBrowser,
-  createdAt,
-  consoleErrors,
-  networkErrors,
-  actionLogs,
-  storage,
-  findPrecedingAction,
-}: {
-  capture: Props["capture"];
-  targetHost?: string;
-  detectedOs: string;
-  detectedBrowser: string;
-  createdAt: string;
-  consoleErrors: ConsoleLog[];
-  networkErrors: NetworkLog[];
-  actionLogs: (ActionLog | NavigationLog | ScreenshotLog)[];
-  storage?: StorageLog["storage"];
-  findPrecedingAction: (log: TimedLog, knownIdx?: number) => { message: string; deltaSec: number | null } | null;
-}): string {
-  const totalIssues = consoleErrors.length + networkErrors.length;
-  const sections: string[] = [];
-
-  // Plain headings and no zero-valued lines: a pasted report is read in an issue
-  // tracker, where emoji headings and "Failed Network Requests: 0" are noise the
-  // reader has to scan past to reach the two lines that matter.
-  sections.push(`## Bug Report: ${capture.site_url || "Session Capture"}`);
-  sections.push("");
-  sections.push("### Environment");
-  sections.push(`- **URL**: ${capture.site_url || "-"}`);
-  if (targetHost) sections.push(`- **Target Host**: ${targetHost}`);
-  sections.push(`- **OS**: ${detectedOs}`);
-  sections.push(`- **Browser**: ${detectedBrowser}`);
-  if (capture.window_size) sections.push(`- **Window Size**: ${capture.window_size}`);
-  sections.push(`- **Captured At**: ${createdAt}`);
-  if (capture.drive_url) sections.push(`- **Session Recording**: [View Recording](${capture.drive_url})`);
-
-  if (totalIssues > 0) {
-    sections.push("");
-    sections.push(`### Issues Overview (${totalIssues} detected)`);
-    if (consoleErrors.length > 0) sections.push(`- **Console Errors**: ${consoleErrors.length}`);
-    if (networkErrors.length > 0) sections.push(`- **Failed Network Requests**: ${networkErrors.length}`);
-  }
-
-  if (consoleErrors.length > 0) {
-    sections.push("");
-    sections.push("### Console Errors");
-    consoleErrors.slice(0, 5).forEach((err, idx) => {
-      const msg = conciseConsoleText(err) || "Console error";
-      const preceding = findPrecedingAction(err);
-      sections.push(`${idx + 1}. \`${msg}\``);
-      if (preceding) {
-        const delta = preceding.deltaSec != null ? ` (${preceding.deltaSec < 1 ? "<1s" : `${preceding.deltaSec.toFixed(1)}s`} prior)` : "";
-        sections.push(`   - ↳ *Triggered after*: ${preceding.message}${delta}`);
-      }
-      const stack = cleanStackTrace(err.stack);
-      if (stack) {
-        const topLines = stack.split("\n").slice(0, 4).join("\n");
-        sections.push("   ```stack");
-        sections.push(`   ${topLines}`);
-        sections.push("   ```");
-      }
-    });
-  }
-
-  if (networkErrors.length > 0) {
-    sections.push("");
-    sections.push("### Failed Network Requests");
-    networkErrors.slice(0, 5).forEach((req, idx) => {
-      const method = (req.method || "GET").toUpperCase();
-      const status = req.status || "FAIL";
-      const preceding = findPrecedingAction(req);
-      sections.push(`${idx + 1}. **${method} ${status}** \`${req.url || "-"}\``);
-      if (preceding) {
-        const delta = preceding.deltaSec != null ? ` (${preceding.deltaSec < 1 ? "<1s" : `${preceding.deltaSec.toFixed(1)}s`} prior)` : "";
-        sections.push(`   - ↳ *Triggered after*: ${preceding.message}${delta}`);
-      }
-      sections.push("   ```bash");
-      sections.push(`   ${buildCurlCommand(req)}`);
-      sections.push("   ```");
-    });
-  }
-
-  if (actionLogs.length > 0) {
-    sections.push("");
-    sections.push("### Steps to Reproduce (Recent Actions)");
-    const recent = actionLogs.slice(-10);
-    let step = 0;
-    recent.forEach((act) => {
-      const msg = (act.message || ("url" in act && act.url ? `Navigate to ${act.url}` : "")).trim();
-      // A step with no target is not reproducible, so it is not a step.
-      if (!msg) return;
-      sections.push(`${++step}. ${msg}`);
-    });
-    // Heading AND the blank line before it, or the report grows a stray gap.
-    if (step === 0) sections.splice(-2, 2);
-  }
-
-  if (storage) {
-    const localKeys = Object.keys(storage.localStorage || {});
-    const sessionKeys = Object.keys(storage.sessionStorage || {});
-    if (localKeys.length > 0 || sessionKeys.length > 0) {
-      sections.push("");
-      sections.push("### Storage Snapshot");
-      if (localKeys.length > 0) {
-        sections.push(`- **localStorage** (${localKeys.length} items): \`${localKeys.slice(0, 10).join("`, `")}${localKeys.length > 10 ? "..." : ""}\``);
-      }
-      if (sessionKeys.length > 0) {
-        sections.push(`- **sessionStorage** (${sessionKeys.length} items): \`${sessionKeys.slice(0, 10).join("`, `")}${sessionKeys.length > 10 ? "..." : ""}\``);
-      }
-    }
-  }
-
-  sections.push("");
-  sections.push("---");
-  sections.push("*Generated via BugSnap DevTools*");
-
-  return sections.join("\n");
-}
-
-export function buildHarExport(networkLogs: NetworkLog[], siteUrl?: string | null): string {
-  const startedDateTime = new Date().toISOString();
-  const entries = networkLogs.map((log, index) => {
-    const duration = typeof log.duration === "number" && log.duration > 0 ? log.duration : 50;
-    const status = log.status || (log.error ? 0 : 200);
-    const statusText = log.statusText || (HTTP_STATUS_TEXT[status] || (status === 0 ? "Failed" : "OK"));
-    const reqBody = log.requestBody || "";
-    const resBody = log.responseBody || "";
-
-    return {
-      _index: index,
-      startedDateTime: log.timestamp ? new Date(Number(log.timestamp)).toISOString() : startedDateTime,
-      time: duration,
-      request: {
-        method: (log.method || "GET").toUpperCase(),
-        url: log.url || "",
-        httpVersion: "HTTP/1.1",
-        cookies: [],
-        headers: reqBody ? [{ name: "Content-Type", value: "application/json" }] : [],
-        queryString: [],
-        postData: reqBody ? { mimeType: "application/json", text: reqBody } : undefined,
-        headersSize: -1,
-        bodySize: reqBody ? reqBody.length : 0,
-      },
-      response: {
-        status,
-        statusText,
-        httpVersion: "HTTP/1.1",
-        cookies: [],
-        headers: resBody ? [{ name: "Content-Type", value: "application/json" }] : [],
-        content: {
-          size: resBody ? resBody.length : 0,
-          mimeType: "application/json",
-          text: resBody,
-        },
-        redirectURL: "",
-        headersSize: -1,
-        bodySize: resBody ? resBody.length : 0,
-      },
-      cache: {},
-      timings: {
-        blocked: -1,
-        dns: -1,
-        connect: -1,
-        send: 0,
-        wait: duration,
-        receive: 0,
-        ssl: -1,
-      },
-    };
-  });
-
-  const har = {
-    log: {
-      version: "1.2",
-      creator: {
-        name: "BugSnap DevTools",
-        version: "1.0.0",
-      },
-      pages: [
-        {
-          startedDateTime,
-          id: "page_1",
-          title: siteUrl || "BugSnap Session",
-          pageTimings: {
-            onContentLoad: -1,
-            onLoad: -1,
-          },
-        },
-      ],
-      entries,
-    },
-  };
-
-  return JSON.stringify(har, null, 2);
-}
 
 // Zero rows has two causes that used to print the same sentence: the capture
 // holds nothing, or a filter hid everything. The second needs a way out, so it
@@ -748,7 +228,7 @@ function ActionBreadcrumb({
   );
 }
 
-export default function DevToolsPanel({ capture, currentTime, onSeekToTime }: Props) {
+export default function DevToolsPanel({ capture, currentTime, onSeekToTime, unlockPassword = null }: Props) {
   const { t } = useT();
   const [activeTab, setActiveTab] = useState<Tab>("Info");
   const [consoleErrorsOnly, setConsoleErrorsOnly] = useState(false);
@@ -823,9 +303,26 @@ ${stack}` : body);
       // captures. Public ones ignore it, so sending it unconditionally is fine.
       supabase.auth
         .getSession()
-        .then(({ data }) => {
+        .then(async ({ data }) => {
           const token = data.session?.access_token;
-          return fetch(`/api/google-drive/download?id=${encodeURIComponent(fileId)}&type=logs`, {
+          // Protected public capture: no session to send, so trade the unlock
+          // password for the same short-lived signature the media tags use.
+          let sigQuery = "";
+          if (unlockPassword) {
+            const sigRes = await fetch("/api/google-drive/sign", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                ...(token ? { Authorization: `Bearer ${token}` } : {}),
+              },
+              body: JSON.stringify({ fileId, password: unlockPassword }),
+            }).catch(() => null);
+            if (sigRes?.ok) {
+              const { sig, exp } = await sigRes.json();
+              if (sig) sigQuery = `&sig=${encodeURIComponent(sig)}&exp=${exp}`;
+            }
+          }
+          return fetch(`/api/google-drive/download?id=${encodeURIComponent(fileId)}&type=logs${sigQuery}`, {
             headers: token ? { Authorization: `Bearer ${token}` } : {},
           });
         })
@@ -857,13 +354,16 @@ ${stack}` : body);
         if (!cancelled && res) setDecompressedLogs(res as CapturedLogs);
       });
     } else {
-      setDecompressedLogs(capture.dev_logs || null);
+      // `raw`, not capture.dev_logs: stringified JSON was already parsed above,
+      // and storing the string back makes Array.isArray() false - the panel then
+      // renders zero console/network/storage rows for a capture that has them.
+      setDecompressedLogs((raw as CapturedLogs) || null);
     }
 
     return () => {
       cancelled = true;
     };
-  }, [capture.dev_logs]);
+  }, [capture.dev_logs, unlockPassword]);
 
   const effectiveDevLogs = decompressedLogs;
   const summaryOnly = !Array.isArray(effectiveDevLogs) && isSummary(effectiveDevLogs);
@@ -1363,9 +863,7 @@ ${stack}` : body);
   };
 
   return (
-    // Was a hard 520px: cramped on a short laptop, wasteful on a tall monitor.
-    // clamp() is a one-value fix and needs no resize listener.
-    <div className="w-full h-[clamp(360px,60vh,760px)] rounded-xl border border-border bg-white shadow-sm dark:bg-background flex flex-col shrink-0 overflow-hidden">
+    <div className="w-full rounded-xl border border-border bg-white shadow-sm dark:bg-background flex flex-col shrink-0">
       {/* Header */}
       <div className="h-11 border-b border-border px-4 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2 min-w-0">
@@ -1462,7 +960,7 @@ ${stack}` : body);
         role="tabpanel"
         id="dt-tabpanel"
         aria-labelledby={`dt-tab-${activeTab}`}
-        className="flex-1 min-h-0 flex flex-col overflow-hidden"
+        className="flex-1 flex flex-col"
       >
         {/* Global Search & Filters */}
         {activeTab !== "Info" && (
@@ -1645,7 +1143,7 @@ ${stack}` : body);
 
         {/* ISSUES TAB */}
         {activeTab === "Issues" && (
-          <div className="flex-1 min-h-0 overflow-y-auto">
+          <div className="flex-1">
             {totalIssuesCount === 0 ? (
               <div className="py-14 flex flex-col items-center gap-2 text-center text-xs text-muted p-4">
                 <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
@@ -1827,7 +1325,7 @@ ${stack}` : body);
 
         {/* INFO TAB */}
         {activeTab === "Info" && (
-          <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
+          <div className="p-4 space-y-4">
             {capture.site_url && (
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-muted mb-1.5">URL</p>
@@ -2052,7 +1550,7 @@ ${stack}` : body);
 
         {/* CONSOLE TAB */}
         {activeTab === "Console" && (
-          <div className="flex-1 min-h-0 overflow-y-auto">
+          <div className="flex-1">
             {visibleConsoleLogs.length === 0 ? (
               summary ? (
                 <div className="p-4 space-y-3">
@@ -2173,7 +1671,7 @@ ${stack}` : body);
 
         {/* NETWORK TAB */}
         {activeTab === "Network" && (
-          <div className="flex-1 min-h-0 overflow-y-auto">
+          <div className="flex-1">
             {networkLogs.length === 0 ? (
               summary ? (
                 <div className="p-4 space-y-3">
@@ -2382,7 +1880,7 @@ ${stack}` : body);
 
         {/* ACTIONS TAB */}
         {activeTab === "Actions" && (
-          <div className="flex-1 min-h-0 overflow-y-auto p-3">
+          <div className="p-3">
             {actionLogs.length === 0 ? (
               logSearch || actionKindFilter !== "all" ? (
                 <EmptyLogState filtered emptyText="" onReset={resetLogFilters} t={t} />
@@ -2475,7 +1973,7 @@ ${stack}` : body);
         {/* STORAGE TAB */}
         {activeTab === "Storage" && (() => {
           const currentStore = storageType === "local" ? (storageData?.localStorage || {}) : (storageData?.sessionStorage || {});
-          // The extension caps a snapshot at 50 keys and signals the rest by
+          // The extension caps a snapshot at STORAGE_MAX_KEYS and signals the rest by
           // injecting a synthetic `... N more keys omitted` key with an empty
           // value (injected_logger.js:276). Rendered as a data row it read as a
           // real storage entry with no value - it belongs in a notice.
@@ -2559,7 +2057,7 @@ ${stack}` : body);
               </div>
 
               {/* Storage Entries */}
-              <div className="flex-1 min-h-0 overflow-y-auto">
+              <div className="flex-1">
                 {omittedCount > 0 && (
                   <p className="px-3 py-2 text-[10px] text-amber-700 dark:text-amber-400 bg-amber-50/60 dark:bg-amber-950/20 border-b border-amber-200/60 dark:border-amber-800/40">
                     {t("dt.storageOmitted", { n: omittedCount })}

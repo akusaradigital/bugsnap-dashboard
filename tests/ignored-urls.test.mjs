@@ -29,6 +29,14 @@ const TRACKER_PATTERNS = [
   /tracking/i,
 ];
 
+function trackerHost(url) {
+  try {
+    return new URL(url).hostname.toLowerCase();
+  } catch {
+    return null;
+  }
+}
+
 function isIgnoredUrl(url) {
   if (!url) return false;
   const lower = String(url).toLowerCase().trim();
@@ -46,7 +54,9 @@ function isIgnoredUrl(url) {
   ) {
     return true;
   }
-  return TRACKER_PATTERNS.some((pattern) => pattern.test(url));
+  const host = trackerHost(url);
+  if (!host) return false;
+  return TRACKER_PATTERNS.some((pattern) => pattern.test(host));
 }
 
 test("isIgnoredUrl filters internal dashboard and cloud services", () => {
@@ -75,4 +85,22 @@ test("isIgnoredUrl allows normal user website network requests", () => {
   for (const url of allowed) {
     assert.equal(isIgnoredUrl(url), false, `Expected ${url} to NOT be ignored`);
   }
+});
+
+// The bare /analytics/, /telemetry/ and /tracking/ patterns match a host, not a
+// path. Applied to the whole URL they emptied real first-party rows.
+test("isIgnoredUrl only matches trackers in the HOST, never the path or free text", () => {
+  const kept = [
+    "https://app.mysite.com/dashboard/analytics",
+    "https://api.mysite.com/v1/tracking/orders",
+    "https://shop.example.com/order-tracking?id=5",
+    "/api/analytics/summary",
+    "TypeError: telemetry is undefined at app.js:12",
+    "Failed to fetch https://my-saas.com/api/analytics",
+  ];
+  for (const value of kept) {
+    assert.equal(isIgnoredUrl(value), false, `Expected ${value} to NOT be ignored`);
+  }
+  assert.equal(isIgnoredUrl("https://www.google-analytics.com/collect"), true);
+  assert.equal(isIgnoredUrl("https://browser-intake-datadoghq.com/api/v2/rum"), true);
 });

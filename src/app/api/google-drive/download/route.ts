@@ -10,6 +10,7 @@ interface CachedCap {
   workspace_id: string | null;
   expires_at: string | null;
   access_mode: "public" | "members" | null;
+  password: string | null;
 }
 
 // ponytail: 60s in-memory cache to prevent repeated Supabase queries during multi-chunk video streaming
@@ -57,7 +58,7 @@ export async function GET(req: Request) {
       : `drive_file_id.eq.${id},drive_url.ilike.%${id}%`;
     const { data } = await supabase
       .from("captures")
-      .select("user_id, workspace_id, expires_at, access_mode")
+      .select("user_id, workspace_id, expires_at, access_mode, password")
       .or(filter)
       .limit(1)
       .maybeSingle();
@@ -69,15 +70,26 @@ export async function GET(req: Request) {
     capCache.set(id, { data: cap, expiresAt: Date.now() + 60_000 });
   }
 
-  if (cap?.expires_at && new Date(cap.expires_at).getTime() < Date.now()) {
+  // An id that belongs to no capture is not ours to serve. Without this the
+  // public-Drive fallback below turns this route into an open proxy for any
+  // world-readable Drive file, on our domain and our egress.
+  if (!cap) {
+    return NextResponse.json({ error: "Not found" }, { status: 404 });
+  }
+
+  if (cap.expires_at && new Date(cap.expires_at).getTime() < Date.now()) {
     return NextResponse.json({ error: "Capture expired" }, { status: 410 });
   }
 
   // A members-only capture must not stream to anyone holding the file id.
   // Two ways in: a Bearer token (fetch callers) or a signature minted by
   // /api/google-drive/sign (<img>/<video>, which cannot send headers).
-  // Public captures skip this entirely — unchanged behaviour for them.
-  if (cap?.access_mode === "members") {
+  // Unprotected public captures skip this entirely — unchanged for them.
+  // A password on a public capture gates the page but did nothing here: the raw
+  // media streamed to anyone holding the Drive id. The signature from
+  // /api/google-drive/sign is the unlock proof (it mints one for a correct
+  // password), so the same gate covers both cases.
+  if (cap.access_mode === "members" || cap.password) {
     let allowed = verifyDownloadSig(id, url.searchParams.get("sig"), url.searchParams.get("exp"));
     if (!allowed) {
       const user = await getAuthenticatedUser(req);

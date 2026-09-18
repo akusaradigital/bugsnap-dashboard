@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-server";
+import { clientIp, isRateLimited } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -26,6 +27,17 @@ export async function POST(req: Request) {
     if (token) {
       const { data: { user } } = await supabase.auth.getUser(token);
       if (user?.id) targetUserId = user.id;
+    }
+
+    // The extension has no session and posts a bare email (background.js
+    // sendRetentionHeartbeat), so the email path has to stay. It is only
+    // presence metadata, but it is still an unauthenticated write keyed on a
+    // caller-supplied address - throttle it so it cannot be sprayed. The real
+    // extension fires this once a day.
+    if (!targetUserId && email) {
+      if (await isRateLimited(`ext-heartbeat:${clientIp(req)}`, 30, 3600)) {
+        return NextResponse.json({ ok: true, timestamp: Date.now() }, { headers: corsHeaders });
+      }
     }
 
     if (!targetUserId && email) {

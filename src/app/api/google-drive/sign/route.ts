@@ -15,10 +15,14 @@ export const dynamic = "force-dynamic";
  */
 export async function POST(req: Request) {
   const user = await getAuthenticatedUser(req);
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const body = (await req.json().catch(() => null)) as { fileId?: unknown } | null;
+  const body = (await req.json().catch(() => null)) as { fileId?: unknown; password?: unknown } | null;
   const fileId = typeof body?.fileId === "string" ? body.fileId : "";
+  const password = typeof body?.password === "string" ? body.password : "";
+  // A password-protected public capture has no session to check - the password
+  // itself is the credential, so an unauthenticated caller is allowed this far
+  // and gets rejected below unless it matches.
+  if (!user && !password) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!/^[A-Za-z0-9_-]{10,200}$/.test(fileId)) {
     return NextResponse.json({ error: "Invalid file id" }, { status: 400 });
   }
@@ -29,7 +33,7 @@ export async function POST(req: Request) {
     : `drive_file_id.eq.${fileId}`;
   const { data: cap } = await db
     .from("captures")
-    .select("user_id, workspace_id, expires_at")
+    .select("user_id, workspace_id, expires_at, password, access_mode")
     .or(filter)
     .limit(1)
     .maybeSingle();
@@ -38,6 +42,18 @@ export async function POST(req: Request) {
   if (cap.expires_at && new Date(cap.expires_at).getTime() < Date.now()) {
     return NextResponse.json({ error: "Capture expired" }, { status: 410 });
   }
+
+  // A correct password signs a public capture on its own - that is exactly what
+  // the viewer just proved to get past the lock screen. Members-only still needs
+  // the membership check below regardless.
+  if (cap.password && cap.access_mode !== "members") {
+    if (password && password === cap.password) {
+      return NextResponse.json(signDownload(fileId));
+    }
+    if (!user) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   let allowed = cap.user_id === user.id;
   if (!allowed && cap.workspace_id) {

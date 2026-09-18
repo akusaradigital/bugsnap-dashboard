@@ -8,405 +8,23 @@ import { useT } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
 import { Dropdown } from "@/components/Dropdown";
 import { pickAvatar, initialOf } from "@/lib/avatar";
-import { ShimmerLockBadge } from "@/components/ShimmerLockBadge";
+import EditModal from "@/components/CaptureEditModal";
+import {
+  type Capture,
+  type UploadTask,
+  STATUS_OPTIONS,
+  TAG_OPTIONS,
+  driveFileId,
+  driveThumbUrl,
+  formatBytes,
+  formatDuration,
+  getAvatarColor,
+  getOwnerInitial,
+  timeAgo,
+} from "@/lib/capture-utils";
 
-export type CaptureFilter = "all" | "video" | "screenshot";
-
-interface Capture {
-  id: string;
-  title: string;
-  type: string;
-  drive_url: string;
-  created_at: string;
-  window_size?: string;
-  workspace_id?: string | null;
-  description?: string | null;
-  password?: string | null;
-  expires_at?: string | null;
-  duration?: number | null;
-  tag?: string | null;
-  status?: string | null;
-  dev_logs?: { type?: string; level?: string; message?: string; text?: string; url?: string; method?: string; count?: number }[] | { version: number; errors?: number } | null;
-  burn_after_read?: boolean;
-  allowed_domains?: string[] | null;
-  allowed_ips?: string[] | null;
-  owner_email?: string | null;
-  folder_name?: string | null;
-  project_id?: string | null;
-  source?: string | null;
-  project_name?: string | null;
-}
-
-const TAG_OPTIONS = ["bug", "feature-request", "wip", "design", "other"];
-const STATUS_OPTIONS = ["open", "in-progress", "fixed", "closed"];
 const CHROME_WEB_STORE_URL = "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
 
-interface EditModalProps {
-  capture: Capture;
-  onClose: () => void;
-  onSaved: (updated: Capture) => void;
-}
-
-const EXPIRY_OPTIONS: { value: "never" | "24h" | "7d"; labelKey: string }[] = [
-  { value: "never", labelKey: "cap.never" },
-  { value: "24h", labelKey: "cap.hours24" },
-  { value: "7d", labelKey: "cap.days7" },
-];
-
-function timeAgo(iso: string, t: (k: string, vars?: Record<string, string | number>) => string): string {
-  const diff = Date.now() - new Date(iso).getTime();
-  const m = Math.floor(diff / 60000);
-  if (m < 1) return t("time.justNow");
-  if (m < 60) return t("time.minAgo", { n: m });
-  const h = Math.floor(m / 60);
-  if (h < 24) return t("time.hrAgo", { n: h });
-  const d = Math.floor(h / 24);
-  if (d < 7) return t("time.dayAgo", { n: d });
-  // Older than a week → compact date, same as before.
-  return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
-}
-
-function formatDuration(sec: number | null | undefined): string {
-  if (!sec || isNaN(sec)) return "0:00";
-  const m = Math.floor(sec / 60);
-  const s = Math.floor(sec % 60);
-  return `${m}:${s < 10 ? "0" : ""}${s}`;
-}
-
-function getAvatarColor(seed: string | null | undefined): string {
-  const colors = [
-    "bg-[#89BD49]",
-    "bg-emerald-600",
-    "bg-rose-600",
-    "bg-amber-600",
-    "bg-slate-700",
-    "bg-teal-600",
-    "bg-sky-600",
-  ];
-  let h = 0;
-  const s = seed || "";
-  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
-  return colors[h % colors.length];
-}
-
-function getOwnerInitial(email: string | null | undefined): string {
-  if (!email) return "M";
-  // Filter out punctuation commonly at the start of title, get clean first letter
-  const clean = email.replace(/[^a-zA-Z0-9]/g, "").trim();
-  const char = clean.charAt(0);
-  return (char || "M").toUpperCase();
-}
-
-function driveFileId(driveUrl: string | null | undefined): string | null {
-  if (!driveUrl) return null;
-  const m = driveUrl.match(/[?&]id=([^&]+)/) || driveUrl.match(/\/d\/([^/]+)/);
-  return m ? decodeURIComponent(m[1]) : null;
-}
-
-function driveThumbUrl(driveUrl: string | null | undefined, size = 800): string | null {
-  if (!driveUrl) return null;
-  const id = driveFileId(driveUrl);
-  return id ? `https://drive.google.com/thumbnail?id=${id}&sz=w${size}` : null;
-}
-
-function expiryToOption(expiresAt: string | null | undefined, createdAt: string): string {
-  if (!expiresAt) return "never";
-  const diffMs = new Date(expiresAt).getTime() - new Date(createdAt).getTime();
-  if (diffMs <= 36 * 60 * 60 * 1000) return "24h";
-  if (diffMs <= 10.5 * 24 * 60 * 60 * 1000) return "7d";
-  return "never";
-}
-
-interface UploadTask {
-  name: string;
-  size: number;
-  type: "video" | "screenshot";
-  progress: number;
-  status: "uploading" | "syncing" | "completed" | "error";
-  error?: string;
-}
-
-function formatBytes(bytes: number, decimals = 1): string {
-  if (!bytes || bytes <= 0) return "0 B";
-  const k = 1024;
-  const sizes = ["B", "KB", "MB", "GB"];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(decimals))} ${sizes[i]}`;
-}
-
-function EditModal({ capture, onClose, onSaved }: EditModalProps) {
-  const { t } = useT();
-  const { showToast } = useToast();
-  const [title, setTitle] = useState(capture.title);
-  const [description, setDescription] = useState(capture.description || "");
-  const [password, setPassword] = useState(capture.password || "");
-  const [tag, setTag] = useState(capture.tag || "");
-  const [status, setStatus] = useState(capture.status || "open");
-  const [expiry, setExpiry] = useState<string>(() =>
-    expiryToOption(capture.expires_at, capture.created_at)
-  );
-  const [burnAfterRead, setBurnAfterRead] = useState(capture.burn_after_read || false);
-  const [allowedDomainsText, setAllowedDomainsText] = useState(() => (capture.allowed_domains || []).join(", "));
-  const [allowedIpsText, setAllowedIpsText] = useState(() => (capture.allowed_ips || []).join(", "));
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function handleSave() {
-    setSaving(true);
-    setError(null);
-
-    const originalExpiry = expiryToOption(capture.expires_at, capture.created_at);
-    let expiresAt: string | null = null;
-    if (expiry === "never") {
-      expiresAt = null;
-    } else if (expiry === originalExpiry) {
-      expiresAt = capture.expires_at ?? null;
-    } else if (expiry === "24h") {
-      expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
-    } else if (expiry === "7d") {
-      expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-    }
-
-    const allowed_domains = allowedDomainsText.trim() 
-      ? allowedDomainsText.split(",").map(d => d.trim().toLowerCase()).filter(Boolean)
-      : null;
-
-    const allowed_ips = allowedIpsText.trim()
-      ? allowedIpsText.split(",").map(ip => ip.trim()).filter(Boolean)
-      : null;
-
-    const { error } = await supabase
-      .from("captures")
-      .update({
-        title: title.trim() || capture.title,
-        description: description.trim() || null,
-        password: password.trim() || null,
-        expires_at: expiresAt,
-        tag: tag || null,
-        status: status || null,
-        burn_after_read: burnAfterRead,
-        allowed_domains,
-        allowed_ips,
-      })
-      .eq("id", capture.id);
-
-    if (error) {
-      console.warn("Error updating capture:", error);
-      setError(t("cap.saveError"));
-      showToast("Save failed", "error");
-      setSaving(false);
-      return;
-    }
-    onSaved({
-      ...capture,
-      title: title.trim() || capture.title,
-      description: description.trim() || null,
-      password: password.trim() || null,
-      expires_at: expiresAt,
-      tag: tag || null,
-      status: status || null,
-      burn_after_read: burnAfterRead,
-      allowed_domains,
-      allowed_ips,
-    } as Capture);
-    showToast("Capture saved", "success");
-    onClose();
-  }
-
-  const inputClasses =
-    "w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 bg-subtle text-foreground placeholder:text-muted";
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative w-full max-w-md rounded-xl bg-subtle shadow-xl border border-border flex flex-col max-h-[85vh] overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
-          <h2 className="text-base font-bold text-foreground">{t("cap.editTitle")}</h2>
-          <button
-            onClick={onClose}
-            aria-label={t("common.close")}
-            className="text-muted hover:text-foreground transition-colors"
-          >
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d="M18 6L6 18M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Scrollable Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-4">
-          <div className="space-y-4">
-          <div>
-            <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">
-              <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
-              {t("cap.titleLabel")}
-            </label>
-            <input className={inputClasses} value={title} onChange={(e) => setTitle(e.target.value)} />
-          </div>
-          <div>
-            <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">
-              <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" /><path d="M14 2v6h6" /><path d="M9 13h6M9 17h6" /></svg>
-              {t("cap.descLabel")}
-            </label>
-            <textarea
-              className={`${inputClasses} min-h-[72px] resize-none`}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder={t("cap.descPlaceholder")}
-            />
-          </div>
-
-          <div className="border-t border-border pt-4">
-            <h3 className="text-sm font-semibold text-foreground mb-1">{t("cap.linkSettings")}</h3>
-            <p className="text-xs text-muted mb-4">{t("cap.linkSettingsHint")}</p>
-
-            <div className="space-y-4">
-              {/* Tag */}
-              <div>
-                <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">
-              <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12.59 2.59A2 2 0 0 0 11.17 2H4a2 2 0 0 0-2 2v7.17c0 .53.21 1.04.59 1.41l8.83 8.83a2 2 0 0 0 2.83 0l7.17-7.17a2 2 0 0 0 0-2.83Z" /><circle cx="7" cy="7" r="1.5" fill="currentColor" stroke="none" /></svg>
-              {t("cap.tagLabel")}
-            </label>
-                <Dropdown
-                  variant="field"
-                  value={tag}
-                  onChange={setTag}
-                  options={[{ value: "", label: t("cap.noTag") }, ...TAG_OPTIONS.map((t) => ({ value: t, label: t }))]}
-                />
-              </div>
-              {/* Status */}
-              <div>
-                <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">
-              <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v3M12 19v3M22 12h-3M5 12H2" /></svg>
-              {t("cap.statusLabel")}
-            </label>
-                <Dropdown
-                  variant="field"
-                  value={status}
-                  onChange={setStatus}
-                  options={STATUS_OPTIONS.map((s) => ({ value: s, label: s }))}
-                />
-              </div>
-              <div>
-                <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">
-              <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
-              {t("cap.passwordLabel")}
-            </label>
-                <input
-                  className={inputClasses}
-                  type="text"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder={t("cap.passwordPlaceholder")}
-                />
-              </div>
-              <div>
-                <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">
-              <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
-              {t("cap.expiresLabel")}
-            </label>
-                <div className="inline-flex rounded-lg border border-border bg-subtle p-1 w-full">
-                  {EXPIRY_OPTIONS.map((opt) => (
-                    <button
-                      key={opt.value}
-                      onClick={() => setExpiry(opt.value)}
-                      className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-colors ${
-                        expiry === opt.value
-                          ? "bg-background text-foreground shadow-sm"
-                          : "text-muted hover:text-foreground"
-                      }`}
-                    >
-                      {t(opt.labelKey)}
-                    </button>
-                  ))}
-                </div>
-                <p className="text-[11px] text-muted mt-1.5">
-                  {expiry === "never"
-                    ? t("cap.neverExpires")
-                    : t("cap.expiresOn", { date: new Date(
-                        Date.now() + (expiry === "24h" ? 24 : 168) * 60 * 60 * 1000
-                      ).toLocaleDateString() })}
-                </p>
-              </div>
-
-              {/* Advanced Security */}
-              <div className="border-t border-border pt-4 space-y-4">
-                <div className="flex items-center gap-2">
-                  <h4 className="text-xs font-semibold text-foreground">{t("cap.advancedProtection")}</h4>
-                  <ShimmerLockBadge label="PRO" />
-                </div>
-
-                {/* Burn after reading */}
-                <label className="flex items-center gap-2.5 text-xs text-foreground select-none cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={burnAfterRead}
-                    onChange={(e) => setBurnAfterRead(e.target.checked)}
-                    className="w-4 h-4 rounded border-border text-[#89BD49] focus:ring-[#89BD49]/20"
-                  />
-                  <div>
-                    <p className="font-medium">{t("cap.burnAfterRead")}</p>
-                    <p className="text-[10px] text-muted leading-tight mt-0.5">{t("cap.burnHint")}</p>
-                  </div>
-                </label>
-
-                {/* Domain Whitelist */}
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-xs font-medium text-muted">{t("cap.domainWhitelist")}</label>
-                  </div>
-                  <input
-                    type="text"
-                    value={allowedDomainsText}
-                    onChange={(e) => setAllowedDomainsText(e.target.value)}
-                    placeholder={t("cap.domainPlaceholder")}
-                    className={inputClasses}
-                  />
-                  <p className="text-[9px] text-muted leading-tight mt-1">{t("cap.domainHint")}</p>
-                </div>
-
-                {/* IP Whitelist */}
-                <div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <label className="block text-xs font-medium text-muted">{t("cap.ipWhitelist")}</label>
-                  </div>
-                  <input
-                    type="text"
-                    value={allowedIpsText}
-                    onChange={(e) => setAllowedIpsText(e.target.value)}
-                    placeholder={t("cap.ipPlaceholder")}
-                    className={inputClasses}
-                  />
-                  <p className="text-[9px] text-muted leading-tight mt-1">{t("cap.ipHint")}</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        </div>
-
-        {/* Sticky Footer Actions */}
-        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-border shrink-0">
-          {error && <p className="mr-auto text-xs text-red-600 dark:text-red-400">{error}</p>}
-          <button
-            onClick={onClose}
-            className="rounded-lg border border-border bg-subtle px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle transition-colors"
-          >
-            {t("common.cancel")}
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="rounded-lg bg-[#89BD49] px-4 py-2 text-sm font-medium text-white hover:bg-[#6B9A35] disabled:opacity-60 shadow-xs shadow-[#89BD49]/25 transition-colors"
-          >
-            {saving ? t("settings.saving") : t("cap.saveChanges")}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export default function CapturesList() {
   const { t } = useT();
@@ -458,7 +76,9 @@ function CapturesContent() {
     return () => window.removeEventListener("bugsnap:profile-updated", onProfileUpdated);
   }, []);
   const [loading, setLoading] = useState(true);
-  const [search, setSearch] = useState("");
+  // Filters live in the URL so a filtered view is shareable and survives reload.
+  // Seeded once from searchParams; the sync effect below writes them back.
+  const [search, setSearch] = useState(() => searchParams.get("q") || "");
   const [editing, setEditing] = useState<Capture | null>(null);
   const [deleteRequest, setDeleteRequest] = useState<{ ids: string[]; title?: string; operationId: string } | null>(null);
   const [deleteMode, setDeleteMode] = useState<"drive_trash" | "app_only">("drive_trash");
@@ -515,10 +135,34 @@ function CapturesContent() {
   // If BOTH are false, we show ALL (no filter applied).
   const [typeMenuOpen, setTypeMenuOpen] = useState(false);
   const typeMenuRef = useRef<HTMLDivElement>(null);
-  const [showVideo, setShowVideo] = useState(false);
-  const [showScreenshot, setShowScreenshot] = useState(false);
-  const [filterTag, setFilterTag] = useState("");
-  const [filterStatus, setFilterStatus] = useState("");
+  const initialTypes = (searchParams.get("type") || "").split(",");
+  const [showVideo, setShowVideo] = useState(() => initialTypes.includes("video"));
+  const [showScreenshot, setShowScreenshot] = useState(() => initialTypes.includes("screenshot"));
+  const [filterTag, setFilterTag] = useState(() => searchParams.get("tag") || "");
+  const [filterStatus, setFilterStatus] = useState(() => searchParams.get("status") || "");
+
+  // Typing must not fire a query per keystroke.
+  const [debouncedSearch, setDebouncedSearch] = useState(search.trim());
+  useEffect(() => {
+    const id = setTimeout(() => setDebouncedSearch(search.trim()), 300);
+    return () => clearTimeout(id);
+  }, [search]);
+
+  // Both checked (or neither) means "all", so there is only ever one type to filter on.
+  const typeFilter = showVideo === showScreenshot ? "" : showVideo ? "video" : "screenshot";
+
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    const put = (k: string, v: string) => (v ? url.searchParams.set(k, v) : url.searchParams.delete(k));
+    put("q", debouncedSearch);
+    put("tag", filterTag);
+    put("status", filterStatus);
+    put("type", [showScreenshot ? "screenshot" : "", showVideo ? "video" : ""].filter(Boolean).join(","));
+    const next = `${url.pathname}${url.search}`;
+    if (next !== `${window.location.pathname}${window.location.search}`) {
+      router.replace(next, { scroll: false });
+    }
+  }, [debouncedSearch, filterTag, filterStatus, showVideo, showScreenshot, router]);
 
   // Close type filter dropdown when clicking outside without blocking scroll
   useEffect(() => {
@@ -565,7 +209,11 @@ function CapturesContent() {
       let query = supabase
         .from("captures")
         .select(CAPTURES_COLUMNS)
+        // id is the cursor's tiebreak, so it has to be in the sort too - without
+        // it, rows sharing a created_at come back in arbitrary order and the
+        // keyset either skips or repeats them across page boundaries.
         .order("created_at", { ascending: false })
+        .order("id", { ascending: false })
         .limit(PAGE_SIZE);
       if (workspaceParam) {
         query = query.eq("workspace_id", workspaceParam);
@@ -575,6 +223,22 @@ function CapturesContent() {
       }
       if (projectFilter) {
         query = query.eq("project_id", projectFilter);
+      }
+      // Server-side, not post-filtering the loaded page: with keyset pagination a
+      // capture that has not been scrolled into memory yet is otherwise unfindable.
+      if (typeFilter) {
+        query = query.eq("type", typeFilter);
+      }
+      if (filterTag) {
+        query = query.eq("tag", filterTag);
+      }
+      if (filterStatus) {
+        query = query.eq("status", filterStatus);
+      }
+      if (debouncedSearch) {
+        // Escape PostgREST's pattern/list metacharacters so a title containing
+        // a comma or quote does not break out of the filter expression.
+        query = query.ilike("title", `%${debouncedSearch.replace(/[%_,"\\()]/g, "\\$&")}%`);
       }
       const cursor = cursorRef.current;
       if (cursor) {
@@ -602,22 +266,23 @@ function CapturesContent() {
       }
       setHasMore(items.length === PAGE_SIZE);
     },
-    [folderParam, projectFilter, workspaceParam]
+    [folderParam, projectFilter, workspaceParam, typeFilter, filterTag, filterStatus, debouncedSearch]
   );
 
-  // Initial load + reload on workspace / folder change
+  // Initial load + reload on any filter change (loadPage's identity covers them all)
   useEffect(() => {
     let cancelled = false;
     cursorRef.current = null;
     loadGenRef.current += 1;
     setLoadingMore(false);
+    setLoading(true);
     loadPage(true).finally(() => {
       if (!cancelled) setLoading(false);
     });
     return () => {
       cancelled = true;
     };
-  }, [wsParam, folderParam, loadPage]);
+  }, [loadPage]);
 
   // Handle Escape key to cancel/clear active selection
   useEffect(() => {
@@ -941,6 +606,33 @@ function CapturesContent() {
     setMoveTargetFolderName("");
   }
 
+  // Bulk tag / status. One update for the whole selection - RLS decides which
+  // rows it may touch, same as the single-card edit path.
+  const [bulkField, setBulkField] = useState<"tag" | "status" | null>(null);
+  const [bulkSaving, setBulkSaving] = useState(false);
+  async function applyBulkField(field: "tag" | "status", value: string) {
+    if (bulkSaving || selectedIds.size === 0) return;
+    setBulkSaving(true);
+    const ids = Array.from(selectedIds);
+    // .select() so RLS-skipped rows are visible: an update that touches nothing
+    // returns no error, and without this the UI would claim rows it never changed.
+    const { data, error } = await supabase
+      .from("captures")
+      .update({ [field]: value })
+      .in("id", ids)
+      .select("id");
+    setBulkSaving(false);
+    setBulkField(null);
+    if (error) {
+      showToast(error.message, "error");
+      return;
+    }
+    const updated = new Set(((data ?? []) as Array<{ id: string }>).map((r) => r.id));
+    setCaptures((prev) => prev.map((c) => (updated.has(c.id) ? { ...c, [field]: value } : c)));
+    clearSelection();
+    showToast(t("cap.bulkUpdated", { count: updated.size }), "success");
+  }
+
   async function submitMoveTo() {
     if (moving || selectedIds.size === 0 || !moveTargetWorkspaceId) return;
     setMoving(true);
@@ -1038,24 +730,33 @@ function CapturesContent() {
     }
   }
 
-  const filteredCaptures = workspaceCaptures.filter((item) => {
-    // No type selected => treat as "All" (don't filter by type).
-    const matchesType =
-      (!showVideo && !showScreenshot) ||
-      (item.type === "video" && showVideo) ||
-      (item.type === "screenshot" && showScreenshot);
+  // loadPage already applied every filter server-side.
+  const filteredCaptures = workspaceCaptures;
 
-    const matchesTag = !filterTag || item.tag === filterTag;
-    const matchesStatus = !filterStatus || item.status === filterStatus;
-
-    const q = search.trim().toLowerCase();
-    const matchesSearch = !q || (item.title || "").toLowerCase().includes(q);
-
-    return matchesType && matchesTag && matchesStatus && matchesSearch;
-  });
-
-  const videoCount = workspaceCaptures.filter((c) => c.type === "video").length;
-  const screenshotCount = workspaceCaptures.filter((c) => c.type === "screenshot").length;
+  // Type counts are for the whole scope, not the loaded page - a head count is
+  // the cheapest way to get that without fetching the rows.
+  const [typeCounts, setTypeCounts] = useState({ video: 0, screenshot: 0 });
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const counts = await Promise.all(
+        (["video", "screenshot"] as const).map(async (type) => {
+          let q = supabase.from("captures").select("id", { count: "exact", head: true }).eq("type", type);
+          if (workspaceParam) q = q.eq("workspace_id", workspaceParam);
+          if (folderParam) q = q.eq("folder_name", folderParam);
+          if (projectFilter) q = q.eq("project_id", projectFilter);
+          const { count } = await q;
+          return count || 0;
+        })
+      );
+      if (!cancelled) setTypeCounts({ video: counts[0], screenshot: counts[1] });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [workspaceParam, folderParam, projectFilter]);
+  const videoCount = typeCounts.video;
+  const screenshotCount = typeCounts.screenshot;
 
   const toggleSelectAllVisible = useCallback(() => {
     if (filteredCaptures.length === 0) return;
@@ -2128,6 +1829,34 @@ function CapturesContent() {
               </svg>
               <span>{t("cap.bulkMove")}</span>
             </button>
+
+            {/* Tag / Status */}
+            {(["tag", "status"] as const).map((field) => (
+              <div key={field} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setBulkField((f) => (f === field ? null : field))}
+                  disabled={moving || deleting || bulkSaving}
+                  className="h-8 px-2.5 rounded-xl border border-border bg-subtle hover:bg-background hover:border-[#89BD49]/40 dark:hover:border-[#89BD49]/50 text-xs font-semibold text-foreground hover:text-[#6B9A35] dark:hover:text-[#A8D666] disabled:opacity-40 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                >
+                  <span>{field === "tag" ? t("cap.bulkTag") : t("cap.bulkStatus")}</span>
+                </button>
+                {bulkField === field && (
+                  <div className="absolute bottom-full mb-1.5 left-0 z-50 min-w-[9rem] bg-white dark:bg-zinc-900 border border-border rounded-lg shadow-lg overflow-hidden">
+                    {(field === "tag" ? TAG_OPTIONS : STATUS_OPTIONS).map((opt) => (
+                      <button
+                        key={opt}
+                        type="button"
+                        onClick={() => void applyBulkField(field, opt)}
+                        className="w-full text-left px-3 py-2 text-xs text-foreground hover:bg-subtle transition-colors cursor-pointer"
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ))}
 
             {/* Delete */}
             <button

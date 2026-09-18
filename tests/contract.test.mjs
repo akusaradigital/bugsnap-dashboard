@@ -35,8 +35,21 @@ function normalizeDevLog(log) {
   if (type === "screenshot") {
     return { type: "screenshot", message, url, time, timestamp, count };
   }
+  if (type === "step" && url) {
+    return { type: "navigation", message, url, time, timestamp, count };
+  }
   return { type: "step", message: message || text || "", time, timestamp, count };
 }
+
+// Legacy captures (extension < 1.0.44) had navigation/screenshot flattened to
+// "step" on upload, which left the dashboard Console tab empty.
+test("legacy 'step' log carrying a url is recovered as navigation", () => {
+  assert.equal(
+    normalizeDevLog({ type: "step", message: "Page loaded: https://a.test/", url: "https://a.test/" }).type,
+    "navigation"
+  );
+  assert.equal(normalizeDevLog({ type: "step", message: "Clicked Save" }).type, "step");
+});
 
 test("Cross-project contract: validate simulated extension capture payload", () => {
   // Simulated extension payload sent to the dashboard api or stored in DB

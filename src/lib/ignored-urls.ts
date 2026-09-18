@@ -29,6 +29,19 @@ export const TRACKER_PATTERNS = [
   /tracking/i,
 ];
 
+// Every pattern above matches a HOST, so they must only ever be tested against
+// one. Run against a whole URL (or worse, a console message) they swallow real
+// first-party data: `/analytics/i` killed `/api/analytics`, `/tracking/i` killed
+// `/order-tracking`, and any console line mentioning "telemetry" vanished.
+function trackerHost(url: string): string | null {
+  try {
+    return new URL(url).hostname.toLowerCase();
+  } catch {
+    // Relative or unparseable: same-origin by definition, never a tracker.
+    return null;
+  }
+}
+
 export function isIgnoredUrl(url?: string): boolean {
   if (!url) return false;
   const lower = url.toLowerCase().trim();
@@ -46,5 +59,7 @@ export function isIgnoredUrl(url?: string): boolean {
   ) {
     return true;
   }
-  return TRACKER_PATTERNS.some((pattern) => pattern.test(url));
+  const host = trackerHost(url);
+  if (!host) return false;
+  return TRACKER_PATTERNS.some((pattern) => pattern.test(host));
 }

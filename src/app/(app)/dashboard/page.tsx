@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -33,7 +33,7 @@ export default function DashboardAnalyticsPage() {
 }
 
 function DashboardContent() {
-  const { t } = useT();
+  const { t, locale } = useT();
   const searchParams = useSearchParams();
   const wsParam = searchParams.get("ws");
   const now = new Date();
@@ -309,10 +309,13 @@ function DashboardContent() {
     ? `${(storageUsageMb / 1024).toFixed(1)} GB`
     : `${storageUsageMb.toFixed(1)} MB`;
 
-  const MONTH_NAMES = [
-    "January", "February", "March", "April", "May", "June",
-    "July", "August", "September", "October", "November", "December"
-  ];
+  // Intl already knows every locale's month names - 24 i18n keys would just
+  // restate what the platform ships. Keyed on `locale` so switching language
+  // relabels the chart without a reload.
+  const MONTH_NAMES = useMemo(() => {
+    const fmt = new Intl.DateTimeFormat(locale === "id" ? "id-ID" : "en-US", { month: "long" });
+    return Array.from({ length: 12 }, (_, m) => fmt.format(new Date(2000, m, 1)));
+  }, [locale]);
 
   const daysInMonth = new Date(selectedYear, selectedMonth + 1, 0).getDate();
   const days: DayCount[] = Array.from({ length: daysInMonth }, (_, idx) => ({

@@ -140,12 +140,16 @@ export default function TeamManagementPage() {
     if (member.role === "owner") return;
     if (!confirm(t("members.removeConfirm", { email: member.email }))) return;
     try {
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from("workspace_members")
         .delete()
         .eq("workspace_id", activeWsId)
-        .eq("user_id", member.user_id);
+        .eq("user_id", member.user_id)
+        // RLS declines rows without raising: without the read-back the row
+        // disappears from the table while the member is still in the workspace.
+        .select("user_id");
       if (error) throw error;
+      if (!data || data.length === 0) throw new Error(t("members.removeError"));
       setMembers((prev) => prev.filter((m) => m.user_id !== member.user_id));
       showToast(`${member.email} removed`, "success");
     } catch {

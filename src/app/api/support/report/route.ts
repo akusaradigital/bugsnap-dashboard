@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getAuthenticatedUser, createServiceClient } from "@/lib/supabase-server";
 import { validateEmail } from "@/lib/email-validator";
 import { logSecurityEvent } from "@/lib/security-audit";
+import { isRateLimited } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -52,6 +53,17 @@ export async function POST(req: Request) {
 
     if (!message) {
       return NextResponse.json({ error: "Message is required", code: "MESSAGE_REQUIRED" }, { status: 400 });
+    }
+
+    // Public endpoint that sends mail on every accepted call. Turnstile below is
+    // the bot gate, but it does not bound how fast one solved-token caller can
+    // burn the Resend quota. Generous enough that a real person filing several
+    // tickets never sees it.
+    if (await isRateLimited(`support-report:${clientIp || "unknown"}`, 5, 3600)) {
+      return NextResponse.json(
+        { error: "Terlalu banyak laporan. Coba lagi nanti.", code: "RATE_LIMITED" },
+        { status: 429 }
+      );
     }
 
     // 2. Strict Email Validation (anti-spam & deliverability)

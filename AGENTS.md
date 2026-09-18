@@ -11,6 +11,7 @@
 5. **Free tier stubs**: `tiers.ts` + `quota.ts` are deliberately unlimited. Do NOT add paywalls.
 6. **i18n**: All UI text via `src/lib/i18n.ts` + `useT()`. Both `en` + `id`. No hardcoded strings.
 7. **No `any` TS type**: Proper types only.
+8. **DB changes apply immediately**: A new `supabase/migrations/*.sql` is not done until it runs against the live project. Execute it with `node scripts/apply-migration.mjs <file.sql>` (Management API + `SUPABASE_PAT` from `.env.local`) in the same turn it is written. Snapshot what you are replacing first — `--sql "select pg_get_functiondef(...)"` — and verify afterwards. Never leave a migration written-but-unapplied.
 
 ## Versioning (SemVer)
 

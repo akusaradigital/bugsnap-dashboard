@@ -13,16 +13,25 @@
 7. **Design**: Solid colors, Tailwind tokens, dark/light mode. No heavy gradients.
 8. **Ethics**: Never compare BugSnap to competitors in UI or docs.
 9. **No `any` TS type**: Use proper types. `@typescript-eslint/no-explicit-any` is enforced.
+10. **DB changes apply immediately**: A migration that only exists as a file has changed nothing. Any new `supabase/migrations/*.sql` must be executed against the live project in the same turn it is written:
+
+```bash
+node scripts/apply-migration.mjs --sql "select pg_get_functiondef(p.oid) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='<fn>'"  # snapshot first
+node scripts/apply-migration.mjs supabase/migrations/<file>.sql                                                                                                              # apply
+node scripts/apply-migration.mjs --sql "<verification query>"                                                                                                               # verify
+```
+
+The script posts to the Supabase Management API using `SUPABASE_PAT` + `NEXT_PUBLIC_SUPABASE_URL` from `.env.local` (no CLI, no DB password, no linked local project). Save the pre-change definition to `supabase/.rollback-<object>-<date>.json` so there is a way back. Never leave a migration written-but-unapplied.
 
 ## 2. Versioning (SemVer)
 
 Bump `package.json` + `package-lock.json` (top-level + `packages[""].version`) before every production deploy.
 
-- **PATCH** `0.5.10 → 0.5.11`: bugfix, hotfix, copy, asset, dependency.
+- **PATCH** `0.5.11 → 0.5.12`: bugfix, hotfix, copy, asset, dependency.
 - **MINOR** `0.5.x → 0.6.0`: new user-facing feature, route, module.
 - **MAJOR** `0.x → 1.0.0`: breaking API/auth/UI change.
 
-Current version: **`0.5.11`**
+Current version: **`0.6.1`**
 
 ## 3. Architecture & Data Flow
 

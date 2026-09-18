@@ -87,6 +87,14 @@ function parseTimestamp(input: string): number | null {
   return minutes * 60 + parseInt(m[2], 10);
 }
 
+// Drop `replacing` (an optimistic id, or nothing) and append `row` unless the
+// poll already raced it in. Every write path goes through this, otherwise a poll
+// that lands mid-RPC leaves the same comment in the list twice.
+function upsertComment(prev: CommentRow[], row: CommentRow, replacing?: string): CommentRow[] {
+  const rest = prev.filter((c) => c.id !== replacing && c.id !== row.id);
+  return [...rest, row];
+}
+
 function formatDate(iso: string): string {
   return new Date(iso).toLocaleString("en-US", {
     month: "short",
@@ -107,6 +115,11 @@ export default function Comments({
 }: CommentsProps) {
   const { t, locale } = useT();
   const [comments, setComments] = useState<CommentRow[]>([]);
+  // The poll merges against this instead of its own closure copy: post/edit/
+  // delete handlers also write setComments, and an incremental merge that
+  // ignored them would resurrect deleted rows on the next tick.
+  const commentsRef = useRef<CommentRow[]>([]);
+  commentsRef.current = comments;
   const [loading, setLoading] = useState(true);
   const [body, setBody] = useState("");
   const [timestampOn, setTimestampOn] = useState(false);
@@ -257,12 +270,22 @@ export default function Comments({
     // Realtime caps at 200 concurrent connections, and one channel per video
     // tab exhausts it (T-022). New comments appear within 30s, which is
     // ample for a comment thread.
-    const load = async () => {
-      const { data, error } = await supabase
+    //
+    // Most polls only ask for rows newer than the newest we hold, so a quiet
+    // thread costs an empty result instead of the whole thread every 30s.
+    // An incremental fetch cannot see deletions or edits, so every 5th poll
+    // (~2.5 min) refetches in full and replaces the list.
+    let newestSeen: string | null = null;
+    let tick = 0;
+
+    const load = async (incremental: boolean) => {
+      let query = supabase
         .from("comments")
         .select("id, capture_id, parent_id, author_name, body, video_timestamp, created_at, pin_x, pin_y")
         .eq("capture_id", captureId)
         .order("created_at", { ascending: true });
+      if (incremental && newestSeen) query = query.gt("created_at", newestSeen);
+      const { data, error } = await query;
       if (cancelled) return;
       setLoading(false);
       if (error) {
@@ -270,17 +293,34 @@ export default function Comments({
         setError(t("cm.errorLoad"));
         return;
       }
-      const loadedComments = (data as CommentRow[]) ?? [];
-      setComments(loadedComments);
-      onCommentsChangeRef.current?.(loadedComments);
+      const rows = (data as CommentRow[]) ?? [];
+      if (incremental && newestSeen && rows.length === 0) return;
+      // A full refetch still has to keep optimistic rows: the server does not
+      // know about a post whose RPC has not returned yet, and dropping it here
+      // makes the comment vanish until the next poll.
+      const pending = commentsRef.current.filter(
+        (c) => c.id.startsWith("local-") && !rows.some((r) => r.id === c.id)
+      );
+      const merged =
+        incremental && newestSeen
+          ? [...commentsRef.current.filter((c) => !rows.some((r) => r.id === c.id)), ...rows]
+          : [...rows, ...pending];
+      // Reset, not just advance: an emptied thread must not keep a cursor from
+      // its deleted rows, or every later comment is invisible to the poll.
+      newestSeen = rows.length > 0 ? rows[rows.length - 1].created_at : incremental ? newestSeen : null;
+      setComments(merged);
+      onCommentsChangeRef.current?.(merged);
     };
 
-    load();
-    timer = setInterval(load, 30_000);
+    load(false);
+    timer = setInterval(() => {
+      tick += 1;
+      void load(tick % 5 !== 0);
+    }, 30_000);
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        load();
+        void load(false);
       }
     };
     document.addEventListener("visibilitychange", handleVisibilityChange);
@@ -388,7 +428,7 @@ export default function Comments({
       }).catch((err) => console.error("Failed to send comment notification:", err));
 
       setComments((prev) => {
-        const updated = prev.map((c) => (c.id === optimisticId ? (data as CommentRow) : c));
+        const updated = upsertComment(prev, data as CommentRow, optimisticId);
         onCommentsChangeRef.current?.(updated);
         return updated;
       });
@@ -454,7 +494,11 @@ export default function Comments({
         body: JSON.stringify({ comment: data, locale }),
       }).catch((err) => console.error("Failed to send comment notification:", err));
 
-      setComments((prev) => [...prev, data as CommentRow]);
+      setComments((prev) => {
+        const updated = upsertComment(prev, data as CommentRow);
+        onCommentsChangeRef.current?.(updated);
+        return updated;
+      });
       setExpandedReplies((prev) => (prev.includes(parentId) ? prev : [...prev, parentId]));
       setHighlightId((data as CommentRow).id);
       setReplyBody("");

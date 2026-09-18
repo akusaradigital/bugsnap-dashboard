@@ -47,36 +47,30 @@ export async function GET(req: Request) {
     }
 
     // 2. Security Audit Logs Query
-    const { data: secData } = await db
-      .from("app_settings")
-      .select("value")
-      .eq("key", "security_audit_logs")
-      .maybeSingle();
+    // The table, not app_settings: logSecurityEvent() has written to
+    // security_audit_logs since 20260908150000, so the old key lookup found
+    // nothing and admin threat alerts never fired.
+    const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+    const { data: recentThreats } = await db
+      .from("security_audit_logs")
+      .select("id, type, detail, created_at")
+      .gte("created_at", oneDayAgo)
+      .in("type", ["honeypot_trap", "turnstile_fail", "spam_email"])
+      .order("created_at", { ascending: false })
+      .limit(50);
 
-    if (secData?.value && Array.isArray(secData.value)) {
-      const logs = secData.value as Array<{
-        id?: string;
-        type: string;
-        timestamp: string;
-        details?: string;
-      }>;
-      const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-      const recentThreats = logs.filter(
-        (l) => l.timestamp >= oneDayAgo && (l.type.includes("honeypot") || l.type.includes("turnstile") || l.type.includes("disposable"))
-      );
-
-      if (recentThreats.length > 0) {
-        notifications.push({
-          id: `sec-${recentThreats[0].id || "recent"}`,
-          category: "security",
-          title: `${recentThreats.length} Ancaman Terdeteksi (24 Jam)`,
-          description: `Aktivitas mencurigakan dicegah: ${recentThreats[0].type} (${recentThreats[0].details || "blocked"})`,
-          time: recentThreats[0].timestamp || new Date().toISOString(),
-          href: "/admin/security-audit",
-          severity: "error",
-          unread: true,
-        });
-      }
+    if (recentThreats && recentThreats.length > 0) {
+      const first = recentThreats[0] as { id?: string; type: string; detail?: string; created_at?: string };
+      notifications.push({
+        id: `sec-${first.id || "recent"}`,
+        category: "security",
+        title: `${recentThreats.length} Ancaman Terdeteksi (24 Jam)`,
+        description: `Aktivitas mencurigakan dicegah: ${first.type} (${first.detail || "blocked"})`,
+        time: first.created_at || new Date().toISOString(),
+        href: "/admin/security-audit",
+        severity: "error",
+        unread: true,
+      });
     }
 
     // 3. Extension Fleet Status
