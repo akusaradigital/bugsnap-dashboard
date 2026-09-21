@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
     if (!body || typeof body !== "object" || !body.comment) {
       return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
     }

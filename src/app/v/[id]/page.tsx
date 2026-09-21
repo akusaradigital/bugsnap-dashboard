@@ -13,6 +13,7 @@ import CaptureFooter from "@/components/CaptureFooter";
 import { useT } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
 import { Dropdown } from "@/components/Dropdown";
+import { SubsystemErrorBoundary } from "@/components/SubsystemErrorBoundary";
 
 const DevToolsPanel = dynamic(() => import("@/components/DevToolsPanel"), {
   ssr: false,
@@ -676,10 +677,13 @@ function SingleViewContent() {
             )
             .eq("id", id)
             .single();
-          if (directData && !cancelled) {
+          if (cancelled) return;
+          if (directData) {
             setCapture(directData as Capture);
             setAccessMode(directData.access_mode === "members" ? "members" : "public");
             setStatus("ready");
+          } else {
+            setStatus("notfound");
           }
           return;
         }
@@ -799,48 +803,53 @@ function SingleViewContent() {
     return () => { cancelled = true; };
   }, [id, capture, status, isAuthenticated]);
 
-  function submitPassword(e: React.FormEvent) {
+  async function submitPassword(e: React.FormEvent) {
     e.preventDefault();
     if (!passwordInput || passwordRateLimited) return;
     setCheckingPassword(true);
     setPasswordError(false);
-    supabase
-      .rpc("get_public_capture", { p_id: id, p_password: passwordInput })
-      .then(({ data, error }) => {
-        setCheckingPassword(false);
-        // A failed RPC says nothing about the capture - it is still there, the
-        // request just did not land. Sending the viewer to a 404 loses the form
-        // and the link looks dead; keep the form and let them retry.
-        if (error || !data || data.length === 0) {
-          showToast(t("v.verifyFailed"), "error");
-          return;
-        }
+    try {
+      const { data, error } = await supabase
+        .rpc("get_public_capture", { p_id: id, p_password: passwordInput });
 
-        const row = data[0] as Capture & { status: string };
-        setAccessMode(row.access_mode === "members" ? "members" : "public");
-        if (row.status === "ok") {
-          setUnlockedPassword(passwordInput);
-          setCapture(row);
-          setStatus("ready");
-        } else if (row.status === "rate_limited") {
-          setCapture(row);
-          setPasswordRateLimited(true);
-          setPasswordError(false);
-        } else if (row.status === "not_found") {
-          setStatus("notfound");
-        } else if (row.status === "expired") {
-          setStatus("expired");
-        } else if (row.status === "unauthorized_ip") {
-          setStatus("unauthorized_ip");
-        } else if (row.status === "needs_login") {
-          setStatus("needs_login");
-        } else if (row.status === "unauthorized_domain") {
-          setStatus("unauthorized_domain");
-        } else {
-          setCapture(row);
-          setPasswordError(true);
-        }
-      });
+      setCheckingPassword(false);
+      // A failed RPC says nothing about the capture - it is still there, the
+      // request just did not land. Sending the viewer to a 404 loses the form
+      // and the link looks dead; keep the form and let them retry.
+      if (error || !data || data.length === 0) {
+        showToast(t("v.verifyFailed"), "error");
+        return;
+      }
+
+      const row = data[0] as Capture & { status: string };
+      setAccessMode(row.access_mode === "members" ? "members" : "public");
+      if (row.status === "ok") {
+        setUnlockedPassword(passwordInput);
+        setCapture(row);
+        setStatus("ready");
+      } else if (row.status === "rate_limited") {
+        setCapture(row);
+        setPasswordRateLimited(true);
+        setPasswordError(false);
+      } else if (row.status === "not_found") {
+        setStatus("notfound");
+      } else if (row.status === "expired") {
+        setStatus("expired");
+      } else if (row.status === "unauthorized_ip") {
+        setStatus("unauthorized_ip");
+      } else if (row.status === "needs_login") {
+        setStatus("needs_login");
+      } else if (row.status === "unauthorized_domain") {
+        setStatus("unauthorized_domain");
+      } else {
+        setCapture(row);
+        setPasswordError(true);
+      }
+    } catch (err: unknown) {
+      console.error("Failed to verify password:", err);
+      setCheckingPassword(false);
+      showToast(t("v.verifyFailed"), "error");
+    }
   }
 
   async function handleCopyLink() {
@@ -866,11 +875,11 @@ function SingleViewContent() {
     try {
       const { error } = await supabase.from("captures").update({ access_mode: nextMode }).eq("id", capture.id);
       if (error) throw error;
-      showToast(nextMode === "public" ? "Link set to public" : "Link restricted to members", "success");
+      showToast(nextMode === "public" ? t("v.linkPublic") : t("v.linkMembers"), "success");
     } catch {
       setAccessMode(previous);
       setCapture({ ...capture, access_mode: previous });
-      showToast("Permission denied", "error");
+      showToast(t("v.permissionDenied"), "error");
     } finally {
       setAccessSaving(false);
       setAccessOpen(false);
@@ -1532,17 +1541,19 @@ function SingleViewContent() {
 
             <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_440px] xl:items-start">
               <section className="rounded-xl border border-border bg-white p-4 sm:p-6 lg:p-7 shadow-sm dark:bg-background">
-                <MediaViewer
-                  type={capture.type}
-                  driveUrl={capture.drive_url}
-                  title={capture.title}
-                  onTimeUpdate={handlePlaybackTimeUpdate}
-                  seekToTime={seekTargetTime}
-                  errorMarkers={errorMarkers}
-                  accessMode={accessMode}
-                  unlockPassword={unlockedPassword}
-                  initialDuration={initialDuration}
-                />
+                <SubsystemErrorBoundary fallbackTitle="Media player error" fallbackDescription="An unexpected error occurred in the media player. Click retry to reload.">
+                  <MediaViewer
+                    type={capture.type}
+                    driveUrl={capture.drive_url}
+                    title={capture.title}
+                    onTimeUpdate={handlePlaybackTimeUpdate}
+                    seekToTime={seekTargetTime}
+                    errorMarkers={errorMarkers}
+                    accessMode={accessMode}
+                    unlockPassword={unlockedPassword}
+                    initialDuration={initialDuration}
+                  />
+                </SubsystemErrorBoundary>
                 <div className="mt-5 sm:mt-7 space-y-4">
                   <div
                     onClick={isTeamMember ? openEditModal : undefined}
@@ -1592,26 +1603,30 @@ function SingleViewContent() {
                     {capture.expires_at && <p className="mt-2 text-[11px] font-medium text-muted">{getExpiryCountdown(capture.expires_at, t)}</p>}
                   </div>
                   <div className="border-t border-border pt-3">
-                    <Comments
-                      captureId={capture.id}
-                      isVideo={capture.type === "video"}
-                      authorName={viewerEmail ? viewerEmail.split("@")[0] : undefined}
-                      authorEmail={viewerEmail || undefined}
-                      onSeek={(t) => setSeekTargetTime((prev) => (prev === t ? t + 0.0001 : t))}
-                      getCurrentTime={() => playbackTime}
-                    />
+                    <SubsystemErrorBoundary fallbackTitle="Comments unavailable" fallbackDescription="An unexpected error occurred while loading comments.">
+                      <Comments
+                        captureId={capture.id}
+                        isVideo={capture.type === "video"}
+                        authorName={viewerEmail ? viewerEmail.split("@")[0] : undefined}
+                        authorEmail={viewerEmail || undefined}
+                        onSeek={(t) => setSeekTargetTime((prev) => (prev === t ? t + 0.0001 : t))}
+                        getCurrentTime={() => playbackTime}
+                      />
+                    </SubsystemErrorBoundary>
                   </div>
                 </div>
               </section>
 
               <aside className="flex flex-col gap-3 xl:sticky xl:top-4 xl:self-start">
                 {!hideDevTools && (
-                  <DevToolsPanel
-                    capture={capture as unknown as React.ComponentProps<typeof DevToolsPanel>["capture"]}
-                    currentTime={playbackTime}
-                    unlockPassword={unlockedPassword}
-                    onSeekToTime={(t) => setSeekTargetTime((prev) => (prev === t ? t + 0.0001 : t))}
-                  />
+                  <SubsystemErrorBoundary fallbackTitle="DevTools unavailable" fallbackDescription="An unexpected error occurred in the DevTools panel.">
+                    <DevToolsPanel
+                      capture={capture as unknown as React.ComponentProps<typeof DevToolsPanel>["capture"]}
+                      currentTime={playbackTime}
+                      unlockPassword={unlockedPassword}
+                      onSeekToTime={(t) => setSeekTargetTime((prev) => (prev === t ? t + 0.0001 : t))}
+                    />
+                  </SubsystemErrorBoundary>
                 )}
                 <section className="rounded-xl border border-border bg-white p-5 shadow-sm dark:bg-background">
                   <div>
@@ -1628,21 +1643,23 @@ function SingleViewContent() {
                         <p className="mt-1 text-[10px] font-normal text-muted">{t("v.contentOnlyHint")}</p>
                       </button>
                     </div>
-                    <div className="mt-5">
-                      <label className="mb-2 block text-xs font-semibold text-muted">{t("v.generalAccess")}</label>
-                      <div ref={accessMenuRef} className="relative">
-                        <button type="button" onClick={() => setAccessOpen((open) => !open)} className="flex w-full items-center justify-between rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-subtle">
-                          <span className="flex items-center gap-2"><img src="/icons/globe.svg" alt="" className="h-4 w-4" />{accessMode === "members" ? t("v.membersOnly") : t("v.anyoneWithLink")}</span>
-                          <img src="/icons/chevron-down.svg" alt="" className="h-3 w-3" />
-                        </button>
-                        {accessOpen && (
-                          <div className="absolute left-0 right-0 top-full z-50 mt-2 rounded-xl border border-border bg-white dark:bg-zinc-900 p-1 shadow-xl">
-                            <button type="button" onClick={() => void saveAccessMode("public")} disabled={accessSaving} className="w-full rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50">{t("v.anyoneWithLink")}</button>
-                            <button type="button" onClick={() => void saveAccessMode("members")} disabled={accessSaving} className="w-full rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50">{t("v.membersOnly")}</button>
-                          </div>
-                        )}
+                    {(isTeamMember || isWorkspaceOwner) && (
+                      <div className="mt-5">
+                        <label className="mb-2 block text-xs font-semibold text-muted">{t("v.generalAccess")}</label>
+                        <div ref={accessMenuRef} className="relative">
+                          <button type="button" onClick={() => setAccessOpen((open) => !open)} className="flex w-full items-center justify-between rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-subtle">
+                            <span className="flex items-center gap-2"><img src="/icons/globe.svg" alt="" className="h-4 w-4" />{accessMode === "members" ? t("v.membersOnly") : t("v.anyoneWithLink")}</span>
+                            <img src="/icons/chevron-down.svg" alt="" className="h-3 w-3" />
+                          </button>
+                          {accessOpen && (
+                            <div className="absolute left-0 right-0 top-full z-50 mt-2 rounded-xl border border-border bg-white dark:bg-zinc-900 p-1 shadow-xl">
+                              <button type="button" onClick={() => void saveAccessMode("public")} disabled={accessSaving} className="w-full rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50">{t("v.anyoneWithLink")}</button>
+                              <button type="button" onClick={() => void saveAccessMode("members")} disabled={accessSaving} className="w-full rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50">{t("v.membersOnly")}</button>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                   <div className="mt-6 pt-2">
                     <button type="button" onClick={handleCopyLink} className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] py-3 text-sm font-semibold text-white shadow-xs shadow-[#89BD49]/25">

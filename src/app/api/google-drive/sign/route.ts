@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
+import crypto from "node:crypto";
 import { getAuthenticatedUser, createServiceClient } from "@/lib/supabase-server";
 import { signDownload } from "@/lib/download-signing";
 import { isUuid } from "@/lib/google-drive-values";
+import { isRateLimited, clientIp } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -29,11 +31,11 @@ export async function POST(req: Request) {
 
   const db = createServiceClient();
   const filter = isUuid(fileId)
-    ? `drive_file_id.eq.${fileId},id.eq.${fileId}`
-    : `drive_file_id.eq.${fileId}`;
+    ? `drive_file_id.eq.${fileId},id.eq.${fileId},drive_url.ilike.%${fileId}%,dev_logs->>driveFileId.eq.${fileId}`
+    : `drive_file_id.eq.${fileId},drive_url.ilike.%${fileId}%,dev_logs->>driveFileId.eq.${fileId}`;
   const { data: cap } = await db
     .from("captures")
-    .select("user_id, workspace_id, expires_at, password, access_mode")
+    .select("id, user_id, workspace_id, expires_at, password, access_mode")
     .or(filter)
     .limit(1)
     .maybeSingle();
@@ -47,7 +49,21 @@ export async function POST(req: Request) {
   // the viewer just proved to get past the lock screen. Members-only still needs
   // the membership check below regardless.
   if (cap.password && cap.access_mode !== "members") {
-    if (password && password === cap.password) {
+    const ip = clientIp(req);
+    if (await isRateLimited(`sign-pass:${cap.id || fileId}:${ip}`, 10, 300)) {
+      return NextResponse.json(
+        { error: "Too many password attempts. Please wait 5 minutes." },
+        { status: 429 }
+      );
+    }
+
+    const providedBuf = Buffer.from(password, "utf8");
+    const expectedBuf = Buffer.from(cap.password, "utf8");
+    const passwordsMatch =
+      providedBuf.length === expectedBuf.length &&
+      crypto.timingSafeEqual(providedBuf, expectedBuf);
+
+    if (passwordsMatch) {
       return NextResponse.json(signDownload(fileId));
     }
     if (!user) return NextResponse.json({ error: "Forbidden" }, { status: 403 });

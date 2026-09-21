@@ -14,12 +14,17 @@ import {
   conciseConsoleText,
 } from "@/lib/devlogs";
 
+const ALLOWED_CURL_METHODS = new Set(["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]);
+
 export function buildCurlCommand(log: NetworkLog): string {
-  const method = (log.method || "GET").toUpperCase();
-  const safeUrl = (log.url || "").replace(/(["\\$`])/g, "\\$1");
+  const rawMethod = (log.method || "GET").toUpperCase().trim();
+  const method = ALLOWED_CURL_METHODS.has(rawMethod) ? rawMethod : "GET";
+  const cleanUrl = (log.url || "").replace(/[\x00-\x1f\x7f]/g, "").trim();
+  const safeUrl = cleanUrl.replace(/(["\\$`])/g, "\\$1");
   let cmd = `curl -X ${method} "${safeUrl}"`;
   if (log.requestBody) {
-    const escaped = log.requestBody.replace(/'/g, "'\\''");
+    const cleanBody = log.requestBody.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, "");
+    const escaped = cleanBody.replace(/'/g, "'\\''");
     cmd += ` -H "Content-Type: application/json" -d '${escaped}'`;
   }
   return cmd;
@@ -157,9 +162,17 @@ export function buildHarExport(networkLogs: NetworkLog[], siteUrl?: string | nul
     const reqBody = log.requestBody || "";
     const resBody = log.responseBody || "";
 
+    let entryStartedDateTime = startedDateTime;
+    if (log.timestamp) {
+      const parsed = typeof log.timestamp === "number" ? new Date(log.timestamp) : new Date(String(log.timestamp));
+      if (!isNaN(parsed.getTime())) {
+        entryStartedDateTime = parsed.toISOString();
+      }
+    }
+
     return {
       _index: index,
-      startedDateTime: log.timestamp ? new Date(Number(log.timestamp)).toISOString() : startedDateTime,
+      startedDateTime: entryStartedDateTime,
       time: duration,
       request: {
         method: (log.method || "GET").toUpperCase(),

@@ -3,14 +3,14 @@
 // before telemetry is ingested into LLM prompts or dispatched to external integrations.
 
 export const PATTERNS: Array<[RegExp, string]> = [
-  // URL query params: ?token=..., &secret=...
-  [/([?&](?:token|key|secret|password|code|auth|session|signature))=[^&#\s]*/gi, "$1=[REDACTED]"],
-  // URL embedded basic auth: https://user:password@example.com
-  [/([a-z]{3,6}:\/\/)(?:[^:\s/@]+):(?:[^@\s/]+)@/gi, "$1[REDACTED_AUTH]@"],
+  // URL query params: ?token=..., &secret=..., &access_token=...
+  [/([?&](?:[\w.-]*(?:token|key|secret|password|code|auth|session|signature)[\w.-]*))=[^&#\s]*/gi, "$1=[REDACTED]"],
+  // URL embedded basic auth: https://user:password@example.com or postgresql://user:pass@host
+  [/([a-z][a-z0-9+.-]{2,15}:\/\/)(?:[^:\s/@]+):(?:[^@\s/]+)@/gi, "$1[REDACTED_AUTH]@"],
   // JSON fields: "access_token": "..."
-  [/"(password|secret|key|token|auth|access_token|refresh_token|api_key)":\s*"[^"]*"/gi, '"$1":"[REDACTED]"'],
+  [/"([\w.-]*(?:password|secret|token|auth|api_key|apikey|bearer)[\w.-]*|key|private_key|secret_key)":\s*"[^"]*"/gi, '"$1":"[REDACTED]"'],
   // key=value / key: value in free text
-  [/(password|secret|token|api_key|apikey)(["'=:\s]+)[^\s&"',]+/gi, "$1$2[REDACTED]"],
+  [/(password|secret|token|api[_-]?key|apikey|client_secret|private_key)(["'=:\s]+)[^\s&"',]+/gi, "$1$2[REDACTED]"],
   // Authorization headers
   [/\bBearer\s+[A-Za-z0-9._~+/-]+=*/gi, "Bearer [REDACTED]"],
   [/\bBasic\s+[A-Za-z0-9+/=]{8,}={0,2}/gi, "Basic [REDACTED]"],

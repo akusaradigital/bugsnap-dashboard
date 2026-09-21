@@ -28,12 +28,14 @@ function safeFilename(value: string, type: string) {
 function resolveMime(type: string, upstreamType: string | null): string {
   const raw = (upstreamType || "").toLowerCase().trim();
   if (type === "video") {
-    return !raw || raw === "application/octet-stream" ? "video/webm" : raw;
+    if (raw === "video/mp4" || raw === "video/webm" || raw === "video/quicktime") return raw;
+    return "video/webm";
   }
   if (type === "logs") {
-    return !raw || raw === "application/octet-stream" ? "application/json" : raw;
+    return "application/json";
   }
-  return !raw || raw === "application/octet-stream" ? "image/png" : raw;
+  if (raw === "image/jpeg" || raw === "image/webp" || raw === "image/gif") return raw;
+  return "image/png";
 }
 
 export async function GET(req: Request) {
@@ -54,8 +56,8 @@ export async function GET(req: Request) {
   } else {
     const supabase = createServiceClient();
     const filter = isUuid(id)
-      ? `drive_file_id.eq.${id},id.eq.${id},drive_url.ilike.%${id}%`
-      : `drive_file_id.eq.${id},drive_url.ilike.%${id}%`;
+      ? `drive_file_id.eq.${id},id.eq.${id},drive_url.ilike.%${id}%,dev_logs->>driveFileId.eq.${id}`
+      : `drive_file_id.eq.${id},drive_url.ilike.%${id}%,dev_logs->>driveFileId.eq.${id}`;
     const { data } = await supabase
       .from("captures")
       .select("user_id, workspace_id, expires_at, access_mode, password")

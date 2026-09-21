@@ -11,7 +11,10 @@ export async function POST(req: Request) {
   }
 
   try {
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
+    if (!body || typeof body !== "object") {
+      return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
+    }
     const targetUserId = body?.user_id;
     const suspended = Boolean(body?.suspended);
 

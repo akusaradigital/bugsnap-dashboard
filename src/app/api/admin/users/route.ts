@@ -178,7 +178,10 @@ export async function PATCH(req: Request) {
   }
 
   try {
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
+    if (!body || typeof body !== "object") {
+      return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
+    }
     const { user_id, action, plan, suspended } = body;
 
     if (!user_id) {

@@ -9,7 +9,10 @@ export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
+    const body = await req.json().catch(() => null);
+    if (!body || typeof body !== "object") {
+      return NextResponse.json({ error: "Invalid JSON payload" }, { status: 400 });
+    }
     const captureId = typeof body?.capture_id === "string" ? body.capture_id.trim() : null;
     if (!captureId || !isUuid(captureId)) {
       return NextResponse.json({ error: "Missing or invalid capture_id" }, { status: 400 });

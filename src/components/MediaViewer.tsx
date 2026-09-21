@@ -1593,6 +1593,32 @@ export default function MediaViewer({
                 </div>
               )}
             </div>
+          ) : videoFailed ? (
+            <div className="flex flex-col items-center justify-center p-6 text-center">
+              <p className="text-sm font-medium text-muted mb-3">{t("mv.videoError")}</p>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setVideoFailed(false);
+                    setActiveVideoSrc(streamUrl || directUrl || downloadUrl || "");
+                  }}
+                  className="rounded-lg bg-surface px-3 py-1.5 text-xs font-semibold text-foreground border border-border hover:bg-subtle transition-colors shadow-2xs"
+                >
+                  {t("error.tryAgain")}
+                </button>
+                {driveUrl && (
+                  <a
+                    href={driveUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-lg bg-[#89BD49] px-3 py-1.5 text-xs font-semibold text-white hover:bg-[#6B9A35] transition-colors shadow-2xs"
+                  >
+                    {t("mv.openInDrive")}
+                  </a>
+                )}
+              </div>
+            </div>
           ) : previewUrl ? (
             <iframe
               src={previewUrl}

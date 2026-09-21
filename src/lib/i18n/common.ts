@@ -127,6 +127,16 @@ export const commonEn: Dict = {
   "login.badgeData": "100% Data Ownership",
   "login.badgeDevTools": "Automated DevTools Logs",
   "login.badgeDrive": "Stored in Your Google Drive",
+  "error.title": "Something went wrong",
+  "error.description": "An unexpected error occurred while loading this view.",
+  "error.tryAgain": "Try again",
+  "error.reload": "Reload page",
+  "notFound.code": "404 Error",
+  "notFound.title": "Page not found",
+  "notFound.description": "Sorry, we couldn't find the page you're looking for. It may have been moved, deleted, or never existed.",
+  "notFound.backHome": "Back to Home",
+  "notFound.goDashboard": "Go to Dashboard",
+  "notFound.footer": "BugSnap — From Click to Fix",
 };
 
 export const commonId: Dict = {
@@ -256,4 +266,14 @@ export const commonId: Dict = {
   "login.badgeData": "100% Kepemilikan Data",
   "login.badgeDevTools": "Log DevTools Otomatis",
   "login.badgeDrive": "Tersimpan di Google Drive Anda",
+  "error.title": "Terjadi kesalahan",
+  "error.description": "Terjadi kesalahan tak terduga saat memuat tampilan ini.",
+  "error.tryAgain": "Coba lagi",
+  "error.reload": "Muat ulang halaman",
+  "notFound.code": "Kesalahan 404",
+  "notFound.title": "Halaman tidak ditemukan",
+  "notFound.description": "Maaf, kami tidak dapat menemukan halaman yang Anda cari. Halaman mungkin telah dipindahkan, dihapus, atau tidak pernah ada.",
+  "notFound.backHome": "Kembali ke Beranda",
+  "notFound.goDashboard": "Ke Dashboard",
+  "notFound.footer": "BugSnap — From Click to Fix",
 };

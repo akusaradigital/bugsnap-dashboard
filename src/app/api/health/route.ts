@@ -11,7 +11,11 @@ export async function GET() {
     const latency = Date.now() - start;
 
     if (error) {
-      return NextResponse.json({ status: "degraded", database: "error", latencyMs: latency, error: error.message }, { status: 200 });
+      console.error("[HealthCheck] Database error:", error.message);
+      return NextResponse.json(
+        { status: "degraded", database: "error", latencyMs: latency },
+        { status: 503 }
+      );
     }
 
     return NextResponse.json({
@@ -21,11 +25,14 @@ export async function GET() {
       timestamp: new Date().toISOString(),
     });
   } catch (err) {
-    return NextResponse.json({
-      status: "unhealthy",
-      database: "disconnected",
-      latencyMs: Date.now() - start,
-      error: err instanceof Error ? err.message : "Unknown error",
-    }, { status: 200 });
+    console.error("[HealthCheck] Database connection failed:", err);
+    return NextResponse.json(
+      {
+        status: "unhealthy",
+        database: "disconnected",
+        latencyMs: Date.now() - start,
+      },
+      { status: 503 }
+    );
   }
 }

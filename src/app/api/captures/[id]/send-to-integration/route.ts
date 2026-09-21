@@ -174,6 +174,7 @@ export async function POST(
             body: fullDescription,
             labels: ["bug"],
           }),
+          signal: AbortSignal.timeout(10000),
         });
         const ghData = await ghRes.json().catch(() => ({}));
         if (!ghRes.ok) throw new Error(ghData.message || "Failed to create GitHub issue");
@@ -210,6 +211,7 @@ export async function POST(
               },
             },
           }),
+          signal: AbortSignal.timeout(10000),
         });
         const linData = await linRes.json().catch(() => ({}));
         if (!linRes.ok || linData.errors) {
@@ -300,6 +302,7 @@ export async function POST(
               },
             ],
           }),
+          signal: AbortSignal.timeout(10000),
         });
         const notionData = await notionRes.json().catch(() => ({}));
         if (!notionRes.ok) throw new Error(notionData.message || "Failed to create Notion page");
@@ -319,6 +322,7 @@ export async function POST(
             description: fullDescription,
             priority: 2,
           }),
+          signal: AbortSignal.timeout(10000),
         });
         const cuData = await cuRes.json().catch(() => ({}));
         if (!cuRes.ok) throw new Error(cuData.err || cuData.message || "Failed to create ClickUp task");
@@ -340,6 +344,7 @@ export async function POST(
               projects: [config.projectId.trim()],
             },
           }),
+          signal: AbortSignal.timeout(10000),
         });
         const asanaData = await asanaRes.json().catch(() => ({}));
         if (!asanaRes.ok) throw new Error(asanaData.errors?.[0]?.message || "Failed to create Asana task");
@@ -457,6 +462,7 @@ Dev Logs: ${JSON.stringify(resolvedLogs || {})}`;
             max_tokens: 1000,
             messages: [{ role: "user", content: prompt }],
           }),
+          signal: AbortSignal.timeout(15000),
         });
         const cData = await claudeRes.json().catch(() => ({}));
         if (!claudeRes.ok) throw new Error(cData.error?.message || "Failed to generate Claude summary");
@@ -491,6 +497,7 @@ Dev Logs: ${JSON.stringify(resolvedLogs || {})}`;
             messages: [{ role: "user", content: prompt }],
             max_tokens: 1000,
           }),
+          signal: AbortSignal.timeout(15000),
         });
         const gData = await gptRes.json().catch(() => ({}));
         if (!gptRes.ok) throw new Error(gData.error?.message || "Failed to generate ChatGPT summary");

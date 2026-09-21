@@ -17,8 +17,9 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { url } = (await req.json()) as { url?: string };
-    if (!url || typeof url !== "string") {
+    const body = (await req.json().catch(() => null)) as { url?: unknown } | null;
+    const url = typeof body?.url === "string" ? body.url : null;
+    if (!url) {
       return NextResponse.json({ error: "Valid Webhook URL is required" }, { status: 400 });
     }
 

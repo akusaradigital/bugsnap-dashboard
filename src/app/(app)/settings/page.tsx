@@ -133,18 +133,23 @@ function SettingsContent() {
   }, [router, t]);
 
   useEffect(() => {
+    let cancelled = false;
     supabase.auth.getSession().then(async ({ data }) => {
+      if (cancelled) return;
       const u = data.session?.user;
       if (!u) return;
       setUserEmail(u.email ?? "");
       const initialName = u.user_metadata?.full_name || u.user_metadata?.name || u.email?.split("@")[0] || "";
       const [fn, ...rest] = initialName.trim().split(/\s+/);
-      setFirstName(fn || "");
-      setLastName(rest.join(" "));
-      setUserAvatar(pickAvatar(u.user_metadata?.avatar_url, u.user_metadata?.picture));
+      if (!cancelled) {
+        setFirstName(fn || "");
+        setLastName(rest.join(" "));
+        setUserAvatar(pickAvatar(u.user_metadata?.avatar_url, u.user_metadata?.picture));
+      }
       let plan: Plan = normalizePlan(u.user_metadata?.plan);
       if (u.email) {
         const { data: row } = await supabase.from("users").select("plan, created_at, checkout_status, avatar_url, full_name, job_role, notification_prefs").ilike("email", u.email).maybeSingle();
+        if (cancelled) return;
         if (row?.plan) plan = normalizePlan(row.plan);
         if (row?.checkout_status) setCheckoutStatus(row.checkout_status);
         const effective = getEffectivePlan(plan, row?.created_at);
@@ -168,12 +173,14 @@ function SettingsContent() {
           });
         }
       }
+      if (cancelled) return;
       setUserPlan(plan);
       if (activeWsId) {
         const [{ data: wsData }, { data: wsSet }] = await Promise.all([
           supabase.from("workspaces").select("name, avatar_url").eq("id", activeWsId).maybeSingle(),
           supabase.from("workspace_settings").select("*").eq("workspace_id", activeWsId).maybeSingle()
         ]);
+        if (cancelled) return;
         if (wsData?.name) setWorkspaceName(wsData.name);
         if (wsData?.avatar_url) setWorkspaceAvatar(wsData.avatar_url);
         if (wsSet) {
@@ -204,6 +211,7 @@ function SettingsContent() {
         }
       } else {
         const { data: myWs } = await supabase.rpc("get_my_workspaces");
+        if (cancelled) return;
         if (myWs && myWs.length > 0) {
           setWorkspaceName(myWs[0].name || "My Workspace");
           const url = new URL(window.location.href);
@@ -212,19 +220,26 @@ function SettingsContent() {
         }
       }
     });
+    return () => {
+      cancelled = true;
+    };
   }, [activeWsId, router]);
 
   useEffect(() => {
     if (!activeWsId || activeTab !== "members") return;
+    let cancelled = false;
     setMembersLoading(true);
     (async () => {
       try {
         const { data } = await supabase.rpc("get_workspace_members", { p_workspace_id: activeWsId });
-        setMembers((data as typeof members) ?? []);
+        if (!cancelled) setMembers((data as typeof members) ?? []);
       } finally {
-        setMembersLoading(false);
+        if (!cancelled) setMembersLoading(false);
       }
     })();
+    return () => {
+      cancelled = true;
+    };
   }, [activeWsId, activeTab]);
 
   function formatDriveBytes(bytes: number | null) {
@@ -681,7 +696,7 @@ function SettingsContent() {
 
   useEffect(() => {
     if (activeTab === "integrations" && activeWsId) {
-      loadBugsnapApiKeys();
+      void loadBugsnapApiKeys();
     }
   }, [activeTab, activeWsId, loadBugsnapApiKeys]);
 

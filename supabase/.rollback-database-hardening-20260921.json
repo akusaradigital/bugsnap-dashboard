@@ -1,0 +1,132 @@
+{
+  "date": "2026-09-21T11:29:19.974Z",
+  "fn_move_capture": [
+    {
+      "pg_get_functiondef": "CREATE OR REPLACE FUNCTION public.move_capture_to_workspace_folder(p_capture_id uuid, p_target_workspace_id uuid, p_target_folder_name text DEFAULT NULL::text)\n RETURNS captures\n LANGUAGE plpgsql\n SECURITY DEFINER\n SET search_path TO 'public'\nAS $function$\r\ndeclare\r\n  v_capture public.captures%rowtype;\r\n  v_target_folder text := nullif(btrim(coalesce(p_target_folder_name, '')), '');\r\nbegin\r\n  select * into v_capture\r\n  from public.captures\r\n  where id = p_capture_id;\r\n\r\n  if v_capture.id is null then\r\n    raise exception 'Capture not found' using errcode = 'P0002';\r\n  end if;\r\n\r\n  if not exists (\r\n    select 1 from public.workspaces w\r\n    where w.id = v_capture.workspace_id and w.owner_user_id = auth.uid()\r\n  ) then\r\n    raise exception 'Permission denied for source workspace' using errcode = '42501';\r\n  end if;\r\n\r\n  if not exists (\r\n    select 1 from public.workspaces w\r\n    where w.id = p_target_workspace_id and w.owner_user_id = auth.uid()\r\n  ) then\r\n    raise exception 'Permission denied for target workspace' using errcode = '42501';\r\n  end if;\r\n\r\n  if v_target_folder is not null and not exists (\r\n    select 1 from public.workspace_folders wf\r\n    where wf.workspace_id = p_target_workspace_id and wf.name = v_target_folder\r\n  ) then\r\n    raise exception 'Target folder not found' using errcode = 'P0002';\r\n  end if;\r\n\r\n  update public.captures\r\n  set workspace_id = p_target_workspace_id,\r\n      folder_name = v_target_folder,\r\n      project_id = null\r\n  where id = p_capture_id\r\n  returning * into v_capture;\r\n\r\n  return v_capture;\r\nend;\r\n$function$\n"
+    }
+  ],
+  "policies_comments": [
+    {
+      "schemaname": "public",
+      "tablename": "comments",
+      "policyname": "comments read",
+      "permissive": "PERMISSIVE",
+      "roles": "{public}",
+      "cmd": "SELECT",
+      "qual": "true",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "comments",
+      "policyname": "comments_select",
+      "permissive": "PERMISSIVE",
+      "roles": "{public}",
+      "cmd": "SELECT",
+      "qual": "true",
+      "with_check": null
+    }
+  ],
+  "policies_workspace_settings": [
+    {
+      "schemaname": "public",
+      "tablename": "workspace_settings",
+      "policyname": "workspace settings members select",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "SELECT",
+      "qual": "(EXISTS ( SELECT 1\n   FROM workspace_members m\n  WHERE ((m.workspace_id = workspace_settings.workspace_id) AND (m.user_id = auth.uid()))))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "workspace_settings",
+      "policyname": "workspace settings owners write",
+      "permissive": "PERMISSIVE",
+      "roles": "{authenticated}",
+      "cmd": "ALL",
+      "qual": "(EXISTS ( SELECT 1\n   FROM workspaces w\n  WHERE ((w.id = workspace_settings.workspace_id) AND (w.owner_user_id = auth.uid()))))",
+      "with_check": "(EXISTS ( SELECT 1\n   FROM workspaces w\n  WHERE ((w.id = workspace_settings.workspace_id) AND (w.owner_user_id = auth.uid()))))"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "workspace_settings",
+      "policyname": "workspace_settings_select",
+      "permissive": "PERMISSIVE",
+      "roles": "{public}",
+      "cmd": "SELECT",
+      "qual": "(EXISTS ( SELECT 1\n   FROM workspace_members\n  WHERE ((workspace_members.workspace_id = workspace_settings.workspace_id) AND (workspace_members.user_id = auth.uid()))))",
+      "with_check": null
+    },
+    {
+      "schemaname": "public",
+      "tablename": "workspace_settings",
+      "policyname": "workspace_settings_upsert",
+      "permissive": "PERMISSIVE",
+      "roles": "{public}",
+      "cmd": "ALL",
+      "qual": "(EXISTS ( SELECT 1\n   FROM workspace_members\n  WHERE ((workspace_members.workspace_id = workspace_settings.workspace_id) AND (workspace_members.user_id = auth.uid()))))",
+      "with_check": null
+    }
+  ],
+  "indexes_comments": [
+    {
+      "schemaname": "public",
+      "tablename": "comments",
+      "indexname": "comments_pkey",
+      "tablespace": null,
+      "indexdef": "CREATE UNIQUE INDEX comments_pkey ON public.comments USING btree (id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "comments",
+      "indexname": "comments_capture_id_created_at_idx",
+      "tablespace": null,
+      "indexdef": "CREATE INDEX comments_capture_id_created_at_idx ON public.comments USING btree (capture_id, created_at)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "comments",
+      "indexname": "idx_comments_capture",
+      "tablespace": null,
+      "indexdef": "CREATE INDEX idx_comments_capture ON public.comments USING btree (capture_id, created_at)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "comments",
+      "indexname": "comments_parent_id_idx",
+      "tablespace": null,
+      "indexdef": "CREATE INDEX comments_parent_id_idx ON public.comments USING btree (parent_id)"
+    }
+  ],
+  "indexes_bugsnap_api_keys": [
+    {
+      "schemaname": "public",
+      "tablename": "bugsnap_api_keys",
+      "indexname": "bugsnap_api_keys_pkey",
+      "tablespace": null,
+      "indexdef": "CREATE UNIQUE INDEX bugsnap_api_keys_pkey ON public.bugsnap_api_keys USING btree (id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "bugsnap_api_keys",
+      "indexname": "bugsnap_api_keys_key_hash_key",
+      "tablespace": null,
+      "indexdef": "CREATE UNIQUE INDEX bugsnap_api_keys_key_hash_key ON public.bugsnap_api_keys USING btree (key_hash)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "bugsnap_api_keys",
+      "indexname": "idx_bugsnap_api_keys_workspace_id",
+      "tablespace": null,
+      "indexdef": "CREATE INDEX idx_bugsnap_api_keys_workspace_id ON public.bugsnap_api_keys USING btree (workspace_id)"
+    },
+    {
+      "schemaname": "public",
+      "tablename": "bugsnap_api_keys",
+      "indexname": "idx_bugsnap_api_keys_hash_active",
+      "tablespace": null,
+      "indexdef": "CREATE INDEX idx_bugsnap_api_keys_hash_active ON public.bugsnap_api_keys USING btree (key_hash) WHERE (revoked_at IS NULL)"
+    }
+  ]
+}

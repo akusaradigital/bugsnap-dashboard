@@ -31,7 +31,7 @@ Bump `package.json` + `package-lock.json` (top-level + `packages[""].version`) b
 - **MINOR** `0.5.x → 0.6.0`: new user-facing feature, route, module.
 - **MAJOR** `0.x → 1.0.0`: breaking API/auth/UI change.
 
-Current version: **`0.6.2`**
+Current version: **`0.6.3`**
 
 ## 3. Architecture & Data Flow
 

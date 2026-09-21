@@ -55,6 +55,7 @@ export async function GET(req: Request) {
       supabase.rpc("prune_admin_logs"),
       supabase.rpc("prune_rate_limits"),
       supabase.rpc("prune_capture_views"),
+      supabase.rpc("prune_ephemeral_data"),
     ]);
   } catch (pruneErr) {
     console.warn("[Cron cleanup] prune RPC failed:", pruneErr);

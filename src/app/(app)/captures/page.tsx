@@ -682,11 +682,19 @@ function CapturesContent() {
         throw new Error(firstErr || "Failed moving captures");
       }
 
-      // Optimistically update local captures state
+      const failedIds = new Set<string>();
+      results.forEach((r, idx) => {
+        if (r.status === "rejected" || (r.status === "fulfilled" && r.value.error)) {
+          failedIds.add(ids[idx]);
+        }
+      });
+      const successfulIds = new Set(ids.filter((id) => !failedIds.has(id)));
+
+      // Optimistically update local captures state strictly for successful IDs
       setCaptures((prev) =>
         prev
           .map((c) => {
-            if (!selectedIds.has(c.id)) return c;
+            if (!successfulIds.has(c.id)) return c;
             return {
               ...c,
               workspace_id: moveTargetWorkspaceId,
@@ -700,12 +708,12 @@ function CapturesContent() {
           })
       );
 
-      const movedCount = ids.length - failed.length;
+      const movedCount = successfulIds.size;
       setMoveToOpen(false);
       clearSelection();
       await loadPage(true);
-      if (failed.length > 0) {
-        showToast(t("cap.movedWithFailures", { moved: movedCount, failed: failed.length }), "info");
+      if (failedIds.size > 0) {
+        showToast(t("cap.movedWithFailures", { moved: movedCount, failed: failedIds.size }), "info");
       } else {
         showToast(
           movedCount === 1
@@ -2009,9 +2017,9 @@ function CapturesContent() {
       {selectedIds.size > 0 && (
         <div
           onClick={(e) => e.stopPropagation()}
-          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[94%] max-w-2xl bg-white/95 dark:bg-zinc-900/95 text-foreground backdrop-blur-md rounded-2xl shadow-xl dark:shadow-2xl px-4 py-2.5 border border-border dark:border-zinc-800 flex flex-wrap items-center justify-between gap-2.5 animate-in slide-in-from-bottom-5 duration-200"
+          className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 w-[calc(100vw-2rem)] max-w-2xl bg-white/95 dark:bg-zinc-900/95 text-foreground backdrop-blur-md rounded-2xl shadow-xl dark:shadow-2xl px-4 py-2.5 border border-border dark:border-zinc-800 flex flex-wrap items-center justify-between gap-2.5 animate-in slide-in-from-bottom-5 duration-200"
         >
-          <div className="flex items-center gap-2 sm:gap-2.5">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
             <span className="w-5 h-5 rounded-md bg-[#89BD49] text-white flex items-center justify-center text-[11px] font-bold shadow-xs shrink-0">
               ✓
             </span>

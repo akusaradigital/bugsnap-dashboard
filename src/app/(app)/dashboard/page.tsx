@@ -23,9 +23,23 @@ interface DashboardStats {
   promo?: { enabled: boolean; message: string };
 }
 
+function formatBytes(bytes: number | null): string {
+  if (!Number.isFinite(bytes) || bytes == null || bytes < 0) return "-";
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  let val = bytes;
+  let i = 0;
+  while (val >= 1024 && i < units.length - 1) {
+    val /= 1024;
+    i++;
+  }
+  const isInteger = Math.abs(val - Math.round(val)) < 0.05;
+  const decimals = isInteger || i === 0 ? 0 : 1;
+  return `${val.toFixed(decimals)} ${units[i]}`;
+}
+
 export default function DashboardAnalyticsPage() {
   return (
-    <Suspense fallback={<div className="p-12 text-center text-sm text-muted">Loading dashboard...</div>}>
+    <Suspense fallback={<div className="p-12 text-center text-sm text-muted animate-pulse">···</div>}>
       <DashboardContent />
     </Suspense>
   );
@@ -48,6 +62,8 @@ function DashboardContent() {
     name: "User",
     email: "",
   });
+
+  const [driveQuota, setDriveQuota] = useState<{ usedBytes: number | null; totalBytes: number | null } | null>(null);
 
   const [qaData, setQaData] = useState<{
     statusCounts: { open: number; inProgress: number; fixed: number; closed: number };
@@ -79,6 +95,37 @@ function DashboardContent() {
         });
       }
     });
+
+    (async () => {
+      try {
+        const cached = typeof sessionStorage !== "undefined" ? sessionStorage.getItem("bs_drive_quota") : null;
+        if (cached) {
+          try {
+            const parsed = JSON.parse(cached);
+            if (Date.now() - parsed.timestamp < 180000 && parsed.data?.quota) {
+              if (!cancelled) setDriveQuota(parsed.data.quota);
+              return;
+            }
+          } catch {}
+        }
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
+        if (!token) return;
+        const res = await fetch("/api/google-drive/status", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return;
+        const json = await res.json();
+        if (!cancelled && json.quota) {
+          setDriveQuota(json.quota);
+          try {
+            sessionStorage.setItem("bs_drive_quota", JSON.stringify({ timestamp: Date.now(), data: json }));
+          } catch {}
+        }
+      } catch (err) {
+        console.warn("Error fetching drive status:", err);
+      }
+    })();
 
     (async () => {
       const wsId = wsParam && wsParam !== "all" ? wsParam : null;
@@ -277,10 +324,12 @@ function DashboardContent() {
   const videoCount = stats?.totals?.video_count ?? 0;
   const screenshotCount = stats?.totals?.screenshot_count ?? 0;
 
-  const storageUsageMb = (screenshotCount * 0.2) + (videoCount * 4.5);
-  const storageUsageText = storageUsageMb > 1024
-    ? `${(storageUsageMb / 1024).toFixed(1)} GB`
-    : `${storageUsageMb.toFixed(1)} MB`;
+  const storageUsageText = driveQuota && driveQuota.usedBytes != null
+    ? formatBytes(driveQuota.usedBytes)
+    : "-";
+  const storageSubtext = driveQuota && driveQuota.totalBytes != null
+    ? `${formatBytes(driveQuota.usedBytes)} / ${formatBytes(driveQuota.totalBytes)}`
+    : t("dash.driveBackup");
 
   // Intl already knows every locale's month names - 24 i18n keys would just
   // restate what the platform ships. Keyed on `locale` so switching language
@@ -330,7 +379,7 @@ function DashboardContent() {
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-            {t("dash.welcome", { name: session.name.split(" ")[0] })} 👋
+            {t("dash.welcome", { name: session.name.split(" ")[0] })}
           </h1>
           <p className="text-sm text-muted mt-1">{t("dash.subtitle")}</p>
         </div>
@@ -396,7 +445,7 @@ function DashboardContent() {
           {
             labelKey: "dash.storage",
             value: storageUsageText,
-            subtext: t("dash.driveBackup"),
+            subtext: storageSubtext,
             subtextBadge: false,
             icon: (
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">

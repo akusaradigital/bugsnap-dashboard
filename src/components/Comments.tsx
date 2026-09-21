@@ -162,11 +162,11 @@ export default function Comments({
           },
           "expired-callback": () => {
             setCfToken(null);
-            setCfError("Anti-bot check expired. Try again.");
+            setCfError(t("cm.turnstileExpired"));
           },
           "error-callback": () => {
             setCfToken(null);
-            setCfError("Anti-bot check failed. Try again.");
+            setCfError(t("cm.turnstileFailed"));
           },
         });
       } catch (err) {
@@ -177,12 +177,17 @@ export default function Comments({
     if (window.turnstile) {
       renderWidget();
     } else {
-      const s = document.createElement("script");
-      s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
-      s.async = true;
-      s.defer = true;
-      s.onload = renderWidget;
-      document.head.appendChild(s);
+      const existingScript = document.querySelector<HTMLScriptElement>('script[src*="turnstile"]');
+      if (existingScript) {
+        existingScript.addEventListener("load", renderWidget, { once: true });
+      } else {
+        const s = document.createElement("script");
+        s.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+        s.async = true;
+        s.defer = true;
+        s.onload = renderWidget;
+        document.head.appendChild(s);
+      }
     }
 
     return () => {
@@ -191,7 +196,7 @@ export default function Comments({
         try { window.turnstile.remove(widgetIdRef.current); } catch { /* already removed */ }
       }
     };
-  }, []);
+  }, [authorEmail, t]);
 
   // Validate the Turnstile token against the managed siteverify Worker.
   const verifyTurnstile = useCallback(async (): Promise<boolean> => {
@@ -444,6 +449,7 @@ export default function Comments({
         onCommentsChangeRef.current?.(updated);
         return updated;
       });
+      setBody(text);
       setError(
         (err as { message?: string })?.message ||
           t("cm.errorPost")

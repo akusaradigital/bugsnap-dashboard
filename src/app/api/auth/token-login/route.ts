@@ -6,7 +6,8 @@ export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
-    const { access_token } = await request.json();
+    const body = (await request.json().catch(() => null)) as { access_token?: unknown } | null;
+    const access_token = typeof body?.access_token === "string" ? body.access_token : null;
     if (!access_token) {
       return NextResponse.json({ error: "Access token is required" }, { status: 400 });
     }

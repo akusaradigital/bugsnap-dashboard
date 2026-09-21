@@ -237,12 +237,16 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime, unlo
   // Actions was the only list tab with no chips - just the shared search box.
   const [actionKindFilter, setActionKindFilter] = useState<string>("all");
   const [logSearch, setLogSearch] = useState("");
+  const [consoleLimit, setConsoleLimit] = useState(100);
+  const [networkLimit, setNetworkLimit] = useState(100);
   const resetLogFilters = () => {
     setLogSearch("");
     setConsoleErrorsOnly(false);
     setNetworkStatusFilter("all");
     setNetworkPartyFilter("all");
     setActionKindFilter("all");
+    setConsoleLimit(100);
+    setNetworkLimit(100);
   };
   const [decompressedLogs, setDecompressedLogs] = useState<CapturedLogs>(capture.dev_logs || null);
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
@@ -1660,7 +1664,7 @@ ${stack}` : body);
               )
             ) : (
               <div className="divide-y divide-border/60">
-                {visibleConsoleLogs.map((log) => {
+                {visibleConsoleLogs.slice(0, consoleLimit).map((log) => {
                   const level = log.type === "console" ? normalizeLevel(log.level) : log.type;
                   const isWarn = level === "warn";
                   const isErr = level === "error";
@@ -1726,6 +1730,15 @@ ${stack}` : body);
                     </div>
                   );
                 })}
+                {visibleConsoleLogs.length > consoleLimit && (
+                  <button
+                    type="button"
+                    onClick={() => setConsoleLimit((prev) => prev + 100)}
+                    className="w-full py-2.5 text-center text-xs font-semibold text-muted hover:text-foreground hover:bg-subtle border-t border-border transition-colors"
+                  >
+                    Load more ({visibleConsoleLogs.length - consoleLimit} remaining)
+                  </button>
+                )}
               </div>
             )}
           </div>
@@ -1777,7 +1790,7 @@ ${stack}` : body);
               />
             ) : (
               <div className="divide-y divide-border/60">
-                {visibleGroupedNetworkLogs.map(({ log, count }) => {
+                {visibleGroupedNetworkLogs.slice(0, networkLimit).map(({ log, count }) => {
                   const { domain, path } = networkLocation(log.url);
                   const isFailed = !log.status || log.status >= 400;
                   const isOk = log.status && log.status < 300;
@@ -1935,6 +1948,15 @@ ${stack}` : body);
                     </details>
                   );
                 })}
+                {visibleGroupedNetworkLogs.length > networkLimit && (
+                  <button
+                    type="button"
+                    onClick={() => setNetworkLimit((prev) => prev + 100)}
+                    className="w-full py-2.5 text-center text-xs font-semibold text-muted hover:text-foreground hover:bg-subtle border-t border-border transition-colors"
+                  >
+                    Load more ({visibleGroupedNetworkLogs.length - networkLimit} remaining)
+                  </button>
+                )}
               </div>
             )}
           </div>
