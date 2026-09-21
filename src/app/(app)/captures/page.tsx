@@ -25,6 +25,22 @@ import {
 
 const CHROME_WEB_STORE_URL = "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
 
+function getSavedViewMode(): "grid" | "list" {
+  if (typeof window === "undefined") return "grid";
+  try {
+    const v = localStorage.getItem("bugsnap_captures_view");
+    return v === "list" ? "list" : "grid";
+  } catch {
+    return "grid";
+  }
+}
+
+function saveViewMode(mode: "grid" | "list") {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem("bugsnap_captures_view", mode);
+  } catch {}
+}
 
 export default function CapturesList() {
   const { t } = useT();
@@ -76,6 +92,10 @@ function CapturesContent() {
     return () => window.removeEventListener("bugsnap:profile-updated", onProfileUpdated);
   }, []);
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState<"grid" | "list">(() => getSavedViewMode());
+  useEffect(() => {
+    saveViewMode(viewMode);
+  }, [viewMode]);
   // Filters live in the URL so a filtered view is shareable and survives reload.
   // Seeded once from searchParams; the sync effect below writes them back.
   const [search, setSearch] = useState(() => searchParams.get("q") || "");
@@ -973,6 +993,50 @@ function CapturesContent() {
           </button>
         )}
         </div>
+
+        {/* View Mode Toggle (Grid / List) */}
+        <div className="flex items-center gap-1 border border-border bg-subtle rounded-lg p-0.5 shrink-0 ml-auto sm:ml-0">
+          <button
+            type="button"
+            onClick={() => setViewMode("grid")}
+            aria-pressed={viewMode === "grid"}
+            aria-label={t("cap.viewGrid")}
+            title={t("cap.viewGrid")}
+            className={`p-1.5 rounded-md transition-colors ${
+              viewMode === "grid"
+                ? "bg-white dark:bg-background text-foreground shadow-xs"
+                : "text-muted hover:text-foreground"
+            }`}
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="7" height="7" rx="1.5" />
+              <rect x="14" y="3" width="7" height="7" rx="1.5" />
+              <rect x="14" y="14" width="7" height="7" rx="1.5" />
+              <rect x="3" y="14" width="7" height="7" rx="1.5" />
+            </svg>
+          </button>
+          <button
+            type="button"
+            onClick={() => setViewMode("list")}
+            aria-pressed={viewMode === "list"}
+            aria-label={t("cap.viewList")}
+            title={t("cap.viewList")}
+            className={`p-1.5 rounded-md transition-colors ${
+              viewMode === "list"
+                ? "bg-white dark:bg-background text-foreground shadow-xs"
+                : "text-muted hover:text-foreground"
+            }`}
+          >
+            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="8" y1="6" x2="21" y2="6" strokeLinecap="round" />
+              <line x1="8" y1="12" x2="21" y2="12" strokeLinecap="round" />
+              <line x1="8" y1="18" x2="21" y2="18" strokeLinecap="round" />
+              <circle cx="4" cy="6" r="1" fill="currentColor" />
+              <circle cx="4" cy="12" r="1" fill="currentColor" />
+              <circle cx="4" cy="18" r="1" fill="currentColor" />
+            </svg>
+          </button>
+        </div>
       </div>
 
       {/* Upload Progress Animation Banner */}
@@ -1253,6 +1317,184 @@ function CapturesContent() {
             </div>
           </div>
         )
+      ) : viewMode === "list" ? (
+        <div className="rounded-xl border border-border bg-white dark:bg-subtle divide-y divide-border overflow-hidden shadow-xs">
+          {filteredCaptures.map((item) => {
+            const isSelected = selectedIds.has(item.id);
+            const isSelectionActive = selectedIds.size > 0;
+            const isMe = !!myProfile && !!item.owner_email && item.owner_email.toLowerCase() === myProfile.email.toLowerCase();
+            const CardWrapper = (isSelectionActive ? "div" : Link) as React.ElementType;
+            const cardProps = isSelectionActive
+              ? {
+                  onClick: (e: React.MouseEvent) => {
+                    e.preventDefault();
+                    toggleSelect(item.id);
+                  },
+                  className: "flex items-center gap-3 p-3 flex-1 cursor-pointer select-none min-w-0",
+                }
+              : { href: `/v/${item.id}`, className: "flex items-center gap-3 p-3 flex-1 group min-w-0" };
+
+            return (
+              <div
+                key={item.id}
+                onMouseEnter={() => setActiveHoverId(item.id)}
+                onMouseLeave={() => setActiveHoverId((prev) => (prev === item.id ? null : prev))}
+                className={`group relative flex items-center transition-colors hover:bg-slate-50 dark:hover:bg-subtle/80 ${
+                  isSelected ? "bg-[#89BD49]/5 dark:bg-[#89BD49]/10" : ""
+                }`}
+              >
+                {/* Checkbox */}
+                <div className="pl-3 shrink-0 flex items-center">
+                  <button
+                    type="button"
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleSelect(item.id); }}
+                    aria-label="Select capture"
+                    className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
+                      isSelected
+                        ? "bg-[#89BD49] border-[#89BD49] text-white"
+                        : isSelectionActive
+                        ? "border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-transparent"
+                        : "border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-transparent opacity-0 group-hover:opacity-100"
+                    }`}
+                  >
+                    <svg className={`w-3.5 h-3.5 ${isSelected ? "text-white" : "text-transparent"}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                    </svg>
+                  </button>
+                </div>
+
+                <CardWrapper {...cardProps}>
+                  {/* Compact Thumbnail */}
+                  <div className="w-16 h-10 sm:w-20 sm:h-12 rounded-lg overflow-hidden bg-slate-100 dark:bg-background flex items-center justify-center text-muted text-xs relative shrink-0">
+                    {driveThumbUrl(item.drive_url) && !thumbFailed[item.id] ? (
+                      <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={driveThumbUrl(item.drive_url)!}
+                          alt={item.title}
+                          referrerPolicy="no-referrer"
+                          onError={() => setThumbFailed((prev) => ({ ...prev, [item.id]: true }))}
+                          className="w-full h-full object-cover"
+                        />
+                        {item.type === "video" && (
+                          <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/25">
+                            <svg className="w-4 h-4 text-white fill-current" viewBox="0 0 24 24">
+                              <path d="M8 5v14l11-7z" />
+                            </svg>
+                          </div>
+                        )}
+                      </>
+                    ) : item.type === "video" ? (
+                      <svg className="w-5 h-5 text-[#89BD49]" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M8 5v14l11-7z" />
+                      </svg>
+                    ) : (
+                      <svg className="w-5 h-5 text-rose-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    )}
+                  </div>
+
+                  {/* Title + Folder + Badges */}
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-sm font-medium text-foreground truncate group-hover:text-[#6B9A35] dark:group-hover:text-[#A8D666] transition-colors">
+                        {item.title}
+                      </h3>
+                      {item.type === "video" && item.duration ? (
+                        <span className="text-[10px] text-muted shrink-0 hidden sm:inline">
+                          {formatDuration(item.duration)}
+                        </span>
+                      ) : null}
+                      {item.expires_at && new Date(item.expires_at).getTime() < Date.now() && (
+                        <span className="text-[9px] font-semibold uppercase tracking-wider text-red-600 bg-red-100 dark:bg-red-950/40 dark:text-red-400 px-1.5 py-0.5 rounded shrink-0">
+                          {t("cap.expired")}
+                        </span>
+                      )}
+                      {item.password && (
+                        <span className="text-[9px] font-semibold text-amber-700 bg-amber-100 dark:bg-amber-950/40 dark:text-amber-400 px-1.5 py-0.5 rounded flex items-center gap-0.5 shrink-0">
+                          <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0110 0v4" /></svg>
+                          {t("cap.locked")}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 mt-0.5 text-[11px] text-muted">
+                      {item.folder_name && <span className="truncate max-w-[120px]">{item.folder_name}</span>}
+                      {item.folder_name && (item.tag || item.status) && <span>•</span>}
+                      {item.tag && (
+                        <span className="px-1.5 py-0.2 rounded bg-subtle border border-border text-[10px]">
+                          {item.tag}
+                        </span>
+                      )}
+                      {item.status && (
+                        <span className="capitalize text-[10px]">
+                          {item.status}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Owner & Time */}
+                  <div className="hidden md:flex items-center gap-2 shrink-0 text-xs text-muted">
+                    {isMe && myProfile?.avatar ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={myProfile.avatar}
+                        alt=""
+                        referrerPolicy="no-referrer"
+                        className="w-5 h-5 rounded-full object-cover shrink-0"
+                      />
+                    ) : (
+                      <div className={`w-5 h-5 rounded-full ${getAvatarColor(item.owner_email)} text-white text-[10px] font-bold flex items-center justify-center shrink-0`}>
+                        {isMe ? initialOf(myProfile?.name) : getOwnerInitial(item.owner_email)}
+                      </div>
+                    )}
+                    <span className="text-muted shrink-0 text-[11px]">
+                      {timeAgo(item.created_at, t)}
+                    </span>
+                  </div>
+                </CardWrapper>
+
+                {/* Row Actions */}
+                {!isSelectionActive && (
+                  <div className="pr-3 shrink-0 flex items-center gap-1">
+                    <button
+                      type="button"
+                      aria-label={t("cap.copyLink")}
+                      title={t("cap.copyLink")}
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleCopyLink(item.id); }}
+                      className="w-7 h-7 rounded-lg hover:bg-slate-100 dark:hover:bg-subtle text-muted hover:text-foreground flex items-center justify-center transition-colors"
+                    >
+                      {copiedId === item.id ? (
+                        <svg className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
+                      ) : (
+                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" /><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" /></svg>
+                      )}
+                    </button>
+
+                    <button
+                      type="button"
+                      aria-label="Capture options"
+                      title="Options"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        const left = typeof window !== "undefined" ? Math.max(12, Math.min(rect.right - 128, window.innerWidth - 136)) : rect.right - 128;
+                        const top = typeof window !== "undefined" ? Math.min(rect.bottom + 6, window.innerHeight - 150) : rect.bottom + 6;
+                        setMenuPos({ top, left });
+                        setActiveMenuId((prev) => (prev === item.id ? null : item.id));
+                      }}
+                      className="w-7 h-7 rounded-lg hover:bg-slate-100 dark:hover:bg-subtle text-muted hover:text-foreground flex items-center justify-center transition-colors"
+                    >
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="1.75"/><circle cx="12" cy="12" r="1.75"/><circle cx="12" cy="19" r="1.75"/></svg>
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {filteredCaptures.map((item) => {

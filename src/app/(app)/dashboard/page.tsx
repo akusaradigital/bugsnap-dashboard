@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
-import { getEffectivePlan } from "@/lib/paddle";
 
 interface DayCount {
   day: number; // 1 to 31
@@ -49,15 +48,6 @@ function DashboardContent() {
     name: "User",
     email: "",
   });
-  const [trialInfo, setTrialInfo] = useState<{ isTrial: boolean; trialDaysLeft: number }>({ isTrial: false, trialDaysLeft: 0 });
-  const [checkoutStatus, setCheckoutStatus] = useState<string | null>(null);
-  const [justUpgraded, setJustUpgraded] = useState(false);
-
-  useEffect(() => {
-    if (searchParams.get("upgraded") === "true") {
-      setJustUpgraded(true);
-    }
-  }, [searchParams]);
 
   const [qaData, setQaData] = useState<{
     statusCounts: { open: number; inProgress: number; fixed: number; closed: number };
@@ -87,23 +77,6 @@ function DashboardContent() {
           name: meta.full_name || meta.name || u.email?.split("@")[0] || "User",
           email: u.email || "",
         });
-
-        supabase
-          .from("users")
-          .select("plan, created_at, checkout_status")
-          .eq("id", u.id)
-          .maybeSingle()
-          .then(
-            ({ data: userRow }) => {
-              if (cancelled || !userRow) return;
-              if (userRow.checkout_status) setCheckoutStatus(userRow.checkout_status);
-              const eff = getEffectivePlan(userRow.plan, userRow.created_at);
-              if (eff.isTrial) {
-                setTrialInfo({ isTrial: true, trialDaysLeft: eff.trialDaysLeft });
-              }
-            },
-            () => {}
-          );
       }
     });
 
@@ -372,69 +345,6 @@ function DashboardContent() {
         </Link>
       </div>
 
-      {/* Upgrade Celebration Banner */}
-      {justUpgraded && (
-        <div className="rounded-2xl border border-emerald-300 dark:border-emerald-800 bg-gradient-to-r from-emerald-500/15 via-emerald-500/10 to-teal-500/10 p-4 sm:p-5 shadow-sm flex items-start sm:items-center justify-between gap-4 animate-in fade-in slide-in-from-top-2">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">🎉</span>
-            <div>
-              <h2 className="text-sm font-bold text-emerald-900 dark:text-emerald-100">
-                {t("dash.upgradedTitle")}
-              </h2>
-              <p className="text-xs text-emerald-800 dark:text-emerald-200 mt-0.5">
-                {t("dash.upgradedDesc")}
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={() => setJustUpgraded(false)}
-            className="text-emerald-700 dark:text-emerald-300 hover:opacity-75 p-1 text-sm font-bold shrink-0"
-            aria-label="Dismiss"
-          >
-            ✕
-          </button>
-        </div>
-      )}
-
-      {/* Smart Dunning / Past Due Alert */}
-      {checkoutStatus === "past_due" && (
-        <div className="rounded-2xl border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 p-4 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs sm:text-sm">
-          <div className="flex items-center gap-2.5">
-            <span className="text-lg">⚠️</span>
-            <p className="text-amber-900 dark:text-amber-200 font-medium">
-              {t("dash.pastDueAlert")}
-            </p>
-          </div>
-          <Link
-            href="/settings?tab=billing"
-            className="shrink-0 px-3 py-1.5 rounded-lg bg-amber-700 hover:bg-amber-800 text-white font-semibold text-xs transition-colors shadow-xs"
-          >
-            {t("settings.updatePayment")}
-          </Link>
-        </div>
-      )}
-
-      {/* 7-Day Reverse Trial Banner */}
-      {trialInfo.isTrial && (
-        <div className="rounded-2xl border border-[#89BD49]/30 dark:border-[#89BD49]/40 bg-[#89BD49]/10 dark:bg-[#89BD49]/15 p-4 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-          <div className="flex items-center gap-2.5 text-xs sm:text-sm">
-            <span className="text-lg">✨</span>
-            <div>
-              <p className="font-semibold text-foreground dark:text-white">
-                {t("dash.trialBanner", { days: trialInfo.trialDaysLeft })}
-              </p>
-            </div>
-          </div>
-          <Link
-            href="/upgrade"
-            className="shrink-0 px-3.5 py-1.5 rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] text-white font-bold text-xs transition-colors shadow-xs shadow-[#89BD49]/25"
-          >
-            {t("dash.trialUpgradeBtn")}
-          </Link>
-        </div>
-      )}
-
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {[
@@ -635,13 +545,7 @@ function DashboardContent() {
       <div className="space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-base font-bold text-foreground">{t("qa.title")}</h2>
-              <span className="inline-flex items-center gap-1 rounded-md bg-[#89BD49]/10 dark:bg-[#89BD49]/20 px-2.5 py-0.5 text-[11px] font-semibold text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/25 dark:border-[#89BD49]/30">
-                <span className="h-1.5 w-1.5 rounded-full bg-[#89BD49] animate-pulse" />
-                {t("qa.liveTelemetry")}
-              </span>
-            </div>
+            <h2 className="text-base font-bold text-foreground">{t("qa.title")}</h2>
             <p className="text-xs text-muted mt-0.5">
               {t("qa.subtitle")}
             </p>
@@ -661,9 +565,6 @@ function DashboardContent() {
             <div>
               <div className="flex items-center justify-between mb-3">
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted">{t("qa.healthTitle")}</span>
-                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800/40">
-                  {t("qa.resolved", { pct: qaData.resolutionRate })}
-                </span>
               </div>
 
               <div className="flex items-baseline gap-2 mb-4">

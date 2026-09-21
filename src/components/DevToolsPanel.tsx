@@ -232,7 +232,7 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime, unlo
   const { t } = useT();
   const [activeTab, setActiveTab] = useState<Tab>("Info");
   const [consoleErrorsOnly, setConsoleErrorsOnly] = useState(false);
-  const [networkFailedOnly, setNetworkFailedOnly] = useState(false);
+  const [networkStatusFilter, setNetworkStatusFilter] = useState<"all" | "4xx" | "5xx" | "failed">("all");
   const [networkPartyFilter, setNetworkPartyFilter] = useState<"all" | "1st" | "3rd">("all");
   // Actions was the only list tab with no chips - just the shared search box.
   const [actionKindFilter, setActionKindFilter] = useState<string>("all");
@@ -240,7 +240,7 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime, unlo
   const resetLogFilters = () => {
     setLogSearch("");
     setConsoleErrorsOnly(false);
-    setNetworkFailedOnly(false);
+    setNetworkStatusFilter("all");
     setNetworkPartyFilter("all");
     setActionKindFilter("all");
   };
@@ -650,13 +650,33 @@ ${stack}` : body);
   const visibleGroupedNetworkLogs = useMemo(
     () =>
       groupedNetworkLogs
-        .filter(({ log }) => !networkFailedOnly || isNetworkFailed(log))
+        .filter(({ log }) => {
+          if (networkStatusFilter === "all") return true;
+          const status = log.status ?? 0;
+          if (networkStatusFilter === "4xx") return status >= 400 && status < 500;
+          if (networkStatusFilter === "5xx") return status >= 500;
+          if (networkStatusFilter === "failed") return isNetworkFailed(log) && status < 400;
+          return true;
+        })
         .filter(({ log }) => {
           if (networkPartyFilter === "all" || !targetHost) return true;
           const is1st = isFirstPartyUrl(log.url, targetHost);
           return networkPartyFilter === "1st" ? is1st : !is1st;
         }),
-    [groupedNetworkLogs, networkFailedOnly, networkPartyFilter, targetHost]
+    [groupedNetworkLogs, networkStatusFilter, networkPartyFilter, targetHost]
+  );
+
+  const count4xx = useMemo(
+    () => networkLogs.filter((l) => (l.status ?? 0) >= 400 && (l.status ?? 0) < 500).length,
+    [networkLogs]
+  );
+  const count5xx = useMemo(
+    () => networkLogs.filter((l) => (l.status ?? 0) >= 500).length,
+    [networkLogs]
+  );
+  const countFailed = useMemo(
+    () => networkLogs.filter((l) => isNetworkFailed(l) && (!l.status || l.status < 400)).length,
+    [networkLogs]
   );
 
   const firstPartyCount = useMemo(
@@ -1056,24 +1076,66 @@ ${stack}` : body);
             {activeTab === "Network" && (
               <div className="flex flex-wrap items-center justify-between gap-1.5 pt-0.5">
                 <div className="flex items-center gap-1.5">
-                  {/* No "All" chip: its count is the ungrouped total, which disagreed with
-                      the tab and search counts (they sum repeat requests), and "off" is
-                      already expressible by unpressing Failed Requests. */}
                   {networkErrors.length > 0 && (
-                    <button
-                      type="button"
-                      onClick={() => setNetworkFailedOnly(!networkFailedOnly)}
-                      aria-pressed={networkFailedOnly}
-                      className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors flex items-center gap-1 ${
-                        networkFailedOnly
-                          ? "bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/40 font-semibold"
-                          : "text-red-600/80 hover:text-red-700 border border-transparent"
-                      }`}
-                      title={networkFailedOnly ? t("dt.showAllRequests") : t("dt.showOnlyFailed")}
-                    >
-                      <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                      {t("dt.failedReq") || "Failed Requests"} ({networkErrors.length})
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => setNetworkStatusFilter("all")}
+                        aria-pressed={networkStatusFilter === "all"}
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors ${
+                          networkStatusFilter === "all"
+                            ? "bg-subtle text-foreground border border-border font-semibold"
+                            : "text-muted hover:text-foreground border border-transparent"
+                        }`}
+                      >
+                        {t("dt.allStatuses") || "All"}
+                      </button>
+                      {count4xx > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setNetworkStatusFilter(networkStatusFilter === "4xx" ? "all" : "4xx")}
+                          aria-pressed={networkStatusFilter === "4xx"}
+                          className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors flex items-center gap-1 ${
+                            networkStatusFilter === "4xx"
+                              ? "bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/40 font-semibold"
+                              : "text-amber-600/80 hover:text-amber-700 border border-transparent"
+                          }`}
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                          {t("dt.status4xx") || "4xx"} ({count4xx})
+                        </button>
+                      )}
+                      {count5xx > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setNetworkStatusFilter(networkStatusFilter === "5xx" ? "all" : "5xx")}
+                          aria-pressed={networkStatusFilter === "5xx"}
+                          className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors flex items-center gap-1 ${
+                            networkStatusFilter === "5xx"
+                              ? "bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/40 font-semibold"
+                              : "text-red-600/80 hover:text-red-700 border border-transparent"
+                          }`}
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                          {t("dt.status5xx") || "5xx"} ({count5xx})
+                        </button>
+                      )}
+                      {countFailed > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setNetworkStatusFilter(networkStatusFilter === "failed" ? "all" : "failed")}
+                          aria-pressed={networkStatusFilter === "failed"}
+                          className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors flex items-center gap-1 ${
+                            networkStatusFilter === "failed"
+                              ? "bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/40 font-semibold"
+                              : "text-rose-600/80 hover:text-rose-700 border border-transparent"
+                          }`}
+                        >
+                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                          {t("dt.statusFailed") || "Failed"} ({countFailed})
+                        </button>
+                      )}
+                    </>
                   )}
                   {targetHost && networkErrors.length > 0 && (
                     /* Status and origin are independent filters; the rule marks the
@@ -1708,7 +1770,7 @@ ${stack}` : body);
               )
             ) : visibleGroupedNetworkLogs.length === 0 ? (
               <EmptyLogState
-                filtered={networkFailedOnly || networkPartyFilter !== "all" || Boolean(logSearch)}
+                filtered={networkStatusFilter !== "all" || networkPartyFilter !== "all" || Boolean(logSearch)}
                 emptyText={t("dt.noNetworkErrors")}
                 onReset={resetLogFilters}
                 t={t}

@@ -13,21 +13,11 @@ import { pickAvatar, isRealAvatar, initialOf } from "@/lib/avatar";
 import { Dropdown } from "@/components/Dropdown";
 import { ShimmerLockBadge } from "@/components/ShimmerLockBadge";
 import { INTEGRATIONS } from "@/lib/integrations";
-
-type Tab = "general" | "members" | "billing" | "integrations" | "account" | "notifications";
-
-// i18n keys, not strings: this is a module const so it cannot call useT() -
-// the caller resolves it at render time.
-const TAB_TITLES: Record<Tab, { title: string; subtitle: string }> = {
-  general: { title: "settings.tabGeneral", subtitle: "settings.tabGeneralSub" },
-  members: { title: "settings.members", subtitle: "settings.tabMembersSub" },
-  billing: { title: "settings.tabBilling", subtitle: "settings.tabBillingSub" },
-  integrations: { title: "settings.tabIntegrations", subtitle: "settings.tabIntegrationsSub" },
-  account: { title: "settings.tabAccount", subtitle: "settings.tabAccountSub" },
-  notifications: { title: "settings.tabNotifications", subtitle: "settings.tabNotificationsSub" },
-};
-
-const ROLE_OPTIONS = ["Customer success", "Support", "Engineering", "Design", "Product", "QA", "Sales", "Other"];
+import { type Tab, TAB_TITLES, ROLE_OPTIONS } from "./constants";
+import { DeleteAccountModal } from "./DeleteAccountModal";
+import { RemoveMemberModal } from "./RemoveMemberModal";
+import { RetentionModal } from "./RetentionModal";
+import { ConnectDriveModal } from "./ConnectDriveModal";
 
 function SettingsContent() {
   const { t } = useT();
@@ -128,7 +118,6 @@ function SettingsContent() {
 
   // Churn Prevention Retention Modal state
   const [showRetentionModal, setShowRetentionModal] = useState(false);
-  const [copiedRetentionCode, setCopiedRetentionCode] = useState(false);
 
   // ── Init ──────────────────────────────────────────────────────────────────
   useEffect(() => {
@@ -2111,20 +2100,15 @@ function SettingsContent() {
       </main>
 
       {/* Drive modal */}
-      {connectDriveModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
-          <button className="absolute inset-0 bg-black/40" aria-label="Close" onClick={() => !driveActionLoading && setConnectDriveModalOpen(false)} />
-          <div className="relative w-full max-w-sm rounded-xl border border-border bg-background p-6 shadow-xl">
-            <h2 className="text-lg font-bold text-foreground">{t("settings.connectDriveQ")}</h2>
-            <p className="text-sm text-muted mt-2">{t("settings.connectDriveDesc")}</p>
-            {driveError && <p className="text-xs text-red-600 dark:text-red-400 mt-3">{driveError}</p>}
-            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-border">
-              <button type="button" onClick={() => setConnectDriveModalOpen(false)} disabled={driveActionLoading} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-border/30 rounded-lg disabled:opacity-50">{t("common.cancel")}</button>
-              <button type="button" onClick={connectDrive} disabled={driveActionLoading} className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] shadow-xs shadow-[#89BD49]/25 disabled:opacity-50">{driveActionLoading ? t("settings.connecting") : driveStatus === "reconnect_required" ? "Reconnect with Google" : t("settings.continueToGoogle")}</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <ConnectDriveModal
+        isOpen={connectDriveModalOpen}
+        onClose={() => setConnectDriveModalOpen(false)}
+        onConnect={connectDrive}
+        loading={driveActionLoading}
+        driveStatus={driveStatus}
+        driveError={driveError}
+        t={t}
+      />
 
       {/* Dynamic Integration Modal for all platforms */}
       {activeModalInt && (() => {
@@ -2267,182 +2251,28 @@ function SettingsContent() {
       })()}
 
       {/* Churn Prevention Downsell Retention Modal (Feature 5) */}
-      {showRetentionModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs" role="dialog" aria-modal="true">
-          <button className="absolute inset-0 bg-transparent" aria-label="Close" onClick={() => setShowRetentionModal(false)} />
-          <div className="relative w-full max-w-md rounded-2xl border border-border bg-background p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-200">
-            <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 flex items-center justify-center text-2xl mx-auto shadow-inner">
-              🎁
-            </div>
-            <div className="text-center space-y-1.5">
-              <h2 className="text-lg font-bold text-foreground">
-                {t("settings.churnRetentionTitle")}
-              </h2>
-              <p className="text-xs text-muted leading-relaxed">
-                {t("settings.churnRetentionOffer")}
-              </p>
-            </div>
-
-            <div className="space-y-2.5 pt-2">
-              <button
-                type="button"
-                onClick={() => {
-                  navigator.clipboard.writeText("SAVE50");
-                  setCopiedRetentionCode(true);
-                  showToast(t("upgrade.appliedCoupon", { coupon: "SAVE50" }) || "Code SAVE50 copied!", "success");
-                  setTimeout(() => {
-                    openPaddleCustomerPortal();
-                    setShowRetentionModal(false);
-                  }, 800);
-                }}
-                className="w-full py-2.5 px-4 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] text-white font-bold text-xs shadow-xs shadow-[#89BD49]/25 transition-all flex items-center justify-center gap-2 active:scale-98"
-              >
-                <span>{copiedRetentionCode ? "✓ Copied SAVE50!" : t("settings.churnApplyCode")}</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  showToast("Opening customer portal to pause your subscription...", "info");
-                  openPaddleCustomerPortal();
-                  setShowRetentionModal(false);
-                }}
-                className="w-full py-2 px-4 rounded-xl border border-border hover:bg-subtle text-foreground font-semibold text-xs transition-colors flex items-center justify-center gap-1.5"
-              >
-                <span>⏸️</span>
-                <span>{t("settings.churnPauseInstead")}</span>
-              </button>
-
-              <div className="pt-2 text-center">
-                <button
-                  type="button"
-                  onClick={() => {
-                    openPaddleCustomerPortal();
-                    setShowRetentionModal(false);
-                  }}
-                  className="text-[11px] text-muted hover:text-foreground transition-colors"
-                >
-                  {t("settings.churnContinueCancel")}
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <RetentionModal
+        isOpen={showRetentionModal}
+        onClose={() => setShowRetentionModal(false)}
+        showToast={showToast}
+        t={t}
+      />
 
       {/* Delete Account Confirmation Modal */}
-      {deleteAccountModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
-          <button
-            className="absolute inset-0 bg-black/40 backdrop-blur-xs"
-            aria-label="Close"
-            onClick={() => !accountDeleting && setDeleteAccountModalOpen(false)}
-          />
-          <div className="relative w-full max-w-md rounded-2xl border border-border bg-subtle p-6 shadow-2xl space-y-4">
-            <div className="flex items-start gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-              </div>
-              <div className="space-y-1 min-w-0 flex-1">
-                <h2 className="text-base font-bold text-foreground">Delete BugSnap Account?</h2>
-                <p className="text-xs text-muted leading-relaxed">
-                  Are you sure you want to permanently delete your account? All your recordings, captures, workspace memberships, and personal data will be completely erased.
-                </p>
-              </div>
-            </div>
-
-            <div className="rounded-xl border border-red-200/80 dark:border-red-900/40 bg-red-50/60 dark:bg-red-950/20 p-3.5 text-xs text-red-700 dark:text-red-300">
-              <span className="font-semibold">Irreversible:</span> This action cannot be undone or recovered later.
-            </div>
-
-            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-border">
-              <button
-                type="button"
-                onClick={() => setDeleteAccountModalOpen(false)}
-                disabled={accountDeleting}
-                className="px-4 py-2 text-xs font-semibold text-foreground hover:bg-border/30 rounded-xl transition-colors disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleDeleteAccount}
-                disabled={accountDeleting}
-                className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold transition-colors disabled:opacity-50 flex items-center gap-1.5 shadow-xs"
-              >
-                {accountDeleting ? (
-                  <>
-                    <svg className="w-3.5 h-3.5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    <span>Deleting…</span>
-                  </>
-                ) : (
-                  <span>Yes, delete account</span>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <DeleteAccountModal
+        isOpen={deleteAccountModalOpen}
+        onClose={() => setDeleteAccountModalOpen(false)}
+        onConfirm={handleDeleteAccount}
+        deleting={accountDeleting}
+      />
 
       {/* Remove Member Confirmation Modal */}
-      {memberToRemove && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
-          <button
-            className="absolute inset-0 bg-black/40 backdrop-blur-xs"
-            aria-label="Close"
-            onClick={() => !removingMemberId && setMemberToRemove(null)}
-          />
-          <div className="relative w-full max-w-md rounded-2xl border border-border bg-subtle p-6 shadow-2xl space-y-4">
-            <div className="flex items-start gap-3.5">
-              <div className="w-10 h-10 rounded-xl bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </div>
-              <div className="space-y-1 min-w-0 flex-1">
-                <h2 className="text-base font-bold text-foreground">Remove Member?</h2>
-                <p className="text-xs text-muted leading-relaxed">
-                  Are you sure you want to remove <span className="font-semibold text-foreground">{memberToRemove.email}</span> from this workspace? They will immediately lose access to all captures and team discussions.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-2.5 pt-2 border-t border-border">
-              <button
-                type="button"
-                onClick={() => setMemberToRemove(null)}
-                disabled={Boolean(removingMemberId)}
-                className="px-4 py-2 text-xs font-semibold text-foreground hover:bg-border/30 rounded-xl transition-colors disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => handleRemoveMember(memberToRemove)}
-                disabled={Boolean(removingMemberId)}
-                className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold transition-colors disabled:opacity-50 flex items-center gap-1.5 shadow-xs"
-              >
-                {removingMemberId === memberToRemove.user_id ? (
-                  <>
-                    <svg className="w-3.5 h-3.5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
-                    <span>Removing…</span>
-                  </>
-                ) : (
-                  <span>Remove member</span>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      <RemoveMemberModal
+        member={memberToRemove}
+        onClose={() => setMemberToRemove(null)}
+        onConfirm={handleRemoveMember}
+        removingMemberId={removingMemberId}
+      />
     </div>
   );
 }

@@ -113,12 +113,30 @@ export default function Home() {
   }, []);
 
   const faqItems: { id: number; q: string; a: string; category: "privacy" | "devtools" | "integrations" }[] = [
+    // 1
     { id: 1, q: "landing.faq1q", a: "landing.faq1a", category: "devtools" },
     { id: 2, q: "landing.faq2q", a: "landing.faq2a", category: "privacy" },
-    { id: 3, q: "landing.faq3q", a: "landing.faq3a", category: "privacy" },
     { id: 4, q: "landing.faq4q", a: "landing.faq4a", category: "integrations" },
-    { id: 5, q: "landing.faq5q", a: "landing.faq5a", category: "privacy" },
+    // 2
+    { id: 10, q: "landing.faq10q", a: "landing.faq10a", category: "devtools" },
+    { id: 3, q: "landing.faq3q", a: "landing.faq3a", category: "privacy" },
     { id: 6, q: "landing.faq6q", a: "landing.faq6a", category: "integrations" },
+    // 3
+    { id: 11, q: "landing.faq11q", a: "landing.faq11a", category: "devtools" },
+    { id: 5, q: "landing.faq5q", a: "landing.faq5a", category: "privacy" },
+    { id: 15, q: "landing.faq15q", a: "landing.faq15a", category: "integrations" },
+    // 4
+    { id: 12, q: "landing.faq12q", a: "landing.faq12a", category: "devtools" },
+    { id: 7, q: "landing.faq7q", a: "landing.faq7a", category: "privacy" },
+    { id: 16, q: "landing.faq16q", a: "landing.faq16a", category: "integrations" },
+    // 5
+    { id: 13, q: "landing.faq13q", a: "landing.faq13a", category: "devtools" },
+    { id: 8, q: "landing.faq8q", a: "landing.faq8a", category: "privacy" },
+    { id: 17, q: "landing.faq17q", a: "landing.faq17a", category: "integrations" },
+    // 6
+    { id: 14, q: "landing.faq14q", a: "landing.faq14a", category: "devtools" },
+    { id: 9, q: "landing.faq9q", a: "landing.faq9a", category: "privacy" },
+    { id: 18, q: "landing.faq18q", a: "landing.faq18a", category: "integrations" },
   ];
 
   if (autoLoggingIn) {
@@ -189,14 +207,6 @@ export default function Home() {
           <div className="pointer-events-none absolute top-16 -left-20 -z-10 h-72 w-72 rounded-full bg-emerald-400/20 blur-3xl dark:bg-emerald-900/20 animate-pulse-slow [animation-delay:2.5s]" />
           <div className="pointer-events-none absolute top-20 -right-20 -z-10 h-72 w-72 rounded-full bg-lime-400/15 blur-3xl dark:bg-lime-900/10 animate-pulse-slow [animation-delay:5s]" />
 
-          {/* Modern Eyebrow Badge (sleek rectangular, no pills) */}
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-[#89BD49]/30 bg-[#89BD49]/10 text-[#6B9A35] dark:text-[#A8D666] text-xs font-bold shadow-2xs mb-6">
-            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-            </svg>
-            <span>{t("landing.eyebrow")}</span>
-          </div>
-
           <h1 className="text-3xl sm:text-5xl md:text-7xl font-black tracking-[-0.04em] leading-[1.05] sm:leading-[0.98] text-slate-900 dark:text-foreground">
             {t("landing.tagline")}
           </h1>
@@ -229,17 +239,13 @@ export default function Home() {
                     : "Chrome Web Store"}
                 </span>
               </div>
-              <span className="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-white/20 text-white border border-white/30 shadow-xs">
-                {t("v.free")}
-              </span>
             </a>
-            <a
-              href="/pricing"
-              onClick={() => trackConversion("pricing_click")}
+            <Link
+              href="/how-it-works"
               className="inline-flex items-center gap-2 w-full sm:w-auto justify-center rounded-2xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle hover:bg-white dark:hover:bg-background px-7 py-3.5 text-sm font-bold text-slate-800 dark:text-foreground transition-all duration-200 shadow-lg shadow-slate-200/50 dark:shadow-none hover:shadow-xl hover:-translate-y-0.5 backdrop-blur-xl"
             >
-              {t("landing.pricing")}
-            </a>
+              {t("landing.howItWorks")}
+            </Link>
             <button
               type="button"
               onClick={() => {
@@ -258,49 +264,8 @@ export default function Home() {
           </div>
 
           <p className="mt-6 text-xs font-medium text-slate-600 dark:text-muted">
-            {t("landing.noCard")} &middot; {t("landing.trustStrip")}
+            {t("landing.heroTrustNote")}
           </p>
-
-          {/* Trust Badges Grid (sleek rectangular cards, no pills) */}
-          <div className="mt-8 grid grid-cols-1 sm:grid-cols-3 gap-3 max-w-2xl mx-auto text-left">
-            <div className="flex items-center gap-3 p-3 rounded-xl border border-border/70 bg-white/70 dark:bg-subtle/50 shadow-xs backdrop-blur-xs">
-              <div className="w-8 h-8 rounded-lg bg-[#89BD49]/10 text-[#6B9A35] dark:text-[#A8D666] flex items-center justify-center shrink-0 border border-[#89BD49]/20">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-                </svg>
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-slate-900 dark:text-foreground truncate">{t("landing.trustDrive")}</p>
-                <p className="text-[10px] text-muted truncate">{t("landing.trustDriveSub")}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 p-3 rounded-xl border border-border/70 bg-white/70 dark:bg-subtle/50 shadow-xs backdrop-blur-xs">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-                  <polyline points="22 4 12 14.01 9 11.01" />
-                </svg>
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-slate-900 dark:text-foreground truncate">{t("landing.trustChrome")}</p>
-                <p className="text-[10px] text-muted truncate">{t("landing.trustChromeSub")}</p>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-3 p-3 rounded-xl border border-border/70 bg-white/70 dark:bg-subtle/50 shadow-xs backdrop-blur-xs">
-              <div className="w-8 h-8 rounded-lg bg-teal-500/10 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0 border border-teal-500/20">
-                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-                </svg>
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs font-bold text-slate-900 dark:text-foreground truncate">{t("landing.trustPrivacy")}</p>
-                <p className="text-[10px] text-muted truncate">{t("landing.trustPrivacySub")}</p>
-              </div>
-            </div>
-          </div>
 
           {/* Key Developer Metrics Strip (sleek rectangular grid, no pills) */}
           <div className="mt-8 grid grid-cols-2 lg:grid-cols-4 gap-3 max-w-4xl mx-auto text-left">
@@ -1162,10 +1127,7 @@ export default function Home() {
               <div className="md:col-span-2 group relative overflow-hidden rounded-2xl border border-white/80 dark:border-border hover:border-[#89BD49]/40 dark:hover:border-[#89BD49]/40 bg-white/80 dark:bg-subtle p-5 sm:p-8 flex flex-col justify-between shadow-lg shadow-slate-200/50 dark:shadow-none backdrop-blur-sm hover:-translate-y-1 hover:shadow-xl transition-all duration-300">
                 <div className="pointer-events-none absolute -top-12 -right-12 w-36 h-36 rounded-full bg-[#89BD49]/10 dark:bg-[#89BD49]/15 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div>
-                  <span className="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-800/40">
-                    {t("landing.pill1Title")}
-                  </span>
-                  <h3 className="mt-3 text-lg font-bold text-slate-900 dark:text-foreground leading-snug">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-foreground leading-snug">
                     {t("landing.f2Title")}
                   </h3>
                   <p className="mt-2 text-xs text-slate-600 dark:text-muted leading-relaxed">
@@ -1270,10 +1232,7 @@ export default function Home() {
               <div className="group relative overflow-hidden rounded-2xl border border-white/80 dark:border-border hover:border-[#89BD49]/40 dark:hover:border-[#89BD49]/40 bg-white/80 dark:bg-subtle p-5 sm:p-8 flex flex-col justify-between shadow-lg shadow-slate-200/50 dark:shadow-none backdrop-blur-sm hover:-translate-y-1 hover:shadow-xl transition-all duration-300">
                 <div className="pointer-events-none absolute -top-12 -right-12 w-32 h-32 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div>
-                  <span className="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/40">
-                    {t("landing.pill2Title")}
-                  </span>
-                  <h3 className="mt-3 text-lg font-bold text-slate-900 dark:text-foreground leading-snug">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-foreground leading-snug">
                     {t("landing.freeForever")}
                   </h3>
                   <p className="mt-2 text-xs text-slate-600 dark:text-muted leading-relaxed">
@@ -1296,14 +1255,11 @@ export default function Home() {
               <div className="group relative overflow-hidden rounded-2xl border border-white/80 dark:border-border hover:border-[#89BD49]/40 dark:hover:border-[#89BD49]/40 bg-white/80 dark:bg-subtle p-5 sm:p-8 flex flex-col justify-between shadow-lg shadow-slate-200/50 dark:shadow-none backdrop-blur-sm hover:-translate-y-1 hover:shadow-xl transition-all duration-300">
                 <div className="pointer-events-none absolute -top-12 -right-12 w-32 h-32 rounded-full bg-[#89BD49]/10 dark:bg-[#89BD49]/15 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div>
-                  <span className="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border bg-[#89BD49]/10 text-[#6B9A35] border-[#89BD49]/30 dark:bg-[#89BD49]/20 dark:text-[#A8D666]">
-                    {t("landing.screenRecorder")}
-                  </span>
-                  <h3 className="mt-3 text-lg font-bold text-slate-900 dark:text-foreground leading-snug">
-                    {t("landing.f1Title")}
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-foreground leading-snug">
+                    {t("landing.bentoAnnotateTitle")}
                   </h3>
                   <p className="mt-2 text-xs text-slate-600 dark:text-muted leading-relaxed">
-                    {t("landing.f1Body")}
+                    {t("landing.bentoAnnotateDesc")}
                   </p>
                 </div>
 
@@ -1321,10 +1277,7 @@ export default function Home() {
               <div className="md:col-span-2 group relative overflow-hidden rounded-2xl border border-white/80 dark:border-border hover:border-[#89BD49]/40 dark:hover:border-[#89BD49]/40 bg-white/80 dark:bg-subtle p-5 sm:p-8 flex flex-col justify-between shadow-lg shadow-slate-200/50 dark:shadow-none backdrop-blur-sm hover:-translate-y-1 hover:shadow-xl transition-all duration-300">
                 <div className="pointer-events-none absolute -top-12 -right-12 w-36 h-36 rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                 <div>
-                  <span className="inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800/40">
-                    {t("landing.pill3Title")}
-                  </span>
-                  <h3 className="mt-3 text-lg font-bold text-slate-900 dark:text-foreground leading-snug">
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-foreground leading-snug">
                     {t("landing.f3Title")}
                   </h3>
                   <p className="mt-2 text-xs text-slate-600 dark:text-muted leading-relaxed">
@@ -1359,7 +1312,7 @@ export default function Home() {
 
         {/* FAQ Section with Interactive Category Filter & Accordion (no pills) */}
         <section className="border-t border-white/70 dark:border-border bg-gradient-to-b from-slate-50/70 to-lime-50/30 dark:from-background dark:to-background py-14 sm:py-20">
-          <div className="mx-auto max-w-3xl px-4 sm:px-8">
+          <div className="mx-auto max-w-6xl px-4 sm:px-8">
             <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-center mb-4 text-slate-900 dark:text-foreground">
               {t("landing.faq")}
             </h2>
@@ -1378,7 +1331,10 @@ export default function Home() {
                 <button
                   key={cat.key}
                   type="button"
-                  onClick={() => setActiveFaqCategory(cat.key as "all" | "privacy" | "devtools" | "integrations")}
+                  onClick={() => {
+                    setActiveFaqCategory(cat.key as "all" | "privacy" | "devtools" | "integrations");
+                    setExpandedFaqIndex(null);
+                  }}
                   className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 border ${
                     activeFaqCategory === cat.key
                       ? "border-[#89BD49] bg-[#89BD49] text-white shadow-xs"
@@ -1390,52 +1346,63 @@ export default function Home() {
               ))}
             </div>
 
-            {/* Accordion List */}
-            <div className="space-y-3">
-              {faqItems
-                .filter((faq) => activeFaqCategory === "all" || faq.category === activeFaqCategory)
-                .map((faq) => {
-                  const isExpanded = expandedFaqIndex === faq.id;
-                  return (
-                    <div
-                      key={faq.id}
-                      className={`rounded-xl border transition-all duration-200 overflow-hidden ${
-                        isExpanded
-                          ? "border-[#89BD49]/60 bg-white dark:bg-subtle shadow-md"
-                          : "border-border/80 bg-white/70 dark:bg-subtle/50 hover:border-[#89BD49]/30 hover:bg-white dark:hover:bg-subtle"
-                      }`}
-                    >
-                      <button
-                        type="button"
-                        onClick={() => setExpandedFaqIndex(isExpanded ? null : faq.id)}
-                        className="w-full text-left p-4 sm:p-5 flex items-center justify-between gap-4 transition-colors"
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <span className="px-2 py-0.5 rounded-md text-[10px] font-mono font-bold uppercase tracking-wider bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-border">
-                            {faq.category}
-                          </span>
-                          <span className="text-sm font-semibold text-slate-900 dark:text-foreground">
-                            {t(faq.q)}
-                          </span>
-                        </div>
-                        <span className={`w-6 h-6 rounded-md border border-border flex items-center justify-center shrink-0 transition-transform duration-200 ${
-                          isExpanded ? "rotate-180 bg-[#89BD49]/10 text-[#6B9A35] dark:text-[#A8D666] border-[#89BD49]/40" : "text-muted"
-                        }`}>
-                          <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                            <polyline points="6 9 12 15 18 9" />
-                          </svg>
-                        </span>
-                      </button>
+            {/* Accordion List (2-column balanced grid) */}
+            {(() => {
+              const filtered = faqItems.filter(
+                (faq) => activeFaqCategory === "all" || faq.category === activeFaqCategory
+              );
+              const half = Math.ceil(filtered.length / 2);
+              const leftCol = filtered.slice(0, half);
+              const rightCol = filtered.slice(half);
 
-                      {isExpanded && (
-                        <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-1 text-xs text-slate-600 dark:text-muted leading-relaxed border-t border-border/50 animate-fadeIn">
-                          {t(faq.a)}
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-            </div>
+              const renderFaqCard = (faq: (typeof faqItems)[number]) => {
+                const isExpanded = expandedFaqIndex === faq.id;
+                return (
+                  <div
+                    key={faq.id}
+                    className={`rounded-xl border transition-all duration-200 overflow-hidden ${
+                      isExpanded
+                        ? "border-[#89BD49]/60 bg-white dark:bg-subtle shadow-md"
+                        : "border-border/80 bg-white/70 dark:bg-subtle/50 hover:border-[#89BD49]/30 hover:bg-white dark:hover:bg-subtle"
+                    }`}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => setExpandedFaqIndex(isExpanded ? null : faq.id)}
+                      className="w-full text-left p-4 sm:p-5 flex items-start justify-between gap-4 transition-colors"
+                    >
+                      <span className="text-sm font-semibold text-slate-900 dark:text-foreground leading-snug">
+                        {t(faq.q)}
+                      </span>
+                      <span className={`w-6 h-6 rounded-md border border-border flex items-center justify-center shrink-0 transition-transform duration-200 mt-0.5 ${
+                        isExpanded ? "rotate-180 bg-[#89BD49]/10 text-[#6B9A35] dark:text-[#A8D666] border-[#89BD49]/40" : "text-muted"
+                      }`}>
+                        <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                          <polyline points="6 9 12 15 18 9" />
+                        </svg>
+                      </span>
+                    </button>
+
+                    {isExpanded && (
+                      <div className="px-4 sm:px-5 pb-4 sm:pb-5 pt-1 text-xs text-slate-600 dark:text-muted leading-relaxed border-t border-border/50 animate-fadeIn">
+                        {t(faq.a)}
+                      </div>
+                    )}
+                  </div>
+                );
+              };
+
+              return (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+                  <div className="space-y-3">
+                    {leftCol.map(renderFaqCard)}
+                  </div>
+                  <div className="space-y-3">
+                    {rightCol.map(renderFaqCard)}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </section>
 
@@ -1471,13 +1438,12 @@ export default function Home() {
                   {t("landing.cta")}
                 </span>
               </a>
-              <a
-                href="/pricing"
-                onClick={() => trackConversion("pricing_click")}
+              <Link
+                href="/how-it-works"
                 className="inline-flex items-center gap-2 w-full sm:w-auto justify-center rounded-2xl border border-border/80 dark:border-border bg-white/90 dark:bg-subtle hover:bg-white dark:hover:bg-background px-7 py-3.5 text-sm font-bold text-foreground transition-all duration-200 shadow-sm hover:shadow-md hover:-translate-y-0.5 backdrop-blur-xl"
               >
-                {t("landing.pricing")}
-              </a>
+                {t("landing.howItWorks")}
+              </Link>
             </div>
 
             <p className="mt-5 text-xs text-muted">

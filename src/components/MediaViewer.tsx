@@ -135,6 +135,11 @@ export default function MediaViewer({
 
   // Flags for click discrimination & WebM duration discovery
   const isDiscoveringDurationRef = useRef(false);
+  // `initialDuration` is the extension's own recording-timer value: a good
+  // placeholder before metadata loads, but it drifts from the real media length
+  // (encoder flush, dropped frames). Only a decoder-derived figure is trusted,
+  // and until we have one the discovery seek must keep being allowed to run.
+  const isDurationConfirmedRef = useRef(false);
   const discoveryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
   const videoClickCoordRef = useRef<{ x: number; y: number } | null>(null);
@@ -152,10 +157,24 @@ export default function MediaViewer({
     if (fsPlayheadRef.current) fsPlayheadRef.current.style.left = pStr;
   }, []);
 
+  // Every decoder-derived duration lands here. Once one arrives the value is
+  // frozen: the old code let onTimeUpdate raise it whenever `cur > videoDuration`,
+  // so a WebM reporting Infinity had its "total" rewritten to the playhead on
+  // every tick - which is exactly why the right-hand number crept up during
+  // playback and the bar never reached the end.
+  const commitDuration = useCallback((dur: number) => {
+    if (!isFinite(dur) || dur <= 0) return;
+    isDurationConfirmedRef.current = true;
+    setVideoDuration((prev) => (Math.abs(prev - dur) < 0.05 ? prev : dur));
+  }, []);
+
   // WebM Infinity duration discovery: seek to end to let decoder calculate true duration
   const discoverWebmDuration = useCallback((vid: HTMLVideoElement) => {
     if (!vid || !vid.paused || (isFinite(vid.duration) && vid.duration > 0) || isDiscoveringDurationRef.current) return;
-    if (videoDuration > 0 || (initialDuration && initialDuration > 0)) return;
+    // Was `videoDuration > 0 || initialDuration > 0`, which meant the metadata
+    // placeholder suppressed discovery outright and the displayed total stayed
+    // an estimate forever. Only a confirmed decoder value stops the seek.
+    if (isDurationConfirmedRef.current) return;
 
     isDiscoveringDurationRef.current = true;
     const cleanup = () => {
@@ -185,9 +204,7 @@ export default function MediaViewer({
     const onSeekedToEnd = () => {
       vid.removeEventListener("seeked", onSeekedToEnd);
       const discoveredDur = vid.currentTime;
-      if (isFinite(discoveredDur) && discoveredDur > 0) {
-        setVideoDuration(discoveredDur);
-      }
+      commitDuration(discoveredDur);
       vid.addEventListener("seeked", onSeekedToStart, { once: true });
       try {
         vid.currentTime = 0;
@@ -203,7 +220,7 @@ export default function MediaViewer({
     } catch {
       cleanup();
     }
-  }, [videoDuration, initialDuration]);
+  }, [commitDuration]);
 
   const resetControlsTimeout = useCallback(() => {
     if (controlsTimeoutRef.current) {
@@ -285,6 +302,9 @@ export default function MediaViewer({
           if (curFloor !== lastSec) {
             lastSec = curFloor;
             setCurrentPlaybackTime(cur);
+            // Parent only renders a whole-second readout, so it gets the same
+            // once-per-second tick instead of the native ~4x/s one.
+            onTimeUpdate?.(cur);
           }
         }
       }
@@ -292,7 +312,7 @@ export default function MediaViewer({
     };
     animId = requestAnimationFrame(step);
     return () => cancelAnimationFrame(animId);
-  }, [isPlaying, videoDuration, updateScrubberDom]);
+  }, [isPlaying, videoDuration, updateScrubberDom, onTimeUpdate]);
 
   useEffect(() => {
     if (!fileId) { setSigQuery(""); return; }
@@ -1390,9 +1410,9 @@ export default function MediaViewer({
                 onCanPlay={(e) => {
                   setIsBuffering(false);
                   const dur = e.currentTarget.duration;
-                  if (isFinite(dur) && dur > 0 && videoDuration !== dur) {
-                    setVideoDuration(dur);
-                  } else if ((!isFinite(dur) || dur <= 0) && (!videoDuration || videoDuration === 0)) {
+                  if (isFinite(dur) && dur > 0) {
+                    commitDuration(dur);
+                  } else if (!isDurationConfirmedRef.current) {
                     discoverWebmDuration(e.currentTarget);
                   }
                   if (videoRef.current) {
@@ -1406,13 +1426,16 @@ export default function MediaViewer({
                   setIsBuffering(false);
                   if (videoRef.current) {
                     const vid = videoRef.current;
+                    // Playing to the end is the one moment currentTime IS the
+                    // duration, so an Infinity-header WebM gets its real length
+                    // confirmed here even if the discovery seek never ran.
                     const finalDur = isFinite(vid.duration) && vid.duration > 0
                       ? vid.duration
                       : isFinite(vid.currentTime) && vid.currentTime > 0
                       ? vid.currentTime
                       : videoDuration;
                     if (isFinite(finalDur) && finalDur > 0) {
-                      setVideoDuration(finalDur);
+                      commitDuration(finalDur);
                       setCurrentPlaybackTime(finalDur);
                       updateScrubberDom(100);
                       onTimeUpdate?.(finalDur);
@@ -1433,27 +1456,28 @@ export default function MediaViewer({
                 onTimeUpdate={(e) => {
                   if (isDiscoveringDurationRef.current) return;
                   const cur = e.currentTarget.currentTime;
-                  const dur = e.currentTarget.duration;
-                  if (isFinite(dur) && dur > 0 && videoDuration !== dur) {
-                    setVideoDuration(dur);
-                  } else if (isFinite(cur) && cur > videoDuration) {
-                    setVideoDuration(cur);
-                  }
-                  if (!isDraggingScrubberRef.current && isFinite(cur)) {
+                  // No `cur > videoDuration` branch here any more: growing the
+                  // total to match the playhead is what made the end time count
+                  // up during playback. A real duration only comes from the
+                  // decoder or from the end-of-seek discovery above.
+                  commitDuration(e.currentTarget.duration);
+                  // While playing, the rAF loop already owns the playhead and
+                  // throttles to one state write per second. This handler fires
+                  // ~4x/s and used to write the same value again, re-rendering
+                  // this component AND the whole /v/[id] page through the
+                  // onTimeUpdate callback - the stutter the user saw on play.
+                  if (!isDraggingScrubberRef.current && isFinite(cur) && e.currentTarget.paused) {
                     setCurrentPlaybackTime(cur);
                     onTimeUpdate?.(cur);
                   }
                 }}
                 onDurationChange={(e) => {
-                  const dur = e.currentTarget.duration;
-                  if (isFinite(dur) && dur > 0) {
-                    setVideoDuration(dur);
-                  }
+                  commitDuration(e.currentTarget.duration);
                 }}
                 onLoadedMetadata={(e) => {
                   const vid = e.currentTarget;
                   if (isFinite(vid.duration) && vid.duration > 0) {
-                    setVideoDuration(vid.duration);
+                    commitDuration(vid.duration);
                   } else {
                     discoverWebmDuration(vid);
                   }
