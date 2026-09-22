@@ -23,12 +23,13 @@ node scripts/apply-migration.mjs --sql "<verification query>"                   
 
 The script posts to the Supabase Management API using `SUPABASE_PAT` + `NEXT_PUBLIC_SUPABASE_URL` from `.env.local` (no CLI, no DB password, no linked local project). Save the pre-change definition to `supabase/.rollback-<object>-<date>.json` so there is a way back. Never leave a migration written-but-unapplied.
 
-## 2. Versioning (SemVer)
+## 2. Versioning (SemVer — ONLY on git push to main)
 
-Bump `package.json` + `package-lock.json` (top-level + `packages[""].version`) before every production deploy.
+- **Do NOT bump version on routine edits or local commits**: Jangan menaikkan versi pada setiap perubahan kecil atau bugfix lokal agar nomor versi tidak naik terus.
+- **Bump ONLY when pushing to `main`**: Bump `package.json` + `package-lock.json` (top-level + `packages[""].version`) HANYA saat user secara eksplisit menginstruksikan `git push` ke `main` untuk deployment produksi.
 
-- **PATCH** `0.5.11 → 0.5.12`: bugfix, hotfix, copy, asset, dependency.
-- **MINOR** `0.5.x → 0.6.0`: new user-facing feature, route, module.
+- **PATCH** `0.7.0 → 0.7.1`: bugfix, hotfix, copy, asset, dependency.
+- **MINOR** `0.7.x → 0.8.0`: new user-facing feature, route, module.
 - **MAJOR** `0.x → 1.0.0`: breaking API/auth/UI change.
 
 Current version: **`0.7.0`**

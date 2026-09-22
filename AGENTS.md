@@ -13,11 +13,12 @@
 7. **No `any` TS type**: Proper types only.
 8. **DB changes apply immediately**: A new `supabase/migrations/*.sql` is not done until it runs against the live project. Execute it with `node scripts/apply-migration.mjs <file.sql>` (Management API + `SUPABASE_PAT` from `.env.local`) in the same turn it is written. Snapshot what you are replacing first — `--sql "select pg_get_functiondef(...)"` — and verify afterwards. Never leave a migration written-but-unapplied.
 
-## Versioning (SemVer)
+## Versioning (SemVer — ONLY on git push to main)
 
-Bump `package.json` + `package-lock.json` before every production deploy:
-- Current: **`0.5.10`**
-- PATCH `0.5.9 → 0.5.10` | MINOR `0.5.x → 0.6.0` | MAJOR `0.x → 1.0.0`
+- **DILARANG bump version di setiap commit lokal**: Jangan menaikkan versi pada setiap perbaikan atau commit rutin lokal agar versi tidak terus melonjak.
+- **HANYA bump saat push ke `main`**: Bump `package.json` + `package-lock.json` hanya saat user secara eksplisit meminta `git push` ke `main` (production deploy).
+- Current: **`0.7.0`**
+- PATCH `0.7.0 → 0.7.1` | MINOR `0.7.x → 0.8.0` | MAJOR `0.x → 1.0.0`
 
 ## Architecture
 
