@@ -44,10 +44,17 @@ export async function GET(
     }
   }
 
-  return NextResponse.json({
-    brandName: settings?.brand_name || "BugSnap",
-    logoUrl: settings?.custom_logo_url || "",
-    hideWatermark: Boolean(settings?.hide_watermark),
-    configuredIntegrations,
-  });
+  return NextResponse.json(
+    {
+      brandName: settings?.brand_name || "BugSnap",
+      logoUrl: settings?.custom_logo_url || "",
+      hideWatermark: Boolean(settings?.hide_watermark),
+      configuredIntegrations,
+    },
+    {
+      headers: {
+        "Cache-Control": "public, max-age=60, s-maxage=300, stale-while-revalidate=600",
+      },
+    }
+  );
 }

@@ -357,9 +357,15 @@ function SingleViewContent() {
 
   // Timeline Sync between Video Playback and DevToolsPanel
   const [playbackTime, setPlaybackTime] = useState<number>(0);
+  const playbackTimeRef = useRef<number>(0);
   const [seekTargetTime, setSeekTargetTime] = useState<number | null>(null);
   const handlePlaybackTimeUpdate = useCallback((t: number) => {
+    playbackTimeRef.current = t;
     setPlaybackTime(t);
+  }, []);
+  const getCurrentPlaybackTime = useCallback(() => playbackTimeRef.current, []);
+  const handleSeek = useCallback((t: number) => {
+    setSeekTargetTime((prev) => (prev === t ? t + 0.0001 : t));
   }, []);
 
   const errorMarkers = useMemo<ErrorMarker[]>(() => {
@@ -626,42 +632,37 @@ function SingleViewContent() {
           const { data: authData } = await supabase.auth.getSession();
           const userId = authData.session?.user?.id;
           if (userId) {
-          // get_public_capture does NOT return workspace_id, so fetch it directly
-          // from the captures table (member-scoped, safe via RLS).
-          let wsId = row.workspace_id || null;
-          if (!wsId) {
-            const { data: wsData } = await supabase
-              .from("captures")
-              .select("workspace_id")
-              .eq("id", id)
-              .single();
-            wsId = (wsData as { workspace_id: string } | null)?.workspace_id || null;
-          }
+            let wsId = row.workspace_id || null;
+            if (!wsId) {
+              const { data: wsData } = await supabase
+                .from("captures")
+                .select("workspace_id")
+                .eq("id", id)
+                .single();
+              wsId = (wsData as { workspace_id: string } | null)?.workspace_id || null;
+            }
 
-          if (wsId) {
-            const { data: wsInfo } = await supabase
-              .from("workspaces")
-              .select("owner_user_id")
-              .eq("id", wsId)
-              .maybeSingle();
+            if (wsId) {
+              const [wsInfoRes, membersRes] = await Promise.all([
+                supabase.from("workspaces").select("owner_user_id").eq("id", wsId).maybeSingle(),
+                supabase.rpc("get_workspace_members", { p_workspace_id: wsId }),
+              ]);
 
-            if (wsInfo?.owner_user_id === userId) {
-              bypass = true;
-              setIsTeamMember(true);
-              setIsWorkspaceOwner(true);
-            } else {
-              const { data: members } = await supabase.rpc("get_workspace_members", {
-                p_workspace_id: wsId,
-              });
-              const memberList = (members ?? []) as { user_id: string; role?: string }[];
-              const currentMember = memberList.find((member) => member.user_id === userId);
-              if (currentMember) {
+              const wsInfo = wsInfoRes.data;
+              if (wsInfo?.owner_user_id === userId) {
                 bypass = true;
                 setIsTeamMember(true);
-                setIsWorkspaceOwner(currentMember.role === "owner");
+                setIsWorkspaceOwner(true);
+              } else {
+                const memberList = (membersRes.data ?? []) as { user_id: string; role?: string }[];
+                const currentMember = memberList.find((member) => member.user_id === userId);
+                if (currentMember) {
+                  bypass = true;
+                  setIsTeamMember(true);
+                  setIsWorkspaceOwner(currentMember.role === "owner");
+                }
               }
             }
-          }
           }
         } catch {}
 
@@ -1609,8 +1610,8 @@ function SingleViewContent() {
                         isVideo={capture.type === "video"}
                         authorName={viewerEmail ? viewerEmail.split("@")[0] : undefined}
                         authorEmail={viewerEmail || undefined}
-                        onSeek={(t) => setSeekTargetTime((prev) => (prev === t ? t + 0.0001 : t))}
-                        getCurrentTime={() => playbackTime}
+                        onSeek={handleSeek}
+                        getCurrentTime={getCurrentPlaybackTime}
                       />
                     </SubsystemErrorBoundary>
                   </div>

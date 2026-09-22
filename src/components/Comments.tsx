@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
 
@@ -104,7 +104,7 @@ function formatDate(iso: string): string {
   });
 }
 
-export default function Comments({
+function Comments({
   captureId,
   isVideo,
   authorName,
@@ -855,3 +855,5 @@ export default function Comments({
     </div>
   );
 }
+
+export default memo(Comments);

@@ -8,6 +8,9 @@ import { isRateLimited, clientIp } from "@/lib/rate-limit";
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
+// In-memory 60s permission cache to prevent repeated database hits on media signing
+const signPermCache = new Map<string, { allowed: boolean; expiresAt: number }>();
+
 /**
  * Mints a short-lived signature for streaming one Drive file.
  *
@@ -27,6 +30,12 @@ export async function POST(req: Request) {
   if (!user && !password) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   if (!/^[A-Za-z0-9_-]{10,200}$/.test(fileId)) {
     return NextResponse.json({ error: "Invalid file id" }, { status: 400 });
+  }
+
+  const cacheKey = `${user?.id || "anon"}:${fileId}:${password}`;
+  const cached = signPermCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now() && cached.allowed) {
+    return NextResponse.json(signDownload(fileId));
   }
 
   const db = createServiceClient();
@@ -64,6 +73,7 @@ export async function POST(req: Request) {
       crypto.timingSafeEqual(providedBuf, expectedBuf);
 
     if (passwordsMatch) {
+      signPermCache.set(cacheKey, { allowed: true, expiresAt: Date.now() + 60_000 });
       return NextResponse.json(signDownload(fileId));
     }
     if (!user) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
@@ -93,5 +103,6 @@ export async function POST(req: Request) {
   }
   if (!allowed) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
+  signPermCache.set(cacheKey, { allowed: true, expiresAt: Date.now() + 60_000 });
   return NextResponse.json(signDownload(fileId));
 }

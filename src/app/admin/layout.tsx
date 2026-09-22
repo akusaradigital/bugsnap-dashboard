@@ -37,13 +37,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && window.innerWidth >= 768) {
+    if (typeof window !== "undefined" && window.innerWidth > 768) {
       setSidebarOpen(true);
     }
   }, []);
 
   useEffect(() => {
-    if (typeof window !== "undefined" && window.innerWidth < 768) {
+    if (typeof window !== "undefined" && window.innerWidth <= 768) {
       setSidebarOpen(false);
     }
   }, [pathname]);

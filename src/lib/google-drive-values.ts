@@ -35,3 +35,21 @@ export function compensatedDeleteError(deleteError: unknown, compensationError?:
   const compensation = compensationError instanceof Error ? compensationError.message : "restore failed";
   return `${message}. Google Drive restore also failed: ${compensation}`;
 }
+
+// In-flight deduplication cache for /api/google-drive/status requests
+let inFlightDriveStatus: Promise<unknown> | null = null;
+export async function fetchDriveStatus(token: string): Promise<unknown> {
+  if (inFlightDriveStatus) return inFlightDriveStatus;
+  inFlightDriveStatus = fetch("/api/google-drive/status", {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+    .then(async (res) => {
+      if (!res.ok) return null;
+      return res.json();
+    })
+    .catch(() => null)
+    .finally(() => {
+      setTimeout(() => { inFlightDriveStatus = null; }, 5000);
+    });
+  return inFlightDriveStatus;
+}

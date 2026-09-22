@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useT } from "@/components/I18nProvider";
 import { supabase } from "@/lib/supabase";
 
@@ -88,7 +88,7 @@ function getFsElement(): Element | null {
   return d.fullscreenElement || d.webkitFullscreenElement || d.mozFullScreenElement || d.msFullscreenElement || null;
 }
 
-export default function MediaViewer({
+function MediaViewer({
   type,
   driveUrl,
   title,
@@ -143,6 +143,15 @@ export default function MediaViewer({
   const discoveryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const clickTimerRef = useRef<NodeJS.Timeout | null>(null);
   const videoClickCoordRef = useRef<{ x: number; y: number } | null>(null);
+
+  // Unmount cleanup for timers to prevent leaks
+  useEffect(() => {
+    return () => {
+      if (discoveryTimeoutRef.current) clearTimeout(discoveryTimeoutRef.current);
+      if (clickTimerRef.current) clearTimeout(clickTimerRef.current);
+      if (controlsTimeoutRef.current) clearTimeout(controlsTimeoutRef.current);
+    };
+  }, []);
 
   const progressBarRef = useRef<HTMLDivElement>(null);
   const playheadRef = useRef<HTMLDivElement>(null);
@@ -314,9 +323,18 @@ export default function MediaViewer({
     return () => cancelAnimationFrame(animId);
   }, [isPlaying, videoDuration, updateScrubberDom, onTimeUpdate]);
 
+  // Client-side cache for media signatures (avoid re-fetching for the same fileId/password)
+  const sigCacheRef = useRef<Map<string, { query: string; expiresAt: number }>>(new Map());
+
   useEffect(() => {
     if (!fileId) { setSigQuery(""); return; }
     let cancelled = false;
+    const cacheKey = `${fileId}:${unlockPassword || ""}`;
+    const cached = sigCacheRef.current.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now() + 60_000) {
+      setSigQuery(cached.query);
+      return;
+    }
     (async () => {
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
@@ -337,7 +355,11 @@ export default function MediaViewer({
       }).catch(() => null);
       if (!res?.ok || cancelled) return;
       const { sig, exp } = await res.json();
-      if (!cancelled && sig) setSigQuery(`&sig=${encodeURIComponent(sig)}&exp=${exp}`);
+      if (!cancelled && sig) {
+        const q = `&sig=${encodeURIComponent(sig)}&exp=${exp}`;
+        sigCacheRef.current.set(cacheKey, { query: q, expiresAt: (typeof exp === "number" ? exp : 0) * 1000 });
+        setSigQuery(q);
+      }
     })();
     return () => { cancelled = true; };
   }, [fileId, needsSig, unlockPassword]);
@@ -1269,7 +1291,7 @@ export default function MediaViewer({
             onChange={handleVolumeChange}
             onClick={(e) => e.stopPropagation()}
             aria-label="Volume"
-            className="w-14 sm:w-16 h-1.5 accent-[#89BD49] bg-zinc-200 dark:bg-zinc-700 rounded-lg cursor-pointer"
+            className="hidden sm:inline-block w-14 sm:w-16 h-1.5 accent-[#89BD49] bg-zinc-200 dark:bg-zinc-700 rounded-lg cursor-pointer"
           />
         </div>
 
@@ -1394,7 +1416,7 @@ export default function MediaViewer({
               <video
                 ref={videoRef}
                 playsInline
-                preload="auto"
+                preload="metadata"
                 poster={imageUrl || undefined}
                 src={activeVideoSrc || streamUrl || directUrl || downloadUrl || ""}
                 onPlay={() => {
@@ -1650,6 +1672,7 @@ export default function MediaViewer({
                 src={activeImageSrc || imageUrl || ""}
                 alt={title}
                 referrerPolicy="no-referrer"
+                decoding="async"
                 onLoad={() => setImageLoaded(true)}
                 onError={() => {
                   if (activeImageSrc !== streamUrl && streamUrl) {
@@ -1808,6 +1831,7 @@ export default function MediaViewer({
                 src={activeImageSrc || imageUrl || ""}
                 alt={title}
                 referrerPolicy="no-referrer"
+                decoding="async"
                 className="max-h-full max-w-full object-contain select-none"
                 draggable={false}
                 style={{
@@ -1823,3 +1847,5 @@ export default function MediaViewer({
     </>
   );
 }
+
+export default memo(MediaViewer);

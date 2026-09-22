@@ -129,7 +129,7 @@ function CapturesContent() {
       .map((c) => c.id);
   }, [captures]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [activeHoverId, setActiveHoverId] = useState<string | null>(null);
+  const activeHoverRef = useRef<string | null>(null);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(null);
 
@@ -139,8 +139,8 @@ function CapturesContent() {
       const target = e.target as HTMLElement | null;
       const tag = target?.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
-      if (!activeHoverId) return;
-      const shareUrl = `${window.location.origin}/v/${activeHoverId}`;
+      if (!activeHoverRef.current) return;
+      const shareUrl = `${window.location.origin}/v/${activeHoverRef.current}`;
       navigator.clipboard?.writeText(shareUrl).then(() => {
         showToast("Link copied", "success");
       }).catch(() => showToast(t("cap.copyError"), "error"));
@@ -149,7 +149,7 @@ function CapturesContent() {
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [activeHoverId, showToast, t]);
+  }, [showToast, t]);
 
   // Dropdown states: false = not actively filtering by this type.
   // If BOTH are false, we show ALL (no filter applied).
@@ -236,7 +236,7 @@ function CapturesContent() {
         .order("id", { ascending: false })
         .limit(PAGE_SIZE);
       if (workspaceParam) {
-        query = query.eq("workspace_id", workspaceParam);
+        query = query.or(`workspace_id.eq.${workspaceParam},workspace_id.is.null`);
       }
       if (folderParam) {
         query = query.eq("folder_name", folderParam);
@@ -1345,8 +1345,8 @@ function CapturesContent() {
             return (
               <div
                 key={item.id}
-                onMouseEnter={() => setActiveHoverId(item.id)}
-                onMouseLeave={() => setActiveHoverId((prev) => (prev === item.id ? null : prev))}
+                onMouseEnter={() => { activeHoverRef.current = item.id; }}
+                onMouseLeave={() => { if (activeHoverRef.current === item.id) activeHoverRef.current = null; }}
                 className={`group relative flex items-center transition-colors hover:bg-slate-50 dark:hover:bg-subtle/80 ${
                   isSelected ? "bg-[#89BD49]/5 dark:bg-[#89BD49]/10" : ""
                 }`}
@@ -1374,12 +1374,14 @@ function CapturesContent() {
                 <CardWrapper {...cardProps}>
                   {/* Compact Thumbnail */}
                   <div className="w-16 h-10 sm:w-20 sm:h-12 rounded-lg overflow-hidden bg-slate-100 dark:bg-background flex items-center justify-center text-muted text-xs relative shrink-0">
-                    {driveThumbUrl(item.drive_url) && !thumbFailed[item.id] ? (
+                    {driveThumbUrl(item.drive_url, 120) && !thumbFailed[item.id] ? (
                       <>
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                          src={driveThumbUrl(item.drive_url)!}
+                          src={driveThumbUrl(item.drive_url, 120)!}
                           alt={item.title}
+                          loading="lazy"
+                          decoding="async"
                           referrerPolicy="no-referrer"
                           onError={() => setThumbFailed((prev) => ({ ...prev, [item.id]: true }))}
                           className="w-full h-full object-cover"
@@ -1524,8 +1526,8 @@ function CapturesContent() {
             return (
             <div
               key={item.id}
-              onMouseEnter={() => setActiveHoverId(item.id)}
-              onMouseLeave={() => setActiveHoverId((prev) => (prev === item.id ? null : prev))}
+              onMouseEnter={() => { activeHoverRef.current = item.id; }}
+              onMouseLeave={() => { if (activeHoverRef.current === item.id) activeHoverRef.current = null; }}
               className={`group relative rounded-xl border bg-white dark:bg-subtle shadow-sm hover:shadow-md transition-all flex flex-col ${
                 isSelected ? "border-[#89BD49] ring-2 ring-[#89BD49]/20" : "border-border"
               }`}
@@ -1533,12 +1535,14 @@ function CapturesContent() {
               <CardWrapper {...cardProps}>
                 {/* Thumbnail Container */}
                 <div className="aspect-[16/10] rounded-t-xl overflow-hidden bg-slate-100 dark:bg-background flex items-center justify-center text-muted text-sm relative group-hover:bg-slate-200 dark:group-hover:bg-background/80 transition-colors">
-                  {driveThumbUrl(item.drive_url) && !thumbFailed[item.id] ? (
+                  {driveThumbUrl(item.drive_url, 400) && !thumbFailed[item.id] ? (
                     <>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src={driveThumbUrl(item.drive_url)!}
+                        src={driveThumbUrl(item.drive_url, 400)!}
                         alt={item.title}
+                        loading="lazy"
+                        decoding="async"
                         referrerPolicy="no-referrer"
                         onError={() => setThumbFailed((prev) => ({ ...prev, [item.id]: true }))}
                         className="w-full h-full object-cover"

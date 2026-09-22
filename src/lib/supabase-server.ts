@@ -34,11 +34,20 @@ export async function getAuthenticatedUser(req: Request): Promise<AuthUserRow | 
   const email = data.user?.email;
   if (error || !data.user || !email) return null;
 
-  const { data: row } = await supabase
+  let { data: row } = await supabase
     .from("users")
     .select("plan, suspended")
-    .ilike("email", email)
+    .eq("id", data.user.id)
     .maybeSingle();
+
+  if (!row) {
+    const { data: rowByEmail } = await supabase
+      .from("users")
+      .select("plan, suspended")
+      .eq("email", email.toLowerCase())
+      .maybeSingle();
+    row = rowByEmail;
+  }
 
   return {
     id: data.user.id,

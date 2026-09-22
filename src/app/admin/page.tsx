@@ -229,7 +229,7 @@ export default function AdminOverviewPage() {
             onClick={loadData}
             className="px-3 py-1 bg-rose-600 text-white rounded-lg font-semibold hover:bg-rose-700 cursor-pointer"
           >
-            {t("errors.tryAgain")}
+            {t("error.tryAgain")}
           </button>
         </div>
       )}

@@ -98,6 +98,6 @@ export function middleware(req: NextRequest) {
 
 export const config = {
   // Skip Next internals and static assets — they need no policy and this keeps
-  // the middleware off the hot path for every image request.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|webp|ico)$).*)"],
+  // the middleware off the hot path for every image/font/media request.
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|webp|ico|woff|woff2|ttf|mp4|webm|json|xml|txt)$).*)"],
 };

@@ -69,16 +69,30 @@ function resolveTargetUserId(
 async function computeOrphans(userId: string) {
   const db = createServiceClient();
   const accessToken = await driveAccessToken(userId);
-  const [driveFiles, capturesResult] = await Promise.all([
+  const [driveFiles, usedIds] = await Promise.all([
     listAccessibleDriveFiles(accessToken),
-    db.from("captures").select("id,title,drive_file_id,drive_url").eq("user_id", userId),
+    (async () => {
+      const ids = new Set<string>();
+      let from = 0;
+      const pageSize = 1000;
+      for (;;) {
+        const { data, error } = await db
+          .from("captures")
+          .select("drive_file_id,drive_url")
+          .eq("user_id", userId)
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        for (const capture of data as Array<{ drive_file_id?: string | null; drive_url?: string | null }>) {
+          const id = capture.drive_file_id ?? parseDriveFileId(capture.drive_url ?? null);
+          if (id) ids.add(id);
+        }
+        if (data.length < pageSize) break;
+        from += pageSize;
+      }
+      return ids;
+    })(),
   ]);
-  if (capturesResult.error) throw capturesResult.error;
-  const usedIds = new Set<string>();
-  for (const capture of (capturesResult.data ?? []) as Array<{ drive_file_id?: string | null; drive_url?: string | null }>) {
-    const id = capture.drive_file_id ?? parseDriveFileId(capture.drive_url ?? null);
-    if (id) usedIds.add(id);
-  }
   const orphans = driveFiles.filter((file) => !usedIds.has(file.id));
   return { accessToken, orphans, totalDriveFiles: driveFiles.length, linkedCaptureFiles: usedIds.size };
 }

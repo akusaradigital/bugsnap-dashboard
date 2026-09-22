@@ -10,9 +10,18 @@
   --muted: #64748b;
   --accent: #89BD49;
   --accent-hover: #6B9A35;
-  --glow-primary: rgba(137, 189, 73, 0.22);
-  --glow-secondary: rgba(16, 185, 129, 0.18);
-  --glow-tertiary: rgba(217, 70, 239, 0.14);
+
+  /* BugSnap Public Site Design Tokens (Day Mode default) */
+  --site-bg: #F8F9FB;
+  --site-surface: #FFFFFF;
+  --site-surface-2: #F3F4F6;
+  --site-text: #111318;
+  --site-text-2: #667085;
+  --site-border: #E5E7EB;
+  --site-border-subtle: #EEF0F2;
+  --site-success: #15803D;
+  --site-warning: #D97706;
+  --site-danger: #DC2626;
 }
 
 /* Dark mode overrides - toggled via .dark class on <html> by ThemeProvider.
@@ -26,9 +35,18 @@
   --muted: #94a3b8;
   --accent: #A8D666;
   --accent-hover: #C2E688;
-  --glow-primary: rgba(168, 214, 102, 0.22);
-  --glow-secondary: rgba(52, 211, 153, 0.16);
-  --glow-tertiary: rgba(232, 121, 249, 0.12);
+
+  /* BugSnap Public Site Design Tokens (Dark Mode) */
+  --site-bg: #0B0D10;
+  --site-surface: #111419;
+  --site-surface-2: #171A20;
+  --site-text: #F5F7FA;
+  --site-text-2: #9299A5;
+  --site-border: #242932;
+  --site-border-subtle: #1B1F26;
+  --site-success: #22C55E;
+  --site-warning: #F59E0B;
+  --site-danger: #F87171;
 }
 
 * {
@@ -46,12 +64,8 @@ body {
   color: var(--foreground);
   overflow-x: hidden;
   max-width: 100vw;
-  background:
-    radial-gradient(circle at 12% 8%, var(--glow-primary), transparent 28rem),
-    radial-gradient(circle at 86% 18%, var(--glow-secondary), transparent 26rem),
-    radial-gradient(circle at 48% 92%, var(--glow-tertiary), transparent 30rem),
-    var(--background);
-  background-attachment: fixed;
+  background-color: var(--background);
+  position: relative;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

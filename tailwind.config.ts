@@ -17,6 +17,19 @@ const config: Config = {
         muted: "var(--muted)",
         accent: "var(--accent)",
         "accent-hover": "var(--accent-hover)",
+        "site-bg": "var(--site-bg)",
+        "site-surface": "var(--site-surface)",
+        "site-surface-2": "var(--site-surface-2)",
+        "site-text": "var(--site-text)",
+        "site-text-2": "var(--site-text-2)",
+        "site-border": "var(--site-border)",
+        "site-border-subtle": "var(--site-border-subtle)",
+        "site-success": "var(--site-success)",
+        "site-warning": "var(--site-warning)",
+        "site-danger": "var(--site-danger)",
+      },
+      fontFamily: {
+        site: ["var(--font-inter)", "-apple-system", "BlinkMacSystemFont", '"Segoe UI"', "Roboto", "sans-serif"],
       },
       keyframes: {
         float: {

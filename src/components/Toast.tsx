@@ -49,6 +49,21 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
+  useEffect(() => {
+    const handleOffline = () => {
+      showToast("Network connection lost. You are currently offline.", "error", 5000);
+    };
+    const handleOnline = () => {
+      showToast("Back online. Network connection restored.", "success", 3000);
+    };
+    window.addEventListener("offline", handleOffline);
+    window.addEventListener("online", handleOnline);
+    return () => {
+      window.removeEventListener("offline", handleOffline);
+      window.removeEventListener("online", handleOnline);
+    };
+  }, [showToast]);
+
   return (
     <ToastContext.Provider value={{ showToast, updateToast, dismissToast }}>
       {children}

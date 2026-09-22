@@ -8,14 +8,14 @@ export const PATTERNS: Array<[RegExp, string]> = [
   // URL embedded basic auth: https://user:password@example.com or postgresql://user:pass@host
   [/([a-z][a-z0-9+.-]{2,15}:\/\/)(?:[^:\s/@]+):(?:[^@\s/]+)@/gi, "$1[REDACTED_AUTH]@"],
   // JSON fields: "access_token": "..."
-  [/"([\w.-]*(?:password|secret|token|auth|api_key|apikey|bearer)[\w.-]*|key|private_key|secret_key)":\s*"[^"]*"/gi, '"$1":"[REDACTED]"'],
+  [/"([\w.-]*(?:password|secret|token|auth|api_key|apikey|bearer|pin|cvv)[\w.-]*|key|private_key|secret_key)":\s*(?:"[^"]*"|[0-9]+|true|false)/gi, '"$1":"[REDACTED]"'],
   // key=value / key: value in free text
-  [/(password|secret|token|api[_-]?key|apikey|client_secret|private_key)(["'=:\s]+)[^\s&"',]+/gi, "$1$2[REDACTED]"],
+  [/(password|secret|token|api[_-]?key|apikey|client_secret|private_key)(["'=:\s]+)[^\s&"',}]+/gi, "$1$2[REDACTED]"],
   // Authorization headers
   [/\bBearer\s+[A-Za-z0-9._~+/-]+=*/gi, "Bearer [REDACTED]"],
   [/\bBasic\s+[A-Za-z0-9+/=]{8,}={0,2}/gi, "Basic [REDACTED]"],
   // Cookie and session headers
-  [/((?:cookie|set-cookie)\s*[:=]\s*)[^\r\n;]+/gi, "$1[REDACTED_COOKIE]"],
+  [/(["']?(?:cookie|set-cookie)["']?\s*[:=]\s*["']?)[^\r\n"']+/gi, "$1[REDACTED_COOKIE]"],
   // JWT tokens
   [/\bey[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_.+/-]+\b/gi, "[JWT REDACTED]"],
   // Provider key formats

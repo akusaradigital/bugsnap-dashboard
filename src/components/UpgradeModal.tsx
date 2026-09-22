@@ -43,7 +43,13 @@ export function UpgradeModal({
         body: JSON.stringify({ feature }),
       }).catch(() => {});
     });
-  }, [isOpen, feature]);
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isOpen, feature, onClose]);
 
   if (!isOpen) return null;
 
@@ -76,6 +82,9 @@ export function UpgradeModal({
   return (
     <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 overflow-y-auto bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="upgrade-modal-title"
         className="relative w-full max-w-4xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl shadow-2xl p-6 sm:p-10 my-8 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
@@ -93,7 +102,7 @@ export function UpgradeModal({
 
         {/* Heading */}
         <div className="text-center pt-2 pb-6">
-          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-neutral-900 dark:text-white">
+          <h2 id="upgrade-modal-title" className="text-2xl sm:text-3xl font-extrabold tracking-tight text-neutral-900 dark:text-white">
             Level-up with advanced features
           </h2>
         </div>

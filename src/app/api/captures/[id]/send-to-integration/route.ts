@@ -448,7 +448,7 @@ export async function POST(
 Bug: ${capture.title}
 Description: ${capture.description || "N/A"}
 Environment: ${envParts.join(", ")}
-Dev Logs: ${JSON.stringify(resolvedLogs || {})}`;
+${logSummary || "Dev Logs: None"}`;
 
         const claudeRes = await fetch("https://api.anthropic.com/v1/messages", {
           method: "POST",
@@ -484,7 +484,7 @@ Dev Logs: ${JSON.stringify(resolvedLogs || {})}`;
 Bug: ${capture.title}
 Description: ${capture.description || "N/A"}
 Environment: ${envParts.join(", ")}
-Dev Logs: ${JSON.stringify(resolvedLogs || {})}`;
+${logSummary || "Dev Logs: None"}`;
 
         const gptRes = await fetch("https://api.openai.com/v1/chat/completions", {
           method: "POST",

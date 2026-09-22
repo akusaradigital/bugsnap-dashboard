@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
+import { fetchDriveStatus } from "@/lib/google-drive-values";
 
 interface DayCount {
   day: number; // 1 to 31
@@ -111,11 +112,8 @@ function DashboardContent() {
         const { data: sessionData } = await supabase.auth.getSession();
         const token = sessionData.session?.access_token;
         if (!token) return;
-        const res = await fetch("/api/google-drive/status", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) return;
-        const json = await res.json();
+        const json = (await fetchDriveStatus(token)) as { quota?: { usedBytes: number | null; totalBytes: number | null } } | null;
+        if (!json) return;
         if (!cancelled && json.quota) {
           setDriveQuota(json.quota);
           try {

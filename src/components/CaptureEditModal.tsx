@@ -2,12 +2,11 @@
 
 // The capture edit modal. Split out of captures/page.tsx - it shares nothing
 // with the list beyond the Capture type and the two callbacks.
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
 import { Dropdown } from "@/components/Dropdown";
-import { ShimmerLockBadge } from "@/components/ShimmerLockBadge";
 import {
   type Capture,
   EXPIRY_OPTIONS,
@@ -38,6 +37,14 @@ export default function EditModal({ capture, onClose, onSaved }: EditModalProps)
   const [allowedIpsText, setAllowedIpsText] = useState(() => (capture.allowed_ips || []).join(", "));
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
 
   async function handleSave() {
     setSaving(true);
@@ -118,10 +125,10 @@ export default function EditModal({ capture, onClose, onSaved }: EditModalProps)
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div className="relative w-full max-w-md rounded-xl bg-subtle shadow-xl border border-border flex flex-col max-h-[85vh] overflow-hidden">
+      <div role="dialog" aria-modal="true" aria-labelledby="edit-modal-title" className="relative w-full max-w-md rounded-xl bg-subtle shadow-xl border border-border flex flex-col max-h-[85vh] overflow-hidden">
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
-          <h2 className="text-base font-bold text-foreground">{t("cap.editTitle")}</h2>
+          <h2 id="edit-modal-title" className="text-base font-bold text-foreground">{t("cap.editTitle")}</h2>
           <button
             onClick={onClose}
             aria-label={t("common.close")}
@@ -233,7 +240,6 @@ export default function EditModal({ capture, onClose, onSaved }: EditModalProps)
               <div className="border-t border-border pt-4 space-y-4">
                 <div className="flex items-center gap-2">
                   <h4 className="text-xs font-semibold text-foreground">{t("cap.advancedProtection")}</h4>
-                  <ShimmerLockBadge label="PRO" />
                 </div>
 
                 {/* Burn after reading */}
@@ -297,7 +303,7 @@ export default function EditModal({ capture, onClose, onSaved }: EditModalProps)
           <button
             onClick={handleSave}
             disabled={saving}
-            className="rounded-lg bg-[#89BD49] px-4 py-2 text-sm font-medium text-white hover:bg-[#6B9A35] disabled:opacity-60 shadow-xs shadow-[#89BD49]/25 transition-colors"
+            className="rounded-lg bg-[#89BD49] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#6B9A35] hover:text-white disabled:opacity-60 shadow-xs shadow-[#89BD49]/25 transition-colors"
           >
             {saving ? t("settings.saving") : t("cap.saveChanges")}
           </button>

@@ -5,7 +5,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 export type Theme = "light" | "dark" | "system";
 
 const ThemeContext = createContext<{ theme: Theme; setTheme: (t: Theme) => void }>({
-  theme: "system",
+  theme: "light",
   setTheme: () => {},
 });
 
@@ -15,10 +15,25 @@ export function applyThemeClass(theme: Theme) {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("system");
+  const [theme, setThemeState] = useState<Theme>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem("BugSnap_theme");
+        if (stored === "light" || stored === "dark" || stored === "system") {
+          return stored as Theme;
+        }
+      } catch {}
+    }
+    return "light";
+  });
 
   useEffect(() => {
-    // Load user theme preference from the profile in the DB, fallback to system.
+    // Only query user theme from DB if not already present in localStorage
+    try {
+      const stored = localStorage.getItem("BugSnap_theme");
+      if (stored) return;
+    } catch {}
+
     let cancelled = false;
     (async () => {
       try {
@@ -31,7 +46,10 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
           .select("theme")
           .ilike("email", u.email)
           .maybeSingle();
-        if (!cancelled && row?.theme) setThemeState(row.theme as Theme);
+        if (!cancelled && row?.theme) {
+          setThemeState(row.theme as Theme);
+          try { localStorage.setItem("BugSnap_theme", row.theme); } catch {}
+        }
       } catch {
         // keep default system
       }
@@ -52,6 +70,17 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const setTheme = (t: Theme) => {
     setThemeState(t);
     applyThemeClass(t);
+    try { localStorage.setItem("BugSnap_theme", t); } catch {}
+    // Best-effort background sync to user profile if authenticated
+    (async () => {
+      try {
+        const { supabase } = await import("@/lib/supabase");
+        const { data: session } = await supabase.auth.getSession();
+        const u = session.session?.user;
+        if (!u?.email) return;
+        await supabase.from("users").update({ theme: t }).ilike("email", u.email);
+      } catch {}
+    })();
   };
 
   return <ThemeContext.Provider value={{ theme, setTheme }}>{children}</ThemeContext.Provider>;

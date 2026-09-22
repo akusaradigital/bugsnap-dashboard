@@ -94,9 +94,9 @@ export default function FloatingSupport() {
     };
   }, [isOpen]);
 
-  // Mount Invisible Cloudflare Turnstile
+  // Mount Invisible Cloudflare Turnstile only when support drawer is opened
   useEffect(() => {
-    if (!turnstileRef.current) return;
+    if (!isOpen || !turnstileRef.current) return;
     let cancelled = false;
 
     const renderWidget = () => {
@@ -140,7 +140,7 @@ export default function FloatingSupport() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [isOpen]);
 
   const categories = [
     {

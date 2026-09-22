@@ -12,10 +12,17 @@ export async function GET() {
       .eq("key", "promo_banner")
       .maybeSingle();
 
-    return NextResponse.json({
-      ok: true,
-      promo: data?.value ?? null,
-    });
+    return NextResponse.json(
+      {
+        ok: true,
+        promo: data?.value ?? null,
+      },
+      {
+        headers: {
+          "Cache-Control": "public, max-age=300, s-maxage=300, stale-while-revalidate=600",
+        },
+      }
+    );
   } catch (err) {
     console.error("Promo fetch error:", err);
     return NextResponse.json({ ok: true, promo: null });

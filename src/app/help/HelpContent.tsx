@@ -4,8 +4,10 @@ import { useState } from "react";
 import Link from "next/link";
 import { StaticShell } from "@/components/StaticShell";
 import { useT } from "@/components/I18nProvider";
+import { IconChevronDown, IconHelpCircle } from "@/components/site/TablerIcons";
 
-const CARD = "group rounded-2xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle shadow-lg shadow-slate-200/50 dark:shadow-none backdrop-blur-sm transition-all duration-300 hover:border-[#89BD49]/40 hover:-translate-y-1 hover:shadow-xl";
+const CHROME_STORE_URL =
+  "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
 
 export function HelpContent() {
   const { t } = useT();
@@ -23,18 +25,18 @@ export function HelpContent() {
       title={t("help.title")}
       subtitle={t("help.subtitle")}
     >
-      <div className="mx-auto max-w-5xl px-4 sm:px-8 py-10 sm:py-12 grid grid-cols-1 md:grid-cols-3 gap-8 sm:gap-10">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 font-site">
 
         {/* FAQ Left Column - Expandable Accordion */}
-        <div className="md:col-span-2 space-y-6">
-          <h2 className="text-xl font-bold text-foreground">{t("help.faqHeading")}</h2>
+        <div className="md:col-span-2 space-y-4">
+          <h2 className="text-base font-bold text-site-text">{t("help.faqHeading")}</h2>
           <div className="space-y-3">
             {faqs.map((faq, i) => {
               const isOpen = openIndex === i;
               return (
                 <div
                   key={i}
-                  className="rounded-2xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle shadow-md shadow-slate-200/40 dark:shadow-none backdrop-blur-sm transition-all duration-300 hover:border-[#89BD49]/40 overflow-hidden"
+                  className="rounded-xl border border-site-border bg-site-surface shadow-xs overflow-hidden"
                 >
                   <button
                     type="button"
@@ -43,27 +45,20 @@ export function HelpContent() {
                     aria-expanded={isOpen}
                     aria-label={isOpen ? t("help.closeFaq") : t("help.openFaq")}
                   >
-                    <span className="text-sm font-bold text-slate-900 dark:text-foreground hover:text-[#6B9A35] dark:hover:text-[#A8D666] transition-colors">
+                    <span className="text-xs sm:text-sm font-bold text-site-text hover:text-accent transition-colors">
                       {faq.q}
                     </span>
-                    <span className="w-7 h-7 rounded-lg bg-subtle flex items-center justify-center shrink-0 text-muted transition-transform duration-300">
-                      <svg
-                        className={`w-3.5 h-3.5 transform transition-transform duration-300 ${isOpen ? "rotate-180 text-[#6B9A35] dark:text-[#A8D666]" : ""}`}
-                        viewBox="0 0 16 16"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        aria-hidden="true"
-                      >
-                        <path d="M4 6l4 4 4-4" />
-                      </svg>
+                    <span className="w-6 h-6 rounded bg-site-surface-2 border border-site-border-subtle flex items-center justify-center shrink-0 text-site-text-2">
+                      <IconChevronDown
+                        size={14}
+                        strokeWidth={2}
+                        className={`transform transition-transform duration-200 ${isOpen ? "rotate-180 text-accent" : ""}`}
+                      />
                     </span>
                   </button>
 
                   {isOpen && (
-                    <div className="px-5 pb-5 pt-1 text-xs text-muted leading-relaxed border-t border-border/40 animate-fade-in-up">
+                    <div className="px-5 pb-5 pt-1 text-xs text-site-text-2 leading-relaxed border-t border-site-border-subtle">
                       {faq.a}
                     </div>
                   )}
@@ -75,56 +70,56 @@ export function HelpContent() {
 
         {/* Right Column */}
         <div className="space-y-6">
-          <div className={`${CARD} p-5 sm:p-6 space-y-4`}>
-            <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-[#89BD49] to-[#6B9A35] text-white flex items-center justify-center shadow-md group-hover:scale-110 group-hover:shadow-[#89BD49]/25 transition-all duration-300">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-5 h-5">
-                <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
-              </svg>
+          <div className="rounded-xl border border-site-border bg-site-surface p-6 space-y-3 shadow-xs">
+            <div className="w-10 h-10 rounded-lg bg-site-surface-2 border border-site-border text-site-text flex items-center justify-center">
+              <IconHelpCircle size={20} strokeWidth={2} />
             </div>
-            <h3 className="text-base font-bold text-foreground">{t("help.needHelp")}</h3>
-            <p className="text-xs text-muted leading-relaxed">{t("help.needHelpDesc")}</p>
+            <h3 className="text-sm font-bold text-site-text">{t("help.needHelp")}</h3>
+            <p className="text-xs text-site-text-2 leading-relaxed">{t("help.needHelpDesc")}</p>
             <a
               href="mailto:support@akusaradigital.com"
-              className="block text-center bg-[#89BD49] hover:bg-[#6B9A35] active:scale-95 text-white text-sm font-semibold py-2.5 rounded-xl transition-all shadow-sm hover:shadow-md shadow-[#89BD49]/25"
+              className="block text-center border border-site-border bg-site-surface-2 hover:bg-site-surface text-site-text text-xs font-semibold py-2 rounded-lg transition-colors"
             >
               {t("help.emailSupport")}
             </a>
           </div>
 
-          <div className={`${CARD} p-5 sm:p-6 space-y-3`}>
-            <h3 className="text-sm font-bold text-foreground">{t("help.getStarted")}</h3>
+          <div className="rounded-xl border border-site-border bg-site-surface p-6 space-y-3 shadow-xs">
+            <h3 className="text-sm font-bold text-site-text">{t("help.getStarted")}</h3>
             <a
-              href="https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf"
+              href={CHROME_STORE_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="block text-center bg-[#89BD49] hover:bg-[#6B9A35] active:scale-95 text-white text-sm font-semibold py-2.5 rounded-xl transition-all shadow-sm hover:shadow-md shadow-[#89BD49]/25"
+              className="flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-slate-900 hover:text-white text-xs font-semibold py-2 rounded-lg transition-colors shadow-xs"
             >
-              {t("help.installFree")}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/icons/chrome.svg" alt="" aria-hidden="true" className="w-4 h-4 shrink-0" />
+              <span>{t("help.installFree")}</span>
             </a>
             <Link
               href="/pricing"
-              className="block text-center border border-border bg-white dark:bg-subtle hover:bg-subtle dark:hover:bg-border/30 text-foreground text-sm font-semibold py-2.5 rounded-xl transition-all"
+              className="block text-center border border-site-border bg-site-surface hover:bg-site-surface-2 text-site-text text-xs font-semibold py-2 rounded-lg transition-colors"
             >
               {t("help.seePricing")}
             </Link>
           </div>
 
-          <div className={`${CARD} p-5 sm:p-6 space-y-3`}>
-            <h3 className="text-sm font-bold text-foreground">{t("help.resources")}</h3>
-            <ul className="space-y-2.5 text-xs">
+          <div className="rounded-xl border border-site-border bg-site-surface p-6 space-y-3 shadow-xs">
+            <h3 className="text-sm font-bold text-site-text">{t("help.resources")}</h3>
+            <ul className="space-y-2 text-xs">
               <li>
-                <Link href="/docs" className="text-[#6B9A35] hover:text-[#58802A] dark:text-[#A8D666] dark:hover:text-[#C2E688] transition-colors">
-                  {t("help.viewDocs")}
+                <Link href="/docs" className="text-accent hover:underline">
+                  {t("help.viewDocs")} →
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="text-[#6B9A35] hover:text-[#58802A] dark:text-[#A8D666] dark:hover:text-[#C2E688] transition-colors">
-                  {t("help.contactForm")}
+                <Link href="/contact" className="text-accent hover:underline">
+                  {t("help.contactForm")} →
                 </Link>
               </li>
               <li>
-                <Link href="/status" className="text-[#6B9A35] hover:text-[#58802A] dark:text-[#A8D666] dark:hover:text-[#C2E688] transition-colors">
-                  {t("help.systemStatus")}
+                <Link href="/status" className="text-accent hover:underline">
+                  {t("help.systemStatus")} →
                 </Link>
               </li>
             </ul>

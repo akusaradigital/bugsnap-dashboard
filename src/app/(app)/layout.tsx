@@ -34,6 +34,10 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const router = useRouter();
+  const pathnameRef = useRef(pathname);
+  pathnameRef.current = pathname;
+  const routerRef = useRef(router);
+  routerRef.current = router;
   const [currentFolder, setCurrentFolder] = useState<string | null>(null);
   const { t } = useT();
   const { showToast } = useToast();
@@ -345,8 +349,7 @@ export default function DashboardLayout({
   }, [pathname]);
 
   // Load the user's workspaces (owned or invited) via the RLS-safe RPC
-  // once the session resolves. Falls back to the default single-workspace
-  // view if the fetch fails so the sidebar never goes blank.
+  // once the session resolves.
   useEffect(() => {
     let active = true;
     const uid = session.user?.id;
@@ -373,37 +376,41 @@ export default function DashboardLayout({
           );
           if (refetchErr) throw refetchErr;
           rows = (refetched ?? []) as Workspace[];
-          
+
           // Force set the URL and active state for this newly created workspace
           if (rows[0]?.id) {
-            router.replace(`${pathname}?ws=${rows[0].id}`, { scroll: false });
+            routerRef.current.replace(`${pathnameRef.current}?ws=${rows[0].id}`, { scroll: false });
           }
         }
 
         if (!active) return;
         setWorkspaces(rows);
-        // Initialize from the URL ?ws= param (by ID or name) when valid, else first workspace.
-        const matchedWs = wsParam
-          ? rows.find((w) => w.id === wsParam || w.name.toLowerCase() === wsParam.toLowerCase())
-          : null;
-        const initialWs = matchedWs ? matchedWs.id : rows[0]?.id ?? null;
-        setActiveWsId(initialWs);
-        if (matchedWs && matchedWs.id !== wsParam) {
-          router.replace(`${pathname}?ws=${matchedWs.id}`, { scroll: false });
-        } else if (!wsParam && initialWs) {
-          router.replace(`${pathname}?ws=${initialWs}`, { scroll: false });
-        }
       } catch (err) {
         console.warn("Failed to load workspaces:", err);
-        // Degrade gracefully: the default "Personal Workspace" view (no
-        // members) stays in place.
       }
     })();
 
     return () => {
       active = false;
     };
-  }, [session.user?.id, wsParam, pathname, router]);
+  }, [session.user?.id]);
+
+  // Synchronize active workspace ID from wsParam and loaded workspaces
+  useEffect(() => {
+    if (workspaces.length === 0) return;
+    const matchedWs = wsParam
+      ? workspaces.find((w) => w.id === wsParam || w.name.toLowerCase() === wsParam.toLowerCase())
+      : null;
+    const targetWs = matchedWs ? matchedWs.id : workspaces[0]?.id ?? null;
+    if (targetWs !== activeWsId) {
+      setActiveWsId(targetWs);
+    }
+    if (matchedWs && matchedWs.id !== wsParam) {
+      routerRef.current.replace(`${pathnameRef.current}?ws=${matchedWs.id}`, { scroll: false });
+    } else if (!wsParam && targetWs) {
+      routerRef.current.replace(`${pathnameRef.current}?ws=${targetWs}`, { scroll: false });
+    }
+  }, [wsParam, workspaces, activeWsId]);
 
   // Fetch members only for the active workspace to prevent menu navigation delay
   useEffect(() => {
@@ -467,27 +474,29 @@ export default function DashboardLayout({
 
     (async () => {
       try {
-        // 1. Fetch folders that have captures
-        const { data: capturesData, error: capturesErr } = await supabase
-          .from("captures")
-          .select("folder_name")
-          .eq("workspace_id", activeWsId)
-          .not("folder_name", "is", null);
+        // 1. Fetch folders, custom created folders, and projects in parallel
+        const [capturesRes, customFoldersRes, projectsRes] = await Promise.all([
+          supabase
+            .from("captures")
+            .select("folder_name")
+            .eq("workspace_id", activeWsId)
+            .not("folder_name", "is", null)
+            .limit(300),
+          supabase
+            .from("workspace_folders")
+            .select("name, is_default, sort_order")
+            .eq("workspace_id", activeWsId),
+          supabase
+            .rpc("get_workspace_projects", { p_workspace_id: activeWsId }),
+        ]);
 
-        if (capturesErr) throw capturesErr;
+        if (capturesRes.error) throw capturesRes.error;
+        if (customFoldersRes.error) throw customFoldersRes.error;
+        if (projectsRes.error) throw projectsRes.error;
 
-        // 2. Fetch custom created folders in workspace (legacy surface)
-        const { data: customFoldersData, error: customFoldersErr } = await supabase
-          .from("workspace_folders")
-          .select("name, is_default, sort_order")
-          .eq("workspace_id", activeWsId);
-
-        if (customFoldersErr) throw customFoldersErr;
-
-        // 3. Fetch projects in workspace (new surface)
-        const { data: projectsData, error: projectsErr } = await supabase
-          .rpc("get_workspace_projects", { p_workspace_id: activeWsId });
-        if (projectsErr) throw projectsErr;
+        const capturesData = capturesRes.data;
+        const customFoldersData = customFoldersRes.data;
+        const projectsData = projectsRes.data;
         
         // Deduplicate folder names from both sources
         const allFolderNames = [
@@ -1272,7 +1281,7 @@ export default function DashboardLayout({
                 }`}
               >
                 <span className="text-xs shrink-0">📂</span>
-                <span className="truncate">All Captures</span>
+                <span className="truncate">{t("nav.captures")}</span>
               </Link>
               {folders.map((folder) => {
                 const isActiveFolder = pathname === "/captures" && currentFolder === folder;

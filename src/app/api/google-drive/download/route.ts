@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { driveAccessToken, isUuid } from "@/lib/google-drive";
 import { createServiceClient, getAuthenticatedUser } from "@/lib/supabase-server";
 import { verifyDownloadSig } from "@/lib/download-signing";
+import { clientIp } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -11,6 +12,9 @@ interface CachedCap {
   expires_at: string | null;
   access_mode: "public" | "members" | null;
   password: string | null;
+  allowed_ips?: string[] | null;
+  burn_after_read?: boolean | null;
+  view_count?: number | null;
 }
 
 // ponytail: 60s in-memory cache to prevent repeated Supabase queries during multi-chunk video streaming
@@ -60,7 +64,7 @@ export async function GET(req: Request) {
       : `drive_file_id.eq.${id},drive_url.ilike.%${id}%,dev_logs->>driveFileId.eq.${id}`;
     const { data } = await supabase
       .from("captures")
-      .select("user_id, workspace_id, expires_at, access_mode, password")
+      .select("user_id, workspace_id, expires_at, access_mode, password, allowed_ips, burn_after_read, view_count")
       .or(filter)
       .limit(1)
       .maybeSingle();
@@ -81,6 +85,17 @@ export async function GET(req: Request) {
 
   if (cap.expires_at && new Date(cap.expires_at).getTime() < Date.now()) {
     return NextResponse.json({ error: "Capture expired" }, { status: 410 });
+  }
+
+  if (cap.burn_after_read && (cap.view_count ?? 0) > 0) {
+    return NextResponse.json({ error: "Capture expired" }, { status: 410 });
+  }
+
+  if (Array.isArray(cap.allowed_ips) && cap.allowed_ips.length > 0) {
+    const reqIp = clientIp(req);
+    if (!cap.allowed_ips.includes(reqIp)) {
+      return NextResponse.json({ error: "Forbidden: IP not allowed" }, { status: 403 });
+    }
   }
 
   // A members-only capture must not stream to anyone holding the file id.

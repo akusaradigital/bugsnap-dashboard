@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
+import { fetchDriveStatus } from "@/lib/google-drive-values";
 
 interface DriveQuota {
   usedBytes: number | null;
@@ -56,11 +57,8 @@ export default function DriveStorageMeter() {
         const token = sessionData.session?.access_token;
         if (!token) return;
 
-        const res = await fetch("/api/google-drive/status", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) return;
-        const json: DriveStatusResponse = await res.json();
+        const json = (await fetchDriveStatus(token)) as DriveStatusResponse | null;
+        if (!json) return;
         if (active) {
           setData(json);
           try {
