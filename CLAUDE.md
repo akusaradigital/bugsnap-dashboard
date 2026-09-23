@@ -32,7 +32,7 @@ The script posts to the Supabase Management API using `SUPABASE_PAT` + `NEXT_PUB
 - **MINOR** `0.7.x → 0.8.0`: new user-facing feature, route, module.
 - **MAJOR** `0.x → 1.0.0`: breaking API/auth/UI change.
 
-Current version: **`0.7.0`**
+Current version: **`0.7.1`**
 
 ## 3. Architecture & Data Flow
 

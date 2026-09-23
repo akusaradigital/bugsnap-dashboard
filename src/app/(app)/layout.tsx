@@ -564,7 +564,7 @@ export default function DashboardLayout({
   }
 
   if (!session.loading && !session.user) {
-    return <AuthRequiredCard title="404 - Dashboard Access Protected" />;
+    return <AuthRequiredCard title={t("auth.dashboardProtectedTitle")} />;
   }
 
   if (!session.user) {

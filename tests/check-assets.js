@@ -11,7 +11,7 @@ function walk(dir) {
   return files;
 }
 
-const baseDir = fs.existsSync("src") ? "." : (fs.existsSync("bugsnap-dashboard/src") ? "bugsnap-dashboard" : ".");
+const baseDir = path.resolve(__dirname, "..");
 const srcFiles = walk(path.join(baseDir, "src"));
 const publicDir = path.resolve(path.join(baseDir, "public"));
 const missing = new Set();

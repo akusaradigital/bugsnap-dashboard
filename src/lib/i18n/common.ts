@@ -137,6 +137,12 @@ export const commonEn: Dict = {
   "notFound.backHome": "Back to Home",
   "notFound.goDashboard": "Go to Dashboard",
   "notFound.footer": "BugSnap — From Click to Fix",
+  "auth.requiredDefaultTitle": "404 - Page Requires Authentication",
+  "auth.dashboardProtectedTitle": "404 - Dashboard Access Protected",
+  "auth.requiredDesc": "This dashboard page is protected. Sign in to your BugSnap account to access workspace features and screen captures.",
+  "auth.signInBugSnap": "Sign In to BugSnap",
+  "auth.downloadExtension": "Download Extension (Chrome Web Store)",
+  "auth.driveNotice": "Captures are stored safely in your own Google Drive.",
 };
 
 export const commonId: Dict = {
@@ -276,4 +282,10 @@ export const commonId: Dict = {
   "notFound.backHome": "Kembali ke Beranda",
   "notFound.goDashboard": "Ke Dashboard",
   "notFound.footer": "BugSnap — From Click to Fix",
+  "auth.requiredDefaultTitle": "404 - Halaman Memerlukan Autentikasi",
+  "auth.dashboardProtectedTitle": "404 - Akses Dasbor Dilindungi",
+  "auth.requiredDesc": "Halaman dasbor ini dilindungi. Masuk ke akun BugSnap Anda untuk mengakses fitur ruang kerja dan rekaman layar.",
+  "auth.signInBugSnap": "Masuk ke BugSnap",
+  "auth.downloadExtension": "Unduh Ekstensi (Chrome Web Store)",
+  "auth.driveNotice": "Tangkapan tersimpan dengan aman di Google Drive Anda sendiri.",
 };

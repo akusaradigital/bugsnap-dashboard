@@ -8,12 +8,15 @@ export const PATTERNS: Array<[RegExp, string]> = [
   // URL embedded basic auth: https://user:password@example.com or postgresql://user:pass@host
   [/([a-z][a-z0-9+.-]{2,15}:\/\/)(?:[^:\s/@]+):(?:[^@\s/]+)@/gi, "$1[REDACTED_AUTH]@"],
   // JSON fields: "access_token": "..."
-  [/"([\w.-]*(?:password|secret|token|auth|api_key|apikey|bearer|pin|cvv)[\w.-]*|key|private_key|secret_key)":\s*(?:"[^"]*"|[0-9]+|true|false)/gi, '"$1":"[REDACTED]"'],
-  // key=value / key: value in free text
-  [/(password|secret|token|api[_-]?key|apikey|client_secret|private_key)(["'=:\s]+)[^\s&"',}]+/gi, "$1$2[REDACTED]"],
+  [/"([\w.-]*(?:password|passwd|pwd|passphrase|secret|token|auth|api_key|apikey|bearer|pin|cvv|cvc|ssn|otp|totp|credentials)[\w.-]*|key|private_key|secret_key)":\s*(?:"(?:\\.|[^"\\])*"|[0-9]+|true|false)/gi, '"$1":"[REDACTED]"'],
+  // Quoted password/secret in free text (preserves multi-word values)
+  [/(password|passwd|pwd|passphrase|secret|token|api[_-]?key|apikey|client_secret|private_key|credentials)(["'=:\s]+)(["'])(?:\\.|(?!\3)[^\\])*\3/gi, "$1$2$3[REDACTED]$3"],
+  // Unquoted key=value / key: value in free text
+  [/(password|passwd|pwd|passphrase|secret|token|api[_-]?key|apikey|client_secret|private_key|credentials)(["'=:\s]+)[^\s&"',}]+/gi, "$1$2[REDACTED]"],
   // Authorization headers
   [/\bBearer\s+[A-Za-z0-9._~+/-]+=*/gi, "Bearer [REDACTED]"],
   [/\bBasic\s+[A-Za-z0-9+/=]{8,}={0,2}/gi, "Basic [REDACTED]"],
+  [/\b(Authorization\s*[:=]\s*(?:Token\s+)?)(?!(?:Bearer|Basic)\b)[A-Za-z0-9._~+/-]+=*/gi, "$1[REDACTED]"],
   // Cookie and session headers
   [/(["']?(?:cookie|set-cookie)["']?\s*[:=]\s*["']?)[^\r\n"']+/gi, "$1[REDACTED_COOKIE]"],
   // JWT tokens
@@ -21,12 +24,17 @@ export const PATTERNS: Array<[RegExp, string]> = [
   // Provider key formats
   [/\b(?:AKIA|ASIA)[0-9A-Z]{16}\b/g, "[AWS KEY REDACTED]"],
   [/\bAIzaSy[0-9A-Za-z\-_]{33}\b/g, "[GOOGLE KEY REDACTED]"],
+  [/\bGOCSPX-[0-9A-Za-z_-]{28,}\b/g, "[GOOGLE SECRET REDACTED]"],
   [/\bxox[baprs]-[0-9A-Za-z\-_]{10,}\b/g, "[SLACK TOKEN REDACTED]"],
   [/\b[rs]k_(?:live|test)_[0-9a-zA-Z]{16,}\b/g, "[STRIPE KEY REDACTED]"],
   [/\bsk-ant-[A-Za-z0-9_-]{20,}\b/g, "[ANTHROPIC KEY REDACTED]"],
   [/\bsk-(?:proj-)?[A-Za-z0-9_-]{20,}\b/g, "[OPENAI KEY REDACTED]"],
   [/\bgh[pousr]_[A-Za-z0-9]{16,}\b/g, "[GITHUB TOKEN REDACTED]"],
+  [/\bgithub_pat_[A-Za-z0-9_]{22,}\b/g, "[GITHUB PAT REDACTED]"],
+  [/\bglpat-[A-Za-z0-9\-_]{20,}\b/g, "[GITLAB PAT REDACTED]"],
+  [/\bSG\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}\b/g, "[SENDGRID KEY REDACTED]"],
   [/\bre_[0-9a-zA-Z]{16,}\b/g, "[RESEND KEY REDACTED]"],
+  [/-----BEGIN (?:[A-Z ]*?)PRIVATE KEY-----[\s\S]*?-----END (?:[A-Z ]*?)PRIVATE KEY-----/g, "[PRIVATE KEY REDACTED]"],
   // Card numbers (major issuers)
   [/\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|6(?:011|5[0-9][0-9])[0-9]{12}|3[47][0-9]{13})\b/g, "[CARD REDACTED]"],
   // Email addresses

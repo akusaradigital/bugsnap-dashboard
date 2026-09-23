@@ -1,10 +1,14 @@
 "use client";
 
 import Link from "next/link";
+import { useT } from "@/components/I18nProvider";
 
 const CHROME_WEB_STORE_URL = "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
 
-export function AuthRequiredCard({ title = "404 - Page Requires Authentication" }: { title?: string }) {
+export function AuthRequiredCard({ title }: { title?: string }) {
+  const { t } = useT();
+  const heading = title || t("auth.requiredDefaultTitle");
+
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 sm:p-6 text-foreground font-sans">
       <div className="w-full max-w-md bg-subtle border border-border rounded-2xl p-6 sm:p-8 text-center shadow-lg space-y-6">
@@ -24,9 +28,9 @@ export function AuthRequiredCard({ title = "404 - Page Requires Authentication" 
 
         {/* Heading & Info */}
         <div className="space-y-2">
-          <h1 className="text-xl font-bold tracking-tight text-foreground">{title}</h1>
+          <h1 className="text-xl font-bold tracking-tight text-foreground">{heading}</h1>
           <p className="text-xs sm:text-sm text-muted leading-relaxed">
-            This dashboard page is protected. Sign in to your BugSnap account to access workspace features and screen captures.
+            {t("auth.requiredDesc")}
           </p>
         </div>
 
@@ -39,7 +43,7 @@ export function AuthRequiredCard({ title = "404 - Page Requires Authentication" 
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
             </svg>
-            Sign In to BugSnap
+            {t("auth.signInBugSnap")}
           </Link>
 
           <a
@@ -48,13 +52,14 @@ export function AuthRequiredCard({ title = "404 - Page Requires Authentication" 
             rel="noopener noreferrer"
             className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-emerald-200 dark:border-emerald-800/40 bg-emerald-50 dark:bg-emerald-950/30 hover:bg-emerald-100 dark:hover:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 text-sm font-semibold transition-colors"
           >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src="/icons/chrome.svg" alt="Chrome" className="w-4 h-4 shrink-0" />
-            Download Extension (Chrome Web Store)
+            {t("auth.downloadExtension")}
           </a>
         </div>
 
         <p className="text-[11px] text-muted pt-2 border-t border-border/60">
-          Captures are stored safely in your own Google Drive.
+          {t("auth.driveNotice")}
         </p>
       </div>
     </div>
