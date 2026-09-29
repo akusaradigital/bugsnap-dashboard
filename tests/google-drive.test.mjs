@@ -118,3 +118,43 @@ test("email-health safety: recipient validation rejects header injection and mal
   assert.equal(isValid("notanemail"), false);
   assert.equal(isValid(""), false);
 });
+
+test("missing Drive file detection logic identifies deleted or unresolvable assets", () => {
+  const creatorFilesMap = new Map([
+    ["user-1", new Set(["1234567890file1", "1234567890file2"])],
+    ["user-2", new Set(["1234567890file3"])],
+  ]);
+
+  const captures = [
+    { id: "c1", user_id: "user-1", drive_file_id: "1234567890file1", drive_url: null, source: "extension" },
+    { id: "c2", user_id: "user-1", drive_file_id: "1234567890deleted", drive_url: null, source: "extension" },
+    { id: "c3", user_id: "user-2", drive_file_id: null, drive_url: "https://drive.google.com/file/d/1234567890del2/view", source: "extension" },
+    { id: "c4", user_id: "user-2", drive_file_id: null, drive_url: "https://drive.google.com/file/d/1234567890file3/view", source: "extension" },
+    { id: "c5", user_id: "user-unknown", drive_file_id: "1234567890filex", drive_url: null, source: "extension" },
+    { id: "c6", user_id: "user-1", drive_file_id: null, drive_url: "invalid-url", source: "extension" },
+    { id: "c-demo", user_id: "user-1", drive_file_id: "1234567890deleted", drive_url: null, source: "demo" },
+  ];
+
+  const missingCaptures = [];
+  for (const capture of captures) {
+    if (capture.source === "demo") continue;
+    const fileId = capture.drive_file_id ?? parseDriveFileId(capture.drive_url);
+    if (!fileId) {
+      if (capture.drive_url) {
+        missingCaptures.push(capture.id);
+      }
+      continue;
+    }
+    const creatorFiles = creatorFilesMap.get(capture.user_id);
+    if (creatorFiles && !creatorFiles.has(fileId)) {
+      missingCaptures.push(capture.id);
+    }
+  }
+
+  // c2: 1234567890deleted is not in user-1's Drive
+  // c3: 1234567890del2 is not in user-2's Drive
+  // c6: invalid-url cannot resolve a Drive ID
+  // c5 is NOT flagged because user-unknown's Drive connection was not resolved (prevents false positives)
+  // c-demo is ignored because source is demo
+  assert.deepEqual(missingCaptures, ["c2", "c3", "c6"]);
+});

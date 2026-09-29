@@ -5,6 +5,7 @@ import { StaticShell } from "@/components/StaticShell";
 import { DevToolsCard, GoogleDriveProofCard, ExportTicketCard } from "@/components/site/ProductMockups";
 import { BrowserFrame } from "@/components/site/BrowserFrame";
 import { IconCheck } from "@/components/site/TablerIcons";
+import { Reveal } from "@/components/site/motion";
 
 const CHROME_STORE_URL =
   "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
@@ -19,9 +20,9 @@ export function SolutionsContent() {
       headline: t("solutions.qa.role"),
       desc: t("solutions.qa.desc"),
       points: [
-        "1-click recording with hotkeys (Ctrl+Shift+S / Ctrl+Shift+F)",
-        "Automatic capture of console errors and failed network calls",
-        "Reduces time spent writing step-by-step reproduction instructions",
+        t("solutions.qa.point1"),
+        t("solutions.qa.point2"),
+        t("solutions.qa.point3"),
       ],
       mockup: <DevToolsCard />,
     },
@@ -31,9 +32,9 @@ export function SolutionsContent() {
       headline: t("solutions.dev.role"),
       desc: t("solutions.dev.desc"),
       points: [
-        "Full unhandled JS exceptions with complete stack traces",
-        "Exact HTTP status codes, request bodies, and headers",
-        "Copy curl commands directly to reproduce in terminal",
+        t("solutions.dev.point1"),
+        t("solutions.dev.point2"),
+        t("solutions.dev.point3"),
       ],
       mockup: <ExportTicketCard />,
     },
@@ -43,9 +44,9 @@ export function SolutionsContent() {
       headline: t("solutions.pm.role"),
       desc: t("solutions.pm.desc"),
       points: [
-        "On-screen callouts, arrows, and step numbers",
-        "Interactive web links that open directly in Linear and Jira",
-        "Private Google Drive links without video file upload limits",
+        t("solutions.pm.point1"),
+        t("solutions.pm.point2"),
+        t("solutions.pm.point3"),
       ],
       mockup: (
         <BrowserFrame url="https://staging.acme.corp/billing">
@@ -68,9 +69,9 @@ export function SolutionsContent() {
       headline: t("solutions.support.role"),
       desc: t("solutions.support.desc"),
       points: [
-        "Zero extension or account requirement for end users to view reports",
-        "Silent diagnostic telemetry collection without technical friction",
-        "Secure credential redaction protects customer PII",
+        t("solutions.support.point1"),
+        t("solutions.support.point2"),
+        t("solutions.support.point3"),
       ],
       mockup: <GoogleDriveProofCard />,
     },
@@ -85,60 +86,70 @@ export function SolutionsContent() {
         {/* Solutions Grid */}
         <div className="space-y-12">
           {useCases.map((uc, i) => (
-            <div
-              key={uc.role}
-              className={`grid grid-cols-1 lg:grid-cols-12 gap-8 items-center p-6 sm:p-8 rounded-xl border border-site-border bg-site-surface ${
-                i % 2 === 1 ? "lg:flex-row-reverse" : ""
-              }`}
-            >
-              <div className={`lg:col-span-7 space-y-4 ${i % 2 === 1 ? "lg:order-2" : ""}`}>
-                <span className="inline-block text-[11px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded bg-site-surface-2 text-site-text-2 border border-site-border-subtle">
-                  {uc.badge}
-                </span>
-                <h2 className="text-xl sm:text-2xl font-bold text-site-text tracking-tight">
-                  {uc.headline}
-                </h2>
-                <p className="text-sm text-site-text-2 leading-relaxed">
-                  {uc.desc}
-                </p>
-                <ul className="space-y-2 pt-2 text-xs text-site-text">
-                  {uc.points.map((pt) => (
-                    <li key={pt} className="flex items-start gap-2">
-                      <IconCheck size={14} className="text-accent mt-0.5 shrink-0" />
-                      <span>{pt}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
+            <Reveal key={uc.role} delay={i * 0.1}>
+              <div
+                className={`relative overflow-hidden group grid grid-cols-1 lg:grid-cols-12 gap-8 items-center p-6 sm:p-8 rounded-2xl border border-site-border bg-gradient-to-b from-site-surface via-site-surface to-site-surface-2/60 transition-all duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-xl hover:shadow-accent/5 ${
+                  i % 2 === 1 ? "lg:flex-row-reverse" : ""
+                }`}
+              >
+                {/* Top Edge Gradient Accent */}
+                <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-accent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden="true" />
 
-              <div className={`lg:col-span-5 ${i % 2 === 1 ? "lg:order-1" : ""}`}>
-                {uc.mockup}
+                <div className={`lg:col-span-7 space-y-4 ${i % 2 === 1 ? "lg:order-2" : ""}`}>
+                  <span className="inline-block text-[11px] font-semibold uppercase tracking-wider px-2.5 py-1 rounded-md bg-site-surface-2 text-site-text-2 border border-site-border-subtle">
+                    {uc.badge}
+                  </span>
+                  <h2 className="text-xl sm:text-2xl font-bold text-site-text tracking-tight group-hover:text-accent transition-colors">
+                    {uc.headline}
+                  </h2>
+                  <p className="text-sm text-site-text-2 leading-relaxed">
+                    {uc.desc}
+                  </p>
+                  <ul className="space-y-2 pt-2 text-xs text-site-text">
+                    {uc.points.map((pt) => (
+                      <li key={pt} className="flex items-start gap-2">
+                        <IconCheck size={14} className="text-accent mt-0.5 shrink-0" />
+                        <span>{pt}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div className={`lg:col-span-5 ${i % 2 === 1 ? "lg:order-1" : ""}`}>
+                  <div className="transition-all duration-300 hover:-translate-y-1 rounded-xl">
+                    {uc.mockup}
+                  </div>
+                </div>
               </div>
-            </div>
+            </Reveal>
           ))}
         </div>
 
         {/* Bottom CTA Banner */}
-        <div className="rounded-xl border border-site-border bg-site-surface p-8 text-center space-y-4">
-          <h3 className="text-xl font-bold text-site-text">
-            Equip your entire team with BugSnap
-          </h3>
-          <p className="text-xs text-site-text-2 max-w-md mx-auto">
-            Free forever with direct Google Drive storage. No credit card required.
-          </p>
-          <div className="pt-2">
-            <a
-              href={CHROME_STORE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-slate-900 text-xs font-semibold hover:bg-accent-hover hover:text-white transition-all shadow-xs"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/icons/chrome.svg" alt="" aria-hidden="true" className="w-4 h-4" />
-              <span>Add to Chrome - Free</span>
-            </a>
+        <Reveal delay={0.4}>
+          <div className="relative overflow-hidden rounded-2xl border border-site-border bg-site-surface/85 backdrop-blur-md p-8 sm:p-12 text-center space-y-4 shadow-lg">
+            <div className="relative z-10 space-y-4">
+              <h3 className="text-xl sm:text-2xl font-bold text-site-text tracking-tight">
+                {t("footer.captureBugsFaster")}
+              </h3>
+              <p className="text-xs sm:text-sm text-site-text-2 max-w-md mx-auto leading-relaxed">
+                {t("footer.captureDesc")}
+              </p>
+              <div className="pt-2">
+                <a
+                  href={CHROME_STORE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-accent hover:bg-accent-hover text-slate-900 text-xs font-semibold shadow-xs hover:shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/icons/chrome.svg" alt="" aria-hidden="true" className="w-4 h-4 shrink-0" />
+                  <span>{t("footer.addToChrome")}</span>
+                </a>
+              </div>
+            </div>
           </div>
-        </div>
+        </Reveal>
       </div>
     </StaticShell>
   );

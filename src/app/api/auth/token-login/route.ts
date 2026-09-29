@@ -61,9 +61,9 @@ export async function POST(request: Request) {
     // user id, which is where the invite upsert below now gets it from.
     const { data: provision, error: provisionError } = await supabaseAdmin
       .rpc("ensure_user_and_workspace_by_email", { p_email: email })
-      .maybeSingle<{ user_id: string; workspace_id: string }>();
+      .maybeSingle<{ out_user_id: string; out_workspace_id: string }>();
     if (provisionError) throw provisionError;
-    const userId = provision?.user_id;
+    const userId = provision?.out_user_id;
 
     // 3.5. Accept pending workspace invites for this user's email
     const emailNorm = email.toLowerCase().trim();

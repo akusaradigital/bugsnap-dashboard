@@ -10,6 +10,7 @@ export async function DELETE(request: Request) {
   if (data?.refresh_token) {
     try { await fetch(`https://oauth2.googleapis.com/revoke?token=${encodeURIComponent(decrypt(data.refresh_token))}`, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" } }); } catch { /* Local disconnect remains authoritative. */ }
   }
+  await db.from("google_drive_oauth_states").delete().eq("user_id", user.id);
   const { error } = await db.from("google_drive_connections").delete().eq("user_id", user.id);
   return error ? NextResponse.json({ error: "Unable to disconnect" }, { status: 500 }) : NextResponse.json({ disconnected: true });
 }

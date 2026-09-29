@@ -16,7 +16,6 @@ import {
   TAG_OPTIONS,
   driveFileId,
   driveThumbUrl,
-  formatBytes,
   formatDuration,
   getAvatarColor,
   getOwnerInitial,
@@ -108,6 +107,12 @@ function CapturesContent() {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [currentUpload, setCurrentUpload] = useState<UploadTask | null>(null);
+  const uploadDismissTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    return () => {
+      if (uploadDismissTimer.current) clearTimeout(uploadDismissTimer.current);
+    };
+  }, []);
   const [moveToOpen, setMoveToOpen] = useState(false);
   const [moving, setMoving] = useState(false);
   const [moveTargetWorkspaceId, setMoveTargetWorkspaceId] = useState<string>("");
@@ -122,12 +127,23 @@ function CapturesContent() {
   }, []);
   const [dragActive, setDragActive] = useState(false);
   const [thumbFailed, setThumbFailed] = useState<Record<string, boolean>>({});
-  // Prevent transient thumbnail 403 or network lag from triggering false ghost deletion
+  const [scannedMissingIds, setScannedMissingIds] = useState<string[]>([]);
+  const [scanningDrive, setScanningDrive] = useState(false);
+  const scanningRef = useRef(false);
+
   const missingDriveIds = useMemo(() => {
     return captures
-      .filter((c) => Boolean(c.drive_url) && !driveFileId(c.drive_url) && c.source !== "demo")
+      .filter(
+        (c) =>
+          (thumbFailed[c.id] || (Boolean(c.drive_url) && !driveFileId(c.drive_url))) &&
+          c.source !== "demo"
+      )
       .map((c) => c.id);
-  }, [captures]);
+  }, [captures, thumbFailed]);
+
+  const allMissingDriveIds = useMemo(() => {
+    return Array.from(new Set([...missingDriveIds, ...scannedMissingIds]));
+  }, [missingDriveIds, scannedMissingIds]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const activeHoverRef = useRef<string | null>(null);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
@@ -142,7 +158,7 @@ function CapturesContent() {
       if (!activeHoverRef.current) return;
       const shareUrl = `${window.location.origin}/v/${activeHoverRef.current}`;
       navigator.clipboard?.writeText(shareUrl).then(() => {
-        showToast("Link copied", "success");
+        showToast(t("cap.linkCopied"), "success");
       }).catch(() => showToast(t("cap.copyError"), "error"));
     }
     window.addEventListener("keydown", handleKeyDown);
@@ -296,6 +312,9 @@ function CapturesContent() {
     loadGenRef.current += 1;
     setLoadingMore(false);
     setLoading(true);
+    setCaptures([]);
+    setThumbFailed({});
+    setScannedMissingIds([]);
     loadPage(true).finally(() => {
       if (!cancelled) setLoading(false);
     });
@@ -316,6 +335,61 @@ function CapturesContent() {
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [selectedIds.size, moveToOpen, deleteRequest, editing, clearSelection]);
+
+  // Clear any active bulk selection when switching workspaces
+  useEffect(() => {
+    clearSelection();
+  }, [workspaceParam, clearSelection]);
+
+  // Automatically scan missing Drive files on workspace load or manual request
+  const scanMissingDrive = useCallback(
+    async (manual = false) => {
+      if (scanningRef.current) return;
+      scanningRef.current = true;
+      setScanningDrive(true);
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
+        if (!token) return;
+
+        const query = workspaceParam ? `?workspaceId=${encodeURIComponent(workspaceParam)}` : "";
+        const res = await fetch(`/api/google-drive/scan-missing${query}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) return;
+        const data = (await res.json()) as { missingIds?: string[]; totalMissing?: number };
+        const ids = data.missingIds ?? [];
+        if (ids.length > 0) {
+          setScannedMissingIds(ids);
+          setThumbFailed((prev) => {
+            const next = { ...prev };
+            ids.forEach((id) => {
+              next[id] = true;
+            });
+            return next;
+          });
+          if (manual) {
+            showToast(t("cap.scanFoundMissing", { count: ids.length }), "info");
+          }
+        } else {
+          setScannedMissingIds([]);
+          if (manual) {
+            showToast(t("cap.scanNoMissing"), "info");
+          }
+        }
+      } catch {
+        // Non-fatal
+      } finally {
+        scanningRef.current = false;
+        setScanningDrive(false);
+      }
+    },
+    [workspaceParam, t, showToast]
+  );
+
+  useEffect(() => {
+    void scanMissingDrive(false);
+  }, [workspaceParam, scanMissingDrive]);
 
   // IntersectionObserver: Callback Ref to safely load more when the sentinel enters the viewport
   const observerRef = useRef<IntersectionObserver | null>(null);
@@ -348,7 +422,7 @@ function CapturesContent() {
     try {
       await navigator.clipboard.writeText(`${window.location.origin}/v/${id}`);
       setCopiedId(id);
-      showToast("Link copied", "success");
+      showToast(t("cap.linkCopied"), "success");
       setTimeout(() => setCopiedId(null), 2000);
     } catch {
       showToast(t("cap.copyError"), "error");
@@ -361,13 +435,13 @@ function CapturesContent() {
     if (!token) throw new Error(t("cap.sessionExpired"));
     const res = await fetch("/api/google-drive/connect", { method: "POST", headers: { Authorization: `Bearer ${token}` } });
     const result = await res.json().catch(() => ({})) as { url?: string; error?: string };
-    if (!res.ok || !result.url) throw new Error(result.error || "Could not start Google Drive connection");
+    if (!res.ok || !result.url) throw new Error(result.error || t("cap.driveConnectError"));
     window.location.assign(result.url);
   }
 
   function openDeleteConfirmation(ids: string[], title?: string, defaultMode?: "drive_trash" | "app_only") {
     if (ids.length === 0 || deleting) return;
-    const isMissingCleanup = defaultMode === "app_only" || ids.every((id) => missingDriveIds.includes(id));
+    const isMissingCleanup = defaultMode === "app_only" || ids.every((id) => allMissingDriveIds.includes(id));
     setDeleteMode(isMissingCleanup ? "app_only" : (defaultMode ?? "drive_trash"));
     setDriveIssue(null);
     setDeleteError(null);
@@ -415,6 +489,7 @@ function CapturesContent() {
       if (deletedIds.length > 0) {
         const removed = new Set(deletedIds);
         setCaptures((prev) => prev.filter((capture) => !removed.has(capture.id)));
+        setScannedMissingIds((prev) => prev.filter((id) => !removed.has(id)));
         setSelectedIds((prev) => new Set(Array.from(prev).filter((id) => !removed.has(id))));
       }
       if (driveIssue) {
@@ -438,11 +513,16 @@ function CapturesContent() {
       const deletedCount = deletedIds.length || deleteRequest.ids.length;
       setDeleteRequest(null);
       clearSelection();
-      showToast(`${deletedCount} capture${deletedCount === 1 ? "" : "s"} deleted`, "success");
+      showToast(
+        deletedCount === 1
+          ? t("cap.deletedCount", { count: deletedCount })
+          : t("cap.deletedCountPlural", { count: deletedCount }),
+        "success"
+      );
     } catch (error) {
       console.warn("Error deleting captures:", error);
-      setDeleteError(error instanceof Error ? error.message : "Could not delete the selected captures. Please try again.");
-      showToast("Delete failed", "error");
+      setDeleteError(error instanceof Error ? error.message : t("cap.deleteFailed"));
+      showToast(t("cap.deleteFailedToast"), "error");
     } finally {
       setDeleting(false);
     }
@@ -531,14 +611,15 @@ function CapturesContent() {
             }
 
             setCurrentUpload((prev) => (prev ? { ...prev, progress: 100, status: "completed" } : null));
-            showToast(`Uploaded ${file.name}`, "success");
+            showToast(t("cap.uploadedFile", { name: file.name }), "success");
             loadPage(true);
-            setTimeout(() => {
+            if (uploadDismissTimer.current) clearTimeout(uploadDismissTimer.current);
+            uploadDismissTimer.current = setTimeout(() => {
               setCurrentUpload((prev) => (prev?.status === "completed" ? null : prev));
             }, 4000);
             resolve();
           } else {
-            let errorMsg = "Upload failed";
+            let errorMsg = t("cap.uploadFailed");
             try {
               const res = JSON.parse(xhr.responseText);
               if (res.error) errorMsg = res.error;
@@ -549,7 +630,7 @@ function CapturesContent() {
 
         xhr.onerror = () => {
           if (syncTimer) clearInterval(syncTimer);
-          reject(new Error("Network error during upload"));
+          reject(new Error(t("cap.networkErrorUpload")));
         };
 
         xhr.open("POST", "/api/captures/upload");
@@ -559,7 +640,7 @@ function CapturesContent() {
         xhr.send(form);
       });
     } catch (error) {
-      const errMsg = error instanceof Error ? error.message : "Upload failed";
+      const errMsg = error instanceof Error ? error.message : t("cap.uploadFailed");
       setCurrentUpload((prev) => (prev ? { ...prev, status: "error", error: errMsg } : null));
       setUploadError(errMsg);
       showToast(errMsg, "error");
@@ -679,7 +760,7 @@ function CapturesContent() {
           failed[0].status === "rejected"
             ? failed[0].reason
             : (failed[0] as PromiseFulfilledResult<{ error?: { message?: string } }>).value.error?.message;
-        throw new Error(firstErr || "Failed moving captures");
+        throw new Error(firstErr || t("cap.moveFailed"));
       }
 
       const failedIds = new Set<string>();
@@ -723,7 +804,7 @@ function CapturesContent() {
         );
       }
     } catch (error) {
-      setUploadError(error instanceof Error ? error.message : "Failed moving captures");
+      setUploadError(error instanceof Error ? error.message : t("cap.moveFailed"));
       showToast(t("cap.moveFailed"), "error");
     } finally {
       setMoving(false);
@@ -803,6 +884,7 @@ function CapturesContent() {
         e.preventDefault();
         setDragActive(true);
       }}
+      onDragOver={(e) => e.preventDefault()}
     >
       {dragActive && (
         <div
@@ -827,9 +909,9 @@ function CapturesContent() {
               </svg>
             </div>
             <div>
-              <p className="font-semibold text-foreground text-base">Drop file to upload</p>
+              <p className="font-semibold text-foreground text-base">{t("cap.dropFile")}</p>
               <p className="text-xs text-muted mt-1.5 max-w-xs">
-                Release your screenshot or video to upload directly to Google Drive & BugSnap
+                {t("cap.dropFileHint")}
               </p>
             </div>
             <div className="flex items-center gap-2 mt-1">
@@ -845,7 +927,7 @@ function CapturesContent() {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 sm:mb-8 gap-4">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">{t("cap.title")}</h1>
 
-        <div className="flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+        <div className="flex items-center gap-2 w-full lg:w-auto">
           <div className="relative flex-1 min-w-[150px] sm:min-w-[200px] lg:flex-none lg:w-64">
             <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
             <input
@@ -856,10 +938,19 @@ function CapturesContent() {
               className="h-10 pl-9 pr-3 text-sm rounded-lg border border-border bg-subtle text-foreground placeholder:text-muted focus:outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 w-full"
             />
           </div>
-          <label className={`h-10 flex items-center justify-center gap-2 px-4 border border-border text-sm font-medium rounded-lg transition-colors whitespace-nowrap shrink-0 ${uploading ? "bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border-[#89BD49]/30 dark:border-[#89BD49]/40 cursor-wait" : "bg-subtle text-muted hover:text-foreground hover:bg-subtle/80 cursor-pointer"}`}>
+
+          {/* Compact upload icon button */}
+          <label
+            title={uploading ? (currentUpload?.status === "syncing" ? t("cap.syncingToDrive") : t("cap.uploadingTitle", { progress: String(currentUpload?.progress ?? 0) })) : t("cap.uploadBtnTitle")}
+            className={`relative h-10 w-10 flex items-center justify-center rounded-lg border transition-colors shrink-0 cursor-pointer ${
+              uploading
+                ? "border-[#89BD49]/40 bg-[#89BD49]/10 text-[#6B9A35] dark:text-[#A8D666] cursor-wait"
+                : "border-border bg-subtle text-muted hover:text-foreground hover:border-[#89BD49]/40"
+            }`}
+          >
             <input type="file" className="hidden" onChange={handleManualUpload} accept="image/*,video/*" disabled={uploading} />
             {uploading ? (
-              <svg className="w-4 h-4 text-[#89BD49] animate-spin" fill="none" viewBox="0 0 24 24">
+              <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
               </svg>
@@ -868,11 +959,19 @@ function CapturesContent() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
               </svg>
             )}
-            {uploading
-              ? currentUpload?.status === "syncing"
-                ? "Syncing Drive..."
-                : `Uploading (${currentUpload?.progress || 0}%)`
-              : "Upload file"}
+            {/* Progress ring overlay */}
+            {uploading && (currentUpload?.progress ?? 0) > 0 && (
+              <svg className="absolute inset-0 w-10 h-10 -rotate-90 pointer-events-none" viewBox="0 0 40 40">
+                <circle cx="20" cy="20" r="17" fill="none" stroke="currentColor" strokeWidth="2.5" className="text-[#89BD49]/20" />
+                <circle
+                  cx="20" cy="20" r="17" fill="none" stroke="currentColor" strokeWidth="2.5"
+                  className="text-[#89BD49] transition-all duration-300"
+                  strokeDasharray={`${2 * Math.PI * 17}`}
+                  strokeDashoffset={`${2 * Math.PI * 17 * (1 - (currentUpload?.progress ?? 0) / 100)}`}
+                  strokeLinecap="round"
+                />
+              </svg>
+            )}
           </label>
         </div>
       </div>
@@ -1000,6 +1099,20 @@ function CapturesContent() {
             <span>{t("cap.selectAll")}</span>
           </button>
         )}
+
+        {/* Scan Missing Drive files button */}
+        <button
+          type="button"
+          onClick={() => scanMissingDrive(true)}
+          disabled={scanningDrive}
+          className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-border bg-subtle text-muted hover:text-foreground hover:bg-subtle/80 transition-colors cursor-pointer disabled:opacity-50"
+          title={t("cap.scanMissing")}
+        >
+          <svg className={`w-3.5 h-3.5 ${scanningDrive ? "animate-spin text-amber-500" : "text-muted"}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          <span className="hidden md:inline">{scanningDrive ? t("cap.scanning") : t("cap.scanMissing")}</span>
+        </button>
         </div>
 
         {/* View Mode Toggle (Grid / List) */}
@@ -1047,116 +1160,51 @@ function CapturesContent() {
         </div>
       </div>
 
-      {/* Upload Progress Animation Banner */}
+      {/* Upload toast — fixed bottom-right, doesn't push content */}
       {currentUpload && (
-        <div className="mb-6 overflow-hidden rounded-xl border border-[#89BD49]/30 dark:border-[#89BD49]/40 bg-white dark:bg-subtle p-4 shadow-sm transition-all animate-in fade-in slide-in-from-top-2 duration-300">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center gap-3 min-w-0">
-              <div
-                className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all ${
-                  currentUpload.status === "completed"
-                    ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 ring-2 ring-emerald-500/20"
-                    : currentUpload.status === "error"
-                    ? "bg-red-50 text-red-600 dark:bg-red-950/40 dark:text-red-400 ring-2 ring-red-500/20"
-                    : "bg-[#89BD49]/10 text-[#6B9A35] dark:bg-[#89BD49]/20 dark:text-[#A8D666] ring-2 ring-[#89BD49]/20"
-                }`}
-              >
-                {currentUpload.status === "completed" ? (
-                  <svg className="w-5 h-5 animate-in zoom-in duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
-                ) : currentUpload.status === "error" ? (
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                ) : currentUpload.type === "video" ? (
-                  <svg className="w-5 h-5 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                ) : (
-                  <svg className="w-5 h-5 animate-pulse" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                )}
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="font-semibold text-sm text-foreground truncate max-w-xs sm:max-w-md">
-                    {currentUpload.name}
-                  </span>
-                  <span className="text-[11px] text-muted shrink-0">
-                    ({formatBytes(currentUpload.size)})
-                  </span>
-                </div>
-                <div className="text-xs text-muted flex items-center gap-1.5 mt-0.5">
-                  {currentUpload.status === "uploading" && (
-                    <>
-                      <span className="inline-block w-2 h-2 rounded-full bg-[#89BD49] animate-ping" />
-                      <span>Uploading to server...</span>
-                    </>
-                  )}
-                  {currentUpload.status === "syncing" && (
-                    <>
-                      <svg className="w-3.5 h-3.5 text-[#89BD49] animate-spin" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
-                      </svg>
-                      <span>Syncing to Google Drive...</span>
-                    </>
-                  )}
-                  {currentUpload.status === "completed" && (
-                    <span className="text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1">
-                      <span>Successfully uploaded to Google Drive & BugSnap</span>
-                    </span>
-                  )}
-                  {currentUpload.status === "error" && (
-                    <span className="text-red-600 dark:text-red-400 font-medium">
-                      {currentUpload.error || "Upload failed"}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex items-center gap-2.5 shrink-0">
-              <span
-                className={`text-xs font-bold tabular-nums ${
-                  currentUpload.status === "completed"
-                    ? "text-emerald-600 dark:text-emerald-400"
-                    : currentUpload.status === "error"
-                    ? "text-red-600 dark:text-red-400"
-                    : "text-[#6B9A35] dark:text-[#A8D666]"
-                }`}
-              >
-                {currentUpload.status === "error" ? "Error" : `${currentUpload.progress}%`}
-              </span>
-              {(currentUpload.status === "completed" || currentUpload.status === "error") && (
-                <button
-                  type="button"
-                  onClick={() => setCurrentUpload(null)}
-                  className="p-1 text-muted hover:text-foreground rounded-lg hover:bg-subtle transition-colors cursor-pointer"
-                  title="Dismiss"
-                >
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+        <div className="fixed bottom-5 right-5 z-50 w-72 rounded-xl border bg-background shadow-lg animate-in fade-in slide-in-from-bottom-3 duration-200 overflow-hidden"
+          style={{ borderColor: currentUpload.status === "error" ? "rgb(239 68 68 / 0.4)" : currentUpload.status === "completed" ? "rgb(34 197 94 / 0.4)" : "rgb(137 189 73 / 0.4)" }}
+        >
+          <div className="flex items-center gap-3 px-3 py-3">
+            {/* Status icon */}
+            <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 ${
+              currentUpload.status === "completed" ? "bg-emerald-500/15 text-emerald-500"
+              : currentUpload.status === "error" ? "bg-red-500/15 text-red-500"
+              : "bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666]"
+            }`}>
+              {currentUpload.status === "completed" ? (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+              ) : currentUpload.status === "error" ? (
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              ) : (
+                <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" /></svg>
               )}
             </div>
+
+            {/* Text */}
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-semibold text-foreground truncate">{currentUpload.name}</p>
+              <p className={`text-[11px] mt-0.5 ${currentUpload.status === "error" ? "text-red-500" : currentUpload.status === "completed" ? "text-emerald-600 dark:text-emerald-400" : "text-muted"}`}>
+                {currentUpload.status === "uploading" && t("cap.uploadingTitle", { progress: String(currentUpload.progress) })}
+                {currentUpload.status === "syncing" && t("cap.syncingToDrive")}
+                {currentUpload.status === "completed" && t("cap.savedToDrive")}
+                {currentUpload.status === "error" && (currentUpload.error ?? t("cap.uploadFailed"))}
+              </p>
+            </div>
+
+            {/* Dismiss (only when done) */}
+            {(currentUpload.status === "completed" || currentUpload.status === "error") && (
+              <button type="button" onClick={() => setCurrentUpload(null)}
+                className="p-1 rounded-md text-muted hover:text-foreground hover:bg-subtle transition-colors shrink-0">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
+              </button>
+            )}
           </div>
 
-          {/* Smooth Progress Bar */}
-          <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-border/60">
-            <div
-              className={`h-full transition-all duration-300 ease-out rounded-full ${
-                currentUpload.status === "completed"
-                  ? "bg-emerald-500"
-                  : currentUpload.status === "error"
-                  ? "bg-red-500"
-                  : "bg-[#89BD49]"
-              }`}
-              style={{ width: `${currentUpload.progress}%` }}
-            />
+          {/* Slim progress bar */}
+          <div className="h-0.5 w-full bg-border/40">
+            <div className={`h-full transition-all duration-300 ${currentUpload.status === "completed" ? "bg-emerald-500" : currentUpload.status === "error" ? "bg-red-500" : "bg-[#89BD49]"}`}
+              style={{ width: `${currentUpload.progress}%` }} />
           </div>
         </div>
       )}
@@ -1168,7 +1216,7 @@ function CapturesContent() {
       )}
 
       {/* 1-Click Ghost Cleanup Banner for Missing Drive Files */}
-      {missingDriveIds.length > 0 && !currentUpload && (
+      {allMissingDriveIds.length > 0 && !currentUpload && (
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/20 px-4 py-3 text-xs text-amber-900 dark:text-amber-200 shadow-sm animate-in fade-in duration-200">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0 text-amber-600 dark:text-amber-400">
@@ -1178,27 +1226,41 @@ function CapturesContent() {
             </div>
             <div className="min-w-0">
               <span className="font-semibold">
-                {missingDriveIds.length} {missingDriveIds.length === 1 ? "capture" : "captures"} missing from Google Drive
+                {allMissingDriveIds.length === 1
+                  ? t("cap.missingBannerOne")
+                  : t("cap.missingBannerMany", { count: allMissingDriveIds.length })}
               </span>
               <span className="text-amber-700/80 dark:text-amber-400/80 ml-1.5 hidden sm:inline">
-                The original files were deleted in Google Drive. You can clean up their ghost records from the dashboard.
+                {t("cap.missingBannerHint")}
               </span>
             </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             <button
               type="button"
-              onClick={() => openDeleteConfirmation(missingDriveIds, `${missingDriveIds.length} missing captures`, "app_only")}
+              onClick={() => openDeleteConfirmation(allMissingDriveIds, `${allMissingDriveIds.length} missing captures`, "app_only")}
               className="rounded-lg bg-amber-600 hover:bg-amber-700 dark:bg-amber-500 dark:hover:bg-amber-600 text-white font-medium px-3 py-1.5 transition-colors cursor-pointer shadow-xs whitespace-nowrap"
             >
-              Clean Up from Dashboard ({missingDriveIds.length})
+              {t("cap.cleanUpDashboard", { count: allMissingDriveIds.length })}
             </button>
             <button
               type="button"
-              onClick={() => setSelectedIds(new Set(missingDriveIds))}
+              onClick={() => setSelectedIds(new Set(allMissingDriveIds))}
               className="rounded-lg border border-amber-300 dark:border-amber-800/60 bg-white dark:bg-subtle text-amber-800 dark:text-amber-200 font-medium px-3 py-1.5 hover:bg-amber-100/50 transition-colors cursor-pointer whitespace-nowrap"
             >
-              Select All
+              {t("cap.selectAll")}
+            </button>
+            <button
+              type="button"
+              onClick={() => scanMissingDrive(true)}
+              disabled={scanningDrive}
+              className="rounded-lg border border-amber-300 dark:border-amber-800/60 bg-white dark:bg-subtle text-amber-800 dark:text-amber-200 font-medium px-2.5 py-1.5 hover:bg-amber-100/50 transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1.5 disabled:opacity-50"
+              title={t("cap.scanMissing")}
+            >
+              <svg className={`w-3.5 h-3.5 ${scanningDrive ? "animate-spin" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              <span>{scanningDrive ? t("cap.scanning") : t("cap.scanMissing")}</span>
             </button>
           </div>
         </div>
@@ -1275,6 +1337,7 @@ function CapturesContent() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] text-white text-xs font-semibold shadow-xs shadow-[#89BD49]/25 transition-all w-full"
                 >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src="/icons/chrome.svg" alt="Chrome" className="w-3.5 h-3.5 shrink-0" />
                   <span>{t("cap.install")}</span>
                 </a>
@@ -1294,7 +1357,7 @@ function CapturesContent() {
                   </p>
                 </div>
                 <div className="p-2.5 rounded-lg border border-border/80 bg-slate-50 dark:bg-subtle/50 flex items-center justify-center gap-2 text-xs">
-                  <span className="text-muted text-[11px]">Hotkey:</span>
+                  <span className="text-muted text-[11px]">{t("cap.hotkey")}</span>
                   <kbd className="px-2 py-0.5 text-[11px] font-mono font-bold bg-white dark:bg-subtle text-foreground border border-slate-300 dark:border-border rounded-md shadow-2xs">
                     Alt + Shift + S
                   </kbd>
@@ -1317,9 +1380,9 @@ function CapturesContent() {
                 <div className="p-2.5 rounded-lg border border-border/80 bg-slate-50 dark:bg-subtle/50 flex items-center justify-between text-xs text-muted">
                   <span className="flex items-center gap-1.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400">
                     <span className="w-1.5 h-1.5 rounded-sm bg-emerald-500" />
-                    Auto Google Drive Sync
+                    {t("cap.autoDriveSync")}
                   </span>
-                  <span className="text-[10px] font-mono">1-Click Share</span>
+                  <span className="text-[10px] font-mono">{t("cap.oneClickShare")}</span>
                 </div>
               </div>
             </div>
@@ -1356,7 +1419,7 @@ function CapturesContent() {
                   <button
                     type="button"
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleSelect(item.id); }}
-                    aria-label="Select capture"
+                    aria-label={t("cap.selectCapture")}
                     className={`w-5 h-5 rounded border flex items-center justify-center transition-all ${
                       isSelected
                         ? "bg-[#89BD49] border-[#89BD49] text-white"
@@ -1427,6 +1490,23 @@ function CapturesContent() {
                           {t("cap.locked")}
                         </span>
                       )}
+                      {(thumbFailed[item.id] || (Boolean(item.drive_url) && !driveFileId(item.drive_url)) || scannedMissingIds.includes(item.id)) && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            openDeleteConfirmation([item.id], item.title, "app_only");
+                          }}
+                          className="text-[9px] font-semibold text-amber-700 bg-amber-100 dark:bg-amber-950/40 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/60 px-1.5 py-0.5 rounded flex items-center gap-1 shrink-0 transition-colors cursor-pointer"
+                          title={t("cap.driveMissingTooltip")}
+                        >
+                          <svg className="w-2.5 h-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                          </svg>
+                          <span>{t("cap.driveMissing")}</span>
+                        </button>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 mt-0.5 text-[11px] text-muted">
                       {item.folder_name && <span className="truncate max-w-[120px]">{item.folder_name}</span>}
@@ -1452,6 +1532,7 @@ function CapturesContent() {
                         src={myProfile.avatar}
                         alt=""
                         referrerPolicy="no-referrer"
+                        onError={() => setMyProfile((prev) => (prev ? { ...prev, avatar: "" } : null))}
                         className="w-5 h-5 rounded-full object-cover shrink-0"
                       />
                     ) : (
@@ -1484,8 +1565,8 @@ function CapturesContent() {
 
                     <button
                       type="button"
-                      aria-label="Capture options"
-                      title="Options"
+                      aria-label={t("cap.captureOptions")}
+                      title={t("cap.optionsMenu")}
                       onClick={(e) => {
                         e.preventDefault();
                         e.stopPropagation();
@@ -1585,7 +1666,7 @@ function CapturesContent() {
                     <button
                       type="button"
                       onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleSelect(item.id); }}
-                      aria-label="Select capture"
+                      aria-label={t("cap.selectCapture")}
                       className={`w-7 h-7 rounded-lg border-2 flex items-center justify-center transition-all shadow-sm ${
                         isSelected
                           ? "bg-[#89BD49] border-[#89BD49] text-white opacity-100 flex"
@@ -1639,8 +1720,8 @@ function CapturesContent() {
                       <div className="relative" data-capture-menu>
                         <button
                           type="button"
-                          aria-label="Capture options"
-                          title="Options"
+                          aria-label={t("cap.captureOptions")}
+                          title={t("cap.optionsMenu")}
                           onClick={(e) => {
                             e.preventDefault();
                             e.stopPropagation();
@@ -1682,16 +1763,22 @@ function CapturesContent() {
                   </div>
 
                   {/* Drive File Missing Badge */}
-                  {(thumbFailed[item.id] || (Boolean(item.drive_url) && !driveFileId(item.drive_url))) && (
-                    <div
-                      className="absolute bottom-2.5 left-2.5 z-10 inline-flex items-center gap-1 rounded-md bg-amber-600/90 backdrop-blur-sm text-white text-[10px] font-semibold px-2 py-0.5 shadow-sm pointer-events-none"
-                      title="File missing in Google Drive"
+                  {(thumbFailed[item.id] || (Boolean(item.drive_url) && !driveFileId(item.drive_url)) || scannedMissingIds.includes(item.id)) && (
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        openDeleteConfirmation([item.id], item.title, "app_only");
+                      }}
+                      className="absolute bottom-2.5 left-2.5 z-20 inline-flex items-center gap-1 rounded-md bg-amber-600/90 hover:bg-amber-700 active:scale-95 backdrop-blur-sm text-white text-[10px] font-semibold px-2 py-0.5 shadow-sm transition-all cursor-pointer"
+                      title={t("cap.driveMissingTooltip")}
                     >
                       <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                       </svg>
-                      <span>Drive missing</span>
-                    </div>
+                      <span>{t("cap.driveMissing")}</span>
+                    </button>
                   )}
                 </div>
 
@@ -1733,6 +1820,7 @@ function CapturesContent() {
       {activeMenuId && menuPos && (() => {
         const item = captures.find((c) => c.id === activeMenuId);
         if (!item) return null;
+        const isItemDeleting = deleting && (deleteRequest?.ids.includes(item.id) ?? false);
         return (
           <div
             data-capture-menu
@@ -1741,22 +1829,24 @@ function CapturesContent() {
           >
             <button
               type="button"
+              disabled={isItemDeleting}
               onClick={() => {
                 setActiveMenuId(null);
                 setEditing(item);
               }}
-              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left font-medium hover:bg-subtle"
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left font-medium hover:bg-subtle disabled:opacity-50"
             >
               <svg className="w-3.5 h-3.5 text-muted" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
-              Rename
+              {t("cap.rename")}
             </button>
             <button
               type="button"
+              disabled={deleting}
               onClick={() => {
                 setActiveMenuId(null);
                 openDeleteConfirmation([item.id], item.title);
               }}
-              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 disabled:opacity-50"
             >
               <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
               Delete

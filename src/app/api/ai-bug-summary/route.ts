@@ -114,7 +114,7 @@ export async function POST(req: Request) {
     if (devLogs && typeof devLogs === "object" && !Array.isArray(devLogs) && "driveFileId" in devLogs) {
       try {
         const fileId = (devLogs as { driveFileId?: string }).driveFileId;
-        if (fileId && typeof fileId === "string") {
+        if (fileId && typeof fileId === "string" && /^[A-Za-z0-9_-]{10,200}$/.test(fileId)) {
           const driveRes = await fetch(`https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`, { cache: "no-store" });
           if (driveRes.ok) {
             const fetched = await driveRes.json();

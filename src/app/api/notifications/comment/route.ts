@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-server";
 import { renderCommentEmail } from "@/lib/email-templates";
+import { isRateLimited } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
@@ -44,6 +45,11 @@ export async function POST(req: Request) {
     const commentAgeMs = Date.now() - new Date(saved.created_at).getTime();
     if (saved.body !== commentBody || commentAgeMs < 0 || commentAgeMs > 5 * 60_000) {
       return NextResponse.json({ error: "Comment is stale or body mismatch" }, { status: 400 });
+    }
+
+    // Rate-limit notification dispatch per comment to prevent email-bombing loops
+    if (await isRateLimited(`comment-notify:${commentId}`, 1, 300)) {
+      return NextResponse.json({ error: "Notification already sent for this comment" }, { status: 429 });
     }
 
     // 1. Get capture to know workspace_id and title

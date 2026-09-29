@@ -16,6 +16,16 @@ export function SiteNavbar() {
   const pathname = usePathname();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 20);
+    };
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
@@ -46,7 +56,13 @@ export function SiteNavbar() {
   ];
 
   return (
-    <header className="sticky top-0 z-50 border-b border-site-border bg-site-surface/85 backdrop-blur-md text-site-text font-site transition-colors">
+    <header
+      className={`sticky top-0 z-50 border-b text-site-text font-site transition-all duration-200 ${
+        scrolled
+          ? "border-site-border bg-site-surface/95 backdrop-blur-md shadow-sm"
+          : "border-site-border/60 bg-site-surface/80 backdrop-blur-md"
+      }`}
+    >
       <div className="mx-auto max-w-6xl px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
         {/* Brand */}
         <Link href="/" className="flex items-center gap-2 group shrink-0">
@@ -58,9 +74,6 @@ export function SiteNavbar() {
             className="w-6 h-6 object-contain transition-transform group-hover:scale-105"
           />
           <span className="text-sm font-bold tracking-tight text-site-text">BugSnap</span>
-          <span className="hidden sm:inline-block text-[10px] font-semibold uppercase tracking-wider px-1.5 py-0.5 rounded bg-site-surface-2 text-site-text-2 border border-site-border-subtle">
-            Free
-          </span>
         </Link>
 
         {/* Desktop Navigation */}

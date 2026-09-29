@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-server";
-import { driveAccessToken, trashDriveFile } from "@/lib/google-drive";
+import { driveAccessToken, listAccessibleDriveFiles, trashDriveFile } from "@/lib/google-drive";
 import { parseDriveFileId } from "@/lib/google-drive-values";
 
 export const runtime = "nodejs";
@@ -122,6 +122,81 @@ export async function GET(req: Request) {
     console.warn("[Cron cleanup] dev_logs TTL sweep failed:", ttlErr);
   }
 
+  // 0c. Ghost capture sweep: clean up database records for captures whose Google Drive files were deleted externally
+  let ghostCapturesPruned = 0;
+  try {
+    const { data: recentCaptures } = await supabase
+      .from("captures")
+      .select("id, title, user_id, workspace_id, drive_file_id, drive_url, source")
+      .neq("source", "demo")
+      .order("created_at", { ascending: false })
+      .limit(500);
+
+    const checkList = recentCaptures ?? [];
+    const creators = Array.from(
+      new Set(checkList.map((c) => c.user_id).filter((uid): uid is string => Boolean(uid)))
+    );
+
+    const creatorFilesMap = new Map<string, Set<string>>();
+    for (const creatorId of creators) {
+      const token = await resolveUserDriveToken(creatorId);
+      if (!token) continue;
+      try {
+        const files = await listAccessibleDriveFiles(token);
+        creatorFilesMap.set(creatorId, new Set(files.map((f) => f.id)));
+      } catch {
+        // Skip creator if listing fails (token revoked/rate-limited) to prevent false positives
+      }
+    }
+
+    const ghostIdsToDelete: Array<{
+      id: string;
+      workspace_id: string | null;
+      user_id: string | null;
+      drive_file_id: string | null;
+    }> = [];
+
+    for (const cap of checkList) {
+      if (!cap.user_id) continue;
+      const creatorFiles = creatorFilesMap.get(cap.user_id);
+      if (!creatorFiles) continue;
+
+      const fileId = cap.drive_file_id ?? parseDriveFileId(cap.drive_url);
+      if (!fileId) continue;
+
+      if (!creatorFiles.has(fileId)) {
+        ghostIdsToDelete.push({
+          id: cap.id,
+          workspace_id: cap.workspace_id,
+          user_id: cap.user_id,
+          drive_file_id: fileId,
+        });
+      }
+    }
+
+    if (ghostIdsToDelete.length > 0) {
+      for (const item of ghostIdsToDelete) {
+        const { error: delErr } = await supabase.from("captures").delete().eq("id", item.id);
+        if (!delErr) {
+          ghostCapturesPruned++;
+          try {
+            await supabase.from("capture_delete_audit").insert({
+              operation_id: cronOperationId,
+              capture_id: item.id,
+              workspace_id: item.workspace_id,
+              user_id: item.user_id,
+              mode: "app_only",
+              outcome: "deleted",
+              drive_file_id: item.drive_file_id,
+            });
+          } catch {}
+        }
+      }
+    }
+  } catch (ghostErr) {
+    console.warn("[Cron cleanup] Ghost capture sweep failed:", ghostErr);
+  }
+
   try {
     // 1. Fetch candidate expired captures using batch RPC or direct query fallback
     let candidates: ExpiredCapture[] = [];
@@ -179,6 +254,7 @@ export async function GET(req: Request) {
         totalPruned: 0,
         totalDriveTrashed: 0,
         devLogsPurged,
+        ghostCapturesPruned,
       });
     }
 
@@ -241,6 +317,7 @@ export async function GET(req: Request) {
       totalPruned,
       totalDriveTrashed,
       devLogsPurged,
+      ghostCapturesPruned,
       operationId: cronOperationId,
       errors: errors.length > 0 ? errors : undefined,
     });

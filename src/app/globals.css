@@ -12,16 +12,22 @@
   --accent-hover: #6B9A35;
 
   /* BugSnap Public Site Design Tokens (Day Mode default) */
-  --site-bg: #F8F9FB;
+  --site-bg: #FFFFFF;
   --site-surface: #FFFFFF;
-  --site-surface-2: #F3F4F6;
-  --site-text: #111318;
-  --site-text-2: #667085;
-  --site-border: #E5E7EB;
-  --site-border-subtle: #EEF0F2;
+  --site-surface-2: #F8FAFC;
+  --site-text: #0F172A;
+  --site-text-2: #64748B;
+  --site-border: #E2E8F0;
+  --site-border-subtle: #F1F5F9;
+  --site-border-focus: #CBD5E1;
   --site-success: #15803D;
   --site-warning: #D97706;
   --site-danger: #DC2626;
+
+  /* Ambient Glow & Gradient Tokens (Light Mode) */
+  --glow-primary: rgba(137, 189, 73, 0.35);
+  --glow-secondary: rgba(14, 165, 233, 0.22);
+  --glow-accent: rgba(137, 189, 73, 0.45);
 }
 
 /* Dark mode overrides - toggled via .dark class on <html> by ThemeProvider.
@@ -37,16 +43,22 @@
   --accent-hover: #C2E688;
 
   /* BugSnap Public Site Design Tokens (Dark Mode) */
-  --site-bg: #0B0D10;
+  --site-bg: #07090D;
   --site-surface: #111419;
   --site-surface-2: #171A20;
   --site-text: #F5F7FA;
   --site-text-2: #9299A5;
   --site-border: #242932;
   --site-border-subtle: #1B1F26;
+  --site-border-focus: #3B4352;
   --site-success: #22C55E;
   --site-warning: #F59E0B;
   --site-danger: #F87171;
+
+  /* Ambient Glow & Gradient Tokens (Dark Mode) */
+  --glow-primary: rgba(168, 214, 102, 0.32);
+  --glow-secondary: rgba(56, 189, 248, 0.2);
+  --glow-accent: rgba(168, 214, 102, 0.45);
 }
 
 * {
@@ -205,6 +217,22 @@ a:active {
 @keyframes aurora-shift {
   0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
   50% { transform: translate3d(2rem, -1rem, 0) scale(1.06); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { opacity: 0.45; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.08); }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 7s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-pulse-glow,
+  .float-slow {
+    animation: none !important;
+  }
 }
 
 .shimmer {

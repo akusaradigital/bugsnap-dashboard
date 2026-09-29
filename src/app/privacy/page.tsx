@@ -1,5 +1,7 @@
+import { ReactNode } from "react";
 import { Metadata } from "next";
 import { StaticShell } from "@/components/StaticShell";
+import { Reveal } from "@/components/site/motion";
 
 export const metadata: Metadata = {
   title: "Privacy Policy - BugSnap",
@@ -9,113 +11,145 @@ export const metadata: Metadata = {
   },
 };
 
+interface LegalSection {
+  title: string;
+  content: ReactNode;
+}
+
+const sections: LegalSection[] = [
+  {
+    title: "1. Overview",
+    content: (
+      <>
+        <p className="text-site-text-2">
+          BugSnap (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;) provides a screen recording, screenshot capture, and bug reporting tool consisting of a Chrome MV3 Extension and a Web Dashboard hosted at <code className="bg-site-surface-2 px-1 py-0.5 rounded text-xs border border-site-border">bugsnap.akusaraproject.my.id</code>.
+        </p>
+        <p className="text-site-text-2">
+          We respect your privacy. This policy explains what data we collect, how it is stored, and your rights. We adhere strictly to the <strong>Chrome Web Store User Data Policy</strong>, including Limited Use requirements.
+        </p>
+      </>
+    ),
+  },
+  {
+    title: "2. Data We Collect and How We Use It",
+    content: (
+      <div className="border border-site-border rounded-xl p-5 bg-site-surface space-y-4 shadow-xs">
+        <div>
+          <h3 className="font-bold text-[11px] uppercase tracking-wider text-accent mb-1">A. User Account & Identity</h3>
+          <p className="text-site-text">
+            <strong>Data:</strong> Your Google Account email address and Google Profile ID.
+          </p>
+          <p className="text-xs text-site-text-2 mt-1">
+            <strong>Purpose:</strong> Authenticating your user session via Google OAuth and linking captures created in the Chrome extension to your Web Dashboard workspace.
+          </p>
+        </div>
+
+        <div className="border-t border-site-border-subtle pt-3">
+          <h3 className="font-bold text-[11px] uppercase tracking-wider text-accent mb-1">B. Screen Captures & Video Media</h3>
+          <p className="text-site-text">
+            <strong>Data:</strong> Screenshots (PNG) and screen recordings (WebM) captured explicitly when you initiate a capture action.
+          </p>
+          <p className="text-xs text-site-text-2 mt-1">
+            <strong>Storage:</strong> Media files are uploaded directly to <strong>your own Google Drive account</strong> using the <code className="bg-site-surface-2 px-1 py-0.5 rounded border border-site-border-subtle">drive.file</code> scope. BugSnap does NOT store your video or screenshot media files on our own servers.
+          </p>
+        </div>
+
+        <div className="border-t border-site-border-subtle pt-3">
+          <h3 className="font-bold text-[11px] uppercase tracking-wider text-accent mb-1">C. Technical Metadata & DevLogs</h3>
+          <p className="text-site-text">
+            <strong>Data:</strong> Capture title, duration, window dimensions, OS name, browser version, timestamp, and optional developer logs (console errors and failed network request details captured during active recording).
+          </p>
+          <p className="text-xs text-site-text-2 mt-1">
+            <strong>Storage & Purpose:</strong> Stored securely in our cloud database to allow rendering capture details, diagnostic context, and AI bug summaries in your workspace dashboard.
+          </p>
+        </div>
+      </div>
+    ),
+  },
+  {
+    title: "3. Chrome Extension Permissions & Justification",
+    content: (
+      <>
+        <p className="text-site-text-2">Our Chrome Extension requests the following permissions for specific, limited features:</p>
+        <ul className="list-disc pl-5 space-y-1.5 text-xs text-site-text-2">
+          <li><strong className="text-site-text">desktopCapture &amp; tabCapture:</strong> Required to capture your screen or selected tab when you click record/screenshot.</li>
+          <li><strong className="text-site-text">activeTab &amp; scripting:</strong> Required to inject the annotation canvas and capture developer console/network logs for bug reporting on the active tab.</li>
+          <li><strong className="text-site-text">storage:</strong> Required to store local extension preferences and temporary auth session tokens locally in your browser.</li>
+          <li><strong className="text-site-text">identity:</strong> Required to initiate Google OAuth sign-in for Google Drive storage integration.</li>
+          <li><strong className="text-site-text">offscreen:</strong> Required to record audio/video streams safely in background Manifest V3 service workers.</li>
+          <li><strong className="text-site-text">&lt;all_urls&gt; (Host Permission):</strong> Required solely to capture console errors and network request metadata on the web page where you explicitly trigger a bug report. We do NOT track browsing history or background web activity.</li>
+        </ul>
+      </>
+    ),
+  },
+  {
+    title: "4. Data Sharing, Sale, and Transfer",
+    content: (
+      <ul className="list-disc pl-5 space-y-2 text-site-text-2">
+        <li><strong className="text-site-text">We DO NOT sell your data:</strong> BugSnap never sells, rents, or trades your personal data, browser activity, or captures to third parties, advertisers, or data brokers.</li>
+        <li><strong className="text-site-text">We DO NOT use data for advertising:</strong> No data collected by BugSnap is used for personalized advertising or profiling.</li>
+        <li><strong className="text-site-text">Service Providers:</strong> We transmit data only to essential infrastructure providers:
+          <ul className="list-circle pl-5 mt-1 space-y-1 text-xs text-site-text-2">
+            <li><strong>Google Drive API:</strong> For storing media files in your personal account under your control.</li>
+            <li><strong>Cloud Database:</strong> For secure storage of capture metadata and authentication management.</li>
+            <li><strong>Hosting Provider:</strong> Global edge network for serving the web dashboard application.</li>
+          </ul>
+        </li>
+      </ul>
+    ),
+  },
+  {
+    title: "5. Data Retention & Control",
+    content: (
+      <>
+        <p className="text-site-text-2">
+          Your capture media remains in your Google Drive and can be deleted by you at any time directly through Google Drive.
+        </p>
+        <p className="text-site-text-2">
+          Capture metadata stored in BugSnap can be deleted by deleting the capture item from your Web Dashboard. Upon deletion, associated metadata and comments are permanently removed from our database.
+        </p>
+      </>
+    ),
+  },
+  {
+    title: "6. Limited Use Disclosure",
+    content: (
+      <p className="text-site-text-2">
+        BugSnap&apos;s use and transfer to any other app of information received from Google APIs will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy#additional_requirements_for_specific_api_scopes" target="_blank" rel="noopener noreferrer" className="text-accent underline">Google API Services User Data Policy</a>, including the Limited Use requirements.
+      </p>
+    ),
+  },
+  {
+    title: "7. Contact Us",
+    content: (
+      <>
+        <p className="text-site-text-2">
+          If you have any questions or privacy inquiries regarding BugSnap, please contact us at:
+        </p>
+        <p className="font-medium text-accent">
+          <a href="mailto:support@akusaradigital.com" className="underline">support@akusaradigital.com</a> · <a href="https://akusaradigital.com" target="_blank" rel="noopener noreferrer" className="underline">akusaradigital.com</a>
+        </p>
+      </>
+    ),
+  },
+];
+
 export default function PrivacyPolicyPage() {
   return (
     <StaticShell
       title="Privacy Policy"
-      subtitle="Last updated: August 8, 2026"
+      subtitle="Privacy policy and data handling practices for BugSnap Chrome Extension and Dashboard."
+      lastUpdated="August 8, 2026"
     >
-      <div className="space-y-8 font-site text-xs sm:text-sm text-site-text leading-relaxed">
-        <section className="space-y-3">
-          <h2 className="text-base font-bold text-site-text">1. Overview</h2>
-          <p className="text-site-text-2">
-            BugSnap (&quot;we&quot;, &quot;our&quot;, or &quot;us&quot;) provides a screen recording, screenshot capture, and bug reporting tool consisting of a Chrome MV3 Extension and a Web Dashboard hosted at <code className="bg-site-surface-2 px-1 py-0.5 rounded text-xs border border-site-border">bugsnap.akusaraproject.my.id</code>.
-          </p>
-          <p className="text-site-text-2">
-            We respect your privacy. This policy explains what data we collect, how it is stored, and your rights. We adhere strictly to the <strong>Chrome Web Store User Data Policy</strong>, including Limited Use requirements.
-          </p>
-        </section>
-
-        <section className="space-y-3">
-          <h2 className="text-base font-bold text-site-text">2. Data We Collect and How We Use It</h2>
-
-          <div className="border border-site-border rounded-xl p-5 bg-site-surface space-y-4 shadow-xs">
-            <div>
-              <h3 className="font-bold text-[11px] uppercase tracking-wider text-accent mb-1">A. User Account & Identity</h3>
-              <p className="text-site-text">
-                <strong>Data:</strong> Your Google Account email address and Google Profile ID.
-              </p>
-              <p className="text-xs text-site-text-2 mt-1">
-                <strong>Purpose:</strong> Authenticating your user session via Google OAuth and linking captures created in the Chrome extension to your Web Dashboard workspace.
-              </p>
-            </div>
-
-            <div className="border-t border-site-border-subtle pt-3">
-              <h3 className="font-bold text-[11px] uppercase tracking-wider text-accent mb-1">B. Screen Captures & Video Media</h3>
-              <p className="text-site-text">
-                <strong>Data:</strong> Screenshots (PNG) and screen recordings (WebM) captured explicitly when you initiate a capture action.
-              </p>
-              <p className="text-xs text-site-text-2 mt-1">
-                <strong>Storage:</strong> Media files are uploaded directly to <strong>your own Google Drive account</strong> using the <code className="bg-site-surface-2 px-1 py-0.5 rounded border border-site-border-subtle">drive.file</code> scope. BugSnap does NOT store your video or screenshot media files on our own servers.
-              </p>
-            </div>
-
-            <div className="border-t border-site-border-subtle pt-3">
-              <h3 className="font-bold text-[11px] uppercase tracking-wider text-accent mb-1">C. Technical Metadata & DevLogs</h3>
-              <p className="text-site-text">
-                <strong>Data:</strong> Capture title, duration, window dimensions, OS name, browser version, timestamp, and optional developer logs (console errors and failed network request details captured during active recording).
-              </p>
-              <p className="text-xs text-site-text-2 mt-1">
-                <strong>Storage & Purpose:</strong> Stored securely in our cloud database to allow rendering capture details, diagnostic context, and AI bug summaries in your workspace dashboard.
-              </p>
-            </div>
-          </div>
-        </section>
-
-        <section className="space-y-3">
-          <h2 className="text-base font-bold text-site-text">3. Chrome Extension Permissions & Justification</h2>
-          <p className="text-site-text-2">Our Chrome Extension requests the following permissions for specific, limited features:</p>
-          <ul className="list-disc pl-5 space-y-1.5 text-xs text-site-text-2">
-            <li><strong className="text-site-text">desktopCapture &amp; tabCapture:</strong> Required to capture your screen or selected tab when you click record/screenshot.</li>
-            <li><strong className="text-site-text">activeTab &amp; scripting:</strong> Required to inject the annotation canvas and capture developer console/network logs for bug reporting on the active tab.</li>
-            <li><strong className="text-site-text">storage:</strong> Required to store local extension preferences and temporary auth session tokens locally in your browser.</li>
-            <li><strong className="text-site-text">identity:</strong> Required to initiate Google OAuth sign-in for Google Drive storage integration.</li>
-            <li><strong className="text-site-text">offscreen:</strong> Required to record audio/video streams safely in background Manifest V3 service workers.</li>
-            <li><strong className="text-site-text">&lt;all_urls&gt; (Host Permission):</strong> Required solely to capture console errors and network request metadata on the web page where you explicitly trigger a bug report. We do NOT track browsing history or background web activity.</li>
-          </ul>
-        </section>
-
-        <section className="space-y-3">
-          <h2 className="text-base font-bold text-site-text">4. Data Sharing, Sale, and Transfer</h2>
-          <ul className="list-disc pl-5 space-y-2 text-site-text-2">
-            <li><strong className="text-site-text">We DO NOT sell your data:</strong> BugSnap never sells, rents, or trades your personal data, browser activity, or captures to third parties, advertisers, or data brokers.</li>
-            <li><strong className="text-site-text">We DO NOT use data for advertising:</strong> No data collected by BugSnap is used for personalized advertising or profiling.</li>
-            <li><strong className="text-site-text">Service Providers:</strong> We transmit data only to essential infrastructure providers:
-              <ul className="list-circle pl-5 mt-1 space-y-1 text-xs text-site-text-2">
-                <li><strong>Google Drive API:</strong> For storing media files in your personal account under your control.</li>
-                <li><strong>Cloud Database:</strong> For secure storage of capture metadata and authentication management.</li>
-                <li><strong>Hosting Provider:</strong> Global edge network for serving the web dashboard application.</li>
-              </ul>
-            </li>
-          </ul>
-        </section>
-
-        <section className="space-y-3">
-          <h2 className="text-base font-bold text-site-text">5. Data Retention & Control</h2>
-          <p className="text-site-text-2">
-            Your capture media remains in your Google Drive and can be deleted by you at any time directly through Google Drive.
-          </p>
-          <p className="text-site-text-2">
-            Capture metadata stored in BugSnap can be deleted by deleting the capture item from your Web Dashboard. Upon deletion, associated metadata and comments are permanently removed from our database.
-          </p>
-        </section>
-
-        <section className="space-y-3">
-          <h2 className="text-base font-bold text-site-text">6. Limited Use Disclosure</h2>
-          <p className="text-site-text-2">
-            BugSnap&apos;s use and transfer to any other app of information received from Google APIs will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy#additional_requirements_for_specific_api_scopes" target="_blank" rel="noopener noreferrer" className="text-accent underline">Google API Services User Data Policy</a>, including the Limited Use requirements.
-          </p>
-        </section>
-
-        <section className="space-y-3">
-          <h2 className="text-base font-bold text-site-text">7. Contact Us</h2>
-          <p className="text-site-text-2">
-            If you have any questions or privacy inquiries regarding BugSnap, please contact us at:
-          </p>
-          <p className="font-medium text-accent">
-            <a href="mailto:support@akusaradigital.com" className="underline">support@akusaradigital.com</a> · <a href="https://akusaradigital.com" target="_blank" rel="noopener noreferrer" className="underline">akusaradigital.com</a>
-          </p>
-        </section>
+      <div className="max-w-4xl space-y-8 font-site text-xs sm:text-sm text-site-text leading-relaxed">
+        {sections.map((section, i) => (
+          <Reveal key={i} delay={i * 0.05}>
+            <section className="space-y-3">
+              <h2 className="text-base font-bold text-site-text">{section.title}</h2>
+              {section.content}
+            </section>
+          </Reveal>
+        ))}
       </div>
     </StaticShell>
   );

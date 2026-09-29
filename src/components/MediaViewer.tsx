@@ -1839,6 +1839,7 @@ function MediaViewer({
                   transformOrigin: "center center",
                   transition: zoom === MIN_ZOOM ? "transform 0.15s ease-out" : "none",
                 }}
+                onError={() => setImageFailed(true)}
               />
             </div>
           )}

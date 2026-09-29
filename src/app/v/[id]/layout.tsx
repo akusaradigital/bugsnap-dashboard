@@ -44,7 +44,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
       title: captureTitle,
       description,
       openGraph: {
-        title: `${captureTitle} | BugSnap`,
+        title: `BugSnap | ${captureTitle}`,
         description,
         type: "website",
         images: [
@@ -58,7 +58,7 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
       },
       twitter: {
         card: "summary_large_image",
-        title: `${captureTitle} | BugSnap`,
+        title: `BugSnap | ${captureTitle}`,
         description,
         images: [thumb],
       },

@@ -17,7 +17,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
     default: "BugSnap - Free Bug Reporting Tool & Screen Recorder for Chrome",
-    template: "%s | BugSnap",
+    template: "BugSnap | %s",
   },
   description:
     "BugSnap is a free screen recorder and developer bug reporting tool. Capture screenshots, screen videos with audio, console errors, and network logs saved straight to your Google Drive.",

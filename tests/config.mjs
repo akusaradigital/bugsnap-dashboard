@@ -29,8 +29,12 @@ function loadEnv() {
 const env = loadEnv();
 export const SUPABASE_URL = env.NEXT_PUBLIC_SUPABASE_URL;
 export const SUPABASE_ANON_KEY = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+export const SUPABASE_SERVICE_ROLE_KEY = env.SUPABASE_SERVICE_ROLE_KEY;
 
 export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+export const supabaseService = SUPABASE_SERVICE_ROLE_KEY
+  ? createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY)
+  : supabase;
 
 // Test owner email (must exist in public.users - the dashboard user).
 export const TEST_OWNER_EMAIL = "wahyu.priyono@magnusdigital.co.id";
@@ -61,9 +65,9 @@ export async function cleanupTestData() {
   }
 }
 
-/** Insert a test capture via the exact RPC the extension uses. */
+/** Insert a test capture via the service client (insert_capture_by_email is service_role only). */
 export async function insertTestCapture(overrides = {}) {
-  const { data, error } = await supabase.rpc("insert_capture_by_email", {
+  const { data, error } = await supabaseService.rpc("insert_capture_by_email", {
     p_owner_email: overrides.p_owner_email ?? TEST_OWNER_EMAIL,
     p_title: overrides.p_title ?? `${TEST_PREFIX} capture ${Date.now()}`,
     p_type: overrides.p_type ?? "screenshot",

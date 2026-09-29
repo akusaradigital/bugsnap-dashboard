@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useT } from "@/components/I18nProvider";
+import { Reveal } from "./motion/Reveal";
 
 const CHROME_STORE_URL =
   "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
@@ -14,7 +15,7 @@ export function SiteFooter() {
       <div className="mx-auto max-w-6xl px-4 sm:px-6 py-12">
         <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-10">
           {/* Brand Column */}
-          <div className="col-span-2 space-y-3">
+          <Reveal delay={0} className="col-span-2 space-y-3">
             <div className="flex items-center gap-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/icon.svg" alt="" aria-hidden="true" className="w-6 h-6 object-contain" />
@@ -35,10 +36,10 @@ export function SiteFooter() {
                 <span>Chrome Web Store</span>
               </a>
             </div>
-          </div>
+          </Reveal>
 
           {/* Product Links */}
-          <div className="space-y-3">
+          <Reveal delay={0.08} className="space-y-3">
             <h5 className="text-xs font-bold text-site-text uppercase tracking-wider">{t("landing.product")}</h5>
             <ul className="space-y-2 text-xs text-site-text-2">
               <li><Link href="/features" className="hover:text-site-text transition-colors">{t("site.nav.features")}</Link></li>
@@ -47,10 +48,10 @@ export function SiteFooter() {
               <li><Link href="/how-it-works" className="hover:text-site-text transition-colors">{t("site.nav.howItWorks")}</Link></li>
               <li><Link href="/pricing" className="hover:text-site-text transition-colors">{t("site.nav.pricing")}</Link></li>
             </ul>
-          </div>
+          </Reveal>
 
           {/* Resources Links */}
-          <div className="space-y-3">
+          <Reveal delay={0.16} className="space-y-3">
             <h5 className="text-xs font-bold text-site-text uppercase tracking-wider">{t("landing.resources")}</h5>
             <ul className="space-y-2 text-xs text-site-text-2">
               <li><Link href="/docs" className="hover:text-site-text transition-colors">{t("landing.docs")}</Link></li>
@@ -58,10 +59,10 @@ export function SiteFooter() {
               <li><Link href="/security" className="hover:text-site-text transition-colors">{t("landing.security")}</Link></li>
               <li><Link href="/contact" className="hover:text-site-text transition-colors">{t("landing.contact")}</Link></li>
             </ul>
-          </div>
+          </Reveal>
 
           {/* Company & Legal */}
-          <div className="space-y-3">
+          <Reveal delay={0.24} className="space-y-3">
             <h5 className="text-xs font-bold text-site-text uppercase tracking-wider">{t("landing.company")}</h5>
             <ul className="space-y-2 text-xs text-site-text-2">
               <li><Link href="/about" className="hover:text-site-text transition-colors">{t("landing.about")}</Link></li>
@@ -78,7 +79,7 @@ export function SiteFooter() {
                 </a>
               </li>
             </ul>
-          </div>
+          </Reveal>
         </div>
 
         {/* Bottom Bar */}

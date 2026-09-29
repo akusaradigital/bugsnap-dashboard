@@ -239,7 +239,7 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime, unlo
   const [logSearch, setLogSearch] = useState("");
   const [consoleLimit, setConsoleLimit] = useState(100);
   const [networkLimit, setNetworkLimit] = useState(100);
-  const resetLogFilters = () => {
+  const resetLogFilters = useCallback(() => {
     setLogSearch("");
     setConsoleErrorsOnly(false);
     setNetworkStatusFilter("all");
@@ -247,8 +247,10 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime, unlo
     setActionKindFilter("all");
     setConsoleLimit(100);
     setNetworkLimit(100);
-  };
-  const [decompressedLogs, setDecompressedLogs] = useState<CapturedLogs>(capture.dev_logs || null);
+  }, []);
+  // Always null on mount; the effect below resolves and sets this so that
+  // capture switches never flash the previous capture's logs.
+  const [decompressedLogs, setDecompressedLogs] = useState<CapturedLogs>(null);
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null);
   const [copiedCurl, setCopiedCurl] = useState<string | null>(null);
   const [copiedConsole, setCopiedConsole] = useState<string | null>(null);
@@ -288,6 +290,10 @@ ${stack}` : body);
   };
 
   useEffect(() => {
+    // Reset all filter/search state when the capture changes so stale filters
+    // from the previous capture never hide rows in the new one.
+    resetLogFilters();
+    setActiveTab("Info");
     // Switching captures while a slow Drive fetch is in flight used to let the
     // old capture's logs land in the new capture's panel. Ignore any resolution
     // that arrives after this effect has been superseded.
@@ -367,7 +373,7 @@ ${stack}` : body);
     return () => {
       cancelled = true;
     };
-  }, [capture.dev_logs, unlockPassword]);
+  }, [capture.dev_logs, unlockPassword, resetLogFilters]);
 
   const effectiveDevLogs = decompressedLogs;
   const summaryOnly = !Array.isArray(effectiveDevLogs) && isSummary(effectiveDevLogs);

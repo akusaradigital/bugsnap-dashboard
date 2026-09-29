@@ -4,6 +4,7 @@ import { useT } from "@/components/I18nProvider";
 import { StaticShell } from "@/components/StaticShell";
 import { BrowserFrame } from "@/components/site/BrowserFrame";
 import { IconCamera, IconWorld, IconDatabase } from "@/components/site/TablerIcons";
+import { Reveal, Parallax } from "@/components/site/motion";
 
 const CHROME_STORE_URL =
   "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
@@ -38,8 +39,15 @@ export function ExtensionContent() {
       subtitle={t("extension.heroSub")}
     >
       <div className="space-y-16">
-        {/* Hero Product Visual: Extension inside BrowserFrame */}
-        <div className="max-w-3xl mx-auto">
+        {/* Hero Product Visual: Extension inside BrowserFrame with Parallax Backdrop */}
+        <div className="relative max-w-3xl mx-auto">
+          {/* Subtle Parallax Floating Backdrop Element with Theme Gradient */}
+          <div className="absolute -inset-4 sm:-inset-6 -z-10 pointer-events-none" aria-hidden="true">
+            <Parallax offset={20} className="w-full h-full">
+              <div className="w-full h-full rounded-3xl border border-accent/20 bg-gradient-to-tr from-accent/15 via-emerald-500/10 to-transparent blur-md" />
+            </Parallax>
+          </div>
+
           <BrowserFrame
             url="https://app.acme.corp/dashboard"
             headerRight={
@@ -119,7 +127,7 @@ export function ExtensionContent() {
 
                 {/* Start Button */}
                 <div className="pt-2">
-                  <div className="w-full py-2 rounded-lg bg-accent text-slate-900 text-xs font-bold text-center shadow-xs">
+                  <div className="w-full py-2 rounded-lg bg-gradient-to-r from-accent via-emerald-400 to-accent text-slate-950 text-xs font-bold text-center shadow-xs">
                     Start Recording
                   </div>
                 </div>
@@ -130,57 +138,63 @@ export function ExtensionContent() {
 
         {/* Feature Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {capabilities.map((cap) => (
-            <div
-              key={cap.title}
-              className="p-6 rounded-xl border border-site-border bg-site-surface space-y-3 shadow-xs"
-            >
-              <div className="flex items-center justify-between">
-                <div className="p-2 rounded-lg bg-site-surface-2 border border-site-border-subtle">
-                  {cap.icon}
+          {capabilities.map((cap, i) => (
+            <Reveal key={cap.title} delay={i * 0.1}>
+              <div className="relative overflow-hidden group p-6 rounded-2xl border border-site-border bg-gradient-to-b from-site-surface via-site-surface to-site-surface-2/60 space-y-3 shadow-xs h-full transition-all duration-300 hover:-translate-y-1 hover:border-accent/40 hover:shadow-xl hover:shadow-accent/5">
+                {/* Top Edge Gradient Accent */}
+                <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-accent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden="true" />
+
+                <div className="flex items-center justify-between">
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-accent/20 to-emerald-500/10 border border-accent/30 flex items-center justify-center text-accent shadow-xs group-hover:scale-105 transition-all">
+                    {cap.icon}
+                  </div>
+                  <span className="text-[10px] font-semibold uppercase tracking-wider text-site-text-2 bg-site-surface-2 px-2.5 py-1 rounded-md border border-site-border-subtle">
+                    {cap.badge}
+                  </span>
                 </div>
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-site-text-2 bg-site-surface-2 px-2 py-0.5 rounded">
-                  {cap.badge}
-                </span>
+                <h3 className="text-base font-bold text-site-text tracking-tight group-hover:text-accent transition-colors">
+                  {cap.title}
+                </h3>
+                <p className="text-xs text-site-text-2 leading-relaxed">
+                  {cap.desc}
+                </p>
               </div>
-              <h3 className="text-base font-bold text-site-text tracking-tight">
-                {cap.title}
-              </h3>
-              <p className="text-xs text-site-text-2 leading-relaxed">
-                {cap.desc}
-              </p>
-            </div>
+            </Reveal>
           ))}
         </div>
 
         {/* Install CTA Section */}
-        <div className="rounded-xl border border-site-border bg-site-surface p-8 sm:p-12 text-center space-y-4 max-w-2xl mx-auto">
-          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full border border-site-border bg-site-surface-2 text-xs text-site-text-2">
-            <span>Free Forever</span>
-            <span>•</span>
-            <span>No Credit Card</span>
-          </div>
+        <Reveal delay={0.15}>
+          <div className="relative overflow-hidden rounded-2xl border border-site-border bg-site-surface/85 backdrop-blur-md p-8 sm:p-12 text-center space-y-4 max-w-2xl mx-auto shadow-lg">
+            <div className="relative z-10 space-y-4">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-site-border bg-site-surface-2 text-xs text-site-text-2">
+                <span>Free Forever</span>
+                <span>•</span>
+                <span>No Credit Card</span>
+              </div>
 
-          <h2 className="text-2xl sm:text-3xl font-bold text-site-text tracking-tight">
-            Install BugSnap in one click
-          </h2>
-          <p className="text-xs sm:text-sm text-site-text-2 leading-relaxed">
-            {t("extension.installMeta")}
-          </p>
+              <h2 className="text-2xl sm:text-3xl font-bold text-site-text tracking-tight">
+                Install BugSnap in one click
+              </h2>
+              <p className="text-xs sm:text-sm text-site-text-2 leading-relaxed">
+                {t("extension.installMeta")}
+              </p>
 
-          <div className="pt-4">
-            <a
-              href={CHROME_STORE_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-accent text-slate-900 text-sm font-semibold hover:bg-accent-hover hover:text-white transition-all shadow-md"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/icons/chrome.svg" alt="" aria-hidden="true" className="w-4 h-4" />
-              <span>{t("extension.installCta")}</span>
-            </a>
+              <div className="pt-2">
+                <a
+                  href={CHROME_STORE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-accent hover:bg-accent-hover text-slate-900 text-xs font-semibold shadow-xs hover:shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all"
+                >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src="/icons/chrome.svg" alt="" aria-hidden="true" className="w-4 h-4" />
+                  <span>{t("extension.installCta")}</span>
+                </a>
+              </div>
+            </div>
           </div>
-        </div>
+        </Reveal>
       </div>
     </StaticShell>
   );

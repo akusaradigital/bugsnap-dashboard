@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createServiceClient, getAuthenticatedUser } from "@/lib/supabase-server";
+import { isUuid } from "@/lib/google-drive-values";
 
 export const runtime = "nodejs";
 
@@ -42,6 +43,10 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Missing required fields: workspaceId, userId, role" }, { status: 400 });
   }
 
+  if (!isUuid(workspaceId) || !isUuid(targetUserId)) {
+    return NextResponse.json({ error: "Invalid workspaceId or userId format" }, { status: 400 });
+  }
+
   if (role !== "creator" && role !== "viewer") {
     return NextResponse.json({ error: "Role must be either 'creator' or 'viewer'" }, { status: 400 });
   }
@@ -64,7 +69,7 @@ export async function PATCH(req: Request) {
     return NextResponse.json({ error: "Member not found in this workspace" }, { status: 404 });
   }
 
-  if (targetMember.role === "owner") {
+  if (targetMember.role === "owner" || targetUserId === user.id) {
     return NextResponse.json({ error: "Cannot change the workspace owner's role" }, { status: 400 });
   }
 
@@ -103,6 +108,10 @@ export async function DELETE(req: Request) {
 
   if (!workspaceId || !targetUserId) {
     return NextResponse.json({ error: "Missing required parameters: workspaceId, userId" }, { status: 400 });
+  }
+
+  if (!isUuid(workspaceId) || !isUuid(targetUserId)) {
+    return NextResponse.json({ error: "Invalid workspaceId or userId format" }, { status: 400 });
   }
 
   const db = createServiceClient();

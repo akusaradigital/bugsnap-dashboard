@@ -24,6 +24,7 @@ const config: Config = {
         "site-text-2": "var(--site-text-2)",
         "site-border": "var(--site-border)",
         "site-border-subtle": "var(--site-border-subtle)",
+        "site-border-focus": "var(--site-border-focus)",
         "site-success": "var(--site-success)",
         "site-warning": "var(--site-warning)",
         "site-danger": "var(--site-danger)",

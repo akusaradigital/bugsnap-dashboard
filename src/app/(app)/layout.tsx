@@ -14,6 +14,7 @@ import FloatingSupport from "@/components/FloatingSupport";
 
 const navItems = [
   { labelKey: "nav.dashboard", href: "/dashboard", icon: "📊" },
+  { labelKey: "nav.captures", href: "/captures", icon: "📸" },
 ];
 
 type Workspace = {
@@ -405,9 +406,7 @@ export default function DashboardLayout({
     if (targetWs !== activeWsId) {
       setActiveWsId(targetWs);
     }
-    if (matchedWs && matchedWs.id !== wsParam) {
-      routerRef.current.replace(`${pathnameRef.current}?ws=${matchedWs.id}`, { scroll: false });
-    } else if (!wsParam && targetWs) {
+    if (targetWs && targetWs !== wsParam) {
       routerRef.current.replace(`${pathnameRef.current}?ws=${targetWs}`, { scroll: false });
     }
   }, [wsParam, workspaces, activeWsId]);
@@ -812,6 +811,7 @@ export default function DashboardLayout({
       setWorkspaces((prev) => [...prev, created]);
       setMembers((prev) => ({ ...prev, [created.id]: [] }));
       setActiveWsId(created.id);
+      setWsParam(created.id);
       router.replace(`${pathname}?ws=${created.id}`, { scroll: false });
       setNewWsName("");
       setCreateWsModalOpen(false);
@@ -845,14 +845,16 @@ export default function DashboardLayout({
       });
       if (error) throw error;
       const { data: authData } = await supabase.auth.getSession();
-      await fetch("/api/notifications/invite", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...(authData.session?.access_token ? { Authorization: `Bearer ${authData.session.access_token}` } : {}),
-        },
-        body: JSON.stringify({ email, workspaceId: activeWsId }),
-      }).catch(() => null);
+      if (authData.session?.access_token) {
+        await fetch("/api/notifications/invite", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${authData.session.access_token}`,
+          },
+          body: JSON.stringify({ email, workspaceId: activeWsId }),
+        }).catch(() => null);
+      }
       setInviteEmail("");
       setInviteModalOpen(false);
       setMembers((prev) => ({
@@ -1180,77 +1182,42 @@ export default function DashboardLayout({
           )}
         </div>
 
-        <nav className="flex-1 px-3 py-4 space-y-1">
-          {navItems.map((item) => {
-            const active = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
-            // Preserve the active workspace across navigation so the
-            // captures/dashboard filters keep applying.
-            const href = activeWsId ? `${item.href}?ws=${activeWsId}` : item.href;
-            return (
-              <Link
-                key={item.href}
-                href={href}
-                onClick={() => setSidebarOpen(false)}
-                className={`flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg border-l-2 transition-colors ${
-                  active
-                    ? "bg-[#89BD49]/10 dark:bg-[#89BD49]/15 border-[#89BD49] text-[#6B9A35] dark:text-[#A8D666]"
-                    : "border-transparent text-muted hover:text-foreground hover:bg-subtle"
-                }`}
-              >
-                <span className="text-base" aria-hidden="true">{item.icon}</span>
-                {t(item.labelKey)}
-              </Link>
-            );
-          })}
-
-          {/* Sister Apps Entry Points (Aksora & SnapTest) - Temporarily hidden per user request */}
-          {/*
-          <div className="pt-3 mt-2 border-t border-border/60 space-y-1">
-            <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-wider text-muted">
-              {t("nav.sisterApps")}
-            </p>
-            <a
-              href={
-                process.env.NEXT_PUBLIC_AKSORA_URL
-                  ? `${process.env.NEXT_PUBLIC_AKSORA_URL}${activeWs?.name ? `?ws=${encodeURIComponent(activeWs.name)}` : ""}`
-                  : "#"
-              }
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-between px-3 py-2 text-xs font-medium rounded-lg text-muted hover:text-foreground hover:bg-subtle transition-colors group"
-            >
-              <span className="flex items-center gap-2.5">
-                <span className="text-sm" aria-hidden="true">📋</span>
-                {t("nav.aksora")}
-              </span>
-              <svg className="w-3 h-3 text-muted/60 group-hover:text-foreground transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-              </svg>
-            </a>
-            <a
-              href={
-                process.env.NEXT_PUBLIC_SNAPTEST_URL
-                  ? `${process.env.NEXT_PUBLIC_SNAPTEST_URL}${activeWs?.name ? `?ws=${encodeURIComponent(activeWs.name)}` : ""}`
-                  : "#"
-              }
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center justify-between px-3 py-2 text-xs font-medium rounded-lg text-muted hover:text-foreground hover:bg-subtle transition-colors group"
-            >
-              <span className="flex items-center gap-2.5">
-                <span className="text-sm" aria-hidden="true">🤖</span>
-                {t("nav.snaptest")}
-              </span>
-              <svg className="w-3 h-3 text-muted/60 group-hover:text-foreground transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-              </svg>
-            </a>
+        <nav className="flex-1 flex flex-col min-h-0 px-3 py-3 overflow-hidden">
+          <div className="space-y-1 shrink-0">
+            {navItems.map((item) => {
+              const active =
+                item.href === "/captures"
+                  ? pathname === "/captures" && !currentFolder
+                  : pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+              // Preserve the active workspace across navigation so the
+              // captures/dashboard filters keep applying.
+              const href = activeWsId ? `${item.href}?ws=${activeWsId}` : item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={href}
+                  onClick={() => {
+                    if (item.href === "/captures") {
+                      setCurrentFolder(null);
+                    }
+                    setSidebarOpen(false);
+                  }}
+                  className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg border-l-2 transition-colors ${
+                    active
+                      ? "bg-[#89BD49]/10 dark:bg-[#89BD49]/15 border-[#89BD49] text-[#6B9A35] dark:text-[#A8D666]"
+                      : "border-transparent text-muted hover:text-foreground hover:bg-subtle"
+                  }`}
+                >
+                  <span className="text-base" aria-hidden="true">{item.icon}</span>
+                  {t(item.labelKey)}
+                </Link>
+              );
+            })}
           </div>
-          */}
 
           {/* Google Drive Folders List (Sync Bridge) */}
-          <div className="pt-4 mt-2 border-t border-border/60 space-y-1.5">
-            <div className="flex items-center justify-between px-3 pb-1 pt-2">
+          <div className="flex-1 flex flex-col min-h-0 pt-3 mt-2 border-t border-border/60">
+            <div className="flex items-center justify-between px-3 pb-1.5 shrink-0">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted flex items-center gap-1.5">
                 <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
@@ -1259,6 +1226,7 @@ export default function DashboardLayout({
               </p>
               {activeWsRole === "owner" && (
                 <button
+                  type="button"
                   onClick={() => setCreateFolderModalOpen(true)}
                   className="text-[10px] font-bold text-[#6B9A35] dark:text-[#A8D666] hover:underline"
                 >
@@ -1267,22 +1235,7 @@ export default function DashboardLayout({
               )}
             </div>
 
-            <div className="max-h-40 overflow-y-auto space-y-0.5">
-              <Link
-                href={activeWsId ? `/captures?ws=${activeWsId}` : "/captures"}
-                onClick={() => {
-                  setCurrentFolder(null);
-                  setSidebarOpen(false);
-                }}
-                className={`flex items-center gap-2.5 rounded-lg border-l-2 px-3 py-2 text-xs transition-colors ${
-                  pathname === "/captures" && !currentFolder
-                    ? "border-[#89BD49] bg-[#89BD49]/10 dark:bg-[#89BD49]/15 font-semibold text-[#6B9A35] dark:text-[#A8D666]"
-                    : "border-transparent text-muted hover:bg-subtle hover:text-foreground"
-                }`}
-              >
-                <span className="text-xs shrink-0">📂</span>
-                <span className="truncate">{t("nav.captures")}</span>
-              </Link>
+            <div className="flex-1 overflow-y-auto space-y-0.5 pr-0.5">
               {folders.map((folder) => {
                 const isActiveFolder = pathname === "/captures" && currentFolder === folder;
                 const activeWsRole = workspaces.find(w => w.id === activeWsId)?.role;

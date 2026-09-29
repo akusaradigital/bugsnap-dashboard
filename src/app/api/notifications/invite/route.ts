@@ -23,6 +23,12 @@ export async function POST(req: Request) {
   const wsId = String(workspaceId || "").trim();
   if (!targetEmail || !wsId) return NextResponse.json({ error: "Missing fields" }, { status: 400 });
 
+  // Validate email format to prevent sending to malformed addresses or Resend 422 errors
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(targetEmail) || targetEmail.length > 254) {
+    return NextResponse.json({ error: "Invalid email format" }, { status: 400 });
+  }
+
   const supabase = createServiceClient();
   const { data: workspace, error: wsError } = await supabase
     .from("workspaces")
@@ -68,9 +74,9 @@ export async function POST(req: Request) {
       subject: emailContent.subject,
       html: emailContent.html,
     }),
-  });
+  }).catch(() => null);
 
-  if (!response.ok) {
+  if (!response?.ok) {
     return NextResponse.json({ error: "Invite email failed" }, { status: 502 });
   }
   return NextResponse.json({ ok: true });
