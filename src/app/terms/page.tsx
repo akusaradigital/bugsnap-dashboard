@@ -1,15 +1,13 @@
 import { ReactNode } from "react";
-import { Metadata } from "next";
 import { StaticShell } from "@/components/StaticShell";
 import { Reveal } from "@/components/site/motion";
+import { pageMeta } from "@/lib/pageMeta";
 
-export const metadata: Metadata = {
+export const metadata = pageMeta({
   title: "Terms of Service - BugSnap",
   description: "Terms and conditions for using the BugSnap Chrome Extension and Dashboard.",
-  alternates: {
-    canonical: "/terms",
-  },
-};
+  canonical: "/terms",
+});
 
 interface LegalSection {
   title: string;

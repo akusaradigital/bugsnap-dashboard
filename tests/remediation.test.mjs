@@ -184,3 +184,77 @@ test("trailing debounce: collapses rapid mutation calls to single final executio
   // Should have executed exactly once
   assert.equal(callCount, 1);
 });
+
+// ---------------------------------------------------------------------------
+// 5. Admin Captures & Workspaces Column Safety Contracts
+// ---------------------------------------------------------------------------
+test("admin captures visibility resolution: resolves is_public from password state", () => {
+  function resolveCaptureVisibility(capture) {
+    return {
+      id: capture.id,
+      title: capture.title,
+      url: capture.drive_url,
+      is_public: !capture.password,
+      size: 0,
+    };
+  }
+
+  const publicCap = resolveCaptureVisibility({ id: "1", title: "Public Cap", drive_url: "https://drive.google.com/file/d/1/view", password: null });
+  assert.equal(publicCap.is_public, true);
+  assert.equal(publicCap.url, "https://drive.google.com/file/d/1/view");
+  assert.equal(publicCap.size, 0);
+
+  const privateCap = resolveCaptureVisibility({ id: "2", title: "Private Cap", drive_url: "https://drive.google.com/file/d/2/view", password: "secretPassword" });
+  assert.equal(privateCap.is_public, false);
+
+  // Toggle visibility payload
+  function getVisibilityUpdatePayload(nextPublic) {
+    return nextPublic ? { password: null } : { password: "locked" };
+  }
+  assert.deepEqual(getVisibilityUpdatePayload(true), { password: null });
+  assert.deepEqual(getVisibilityUpdatePayload(false), { password: "locked" });
+});
+
+test("admin workspaces search filter: safely targets owner_user_id instead of owner_email column", () => {
+  function buildWorkspaceSearchFilter(search, matchingOwnerIds) {
+    if (!search) return null;
+    if (matchingOwnerIds.length > 0) {
+      return `name.ilike.%${search}%,owner_user_id.in.(${matchingOwnerIds.join(",")})`;
+    }
+    return `name.ilike.%${search}%`;
+  }
+
+  assert.equal(
+    buildWorkspaceSearchFilter("acme", ["uid-1", "uid-2"]),
+    "name.ilike.%acme%,owner_user_id.in.(uid-1,uid-2)"
+  );
+  assert.equal(
+    buildWorkspaceSearchFilter("solo", []),
+    "name.ilike.%solo%"
+  );
+});
+
+test("admin captures views count aggregation: computes views_count from capture_views rows", () => {
+  function aggregateViewsCount(captures, viewsData) {
+    const viewCountMap = {};
+    for (const v of viewsData) {
+      if (v.capture_id) viewCountMap[v.capture_id] = (viewCountMap[v.capture_id] || 0) + 1;
+    }
+    return captures.map((c) => ({
+      ...c,
+      views_count: viewCountMap[c.id] || 0,
+    }));
+  }
+
+  const rawCaptures = [{ id: "c1" }, { id: "c2" }, { id: "c3" }];
+  const viewsRows = [
+    { capture_id: "c1" },
+    { capture_id: "c1" },
+    { capture_id: "c2" },
+  ];
+
+  const enriched = aggregateViewsCount(rawCaptures, viewsRows);
+  assert.equal(enriched.find((c) => c.id === "c1").views_count, 2);
+  assert.equal(enriched.find((c) => c.id === "c2").views_count, 1);
+  assert.equal(enriched.find((c) => c.id === "c3").views_count, 0);
+});

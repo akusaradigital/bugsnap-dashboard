@@ -333,7 +333,7 @@ export default function AdminUsersPage() {
             placeholder={t("admin.searchUserPlaceholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 text-slate-900 dark:text-white"
+            className="w-full min-w-0 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 text-slate-900 dark:text-white"
           />
           <button
             type="submit"

@@ -23,18 +23,18 @@ export function ContactContent() {
           <div className="space-y-6">
             {/* Email Support Card */}
             <Reveal delay={0}>
-              <div className="group rounded-xl border border-site-border bg-site-surface p-6 space-y-3 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-site-border-focus hover:shadow-sm">
+              <div className="group rounded-xl border border-site-border bg-site-surface p-4 sm:p-6 space-y-3 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-site-border-focus hover:shadow-sm">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-site-surface-2 border border-site-border text-site-text flex items-center justify-center transition-colors group-hover:border-accent/40 group-hover:text-accent group-hover:bg-accent/5">
+                  <div className="w-10 h-10 rounded-lg bg-site-surface-2 border border-site-border text-site-text flex items-center justify-center transition-colors group-hover:border-accent/40 group-hover:text-accent group-hover:bg-accent/5 shrink-0">
                     <IconMail size={20} strokeWidth={2} />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <h3 className="text-[11px] font-bold uppercase tracking-wider text-accent">
                       {t("contact.emailSupport")}
                     </h3>
                     <a
                       href="mailto:support@akusaradigital.com"
-                      className="text-sm font-bold text-site-text hover:underline"
+                      className="text-sm font-bold text-site-text hover:underline break-all"
                     >
                       support@akusaradigital.com
                     </a>
@@ -48,12 +48,12 @@ export function ContactContent() {
 
             {/* Company Info Card */}
             <Reveal delay={0.08}>
-              <div className="group rounded-xl border border-site-border bg-site-surface p-6 space-y-3 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-site-border-focus hover:shadow-sm">
+              <div className="group rounded-xl border border-site-border bg-site-surface p-4 sm:p-6 space-y-3 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-site-border-focus hover:shadow-sm">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-site-surface-2 border border-site-border text-site-text flex items-center justify-center transition-colors group-hover:border-accent/40 group-hover:text-accent group-hover:bg-accent/5">
+                  <div className="w-10 h-10 rounded-lg bg-site-surface-2 border border-site-border text-site-text flex items-center justify-center transition-colors group-hover:border-accent/40 group-hover:text-accent group-hover:bg-accent/5 shrink-0">
                     <IconBuilding size={20} strokeWidth={2} />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <h3 className="text-[11px] font-bold uppercase tracking-wider text-accent">
                       {t("contact.company")}
                     </h3>
@@ -63,7 +63,7 @@ export function ContactContent() {
                 <p className="text-xs text-site-text-2 leading-relaxed">
                   {t("contact.companyDesc")}
                 </p>
-                <div className="text-xs text-site-text-2 pt-1 flex items-center gap-1.5">
+                <div className="text-xs text-site-text-2 pt-1 flex items-center gap-1.5 flex-wrap">
                   <span>{t("contact.websiteLabel")}</span>
                   <a
                     href="https://akusaradigital.com"
@@ -79,12 +79,12 @@ export function ContactContent() {
 
             {/* Enterprise Card */}
             <Reveal delay={0.16}>
-              <div className="group rounded-xl border border-site-border bg-site-surface p-6 space-y-3 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-site-border-focus hover:shadow-sm">
+              <div className="group rounded-xl border border-site-border bg-site-surface p-4 sm:p-6 space-y-3 shadow-xs transition-all duration-200 hover:-translate-y-0.5 hover:border-site-border-focus hover:shadow-sm">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-lg bg-site-surface-2 border border-site-border text-site-text flex items-center justify-center transition-colors group-hover:border-accent/40 group-hover:text-accent group-hover:bg-accent/5">
+                  <div className="w-10 h-10 rounded-lg bg-site-surface-2 border border-site-border text-site-text flex items-center justify-center transition-colors group-hover:border-accent/40 group-hover:text-accent group-hover:bg-accent/5 shrink-0">
                     <IconShieldCheck size={20} strokeWidth={2} />
                   </div>
-                  <div>
+                  <div className="min-w-0">
                     <h3 className="text-[11px] font-bold uppercase tracking-wider text-accent">
                       {t("contact.enterprise")}
                     </h3>
@@ -102,7 +102,7 @@ export function ContactContent() {
           <div className="space-y-6">
             {/* Action Box */}
             <Reveal delay={0.1}>
-              <div className="rounded-xl border border-site-border bg-site-surface p-6 space-y-4 shadow-xs">
+              <div className="rounded-xl border border-site-border bg-site-surface p-4 sm:p-6 space-y-4 shadow-xs">
                 <h3 className="text-base font-bold text-site-text">{t("contact.startCapturing")}</h3>
                 <a
                   href={CHROME_STORE_URL}
@@ -125,7 +125,7 @@ export function ContactContent() {
 
             {/* Resources List / FAQ */}
             <Reveal delay={0.18}>
-              <div className="rounded-xl border border-site-border bg-site-surface p-6 space-y-4 shadow-xs">
+              <div className="rounded-xl border border-site-border bg-site-surface p-4 sm:p-6 space-y-4 shadow-xs">
                 <h3 className="text-base font-bold text-site-text">{t("contact.usefulResources")}</h3>
                 <ul className="space-y-3.5 text-xs">
                   <li className="flex flex-col gap-0.5">

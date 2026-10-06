@@ -629,14 +629,25 @@ ${stack}` : body);
     [networkLogs]
   );
 
+  const performanceLog = useMemo(
+    () => logs.findLast((l): l is PerformanceLog => l.type === "performance"),
+    [logs]
+  );
+  const metrics = performanceLog?.metrics;
+  const hasSpaWarning = Boolean(
+    metrics?.spaHealth?.isBloated ||
+    metrics?.spaHealth?.isMemoryLeakSuspected ||
+    (metrics?.domNodes && metrics.domNodes > 3000)
+  );
+
   const consoleErrors = useMemo(
     () => consoleLogs.filter((l): l is ConsoleLog => l.type === "console" && isConsoleError(l)),
     [consoleLogs]
   );
   const networkErrors = useMemo(() => networkLogs.filter(isNetworkFailed), [networkLogs]);
-  const totalIssuesCount = summary
+  const totalIssuesCount = (summary
     ? (summary.errors || 0) + (summary.failedRequests || 0)
-    : consoleErrors.length + networkErrors.length;
+    : consoleErrors.length + networkErrors.length) + (hasSpaWarning ? 1 : 0);
 
   type IssueItem = {
     id: string;
@@ -701,9 +712,6 @@ ${stack}` : body);
   // When every request is one party the badge is 96 identical stamps of noise -
   // and it reads as wrong on sibling subdomains (dev-fe -> dev-be is stamped 3RD).
   const partyIsMixed = firstPartyCount > 0 && thirdPartyCount > 0;
-
-  const performanceLog = logs.findLast((l): l is PerformanceLog => l.type === "performance");
-  const metrics = performanceLog?.metrics;
 
   const storageLog = logs.findLast((l): l is StorageLog => l.type === "storage");
   const storageData = storageLog?.storage;
@@ -1085,7 +1093,7 @@ ${stack}` : body);
             {/* Quick Filter for Network */}
             {activeTab === "Network" && (
               <div className="flex flex-wrap items-center justify-between gap-1.5 pt-0.5">
-                <div className="flex items-center gap-1.5">
+                <div className="flex flex-wrap items-center gap-1.5">
                   {networkErrors.length > 0 && (
                     <>
                       <button
@@ -1268,8 +1276,26 @@ ${stack}` : body);
                     <span>{consoleErrors.length} console</span>
                     <span>•</span>
                     <span>{networkErrors.length} network</span>
+                    {hasSpaWarning && (
+                      <>
+                        <span>•</span>
+                        <span className="text-amber-600 dark:text-amber-400">1 SPA alert</span>
+                      </>
+                    )}
                   </div>
                 </div>
+
+                {hasSpaWarning && (
+                  <div className="p-2.5 rounded-lg border bg-amber-500/10 border-amber-500/30 text-amber-900 dark:text-amber-300 text-xs flex items-start gap-2">
+                    <span className="text-sm">⚠️</span>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-semibold text-[11px]">{t("dt.spaHealthAlert")}</p>
+                      <p className="text-[10px] text-muted leading-relaxed mt-0.5">
+                        {metrics?.spaHealth?.warning || `${t("dt.domBloatWarning")}: ${metrics?.domNodes?.toLocaleString()} elements.`}
+                      </p>
+                    </div>
+                  </div>
+                )}
 
                 <div className="divide-y divide-border/60 border border-border rounded-lg overflow-hidden bg-background">
                   {issueItems.map(({ id, type, log }) => {
@@ -1572,23 +1598,58 @@ ${stack}` : body);
                     </span>
                   </div>
                   <div className="p-2.5 rounded-xl border border-border bg-subtle/80 flex flex-col justify-between">
-                    <span className="text-[10px] text-muted font-medium">JS Heap Memory</span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-muted font-medium">JS Heap Memory</span>
+                      {metrics.heapGrowthMB != null && metrics.heapGrowthMB > 0 && (
+                        <span className="text-[9px] font-mono font-bold text-amber-600 dark:text-amber-400">
+                          +{metrics.heapGrowthMB}MB
+                        </span>
+                      )}
+                    </div>
                     <span className="text-xs font-mono font-bold mt-1 text-foreground">
                       {metrics.jsHeapUsedMB != null ? `${metrics.jsHeapUsedMB} MB` : "-"}
                     </span>
                   </div>
                   <div className="p-2.5 rounded-xl border border-border bg-subtle/80 flex flex-col justify-between">
-                    <span className="text-[10px] text-muted font-medium">DOM Elements</span>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] text-muted font-medium">DOM Elements</span>
+                      {metrics.domGrowthPct != null && metrics.domGrowthPct > 0 && (
+                        <span className="text-[9px] font-mono font-bold text-amber-600 dark:text-amber-400">
+                          +{metrics.domGrowthPct}%
+                        </span>
+                      )}
+                    </div>
                     <span className="text-xs font-mono font-bold mt-1 text-foreground">
                       {metrics.domNodes != null ? `${metrics.domNodes.toLocaleString()}` : "-"}
                     </span>
                   </div>
                 </div>
+
+                {/* SPA Health & Memory Alert */}
+                {(metrics.spaHealth?.isBloated || metrics.spaHealth?.isMemoryLeakSuspected || (metrics.domNodes != null && metrics.domNodes > 3000)) && (
+                  <div className={`mt-2.5 p-2.5 rounded-xl border flex flex-col gap-1 ${
+                    metrics.spaHealth?.status === "critical"
+                      ? "bg-red-500/10 border-red-500/30 text-red-800 dark:text-red-300"
+                      : "bg-amber-500/10 border-amber-500/30 text-amber-800 dark:text-amber-300"
+                  }`}>
+                    <div className="flex items-center gap-1.5 font-semibold text-xs">
+                      <span>{metrics.spaHealth?.status === "critical" ? "🚨" : "⚠️"}</span>
+                      <span>{t("dt.spaHealthAlert")}</span>
+                    </div>
+                    <p className="text-[11px] leading-relaxed opacity-90">
+                      {metrics.spaHealth?.warning || (
+                        metrics.domNodes && metrics.domNodes > 3000
+                          ? `${t("dt.domBloatWarning")}: ${metrics.domNodes.toLocaleString()} elements.`
+                          : t("dt.memoryLeakWarning")
+                      )}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
             {/* Quick Export Bug Report Card */}
-            <div className="p-3 rounded-xl border border-[#89BD49]/30 dark:border-[#89BD49]/40 bg-[#89BD49]/10 dark:bg-[#89BD49]/15 flex items-center justify-between gap-3 shadow-2xs">
+            <div className="p-3 rounded-xl border border-[#89BD49]/30 dark:border-[#89BD49]/40 bg-[#89BD49]/10 dark:bg-[#89BD49]/15 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                   <span className="text-[#6B9A35] dark:text-[#A8D666]">📋</span>
@@ -1601,7 +1662,7 @@ ${stack}` : body);
               <button
                 type="button"
                 onClick={handleCopyBugReport}
-                className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-xs shadow-[#89BD49]/25 transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer"
+                className="w-full sm:w-auto justify-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-xs shadow-[#89BD49]/25 transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer"
               >
                 {copiedBugReport ? (
                   <>
@@ -2103,7 +2164,7 @@ ${stack}` : body);
           return (
             <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
               {/* Storage Switcher Toolbar */}
-              <div className="p-3 border-b border-border bg-subtle/20 flex items-center justify-between gap-2 shrink-0">
+              <div className="p-2.5 sm:p-3 border-b border-border bg-subtle/20 flex flex-wrap items-center justify-between gap-2 shrink-0">
                 <div className="flex items-center gap-1.5">
                   <button
                     type="button"
@@ -2183,7 +2244,7 @@ ${stack}` : body);
                         <div key={key} className="p-3 text-xs hover:bg-subtle/40 transition-colors space-y-1.5">
                           <div className="flex items-center justify-between gap-2 min-w-0">
                             <div className="flex items-center gap-2 min-w-0">
-                              <span className="font-mono font-semibold text-foreground text-xs truncate max-w-sm" title={key}>
+                              <span className="font-mono font-semibold text-foreground text-xs truncate max-w-[140px] sm:max-w-sm" title={key}>
                                 {key}
                               </span>
                               {isJson && (

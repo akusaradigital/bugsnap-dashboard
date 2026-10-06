@@ -37,7 +37,7 @@ test("extension capture payload matches dashboard whitelist and response", () =>
 
 test("workspace context request and response match editor consumption", () => {
   if (editor) {
-    assert.match(editor, /JSON\.stringify\(\{ access_token: accessToken, workspaceId:/);
+    assert.match(editor, /JSON\.stringify\(\{\s*access_token:\s*accessToken,\s*workspaceId:/);
     assert.match(editor, /Array\.isArray\(context\.workspaces\)/);
     assert.match(editor, /Array\.isArray\(context\.folders\)/);
   }

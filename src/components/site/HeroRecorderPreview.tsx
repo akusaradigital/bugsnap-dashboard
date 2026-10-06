@@ -8,7 +8,7 @@ export function HeroRecorderPreview() {
 
   return (
     <div className="relative w-full max-w-lg mx-auto">
-      {/* Wazapin-style soft rounded mint container */}
+      {/* Soft rounded mint container */}
       <div
         className="relative rounded-2xl sm:rounded-[2rem] p-4 sm:p-6 pb-4 overflow-hidden border border-site-border shadow-2xl"
         style={{ background: "linear-gradient(160deg, #eaf9f4 0%, #f4faf7 100%)" }}
@@ -23,21 +23,21 @@ export function HeroRecorderPreview() {
         {/* Floating live capture window */}
         <div className="relative rounded-xl border border-site-border bg-site-surface text-site-text shadow-xl overflow-hidden font-site">
           {/* Top Browser Bar */}
-          <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-site-border bg-site-surface-2">
-            <div className="flex items-center gap-2">
-              <div className="flex gap-1.5">
+          <div className="flex items-center justify-between px-3.5 py-2.5 border-b border-site-border bg-site-surface-2 gap-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="flex gap-1.5 shrink-0">
                 <span className="w-2.5 h-2.5 rounded-full bg-red-400" />
                 <span className="w-2.5 h-2.5 rounded-full bg-yellow-400" />
                 <span className="w-2.5 h-2.5 rounded-full bg-green-400" />
               </div>
-              <span className="text-[11px] font-mono text-site-text-2 bg-site-surface px-2.5 py-0.5 rounded border border-site-border flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                app.acme.corp/checkout
+              <span className="text-[11px] font-mono text-site-text-2 bg-site-surface px-2.5 py-0.5 rounded border border-site-border flex items-center gap-1.5 truncate max-w-[130px] sm:max-w-none">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                <span className="truncate">app.acme.corp/checkout</span>
               </span>
             </div>
 
             {/* Live REC indicator */}
-            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-[10px] font-mono font-semibold">
+            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-[10px] font-mono font-semibold shrink-0">
               <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
               <span>REC 00:14</span>
             </div>
@@ -75,7 +75,7 @@ export function HeroRecorderPreview() {
           {/* Bottom DevTools Drawer */}
           <div className="bg-site-surface-2 text-xs">
             {/* DevTools Drawer Header */}
-            <div className="flex items-center justify-between px-3 border-b border-site-border bg-site-surface text-[11px]">
+            <div className="flex flex-wrap items-center justify-between gap-1.5 px-3 py-1 border-b border-site-border bg-site-surface text-[11px]">
               <div className="flex items-center gap-1 font-mono">
                 <button
                   type="button"
@@ -103,7 +103,7 @@ export function HeroRecorderPreview() {
                 </button>
               </div>
 
-              <div className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium">
+              <div className="flex items-center gap-1 text-[10px] text-emerald-600 dark:text-emerald-400 font-medium py-1">
                 <IconCheck size={11} strokeWidth={2.5} />
                 <span>Saved to Google Drive</span>
               </div>
@@ -130,7 +130,7 @@ export function HeroRecorderPreview() {
               )}
 
               {/* System Specs Tags */}
-              <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-site-border text-[9px] text-site-text-2">
+              <div className="flex flex-wrap items-center gap-1.5 mt-2 pt-2 border-t border-site-border text-[9px] text-site-text-2">
                 <span className="px-1.5 py-0.5 rounded bg-site-surface border border-site-border">Chrome 128</span>
                 <span className="px-1.5 py-0.5 rounded bg-site-surface border border-site-border">macOS 14.5</span>
                 <span className="px-1.5 py-0.5 rounded bg-site-surface border border-site-border">1920×1080</span>

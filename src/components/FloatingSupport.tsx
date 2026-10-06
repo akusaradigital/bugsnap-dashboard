@@ -495,7 +495,7 @@ export default function FloatingSupport() {
                   {t("support.urgent")}{" "}
                   <a
                     href={`mailto:support@bugsnap.akusaraproject.my.id?subject=[BugSnap%20Support]&body=${encodeURIComponent(message || "")}`}
-                    className="text-[#6B9A35] dark:text-[#A8D666] hover:underline font-medium"
+                    className="text-[#6B9A35] dark:text-[#A8D666] hover:underline font-medium break-all"
                   >
                     support@bugsnap.akusaraproject.my.id
                   </a>

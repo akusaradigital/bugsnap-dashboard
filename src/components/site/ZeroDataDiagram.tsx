@@ -50,7 +50,7 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
         <div className="hidden md:block">
           {/* Row of 3 Nodes + Interstitial Connectors */}
           <div className="flex items-stretch justify-between gap-2 relative">
-            {/* NODE 1 — Your Browser */}
+            {/* NODE 1 - Your Browser */}
             <div className="flex-1 rounded-xl border border-site-border bg-site-surface p-4 text-center flex flex-col items-center justify-between min-h-[160px] shadow-sm transition-transform hover:-translate-y-0.5">
               <div className="w-full flex items-center justify-between text-[10px] text-muted font-mono mb-2">
                 <span className="flex items-center gap-1">
@@ -195,7 +195,7 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
               </span>
             </div>
 
-            {/* NODE 2 — Google Drive (Hero Node) */}
+            {/* NODE 2 - Google Drive (Hero Node) */}
             <div className="flex-1 rounded-xl border-2 border-accent/40 bg-accent/5 p-4 text-center flex flex-col items-center justify-between min-h-[160px] shadow-sm relative overflow-hidden transition-transform hover:-translate-y-0.5">
               <div className="w-full flex items-center justify-between text-[10px] text-accent font-mono mb-2">
                 <span className="px-1.5 py-0.2 rounded bg-accent/15 border border-accent/20">
@@ -220,15 +220,9 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
                     fill="#34A853"
                   />
                   {/* Top-Right Yellow */}
-                  <path
-                    d="M57.1 0H28.6l28.5 49.5h28.6z"
-                    fill="#FBBC04"
-                  />
+                  <path d="M57.1 0H28.6l28.5 49.5h28.6z" fill="#FBBC04" />
                   {/* Bottom Blue */}
-                  <path
-                    d="M85.7 49.5H28.6l-14.3 24.8h57.1z"
-                    fill="#4285F4"
-                  />
+                  <path d="M85.7 49.5H28.6l-14.3 24.8h57.1z" fill="#4285F4" />
                 </svg>
               </div>
 
@@ -237,7 +231,7 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
                   Your Google Drive
                 </div>
                 <div className="text-muted text-xs mt-0.5 leading-snug">
-                  Files stored here — not BugSnap servers
+                  Files stored here - not BugSnap servers
                 </div>
               </div>
             </div>
@@ -264,7 +258,7 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
               </span>
             </div>
 
-            {/* NODE 3 — BugSnap Server */}
+            {/* NODE 3 - BugSnap Server */}
             <div className="flex-1 rounded-xl border border-site-border bg-site-surface-2 p-4 text-center opacity-70 flex flex-col items-center justify-between min-h-[160px] shadow-sm transition-opacity hover:opacity-90">
               <div className="w-full flex items-center justify-between text-[10px] text-muted font-mono mb-2">
                 <span>METADATA</span>
@@ -303,9 +297,19 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
                     className="stroke-site-border"
                   />
                   <circle cx="23" cy="19.5" r="1.2" className="fill-accent" />
-                  <circle cx="26" cy="19.5" r="1.2" className="fill-site-border" />
+                  <circle
+                    cx="26"
+                    cy="19.5"
+                    r="1.2"
+                    className="fill-site-border"
+                  />
                   <circle cx="23" cy="12.5" r="1.2" className="fill-accent" />
-                  <circle cx="26" cy="12.5" r="1.2" className="fill-site-border" />
+                  <circle
+                    cx="26"
+                    cy="12.5"
+                    r="1.2"
+                    className="fill-site-border"
+                  />
                 </svg>
               </div>
 
@@ -314,13 +318,13 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
                   BugSnap Server
                 </div>
                 <div className="text-muted text-xs mt-0.5 leading-snug">
-                  Stores: title, tags, share links — zero bytes of your files
+                  Stores: title, tags, share links - zero bytes of your files
                 </div>
               </div>
             </div>
           </div>
 
-          {/* ARROW 1→3 (Secondary, Below) — Dotted path from Browser to BugSnap Server */}
+          {/* ARROW 1→3 (Secondary, Below) - Dotted path from Browser to BugSnap Server */}
           <div className="relative mt-2 h-14">
             <svg
               className="w-full h-full overflow-visible"
@@ -358,7 +362,7 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
         {/* MOBILE LAYOUT (< md): Vertically Stacked Nodes            */}
         {/* ========================================================= */}
         <div className="md:hidden flex flex-col items-stretch space-y-2">
-          {/* NODE 1 — Your Browser */}
+          {/* NODE 1 - Your Browser */}
           <div className="rounded-xl border border-site-border bg-site-surface p-4 text-center shadow-sm">
             <div className="flex items-center justify-center gap-1.5 text-xs text-muted mb-2 font-mono">
               <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
@@ -411,7 +415,7 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
             </span>
           </div>
 
-          {/* NODE 2 — Google Drive (Hero Node) */}
+          {/* NODE 2 - Google Drive (Hero Node) */}
           <div className="rounded-xl border-2 border-accent/40 bg-accent/5 p-4 text-center shadow-sm relative">
             <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-accent/15 text-accent text-[10px] font-mono mb-2">
               <span>CUSTOMER STORAGE</span>
@@ -420,7 +424,7 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
               Your Google Drive
             </div>
             <div className="text-muted text-xs mt-0.5">
-              Files stored here — not BugSnap servers
+              Files stored here - not BugSnap servers
             </div>
           </div>
 
@@ -454,7 +458,7 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
             </svg>
           </div>
 
-          {/* NODE 3 — BugSnap Server */}
+          {/* NODE 3 - BugSnap Server */}
           <div className="rounded-xl border border-site-border bg-site-surface-2 p-4 text-center opacity-70 shadow-sm">
             <div className="text-[10px] text-muted font-mono mb-1">
               ZERO BYTES OF YOUR FILES
@@ -463,7 +467,7 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
               BugSnap Server
             </div>
             <div className="text-muted text-xs mt-0.5">
-              Stores: title, tags, share links — zero bytes of your files
+              Stores: title, tags, share links - zero bytes of your files
             </div>
           </div>
         </div>
@@ -479,7 +483,8 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
               className="text-accent flex-shrink-0 mt-0.5"
             />
             <span className="leading-tight">
-              Your recordings: <strong className="text-site-text">Google Drive only</strong>
+              Your recordings:{" "}
+              <strong className="text-site-text">Google Drive only</strong>
             </span>
           </div>
           <div className="flex items-start gap-2">
@@ -489,7 +494,10 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
               className="text-accent flex-shrink-0 mt-0.5"
             />
             <span className="leading-tight">
-              BugSnap stores: <strong className="text-site-text">metadata, links, workspace info</strong>
+              BugSnap stores:{" "}
+              <strong className="text-site-text">
+                metadata, links, workspace info
+              </strong>
             </span>
           </div>
           <div className="flex items-start gap-2">
@@ -499,7 +507,9 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
               className="text-accent flex-shrink-0 mt-0.5"
             />
             <span className="leading-tight">
-              Your data is <strong className="text-site-text">never processed</strong> on BugSnap infrastructure
+              Your data is{" "}
+              <strong className="text-site-text">never processed</strong> on
+              BugSnap infrastructure
             </span>
           </div>
         </div>

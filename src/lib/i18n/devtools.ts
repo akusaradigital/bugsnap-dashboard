@@ -115,6 +115,11 @@ export const devtoolsEn: Dict = {
   "dt.resourceType": "Resource type",
   "dt.noBodyStatic": "No payload body captured for this static resource.",
   "dt.noBodyRecorded": "No request or response payload captured.",
+  "dt.spaHealthAlert": "SPA Health & Memory Alert",
+  "dt.domBloatWarning": "High DOM element count detected",
+  "dt.memoryLeakWarning": "Potential memory leak: Heap memory escalated",
+  "dt.domGrowth": "DOM Growth",
+  "dt.heapGrowth": "Heap Growth",
 };
 
 export const devtoolsId: Dict = {
@@ -232,4 +237,9 @@ export const devtoolsId: Dict = {
   "dt.resourceType": "Tipe resource",
   "dt.noBodyStatic": "Tidak ada payload data yang ditangkap untuk resource statis ini.",
   "dt.noBodyRecorded": "Tidak ada payload permintaan atau respons yang ditangkap.",
+  "dt.spaHealthAlert": "Peringatan Kesehatan & Memori SPA",
+  "dt.domBloatWarning": "Jumlah elemen DOM berlebih terdeteksi",
+  "dt.memoryLeakWarning": "Potensi kebocoran memori: Penggunaan heap memori meningkat",
+  "dt.domGrowth": "Pertumbuhan DOM",
+  "dt.heapGrowth": "Pertumbuhan Heap",
 };

@@ -122,7 +122,7 @@ export default function LoginPage() {
           </div>
 
           {/* Clean Card */}
-          <div className="rounded-xl border border-site-border bg-site-surface shadow-xs p-6 space-y-5">
+          <div className="rounded-xl border border-site-border bg-site-surface shadow-xs p-4 sm:p-6 space-y-5">
             {/* Google SSO button */}
             <button
               onClick={signInWithGoogle}
@@ -148,18 +148,18 @@ export default function LoginPage() {
               </p>
 
               {/* Feature trust strip */}
-              <div className="grid grid-cols-3 gap-2 text-center text-[10px] text-site-text-2 font-mono">
-                <div className="p-2 rounded-md bg-site-surface-2 border border-site-border-subtle">
-                  <span className="block font-bold text-site-text">100%</span>
-                  <span className="text-[9px] line-clamp-1">{t("login.badgeData")}</span>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center text-[10px] text-site-text-2 font-mono">
+                <div className="p-2 rounded-md bg-site-surface-2 border border-site-border-subtle flex sm:flex-col items-center justify-between sm:justify-center gap-1">
+                  <span className="font-bold text-site-text">100%</span>
+                  <span className="text-[9px]">{t("login.badgeData")}</span>
                 </div>
-                <div className="p-2 rounded-md bg-site-surface-2 border border-site-border-subtle">
-                  <span className="block font-bold text-accent">DevTools</span>
-                  <span className="text-[9px] line-clamp-1">{t("login.badgeDevTools")}</span>
+                <div className="p-2 rounded-md bg-site-surface-2 border border-site-border-subtle flex sm:flex-col items-center justify-between sm:justify-center gap-1">
+                  <span className="font-bold text-accent">DevTools</span>
+                  <span className="text-[9px]">{t("login.badgeDevTools")}</span>
                 </div>
-                <div className="p-2 rounded-md bg-site-surface-2 border border-site-border-subtle">
-                  <span className="block font-bold text-emerald-600 dark:text-emerald-400">Drive</span>
-                  <span className="text-[9px] line-clamp-1">{t("login.badgeDrive")}</span>
+                <div className="p-2 rounded-md bg-site-surface-2 border border-site-border-subtle flex sm:flex-col items-center justify-between sm:justify-center gap-1">
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400">Drive</span>
+                  <span className="text-[9px]">{t("login.badgeDrive")}</span>
                 </div>
               </div>
             </div>

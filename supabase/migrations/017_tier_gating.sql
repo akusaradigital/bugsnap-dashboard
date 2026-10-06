@@ -3,7 +3,7 @@
 --
 -- SATU KESATUAN dengan T-014: `users.plan` adalah single source of truth
 -- (ditulis stripe-webhook, dibaca app-layer). Task ini TIDAK menambah
--- `workspaces.plan` — itu duplikat sumber tier tanpa alasan (keputusan
+-- `workspaces.plan` - itu duplikat sumber tier tanpa alasan (keputusan
 -- konsolidasi, lihat R-018). Sebaliknya, ini menutup gap nyata: T-014
 -- membaca `users.plan` di kode tetapi TIDAK ada SQL yang mendefinisikan
 -- kolom itu. (users.suspended sudah ada di 010_add_suspended_flag.)

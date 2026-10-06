@@ -43,7 +43,7 @@ export async function GET(req: Request) {
         .limit(200),
       serviceClient
         .from("workspaces")
-        .select("id, name, owner_email, created_at")
+        .select("id, name, owner_user_id, created_at")
         .order("created_at", { ascending: false })
         .limit(20),
       serviceClient
@@ -130,11 +130,23 @@ export async function GET(req: Request) {
       }
     });
 
-    const topWorkspaces = (workspacesList || []).map((w) => ({
+    const wsOwnerIds = Array.from(new Set((workspacesList || []).map((w: Record<string, unknown>) => w.owner_user_id as string).filter(Boolean)));
+    const wsOwnerEmailMap: Record<string, string> = {};
+    if (wsOwnerIds.length > 0) {
+      const { data: wsOwners } = await serviceClient
+        .from("users")
+        .select("id, email")
+        .in("id", wsOwnerIds);
+      (wsOwners || []).forEach((u) => {
+        wsOwnerEmailMap[u.id] = u.email;
+      });
+    }
+
+    const topWorkspaces = (workspacesList || []).map((w: Record<string, unknown>) => ({
       id: w.id,
       name: w.name,
-      owner_email: w.owner_email || "-",
-      capture_count: workspaceCaptureCounts[w.id] || 0,
+      owner_email: typeof w.owner_user_id === "string" ? wsOwnerEmailMap[w.owner_user_id] || "-" : "-",
+      capture_count: typeof w.id === "string" ? workspaceCaptureCounts[w.id] || 0 : 0,
     }));
 
     // Compute real plan distribution

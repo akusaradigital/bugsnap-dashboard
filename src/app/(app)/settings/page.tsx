@@ -892,7 +892,7 @@ function SettingsContent() {
           </div>
 
           {/* Horizontal scrollable tab pills */}
-          <div className="overflow-x-auto no-scrollbar flex items-center gap-1.5 px-3 py-2.5">
+          <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden flex items-center gap-1.5 px-3 py-2.5">
             {[
               { id: "general", label: "General" },
               { id: "members", label: "Members" },
@@ -1361,7 +1361,7 @@ function SettingsContent() {
                     const isRemoving = removingMemberId === m.user_id;
 
                     return (
-                      <li key={m.user_id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-6 py-4">
+                      <li key={m.user_id} className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-4 sm:px-6 py-4">
                         <div className="flex items-center gap-4 min-w-0">
                           <div className="w-10 h-10 rounded-full bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40 text-sm font-bold flex items-center justify-center shrink-0 shadow-2xs">
                             {(m.email || "?").charAt(0).toUpperCase()}
@@ -1472,7 +1472,7 @@ function SettingsContent() {
               </div>
             )}
 
-            <div className="rounded-xl border border-border bg-subtle p-6 flex items-center justify-between gap-4 shadow-xs">
+            <div className="rounded-xl border border-border bg-subtle p-4 sm:p-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <p className="text-xs text-muted uppercase tracking-widest font-semibold">{t("settings.currentPlan")}</p>
@@ -1873,7 +1873,7 @@ function SettingsContent() {
               {/* Theme preference */}
               <div className="pt-2 border-t border-border/60">
                 <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-2">{t("settings.appearance")}</label>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                   {([
                     { id: "light", label: t("settings.themeLight"), icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="4" /><path strokeLinecap="round" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" /></svg> },
                     { id: "dark", label: t("settings.themeDark"), icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg> },
@@ -1889,7 +1889,7 @@ function SettingsContent() {
                         } catch { showToast(t("settings.themeSaveFailed"), "error"); }
                       }}
                       aria-pressed={theme === opt.id}
-                      className={`flex flex-col items-center gap-1.5 rounded-lg border px-3 py-3 text-xs font-semibold transition-colors ${
+                      className={`flex flex-col items-center gap-1.5 rounded-lg border px-1.5 sm:px-3 py-2.5 sm:py-3 text-[11px] sm:text-xs font-semibold transition-colors ${
                         theme === opt.id
                           ? "border-[#89BD49] bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] shadow-xs"
                           : "border-border bg-subtle text-muted hover:text-foreground hover:bg-border/30"

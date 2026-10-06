@@ -46,7 +46,7 @@ export function IntegrationSwitcher() {
       {/* Dynamic Preview Container */}
       <div className="rounded-2xl border border-site-border bg-site-surface shadow-xl overflow-hidden font-site">
         {/* Top Bar */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-site-border bg-site-surface-2 text-xs">
+        <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 px-4 py-3 border-b border-site-border bg-site-surface-2 text-xs">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
             <span className="font-semibold text-site-text">1-Click BugSnap Output: {active.toUpperCase()}</span>
@@ -54,7 +54,7 @@ export function IntegrationSwitcher() {
           <button
             type="button"
             onClick={copyPayload}
-            className="flex items-center gap-1.5 px-3 py-1 rounded bg-site-surface border border-site-border text-site-text-2 hover:text-site-text font-medium text-[11px] transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1 rounded bg-site-surface border border-site-border text-site-text-2 hover:text-site-text font-medium text-[11px] transition-colors shrink-0"
           >
             {copied ? <IconCheck size={12} className="text-emerald-500" /> : <IconCopy size={12} />}
             <span>{copied ? "Copied!" : "Copy Report"}</span>
@@ -62,7 +62,7 @@ export function IntegrationSwitcher() {
         </div>
 
         {/* Content based on Active Integration */}
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           {active === "linear" && (
             <div className="space-y-4 animate-in fade-in duration-200">
               <div className="flex items-center justify-between border-b border-site-border pb-3">
@@ -148,12 +148,12 @@ export function IntegrationSwitcher() {
               <div className="border-l-4 border-red-500 pl-3 py-1 space-y-1.5 text-xs bg-site-surface-2 p-3 rounded-r-lg">
                 <p className="font-bold text-site-text">🚨 New Critical Bug Recorded in #checkout-staging</p>
                 <p className="text-site-text-2">Sarah captured an error on <span className="font-mono text-site-text">app.acme.corp/checkout</span></p>
-                <div className="flex items-center gap-2 pt-1">
+                <div className="flex flex-wrap items-center gap-2 pt-1">
                   <a
                     href="https://bugsnap.akusaraproject.my.id"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="px-3 py-1 rounded bg-site-surface border border-site-border text-[11px] font-bold text-accent"
+                    className="px-3 py-1 rounded bg-site-surface border border-site-border text-[11px] font-bold text-accent shrink-0"
                   >
                     View Interactive Player
                   </a>

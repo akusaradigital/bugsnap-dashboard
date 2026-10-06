@@ -55,10 +55,33 @@ export async function GET(req: Request) {
       // Recent captures created by this user
       const { data: captures, count: totalCaptures } = await supabase
         .from("captures")
-        .select("id, title, type, created_at, size, views_count, is_public", { count: "exact" })
+        .select("id, title, type, created_at, drive_url, password", { count: "exact" })
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(10);
+
+      const capIds = (captures || []).map((c) => c.id).filter(Boolean);
+      const capViewsMap: Record<string, number> = {};
+      if (capIds.length > 0) {
+        const { data: vData } = await supabase
+          .from("capture_views")
+          .select("capture_id")
+          .in("capture_id", capIds);
+        (vData || []).forEach((v) => {
+          if (v.capture_id) capViewsMap[v.capture_id] = (capViewsMap[v.capture_id] || 0) + 1;
+        });
+      }
+
+      const enrichedCaptures = (captures || []).map((c) => ({
+        id: c.id,
+        title: c.title,
+        type: c.type,
+        created_at: c.created_at,
+        url: c.drive_url,
+        size: 0,
+        views_count: capViewsMap[c.id] || 0,
+        is_public: !c.password,
+      }));
 
       interface WorkspaceMemberRow {
         workspace_id: string;
@@ -81,7 +104,7 @@ export async function GET(req: Request) {
           is_owner: m.workspaces?.owner_user_id === userId,
           created_at: m.workspaces?.created_at,
         })),
-        recentCaptures: captures || [],
+        recentCaptures: enrichedCaptures,
         totalCaptures: totalCaptures || 0,
       });
     } catch (err: unknown) {

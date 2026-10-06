@@ -30,7 +30,8 @@ const config: Config = {
         "site-danger": "var(--site-danger)",
       },
       fontFamily: {
-        site: ["var(--font-inter)", "-apple-system", "BlinkMacSystemFont", '"Segoe UI"', "Roboto", "sans-serif"],
+        sans: ["-apple-system", "BlinkMacSystemFont", '"Segoe UI"', "Roboto", '"Helvetica Neue"', "Arial", "sans-serif"],
+        site: ["-apple-system", "BlinkMacSystemFont", '"Segoe UI"', "Roboto", '"Helvetica Neue"', "Arial", "sans-serif"],
       },
       keyframes: {
         float: {

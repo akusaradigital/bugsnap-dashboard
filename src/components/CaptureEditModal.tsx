@@ -123,11 +123,11 @@ export default function EditModal({ capture, onClose, onSaved }: EditModalProps)
     "w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 bg-subtle text-foreground placeholder:text-muted";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div role="dialog" aria-modal="true" aria-labelledby="edit-modal-title" className="relative w-full max-w-md rounded-xl bg-subtle shadow-xl border border-border flex flex-col max-h-[85vh] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-border shrink-0">
           <h2 id="edit-modal-title" className="text-base font-bold text-foreground">{t("cap.editTitle")}</h2>
           <button
             onClick={onClose}
@@ -141,7 +141,7 @@ export default function EditModal({ capture, onClose, onSaved }: EditModalProps)
         </div>
 
         {/* Scrollable Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-4">
+        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
           <div className="space-y-4">
           <div>
             <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">
@@ -292,18 +292,18 @@ export default function EditModal({ capture, onClose, onSaved }: EditModalProps)
         </div>
 
         {/* Sticky Footer Actions */}
-        <div className="flex items-center justify-end gap-2 px-6 py-4 border-t border-border shrink-0">
-          {error && <p className="mr-auto text-xs text-red-600 dark:text-red-400">{error}</p>}
+        <div className="flex flex-wrap sm:flex-nowrap items-center justify-end gap-2 px-4 sm:px-6 py-3.5 sm:py-4 border-t border-border shrink-0">
+          {error && <p className="mr-auto text-xs text-red-600 dark:text-red-400 w-full sm:w-auto">{error}</p>}
           <button
             onClick={onClose}
-            className="rounded-lg border border-border bg-subtle px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle transition-colors"
+            className="flex-1 sm:flex-initial rounded-lg border border-border bg-subtle px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle transition-colors text-center"
           >
             {t("common.cancel")}
           </button>
           <button
             onClick={handleSave}
             disabled={saving}
-            className="rounded-lg bg-[#89BD49] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#6B9A35] hover:text-white disabled:opacity-60 shadow-xs shadow-[#89BD49]/25 transition-colors"
+            className="flex-1 sm:flex-initial rounded-lg bg-[#89BD49] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#6B9A35] hover:text-white disabled:opacity-60 shadow-xs shadow-[#89BD49]/25 transition-colors text-center"
           >
             {saving ? t("settings.saving") : t("cap.saveChanges")}
           </button>

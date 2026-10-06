@@ -1,6 +1,6 @@
 -- =====================================================================
 -- 20260917000000_zero_load_supabase.sql
--- Make Supabase a pure pointer catalog — no raw payloads in DB.
+-- Make Supabase a pure pointer catalog - no raw payloads in DB.
 --
 -- 1. Add view_count column to captures (increment-in-place)
 -- 2. Backfill view_count from capture_views
@@ -30,7 +30,7 @@ WHERE c.id = sub.capture_id
   AND c.view_count = 0;
 
 -- ─────────────────────────────────────────────────────────────────────
--- 3. record_view — increment counter + keep row for admin analytics
+-- 3. record_view - increment counter + keep row for admin analytics
 -- ─────────────────────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION public.record_view(
   p_capture_id uuid,
@@ -69,7 +69,7 @@ END;
 $$;
 
 -- ─────────────────────────────────────────────────────────────────────
--- 4. get_view_count — O(1) column read instead of count(*) scan
+-- 4. get_view_count - O(1) column read instead of count(*) scan
 -- ─────────────────────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION public.get_view_count(p_capture_id uuid)
 RETURNS bigint
@@ -82,7 +82,7 @@ AS $$
 $$;
 
 -- ─────────────────────────────────────────────────────────────────────
--- 5. Purge raw dev_logs arrays — replace with count-only pointer
+-- 5. Purge raw dev_logs arrays - replace with count-only pointer
 --    (captures that have a Drive pointer are left as-is)
 -- ─────────────────────────────────────────────────────────────────────
 UPDATE public.captures
@@ -106,7 +106,7 @@ WHERE dev_logs IS NOT NULL
 
 -- ─────────────────────────────────────────────────────────────────────
 -- 6a. Prune capture_views rows older than 90 days
---     (view_count column is the durable tally — rows are only for admin charts)
+--     (view_count column is the durable tally - rows are only for admin charts)
 -- ─────────────────────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION public.prune_capture_views()
 RETURNS void
@@ -119,7 +119,7 @@ AS $$
 $$;
 
 -- ─────────────────────────────────────────────────────────────────────
--- 6b. prune_admin_logs already exists — ensure 30-day cutoff is enforced.
+-- 6b. prune_admin_logs already exists - ensure 30-day cutoff is enforced.
 --     Re-create to be explicit (idempotent).
 -- ─────────────────────────────────────────────────────────────────────
 CREATE OR REPLACE FUNCTION public.prune_admin_logs()
@@ -133,7 +133,7 @@ AS $$
 $$;
 
 -- ─────────────────────────────────────────────────────────────────────
--- Grants (prune functions are server-side only — no public access)
+-- Grants (prune functions are server-side only - no public access)
 -- ─────────────────────────────────────────────────────────────────────
 REVOKE ALL ON FUNCTION public.prune_capture_views() FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.prune_admin_logs()    FROM PUBLIC;

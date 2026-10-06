@@ -13,9 +13,9 @@ export function SiteFooter() {
   return (
     <footer className="border-t border-site-border bg-site-surface-2 text-site-text font-site transition-colors">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 py-12">
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-8 mb-10">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-8 mb-10">
           {/* Brand Column */}
-          <Reveal delay={0} className="col-span-2 space-y-3">
+          <Reveal delay={0} className="md:col-span-2 space-y-3">
             <div className="flex items-center gap-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/icon.svg" alt="" aria-hidden="true" className="w-6 h-6 object-contain" />
@@ -38,48 +38,58 @@ export function SiteFooter() {
             </div>
           </Reveal>
 
-          {/* Product Links */}
-          <Reveal delay={0.08} className="space-y-3">
-            <h5 className="text-xs font-bold text-site-text uppercase tracking-wider">{t("landing.product")}</h5>
-            <ul className="space-y-2 text-xs text-site-text-2">
-              <li><Link href="/features" className="hover:text-site-text transition-colors">{t("site.nav.features")}</Link></li>
-              <li><Link href="/solutions" className="hover:text-site-text transition-colors">{t("site.nav.solutions")}</Link></li>
-              <li><Link href="/extension" className="hover:text-site-text transition-colors">{t("site.nav.extension")}</Link></li>
-              <li><Link href="/how-it-works" className="hover:text-site-text transition-colors">{t("site.nav.howItWorks")}</Link></li>
-              <li><Link href="/pricing" className="hover:text-site-text transition-colors">{t("site.nav.pricing")}</Link></li>
-            </ul>
-          </Reveal>
+          {/* Links Grid: 3-column on mobile, spanning md:col-span-3 on desktop */}
+          <div className="md:col-span-3 grid grid-cols-3 gap-3 sm:gap-6 min-w-0">
+            {/* Product Links */}
+            <Reveal delay={0.08} className="space-y-3 min-w-0">
+              <h5 className="text-[11px] sm:text-xs font-bold text-site-text uppercase tracking-wider truncate">
+                {t("landing.product")}
+              </h5>
+              <ul className="space-y-2 text-[11px] sm:text-xs text-site-text-2">
+                <li><Link href="/features" className="hover:text-site-text transition-colors block truncate">{t("site.nav.features")}</Link></li>
+                <li><Link href="/solutions" className="hover:text-site-text transition-colors block truncate">{t("site.nav.solutions")}</Link></li>
+                <li><Link href="/extension" className="hover:text-site-text transition-colors block truncate">{t("site.nav.extension")}</Link></li>
+                <li><Link href="/how-it-works" className="hover:text-site-text transition-colors block truncate">{t("site.nav.howItWorks")}</Link></li>
+                <li><Link href="/pricing" className="hover:text-site-text transition-colors block truncate">{t("site.nav.pricing")}</Link></li>
+              </ul>
+            </Reveal>
 
-          {/* Resources Links */}
-          <Reveal delay={0.16} className="space-y-3">
-            <h5 className="text-xs font-bold text-site-text uppercase tracking-wider">{t("landing.resources")}</h5>
-            <ul className="space-y-2 text-xs text-site-text-2">
-              <li><Link href="/docs" className="hover:text-site-text transition-colors">{t("landing.docs")}</Link></li>
-              <li><Link href="/help" className="hover:text-site-text transition-colors">{t("landing.help")}</Link></li>
-              <li><Link href="/security" className="hover:text-site-text transition-colors">{t("landing.security")}</Link></li>
-              <li><Link href="/contact" className="hover:text-site-text transition-colors">{t("landing.contact")}</Link></li>
-            </ul>
-          </Reveal>
+            {/* Resources Links */}
+            <Reveal delay={0.16} className="space-y-3 min-w-0">
+              <h5 className="text-[11px] sm:text-xs font-bold text-site-text uppercase tracking-wider truncate">
+                {t("landing.resources")}
+              </h5>
+              <ul className="space-y-2 text-[11px] sm:text-xs text-site-text-2">
+                <li><Link href="/docs" className="hover:text-site-text transition-colors block truncate">{t("landing.docs")}</Link></li>
+                <li><Link href="/blog" className="hover:text-site-text transition-colors block truncate">{t("site.nav.blog")}</Link></li>
+                <li><Link href="/help" className="hover:text-site-text transition-colors block truncate">{t("landing.help")}</Link></li>
+                <li><Link href="/security" className="hover:text-site-text transition-colors block truncate">{t("landing.security")}</Link></li>
+                <li><Link href="/contact" className="hover:text-site-text transition-colors block truncate">{t("landing.contact")}</Link></li>
+              </ul>
+            </Reveal>
 
-          {/* Company & Legal */}
-          <Reveal delay={0.24} className="space-y-3">
-            <h5 className="text-xs font-bold text-site-text uppercase tracking-wider">{t("landing.company")}</h5>
-            <ul className="space-y-2 text-xs text-site-text-2">
-              <li><Link href="/about" className="hover:text-site-text transition-colors">{t("landing.about")}</Link></li>
-              <li><Link href="/privacy" className="hover:text-site-text transition-colors">{t("landing.privacy")}</Link></li>
-              <li><Link href="/terms" className="hover:text-site-text transition-colors">{t("landing.terms")}</Link></li>
-              <li>
-                <a
-                  href="https://akusaradigital.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-site-text transition-colors"
-                >
-                  Akusara Digital
-                </a>
-              </li>
-            </ul>
-          </Reveal>
+            {/* Company & Legal */}
+            <Reveal delay={0.24} className="space-y-3 min-w-0">
+              <h5 className="text-[11px] sm:text-xs font-bold text-site-text uppercase tracking-wider truncate">
+                {t("landing.company")}
+              </h5>
+              <ul className="space-y-2 text-[11px] sm:text-xs text-site-text-2">
+                <li><Link href="/about" className="hover:text-site-text transition-colors block truncate">{t("landing.about")}</Link></li>
+                <li><Link href="/privacy" className="hover:text-site-text transition-colors block truncate">{t("landing.privacy")}</Link></li>
+                <li><Link href="/terms" className="hover:text-site-text transition-colors block truncate">{t("landing.terms")}</Link></li>
+                <li>
+                  <a
+                    href="https://akusaradigital.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-site-text transition-colors block truncate"
+                  >
+                    Akusara Digital
+                  </a>
+                </li>
+              </ul>
+            </Reveal>
+          </div>
         </div>
 
         {/* Bottom Bar */}
@@ -87,17 +97,6 @@ export function SiteFooter() {
           <p className="text-xs text-site-text-2">
             {t("landing.copyright", { year: new Date().getFullYear() })}
           </p>
-
-          <Link
-            href="/status"
-            className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md border border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 text-xs font-medium hover:bg-emerald-500/20 transition-colors"
-          >
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-            </span>
-            <span>{t("landing.systemStatusOperational")}</span>
-          </Link>
         </div>
       </div>
     </footer>

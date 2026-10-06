@@ -245,9 +245,9 @@ export function HeroProductShowcase() {
 export function DevToolsCard() {
   return (
     <div className="rounded-xl border border-site-border bg-site-surface p-4 font-mono text-xs shadow-xs text-site-text">
-      <div className="flex items-center justify-between pb-3 border-b border-site-border-subtle">
+      <div className="flex flex-wrap items-center justify-between gap-1 pb-3 border-b border-site-border-subtle">
         <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-red-500" />
+          <span className="h-2 w-2 rounded-full bg-red-500 shrink-0" />
           <span className="font-semibold font-sans text-xs">Console & Network Diagnostics</span>
         </div>
         <span className="text-[10px] text-site-text-2">Auto-Captured</span>
@@ -259,7 +259,7 @@ export function DevToolsCard() {
         </div>
         <div className="text-site-text bg-site-surface-2 p-2 rounded">
           <span className="text-accent font-bold">Trace: </span>
-          <span>WorkspaceLayout.tsx:84 &gt; useMetrics.ts:31</span>
+          <span className="break-all">WorkspaceLayout.tsx:84 &gt; useMetrics.ts:31</span>
         </div>
       </div>
     </div>
@@ -269,10 +269,10 @@ export function DevToolsCard() {
 export function GoogleDriveProofCard() {
   return (
     <div className="rounded-xl border border-site-border bg-site-surface p-4 text-xs font-site shadow-xs text-site-text">
-      <div className="flex items-center justify-between pb-3 border-b border-site-border-subtle">
+      <div className="flex flex-wrap items-center justify-between gap-1 pb-3 border-b border-site-border-subtle">
         <div className="flex items-center gap-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icons/google.svg" alt="" aria-hidden="true" className="w-4 h-4" />
+          <img src="/icons/google.svg" alt="" aria-hidden="true" className="w-4 h-4 shrink-0" />
           <span className="font-semibold">My Drive / BugSnap</span>
         </div>
         <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
@@ -280,17 +280,17 @@ export function GoogleDriveProofCard() {
         </span>
       </div>
       <div className="mt-3 space-y-2">
-        <div className="flex items-center justify-between p-2 rounded bg-site-surface-2 text-[11px]">
-          <div className="flex items-center gap-2 truncate">
+        <div className="flex items-center justify-between p-2 rounded bg-site-surface-2 text-[11px] gap-2">
+          <div className="flex items-center gap-2 truncate min-w-0">
             <IconPlayerPlay size={10} className="text-accent fill-current shrink-0" />
-            <span className="font-mono text-site-text truncate">bug-checkout-error-2026-09.webm</span>
+            <span className="font-mono text-site-text truncate min-w-0">bug-checkout-error-2026-09.webm</span>
           </div>
           <span className="text-site-text-2 shrink-0 text-[10px]">12.4 MB</span>
         </div>
-        <div className="flex items-center justify-between p-2 rounded bg-site-surface-2 text-[11px]">
-          <div className="flex items-center gap-2 truncate">
-            <span className="text-site-text-2 font-bold">{ }</span>
-            <span className="font-mono text-site-text truncate">devtools-telemetry.json</span>
+        <div className="flex items-center justify-between p-2 rounded bg-site-surface-2 text-[11px] gap-2">
+          <div className="flex items-center gap-2 truncate min-w-0">
+            <span className="text-site-text-2 font-bold shrink-0">{ }</span>
+            <span className="font-mono text-site-text truncate min-w-0">devtools-telemetry.json</span>
           </div>
           <span className="text-site-text-2 shrink-0 text-[10px]">48 KB</span>
         </div>
@@ -302,9 +302,9 @@ export function GoogleDriveProofCard() {
 export function ExportTicketCard() {
   return (
     <div className="rounded-xl border border-site-border bg-site-surface p-4 text-xs font-site shadow-xs text-site-text">
-      <div className="flex items-center justify-between pb-3 border-b border-site-border-subtle">
+      <div className="flex flex-wrap items-center justify-between gap-1 pb-3 border-b border-site-border-subtle">
         <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-accent" />
+          <span className="h-2 w-2 rounded-full bg-accent shrink-0" />
           <span className="font-semibold">Formatted Bug Report</span>
         </div>
         <span className="text-[10px] font-mono text-site-text-2">Linear / Jira format</span>

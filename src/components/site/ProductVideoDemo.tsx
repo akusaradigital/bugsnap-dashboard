@@ -33,21 +33,21 @@ export function ProductVideoDemo() {
   return (
     <div className="w-full max-w-5xl mx-auto rounded-2xl border border-site-border bg-site-surface shadow-2xl overflow-hidden font-site">
       {/* Top Browser Bar */}
-      <div className="flex items-center justify-between px-4 py-3 border-b border-site-border bg-site-surface-2">
-        <div className="flex items-center gap-2">
-          <div className="flex gap-1.5">
+      <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 px-4 py-3 border-b border-site-border bg-site-surface-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <div className="flex gap-1.5 shrink-0">
             <span className="w-3 h-3 rounded-full bg-red-400/80 inline-block" />
             <span className="w-3 h-3 rounded-full bg-yellow-400/80 inline-block" />
             <span className="w-3 h-3 rounded-full bg-green-400/80 inline-block" />
           </div>
-          <span className="text-xs font-mono text-site-text-2 bg-site-surface px-3 py-1 rounded-md border border-site-border ml-2 flex items-center gap-1.5">
-            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-            https://store.acme.corp/checkout
+          <span className="text-xs font-mono text-site-text-2 bg-site-surface px-2.5 sm:px-3 py-1 rounded-md border border-site-border flex items-center gap-1.5 truncate max-w-[130px] sm:max-w-none">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+            <span className="truncate">https://store.acme.corp/checkout</span>
           </span>
         </div>
 
         {/* Video Step Progress Indicator */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-1 shrink-0">
           {STEPS.map((step, idx) => (
             <button
               key={step.key}

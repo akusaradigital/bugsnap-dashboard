@@ -150,7 +150,7 @@ export default function AdminWorkspacesPage() {
   }
 
   async function handleDeleteWorkspace(ws: WorkspaceItem) {
-    if (!confirm(`Are you sure you want to permanently delete workspace "${ws.name}"? This cannot be undone.`)) {
+    if (!confirm(t("admin.deleteWorkspaceConfirm", { name: ws.name }))) {
       return;
     }
 
@@ -209,10 +209,10 @@ export default function AdminWorkspacesPage() {
         <form onSubmit={handleSearchSubmit} className="flex items-center gap-1.5 w-full sm:w-80">
           <input
             type="text"
-            placeholder="Search workspace or owner..."
+            placeholder={t("admin.searchPlaceholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 text-slate-900 dark:text-white"
+            className="w-full min-w-0 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 text-slate-900 dark:text-white"
           />
           <button
             type="submit"
@@ -229,11 +229,11 @@ export default function AdminWorkspacesPage() {
           <table className="w-full text-left text-xs">
             <thead className="border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[10px]">
               <tr>
-                <th className="py-3 px-4">Workspace</th>
-                <th className="py-3 px-4">Owner Email</th>
+                <th className="py-3 px-4">{t("admin.thWorkspace")}</th>
+                <th className="py-3 px-4">{t("admin.thOwnerEmail")}</th>
                 <th className="py-3 px-4">{t("admin.membersCount")}</th>
                 <th className="py-3 px-4">{t("admin.capturesCount")}</th>
-                <th className="py-3 px-4">Created</th>
+                <th className="py-3 px-4">{t("admin.thCreated")}</th>
                 <th className="py-3 px-4 text-right">{t("admin.actions")}</th>
               </tr>
             </thead>
@@ -319,7 +319,7 @@ export default function AdminWorkspacesPage() {
         {totalPages > 1 && (
           <div className="p-3 border-t border-slate-200 dark:border-zinc-800 flex items-center justify-between text-xs text-slate-500 dark:text-zinc-400">
             <span>
-              Page {page} of {totalPages}
+              {t("admin.pageOf", { page: String(page), totalPages: String(totalPages) })}
             </span>
             <div className="flex items-center gap-1">
               <button
@@ -328,7 +328,7 @@ export default function AdminWorkspacesPage() {
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 className="px-2.5 py-1 rounded border border-slate-200 dark:border-zinc-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-zinc-800"
               >
-                Prev
+                {t("admin.prev")}
               </button>
               <button
                 type="button"
@@ -336,7 +336,7 @@ export default function AdminWorkspacesPage() {
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 className="px-2.5 py-1 rounded border border-slate-200 dark:border-zinc-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-zinc-800"
               >
-                Next
+                {t("admin.next")}
               </button>
             </div>
           </div>
@@ -400,7 +400,7 @@ export default function AdminWorkspacesPage() {
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   <span>🏢 {selectedWs.name}</span>
                 </h3>
-                <p className="text-xs text-slate-500 dark:text-zinc-400 font-mono mt-0.5">
+                <p className="text-xs text-slate-500 dark:text-zinc-400 font-mono mt-0.5 break-all">
                   Owner: {selectedWs.owner_email || "-"} (ID: {selectedWs.id})
                 </p>
               </div>
@@ -428,7 +428,7 @@ export default function AdminWorkspacesPage() {
                     <span className="font-bold text-slate-800 dark:text-zinc-200 text-sm">{selectedWs.capture_count}</span>
                   </div>
                   <div className="p-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950">
-                    <span className="text-[10px] text-slate-500 uppercase font-bold block">Storage Used</span>
+                    <span className="text-[10px] text-slate-500 uppercase font-bold block">{t("admin.storageUsed")}</span>
                     <span className="font-bold text-slate-800 dark:text-zinc-200 text-sm">{formatBytes(totalSizeBytes)}</span>
                   </div>
                 </div>
@@ -436,23 +436,27 @@ export default function AdminWorkspacesPage() {
                 {/* Team Members list */}
                 <div>
                   <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-400 mb-2">
-                    Team Members ({members.length})
+                    {t("admin.teamMembers", { count: String(members.length) })}
                   </h4>
                   <div className="space-y-1.5 max-h-36 overflow-y-auto">
-                    {members.map((m) => (
-                      <div
-                        key={m.id}
-                        className="flex items-center justify-between p-2 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950"
-                      >
-                        <div>
-                          <span className="font-semibold text-slate-900 dark:text-white">{m.full_name || m.email}</span>
-                          <span className="text-[11px] text-slate-400 font-mono ml-2">({m.email})</span>
+                    {members.length === 0 ? (
+                      <p className="text-slate-400 italic">{t("admin.noMembers")}</p>
+                    ) : (
+                      members.map((m) => (
+                        <div
+                          key={m.id}
+                          className="flex items-center justify-between p-2 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950"
+                        >
+                          <div>
+                            <span className="font-semibold text-slate-900 dark:text-white">{m.full_name || m.email}</span>
+                            <span className="text-[11px] text-slate-400 font-mono ml-2">({m.email})</span>
+                          </div>
+                          <span className="text-[10px] px-2 py-0.5 rounded uppercase font-bold bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400">
+                            {m.role}
+                          </span>
                         </div>
-                        <span className="text-[10px] px-2 py-0.5 rounded uppercase font-bold bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400">
-                          {m.role}
-                        </span>
-                      </div>
-                    ))}
+                      ))
+                    )}
                   </div>
                 </div>
 

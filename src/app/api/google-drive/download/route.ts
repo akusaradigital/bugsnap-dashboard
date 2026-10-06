@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { driveAccessToken, isUuid } from "@/lib/google-drive";
-import { createServiceClient, getAuthenticatedUser } from "@/lib/supabase-server";
+import {
+  createServiceClient,
+  getAuthenticatedUser,
+} from "@/lib/supabase-server";
 import { verifyDownloadSig } from "@/lib/download-signing";
 import { clientIp } from "@/lib/rate-limit";
 
@@ -18,27 +21,37 @@ interface CachedCap {
 }
 
 // ponytail: 60s in-memory cache to prevent repeated Supabase queries during multi-chunk video streaming
-const capCache = new Map<string, { data: CachedCap | null; expiresAt: number }>();
+const capCache = new Map<
+  string,
+  { data: CachedCap | null; expiresAt: number }
+>();
 
 function safeFilename(value: string, type: string) {
   const ext = type === "video" ? ".webm" : type === "logs" ? ".json" : ".png";
-  const base = (value || "capture")
-    .replace(/[\r\n"\\/;:*?<>|\s]+/g, "-")
-    .trim()
-    .slice(0, 180) || "capture";
+  const base =
+    (value || "capture")
+      .replace(/[\r\n"\\/;:*?<>|\s]+/g, "-")
+      .trim()
+      .slice(0, 180) || "capture";
   return base.toLowerCase().endsWith(ext) ? base : `${base}${ext}`;
 }
 
 function resolveMime(type: string, upstreamType: string | null): string {
   const raw = (upstreamType || "").toLowerCase().trim();
   if (type === "video") {
-    if (raw === "video/mp4" || raw === "video/webm" || raw === "video/quicktime") return raw;
+    if (
+      raw === "video/mp4" ||
+      raw === "video/webm" ||
+      raw === "video/quicktime"
+    )
+      return raw;
     return "video/webm";
   }
   if (type === "logs") {
     return "application/json";
   }
-  if (raw === "image/jpeg" || raw === "image/webp" || raw === "image/gif") return raw;
+  if (raw === "image/jpeg" || raw === "image/webp" || raw === "image/gif")
+    return raw;
   return "image/png";
 }
 
@@ -46,7 +59,8 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const id = url.searchParams.get("id") || "";
   const type = url.searchParams.get("type") || "screenshot";
-  const disposition = url.searchParams.get("disposition") === "inline" ? "inline" : "attachment";
+  const disposition =
+    url.searchParams.get("disposition") === "inline" ? "inline" : "attachment";
   if (!/^[A-Za-z0-9_-]{10,200}$/.test(id)) {
     return NextResponse.json({ error: "Invalid file id" }, { status: 400 });
   }
@@ -64,7 +78,9 @@ export async function GET(req: Request) {
       : `drive_file_id.eq.${id},drive_url.ilike.%${id}%,dev_logs->>driveFileId.eq.${id}`;
     const { data } = await supabase
       .from("captures")
-      .select("user_id, workspace_id, expires_at, access_mode, password, allowed_ips, burn_after_read, view_count")
+      .select(
+        "user_id, workspace_id, expires_at, access_mode, password, allowed_ips, burn_after_read, view_count",
+      )
       .or(filter)
       .limit(1)
       .maybeSingle();
@@ -94,20 +110,27 @@ export async function GET(req: Request) {
   if (Array.isArray(cap.allowed_ips) && cap.allowed_ips.length > 0) {
     const reqIp = clientIp(req);
     if (!cap.allowed_ips.includes(reqIp)) {
-      return NextResponse.json({ error: "Forbidden: IP not allowed" }, { status: 403 });
+      return NextResponse.json(
+        { error: "Forbidden: IP not allowed" },
+        { status: 403 },
+      );
     }
   }
 
   // A members-only capture must not stream to anyone holding the file id.
   // Two ways in: a Bearer token (fetch callers) or a signature minted by
   // /api/google-drive/sign (<img>/<video>, which cannot send headers).
-  // Unprotected public captures skip this entirely — unchanged for them.
+  // Unprotected public captures skip this entirely - unchanged for them.
   // A password on a public capture gates the page but did nothing here: the raw
   // media streamed to anyone holding the Drive id. The signature from
   // /api/google-drive/sign is the unlock proof (it mints one for a correct
   // password), so the same gate covers both cases.
   if (cap.access_mode === "members" || cap.password) {
-    let allowed = verifyDownloadSig(id, url.searchParams.get("sig"), url.searchParams.get("exp"));
+    let allowed = verifyDownloadSig(
+      id,
+      url.searchParams.get("sig"),
+      url.searchParams.get("exp"),
+    );
     if (!allowed) {
       const user = await getAuthenticatedUser(req);
       if (user) {
@@ -134,13 +157,16 @@ export async function GET(req: Request) {
         }
       }
     }
-    if (!allowed) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    if (!allowed)
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
   // A shared CDN cache must not hold a members-only body: the next request for
   // the same id would be served the bytes without ever reaching the gate above.
   const cacheControl =
-    cap?.access_mode === "members" ? "private, max-age=3600" : "public, max-age=3600";
+    cap?.access_mode === "members"
+      ? "private, max-age=3600"
+      : "public, max-age=3600";
 
   const rangeHeader = req.headers.get("range");
   const forwardHeaders: Record<string, string> = {};
@@ -154,20 +180,24 @@ export async function GET(req: Request) {
     try {
       const accessToken = await driveAccessToken(cap.user_id).catch(() => null);
       if (accessToken) {
-        const authRes = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media&supportsAllDrives=true`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            ...forwardHeaders,
+        const authRes = await fetch(
+          `https://www.googleapis.com/drive/v3/files/${id}?alt=media&supportsAllDrives=true`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              ...forwardHeaders,
+            },
+            cache: "no-store",
           },
-          cache: "no-store",
-        });
+        );
 
         // Handle 416 Range Not Satisfiable explicitly so seeking beyond EOF returns 416 instead of falling through to 403
         if (authRes.status === 416) {
           const contentRange = authRes.headers.get("content-range");
           const resHeaders: Record<string, string> = {
             "Accept-Ranges": "bytes",
-            "Content-Type": type === "video" ? "video/webm" : "application/octet-stream",
+            "Content-Type":
+              type === "video" ? "video/webm" : "application/octet-stream",
           };
           if (contentRange) resHeaders["Content-Range"] = contentRange;
           return new NextResponse(null, {
@@ -179,7 +209,10 @@ export async function GET(req: Request) {
         if (authRes.ok && authRes.body) {
           const rawAuthType = authRes.headers.get("content-type");
           const finalContentType = resolveMime(type, rawAuthType);
-          const contentDisp = disposition === "inline" ? "inline" : `attachment; filename="${safeFilename(url.searchParams.get("filename") || "capture", type)}"`;
+          const contentDisp =
+            disposition === "inline"
+              ? "inline"
+              : `attachment; filename="${safeFilename(url.searchParams.get("filename") || "capture", type)}"`;
           const resHeaders: Record<string, string> = {
             "Content-Type": finalContentType,
             "Content-Disposition": contentDisp,
@@ -198,21 +231,30 @@ export async function GET(req: Request) {
         }
       }
     } catch (authErr) {
-      console.warn("Drive API v3 fetch failed, falling back to direct uc fetch:", authErr);
+      console.warn(
+        "Drive API v3 fetch failed, falling back to direct uc fetch:",
+        authErr,
+      );
     }
   }
 
   // 2. Try fetching directly via Google Drive download
   try {
-    const driveRes = await fetch(`https://drive.google.com/uc?export=download&id=${id}`, {
-      headers: forwardHeaders,
-      cache: "no-store",
-    });
+    const driveRes = await fetch(
+      `https://drive.google.com/uc?export=download&id=${id}`,
+      {
+        headers: forwardHeaders,
+        cache: "no-store",
+      },
+    );
     const contentType = driveRes.headers.get("content-type") || "";
     const isHtmlChallenge = contentType.includes("text/html");
 
     if (driveRes.ok && driveRes.body && !isHtmlChallenge) {
-      const contentDisp = disposition === "inline" ? "inline" : `attachment; filename="${safeFilename(url.searchParams.get("filename") || "capture", type)}"`;
+      const contentDisp =
+        disposition === "inline"
+          ? "inline"
+          : `attachment; filename="${safeFilename(url.searchParams.get("filename") || "capture", type)}"`;
       const resolvedContentType = resolveMime(type, contentType);
       const resHeaders: Record<string, string> = {
         "Content-Type": resolvedContentType,
@@ -231,32 +273,39 @@ export async function GET(req: Request) {
       });
     }
   } catch (err) {
-    console.warn("Direct Drive fetch failed, falling back to owner auth token:", err);
+    console.warn(
+      "Direct Drive fetch failed, falling back to owner auth token:",
+      err,
+    );
   }
 
   // 3. Fallback: Authenticated proxy using capture owner's Drive token if not tried yet.
   // This proxy IS the access path for members-only captures, so the file itself
-  // stays private in Drive — we never grant `type: "anyone"` here. Doing so made
+  // stays private in Drive - we never grant `type: "anyone"` here. Doing so made
   // the sharing setting irreversible: flipping a capture back to "members" left
   // the raw Drive URL world-readable forever.
   try {
     if (cap?.user_id) {
       const accessToken = await driveAccessToken(cap.user_id).catch(() => null);
       if (accessToken) {
-        const authRes = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media&supportsAllDrives=true`, {
-          headers: {
-            Authorization: `Bearer ${accessToken}`,
-            ...forwardHeaders,
+        const authRes = await fetch(
+          `https://www.googleapis.com/drive/v3/files/${id}?alt=media&supportsAllDrives=true`,
+          {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              ...forwardHeaders,
+            },
+            cache: "no-store",
           },
-          cache: "no-store",
-        });
+        );
 
         // Handle 416 Range Not Satisfiable explicitly so seeking beyond EOF returns 416 instead of falling through to 403
         if (authRes.status === 416) {
           const contentRange = authRes.headers.get("content-range");
           const resHeaders: Record<string, string> = {
             "Accept-Ranges": "bytes",
-            "Content-Type": type === "video" ? "video/webm" : "application/octet-stream",
+            "Content-Type":
+              type === "video" ? "video/webm" : "application/octet-stream",
           };
           if (contentRange) resHeaders["Content-Range"] = contentRange;
           return new NextResponse(null, {
@@ -268,7 +317,10 @@ export async function GET(req: Request) {
         if (authRes.ok && authRes.body) {
           const rawAuthType = authRes.headers.get("content-type");
           const finalContentType = resolveMime(type, rawAuthType);
-          const contentDisp = disposition === "inline" ? "inline" : `attachment; filename="${safeFilename(url.searchParams.get("filename") || "capture", type)}"`;
+          const contentDisp =
+            disposition === "inline"
+              ? "inline"
+              : `attachment; filename="${safeFilename(url.searchParams.get("filename") || "capture", type)}"`;
           const resHeaders: Record<string, string> = {
             "Content-Type": finalContentType,
             "Content-Disposition": contentDisp,
@@ -291,5 +343,8 @@ export async function GET(req: Request) {
     console.warn("Owner authenticated fetch failed:", authErr);
   }
 
-  return NextResponse.json({ error: "Download failed or file not accessible" }, { status: 403 });
+  return NextResponse.json(
+    { error: "Download failed or file not accessible" },
+    { status: 403 },
+  );
 }

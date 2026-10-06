@@ -136,31 +136,29 @@ export function PricingToggle() {
           return (
             <Reveal key={tier.id} delay={i * 0.1} className="h-full">
               <div
-                className={`relative overflow-hidden group h-full rounded-xl border flex flex-col justify-between transition-all duration-300 hover:-translate-y-1.5 ${
+                className={`relative overflow-hidden group h-full rounded-xl border flex flex-col justify-between ${
                   tier.popular
-                    ? "border-accent/70 bg-gradient-to-b from-site-surface via-site-surface to-accent/10 ring-1 ring-accent/60 shadow-md shadow-accent/10 hover:shadow-xl hover:shadow-accent/20 hover:border-accent"
-                    : "border-site-border bg-gradient-to-b from-site-surface via-site-surface to-site-surface-2/60 hover:border-accent/40 shadow-xs hover:shadow-lg hover:shadow-accent/5"
+                    ? "border-accent/70 bg-gradient-to-b from-site-surface via-site-surface to-accent/10 ring-1 ring-accent/60 shadow-md shadow-accent/10"
+                    : "border-site-border bg-gradient-to-b from-site-surface via-site-surface to-site-surface-2/60 shadow-sm"
                 }`}
               >
                 {/* Top Edge Gradient Accent */}
-                {tier.popular ? (
+                {tier.popular && (
                   <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-accent via-emerald-400 to-accent" aria-hidden="true" />
-                ) : (
-                  <div className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-transparent via-accent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" aria-hidden="true" />
                 )}
 
                 {/* Header Box */}
-                <div className="p-6 border-b border-site-border-subtle bg-site-surface-2/40 relative">
+                <div className="p-5 sm:p-6 border-b border-site-border-subtle bg-site-surface-2/40 relative">
                   {tier.popular && (
                     <span className="absolute top-3 right-3 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-gradient-to-r from-accent to-emerald-400 text-slate-950 shadow-xs">
                       {t("pricing.mostPopular")}
                     </span>
                   )}
-                  <h3 className="text-base font-bold text-site-text group-hover:text-accent transition-colors">{tier.name}</h3>
+                  <h3 className={`text-base font-bold text-site-text ${tier.popular ? "pr-24" : ""}`}>{tier.name}</h3>
                   <p className="text-xs text-site-text-2 mt-1 min-h-[2rem] leading-relaxed">{tier.tagline}</p>
 
                   <div className="my-4">
-                    <span className="text-3xl font-extrabold text-site-text font-mono">${price}</span>
+                    <span className="text-3xl font-extrabold text-site-text tabular-nums">${price}</span>
                     <span className="text-site-text-2 text-xs"> {t("pricing.perMonth")}</span>
                     {tier.monthly !== tier.yearly && yearly && (
                       <p className="text-[10px] text-site-text-2 mt-0.5">{t("pricing.billedYearly")}</p>
@@ -182,7 +180,7 @@ export function PricingToggle() {
                 </div>
 
                 {/* Feature List */}
-                <div className="p-6 flex-1">
+                <div className="p-5 sm:p-6 flex-1">
                   <ul className="space-y-3 text-xs text-site-text">
                     {tier.features.map((f, featureIdx) => (
                       <li key={featureIdx} className="flex items-start gap-2">

@@ -17,10 +17,10 @@ export function DocsContent() {
   };
 
   const navCards = [
-    { id: "getting-started", title: t("docs.gettingStarted"), desc: t("docs.navGettingStartedDesc") },
-    { id: "shortcuts", title: t("docs.shortcuts"), desc: t("docs.navShortcutsDesc") },
-    { id: "drive-setup", title: t("docs.driveSetup"), desc: t("docs.navDriveSetupDesc") },
-    { id: "view-and-share", title: t("docs.viewAndShare"), desc: t("docs.navViewAndShareDesc") },
+    { id: "getting-started", title: t("docs.gettingStarted"), desc: t("docs.navGettingStartedDesc"), badge: "01" },
+    { id: "shortcuts", title: t("docs.shortcuts"), desc: t("docs.navShortcutsDesc"), badge: "02" },
+    { id: "drive-setup", title: t("docs.driveSetup"), desc: t("docs.navDriveSetupDesc"), badge: "03" },
+    { id: "view-and-share", title: t("docs.viewAndShare"), desc: t("docs.navViewAndShareDesc"), badge: "04" },
   ];
 
   return (
@@ -28,15 +28,18 @@ export function DocsContent() {
       title={t("docs.title")}
       subtitle={t("docs.subtitle")}
     >
-      <div className="space-y-8 font-site">
+      <div className="space-y-12 font-site">
         {/* Quick Nav Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {navCards.map((card, i) => (
             <Reveal key={card.id} delay={i * 0.08} className="h-full">
               <div
-                className="h-full rounded-xl border border-site-border bg-site-surface p-5 space-y-2 shadow-xs hover:-translate-y-0.5 hover:border-site-border-focus transition-all"
+                className="h-full rounded-2xl border border-site-border bg-gradient-to-b from-site-surface to-site-surface-2/60 p-6 space-y-3 shadow-sm"
               >
-                <h4 className="text-sm font-bold text-site-text">
+                <span className="text-xs font-bold text-site-accent px-2 py-0.5 rounded bg-site-accent/10 border border-site-accent/20">
+                  {card.badge}
+                </span>
+                <h4 className="text-base font-bold text-site-text">
                   {card.title}
                 </h4>
                 <p className="text-xs text-site-text-2 leading-relaxed">
@@ -54,7 +57,7 @@ export function DocsContent() {
             <div className="rounded-xl border border-site-border bg-site-surface p-6 sm:p-8 space-y-6 shadow-xs">
               <div className="flex items-center justify-between border-b border-site-border-subtle pb-4">
                 <h3 className="text-base font-bold text-site-text">{t("docs.shortcuts")}</h3>
-                <span className="text-xs text-site-text-2 font-mono">Quick Reference</span>
+                <span className="text-xs text-site-text-2 font-medium">Quick Reference</span>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

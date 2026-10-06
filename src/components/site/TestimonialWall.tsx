@@ -6,7 +6,7 @@ const testimonials = [
     role: "QA Lead · Fintech Startup, Jakarta",
     avatar: { bg: "bg-emerald-500", letter: "A" },
     quote:
-      "Sebelum BugSnap, developer kita selalu butuh 5-10 pesan bolak-balik cuma buat reproduksi satu bug. Sekarang, 1 link dan semuanya ada — screen recording, Console errors, Network trace, device info. DevTools auto-capture adalah game changer.",
+      "Sebelum BugSnap, developer kita selalu butuh 5-10 pesan bolak-balik cuma buat reproduksi satu bug. Sekarang, 1 link dan semuanya ada - screen recording, Console errors, Network trace, device info. DevTools auto-capture adalah game changer.",
     tag: "DevTools Auto-capture",
   },
   {
@@ -30,7 +30,7 @@ const testimonials = [
     role: "CTO · Healthcare SaaS, Surabaya",
     avatar: { bg: "bg-rose-500", letter: "B" },
     quote:
-      "Data pasien kami sensitif banget. Fakta bahwa rekaman langsung ke Google Drive tim kami — bukan ke server BugSnap — adalah alasan utama kami pilih ini. Tim security kami approve dalam 1 hari.",
+      "Data pasien kami sensitif banget. Fakta bahwa rekaman langsung ke Google Drive tim kami - bukan ke server BugSnap - adalah alasan utama kami pilih ini. Tim security kami approve dalam 1 hari.",
     tag: "Zero-Data Architecture",
   },
   {

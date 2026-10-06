@@ -131,8 +131,8 @@ export default function DriveStorageMeter() {
         />
       </div>
 
-      <div className="flex items-center justify-between text-[10px] text-muted">
-        <span className="truncate">
+      <div className="flex items-center justify-between text-[10px] text-muted min-w-0">
+        <span className="truncate min-w-0">
           {t("drive.storageUsed", { used: formatBytes(used), total: formatBytes(total) })}
         </span>
         <Link

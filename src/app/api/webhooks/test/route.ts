@@ -7,20 +7,26 @@ export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   const user = await authenticatedUser(req);
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  if (!user)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   if (await isRateLimited(`webhook-test:${user.id}`, 10, 60)) {
     return NextResponse.json(
       { error: "Too many webhook test attempts. Please wait a minute." },
-      { status: 429 }
+      { status: 429 },
     );
   }
 
   try {
-    const body = (await req.json().catch(() => null)) as { url?: unknown } | null;
+    const body = (await req.json().catch(() => null)) as {
+      url?: unknown;
+    } | null;
     const url = typeof body?.url === "string" ? body.url : null;
     if (!url) {
-      return NextResponse.json({ error: "Valid Webhook URL is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Valid Webhook URL is required" },
+        { status: 400 },
+      );
     }
 
     let target: URL;
@@ -29,21 +35,27 @@ export async function POST(req: Request) {
     } catch (err) {
       return NextResponse.json(
         { error: err instanceof Error ? err.message : "Invalid webhook URL" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const payload = {
-      content: "🚀 **BugSnap Webhook Test**: Connection established successfully! You will receive instant notifications whenever a new capture or bug report is saved.",
+      content:
+        "🚀 **BugSnap Webhook Test**: Connection established successfully! You will receive instant notifications whenever a new capture or bug report is saved.",
       text: "🚀 BugSnap Webhook Test: Connection established successfully! You will receive instant notifications whenever a new capture or bug report is saved.",
       embeds: [
         {
           title: "BugSnap Integration Test",
-          description: "Your workspace is now wired to receive instant capture alerts with rich DevTools diagnostics.",
+          description:
+            "Your workspace is now wired to receive instant capture alerts with rich DevTools diagnostics.",
           color: 0x6366f1,
           fields: [
             { name: "Status", value: "Active", inline: true },
-            { name: "Triggered By", value: user.email || "Workspace Admin", inline: true },
+            {
+              name: "Triggered By",
+              value: user.email || "Workspace Admin",
+              inline: true,
+            },
           ],
           timestamp: new Date().toISOString(),
         },
@@ -60,18 +72,23 @@ export async function POST(req: Request) {
     });
 
     if (!res.ok) {
-      // Status only — echoing the response body turns this into a read primitive.
+      // Status only - echoing the response body turns this into a read primitive.
       return NextResponse.json(
         { error: `Webhook endpoint responded with status ${res.status}` },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     return NextResponse.json({ ok: true });
   } catch (err) {
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Failed to reach webhook endpoint" },
-      { status: 500 }
+      {
+        error:
+          err instanceof Error
+            ? err.message
+            : "Failed to reach webhook endpoint",
+      },
+      { status: 500 },
     );
   }
 }

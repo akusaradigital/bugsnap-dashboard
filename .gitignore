@@ -50,3 +50,5 @@ supabase/.temp/
 .zcode/
 test-results/
 playwright-report/
+
+tests/screenshots/

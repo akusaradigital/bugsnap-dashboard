@@ -104,6 +104,7 @@ function MediaViewer({
   const lightboxTriggerRef = useRef<HTMLButtonElement>(null);
   const closeButtonRef = useRef<HTMLButtonElement>(null);
   const imageViewportRef = useRef<HTMLDivElement>(null);
+  const lightboxBodyRef = useRef<HTMLDivElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const videoContainerRef = useRef<HTMLDivElement>(null);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -495,16 +496,42 @@ function MediaViewer({
     });
   }, [clampPan]);
 
-  function handleWheel(e: React.WheelEvent) {
-    e.preventDefault();
-    const nextZoom = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, zoom + (e.deltaY > 0 ? -STEP_ZOOM : STEP_ZOOM)));
-    setZoom(nextZoom);
-    if (nextZoom <= MIN_ZOOM) {
-      setPan({ x: 0, y: 0 });
-    } else {
-      setPan((prev) => clampPan(prev.x, prev.y, nextZoom));
-    }
-  }
+  // Trackpad pinch and ctrl+wheel both arrive as a wheel event with ctrlKey set.
+  // Bound natively (not via React's onWheel) because React 18 attaches wheel at the
+  // root as PASSIVE, so e.preventDefault() there is ignored: the browser still ran
+  // its own page zoom on top of ours, and the whole page scaled while the image was
+  // zooming. A non-passive listener on the element is the only way to stop that.
+  const applyZoomDelta = useCallback((deltaY: number, ctrl: boolean) => {
+    setZoom((current) => {
+      // A pinch reports many small deltas; a mouse wheel reports ~100 per notch.
+      // Scaling by the delta makes a pinch feel continuous instead of jumping a
+      // fixed 0.5 per event, while a wheel notch still moves one STEP_ZOOM.
+      const magnitude = ctrl
+        ? Math.min(STEP_ZOOM, (Math.abs(deltaY) / 100) * STEP_ZOOM * 2)
+        : STEP_ZOOM;
+      const next = Math.min(
+        MAX_ZOOM,
+        Math.max(MIN_ZOOM, current + (deltaY > 0 ? -magnitude : magnitude))
+      );
+      if (next <= MIN_ZOOM) {
+        setPan({ x: 0, y: 0 });
+      } else {
+        setPan((prev) => clampPan(prev.x, prev.y, next));
+      }
+      return next;
+    });
+  }, [clampPan]);
+
+  useEffect(() => {
+    const el = lightboxBodyRef.current;
+    if (!el || !lightboxOpen) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      applyZoomDelta(e.deltaY, e.ctrlKey);
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [lightboxOpen, applyZoomDelta]);
 
   function handlePointerDown(e: React.PointerEvent) {
     if (zoom <= MIN_ZOOM) return;
@@ -1085,7 +1112,7 @@ function MediaViewer({
       )}
 
       {/* Controls row matching extension editor (play on the left, slider track in middle) */}
-      <div className="flex items-center gap-2.5 sm:gap-3">
+      <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3">
         {/* Play/Pause toggle button (.play-btn) */}
         <button
           type="button"
@@ -1112,7 +1139,7 @@ function MediaViewer({
           onPointerMove={handleTrackPointerMove}
           onPointerUp={handleTrackPointerUp}
           onPointerCancel={handleTrackPointerCancel}
-          className="relative flex-1 h-6 flex items-center cursor-pointer select-none touch-none group/track"
+          className="relative flex-1 min-w-[120px] h-6 flex items-center cursor-pointer select-none touch-none group/track"
         >
           {/* Track bar */}
           <div className={`w-full h-2 rounded-full overflow-hidden relative pointer-events-none ${
@@ -1217,153 +1244,156 @@ function MediaViewer({
           {formatSec(currentPlaybackTime)} / {formatSec(effectiveDuration)}
         </div>
 
-        {/* Speed selector (.playback-speed-label) */}
-        <div className="flex items-center gap-1 shrink-0">
-          <label htmlFor={`video-playback-speed${inFs ? "-fs" : ""}`} className={`text-[11px] font-medium hidden sm:inline ${
-            inFs ? "text-zinc-300" : "text-zinc-600 dark:text-zinc-400"
-          }`}>
-            {t("mv.speed")}
-          </label>
-          <select
-            id={`video-playback-speed${inFs ? "-fs" : ""}`}
-            value={playbackRate}
-            onChange={(e) => {
-              const val = Number(e.target.value);
-              setPlaybackRate(val);
-              if (videoRef.current) videoRef.current.playbackRate = val;
-            }}
-            className={`text-xs rounded-md px-1.5 py-1 cursor-pointer focus:outline-hidden focus:ring-1 focus:ring-[#89BD49] ${
-              inFs
-                ? "bg-white/10 text-white border border-white/20 hover:bg-white/20"
-                : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700"
-            }`}
-            title={t("mv.speed")}
-          >
-            <option value="0.5" className="bg-zinc-900 text-white">0.5x</option>
-            <option value="0.75" className="bg-zinc-900 text-white">0.75x</option>
-            <option value="1" className="bg-zinc-900 text-white">1x</option>
-            <option value="1.25" className="bg-zinc-900 text-white">1.25x</option>
-            <option value="1.5" className="bg-zinc-900 text-white">1.5x</option>
-            <option value="2" className="bg-zinc-900 text-white">2x</option>
-          </select>
-        </div>
+        {/* Actions cluster (wraps to full-width row on mobile, inline on desktop) */}
+        <div className="flex items-center justify-end gap-1 sm:gap-1.5 w-full sm:w-auto sm:ml-auto">
+          {/* Speed selector (.playback-speed-label) */}
+          <div className="flex items-center gap-1 shrink-0">
+            <label htmlFor={`video-playback-speed${inFs ? "-fs" : ""}`} className={`text-[11px] font-medium hidden sm:inline ${
+              inFs ? "text-zinc-300" : "text-zinc-600 dark:text-zinc-400"
+            }`}>
+              {t("mv.speed")}
+            </label>
+            <select
+              id={`video-playback-speed${inFs ? "-fs" : ""}`}
+              value={playbackRate}
+              onChange={(e) => {
+                const val = Number(e.target.value);
+                setPlaybackRate(val);
+                if (videoRef.current) videoRef.current.playbackRate = val;
+              }}
+              className={`text-xs rounded-md px-1.5 py-1 cursor-pointer focus:outline-hidden focus:ring-1 focus:ring-[#89BD49] ${
+                inFs
+                  ? "bg-white/10 text-white border border-white/20 hover:bg-white/20"
+                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700"
+              }`}
+              title={t("mv.speed")}
+            >
+              <option value="0.5" className="bg-zinc-900 text-white">0.5x</option>
+              <option value="0.75" className="bg-zinc-900 text-white">0.75x</option>
+              <option value="1" className="bg-zinc-900 text-white">1x</option>
+              <option value="1.25" className="bg-zinc-900 text-white">1.25x</option>
+              <option value="1.5" className="bg-zinc-900 text-white">1.5x</option>
+              <option value="2" className="bg-zinc-900 text-white">2x</option>
+            </select>
+          </div>
 
-        {/* Volume & Mute control */}
-        <div className="flex items-center gap-1 shrink-0">
+          {/* Volume & Mute control */}
+          <div className="flex items-center gap-1 shrink-0">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                toggleMute();
+              }}
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors cursor-pointer focus:outline-hidden ${
+                inFs
+                  ? "text-white hover:bg-white/20"
+                  : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+              }`}
+              aria-label={volumeState.muted || volumeState.volume === 0 ? t("mv.unmute") : t("mv.mute")}
+              title={volumeState.muted || volumeState.volume === 0 ? t("mv.unmute") : t("mv.mute")}
+            >
+              {volumeState.muted || volumeState.volume === 0 ? (
+                <svg className="w-4 h-4 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" />
+                  <line x1="23" y1="9" x2="17" y2="15" />
+                  <line x1="17" y1="9" x2="23" y2="15" />
+                </svg>
+              ) : volumeState.volume < 0.5 ? (
+                <svg className="w-4 h-4 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" />
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                </svg>
+              ) : (
+                <svg className="w-4 h-4 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" />
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
+                </svg>
+              )}
+            </button>
+            <input
+              type="range"
+              min="0"
+              max="1"
+              step="0.05"
+              value={volumeState.muted ? 0 : volumeState.volume}
+              onChange={handleVolumeChange}
+              onClick={(e) => e.stopPropagation()}
+              aria-label="Volume"
+              className="hidden sm:inline-block w-14 sm:w-16 h-1.5 accent-[#89BD49] bg-zinc-200 dark:bg-zinc-700 rounded-lg cursor-pointer"
+            />
+          </div>
+
+          {/* Picture-in-Picture button */}
+          {isPipSupported && (
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                togglePip();
+              }}
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors cursor-pointer focus:outline-hidden ${
+                inFs
+                  ? isPip ? "text-[#A8D666] bg-white/20" : "text-white hover:bg-white/20 hover:text-white"
+                  : isPip ? "text-[#6B9A35] dark:text-[#A8D666] bg-[#89BD49]/10 dark:bg-[#89BD49]/20" : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+              }`}
+              aria-label={t("mv.pip")}
+              title={t("mv.pip")}
+            >
+              <svg className="w-4 h-4 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <rect x="2" y="4" width="20" height="16" rx="2" />
+                <rect x="12" y="10" width="8" height="6" rx="1" />
+              </svg>
+            </button>
+          )}
+
+          {/* Download button */}
+          {downloadUrl && (
+            <button
+              type="button"
+              onClick={handleDownloadMedia}
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors cursor-pointer focus:outline-hidden ${
+                inFs
+                  ? "text-white hover:bg-white/20 hover:text-white"
+                  : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+              }`}
+              aria-label={t("mv.download")}
+              title={t("mv.download")}
+            >
+              <svg className="w-4 h-4 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                <polyline points="7 10 12 15 17 10" />
+                <line x1="12" y1="15" x2="12" y2="3" />
+              </svg>
+            </button>
+          )}
+
+          {/* Fullscreen button */}
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
-              toggleMute();
+              toggleFullscreen();
             }}
-            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors cursor-pointer focus:outline-hidden ${
-              inFs
-                ? "text-white hover:bg-white/20"
-                : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
-            }`}
-            aria-label={volumeState.muted || volumeState.volume === 0 ? t("mv.unmute") : t("mv.mute")}
-            title={volumeState.muted || volumeState.volume === 0 ? t("mv.unmute") : t("mv.mute")}
-          >
-            {volumeState.muted || volumeState.volume === 0 ? (
-              <svg className="w-4 h-4 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" />
-                <line x1="23" y1="9" x2="17" y2="15" />
-                <line x1="17" y1="9" x2="23" y2="15" />
-              </svg>
-            ) : volumeState.volume < 0.5 ? (
-              <svg className="w-4 h-4 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" />
-                <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-              </svg>
-            ) : (
-              <svg className="w-4 h-4 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" />
-                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
-              </svg>
-            )}
-          </button>
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.05"
-            value={volumeState.muted ? 0 : volumeState.volume}
-            onChange={handleVolumeChange}
-            onClick={(e) => e.stopPropagation()}
-            aria-label="Volume"
-            className="hidden sm:inline-block w-14 sm:w-16 h-1.5 accent-[#89BD49] bg-zinc-200 dark:bg-zinc-700 rounded-lg cursor-pointer"
-          />
-        </div>
-
-        {/* Picture-in-Picture button */}
-        {isPipSupported && (
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              togglePip();
-            }}
-            className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors cursor-pointer focus:outline-hidden ${
-              inFs
-                ? isPip ? "text-[#A8D666] bg-white/20" : "text-white hover:bg-white/20 hover:text-white"
-                : isPip ? "text-[#6B9A35] dark:text-[#A8D666] bg-[#89BD49]/10 dark:bg-[#89BD49]/20" : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
-            }`}
-            aria-label={t("mv.pip")}
-            title={t("mv.pip")}
-          >
-            <svg className="w-4 h-4 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <rect x="2" y="4" width="20" height="16" rx="2" />
-              <rect x="12" y="10" width="8" height="6" rx="1" />
-            </svg>
-          </button>
-        )}
-
-        {/* Download button */}
-        {downloadUrl && (
-          <button
-            type="button"
-            onClick={handleDownloadMedia}
             className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors cursor-pointer focus:outline-hidden ${
               inFs
                 ? "text-white hover:bg-white/20 hover:text-white"
                 : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
             }`}
-            aria-label={t("mv.download")}
-            title={t("mv.download")}
+            aria-label={isFullscreen ? t("mv.exitFullscreen") : t("mv.openFullscreen")}
+            title={isFullscreen ? `${t("mv.exitFullscreen")} (Esc)` : t("mv.openFullscreen")}
           >
-            <svg className="w-4 h-4 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
+            {isFullscreen ? (
+              <svg className="w-4 h-4 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
+              </svg>
+            )}
           </button>
-        )}
-
-        {/* Fullscreen button */}
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            toggleFullscreen();
-          }}
-          className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors cursor-pointer focus:outline-hidden ${
-            inFs
-              ? "text-white hover:bg-white/20 hover:text-white"
-              : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
-          }`}
-          aria-label={isFullscreen ? t("mv.exitFullscreen") : t("mv.openFullscreen")}
-          title={isFullscreen ? `${t("mv.exitFullscreen")} (Esc)` : t("mv.openFullscreen")}
-        >
-          {isFullscreen ? (
-            <svg className="w-4 h-4 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
-            </svg>
-          ) : (
-            <svg className="w-4 h-4 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
-            </svg>
-          )}
-        </button>
+        </div>
       </div>
 
       {/* Tooltip on hovered marker */}
@@ -1734,16 +1764,16 @@ function MediaViewer({
         className="m-auto h-[85vh] w-[90vw] max-w-5xl rounded-2xl bg-white dark:bg-zinc-950 border border-zinc-200 dark:border-zinc-800 p-0 text-zinc-900 dark:text-white shadow-2xl backdrop:bg-black/40 dark:backdrop:bg-black/70 backdrop:backdrop-blur-sm"
       >
         <div
-          className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-2xl p-6 sm:p-10 bg-zinc-50/50 dark:bg-zinc-950/50"
-          onWheel={handleWheel}
+          ref={lightboxBodyRef}
+          className="relative flex h-full w-full items-center justify-center overflow-hidden rounded-2xl p-3 sm:p-10 bg-zinc-50/50 dark:bg-zinc-950/50"
         >
           {/* Controls */}
-          <div className="absolute right-4 top-4 z-20 flex items-center gap-1.5 sm:gap-2">
+          <div className="absolute right-2 sm:right-4 top-2 sm:top-4 z-20 flex items-center gap-1 sm:gap-2">
             <button
               type="button"
               onClick={zoomOut}
               disabled={zoom <= MIN_ZOOM}
-              className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg bg-white/90 hover:bg-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed text-zinc-700 hover:text-zinc-900 border border-zinc-200 shadow-md dark:bg-zinc-900/90 dark:hover:bg-zinc-800 dark:text-white dark:border-white/10 dark:shadow-lg backdrop-blur-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-zinc-900 dark:focus-visible:outline-white transition-colors cursor-pointer"
+              className="inline-flex min-h-8 min-w-8 sm:min-h-10 sm:min-w-10 items-center justify-center rounded-lg bg-white/90 hover:bg-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed text-zinc-700 hover:text-zinc-900 border border-zinc-200 shadow-md dark:bg-zinc-900/90 dark:hover:bg-zinc-800 dark:text-white dark:border-white/10 dark:shadow-lg backdrop-blur-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-zinc-900 dark:focus-visible:outline-white transition-colors cursor-pointer"
               aria-label={t("mv.zoomOut")}
               title={`${t("mv.zoomOut")} (-)`}
             >
@@ -1757,7 +1787,7 @@ function MediaViewer({
               type="button"
               onClick={zoomIn}
               disabled={zoom >= MAX_ZOOM}
-              className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg bg-white/90 hover:bg-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed text-zinc-700 hover:text-zinc-900 border border-zinc-200 shadow-md dark:bg-zinc-900/90 dark:hover:bg-zinc-800 dark:text-white dark:border-white/10 dark:shadow-lg backdrop-blur-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-zinc-900 dark:focus-visible:outline-white transition-colors cursor-pointer"
+              className="inline-flex min-h-8 min-w-8 sm:min-h-10 sm:min-w-10 items-center justify-center rounded-lg bg-white/90 hover:bg-zinc-100 disabled:opacity-40 disabled:cursor-not-allowed text-zinc-700 hover:text-zinc-900 border border-zinc-200 shadow-md dark:bg-zinc-900/90 dark:hover:bg-zinc-800 dark:text-white dark:border-white/10 dark:shadow-lg backdrop-blur-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-zinc-900 dark:focus-visible:outline-white transition-colors cursor-pointer"
               aria-label={t("mv.zoomIn")}
               title={`${t("mv.zoomIn")} (+)`}
             >
@@ -1772,7 +1802,7 @@ function MediaViewer({
               <button
                 type="button"
                 onClick={resetView}
-                className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg bg-white/90 hover:bg-zinc-100 text-zinc-700 hover:text-zinc-900 border border-zinc-200 shadow-md dark:bg-zinc-900/90 dark:hover:bg-zinc-800 dark:text-white dark:border-white/10 dark:shadow-lg backdrop-blur-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-zinc-900 dark:focus-visible:outline-white transition-colors cursor-pointer"
+                className="inline-flex min-h-8 min-w-8 sm:min-h-10 sm:min-w-10 items-center justify-center rounded-lg bg-white/90 hover:bg-zinc-100 text-zinc-700 hover:text-zinc-900 border border-zinc-200 shadow-md dark:bg-zinc-900/90 dark:hover:bg-zinc-800 dark:text-white dark:border-white/10 dark:shadow-lg backdrop-blur-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-zinc-900 dark:focus-visible:outline-white transition-colors cursor-pointer"
                 aria-label={t("mv.resetZoom")}
                 title={`${t("mv.resetZoom")} (0)`}
               >
@@ -1786,7 +1816,7 @@ function MediaViewer({
               <button
                 type="button"
                 onClick={handleDownloadMedia}
-                className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg bg-white/90 hover:bg-zinc-100 text-zinc-700 hover:text-zinc-900 border border-zinc-200 shadow-md dark:bg-zinc-900/90 dark:hover:bg-zinc-800 dark:text-white dark:border-white/10 dark:shadow-lg backdrop-blur-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-zinc-900 dark:focus-visible:outline-white transition-colors cursor-pointer"
+                className="inline-flex min-h-8 min-w-8 sm:min-h-10 sm:min-w-10 items-center justify-center rounded-lg bg-white/90 hover:bg-zinc-100 text-zinc-700 hover:text-zinc-900 border border-zinc-200 shadow-md dark:bg-zinc-900/90 dark:hover:bg-zinc-800 dark:text-white dark:border-white/10 dark:shadow-lg backdrop-blur-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-zinc-900 dark:focus-visible:outline-white transition-colors cursor-pointer"
                 aria-label={t("mv.download")}
                 title={t("mv.download")}
               >
@@ -1797,7 +1827,7 @@ function MediaViewer({
               ref={closeButtonRef}
               type="button"
               onClick={closeLightbox}
-              className="inline-flex min-h-10 min-w-10 items-center justify-center rounded-lg bg-white/90 hover:bg-zinc-100 text-zinc-700 hover:text-zinc-900 border border-zinc-200 shadow-md dark:bg-zinc-900/90 dark:hover:bg-zinc-800 dark:text-white dark:border-white/10 dark:shadow-lg backdrop-blur-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-zinc-900 dark:focus-visible:outline-white transition-colors cursor-pointer"
+              className="inline-flex min-h-8 min-w-8 sm:min-h-10 sm:min-w-10 items-center justify-center rounded-lg bg-white/90 hover:bg-zinc-100 text-zinc-700 hover:text-zinc-900 border border-zinc-200 shadow-md dark:bg-zinc-900/90 dark:hover:bg-zinc-800 dark:text-white dark:border-white/10 dark:shadow-lg backdrop-blur-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-zinc-900 dark:focus-visible:outline-white transition-colors cursor-pointer"
               aria-label={t("mv.closeViewer")}
               title={`${t("mv.closeViewer")} (Esc)`}
             >

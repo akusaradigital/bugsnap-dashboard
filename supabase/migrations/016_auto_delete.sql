@@ -1,5 +1,5 @@
 -- =====================================================================
--- 016_auto_delete.sql - Auto-delete history (workspace retention) — T-016
+-- 016_auto_delete.sql - Auto-delete history (workspace retention) - T-016
 --
 -- SATU KESATUAN dengan extension (T-017): kolom SAMA di workspace_settings
 -- (`auto_delete_months`). Extension sudah referensi migration "016"

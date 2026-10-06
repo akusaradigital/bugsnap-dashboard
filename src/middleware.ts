@@ -17,7 +17,7 @@ const SUPABASE_ORIGIN = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 
 // Next.js injects inline bootstrap scripts and styled-jsx style tags, so
 // script-src and style-src need 'unsafe-inline'. Everything else is locked
-// down — most importantly frame-ancestors, object-src and base-uri, which are
+// down - most importantly frame-ancestors, object-src and base-uri, which are
 // what actually stop clickjacking and base-tag injection.
 // ponytail: nonce-based script-src is the upgrade; it needs every inline
 // script to thread a per-request nonce, which is a much larger change.
@@ -40,7 +40,7 @@ function buildCsp(): string {
     "font-src 'self' data:",
     `connect-src ${connect.join(" ")}`,
     "frame-src https://challenges.cloudflare.com https://drive.google.com",
-    // The dashboard is never meant to be embedded — this is the clickjacking fix.
+    // The dashboard is never meant to be embedded - this is the clickjacking fix.
     "frame-ancestors 'none'",
     "object-src 'none'",
     "base-uri 'self'",
@@ -52,31 +52,42 @@ export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Early CSRF protection for mutating admin API requests: reject cross-origin callers
-  if (pathname.startsWith("/api/admin/") && ["POST", "PUT", "DELETE", "PATCH"].includes(req.method)) {
+  if (
+    pathname.startsWith("/api/admin/") &&
+    ["POST", "PUT", "DELETE", "PATCH"].includes(req.method)
+  ) {
     const origin = req.headers.get("origin");
     const host = req.headers.get("host");
     if (origin && host) {
       try {
         const originHost = new URL(origin).host;
         if (originHost !== host) {
-          return new NextResponse(JSON.stringify({ error: "Forbidden: Cross-origin request rejected" }), {
+          return new NextResponse(
+            JSON.stringify({
+              error: "Forbidden: Cross-origin request rejected",
+            }),
+            {
+              status: 403,
+              headers: {
+                "Content-Type": "application/json",
+                "X-Frame-Options": "DENY",
+                "Content-Security-Policy": "frame-ancestors 'none'",
+              },
+            },
+          );
+        }
+      } catch {
+        return new NextResponse(
+          JSON.stringify({ error: "Forbidden: Invalid origin" }),
+          {
             status: 403,
             headers: {
               "Content-Type": "application/json",
               "X-Frame-Options": "DENY",
               "Content-Security-Policy": "frame-ancestors 'none'",
             },
-          });
-        }
-      } catch {
-        return new NextResponse(JSON.stringify({ error: "Forbidden: Invalid origin" }), {
-          status: 403,
-          headers: {
-            "Content-Type": "application/json",
-            "X-Frame-Options": "DENY",
-            "Content-Security-Policy": "frame-ancestors 'none'",
           },
-        });
+        );
       }
     }
   }
@@ -87,17 +98,25 @@ export function middleware(req: NextRequest) {
   res.headers.set("X-Frame-Options", "DENY");
   res.headers.set("X-Content-Type-Options", "nosniff");
   res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
-  res.headers.set("Permissions-Policy", "camera=(), geolocation=(), interest-cohort=()");
+  res.headers.set(
+    "Permissions-Policy",
+    "camera=(), geolocation=(), interest-cohort=()",
+  );
   // Only meaningful over HTTPS; harmless on localhost since browsers ignore it there.
   if (process.env.NODE_ENV === "production") {
-    res.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
+    res.headers.set(
+      "Strict-Transport-Security",
+      "max-age=31536000; includeSubDomains",
+    );
   }
 
   return res;
 }
 
 export const config = {
-  // Skip Next internals and static assets — they need no policy and this keeps
+  // Skip Next internals and static assets - they need no policy and this keeps
   // the middleware off the hot path for every image/font/media request.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|webp|ico|woff|woff2|ttf|mp4|webm|json|xml|txt)$).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|webp|ico|woff|woff2|ttf|mp4|webm|json|xml|txt)$).*)",
+  ],
 };

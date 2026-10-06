@@ -1206,11 +1206,11 @@ function SingleViewContent() {
                   <button
                     type="button"
                     onClick={() => { setMoveSubmenuOpen((o) => !o); if (capFolders.length === 0) loadCapFolders(); }}
-                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-white dark:bg-background px-3 sm:px-3.5 py-1.5 sm:py-2 text-xs font-semibold text-foreground shadow-xs hover:bg-subtle cursor-pointer transition-colors"
+                    className="inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg border border-border bg-white dark:bg-background px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs font-semibold text-foreground shadow-xs hover:bg-subtle cursor-pointer transition-colors"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img src="/icons/folder.svg" alt="" className="h-4 w-4 shrink-0" />
-                    <span>{capture?.folder_name || t("v.moveToFolder")}</span>
+                    <span className="truncate max-w-[80px] sm:max-w-none hidden xs:inline">{capture?.folder_name || t("v.moveToFolder")}</span>
                   </button>
                   {moveSubmenuOpen && (
                     <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-xl border border-border bg-white dark:bg-zinc-900 p-1 shadow-xl">
@@ -1252,11 +1252,12 @@ function SingleViewContent() {
               <button
                 type="button"
                 onClick={handleCopyLink}
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-[#89BD49] px-3 sm:px-3.5 py-1.5 sm:py-2 text-xs font-semibold text-white shadow-xs shadow-[#89BD49]/25 hover:bg-[#6B9A35] transition cursor-pointer"
+                className="inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg bg-[#89BD49] px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs font-semibold text-white shadow-xs shadow-[#89BD49]/25 hover:bg-[#6B9A35] transition cursor-pointer"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/icons/link-white.svg" alt="" className="h-4 w-4 shrink-0" />
-                <span>{copied ? t("v.copied") : t("v.copyLinkBtn")}</span>
+                <span className="hidden xs:inline">{copied ? t("v.copied") : t("v.copyLinkBtn")}</span>
+                <span className="xs:hidden">{copied ? t("v.copied") : "Copy"}</span>
               </button>
             </div>
           )}
@@ -1298,7 +1299,7 @@ function SingleViewContent() {
           )}
 
           {status === "notfound" && (
-            <div className="relative w-full max-w-md mx-auto rounded-3xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle/80 backdrop-blur-xl shadow-2xl shadow-slate-200/60 dark:shadow-none p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
+            <div className="relative w-full max-w-md mx-auto rounded-3xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle/80 backdrop-blur-xl shadow-2xl shadow-slate-200/60 dark:shadow-none p-5 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
               <div className="relative mx-auto mb-5 flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-900/50 text-amber-600 dark:text-amber-400 shadow-xs">
                 <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -1334,7 +1335,7 @@ function SingleViewContent() {
           )}
 
           {status === "expired" && (
-            <div className="relative w-full max-w-md mx-auto rounded-3xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle/80 backdrop-blur-xl shadow-2xl shadow-slate-200/60 dark:shadow-none p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
+            <div className="relative w-full max-w-md mx-auto rounded-3xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle/80 backdrop-blur-xl shadow-2xl shadow-slate-200/60 dark:shadow-none p-5 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
               <div className="relative mx-auto mb-5 flex items-center justify-center w-16 h-16 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200/60 dark:border-red-900/50 text-red-600 dark:text-red-400 shadow-xs">
                 <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -1370,7 +1371,7 @@ function SingleViewContent() {
           )}
 
           {status === "unauthorized_ip" && (
-            <div className="relative w-full max-w-md mx-auto rounded-3xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle/80 backdrop-blur-xl shadow-2xl shadow-slate-200/60 dark:shadow-none p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
+            <div className="relative w-full max-w-md mx-auto rounded-3xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle/80 backdrop-blur-xl shadow-2xl shadow-slate-200/60 dark:shadow-none p-5 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
               <div className="relative mx-auto mb-5 flex items-center justify-center w-16 h-16 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200/60 dark:border-red-900/50 text-red-600 dark:text-red-400 shadow-xs">
                 <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m0 0v2m0-2h2m-2 0H10m11-3.5a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -1398,7 +1399,7 @@ function SingleViewContent() {
           )}
 
           {status === "needs_login" && (
-            <div className="relative w-full max-w-md mx-auto rounded-3xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle/80 backdrop-blur-xl shadow-2xl shadow-slate-200/60 dark:shadow-none p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
+            <div className="relative w-full max-w-md mx-auto rounded-3xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle/80 backdrop-blur-xl shadow-2xl shadow-slate-200/60 dark:shadow-none p-5 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
               <div className="relative mx-auto mb-5 flex items-center justify-center w-16 h-16 rounded-2xl bg-[#89BD49]/10 dark:bg-[#89BD49]/20 border border-[#89BD49]/30 dark:border-[#89BD49]/40 text-[#6B9A35] dark:text-[#A8D666] shadow-xs">
                 <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
@@ -1434,7 +1435,7 @@ function SingleViewContent() {
           )}
 
           {status === "unauthorized_domain" && (
-            <div className="relative w-full max-w-md mx-auto rounded-3xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle/80 backdrop-blur-xl shadow-2xl shadow-slate-200/60 dark:shadow-none p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
+            <div className="relative w-full max-w-md mx-auto rounded-3xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle/80 backdrop-blur-xl shadow-2xl shadow-slate-200/60 dark:shadow-none p-5 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
               <div className="relative mx-auto mb-5 flex items-center justify-center w-16 h-16 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200/60 dark:border-red-900/50 text-red-600 dark:text-red-400 shadow-xs">
                 <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
@@ -1462,7 +1463,7 @@ function SingleViewContent() {
           )}
 
           {status === "locked" && (
-            <div className="relative w-full max-w-md mx-auto rounded-3xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle/80 backdrop-blur-xl shadow-2xl shadow-slate-200/60 dark:shadow-none p-8 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
+            <div className="relative w-full max-w-md mx-auto rounded-3xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle/80 backdrop-blur-xl shadow-2xl shadow-slate-200/60 dark:shadow-none p-5 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
               <div className="relative mx-auto mb-5 flex items-center justify-center w-16 h-16 rounded-2xl bg-[#89BD49]/10 dark:bg-[#89BD49]/20 border border-[#89BD49]/30 dark:border-[#89BD49]/40 text-[#6B9A35] dark:text-[#A8D666] shadow-xs">
                 <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
                   <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
@@ -1632,7 +1633,7 @@ function SingleViewContent() {
                 <section className="rounded-xl border border-border bg-white p-5 shadow-sm dark:bg-background">
                   <div>
                     <h3 className="mb-4 text-base font-bold text-foreground">{t("v.shareCapture")}</h3>
-                    <div className="grid grid-cols-2 gap-3 sm:gap-5 text-center">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5 text-center">
                       <button type="button" onClick={() => setShareType("devtools")} className={`rounded-lg border p-3 sm:p-4 text-xs font-semibold ${shareType === "devtools" ? "border-[#89BD49] text-[#6B9A35] dark:text-[#A8D666]" : "border-border text-muted hover:text-foreground"}`}>
                         <div className="mx-auto mb-2 sm:mb-3 flex h-10 sm:h-12 w-16 sm:w-20 items-center justify-center rounded-md border border-[#89BD49]/30 bg-[#89BD49]/10 text-[#6B9A35] dark:text-[#A8D666] text-xs sm:text-sm">▷ ▯</div>
                         <span>{t("v.withDevTools")}</span>
@@ -1691,7 +1692,7 @@ function SingleViewContent() {
       {editModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setEditModalOpen(false)} />
-          <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-xl bg-white dark:bg-zinc-900 shadow-xl border border-border p-6">
+          <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-xl bg-white dark:bg-zinc-900 shadow-xl border border-border p-4 sm:p-6">
             <h2 className="text-base font-bold text-foreground mb-4">{t("v.editCapture")}</h2>
             <div className="space-y-4">
               <div>
@@ -1711,7 +1712,7 @@ function SingleViewContent() {
                   className="w-full text-sm rounded-lg border border-border px-3 py-2 bg-white dark:bg-zinc-800 text-foreground min-h-[72px] resize-none"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-semibold text-muted mb-1.5">{t("v.tagLabel")}</label>
                   <Dropdown

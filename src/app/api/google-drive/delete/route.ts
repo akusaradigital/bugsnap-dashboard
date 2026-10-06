@@ -18,8 +18,8 @@ export async function POST(request: Request) {
   const ids = Array.isArray(input?.captureIds) ? Array.from(new Set(input.captureIds)) : [];
   const mode = input?.mode as Mode;
   const operationId = input?.operationId;
-  if (!ids.length || ids.length > 100 || ids.some(id => typeof id !== "string" || !isUuid(id)) || !["drive_trash", "app_only"].includes(mode) || typeof operationId !== "string" || !isUuid(operationId)) {
-    return NextResponse.json({ error: "Provide 1-100 capture UUIDs, a valid mode, and a UUID operationId" }, { status: 400 });
+  if (!ids.length || ids.length > 200 || ids.some(id => typeof id !== "string" || !isUuid(id)) || !["drive_trash", "app_only"].includes(mode) || typeof operationId !== "string" || !isUuid(operationId)) {
+    return NextResponse.json({ error: "Provide 1-200 capture UUIDs, a valid mode, and a UUID operationId" }, { status: 400 });
   }
 
   const db = createServiceClient();

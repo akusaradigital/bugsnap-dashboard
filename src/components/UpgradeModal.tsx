@@ -80,12 +80,12 @@ export function UpgradeModal({
   };
 
   return (
-    <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 overflow-y-auto bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-[150] flex items-center justify-center p-3 sm:p-4 overflow-y-auto bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div
         role="dialog"
         aria-modal="true"
         aria-labelledby="upgrade-modal-title"
-        className="relative w-full max-w-4xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl shadow-2xl p-6 sm:p-10 my-8 max-h-[90vh] overflow-y-auto"
+        className="relative w-full max-w-4xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl shadow-2xl p-4 sm:p-10 my-4 sm:my-8 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}
@@ -93,7 +93,7 @@ export function UpgradeModal({
           onClick={onClose}
           type="button"
           aria-label="Close"
-          className="absolute top-6 left-6 p-2 rounded-full text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
+          className="absolute top-4 sm:top-6 left-4 sm:left-6 p-2 rounded-full text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
             <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
@@ -151,7 +151,7 @@ export function UpgradeModal({
         <div className="grid grid-cols-1 md:grid-cols-2 rounded-3xl border border-neutral-200 dark:border-neutral-800 bg-neutral-50/50 dark:bg-neutral-950/40 p-2 gap-3 md:gap-0 md:divide-x divide-neutral-200 dark:divide-neutral-800">
 
           {/* Free Tier */}
-          <div className="p-6 sm:p-8 flex flex-col justify-between rounded-2xl bg-neutral-50 dark:bg-neutral-900/60">
+          <div className="p-4 sm:p-8 flex flex-col justify-between rounded-2xl bg-neutral-50 dark:bg-neutral-900/60">
             <div>
               <div className="flex items-baseline justify-between">
                 <h3 className="text-xl font-bold text-neutral-900 dark:text-white">Free</h3>
@@ -219,7 +219,7 @@ export function UpgradeModal({
           </div>
 
           {/* Team / Pro Tier */}
-          <div className="p-6 sm:p-8 flex flex-col justify-between rounded-2xl bg-white dark:bg-neutral-900 shadow-sm border border-neutral-200/80 dark:border-neutral-800">
+          <div className="p-4 sm:p-8 flex flex-col justify-between rounded-2xl bg-white dark:bg-neutral-900 shadow-sm border border-neutral-200/80 dark:border-neutral-800">
             <div>
               <div className="flex items-baseline justify-between">
                 <h3 className="text-xl font-bold text-neutral-900 dark:text-white">Team</h3>
@@ -234,7 +234,7 @@ export function UpgradeModal({
               </div>
 
               {/* Billed yearly toggle */}
-              <div className="mt-3 pb-4 border-b border-neutral-200/80 dark:border-neutral-800 flex items-center gap-2.5">
+              <div className="mt-3 pb-4 border-b border-neutral-200/80 dark:border-neutral-800 flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-2.5">
                 <button
                   type="button"
                   role="switch"

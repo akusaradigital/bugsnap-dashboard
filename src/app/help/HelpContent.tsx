@@ -82,7 +82,7 @@ export function HelpContent() {
         {/* Right Column */}
         <div className="space-y-6">
           <Reveal delay={0.15}>
-            <div className="rounded-xl border border-site-border bg-site-surface p-6 space-y-3 shadow-xs hover:-translate-y-0.5 hover:border-site-border-focus transition-all">
+            <div className="rounded-xl border border-site-border bg-site-surface p-4 sm:p-6 space-y-3 shadow-xs hover:-translate-y-0.5 hover:border-site-border-focus transition-all">
               <div className="w-10 h-10 rounded-lg bg-site-surface-2 border border-site-border text-site-text flex items-center justify-center">
                 <IconHelpCircle size={20} strokeWidth={2} />
               </div>
@@ -98,7 +98,7 @@ export function HelpContent() {
           </Reveal>
 
           <Reveal delay={0.22}>
-            <div className="rounded-xl border border-site-border bg-site-surface p-6 space-y-3 shadow-xs hover:-translate-y-0.5 hover:border-site-border-focus transition-all">
+            <div className="rounded-xl border border-site-border bg-site-surface p-4 sm:p-6 space-y-3 shadow-xs hover:-translate-y-0.5 hover:border-site-border-focus transition-all">
               <h3 className="text-sm font-bold text-site-text">{t("help.getStarted")}</h3>
               <a
                 href={CHROME_STORE_URL}
@@ -120,7 +120,7 @@ export function HelpContent() {
           </Reveal>
 
           <Reveal delay={0.29}>
-            <div className="rounded-xl border border-site-border bg-site-surface p-6 space-y-3 shadow-xs hover:-translate-y-0.5 hover:border-site-border-focus transition-all">
+            <div className="rounded-xl border border-site-border bg-site-surface p-4 sm:p-6 space-y-3 shadow-xs hover:-translate-y-0.5 hover:border-site-border-focus transition-all">
               <h3 className="text-sm font-bold text-site-text">{t("help.resources")}</h3>
               <ul className="space-y-2 text-xs">
                 <li>

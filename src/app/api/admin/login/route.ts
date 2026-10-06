@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
-import { checkAdminCredentials, createAdminToken, ADMIN_COOKIE_NAME } from "@/lib/admin-auth";
+import {
+  checkAdminCredentials,
+  createAdminToken,
+  ADMIN_COOKIE_NAME,
+} from "@/lib/admin-auth";
 import { isRateLimited, clientIp } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
 
-// A 400ms delay is not a brute-force control — a single client can still try
+// A 400ms delay is not a brute-force control - a single client can still try
 // thousands of passwords an hour against one fixed admin credential.
 const MAX_ATTEMPTS = 8;
 const WINDOW_S = 10 * 60;
@@ -17,7 +21,7 @@ export async function POST(req: Request) {
     if (await isRateLimited(`admin-login:${ip}`, MAX_ATTEMPTS, WINDOW_S)) {
       return NextResponse.json(
         { error: "Terlalu banyak percobaan login. Coba lagi nanti." },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
@@ -26,14 +30,20 @@ export async function POST(req: Request) {
     const password = String(body.password || "");
 
     if (!username || !password) {
-      return NextResponse.json({ error: "Username dan password wajib diisi." }, { status: 400 });
+      return NextResponse.json(
+        { error: "Username dan password wajib diisi." },
+        { status: 400 },
+      );
     }
 
     const valid = await checkAdminCredentials(username, password);
     if (!valid) {
       // Delay response slightly to mitigate brute-force
       await new Promise((r) => setTimeout(r, 400));
-      return NextResponse.json({ error: "Username atau password admin salah." }, { status: 401 });
+      return NextResponse.json(
+        { error: "Username atau password admin salah." },
+        { status: 401 },
+      );
     }
 
     const token = createAdminToken(username);
@@ -57,6 +67,9 @@ export async function POST(req: Request) {
     return response;
   } catch (err) {
     console.error("[Admin Login] Error:", err);
-    return NextResponse.json({ error: "Terjadi kesalahan internal server." }, { status: 500 });
+    return NextResponse.json(
+      { error: "Terjadi kesalahan internal server." },
+      { status: 500 },
+    );
   }
 }

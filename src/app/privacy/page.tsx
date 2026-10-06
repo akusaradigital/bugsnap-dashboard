@@ -1,15 +1,13 @@
 import { ReactNode } from "react";
-import { Metadata } from "next";
 import { StaticShell } from "@/components/StaticShell";
 import { Reveal } from "@/components/site/motion";
+import { pageMeta } from "@/lib/pageMeta";
 
-export const metadata: Metadata = {
+export const metadata = pageMeta({
   title: "Privacy Policy - BugSnap",
   description: "Privacy policy and data handling practices for BugSnap Chrome Extension and Dashboard.",
-  alternates: {
-    canonical: "/privacy",
-  },
-};
+  canonical: "/privacy",
+});
 
 interface LegalSection {
   title: string;

@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
-import { isRequestAdminAuthenticated, checkAdminCredentials, hashAdminPassword } from "@/lib/admin-auth";
+import {
+  isRequestAdminAuthenticated,
+  checkAdminCredentials,
+  hashAdminPassword,
+} from "@/lib/admin-auth";
 import { createServiceClient } from "@/lib/supabase-server";
 import { logSecurityEvent } from "@/lib/security-audit";
 
@@ -8,7 +12,10 @@ export const runtime = "nodejs";
 export async function POST(req: Request) {
   const isAuth = await isRequestAdminAuthenticated(req);
   if (!isAuth) {
-    return NextResponse.json({ error: "Unauthorized: Hanya Super Admin yang berhak." }, { status: 401 });
+    return NextResponse.json(
+      { error: "Unauthorized: Hanya Super Admin yang berhak." },
+      { status: 401 },
+    );
   }
 
   try {
@@ -19,27 +26,27 @@ export async function POST(req: Request) {
     if (!currentPassword || !newPassword) {
       return NextResponse.json(
         { error: "Password saat ini dan password baru wajib diisi." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     if (newPassword.length < 8) {
       return NextResponse.json(
         { error: "Password baru minimal 8 karakter." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    // Verify current password. The username comes from env, not a literal —
+    // Verify current password. The username comes from env, not a literal -
     // a hardcoded one silently breaks the check if ADMIN_USERNAME ever changes.
     const isCurrentValid = await checkAdminCredentials(
       process.env.ADMIN_USERNAME || "",
-      currentPassword
+      currentPassword,
     );
     if (!isCurrentValid) {
       return NextResponse.json(
         { error: "Password saat ini tidak sesuai." },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -56,7 +63,7 @@ export async function POST(req: Request) {
           updated_at: new Date().toISOString(),
         },
       },
-      { onConflict: "key" }
+      { onConflict: "key" },
     );
 
     if (upsertError) {
@@ -79,7 +86,7 @@ export async function POST(req: Request) {
     console.error("[Change Password Error]:", err);
     return NextResponse.json(
       { error: (err as Error)?.message || "Gagal mengubah password." },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

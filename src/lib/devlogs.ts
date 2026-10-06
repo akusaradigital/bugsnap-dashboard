@@ -78,8 +78,20 @@ export interface PerformanceLog extends TimedLog {
   type: "performance";
   metrics?: {
     domNodes?: number;
+    initialDomNodes?: number | null;
+    peakDomNodes?: number;
+    domGrowthPct?: number;
     jsHeapUsedMB?: number | null;
+    initialHeapMB?: number | null;
+    peakHeapMB?: number;
+    heapGrowthMB?: number;
     jsHeapTotalMB?: number | null;
+    spaHealth?: {
+      isBloated?: boolean;
+      isMemoryLeakSuspected?: boolean;
+      status?: "healthy" | "warning" | "critical";
+      warning?: string | null;
+    };
     lcpMs?: number | null;
     cls?: number;
     inpMs?: number | null;

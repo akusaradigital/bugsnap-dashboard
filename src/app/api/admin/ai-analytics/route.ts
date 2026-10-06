@@ -151,9 +151,10 @@ export async function GET(req: Request) {
     let activeWebhooksCount = 0;
     try {
       const { count } = await supabase
-        .from("workspaces")
-        .select("id", { count: "exact", head: true })
-        .not("webhook_url", "is", null);
+        .from("workspace_settings")
+        .select("workspace_id", { count: "exact", head: true })
+        .not("webhook_url", "is", null)
+        .neq("webhook_url", "");
 
       activeWebhooksCount = count || 0;
     } catch {

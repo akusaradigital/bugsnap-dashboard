@@ -3,7 +3,7 @@
 -- Adds unique index on workspace_members(workspace_id, user_id)
 -- =====================================================================
 
--- ponytail: idempotent against a prior manual apply — only (re)create the
+-- ponytail: idempotent against a prior manual apply - only (re)create the
 -- constraint when it isn't already the correct unique constraint, so a
 -- retry never drops a live index it can't rebuild from.
 DO $$

@@ -1,15 +1,8 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
 import "./globals.css";
 import { I18nProvider } from "@/components/I18nProvider";
 import { ToastProvider } from "@/components/Toast";
 import { ThemeProvider } from "@/components/ThemeProvider";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-  display: "swap",
-});
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://bugsnap.akusaraproject.my.id";
 
@@ -150,7 +143,7 @@ const jsonLd = {
         },
         {
           "@type": "Question",
-          name: "Is BugSnap really free forever?",
+          name: "Is BugSnap really free?",
           acceptedAnswer: {
             "@type": "Answer",
             text: "Yes! The core screen recorder and Google Drive storage integration is completely free. Paid plans unlock advanced team controls for growing teams.",
@@ -175,7 +168,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en">
       <head>
         <script
           type="application/ld+json"

@@ -19,12 +19,23 @@ export async function GET(req: Request) {
     try {
       const { data: ws, error: wsErr } = await supabase
         .from("workspaces")
-        .select("id, name, slug, owner_user_id, owner_email, created_at, updated_at")
+        .select("id, name, slug, owner_user_id, created_at, updated_at")
         .eq("id", workspaceId)
         .single();
 
       if (wsErr || !ws) {
         return NextResponse.json({ error: "Workspace not found" }, { status: 404 });
+      }
+
+      // Fetch owner email
+      let ownerEmail = "-";
+      if (ws.owner_user_id) {
+        const { data: ownerUser } = await supabase
+          .from("users")
+          .select("email")
+          .eq("id", ws.owner_user_id)
+          .maybeSingle();
+        if (ownerUser?.email) ownerEmail = ownerUser.email;
       }
 
       // Members
@@ -36,18 +47,31 @@ export async function GET(req: Request) {
       // Captures in this workspace
       const { data: captures, count: totalCaptures } = await supabase
         .from("captures")
-        .select("id, title, type, created_at, size, views_count", { count: "exact" })
+        .select("id, title, type, created_at, drive_url, duration", { count: "exact" })
         .eq("workspace_id", workspaceId)
         .order("created_at", { ascending: false })
         .limit(10);
 
-      // Calculate total storage
-      const { data: allCaptures } = await supabase
-        .from("captures")
-        .select("size")
-        .eq("workspace_id", workspaceId);
+      const capIds = (captures || []).map((c) => c.id).filter(Boolean);
+      const capViewsMap: Record<string, number> = {};
+      if (capIds.length > 0) {
+        const { data: vData } = await supabase
+          .from("capture_views")
+          .select("capture_id")
+          .in("capture_id", capIds);
+        (vData || []).forEach((v) => {
+          if (v.capture_id) capViewsMap[v.capture_id] = (capViewsMap[v.capture_id] || 0) + 1;
+        });
+      }
 
-      const totalSizeBytes = (allCaptures || []).reduce((acc, c) => acc + (Number(c.size) || 0), 0);
+      const enrichedCaptures = (captures || []).map((c) => ({
+        ...c,
+        url: c.drive_url,
+        views_count: capViewsMap[c.id] || 0,
+        size: 0,
+      }));
+
+      const totalSizeBytes = 0;
 
       interface MemberDetailRow {
         id: string;
@@ -63,7 +87,7 @@ export async function GET(req: Request) {
 
       return NextResponse.json({
         ok: true,
-        workspace: ws,
+        workspace: { ...ws, owner_email: ownerEmail },
         members: ((members as unknown as MemberDetailRow[]) || []).map((m) => ({
           id: m.id,
           user_id: m.user_id,
@@ -73,7 +97,7 @@ export async function GET(req: Request) {
           full_name: m.users?.full_name || null,
           plan: m.users?.plan || "free",
         })),
-        recentCaptures: captures || [],
+        recentCaptures: enrichedCaptures,
         totalCaptures: totalCaptures || 0,
         totalSizeBytes,
       });
@@ -92,12 +116,26 @@ export async function GET(req: Request) {
   const to = from + limit - 1;
 
   try {
+    let matchingOwnerIds: string[] = [];
+    if (search) {
+      const { data: matchedUsers } = await supabase
+        .from("users")
+        .select("id")
+        .ilike("email", `%${search}%`)
+        .limit(100);
+      matchingOwnerIds = (matchedUsers || []).map((u) => u.id).filter(Boolean);
+    }
+
     let query = supabase
       .from("workspaces")
-      .select("id, name, slug, owner_user_id, owner_email, created_at", { count: "exact" });
+      .select("id, name, slug, owner_user_id, created_at", { count: "exact" });
 
     if (search) {
-      query = query.or(`name.ilike.%${search}%,owner_email.ilike.%${search}%`);
+      if (matchingOwnerIds.length > 0) {
+        query = query.or(`name.ilike.%${search}%,owner_user_id.in.(${matchingOwnerIds.join(",")})`);
+      } else {
+        query = query.ilike("name", `%${search}%`);
+      }
     }
 
     const { data: workspaces, count, error } = await query
@@ -125,8 +163,21 @@ export async function GET(req: Request) {
       });
     }
 
+    const ownerUserIds = Array.from(new Set((workspaces || []).map((w) => w.owner_user_id).filter(Boolean)));
+    const ownerEmailMap: Record<string, string> = {};
+    if (ownerUserIds.length > 0) {
+      const { data: ownerUsers } = await supabase
+        .from("users")
+        .select("id, email")
+        .in("id", ownerUserIds);
+      (ownerUsers || []).forEach((u) => {
+        ownerEmailMap[u.id] = u.email;
+      });
+    }
+
     const enriched = (workspaces || []).map((w) => ({
       ...w,
+      owner_email: w.owner_user_id ? ownerEmailMap[w.owner_user_id] || "-" : "-",
       member_count: memberCounts[w.id] || 0,
       capture_count: captureCounts[w.id] || 0,
     }));
@@ -169,10 +220,16 @@ export async function PATCH(req: Request) {
         .from("workspaces")
         .update({ name: newName, updated_at: new Date().toISOString() })
         .eq("id", workspace_id)
-        .select("id, name, slug, owner_user_id, owner_email, created_at, updated_at")
+        .select("id, name, slug, owner_user_id, created_at, updated_at")
         .single();
 
       if (error) throw error;
+
+      let ownerEmail = "-";
+      if (data?.owner_user_id) {
+        const { data: u } = await supabase.from("users").select("email").eq("id", data.owner_user_id).maybeSingle();
+        if (u?.email) ownerEmail = u.email;
+      }
 
       await logSecurityEvent({
         type: "admin_action",
@@ -180,7 +237,7 @@ export async function PATCH(req: Request) {
         detail: `Admin ${callerEmail || "Console"} renamed workspace ${workspace_id} to "${newName}"`,
       });
 
-      return NextResponse.json({ ok: true, workspace: data });
+      return NextResponse.json({ ok: true, workspace: { ...data, owner_email: ownerEmail } });
     }
 
     if (action === "transfer_owner") {
@@ -205,11 +262,10 @@ export async function PATCH(req: Request) {
         .from("workspaces")
         .update({
           owner_user_id: targetUser.id,
-          owner_email: targetUser.email,
           updated_at: new Date().toISOString(),
         })
         .eq("id", workspace_id)
-        .select("id, name, slug, owner_user_id, owner_email, created_at, updated_at")
+        .select("id, name, slug, owner_user_id, created_at, updated_at")
         .single();
 
       if (updateErr) throw updateErr;
@@ -232,7 +288,7 @@ export async function PATCH(req: Request) {
         detail: `Admin ${callerEmail || "Console"} transferred workspace ${workspace_id} to ${targetEmail}`,
       });
 
-      return NextResponse.json({ ok: true, workspace: updatedWs });
+      return NextResponse.json({ ok: true, workspace: { ...updatedWs, owner_email: targetUser.email } });
     }
 
     return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
@@ -260,7 +316,7 @@ export async function DELETE(req: Request) {
     // Get workspace name before deletion
     const { data: ws } = await supabase
       .from("workspaces")
-      .select("name, owner_email")
+      .select("name, owner_user_id")
       .eq("id", workspaceId)
       .maybeSingle();
 
@@ -277,7 +333,7 @@ export async function DELETE(req: Request) {
     await logSecurityEvent({
       type: "admin_action",
       title: "Workspace Deleted",
-      detail: `Admin ${callerEmail || "Console"} deleted workspace "${ws?.name || workspaceId}" (Owner: ${ws?.owner_email || "-"})`,
+      detail: `Admin ${callerEmail || "Console"} deleted workspace "${ws?.name || workspaceId}" (ID: ${workspaceId})`,
     });
 
     return NextResponse.json({ ok: true, message: "Workspace deleted successfully" });

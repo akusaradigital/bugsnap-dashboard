@@ -16,7 +16,7 @@
 --      (which compare against auth.users.id = uuid) stop throwing
 --      "operator does not exist: text = uuid".
 --   3. Align comments to the app shape (body/author_name/author_email/
---      video_timestamp) — post_comment writes these; the old live table
+--      video_timestamp) - post_comment writes these; the old live table
 --      had user_name/content.
 --   4. Create missing child tables: workspace_settings,
 --      workspace_folders, deleted_drive_folders, audit_logs,

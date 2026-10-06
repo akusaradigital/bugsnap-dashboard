@@ -92,16 +92,16 @@ export default function AdminCapturesPage() {
       setCaptures((prev) =>
         prev.map((c) => (c.id === capture.id ? { ...c, is_public: nextPublic } : c))
       );
-      showToast(nextPublic ? "Capture made public" : "Capture forced to private", "success");
+      showToast(nextPublic ? t("admin.visibilityUpdatedPublic") : t("admin.visibilityUpdatedPrivate"), "success");
     } catch (err: unknown) {
-      showToast((err as Error)?.message || "Failed to update visibility", "error");
+      showToast((err as Error)?.message || t("admin.visibilityUpdateFailed"), "error");
     } finally {
       setActionLoading(null);
     }
   }
 
   async function handleTakedown(capture: CaptureItem) {
-    if (!confirm(`Are you sure you want to TAKEDOWN and permanently delete "${capture.title || capture.id}"? This cannot be undone.`)) {
+    if (!confirm(t("admin.takedownConfirm", { title: capture.title || capture.id }))) {
       return;
     }
 
@@ -113,12 +113,12 @@ export default function AdminCapturesPage() {
         headers,
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed to takedown capture");
+      if (!res.ok) throw new Error(json.error || t("admin.updateFailed"));
 
       setCaptures((prev) => prev.filter((c) => c.id !== capture.id));
-      showToast("Capture taken down successfully", "success");
+      showToast(t("admin.takedownSuccess"), "success");
     } catch (err: unknown) {
-      showToast((err as Error)?.message || "Failed to takedown capture", "error");
+      showToast((err as Error)?.message || t("admin.updateFailed"), "error");
     } finally {
       setActionLoading(null);
     }
@@ -151,7 +151,7 @@ export default function AdminCapturesPage() {
 
       {/* Filters & Search */}
       <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <select
             value={typeFilter}
             onChange={(e) => {
@@ -160,9 +160,9 @@ export default function AdminCapturesPage() {
             }}
             className="text-xs font-semibold rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 px-3 py-2 outline-none"
           >
-            <option value="all">All Formats</option>
-            <option value="video">📹 Videos</option>
-            <option value="screenshot">📸 Screenshots</option>
+            <option value="all">{t("admin.allFormats")}</option>
+            <option value="video">{t("admin.formatVideo")}</option>
+            <option value="screenshot">{t("admin.formatScreenshot")}</option>
           </select>
 
           <select
@@ -173,19 +173,19 @@ export default function AdminCapturesPage() {
             }}
             className="text-xs font-semibold rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 px-3 py-2 outline-none"
           >
-            <option value="all">All Access</option>
-            <option value="public">🌐 Public Link</option>
-            <option value="private">🔒 Private Only</option>
+            <option value="all">{t("admin.allAccess")}</option>
+            <option value="public">{t("admin.accessPublic")}</option>
+            <option value="private">{t("admin.accessPrivate")}</option>
           </select>
         </div>
 
         <form onSubmit={handleSearchSubmit} className="flex items-center gap-1.5 w-full sm:w-80">
           <input
             type="text"
-            placeholder="Search title, site URL..."
+            placeholder={t("admin.searchCapturesPlaceholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 text-slate-900 dark:text-white"
+            className="w-full min-w-0 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 text-slate-900 dark:text-white"
           />
           <button
             type="submit"
@@ -202,13 +202,13 @@ export default function AdminCapturesPage() {
           <table className="w-full text-left text-xs">
             <thead className="border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[10px]">
               <tr>
-                <th className="py-3 px-4">Capture</th>
-                <th className="py-3 px-4">Creator / Workspace</th>
-                <th className="py-3 px-4">Site URL</th>
-                <th className="py-3 px-4">Access</th>
-                <th className="py-3 px-4">Views</th>
-                <th className="py-3 px-4">Created</th>
-                <th className="py-3 px-4 text-right">Moderation</th>
+                <th className="py-3 px-4">{t("admin.thCapture")}</th>
+                <th className="py-3 px-4">{t("admin.thCreatorWorkspace")}</th>
+                <th className="py-3 px-4">{t("admin.thSiteUrl")}</th>
+                <th className="py-3 px-4">{t("admin.thAccess")}</th>
+                <th className="py-3 px-4">{t("admin.thViews")}</th>
+                <th className="py-3 px-4">{t("admin.thCreated")}</th>
+                <th className="py-3 px-4 text-right">{t("admin.thModeration")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-zinc-800">
@@ -221,7 +221,7 @@ export default function AdminCapturesPage() {
               ) : captures.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="p-8 text-center text-slate-400">
-                    No captures found.
+                    {t("admin.noCapturesFound")}
                   </td>
                 </tr>
               ) : (
@@ -268,12 +268,12 @@ export default function AdminCapturesPage() {
                       {cap.is_public ? (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400">
                           <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
-                          PUBLIC
+                          {t("admin.badgePublic")}
                         </span>
                       ) : (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-400">
                           <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-                          PRIVATE
+                          {t("admin.badgePrivate")}
                         </span>
                       )}
                     </td>
@@ -294,9 +294,9 @@ export default function AdminCapturesPage() {
                           target="_blank"
                           rel="noreferrer"
                           className="px-2.5 py-1 rounded text-xs font-semibold border border-[#89BD49]/30 dark:border-[#89BD49]/40 text-[#6B9A35] dark:text-[#A8D666] hover:bg-[#89BD49]/10 dark:hover:bg-[#89BD49]/20 transition-colors"
-                          title="View share page"
+                          title={t("admin.openSharePage")}
                         >
-                          Open ↗
+                          {t("admin.openSharePage")}
                         </a>
                         <button
                           type="button"
@@ -307,9 +307,9 @@ export default function AdminCapturesPage() {
                               ? "border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40"
                               : "border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
                           }`}
-                          title={cap.is_public ? t("admin.makePrivate") : "Make Public"}
+                          title={cap.is_public ? t("admin.makePrivate") : t("admin.makePublic")}
                         >
-                          {cap.is_public ? "🔒 Private" : "🌐 Public"}
+                          {cap.is_public ? `🔒 ${t("admin.makePrivate")}` : `🌐 ${t("admin.makePublic")}`}
                         </button>
                         <button
                           type="button"
@@ -318,7 +318,7 @@ export default function AdminCapturesPage() {
                           className="px-2 py-1 rounded text-xs font-semibold border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
                           title={t("admin.takedown")}
                         >
-                          🗑 Takedown
+                          🗑 {t("admin.takedown")}
                         </button>
                       </div>
                     </td>
@@ -333,7 +333,7 @@ export default function AdminCapturesPage() {
         {totalPages > 1 && (
           <div className="p-3 border-t border-slate-200 dark:border-zinc-800 flex items-center justify-between text-xs text-slate-500 dark:text-zinc-400">
             <span>
-              Page {page} of {totalPages}
+              {t("admin.pageOf", { page: String(page), totalPages: String(totalPages) })}
             </span>
             <div className="flex items-center gap-1">
               <button
@@ -342,7 +342,7 @@ export default function AdminCapturesPage() {
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 className="px-2.5 py-1 rounded border border-slate-200 dark:border-zinc-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-zinc-800"
               >
-                Prev
+                {t("admin.prev")}
               </button>
               <button
                 type="button"
@@ -350,7 +350,7 @@ export default function AdminCapturesPage() {
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 className="px-2.5 py-1 rounded border border-slate-200 dark:border-zinc-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-zinc-800"
               >
-                Next
+                {t("admin.next")}
               </button>
             </div>
           </div>

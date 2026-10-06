@@ -64,7 +64,7 @@ function TabBar({
   onSelect: (t: Tab) => void;
 }) {
   return (
-    <div className="flex items-center gap-1.5 px-4 py-3 bg-site-surface-2 border-b border-site-border">
+    <div className="flex items-center gap-1.5 px-4 py-3 bg-site-surface-2 border-b border-site-border overflow-x-auto [scrollbar-width:none]">
       {TABS.map((tab) => (
         <button
           key={tab.id}
@@ -129,7 +129,7 @@ function MediaTab() {
               </span>
             </div>
             {/* BugSnap annotation arrow */}
-            <div className="absolute -right-2 -top-6 flex items-center gap-1">
+            <div className="absolute right-1 -top-6 flex items-center gap-1">
               <span className="text-[10px] font-semibold text-accent bg-site-surface border border-accent px-1.5 py-0.5 rounded-full shadow-sm whitespace-nowrap">
                 ↙ BugSnap captured
               </span>
@@ -139,15 +139,15 @@ function MediaTab() {
       </div>
 
       {/* Recording info */}
-      <div className="flex items-center gap-3 px-3 py-2.5 rounded-lg bg-site-surface-2 border border-site-border">
-        <div className="flex items-center gap-1.5 text-[10px] font-mono font-semibold text-red-600 dark:text-red-400 bg-red-500/10 border border-red-500/30 px-2 py-0.5 rounded-full">
+      <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 px-3 py-2.5 rounded-lg bg-site-surface-2 border border-site-border">
+        <div className="flex items-center gap-1.5 text-[10px] font-mono font-semibold text-red-600 dark:text-red-400 bg-red-500/10 border border-red-500/30 px-2 py-0.5 rounded-full shrink-0">
           <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
           REC 00:14
         </div>
-        <span className="text-xs text-site-text-2 flex-1">Screen recording attached</span>
+        <span className="text-xs text-site-text-2">Screen recording attached</span>
         <button
           type="button"
-          className="flex items-center gap-1.5 text-xs text-accent font-medium hover:text-accent-hover transition-colors"
+          className="flex items-center gap-1.5 text-xs text-accent font-medium hover:text-accent-hover transition-colors shrink-0"
           aria-label="Play recording (decorative)"
         >
           <IconPlayerPlay size={13} />

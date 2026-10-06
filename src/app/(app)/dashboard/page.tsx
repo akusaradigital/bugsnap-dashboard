@@ -347,7 +347,7 @@ function DashboardContent() {
 
   if (loading) {
     return (
-      <div className="p-8 max-w-6xl mx-auto space-y-6">
+      <div className="p-4 sm:p-8 max-w-6xl mx-auto space-y-6 min-w-0 w-full overflow-x-hidden">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="rounded-2xl border border-border bg-subtle p-5 animate-pulse flex flex-col gap-3">
@@ -465,7 +465,7 @@ function DashboardContent() {
               </span>
             </div>
             <div>
-              <p className="text-3xl font-bold tracking-tight text-foreground">{stat.value}</p>
+              <p className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground truncate">{stat.value}</p>
               <div className="mt-2 text-[11px] text-muted">
                 {stat.subtextBadge && stat.subtext ? (
                   <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800/40">
@@ -536,7 +536,7 @@ function DashboardContent() {
           </div>
         </div>
 
-        <div className="overflow-x-auto pb-2 -mx-2 px-2 sm:overflow-visible sm:pb-0 sm:mx-0 sm:px-0">
+        <div className="overflow-x-auto pb-2 -mx-2 px-2 sm:overflow-visible sm:pb-0 sm:mx-0 sm:px-0 [scrollbar-width:thin]">
           <div className="relative h-48 flex flex-col justify-end mt-2 min-w-[500px] sm:min-w-0">
             {/* Chart Grid Lines */}
             <div className="absolute inset-0 flex flex-col justify-between pointer-events-none pb-7">
@@ -615,7 +615,7 @@ function DashboardContent() {
               </div>
 
               <div className="flex items-baseline gap-2 mb-4">
-                <span className="text-4xl font-extrabold tracking-tight text-foreground">{qaData.resolutionRate}%</span>
+                <span className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">{qaData.resolutionRate}%</span>
                 <span className="text-xs text-muted">{t("qa.healthScore")}</span>
               </div>
 

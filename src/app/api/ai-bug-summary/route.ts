@@ -1,5 +1,8 @@
 import { NextResponse } from "next/server";
-import { getAuthenticatedUser, createServiceClient } from "@/lib/supabase-server";
+import {
+  getAuthenticatedUser,
+  createServiceClient,
+} from "@/lib/supabase-server";
 import { isRateLimited } from "@/lib/rate-limit";
 import { isUuid } from "@/lib/google-drive-values";
 import { decompressDevLogs } from "@/lib/devlogs-compression";
@@ -42,24 +45,34 @@ const AI_WINDOW_S = 60 * 60;
 export async function POST(req: Request) {
   try {
     const user = await getAuthenticatedUser(req);
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!user)
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     if (await isRateLimited(`ai-summary:${user.id}`, AI_LIMIT, AI_WINDOW_S)) {
       return NextResponse.json(
         { error: "Too many AI summaries. Try again later." },
-        { status: 429 }
+        { status: 429 },
       );
     }
 
     const body: unknown = await req.json();
     if (!body || typeof body !== "object") {
-      return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Invalid request body" },
+        { status: 400 },
+      );
     }
-    const { title, devLogs: rawDevLogs, windowSize, captureId } = body as Record<string, unknown>;
+    const {
+      title,
+      devLogs: rawDevLogs,
+      windowSize,
+      captureId,
+    } = body as Record<string, unknown>;
 
     // Cache hit: the logs for a capture never change once uploaded, so a
     // regenerated summary would be identical. Only serve the cache to someone
-    // who owns the capture — captureId alone must not leak another user's data.
-    const cacheId = typeof captureId === "string" && isUuid(captureId) ? captureId : null;
+    // who owns the capture - captureId alone must not leak another user's data.
+    const cacheId =
+      typeof captureId === "string" && isUuid(captureId) ? captureId : null;
     const db = cacheId ? createServiceClient() : null;
     if (cacheId && db) {
       const { data: cached } = await db
@@ -76,19 +89,28 @@ export async function POST(req: Request) {
       devLogs = await decompressDevLogs(devLogs);
     }
     const isSummaryShape =
-      !!devLogs && typeof devLogs === "object" && !Array.isArray(devLogs) &&
+      !!devLogs &&
+      typeof devLogs === "object" &&
+      !Array.isArray(devLogs) &&
       typeof (devLogs as DevLogSummary).version === "number";
     const isDriveFileShape =
-      !!devLogs && typeof devLogs === "object" && !Array.isArray(devLogs) &&
+      !!devLogs &&
+      typeof devLogs === "object" &&
+      !Array.isArray(devLogs) &&
       typeof (devLogs as { driveFileId?: unknown }).driveFileId === "string";
-    if ((title !== undefined && typeof title !== "string") ||
-        (windowSize !== undefined && typeof windowSize !== "string") ||
-        (!Array.isArray(devLogs) && !isSummaryShape && !isDriveFileShape) ||
-        (devLogs !== undefined && typeof devLogs !== "object") ||
-        (typeof title === "string" && title.length > 200) ||
-        (typeof windowSize === "string" && windowSize.length > 100) ||
-        JSON.stringify(devLogs ?? {}).length > 100_000) {
-      return NextResponse.json({ error: "Invalid or oversized input" }, { status: 400 });
+    if (
+      (title !== undefined && typeof title !== "string") ||
+      (windowSize !== undefined && typeof windowSize !== "string") ||
+      (!Array.isArray(devLogs) && !isSummaryShape && !isDriveFileShape) ||
+      (devLogs !== undefined && typeof devLogs !== "object") ||
+      (typeof title === "string" && title.length > 200) ||
+      (typeof windowSize === "string" && windowSize.length > 100) ||
+      JSON.stringify(devLogs ?? {}).length > 100_000
+    ) {
+      return NextResponse.json(
+        { error: "Invalid or oversized input" },
+        { status: 400 },
+      );
     }
 
     // Normalize the summary into the same view the AI used to get - with the
@@ -111,11 +133,23 @@ export async function POST(req: Request) {
     let steps: string[] = [];
 
     // If devLogs is stored externally in Google Drive, fetch content
-    if (devLogs && typeof devLogs === "object" && !Array.isArray(devLogs) && "driveFileId" in devLogs) {
+    if (
+      devLogs &&
+      typeof devLogs === "object" &&
+      !Array.isArray(devLogs) &&
+      "driveFileId" in devLogs
+    ) {
       try {
         const fileId = (devLogs as { driveFileId?: string }).driveFileId;
-        if (fileId && typeof fileId === "string" && /^[A-Za-z0-9_-]{10,200}$/.test(fileId)) {
-          const driveRes = await fetch(`https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`, { cache: "no-store" });
+        if (
+          fileId &&
+          typeof fileId === "string" &&
+          /^[A-Za-z0-9_-]{10,200}$/.test(fileId)
+        ) {
+          const driveRes = await fetch(
+            `https://drive.google.com/uc?export=download&id=${encodeURIComponent(fileId)}`,
+            { cache: "no-store" },
+          );
           if (driveRes.ok) {
             const fetched = await driveRes.json();
             if (Array.isArray(fetched)) {
@@ -129,15 +163,27 @@ export async function POST(req: Request) {
     }
 
     if (Array.isArray(devLogs)) {
-      const logs: DevLog[] = devLogs.filter((l): l is DevLog => Boolean(l) && typeof l === "object");
+      const logs: DevLog[] = devLogs.filter(
+        (l): l is DevLog => Boolean(l) && typeof l === "object",
+      );
 
       // Filter strictly to errors, warnings, or exceptions
       consoleErrors = logs
-        .filter((l) => l.type === "console" && (l.level === "error" || l.level === "warn" || /error|uncaught|fail|exception/i.test(String(l.message || l.text || l.stack || ""))))
+        .filter(
+          (l) =>
+            l.type === "console" &&
+            (l.level === "error" ||
+              l.level === "warn" ||
+              /error|uncaught|fail|exception/i.test(
+                String(l.message || l.text || l.stack || ""),
+              )),
+        )
         .slice(0, 15)
         .map((l) => {
           const msg = sanitizePromptData(l.message || l.text || "", 250);
-          const stack = l.stack ? sanitizePromptData(cleanStackTrace(String(l.stack)), 300) : undefined;
+          const stack = l.stack
+            ? sanitizePromptData(cleanStackTrace(String(l.stack)), 300)
+            : undefined;
           return {
             type: "console",
             level: sanitizePromptData(l.level || "error", 20),
@@ -148,7 +194,11 @@ export async function POST(req: Request) {
 
       // Filter strictly to HTTP 4xx/5xx or network drops (status 0)
       networkErrors = logs
-        .filter((l) => l.type === "network" && (Number(l.status) >= 400 || Number(l.status) === 0))
+        .filter(
+          (l) =>
+            l.type === "network" &&
+            (Number(l.status) >= 400 || Number(l.status) === 0),
+        )
         .slice(0, 15)
         .map((l) => ({
           type: "network",
@@ -175,15 +225,26 @@ export async function POST(req: Request) {
         url: cleanUrlForTelemetry(url, 150),
       }));
       if ((s?.errors ?? 0) > consoleErrors.length) {
-        consoleErrors.push({ type: "console", level: "error", message: `+${s!.errors - consoleErrors.length} additional console errors omitted` });
+        consoleErrors.push({
+          type: "console",
+          level: "error",
+          message: `+${s!.errors - consoleErrors.length} additional console errors omitted`,
+        });
       }
       if ((s?.failedRequests ?? 0) > networkErrors.length) {
-        networkErrors.push({ type: "network", method: "GET", url: `+${s!.failedRequests - networkErrors.length} additional failed requests omitted` });
+        networkErrors.push({
+          type: "network",
+          method: "GET",
+          url: `+${s!.failedRequests - networkErrors.length} additional failed requests omitted`,
+        });
       }
     }
 
     const sanitizedTitle = sanitizePromptData(title || "Untitled", 200);
-    const sanitizedWindowSize = sanitizePromptData(windowSize || "Unknown", 100);
+    const sanitizedWindowSize = sanitizePromptData(
+      windowSize || "Unknown",
+      100,
+    );
 
     // ---- AI-powered summary via Multi-Model Waterfall Fallback ----
     const promptPayload = {
@@ -208,7 +269,12 @@ export async function POST(req: Request) {
       max_tokens: 800,
     };
 
-    const fetchAi = async (url: string, key: string, model: string, extraHeaders = {}) => {
+    const fetchAi = async (
+      url: string,
+      key: string,
+      model: string,
+      extraHeaders = {},
+    ) => {
       const controller = new AbortController();
       const id = setTimeout(() => controller.abort(), 7000); // 7s timeout to prevent Vercel 10s hang
       try {
@@ -227,7 +293,10 @@ export async function POST(req: Request) {
           return json.choices?.[0]?.message?.content;
         }
       } catch (err) {
-        console.warn(`[AI] Request failed for model ${model}:`, err instanceof Error ? err.message : String(err));
+        console.warn(
+          `[AI] Request failed for model ${model}:`,
+          err instanceof Error ? err.message : String(err),
+        );
       } finally {
         clearTimeout(id);
       }
@@ -236,14 +305,18 @@ export async function POST(req: Request) {
 
     const providers = [];
     const openrouterHeaders = {
-      "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "https://bugsnap.akusaraproject.my.id",
+      "HTTP-Referer":
+        process.env.NEXT_PUBLIC_APP_URL ||
+        "https://bugsnap.akusaraproject.my.id",
       "X-Title": "BugSnap",
     };
 
     // 1. 9Router Custom
     if (process.env.CUSTOM_ROUTER_API_KEY) {
       providers.push({
-        url: process.env.CUSTOM_ROUTER_URL || "https://router.akusaraproject.my.id/v1/chat/completions",
+        url:
+          process.env.CUSTOM_ROUTER_URL ||
+          "https://router.akusaraproject.my.id/v1/chat/completions",
         key: process.env.CUSTOM_ROUTER_API_KEY,
         model: "free",
         headers: openrouterHeaders,
@@ -290,7 +363,10 @@ export async function POST(req: Request) {
       if (cacheId && db) {
         await db
           .from("captures")
-          .update({ ai_summary: aiSummary, ai_summary_at: new Date().toISOString() })
+          .update({
+            ai_summary: aiSummary,
+            ai_summary_at: new Date().toISOString(),
+          })
           .eq("id", cacheId)
           .eq("user_id", user.id);
       }
@@ -303,12 +379,20 @@ export async function POST(req: Request) {
       : "1. Open application\n2. Perform actions on screen\n3. Observed issue";
 
     const consoleSummary = consoleErrors.length
-      ? consoleErrors.map((c) => `- [${(c.level || "ERROR").toUpperCase()}] ${c.message || ""}`).join("\n")
+      ? consoleErrors
+          .map(
+            (c) =>
+              `- [${(c.level || "ERROR").toUpperCase()}] ${c.message || ""}`,
+          )
+          .join("\n")
       : "No console errors detected.";
 
     const networkSummary = networkErrors.length
       ? networkErrors
-          .map((n) => `- ${n.method || "GET"} ${n.url || ""} (${n.status || "FAILED"})`)
+          .map(
+            (n) =>
+              `- ${n.method || "GET"} ${n.url || ""} (${n.status || "FAILED"})`,
+          )
           .join("\n")
       : "No network errors detected.";
 
@@ -334,7 +418,7 @@ ${networkSummary}
   } catch {
     return NextResponse.json(
       { error: "Failed to generate AI bug report" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

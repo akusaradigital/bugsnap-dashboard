@@ -15,14 +15,21 @@ const DEFAULT_CONFIG = {
 
 export async function GET(req: Request) {
   if (!(await isRequestAdminAuthenticated(req))) {
-    return NextResponse.json({ error: "Forbidden: Super Admin only" }, { status: 403 });
+    return NextResponse.json(
+      { error: "Forbidden: Super Admin only" },
+      { status: 403 },
+    );
   }
 
   try {
     const db = createServiceClient();
-    // extension_config stays in app_settings — that one is config, not a log.
+    // extension_config stays in app_settings - that one is config, not a log.
     const [{ data: configRow }, { data: errorRows }] = await Promise.all([
-      db.from("app_settings").select("value").eq("key", "extension_config").maybeSingle(),
+      db
+        .from("app_settings")
+        .select("value")
+        .eq("key", "extension_config")
+        .maybeSingle(),
       db
         .from("extension_error_logs")
         .select("id, title, message, details, email, version, created_at")
@@ -36,20 +43,28 @@ export async function GET(req: Request) {
     return NextResponse.json({ ok: true, config, errors });
   } catch (err) {
     console.error("[Admin Extension API] GET Error:", err);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
   }
 }
 
 export async function POST(req: Request) {
   if (!(await isRequestAdminAuthenticated(req))) {
-    return NextResponse.json({ error: "Forbidden: Super Admin only" }, { status: 403 });
+    return NextResponse.json(
+      { error: "Forbidden: Super Admin only" },
+      { status: 403 },
+    );
   }
 
   try {
     const body = await req.json().catch(() => ({}));
     const newConfig = {
       minVersion: String(body.minVersion || DEFAULT_CONFIG.minVersion).trim(),
-      latestVersion: String(body.latestVersion || DEFAULT_CONFIG.latestVersion).trim(),
+      latestVersion: String(
+        body.latestVersion || DEFAULT_CONFIG.latestVersion,
+      ).trim(),
       forceUpdate: Boolean(body.forceUpdate),
       updateUrl: String(body.updateUrl || DEFAULT_CONFIG.updateUrl).trim(),
       maintenanceMode: Boolean(body.maintenanceMode),
@@ -66,6 +81,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ ok: true, config: newConfig });
   } catch (err) {
     console.error("[Admin Extension API] POST Error:", err);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 },
+    );
   }
 }

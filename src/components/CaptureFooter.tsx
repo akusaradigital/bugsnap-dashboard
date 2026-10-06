@@ -144,7 +144,7 @@ export default function CaptureFooter({ className = "" }: { className?: string }
           </div>
 
           {/* 4-Column Navigation Grid: Balanced with mobile-friendly tap targets and vertical spacing */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-6 sm:gap-x-8 gap-y-5 sm:gap-y-6 items-start">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 sm:gap-x-8 gap-y-5 sm:gap-y-6 items-start">
             {/* Product */}
             <div className="flex flex-col gap-1.5 sm:gap-2 text-left min-w-0">
               <span className="text-[11px] sm:text-xs font-bold text-slate-900 dark:text-zinc-200 tracking-tight">{t("footer.product")}</span>

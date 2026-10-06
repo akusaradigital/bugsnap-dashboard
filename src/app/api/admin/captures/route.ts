@@ -25,7 +25,7 @@ export async function GET(req: Request) {
     let query = supabase
       .from("captures")
       .select(
-        "id, title, type, url, site_url, size, duration, is_public, views_count, created_at, user_id, workspace_id, workspaces(name)",
+        "id, title, type, drive_url, site_url, duration, password, created_at, user_id, workspace_id, workspaces(name)",
         { count: "exact" }
       );
 
@@ -42,9 +42,9 @@ export async function GET(req: Request) {
     }
 
     if (visibility === "public") {
-      query = query.eq("is_public", true);
+      query = query.is("password", null);
     } else if (visibility === "private") {
-      query = query.eq("is_public", false);
+      query = query.not("password", "is", null);
     }
 
     const { data: captures, count, error } = await query
@@ -53,7 +53,23 @@ export async function GET(req: Request) {
 
     if (error) throw error;
 
-    // Fetch creator emails for these captures
+    // Fetch creator emails and view counts for these captures
+    const captureIds = (captures || []).map((c) => c.id).filter(Boolean);
+    const viewCountMap: Record<string, number> = {};
+
+    if (captureIds.length > 0) {
+      const { data: viewsData } = await supabase
+        .from("capture_views")
+        .select("capture_id")
+        .in("capture_id", captureIds);
+
+      (viewsData || []).forEach((v) => {
+        if (v.capture_id) {
+          viewCountMap[v.capture_id] = (viewCountMap[v.capture_id] || 0) + 1;
+        }
+      });
+    }
+
     const userIds = Array.from(new Set((captures || []).map((c) => c.user_id).filter(Boolean)));
     const userEmailMap: Record<string, string> = {};
 
@@ -70,6 +86,10 @@ export async function GET(req: Request) {
 
     const enriched = (captures || []).map((c: Record<string, unknown>) => ({
       ...c,
+      url: c.drive_url,
+      is_public: !c.password,
+      views_count: typeof c.id === "string" ? viewCountMap[c.id] || 0 : 0,
+      size: 0,
       creator_email: typeof c.user_id === "string" ? userEmailMap[c.user_id] || "-" : "-",
       workspace_name: (c.workspaces as { name?: string } | null)?.name || "-",
     }));
@@ -106,11 +126,12 @@ export async function PATCH(req: Request) {
 
     if (action === "toggle_visibility") {
       const nextPublic = Boolean(is_public);
+      const updateData = nextPublic ? { password: null } : { password: "locked" };
       const { data, error } = await supabase
         .from("captures")
-        .update({ is_public: nextPublic })
+        .update(updateData)
         .eq("id", capture_id)
-        .select("id, title, is_public")
+        .select("id, title, password")
         .single();
 
       if (error) throw error;
@@ -121,7 +142,7 @@ export async function PATCH(req: Request) {
         detail: `Admin ${callerEmail || "Console"} set is_public=${nextPublic} on capture ${capture_id}`,
       });
 
-      return NextResponse.json({ ok: true, capture: data });
+      return NextResponse.json({ ok: true, capture: { ...data, is_public: !data?.password } });
     }
 
     return NextResponse.json({ error: "Unsupported action" }, { status: 400 });
@@ -149,7 +170,7 @@ export async function DELETE(req: Request) {
     // Get capture title before deletion
     const { data: cap } = await supabase
       .from("captures")
-      .select("title, url")
+      .select("title, drive_url")
       .eq("id", captureId)
       .maybeSingle();
 

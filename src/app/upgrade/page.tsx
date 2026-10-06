@@ -157,7 +157,7 @@ function UpgradeContent() {
         {/* Plan Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 rounded-xl border border-site-border bg-site-surface overflow-hidden shadow-xs divide-y md:divide-y-0 md:divide-x divide-site-border">
           {/* Free Tier */}
-          <div className="p-6 sm:p-8 flex flex-col justify-between bg-site-surface">
+          <div className="p-4 sm:p-8 flex flex-col justify-between bg-site-surface">
             <div>
               <div className="flex items-baseline justify-between">
                 <h2 className="text-lg font-bold text-site-text">Free</h2>
@@ -210,7 +210,7 @@ function UpgradeContent() {
           </div>
 
           {/* Team / Pro Tier */}
-          <div className="p-6 sm:p-8 flex flex-col justify-between bg-site-surface">
+          <div className="p-4 sm:p-8 flex flex-col justify-between bg-site-surface">
             <div>
               <div className="flex items-baseline justify-between">
                 <h2 className="text-lg font-bold text-site-text">Team</h2>
@@ -228,7 +228,7 @@ function UpgradeContent() {
               </div>
 
               {/* Billed yearly toggle */}
-              <div className="mt-3 pb-4 border-b border-site-border-subtle flex items-center gap-2.5">
+              <div className="mt-3 pb-4 border-b border-site-border-subtle flex flex-wrap items-center gap-2 sm:gap-2.5">
                 <button
                   type="button"
                   role="switch"

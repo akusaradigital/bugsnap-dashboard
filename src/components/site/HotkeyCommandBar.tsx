@@ -20,8 +20,10 @@ const SHORTCUTS: Shortcut[] = [
     id: "screenshot",
     keys: ["Ctrl", "Shift", "S"],
     label: "Instant Screenshot",
-    description: "Captures the full viewport + auto-extracts console errors & network logs",
-    flashMessage: "✅ Screenshot captured (1.2s) · 3 console errors extracted · 2 network failures",
+    description:
+      "Captures the full viewport + auto-extracts console errors & network logs",
+    flashMessage:
+      "✅ Screenshot captured (1.2s) · 3 console errors extracted · 2 network failures",
     colorClass: "text-blue-500",
     accentBorder: "border-blue-400/50",
     accentBg: "bg-blue-500/5",
@@ -30,8 +32,9 @@ const SHORTCUTS: Shortcut[] = [
     id: "record",
     keys: ["Ctrl", "Shift", "F"],
     label: "Screen Recording",
-    description: "Records video with audio + DevTools running silently in background",
-    flashMessage: "🔴 Recording started — DevTools telemetry active",
+    description:
+      "Records video with audio + DevTools running silently in background",
+    flashMessage: "🔴 Recording started - DevTools telemetry active",
     colorClass: "text-rose-500",
     accentBorder: "border-rose-400/50",
     accentBg: "bg-rose-500/5",
@@ -40,7 +43,8 @@ const SHORTCUTS: Shortcut[] = [
     id: "upload",
     keys: ["Ctrl", "Shift", "U"],
     label: "Upload Screenshot / Video",
-    description: "Manually upload any screenshot or screen recording for annotation",
+    description:
+      "Manually upload any screenshot or screen recording for annotation",
     flashMessage: "📁 Upload dialog opened",
     colorClass: "text-violet-500",
     accentBorder: "border-violet-400/50",
@@ -61,9 +65,16 @@ export function HotkeyCommandBar() {
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (!e.ctrlKey || !e.shiftKey) return;
-      if (e.key === "S") { e.preventDefault(); trigger("screenshot"); }
-      else if (e.key === "F") { e.preventDefault(); trigger("record"); }
-      else if (e.key === "U") { e.preventDefault(); trigger("upload"); }
+      if (e.key === "S") {
+        e.preventDefault();
+        trigger("screenshot");
+      } else if (e.key === "F") {
+        e.preventDefault();
+        trigger("record");
+      } else if (e.key === "U") {
+        e.preventDefault();
+        trigger("upload");
+      }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
@@ -114,11 +125,11 @@ export function HotkeyCommandBar() {
               type="button"
               onClick={() => trigger(s.id)}
               className={[
-                "flex items-start sm:items-center gap-4 px-5 py-4 rounded-xl border text-left",
+                "flex items-start sm:items-center gap-2.5 sm:gap-4 px-3 sm:px-5 py-3 sm:py-4 rounded-xl border text-left",
                 "transition-all duration-200 cursor-pointer w-full",
                 isActive
                   ? `${s.accentBorder} ${s.accentBg} border-accent/30 bg-accent/5`
-                  : "border-site-border bg-site-surface hover:border-accent/30 hover:bg-site-surface-2",
+                  : "border-site-border bg-site-surface",
               ].join(" ")}
               aria-label={`Trigger ${s.label} shortcut`}
             >
@@ -128,8 +139,8 @@ export function HotkeyCommandBar() {
                   <kbd
                     key={key}
                     className={[
-                      "inline-flex items-center justify-center px-2 py-1 rounded-lg",
-                      "border-2 border-site-border shadow-sm font-mono text-xs font-bold",
+                      "inline-flex items-center justify-center px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md sm:rounded-lg",
+                      "border sm:border-2 border-site-border shadow-xs sm:shadow-sm font-mono text-[11px] sm:text-xs font-bold",
                       "bg-site-bg text-site-text transition-colors duration-200",
                       isActive ? s.colorClass : "",
                     ].join(" ")}
@@ -141,7 +152,9 @@ export function HotkeyCommandBar() {
 
               {/* Text */}
               <div className="flex-1 min-w-0">
-                <p className={`text-sm font-semibold transition-colors duration-200 ${isActive ? s.colorClass : "text-site-text"}`}>
+                <p
+                  className={`text-sm font-semibold transition-colors duration-200 ${isActive ? s.colorClass : "text-site-text"}`}
+                >
                   {s.label}
                 </p>
                 {isActive ? (
@@ -157,7 +170,11 @@ export function HotkeyCommandBar() {
               {isActive && (
                 <span
                   className={`w-2.5 h-2.5 rounded-full shrink-0 mt-1 sm:mt-0 ${
-                    s.id === "record" ? "bg-rose-500" : s.id === "upload" ? "bg-violet-500" : "bg-blue-500"
+                    s.id === "record"
+                      ? "bg-rose-500"
+                      : s.id === "upload"
+                        ? "bg-violet-500"
+                        : "bg-blue-500"
                   } animate-pulse`}
                   aria-hidden="true"
                 />

@@ -1359,9 +1359,9 @@ export default function DashboardLayout({
 
       {/* Invite Modal */}
       {inviteModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setInviteModalOpen(false)} />
-          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-6">
+          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6">
             <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.inviteToWorkspace")}</h2>
             <p className="text-sm text-muted mb-5">
               {t("layout.inviteDescPre")} <span className="font-semibold text-foreground">{activeWsName}</span> {t("layout.inviteDescPost")}
@@ -1403,9 +1403,9 @@ export default function DashboardLayout({
 
       {/* Create Workspace Modal */}
       {createWsModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setCreateWsModalOpen(false)} />
-          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-6">
+          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6">
             <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.createWorkspace")}</h2>
             <p className="text-sm text-muted mb-5">
               {t("layout.createWorkspaceDesc")}
@@ -1454,9 +1454,9 @@ export default function DashboardLayout({
       {/* Upgrade CTA - read-only; upgrades activate via the Stripe webhook
           (checkout.session.completed → users.plan). No client-side plan flip. */}
       {billingModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setBillingModalOpen(false)} />
-          <div className="relative w-full max-w-md max-h-[85vh] overflow-y-auto rounded-xl bg-subtle shadow-xl border border-border p-6 text-center">
+          <div className="relative w-full max-w-md max-h-[85vh] overflow-y-auto rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6 text-center">
             <h2 className="text-xl font-bold text-foreground mb-1">{t("layout.upgradeTitle")}</h2>
             <p className="text-sm text-muted mb-6">
               {t("layout.upgradeSub")}
@@ -1478,9 +1478,9 @@ export default function DashboardLayout({
 
       {/* Create Project Modal */}
       {createProjectModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setCreateProjectModalOpen(false)} />
-          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-6">
+          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6">
             <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.createProjectTitle")}</h2>
             <p className="text-sm text-muted mb-5">{t("layout.createProjectSubtitle")}</p>
             <div>
@@ -1523,9 +1523,9 @@ export default function DashboardLayout({
 
       {/* Rename Project Modal */}
       {projectToRename && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setProjectToRename(null)} />
-          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-6">
+          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6">
             <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.renameProjectTitle")}</h2>
             <p className="text-sm text-muted mb-5">{t("layout.renameProjectSubtitle")}</p>
             <div>
@@ -1554,9 +1554,9 @@ export default function DashboardLayout({
 
       {/* Delete Project Modal */}
       {projectToDelete && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setProjectToDelete(null)} />
-          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-6 text-center">
+          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6 text-center">
             <h2 className="text-lg font-bold text-foreground mb-2">{t("layout.deleteProjectTitle")}</h2>
             <p className="text-xs text-muted leading-relaxed mb-6">{t("layout.deleteProjectConfirm", { name: projectToDelete.name })}</p>
             <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
@@ -1571,9 +1571,9 @@ export default function DashboardLayout({
 
       {/* Create Folder Modal */}
       {createFolderModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setCreateFolderModalOpen(false)} />
-          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-6">
+          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6">
             <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.createFolderTitle")}</h2>
             <p className="text-sm text-muted mb-5">
               {t("layout.createFolderDesc")}
@@ -1618,9 +1618,9 @@ export default function DashboardLayout({
 
       {/* Rename Folder Modal */}
       {renameFolderModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setRenameFolderModalOpen(false)} />
-          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-6">
+          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6">
             <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.renameFolder")}</h2>
             <p className="text-sm text-muted mb-5">
               {t("layout.renameFolderDesc")}
@@ -1662,9 +1662,9 @@ export default function DashboardLayout({
 
       {/* Delete Folder Modal (Jira Style Popup Confirmation) */}
       {deleteFolderModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setDeleteFolderModalOpen(false)} />
-          <div className="relative w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-xl bg-subtle shadow-xl border border-border p-6 text-center">
+          <div className="relative w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6 text-center">
             <div className="mx-auto mb-4 w-12 h-12 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 flex items-center justify-center text-red-600 dark:text-red-400">
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

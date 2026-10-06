@@ -7,7 +7,7 @@
 -- inserts, indexes, and retention that is a delete instead of a truncation.
 --
 -- Existing blob contents are backfilled below, so nothing is lost. The
--- app_settings rows are left in place — dropping them is a separate step
+-- app_settings rows are left in place - dropping them is a separate step
 -- once the new tables have been serving for a while.
 -- =====================================================================
 
