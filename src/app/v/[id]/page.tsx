@@ -17,7 +17,7 @@ import { SubsystemErrorBoundary } from "@/components/SubsystemErrorBoundary";
 
 const DevToolsPanel = dynamic(() => import("@/components/DevToolsPanel"), {
   ssr: false,
-  loading: () => <div className="w-full lg:w-[360px] border-t lg:border-t-0 lg:border-l border-border bg-subtle animate-pulse h-[450px] lg:h-auto" />
+  loading: () => <div className="w-full border border-border bg-subtle animate-pulse rounded-xl h-[450px]" />
 });
 
 interface Capture {

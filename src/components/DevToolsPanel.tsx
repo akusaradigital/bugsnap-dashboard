@@ -55,6 +55,7 @@ interface Props {
   /** Unlock password for a protected public capture: externally-stored logs go
    *  through the same gated stream route, which needs proof for those now. */
   unlockPassword?: string | null;
+  className?: string;
 }
 
 const TABS = ["Info", "Console", "Network", "Actions", "Storage", "Issues"] as const;
@@ -228,7 +229,7 @@ function ActionBreadcrumb({
   );
 }
 
-export default function DevToolsPanel({ capture, currentTime, onSeekToTime, unlockPassword = null }: Props) {
+export default function DevToolsPanel({ capture, currentTime, onSeekToTime, unlockPassword = null, className }: Props) {
   const { t } = useT();
   const [activeTab, setActiveTab] = useState<Tab>("Info");
   const [consoleErrorsOnly, setConsoleErrorsOnly] = useState(false);
@@ -901,7 +902,7 @@ ${stack}` : body);
   };
 
   return (
-    <div className="w-full rounded-xl border border-border bg-white shadow-sm dark:bg-background flex flex-col shrink-0">
+    <div className={`w-full rounded-xl border border-border bg-white shadow-sm dark:bg-background flex flex-col shrink-0 max-h-[520px] sm:max-h-[600px] xl:max-h-[calc(100vh-16rem)] overflow-hidden ${className || ""}`}>
       {/* Header */}
       <div className="h-11 border-b border-border px-4 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2 min-w-0">
@@ -998,7 +999,7 @@ ${stack}` : body);
         role="tabpanel"
         id="dt-tabpanel"
         aria-labelledby={`dt-tab-${activeTab}`}
-        className="flex-1 flex flex-col"
+        className="flex-1 min-h-0 flex flex-col overflow-hidden"
       >
         {/* Global Search & Filters */}
         {activeTab !== "Info" && (
@@ -1223,7 +1224,7 @@ ${stack}` : body);
 
         {/* ISSUES TAB */}
         {activeTab === "Issues" && (
-          <div className="flex-1">
+          <div className="flex-1 min-h-0 overflow-y-auto">
             {totalIssuesCount === 0 ? (
               <div className="py-14 flex flex-col items-center gap-2 text-center text-xs text-muted p-4">
                 <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
@@ -1423,7 +1424,7 @@ ${stack}` : body);
 
         {/* INFO TAB */}
         {activeTab === "Info" && (
-          <div className="p-4 space-y-4">
+          <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
             {capture.site_url && (
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-muted mb-1.5">URL</p>
@@ -1683,7 +1684,7 @@ ${stack}` : body);
 
         {/* CONSOLE TAB */}
         {activeTab === "Console" && (
-          <div className="flex-1">
+          <div className="flex-1 min-h-0 overflow-y-auto">
             {visibleConsoleLogs.length === 0 ? (
               summary ? (
                 <div className="p-4 space-y-3">
@@ -1813,7 +1814,7 @@ ${stack}` : body);
 
         {/* NETWORK TAB */}
         {activeTab === "Network" && (
-          <div className="flex-1">
+          <div className="flex-1 min-h-0 overflow-y-auto">
             {networkLogs.length === 0 ? (
               summary ? (
                 <div className="p-4 space-y-3">
@@ -2031,7 +2032,7 @@ ${stack}` : body);
 
         {/* ACTIONS TAB */}
         {activeTab === "Actions" && (
-          <div className="p-3">
+          <div className="flex-1 min-h-0 overflow-y-auto p-3">
             {actionLogs.length === 0 ? (
               logSearch || actionKindFilter !== "all" ? (
                 <EmptyLogState filtered emptyText="" onReset={resetLogFilters} t={t} />
@@ -2208,7 +2209,7 @@ ${stack}` : body);
               </div>
 
               {/* Storage Entries */}
-              <div className="flex-1">
+              <div className="flex-1 min-h-0 overflow-y-auto">
                 {omittedCount > 0 && (
                   <p className="px-3 py-2 text-[10px] text-amber-700 dark:text-amber-400 bg-amber-50/60 dark:bg-amber-950/20 border-b border-amber-200/60 dark:border-amber-800/40">
                     {t("dt.storageOmitted", { n: omittedCount })}
