@@ -72,6 +72,19 @@ function CapturesContent() {
   const wsParam = searchParams.get("ws");
   const folderParam = searchParams.get("folder");
   const [captures, setCaptures] = useState<Capture[]>([]);
+  // "newest" is the existing keyset-paged grid. "frequent" is a separate,
+  // server-ranked list: occurrence count is an aggregate, so it cannot be mixed
+  // into the (created_at, id) cursor without breaking pagination. Keeping them
+  // as two modes is why the default path stays untouched.
+  const [sortMode, setSortMode] = useState<"newest" | "frequent">("newest");
+  const [topErrors, setTopErrors] = useState<
+    (Capture & { occurrences: number })[] | null
+  >(null);
+  // fingerprint -> how many captures in this workspace share that error.
+  // Fetched once per workspace instead of per card: the RPC is a grouped
+  // index-only scan, so one call is far cheaper than a count per row, and the
+  // grid pages 12 at a time. Only recurring errors (count > 1) come back.
+  const [occurrenceCounts, setOccurrenceCounts] = useState<Record<string, number>>({});
   // Same source as Settings > Account, so a card's author badge shows the
   // real profile name/photo (not the email-derived username) when the
   // capture belongs to the signed-in user.
@@ -314,8 +327,63 @@ function CapturesContent() {
   const projectParam = searchParams.get("project");
   const projectFilter = projectParam ?? "";
   const workspaceParam = wsParam && wsParam !== "all" ? wsParam : "";
+  // Occurrence counts for the badge. Keyed on the resolved workspace, and
+  // refetched when it changes: a count from one workspace must never be shown
+  // against another's captures. Failure is silent by design - a missing badge
+  // is a cosmetic loss, while a blocked grid is not.
+  useEffect(() => {
+    if (!workspaceParam) {
+      setOccurrenceCounts({});
+      return;
+    }
+    let cancelled = false;
+    supabase
+      .rpc("get_workspace_fingerprint_counts", { p_workspace_id: workspaceParam })
+      .then(({ data, error }) => {
+        if (cancelled || error || !Array.isArray(data)) return;
+        const next: Record<string, number> = {};
+        for (const row of data as { error_fingerprint?: string; occurrences?: number | string }[]) {
+          if (!row?.error_fingerprint) continue;
+          next[row.error_fingerprint] = Number(row.occurrences) || 0;
+        }
+        setOccurrenceCounts(next);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [workspaceParam]);
+
+  // Ranked list for "most reported". Fetched only in that mode so the default
+  // grid costs nothing extra, and reset on workspace change for the same reason
+  // as the counts above.
+  useEffect(() => {
+    if (sortMode !== "frequent" || !workspaceParam) {
+      setTopErrors(null);
+      return;
+    }
+    let cancelled = false;
+    supabase
+      .rpc("get_workspace_top_errors", { p_workspace_id: workspaceParam, p_limit: 50 })
+      .then(({ data, error }) => {
+        if (cancelled) return;
+        if (error || !Array.isArray(data)) {
+          setTopErrors([]); // resolved-but-empty, so the UI can say so instead of spinning
+          return;
+        }
+        setTopErrors(
+          (data as (Capture & { occurrences?: number | string })[]).map((row) => ({
+            ...row,
+            occurrences: Number(row.occurrences) || 0,
+          })),
+        );
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [sortMode, workspaceParam]);
+
   const CAPTURES_COLUMNS =
-    "id, title, type, drive_url, created_at, window_size, workspace_id, folder_name, project_id, source, tag, status, expires_at, password, duration, owner_email, burn_after_read";
+    "id, title, type, drive_url, created_at, window_size, workspace_id, folder_name, project_id, source, tag, status, expires_at, password, duration, owner_email, burn_after_read, error_fingerprint";
 
   const loadPage = useCallback(
     async (replace: boolean) => {
@@ -1183,7 +1251,12 @@ function CapturesContent() {
   }
 
   // loadPage already applied every filter server-side.
-  const filteredCaptures = workspaceCaptures;
+  // In "most reported" mode the rows come from the ranking RPC instead, which
+  // returns one representative capture per distinct error, already ordered.
+  // While it is still loading (null) the normal grid stays on screen rather
+  // than flashing an empty state.
+  const filteredCaptures =
+    sortMode === "frequent" && topErrors !== null ? topErrors : workspaceCaptures;
 
   // Type counts are for the whole scope, not the loaded page - a head count is
   // the cheapest way to get that without fetching the rows.
@@ -1599,6 +1672,21 @@ function CapturesContent() {
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Sort: newest (default keyset grid) vs most reported (ranked RPC) */}
+          <div className="flex min-w-0 items-center gap-1.5 text-xs border border-border bg-subtle rounded-lg px-2 py-1.5 text-muted hover:text-foreground hover:bg-subtle transition-colors">
+            <span>{t("cap.sortFilter")}</span>
+            <Dropdown
+              variant="inline"
+              className="flex-1"
+              value={sortMode}
+              onChange={(v) => setSortMode(v === "frequent" ? "frequent" : "newest")}
+              options={[
+                { value: "newest", label: t("cap.sortNewest") },
+                { value: "frequent", label: t("cap.sortFrequent") },
+              ]}
+            />
           </div>
 
           {/* Tag Filter */}
@@ -3080,6 +3168,24 @@ function CapturesContent() {
                           {item.folder_name}
                         </p>
                       )}
+                      {/* Only for an error seen more than once; a "1x" badge on
+                          every card would be noise rather than a signal. */}
+                      {item.error_fingerprint &&
+                        (occurrenceCounts[item.error_fingerprint] || 0) > 1 && (
+                          <span
+                            title={t("v.occurrencesHint")}
+                            className="mt-1 inline-flex max-w-full min-w-0 items-center gap-1 rounded border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400"
+                          >
+                            <svg className="h-3 w-3 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                            </svg>
+                            <span className="truncate">
+                              {t("v.occurrences", {
+                                count: occurrenceCounts[item.error_fingerprint],
+                              })}
+                            </span>
+                          </span>
+                        )}
                     </div>
                     <span className="text-muted shrink-0">
                       {timeAgo(item.created_at, t)}
@@ -3095,7 +3201,10 @@ function CapturesContent() {
       {/* Infinite scroll sentinel + loading indicator.
           Sentinel always stays mounted when hasMore is true so IntersectionObserver
           can trigger loading subsequent batches even if current batch yielded 0 filter matches. */}
-      {!loading && hasMore && (
+      {/* No sentinel in "most reported" mode: that list comes from a ranking
+          RPC with no keyset cursor, so loading another page would append rows
+          from the newest-first query underneath the ranked ones. */}
+      {!loading && hasMore && sortMode === "newest" && (
         <div
           ref={sentinelRef}
           className="py-8 flex items-center justify-center"

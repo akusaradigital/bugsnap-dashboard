@@ -26,6 +26,8 @@ export interface Capture {
   project_id?: string | null;
   source?: string | null;
   project_name?: string | null;
+  /** Grouping key for the same underlying error; null when the capture has none. */
+  error_fingerprint?: string | null;
 }
 
 export const TAG_OPTIONS = ["bug", "feature-request", "wip", "design", "other"];

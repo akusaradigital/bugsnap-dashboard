@@ -11,6 +11,7 @@ import {
   cleanUrlForTelemetry,
   cleanStackTrace,
 } from "@/lib/redact";
+import { resolveStack, formatResolvedStack } from "@/lib/sourcemap";
 
 interface DevLog {
   type: string;
@@ -131,6 +132,8 @@ export async function POST(req: Request) {
     let consoleErrors: CompactError[] = [];
     let networkErrors: CompactError[] = [];
     let steps: string[] = [];
+    // Original-source stack for the leading error, when source maps resolve.
+    let resolvedStack = "";
 
     // If devLogs is stored externally in Google Drive, fetch content
     if (
@@ -191,6 +194,31 @@ export async function POST(req: Request) {
             ...(stack && stack !== msg ? { stack } : {}),
           };
         });
+
+      // Map the leading error's stack back to original source when the site
+      // publishes its source map. A minified frame ("main.a3f9.js:1:48213")
+      // tells the model nothing; "Checkout.tsx:142" plus the authored line is
+      // what makes the summary actionable.
+      //
+      // Only the first error with a stack is resolved: this performs network
+      // requests inside a request path, and the leading error is what the
+      // summary is actually about. Resolution runs on the RAW stack because it
+      // needs the real script URLs - cleanStackTrace strips them - and the
+      // result is sanitized before it reaches the prompt.
+      const firstWithStack = logs.find(
+        (l) => l.type === "console" && l.stack && /https?:\/\//.test(String(l.stack)),
+      );
+      if (firstWithStack?.stack) {
+        try {
+          const resolved = await resolveStack(String(firstWithStack.stack));
+          if (resolved.resolvedCount > 0) {
+            resolvedStack = sanitizePromptData(formatResolvedStack(resolved, 8), 1200);
+          }
+        } catch {
+          // Best effort: a site without usable maps is the common case and must
+          // never fail the summary. The minified stack above still goes to the model.
+        }
+      }
 
       // Filter strictly to HTTP 4xx/5xx or network drops (status 0)
       networkErrors = logs
@@ -263,7 +291,7 @@ export async function POST(req: Request) {
         },
         {
           role: "user",
-          content: `<dev_logs_untrusted>\nTitle: ${sanitizedTitle}\nWindow size: ${sanitizedWindowSize}\nConsole errors: ${JSON.stringify(consoleErrors)}\nNetwork failures: ${JSON.stringify(networkErrors)}\nUser actions: ${JSON.stringify(steps)}\n</dev_logs_untrusted>`,
+          content: `<dev_logs_untrusted>\nTitle: ${sanitizedTitle}\nWindow size: ${sanitizedWindowSize}\nConsole errors: ${JSON.stringify(consoleErrors)}\nNetwork failures: ${JSON.stringify(networkErrors)}\nUser actions: ${JSON.stringify(steps)}${resolvedStack ? `\nOriginal source location of the leading error (resolved from the site's source map):\n${resolvedStack}` : ""}\n</dev_logs_untrusted>`,
         },
       ],
       max_tokens: 800,

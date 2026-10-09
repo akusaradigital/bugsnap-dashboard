@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-server";
 import { verifiedGoogleEmail } from "@/lib/google-token";
+import { captureFingerprint } from "@/lib/fingerprint";
 
 export const runtime = "nodejs";
 
@@ -43,6 +44,20 @@ export async function POST(request: Request) {
         ? rawLogs
         : null;
 
+  const siteUrl = typeof input.p_site_url === "string" ? input.p_site_url : null;
+
+  // Grouping key for "this bug was reported N times". Derived server-side so an
+  // older extension build still gets its captures grouped, and so a client
+  // cannot choose which group its capture lands in. Null for a capture with no
+  // error, which is normal and must stay ungrouped.
+  let errorFingerprint: string | null = null;
+  try {
+    errorFingerprint = captureFingerprint({ devLogs: devLogsValue, siteUrl });
+  } catch {
+    // Grouping is an enhancement: a capture must still be stored if it fails.
+    errorFingerprint = null;
+  }
+
   const db = createServiceClient();
   const { data, error } = await db.rpc("insert_capture_by_email", {
     p_owner_email: email,
@@ -55,9 +70,10 @@ export async function POST(request: Request) {
     p_duration: typeof input.p_duration === "number" ? input.p_duration : null,
     p_os: typeof input.p_os === "string" ? input.p_os : null,
     p_browser: typeof input.p_browser === "string" ? input.p_browser : null,
-    p_site_url: typeof input.p_site_url === "string" ? input.p_site_url : null,
+    p_site_url: siteUrl,
     p_folder_name: typeof input.p_folder_name === "string" ? input.p_folder_name : null,
     p_workspace_id: typeof input.p_workspace_id === "string" ? input.p_workspace_id : null,
+    p_error_fingerprint: errorFingerprint,
   });
   if (error) return NextResponse.json({ error: error.message, code: error.code }, { status: 422 });
 

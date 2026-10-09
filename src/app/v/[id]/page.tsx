@@ -7,6 +7,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { type CapturedLogs } from "@/components/DevToolsPanel";
 import { isIgnoredUrl } from "@/lib/ignored-urls";
+import { timeAgo } from "@/lib/capture-utils";
 import Comments from "@/components/Comments";
 import MediaViewer, { ErrorMarker } from "@/components/MediaViewer";
 import CaptureFooter from "@/components/CaptureFooter";
@@ -68,6 +69,16 @@ const INTEGRATION_METADATA: Record<string, { name: string; iconSrc: string }> = 
 };
 
 const viewCountCache = new Map<string, { value: number; expiresAt: number }>();
+
+// How many other captures in this workspace carry the same error. Cached the
+// same way and for the same reason as the view count: it is a secondary number
+// on a page that is often re-opened, and it must never delay the capture.
+const occurrenceCache = new Map<string, { value: Occurrence; expiresAt: number }>();
+
+interface Occurrence {
+  occurrences: number;
+  last_seen: string | null;
+}
 
 function hostnameOf(url: string | null | undefined): string {
   try {
@@ -308,6 +319,7 @@ function SingleViewContent() {
   const [passwordRateLimited, setPasswordRateLimited] = useState(false);
   const [checkingPassword, setCheckingPassword] = useState(false);
   const [viewCount, setViewCount] = useState<number | null>(null);
+  const [occurrence, setOccurrence] = useState<Occurrence | null>(null);
   const recordedViewRef = useRef<string | null>(null);
 
   // Modals & Popovers
@@ -735,6 +747,25 @@ function SingleViewContent() {
           setViewCount(value);
           viewCountCache.set(id, { value, expiresAt: Date.now() + 60_000 });
         }
+      });
+    }
+
+    // Occurrence count. The RPC is SECURITY INVOKER, so an anonymous viewer of a
+    // public capture simply gets nothing back rather than a cross-workspace
+    // count - the badge stays hidden instead of showing a wrong or leaked number.
+    const cachedOcc = occurrenceCache.get(id);
+    if (cachedOcc && cachedOcc.expiresAt > Date.now()) {
+      setOccurrence(cachedOcc.value);
+    } else {
+      supabase.rpc("get_capture_occurrences", { p_capture_id: id }).then(({ data, error }) => {
+        if (cancelled || error || !Array.isArray(data) || data.length === 0) return;
+        const row = data[0] as { occurrences?: number | string; last_seen?: string | null };
+        const value: Occurrence = {
+          occurrences: Number(row.occurrences) || 0,
+          last_seen: row.last_seen ?? null,
+        };
+        setOccurrence(value);
+        occurrenceCache.set(id, { value, expiresAt: Date.now() + 60_000 });
       });
     }
 
@@ -1601,6 +1632,22 @@ function SingleViewContent() {
                       <span>•</span>
                       <span>{new Date(capture.created_at).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: "Asia/Jakarta", timeZoneName: "short" })}</span>
                       {viewCount !== null && <><span>•</span><span>{t("v.viewCount", { count: viewCount })}</span></>}
+                      {/* Only shown when the error actually repeats: a badge reading
+                          "Reported 1×" on every capture would be noise, not signal. */}
+                      {occurrence && occurrence.occurrences > 1 && (
+                        <span
+                          title={t("v.occurrencesHint")}
+                          className="inline-flex min-w-0 items-center gap-1.5 rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 font-medium text-amber-700 dark:text-amber-400"
+                        >
+                          <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
+                          </svg>
+                          <span className="truncate">
+                            {t("v.occurrences", { count: occurrence.occurrences })}
+                            {occurrence.last_seen ? ` · ${t("v.occurrencesLastSeen", { ago: timeAgo(occurrence.last_seen, t) })}` : ""}
+                          </span>
+                        </span>
+                      )}
                     </div>
                     {capture.expires_at && <p className="mt-2 text-[11px] font-medium text-muted">{getExpiryCountdown(capture.expires_at, t)}</p>}
                   </div>
