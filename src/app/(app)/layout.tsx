@@ -11,11 +11,12 @@ import { pickAvatar, initialOf } from "@/lib/avatar";
 import { AuthRequiredCard } from "@/components/AuthRequiredCard";
 import DriveStorageMeter from "@/components/DriveStorageMeter";
 import FloatingSupport from "@/components/FloatingSupport";
+import HelpMenu from "@/components/HelpMenu";
+import { SiteThemeToggle } from "@/components/site/SiteThemeToggle";
 
 const navItems = [
   { labelKey: "nav.dashboard", href: "/dashboard", icon: "📊" },
   { labelKey: "nav.captures", href: "/captures", icon: "📸" },
-  { labelKey: "nav.errors", href: "/errors", icon: "🐞" },
 ];
 
 type Workspace = {
@@ -1352,6 +1353,10 @@ export default function DashboardLayout({
 
         <div className="mt-auto shrink-0" />
         <DriveStorageMeter />
+        <div className="px-3 py-2.5 border-t border-border/60 flex items-center justify-between shrink-0 bg-subtle">
+          <HelpMenu />
+          <SiteThemeToggle compact />
+        </div>
       </aside>
       )}
 
