@@ -15,6 +15,7 @@ import FloatingSupport from "@/components/FloatingSupport";
 const navItems = [
   { labelKey: "nav.dashboard", href: "/dashboard", icon: "📊" },
   { labelKey: "nav.captures", href: "/captures", icon: "📸" },
+  { labelKey: "nav.errors", href: "/errors", icon: "🐞" },
 ];
 
 type Workspace = {

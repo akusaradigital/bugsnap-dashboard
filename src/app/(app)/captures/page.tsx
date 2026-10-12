@@ -84,7 +84,7 @@ function CapturesContent() {
   // Fetched once per workspace instead of per card: the RPC is a grouped
   // index-only scan, so one call is far cheaper than a count per row, and the
   // grid pages 12 at a time. Only recurring errors (count > 1) come back.
-  const [occurrenceCounts, setOccurrenceCounts] = useState<Record<string, number>>({});
+  const [occurrenceCounts, setOccurrenceCounts] = useState<Record<string, { occurrences: number; affectedUsers: number }>>({});
   // Same source as Settings > Account, so a card's author badge shows the
   // real profile name/photo (not the email-derived username) when the
   // capture belongs to the signed-in user.
@@ -341,10 +341,17 @@ function CapturesContent() {
       .rpc("get_workspace_fingerprint_counts", { p_workspace_id: workspaceParam })
       .then(({ data, error }) => {
         if (cancelled || error || !Array.isArray(data)) return;
-        const next: Record<string, number> = {};
-        for (const row of data as { error_fingerprint?: string; occurrences?: number | string }[]) {
+        const next: Record<string, { occurrences: number; affectedUsers: number }> = {};
+        for (const row of data as {
+          error_fingerprint?: string;
+          occurrences?: number | string;
+          affected_users?: number | string;
+        }[]) {
           if (!row?.error_fingerprint) continue;
-          next[row.error_fingerprint] = Number(row.occurrences) || 0;
+          next[row.error_fingerprint] = {
+            occurrences: Number(row.occurrences) || 0,
+            affectedUsers: Number(row.affected_users) || 0,
+          };
         }
         setOccurrenceCounts(next);
       });
@@ -3171,7 +3178,7 @@ function CapturesContent() {
                       {/* Only for an error seen more than once; a "1x" badge on
                           every card would be noise rather than a signal. */}
                       {item.error_fingerprint &&
-                        (occurrenceCounts[item.error_fingerprint] || 0) > 1 && (
+                        (occurrenceCounts[item.error_fingerprint]?.occurrences || 0) > 1 && (
                           <span
                             title={t("v.occurrencesHint")}
                             className="mt-1 inline-flex max-w-full min-w-0 items-center gap-1 rounded border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400"
@@ -3180,8 +3187,9 @@ function CapturesContent() {
                               <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
                             </svg>
                             <span className="truncate">
-                              {t("v.occurrences", {
-                                count: occurrenceCounts[item.error_fingerprint],
+                              {t("v.occurrencesUsers", {
+                                count: occurrenceCounts[item.error_fingerprint].occurrences,
+                                users: occurrenceCounts[item.error_fingerprint].affectedUsers,
                               })}
                             </span>
                           </span>

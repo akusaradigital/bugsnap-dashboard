@@ -46,6 +46,9 @@ const MAX_MAP_BYTES = 8 * 1024 * 1024; // 8 MiB: generous for real apps, bounded
 const FETCH_TIMEOUT_MS = 4000;
 const MAX_MAPS_PER_CALL = 3; // one capture rarely spans more than a couple of bundles
 
+export const MAX_CACHE_ENTRIES = 100;
+export const CACHE_TTL_MS = 15 * 60 * 1000; // 15 minutes: bounded lifetime to eventually pick up redeploys
+
 /**
  * Parse the frames of a V8-style stack trace.
  * Chrome is the only browser the extension supports, so only its two shapes
@@ -308,6 +311,60 @@ async function resolveMapUrl(scriptUrl: string): Promise<{ url: string; body: st
   return body ? { url: absolute, body } : null;
 }
 
+interface DecodedSourceMapBundle {
+  mappings: DecodedMapping[];
+  map: RawSourceMap;
+}
+
+interface CacheEntry {
+  data: DecodedSourceMapBundle | null;
+  expiresAt: number;
+}
+
+const sourceMapCache = new Map<string, CacheEntry>();
+
+function getCachedSourceMap(
+  file: string,
+): { hit: true; data: DecodedSourceMapBundle | null } | { hit: false } {
+  const entry = sourceMapCache.get(file);
+  if (!entry) return { hit: false };
+
+  if (Date.now() > entry.expiresAt) {
+    sourceMapCache.delete(file);
+    return { hit: false };
+  }
+
+  // LRU refresh: delete and re-insert to move to the end of the iteration order
+  sourceMapCache.delete(file);
+  sourceMapCache.set(file, entry);
+  return { hit: true, data: entry.data };
+}
+
+function setCachedSourceMap(file: string, data: DecodedSourceMapBundle | null): void {
+  if (sourceMapCache.has(file)) {
+    sourceMapCache.delete(file);
+  } else if (sourceMapCache.size >= MAX_CACHE_ENTRIES) {
+    const oldest = sourceMapCache.keys().next().value;
+    if (oldest !== undefined) {
+      sourceMapCache.delete(oldest);
+    }
+  }
+  sourceMapCache.set(file, {
+    data,
+    expiresAt: Date.now() + CACHE_TTL_MS,
+  });
+}
+
+/** Test-only helper: clear the in-process source map cache. */
+export function __clearSourcemapCacheForTests(): void {
+  sourceMapCache.clear();
+}
+
+/** Test-only helper: return current size of the in-process source map cache. */
+export function __getSourcemapCacheSizeForTests(): number {
+  return sourceMapCache.size;
+}
+
 /**
  * Resolve the frames of one stack trace.
  *
@@ -339,8 +396,15 @@ export async function resolveStack(stack: string): Promise<{
 
   // Array.from rather than spreading the iterator: ES5 target (see above).
   for (const file of Array.from(byFile.keys()).slice(0, MAX_MAPS_PER_CALL)) {
+    const cached = getCachedSourceMap(file);
+    if (cached.hit) {
+      decodedByFile.set(file, cached.data);
+      continue;
+    }
+
     const found = await resolveMapUrl(file);
     if (!found) {
+      setCachedSourceMap(file, null);
       decodedByFile.set(file, null);
       continue;
     }
@@ -349,11 +413,15 @@ export async function resolveStack(stack: string): Promise<{
       // Indexed maps (`sections`) are rare and need separate handling; treat
       // them as unresolvable rather than guessing at offsets.
       if (!map.mappings || typeof map.mappings !== "string" || map.sections) {
+        setCachedSourceMap(file, null);
         decodedByFile.set(file, null);
         continue;
       }
-      decodedByFile.set(file, { mappings: decodeMappings(map.mappings), map });
+      const bundle: DecodedSourceMapBundle = { mappings: decodeMappings(map.mappings), map };
+      setCachedSourceMap(file, bundle);
+      decodedByFile.set(file, bundle);
     } catch {
+      setCachedSourceMap(file, null);
       decodedByFile.set(file, null);
     }
   }

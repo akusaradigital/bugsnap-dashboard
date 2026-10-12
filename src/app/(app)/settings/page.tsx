@@ -43,6 +43,7 @@ function SettingsContent() {
   const [logoUrl, setLogoUrl] = useState("");
   const [logoPreviewError, setLogoPreviewError] = useState(false);
   const [hideWatermark, setHideWatermark] = useState(false);
+  const [autoEscalateErrors, setAutoEscalateErrors] = useState(false);
   const [customDomain, setCustomDomain] = useState("");
   const [autoDeleteMonths, setAutoDeleteMonths] = useState(3);
   const [saving, setSaving] = useState(false);
@@ -189,6 +190,7 @@ function SettingsContent() {
           setBrandName(wsSet.brand_name || "BugSnap");
           setLogoUrl(wsSet.custom_logo_url || "");
           setHideWatermark(!!wsSet.hide_watermark);
+          setAutoEscalateErrors(!!wsSet.auto_escalate_errors);
           setCustomDomain(wsSet.custom_domain || "");
           const months = wsSet.auto_delete_months ?? 0;
           setAutoDeleteMonths(months > 0 ? months : 3);
@@ -331,6 +333,7 @@ function SettingsContent() {
         brand_name: canBrand ? brandName.trim() || "BugSnap" : "BugSnap",
         custom_logo_url: canBrand ? logoUrl.trim() : "",
         hide_watermark: canBrand ? hideWatermark : false,
+        auto_escalate_errors: autoEscalateErrors,
         custom_domain: canBrand ? customDomain.trim() : "",
         auto_delete_months: [0,3,6,12].includes(effectiveAutoDelete) ? effectiveAutoDelete : 0,
         integrations: updatedIntegrations,
@@ -1235,6 +1238,27 @@ function SettingsContent() {
                   className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 bg-background text-foreground font-mono shadow-sm"
                 />
               </div>
+            </div>
+
+            {/* Error Escalation */}
+            <div className="rounded-xl border border-border bg-subtle p-5 shadow-xs">
+              <label className={`flex items-start gap-3 ${!webhookUrl.trim() ? "cursor-not-allowed opacity-60" : "cursor-pointer"}`}>
+                <input
+                  type="checkbox"
+                  checked={autoEscalateErrors && !!webhookUrl.trim()}
+                  disabled={!webhookUrl.trim()}
+                  onChange={(e) => setAutoEscalateErrors(e.target.checked)}
+                  className="w-4 h-4 mt-0.5 rounded border-border text-[#89BD49] focus:ring-[#89BD49]/20 disabled:opacity-50"
+                />
+                <span className="flex flex-col gap-1">
+                  <span className="text-xs font-medium text-foreground">
+                    {t("settings.autoEscalate")}
+                  </span>
+                  <span className="text-[11px] text-muted leading-snug max-w-xl">
+                    {webhookUrl.trim() ? t("settings.autoEscalateDesc") : t("settings.autoEscalateNoWebhook")}
+                  </span>
+                </span>
+              </label>
             </div>
 
             {saveError && <p className="text-xs text-red-600 dark:text-red-400">{saveError}</p>}

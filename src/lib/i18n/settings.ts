@@ -173,6 +173,9 @@ export const settingsEn: Dict = {
   "settings.themeSaveFailed": "Theme save failed",
   "settings.avatarSizeError": "Image file size must be less than 2MB",
   "settings.upgrade": "Upgrade",
+  "settings.autoEscalate": "Auto-escalate recurring errors",
+  "settings.autoEscalateDesc": "Automatically send a webhook alert when the same error is reported by multiple people past a threshold.",
+  "settings.autoEscalateNoWebhook": "Requires a webhook URL to be configured first.",
 };
 
 export const settingsId: Dict = {
@@ -348,4 +351,7 @@ export const settingsId: Dict = {
   "settings.themeSaveFailed": "Gagal menyimpan tema",
   "settings.avatarSizeError": "Ukuran file gambar harus kurang dari 2MB",
   "settings.upgrade": "Upgrade",
+  "settings.autoEscalate": "Eskalasi otomatis error berulang",
+  "settings.autoEscalateDesc": "Kirim peringatan webhook secara otomatis saat error yang sama dilaporkan oleh beberapa orang melampaui ambang batas.",
+  "settings.autoEscalateNoWebhook": "Membutuhkan URL webhook yang dikonfigurasi terlebih dahulu.",
 };

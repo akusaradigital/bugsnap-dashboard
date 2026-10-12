@@ -6,6 +6,7 @@ import { devtoolsEn, devtoolsId } from "./devtools";
 import { settingsEn, settingsId } from "./settings";
 import { adminEn, adminId } from "./admin";
 import { marketingEn, marketingId } from "./marketing";
+import { errorsEn, errorsId } from "./errors";
 
 export type { Locale, Dict };
 
@@ -17,6 +18,7 @@ export const en: Dict = {
   ...settingsEn,
   ...adminEn,
   ...marketingEn,
+  ...errorsEn,
 };
 
 export const id: Dict = {
@@ -27,6 +29,7 @@ export const id: Dict = {
   ...settingsId,
   ...adminId,
   ...marketingId,
+  ...errorsId,
 };
 
 export const locales: Record<Locale, Dict> = { en, id };

@@ -1,4 +1,4 @@
-import test from "node:test";
+import test, { beforeEach } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
@@ -54,7 +54,18 @@ const ctx = {
   __routes: {},
 };
 vm.runInNewContext(transpiled, ctx);
-const { parseStackFrames, resolveStack, formatResolvedStack } = ctx.exports;
+const {
+  parseStackFrames,
+  resolveStack,
+  formatResolvedStack,
+  __clearSourcemapCacheForTests,
+  __getSourcemapCacheSizeForTests,
+  MAX_CACHE_ENTRIES,
+} = ctx.exports;
+
+beforeEach(() => {
+  __clearSourcemapCacheForTests();
+});
 
 // --- stack parsing ----------------------------------------------------------
 test("parseStackFrames handles both V8 frame shapes", () => {
@@ -286,4 +297,67 @@ test("formatResolvedStack prefers the authored name and caps its output", async 
 
   const many = { frames: Array.from({ length: 20 }, () => out.frames[0]), resolvedCount: 20 };
   assert.equal(formatResolvedStack(many, 5).split("\n").filter((l) => l.includes(" at ")).length, 5);
+});
+
+// --- in-process caching -----------------------------------------------------
+test("a second resolveStack call for the same script URL does not re-fetch its map", async () => {
+  const map = {
+    version: 3,
+    sources: ["src/Checkout.tsx"],
+    names: [],
+    mappings: "AAAA",
+    sourcesContent: ["console.log(1);"],
+  };
+  ctx.__routes = { "https://cdn.app.com/cached.js.map": JSON.stringify(map) };
+  lastFetched = [];
+
+  const first = await resolveStack("    at r (https://cdn.app.com/cached.js:1:1)");
+  assert.equal(first.resolvedCount, 1);
+  assert.equal(lastFetched.length, 1);
+
+  lastFetched = [];
+  const second = await resolveStack("    at r (https://cdn.app.com/cached.js:1:1)");
+  assert.equal(second.resolvedCount, 1);
+  assert.equal(lastFetched.length, 0, "second call must use in-process cache without fetching");
+  assert.equal(second.frames[0].resolved?.file, "src/Checkout.tsx");
+});
+
+test("a script with no map (404) is not re-fetched on a second call", async () => {
+  ctx.__routes = {}; // every fetch 404s
+  lastFetched = [];
+
+  const first = await resolveStack("    at r (https://cdn.app.com/nomap.js:1:1)");
+  assert.equal(first.resolvedCount, 0);
+  assert.ok(lastFetched.length > 0, "first call should attempt to fetch");
+
+  lastFetched = [];
+  const second = await resolveStack("    at r (https://cdn.app.com/nomap.js:1:1)");
+  assert.equal(second.resolvedCount, 0);
+  assert.equal(lastFetched.length, 0, "negative result must be cached; no fetch on second call");
+});
+
+test("the cache does not grow without bound and evicts LRU entries", async () => {
+  ctx.__routes = {};
+  lastFetched = [];
+  
+  // Feed it more distinct scripts than the cache can hold
+  const total = MAX_CACHE_ENTRIES + 25;
+  for (let i = 0; i < total; i++) {
+    await resolveStack(`    at f (https://cdn.app.com/bundle${i}.js:1:1)`);
+  }
+
+  assert.equal(
+    __getSourcemapCacheSizeForTests(),
+    MAX_CACHE_ENTRIES,
+    `cache size must be capped at ${MAX_CACHE_ENTRIES}`
+  );
+  
+  // Verify LRU behavior: the oldest (bundle0.js) was evicted, the newest (bundle124.js) is kept
+  lastFetched = [];
+  await resolveStack(`    at f (https://cdn.app.com/bundle${total - 1}.js:1:1)`);
+  assert.equal(lastFetched.length, 0, "recently used entry must still be in cache");
+  
+  lastFetched = [];
+  await resolveStack(`    at f (https://cdn.app.com/bundle0.js:1:1)`);
+  assert.ok(lastFetched.length > 0, "evicted entry must be re-fetched");
 });
