@@ -1,31 +1,11 @@
 import { NextResponse } from "next/server";
-import { createServiceClient } from "@/lib/supabase-server";
-import { isRequestAdminAuthenticated } from "@/lib/admin-auth";
+import { checkAdminAuth } from "@/lib/admin-auth";
+import { logSecurityEvent } from "@/lib/security-audit";
 
 export const runtime = "nodejs";
 
-const getAdminEmails = () =>
-  (process.env.SUPER_ADMIN_EMAILS || "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-
 export async function POST(req: Request) {
-  const isAdminAuthenticated = await isRequestAdminAuthenticated(req);
-  const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-
-  let authorized = isAdminAuthenticated;
-
-  const supabase = createServiceClient();
-
-  if (!authorized && token) {
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (!authError && user?.email) {
-      if (getAdminEmails().includes(user.email.toLowerCase())) {
-        authorized = true;
-      }
-    }
-  }
+  const { authorized, callerEmail, supabase } = await checkAdminAuth(req);
 
   if (!authorized) {
     return NextResponse.json({ error: "Forbidden: Super Admin only" }, { status: 403 });
@@ -86,6 +66,12 @@ export async function POST(req: Request) {
       .upsert({ key: "promo_banner", value: promoValue, updated_at: new Date().toISOString() });
 
     if (error) throw error;
+
+    await logSecurityEvent({
+      type: "admin_action",
+      title: enabled ? "Promo Banner Enabled" : "Promo Banner Disabled",
+      detail: `Admin ${callerEmail || "Console"} ${enabled ? "enabled" : "disabled"} the promo banner${message ? `: "${message}"` : ""}`,
+    });
 
     return NextResponse.json({ ok: true, promo: promoValue });
   } catch (err) {

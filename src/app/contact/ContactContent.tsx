@@ -5,6 +5,7 @@ import { StaticShell } from "@/components/StaticShell";
 import { useT } from "@/components/I18nProvider";
 import { IconMail, IconBuilding, IconShieldCheck } from "@/components/site/TablerIcons";
 import { Reveal } from "@/components/site/motion";
+import { Icon } from "@/lib/iconify";
 
 const CHROME_STORE_URL =
   "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
@@ -110,8 +111,7 @@ export function ContactContent() {
                   rel="noopener noreferrer"
                   className="flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-slate-900 hover:text-white text-xs font-semibold py-2.5 rounded-lg transition-colors shadow-xs"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/icons/chrome.svg" alt="" aria-hidden="true" className="w-4 h-4 shrink-0" />
+                  <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
                   <span>{t("contact.installFree")}</span>
                 </a>
                 <Link

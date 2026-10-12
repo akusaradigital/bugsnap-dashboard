@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { checkAdminAuth, isSuperAdminEmail } from "@/lib/admin-auth";
+import { logSecurityEvent } from "@/lib/security-audit";
 
 export const runtime = "nodejs";
 
@@ -51,6 +52,12 @@ export async function POST(req: Request) {
       .single();
 
     if (error) throw error;
+
+    await logSecurityEvent({
+      type: "admin_action",
+      title: suspended ? "User Suspended" : "User Unsuspended",
+      detail: `Admin ${callerEmail || "Console"} ${suspended ? "suspended" : "unsuspended"} user ${targetUser.email}`,
+    });
 
     return NextResponse.json({ ok: true, user: data });
   } catch (err) {

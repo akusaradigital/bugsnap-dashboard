@@ -16,6 +16,7 @@ interface DropdownProps {
   className?: string;
   direction?: "down" | "up";
   disabled?: boolean;
+  align?: "left" | "right";
 }
 
 const TRIGGER_BASE = "flex items-center gap-2 outline-none transition-all duration-150";
@@ -28,7 +29,7 @@ const TRIGGER_VARIANT: Record<NonNullable<DropdownProps["variant"]>, string> = {
 };
 
 // Matches the folder "..." menu look (layout.tsx) - the house style for every custom dropdown panel.
-export function Dropdown({ value, options, onChange, variant = "field", placeholder, className, direction = "down", disabled }: DropdownProps) {
+export function Dropdown({ value, options, onChange, variant = "field", placeholder, className, direction = "down", disabled, align = "left" }: DropdownProps) {
   const [open, setOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
   const ref = useRef<HTMLDivElement>(null);
@@ -108,7 +109,7 @@ export function Dropdown({ value, options, onChange, variant = "field", placehol
           id={listboxId}
           role="listbox"
           tabIndex={-1}
-          className={`absolute left-0 min-w-full w-max max-w-[min(16rem,calc(100vw-1.5rem))] max-h-60 overflow-y-auto border border-border bg-subtle py-1 shadow-xl overflow-x-hidden ${
+          className={`absolute ${align === "right" ? "right-0" : "left-0"} min-w-full w-max max-w-[min(16rem,calc(100vw-1.5rem))] max-h-60 overflow-y-auto border border-border bg-subtle py-1 shadow-xl overflow-x-hidden ${
             isUp
               ? "bottom-full mb-1.5 z-50 rounded-xl text-xs"
               : "top-full mt-1.5 z-30 rounded-lg text-sm"

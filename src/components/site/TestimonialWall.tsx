@@ -92,7 +92,7 @@ export function TestimonialWall() {
             &ldquo;{t.quote}&rdquo;
           </p>
 
-          <span className="mt-3 inline-block px-2.5 py-1 rounded-full bg-accent/10 text-accent text-[11px] font-semibold">
+          <span className="mt-3 inline-block px-2 py-0.5 rounded-md bg-accent/10 text-accent text-[11px] font-semibold">
             {t.tag}
           </span>
         </div>

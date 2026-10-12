@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { IconCopy, IconPlayerPlay, IconCheck } from "./TablerIcons";
+import { Icon } from "@/lib/iconify";
 
 type Tab = "media" | "console" | "network" | "system";
 
@@ -70,9 +71,9 @@ function TabBar({
           key={tab.id}
           type="button"
           onClick={() => onSelect(tab.id)}
-          className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
             active === tab.id
-              ? "bg-accent text-white"
+              ? "bg-accent text-slate-900 shadow-xs"
               : "text-site-text-2 hover:text-site-text hover:bg-site-surface"
           }`}
         >
@@ -130,7 +131,7 @@ function MediaTab() {
             </div>
             {/* BugSnap annotation arrow */}
             <div className="absolute right-1 -top-6 flex items-center gap-1">
-              <span className="text-[10px] font-semibold text-accent bg-site-surface border border-accent px-1.5 py-0.5 rounded-full shadow-sm whitespace-nowrap">
+              <span className="text-[10px] font-semibold text-accent bg-site-surface border border-accent px-1.5 py-0.5 rounded-md shadow-2xs whitespace-nowrap">
                 ↙ BugSnap captured
               </span>
             </div>
@@ -140,7 +141,7 @@ function MediaTab() {
 
       {/* Recording info */}
       <div className="flex flex-wrap items-center justify-between gap-2 sm:gap-3 px-3 py-2.5 rounded-lg bg-site-surface-2 border border-site-border">
-        <div className="flex items-center gap-1.5 text-[10px] font-mono font-semibold text-red-600 dark:text-red-400 bg-red-500/10 border border-red-500/30 px-2 py-0.5 rounded-full shrink-0">
+        <div className="flex items-center gap-1.5 text-[10px] font-mono font-semibold text-red-600 dark:text-red-400 bg-red-500/10 border border-red-500/30 px-2 py-0.5 rounded-md shrink-0">
           <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
           REC 00:14
         </div>
@@ -175,10 +176,10 @@ function ConsoleTab() {
               row.level === "error" ? "text-red-400" : "text-yellow-400"
             }`}
           >
-            {row.level === "error" ? "✕" : "⚠"}
+            <Icon icon={row.level === "error" ? "lucide:x-circle" : "lucide:alert-triangle"} className="w-3.5 h-3.5 shrink-0" />
           </span>
           <span
-            className={`flex-1 leading-snug ${
+            className={`flex-1 min-w-0 leading-snug break-words ${
               row.level === "error" ? "text-red-300" : "text-yellow-300"
             }`}
           >
@@ -220,7 +221,7 @@ function NetworkTab() {
               </span>
 
               {/* URL */}
-              <span className="flex-1 text-slate-300 truncate">{row.url}</span>
+              <span className="flex-1 min-w-0 text-slate-300 truncate">{row.url}</span>
 
               {/* Status badge */}
               <span

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useT } from "@/components/I18nProvider";
+import { Icon } from "@/lib/iconify";
 import { Reveal } from "./motion/Reveal";
 
 const CHROME_STORE_URL =
@@ -18,7 +19,23 @@ export function SiteFooter() {
           <Reveal delay={0} className="md:col-span-2 space-y-3">
             <div className="flex items-center gap-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/icon.svg" alt="" aria-hidden="true" className="w-6 h-6 object-contain" />
+              <img
+                src="/logo-day.svg"
+                alt=""
+                aria-hidden="true"
+                width={24}
+                height={24}
+                className="w-6 h-6 object-contain dark:hidden"
+              />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/logo-dark.svg"
+                alt=""
+                aria-hidden="true"
+                width={24}
+                height={24}
+                className="w-6 h-6 object-contain hidden dark:block"
+              />
               <span className="text-sm font-bold tracking-tight text-site-text">BugSnap</span>
             </div>
             <p className="text-xs text-site-text-2 max-w-xs leading-relaxed">
@@ -31,8 +48,7 @@ export function SiteFooter() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1.5 text-xs text-site-text-2 hover:text-site-text transition-colors"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/icons/chrome.svg" alt="" aria-hidden="true" className="w-3.5 h-3.5" />
+                <Icon icon="logos:chrome" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                 <span>Chrome Web Store</span>
               </a>
             </div>

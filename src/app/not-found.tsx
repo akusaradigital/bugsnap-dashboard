@@ -2,24 +2,25 @@
 
 import Link from "next/link";
 import { useT } from "@/components/I18nProvider";
+import { Icon } from "@/lib/iconify";
 
 export default function NotFound() {
   const { t } = useT();
 
   return (
     <div className="min-h-screen bg-site-bg text-site-text font-site flex flex-col justify-between selection:bg-accent selection:text-white relative overflow-hidden">
-      {/* Ambient background glow */}
+      {/* Ambient background glow orbs */}
       <div
-        className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 w-[36rem] h-[36rem] rounded-full blur-3xl opacity-30"
+        className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 w-[38rem] h-[38rem] rounded-full blur-3xl opacity-35 dark:opacity-25"
         style={{
-          background: "var(--glow-primary)",
+          background: "radial-gradient(circle, rgba(137,189,73,0.35) 0%, rgba(2,92,253,0.18) 50%, transparent 70%)",
           animation: "glowPulse 6s ease-in-out infinite",
         }}
       />
       <div
-        className="pointer-events-none absolute -bottom-20 -right-20 w-80 h-80 rounded-full blur-3xl opacity-20"
+        className="pointer-events-none absolute -bottom-24 -right-24 w-88 h-88 rounded-full blur-3xl opacity-25 dark:opacity-15"
         style={{
-          background: "var(--glow-secondary)",
+          background: "radial-gradient(circle, rgba(2,92,253,0.25) 0%, rgba(137,189,73,0.15) 50%, transparent 70%)",
           animation: "glowPulse 8s ease-in-out infinite reverse",
         }}
       />
@@ -27,129 +28,145 @@ export default function NotFound() {
       <style>{`
         @keyframes glowPulse {
           0%, 100% { transform: scale(1) translate(-50%, 0); opacity: 0.25; }
-          50% { transform: scale(1.15) translate(-50%, 20px); opacity: 0.4; }
+          50% { transform: scale(1.12) translate(-50%, 16px); opacity: 0.4; }
         }
-        @keyframes floatBug {
-          0%, 100% { transform: translateY(0px) rotate(0deg); }
-          25% { transform: translateY(-8px) rotate(-3deg); }
-          75% { transform: translateY(6px) rotate(3deg); }
+        @keyframes swayMascot {
+          0%, 100% {
+            transform: translateX(0px) translateY(0px) rotate(0deg);
+          }
+          25% {
+            transform: translateX(-14px) translateY(-4px) rotate(-4.5deg);
+          }
+          50% {
+            transform: translateX(0px) translateY(2px) rotate(0deg);
+          }
+          75% {
+            transform: translateX(14px) translateY(-4px) rotate(4.5deg);
+          }
         }
-        @keyframes radarScan {
-          0% { transform: rotate(0deg); }
-          100% { transform: rotate(360deg); }
+        @keyframes shadowSway {
+          0%, 100% {
+            transform: translateX(0px) scale(1);
+            opacity: 0.35;
+          }
+          25% {
+            transform: translateX(-10px) scale(0.92);
+            opacity: 0.25;
+          }
+          50% {
+            transform: translateX(0px) scale(1.04);
+            opacity: 0.38;
+          }
+          75% {
+            transform: translateX(10px) scale(0.92);
+            opacity: 0.25;
+          }
         }
-        @keyframes pulseRing {
-          0% { transform: scale(0.95); opacity: 0.8; }
-          50% { transform: scale(1.08); opacity: 0.3; }
-          100% { transform: scale(0.95); opacity: 0.8; }
+        @keyframes pulseHalo {
+          0%, 100% {
+            transform: scale(0.96);
+            opacity: 0.3;
+          }
+          50% {
+            transform: scale(1.08);
+            opacity: 0.6;
+          }
         }
       `}</style>
 
       {/* Header */}
-      <header className="relative z-10 border-b border-site-border bg-site-surface px-6 py-4">
+      <header className="relative z-10 border-b border-site-border bg-site-surface px-4 sm:px-6 py-3.5">
         <div className="mx-auto max-w-5xl flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 font-bold text-sm text-site-text group">
+          <Link href="/" className="flex items-center gap-2 font-bold text-sm text-site-text group shrink-0">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/icon.svg"
-              alt=""
-              aria-hidden="true"
-              className="w-5 h-5 object-contain transition-transform group-hover:scale-110"
+              src="/logo-day.svg"
+              alt="BugSnap"
+              className="w-6 h-6 object-contain transition-transform group-hover:scale-110 dark:hidden"
+            />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo-dark.svg"
+              alt="BugSnap"
+              className="w-6 h-6 object-contain transition-transform group-hover:scale-110 hidden dark:block"
             />
             <span>BugSnap</span>
-          </Link>
-          <Link
-            href="/"
-            className="text-xs font-semibold text-site-text-2 hover:text-site-text transition-colors"
-          >
-            {t("notFound.backHome") || "Back to Home"}
           </Link>
         </div>
       </header>
 
       {/* Center 404 with Animation */}
-      <main className="relative z-10 flex-1 flex items-center justify-center px-4 sm:px-6 py-16 text-center">
-        <div className="max-w-md mx-auto">
-          {/* Animated Illustration: Radar + Bug */}
-          <div className="relative w-36 h-36 mx-auto mb-8 flex items-center justify-center">
-            {/* Outer pulse ring */}
+      <main className="relative z-10 flex-1 flex items-center justify-center px-4 sm:px-6 py-10 sm:py-16 text-center">
+        <div className="w-full max-w-lg mx-auto flex flex-col items-center">
+          {/* Animated Mascot Section */}
+          <div className="relative w-full flex flex-col items-center mb-4 group cursor-default">
+            {/* Ambient backlight halo */}
             <div
-              className="absolute inset-0 rounded-full border border-site-accent/30"
-              style={{ animation: "pulseRing 3s ease-in-out infinite" }}
+              className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 sm:w-80 h-64 sm:h-80 rounded-full blur-2xl opacity-40 dark:opacity-30 bg-accent/25 dark:bg-accent/15 transition-all duration-700 group-hover:opacity-65 group-hover:scale-110"
+              style={{ animation: "pulseHalo 4s ease-in-out infinite" }}
             />
-            {/* Second ring */}
-            <div className="absolute inset-3 rounded-full border border-site-border" />
-            {/* Inner circle */}
-            <div className="absolute inset-6 rounded-full bg-site-surface-2 border border-site-border/80 flex items-center justify-center shadow-inner" />
 
-            {/* Radar scanner needle */}
+            {/* Swaying 404 Mascot (Kanan-Kiri) */}
             <div
-              className="absolute inset-3 rounded-full pointer-events-none overflow-hidden"
-              style={{ animation: "radarScan 4s linear infinite" }}
+              className="relative z-10 transition-transform duration-500 group-hover:scale-105"
+              style={{ animation: "swayMascot 3.6s ease-in-out infinite" }}
             >
-              <div
-                className="w-1/2 h-1/2 origin-bottom-right"
-                style={{
-                  background: "conic-gradient(from 0deg, transparent 0deg, var(--glow-primary) 60deg, transparent 65deg)",
-                }}
-              />
-            </div>
-
-            {/* Floating bug icon */}
-            <div
-              className="relative z-10"
-              style={{ animation: "floatBug 4s ease-in-out infinite" }}
-            >
+              {/* Day Mode 404 Illustration */}
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/icon.svg"
-                alt="BugSnap"
-                className="w-12 h-12 object-contain drop-shadow-md"
+                src="/bugsnap-404.svg"
+                alt="404 Page Not Found"
+                className="w-56 sm:w-72 md:w-80 max-w-[min(20rem,calc(100vw-3rem))] h-auto aspect-square object-contain mx-auto drop-shadow-xl dark:hidden select-none"
+              />
+              {/* Dark Mode 404 Illustration */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/bugsnap-404-dark.svg"
+                alt="404 Page Not Found"
+                className="w-56 sm:w-72 md:w-80 max-w-[min(20rem,calc(100vw-3rem))] h-auto aspect-square object-contain mx-auto drop-shadow-2xl hidden dark:block select-none"
               />
             </div>
 
-            {/* Small ping dot */}
-            <span className="absolute top-6 right-8 w-2 h-2 rounded-full bg-site-danger animate-ping" />
-            <span className="absolute top-6 right-8 w-2 h-2 rounded-full bg-site-danger" />
+            {/* Dynamic Ground Shadow below swaying illustration */}
+            <div
+              className="w-40 sm:w-56 h-3.5 sm:h-4 mt-2 rounded-[50%] bg-slate-900/15 dark:bg-black/50 blur-xs"
+              style={{ animation: "shadowSway 3.6s ease-in-out infinite" }}
+            />
           </div>
 
-          {/* Error code badge */}
-          <span className="inline-block text-xs font-bold tracking-widest uppercase text-site-accent px-3 py-1 rounded-full bg-site-accent/10 border border-site-accent/20 mb-3">
-            ERROR 404
-          </span>
-
           {/* Headline */}
-          <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-site-text">
-            {t("notFound.title") || "Page Not Found"}
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-tight text-site-text mt-3">
+            {t("notFound.title")}
           </h1>
 
           {/* Description */}
-          <p className="mt-3 text-sm text-site-text-2 leading-relaxed max-w-sm mx-auto">
-            {t("notFound.description") ||
-              "The page you're looking for was moved, renamed, or never existed in the first place."}
+          <p className="mt-2.5 text-xs sm:text-sm text-site-text-2 leading-relaxed max-w-md mx-auto">
+            {t("notFound.description")}
           </p>
 
-          {/* Action Buttons */}
-          <div className="mt-8 flex items-center justify-center gap-3">
+          {/* Action Buttons: Responsive Wrap for 360px-440px Viewports */}
+          <div className="mt-7 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2.5 sm:gap-3 w-full sm:w-auto max-w-xs sm:max-w-none">
             <Link
               href="/"
-              className="px-4 py-2.5 rounded-lg bg-accent hover:bg-accent-hover text-slate-900 text-xs font-bold transition-all shadow-sm shadow-accent/25 hover:shadow-accent/40"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-accent hover:bg-accent-hover text-slate-900 text-xs font-bold transition-all shadow-xs shadow-accent/25 hover:shadow-accent/40 text-center"
             >
-              {t("notFound.backHome") || "Back to Home"}
+              <Icon icon="lucide:arrow-left" className="w-4 h-4 shrink-0" />
+              <span>{t("notFound.backHome")}</span>
             </Link>
             <Link
-              href="/blog"
-              className="px-4 py-2.5 rounded-lg border border-site-border bg-site-surface hover:bg-site-surface-2 text-site-text text-xs font-semibold transition-all"
+              href="/dashboard"
+              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-site-border bg-site-surface hover:bg-site-surface-2 text-site-text text-xs font-semibold transition-all text-center"
             >
-              Read Blog →
+              <Icon icon="lucide:layout-dashboard" className="w-4 h-4 shrink-0" />
+              <span>{t("notFound.goDashboard")}</span>
             </Link>
           </div>
         </div>
       </main>
 
       {/* Minimal Footer */}
-      <footer className="relative z-10 border-t border-site-border py-4 text-center text-xs text-site-text-2 bg-site-surface">
-        {t("notFound.footer") || "BugSnap · Catch bugs, not headaches."}
+      <footer className="relative z-10 border-t border-site-border py-4 text-center text-xs text-site-text-2 bg-site-surface px-4">
+        {t("notFound.footer")}
       </footer>
     </div>
   );

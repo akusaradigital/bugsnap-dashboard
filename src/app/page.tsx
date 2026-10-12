@@ -1,18 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { useT } from "@/components/I18nProvider";
 import { SiteNavbar } from "@/components/site/SiteNavbar";
 import { SiteFooter } from "@/components/site/SiteFooter";
-import { ProductVideoDemo } from "@/components/site/ProductVideoDemo";
 import { HeroRecorderPreview } from "@/components/site/HeroRecorderPreview";
-import { IntegrationSwitcher } from "@/components/site/IntegrationSwitcher";
-import { RoleSwitcher } from "@/components/site/RoleSwitcher";
-import { LiveBugReportViewer } from "@/components/site/LiveBugReportViewer";
-import { BeforeAfterSlider } from "@/components/site/BeforeAfterSlider";
-import { TestimonialWall } from "@/components/site/TestimonialWall";
-import { ZeroDataDiagram } from "@/components/site/ZeroDataDiagram";
-import { HotkeyCommandBar } from "@/components/site/HotkeyCommandBar";
 import {
   DevToolsCard,
   GoogleDriveProofCard,
@@ -34,6 +27,124 @@ import {
 } from "@/components/site/TablerIcons";
 import { Reveal } from "@/components/site/motion";
 import { SiteBackground } from "@/components/site/SiteBackground";
+import { Icon } from "@/lib/iconify";
+
+const ProductVideoDemo = dynamic(
+  () =>
+    import("@/components/site/ProductVideoDemo").then(
+      (m) => m.ProductVideoDemo,
+    ),
+  {
+    loading: () => (
+      <div
+        className="w-full max-w-5xl mx-auto min-h-[550px] sm:min-h-[600px] rounded-2xl border border-slate-800 bg-slate-900/50 animate-pulse"
+        aria-hidden="true"
+      />
+    ),
+  },
+);
+
+const LiveBugReportViewer = dynamic(
+  () =>
+    import("@/components/site/LiveBugReportViewer").then(
+      (m) => m.LiveBugReportViewer,
+    ),
+  {
+    loading: () => (
+      <div
+        className="w-full max-w-3xl mx-auto min-h-[380px] rounded-2xl border border-site-border bg-site-surface/50 animate-pulse"
+        aria-hidden="true"
+      />
+    ),
+  },
+);
+
+const BeforeAfterSlider = dynamic(
+  () =>
+    import("@/components/site/BeforeAfterSlider").then(
+      (m) => m.BeforeAfterSlider,
+    ),
+  {
+    loading: () => (
+      <div
+        className="w-full min-h-[420px] rounded-2xl border border-site-border bg-site-surface/50 animate-pulse"
+        aria-hidden="true"
+      />
+    ),
+  },
+);
+
+const RoleSwitcher = dynamic(
+  () => import("@/components/site/RoleSwitcher").then((m) => m.RoleSwitcher),
+  {
+    loading: () => (
+      <div
+        className="w-full min-h-[520px] rounded-2xl border border-site-border bg-site-surface/50 animate-pulse"
+        aria-hidden="true"
+      />
+    ),
+  },
+);
+
+const HotkeyCommandBar = dynamic(
+  () =>
+    import("@/components/site/HotkeyCommandBar").then(
+      (m) => m.HotkeyCommandBar,
+    ),
+  {
+    loading: () => (
+      <div
+        className="w-full max-w-2xl mx-auto min-h-[320px] rounded-2xl border border-site-border bg-site-surface/50 animate-pulse"
+        aria-hidden="true"
+      />
+    ),
+  },
+);
+
+const ZeroDataDiagram = dynamic(
+  () =>
+    import("@/components/site/ZeroDataDiagram").then(
+      (m) => m.ZeroDataDiagram,
+    ),
+  {
+    loading: () => (
+      <div
+        className="w-full max-w-2xl mx-auto min-h-[380px] rounded-2xl border border-site-border bg-site-surface/50 animate-pulse"
+        aria-hidden="true"
+      />
+    ),
+  },
+);
+
+const IntegrationSwitcher = dynamic(
+  () =>
+    import("@/components/site/IntegrationSwitcher").then(
+      (m) => m.IntegrationSwitcher,
+    ),
+  {
+    loading: () => (
+      <div
+        className="w-full max-w-4xl mx-auto min-h-[400px] rounded-2xl border border-site-border bg-site-surface/50 animate-pulse"
+        aria-hidden="true"
+      />
+    ),
+  },
+);
+
+const TestimonialWall = dynamic(
+  () =>
+    import("@/components/site/TestimonialWall").then(
+      (m) => m.TestimonialWall,
+    ),
+  {
+    loading: () => (
+      <div
+        className="w-full min-h-[420px] rounded-2xl border border-site-border bg-site-surface/50 animate-pulse"
+        aria-hidden="true"
+      />
+    ),
+  },
+);
 
 const CHROME_STORE_URL =
   "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
@@ -385,13 +496,7 @@ export default function LandingPage() {
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-accent hover:bg-accent-hover text-slate-900 text-sm font-semibold shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all"
                       >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src="/icons/chrome.svg"
-                          alt=""
-                          aria-hidden="true"
-                          className="w-4 h-4"
-                        />
+                        <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
                         {t("site.bugsnap.split.cta")}
                       </a>
                       <a
@@ -437,10 +542,10 @@ export default function LandingPage() {
               </Reveal>
 
               {/* Metrics horizontal strip, dividers */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-0 sm:divide-x divide-site-border">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-0 lg:divide-x divide-site-border">
                 {metrics.map((m, i) => (
                   <Reveal key={m.label} delay={i * 0.07}>
-                    <div className="py-2 sm:px-6 flex flex-col gap-1 sm:first:pl-0">
+                    <div className="py-2 sm:py-3 lg:px-6 flex flex-col gap-1 lg:first:pl-0">
                       <span className="text-4xl sm:text-5xl font-extrabold tracking-tight text-site-text tabular-nums leading-none">
                         {m.val}
                       </span>
@@ -679,7 +784,7 @@ export default function LandingPage() {
           </section>
 
           {/* ================================================================ */}
-          {/* HOTKEYS - "Three shortcuts. Full diagnostic context."             */}
+          {/* HOTKEYS - "Two shortcuts. Configurable in Chrome."                */}
           {/* ================================================================ */}
           <section className="py-16 sm:py-20 px-4 sm:px-6 border-b border-site-border">
             <div className="mx-auto max-w-6xl">
@@ -906,8 +1011,8 @@ export default function LandingPage() {
                         </div>
                         <div className="p-3 space-y-2.5">
                           {/* Link */}
-                          <div className="flex items-center gap-1.5 rounded border border-site-border bg-site-surface px-2 py-1.5">
-                            <span className="font-mono text-site-text-2 truncate flex-1 text-[9px]">
+                          <div className="flex items-center gap-1.5 rounded border border-site-border bg-site-surface px-2 py-1.5 min-w-0">
+                            <span className="font-mono text-site-text-2 truncate flex-1 text-[9px] min-w-0">
                               bugsnap.akusaraproject.my.id/v/8f921a
                             </span>
                             <span className="shrink-0 text-accent font-semibold text-[9px] cursor-pointer">
@@ -1072,7 +1177,7 @@ export default function LandingPage() {
                             );
                             setExpandedFaqIndex(null);
                           }}
-                          className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors border ${
+                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border ${
                             activeFaqCategory === cat.key
                               ? "border-accent bg-accent text-slate-900 font-bold"
                               : "border-site-border bg-site-surface text-site-text-2 hover:text-site-text"
@@ -1160,13 +1265,7 @@ export default function LandingPage() {
                     rel="noopener noreferrer"
                     className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-accent hover:bg-accent-hover text-slate-900 text-sm font-semibold shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all"
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src="/icons/chrome.svg"
-                      alt=""
-                      aria-hidden="true"
-                      className="w-4 h-4"
-                    />
+                    <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
                     {t("site.hero.ctaPrimary")}
                   </a>
                   <a

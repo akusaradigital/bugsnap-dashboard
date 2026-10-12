@@ -33,6 +33,51 @@ function summarizeDevLogs(devLogs: unknown): string {
   return "";
 }
 
+interface IntegrationDeliveryEntry {
+  success: number;
+  fail: number;
+  lastFailAt: string | null;
+  lastFailMessage: string | null;
+}
+
+// O(1)-storage rolling counter, not a per-delivery log - same app_settings
+// upsert pattern as the promo banner. Never let a stats failure break the
+// actual integration response.
+async function recordIntegrationDelivery(
+  supabase: ReturnType<typeof createServiceClient>,
+  service: string,
+  ok: boolean,
+  errorMessage?: string
+) {
+  try {
+    const { data } = await supabase
+      .from("app_settings")
+      .select("value")
+      .eq("key", "integration_delivery_stats")
+      .maybeSingle();
+    const stats = (data?.value as Record<string, IntegrationDeliveryEntry>) || {};
+    const entry: IntegrationDeliveryEntry = stats[service] || {
+      success: 0,
+      fail: 0,
+      lastFailAt: null,
+      lastFailMessage: null,
+    };
+    if (ok) {
+      entry.success += 1;
+    } else {
+      entry.fail += 1;
+      entry.lastFailAt = new Date().toISOString();
+      entry.lastFailMessage = (errorMessage || "").slice(0, 300);
+    }
+    stats[service] = entry;
+    await supabase
+      .from("app_settings")
+      .upsert({ key: "integration_delivery_stats", value: stats, updated_at: new Date().toISOString() });
+  } catch (err) {
+    console.warn("[Integration Delivery Stats] Failed to persist:", err);
+  }
+}
+
 export async function POST(
   req: Request,
   { params }: { params: Promise<{ id: string }> | { id: string } }
@@ -122,7 +167,10 @@ export async function POST(
     const bugTitle = `[BugSnap] ${capture.title || "Captured Bug"}`;
 
     // 5. Dispatch per service
-    switch (service) {
+    let dispatchOk = true;
+    let dispatchErrMsg: string | undefined;
+    try {
+      switch (service) {
       case "slack": {
         if (!config.webhookUrl) throw new Error("Slack webhook URL is missing");
         await assertPublicUrl(config.webhookUrl);
@@ -510,6 +558,13 @@ ${logSummary || "Dev Logs: None"}`;
 
       default:
         return NextResponse.json({ error: `Unsupported integration service: ${service}` }, { status: 400 });
+      }
+    } catch (dispatchErr) {
+      dispatchOk = false;
+      dispatchErrMsg = dispatchErr instanceof Error ? dispatchErr.message : String(dispatchErr);
+      throw dispatchErr;
+    } finally {
+      await recordIntegrationDelivery(supabase, service, dispatchOk, dispatchErrMsg);
     }
   } catch (err: unknown) {
     console.error("[Send to Integration Error]:", err);

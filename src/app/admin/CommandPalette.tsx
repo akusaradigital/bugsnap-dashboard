@@ -3,6 +3,8 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { useT } from "@/components/I18nProvider";
+import { Icon } from "@/lib/iconify";
+import { ADMIN_NAV_ROUTES } from "./adminNav";
 
 interface CommandItem {
   id: string;
@@ -38,114 +40,15 @@ export function CommandPalette({
 
   const items: CommandItem[] = useMemo(() => [
     // Navigation Items
-    {
-      id: "nav-overview",
-      category: "nav",
-      title: t("nav.dashboard"),
-      subtitle: "/admin",
-      icon: "📊",
-      keywords: ["overview", "stats", "metrics", "ringkasan", "pulse"],
-      action: () => router.push("/admin"),
-    },
-    {
-      id: "nav-users",
-      category: "nav",
-      title: t("admin.manageUsers"),
-      subtitle: "/admin/users",
-      icon: "👥",
-      keywords: ["users", "pengguna", "accounts", "pelanggan", "members"],
-      action: () => router.push("/admin/users"),
-    },
-    {
-      id: "nav-workspaces",
-      category: "nav",
-      title: t("admin.navWorkspaces"),
-      subtitle: "/admin/workspaces",
-      icon: "🏢",
-      keywords: ["workspaces", "teams", "organisasi", "ruang kerja"],
-      action: () => router.push("/admin/workspaces"),
-    },
-    {
-      id: "nav-captures",
-      category: "nav",
-      title: t("admin.navCaptures"),
-      subtitle: "/admin/captures",
-      icon: "📸",
-      keywords: ["captures", "tangkapan", "videos", "screenshots", "media"],
-      action: () => router.push("/admin/captures"),
-    },
-    {
-      id: "nav-revenue",
-      category: "nav",
-      title: t("admin.navRevenue"),
-      subtitle: "/admin/revenue",
-      icon: "💰",
-      keywords: ["revenue", "sales", "mrr", "pendapatan", "stripe", "subscribers", "leads"],
-      action: () => router.push("/admin/revenue"),
-    },
-    {
-      id: "nav-ai",
-      category: "nav",
-      title: t("admin.navAiAnalytics"),
-      subtitle: "/admin/ai-analytics",
-      icon: "🤖",
-      keywords: ["ai", "tokens", "analytics", "claude", "gpt", "biaya"],
-      action: () => router.push("/admin/ai-analytics"),
-    },
-    {
-      id: "nav-support",
-      category: "nav",
-      title: t("admin.supportInbox"),
-      subtitle: "/admin/support",
-      icon: "📥",
-      keywords: ["support", "tickets", "bantuan", "inbox", "cs", "issues"],
-      action: () => router.push("/admin/support"),
-    },
-    {
-      id: "nav-extension",
-      category: "nav",
-      title: t("admin.extensionFleet"),
-      subtitle: "/admin/extension",
-      icon: "🧩",
-      keywords: ["extension", "chrome", "fleet", "versions", "versi", "heartbeat"],
-      action: () => router.push("/admin/extension"),
-    },
-    {
-      id: "nav-email",
-      category: "nav",
-      title: t("admin.emailHealth"),
-      subtitle: "/admin/email-health",
-      icon: "✉️",
-      keywords: ["email", "resend", "health", "surat", "deliverability"],
-      action: () => router.push("/admin/email-health"),
-    },
-    {
-      id: "nav-security",
-      category: "nav",
-      title: t("admin.auditTitle"),
-      subtitle: "/admin/security-audit",
-      icon: "🛡️",
-      keywords: ["security", "audit", "logs", "keamanan", "access"],
-      action: () => router.push("/admin/security-audit"),
-    },
-    {
-      id: "nav-supabase",
-      category: "nav",
-      title: t("admin.navSupabase"),
-      subtitle: "/admin/supabase",
-      icon: "⚡",
-      keywords: ["supabase", "database", "storage", "quota", "tables", "vacuum", "connections", "db"],
-      action: () => router.push("/admin/supabase"),
-    },
-    {
-      id: "nav-system",
-      category: "nav",
-      title: t("admin.systemDrive"),
-      subtitle: "/admin/system",
-      icon: "🛠️",
-      keywords: ["system", "drive", "google", "sistem", "database", "supabase", "health"],
-      action: () => router.push("/admin/system"),
-    },
+    ...ADMIN_NAV_ROUTES.map((r) => ({
+      id: `nav-${r.id}`,
+      category: "nav" as const,
+      title: t(r.titleKey),
+      subtitle: r.href,
+      icon: r.icon,
+      keywords: r.keywords,
+      action: () => router.push(r.href),
+    })),
 
     // Quick Actions
     {
@@ -153,7 +56,7 @@ export function CommandPalette({
       category: "action",
       title: locale === "id" ? "Switch to English" : "Ganti ke Bahasa Indonesia",
       subtitle: `Current: ${locale.toUpperCase()}`,
-      icon: "🌐",
+      icon: "lucide:globe",
       keywords: ["language", "bahasa", "locale", "translate"],
       action: onToggleLocale,
     },
@@ -162,7 +65,7 @@ export function CommandPalette({
       category: "action",
       title: "Refresh Notifications & Alerts",
       subtitle: "Fetch latest alerts",
-      icon: "🔔",
+      icon: "lucide:bell",
       keywords: ["refresh", "reload", "notif", "alert", "segarkan"],
       action: onRefreshNotifs,
     },
@@ -171,7 +74,7 @@ export function CommandPalette({
       category: "action",
       title: t("admin.toUserDashboard"),
       subtitle: "/dashboard",
-      icon: "👤",
+      icon: "lucide:user",
       keywords: ["user", "dashboard", "kembali", "app"],
       action: () => router.push("/dashboard"),
     },
@@ -180,7 +83,7 @@ export function CommandPalette({
       category: "action",
       title: t("admin.lockConsole"),
       subtitle: "Sign out & lock session",
-      icon: "🔒",
+      icon: "lucide:lock",
       keywords: ["lock", "logout", "keluar", "kunci", "exit"],
       action: onLockConsole,
     },
@@ -252,7 +155,7 @@ export function CommandPalette({
       >
         {/* Search Input Bar */}
         <div className="relative flex items-center px-4 py-3 border-b border-slate-100 dark:border-zinc-800">
-          <span className="text-base text-slate-400 dark:text-zinc-500 mr-2.5">🔍</span>
+          <Icon icon="lucide:search" className="w-4 h-4 text-slate-400 dark:text-zinc-500 mr-2.5 shrink-0" />
           <input
             ref={inputRef}
             type="text"
@@ -292,7 +195,7 @@ export function CommandPalette({
                     }`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <span className="text-base shrink-0">{item.icon}</span>
+                      <Icon icon={item.icon} className="w-4 h-4 shrink-0" />
                       <div className="min-w-0">
                         <span className="truncate block font-medium">{item.title}</span>
                         {item.subtitle && (

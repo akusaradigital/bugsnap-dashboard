@@ -11,9 +11,10 @@
 5. **Free tier stubs**: `tiers.ts` + `quota.ts` are intentionally unlimited - do NOT add paywalls.
 6. **i18n MANDATORY**: All UI text via `src/lib/i18n.ts` + `useT()`. Both `en` + `id` keys. No hardcoded strings.
 7. **Design**: Solid colors, Tailwind tokens, dark/light mode. No heavy gradients.
-8. **Ethics**: Never compare BugSnap to competitors in UI or docs.
-9. **No `any` TS type**: Use proper types. `@typescript-eslint/no-explicit-any` is enforced.
-10. **DB changes apply immediately**: A migration that only exists as a file has changed nothing. Any new `supabase/migrations/*.sql` must be executed against the live project in the same turn it is written:
+8. **Icon Standard (Iconify)**: Gunakan Iconify (https://iconify.design/getting-started/) untuk semua icon agar seragam dan konsisten (`@iconify/react` via `<Icon icon="..." />`). Hindari mencampur icon library yang berbeda atau inline SVG manual tanpa standarisasi.
+9. **Ethics**: Never compare BugSnap to competitors in UI or docs.
+10. **No `any` TS type**: Use proper types. `@typescript-eslint/no-explicit-any` is enforced.
+11. **DB changes apply immediately**: A migration that only exists as a file has changed nothing. Any new `supabase/migrations/*.sql` must be executed against the live project in the same turn it is written:
 
 ```bash
 node scripts/apply-migration.mjs --sql "select pg_get_functiondef(p.oid) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='<fn>'"  # snapshot first
@@ -32,7 +33,7 @@ The script posts to the Supabase Management API using `SUPABASE_PAT` + `NEXT_PUB
 - **MINOR** `0.7.x → 0.8.0`: new user-facing feature, route, module.
 - **MAJOR** `0.x → 1.0.0`: breaking API/auth/UI change.
 
-Current version: **`0.9.1`**
+Current version: **`0.9.2`**
 
 ## 3. Architecture & Data Flow
 

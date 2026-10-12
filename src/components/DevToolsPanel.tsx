@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useT } from "@/components/I18nProvider";
+import { Icon } from "@/lib/iconify";
 import { decompressDevLogs } from "@/lib/devlogs-compression";
 import { supabase } from "@/lib/supabase";
 import { isIgnoredUrl, TRACKER_PATTERNS } from "@/lib/ignored-urls";
@@ -88,7 +89,7 @@ function FormattedErrorMessage({ msg }: { msg: string }) {
 
   return (
     <div className="pl-2.5 border-l-2 border-red-200 dark:border-red-800/40 py-0.5">
-      <p className="text-[11px] font-mono text-foreground/90 break-words leading-relaxed whitespace-pre-wrap">
+      <p className="text-[11px] font-mono text-foreground/90 break-all leading-relaxed whitespace-pre-wrap">
         {msg}
       </p>
     </div>
@@ -155,7 +156,7 @@ function FormattedJsonBody({
             <span className="text-emerald-600 dark:text-emerald-400 font-medium">{t("dt.urlCopied") || "Copied!"}</span>
           ) : (
             <>
-              <img src="/icons/copy.svg" alt="" className="w-2.5 h-2.5" />
+              <Icon icon="lucide:copy" className="w-2.5 h-2.5" />
               <span>{t("dt.copy") || "Copy"}</span>
             </>
           )}
@@ -188,9 +189,7 @@ function EmptyLogState({
   }
   return (
     <div className="py-14 flex flex-col items-center gap-2 text-center text-xs text-muted px-4">
-      <svg className="w-7 h-7 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-        <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-      </svg>
+      <Icon icon="lucide:search" className="w-7 h-7 opacity-30" />
       <p>{t("dt.noMatches") || "No rows match the current filters"}</p>
       <button
         type="button"
@@ -235,6 +234,7 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime, unlo
   const [consoleErrorsOnly, setConsoleErrorsOnly] = useState(false);
   const [networkStatusFilter, setNetworkStatusFilter] = useState<"all" | "4xx" | "5xx" | "failed">("all");
   const [networkPartyFilter, setNetworkPartyFilter] = useState<"all" | "1st" | "3rd">("all");
+  const [networkSlowOnly, setNetworkSlowOnly] = useState(false);
   // Actions was the only list tab with no chips - just the shared search box.
   const [actionKindFilter, setActionKindFilter] = useState<string>("all");
   const [logSearch, setLogSearch] = useState("");
@@ -245,6 +245,7 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime, unlo
     setConsoleErrorsOnly(false);
     setNetworkStatusFilter("all");
     setNetworkPartyFilter("all");
+    setNetworkSlowOnly(false);
     setActionKindFilter("all");
     setConsoleLimit(100);
     setNetworkLimit(100);
@@ -673,6 +674,7 @@ ${stack}` : body);
     () =>
       groupedNetworkLogs
         .filter(({ log }) => {
+          if (networkSlowOnly && (!log.duration || log.duration <= 1000)) return false;
           if (networkStatusFilter === "all") return true;
           const status = log.status ?? 0;
           if (networkStatusFilter === "4xx") return status >= 400 && status < 500;
@@ -685,7 +687,12 @@ ${stack}` : body);
           const is1st = isFirstPartyUrl(log.url, targetHost);
           return networkPartyFilter === "1st" ? is1st : !is1st;
         }),
-    [groupedNetworkLogs, networkStatusFilter, networkPartyFilter, targetHost]
+    [groupedNetworkLogs, networkSlowOnly, networkStatusFilter, networkPartyFilter, targetHost]
+  );
+
+  const countSlow = useMemo(
+    () => networkLogs.filter((l) => Boolean(l.duration && l.duration > 1000)).length,
+    [networkLogs]
   );
 
   const count4xx = useMemo(
@@ -806,6 +813,46 @@ ${stack}` : body);
     }
   };
 
+  const handleOpenGitHubIssue = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    try {
+      const report = buildMarkdownBugReport({
+        capture,
+        targetHost,
+        detectedOs,
+        detectedBrowser,
+        createdAt,
+        consoleErrors,
+        networkErrors,
+        actionLogs,
+        storage: storageData,
+        findPrecedingAction,
+      });
+      try {
+        navigator.clipboard.writeText(report);
+      } catch {}
+
+      const defaultTitle = `Bug: Issue detected on ${targetHost || "session"}`;
+      const repo = window.prompt(
+        t("dt.promptGithubRepo") || "Enter GitHub repository (owner/repo):",
+        ""
+      );
+
+      let issueUrl = "https://github.com/issues";
+      if (repo && repo.trim()) {
+        const cleanRepo = repo.trim().replace(/^https?:\/\/github\.com\//i, "").replace(/\/$/, "");
+        if (cleanRepo.includes("/")) {
+          const bodyParam = report.length > 4000 ? `${report.slice(0, 3950)}\n\n...(Full report copied to clipboard)` : report;
+          issueUrl = `https://github.com/${cleanRepo}/issues/new?title=${encodeURIComponent(defaultTitle)}&body=${encodeURIComponent(bodyParam)}`;
+        }
+      }
+
+      window.open(issueUrl, "_blank", "noopener,noreferrer");
+    } catch (err) {
+      console.error("Failed to open GitHub issue:", err);
+    }
+  };
+
   const handleExportHar = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     try {
@@ -914,9 +961,7 @@ ${stack}` : body);
           <details ref={eventMenuRef} className="relative group">
             <summary className="list-none cursor-pointer flex items-center gap-1 text-[10px] font-semibold text-[#6B9A35] dark:text-[#A8D666] bg-[#89BD49]/10 dark:bg-[#89BD49]/20 px-2 py-0.5 rounded-md border border-[#89BD49]/25 dark:border-[#89BD49]/30 hover:bg-[#89BD49]/20 dark:hover:bg-[#89BD49]/30 transition-colors">
               <span className="tabular-nums">{eventBreakdown.label}</span>
-              <svg className="w-2.5 h-2.5 transition-transform group-open:rotate-180" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden="true">
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
+              <Icon icon="lucide:chevron-down" className="w-2.5 h-2.5 transition-transform group-open:rotate-180" />
             </summary>
             <div className="absolute right-0 top-full mt-1 z-20 w-44 rounded-lg border border-border bg-white dark:bg-background shadow-lg p-1">
               {eventBreakdown.rows.map(({ key, label, n }) => (
@@ -1005,7 +1050,7 @@ ${stack}` : body);
         {activeTab !== "Info" && (
           <div className="p-3 border-b border-border bg-subtle/30 flex flex-col gap-2 shrink-0">
             <div className="relative">
-              <img src="/icons/search.svg" alt="" className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5" />
+              <Icon icon="lucide:search" className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted pointer-events-none" />
               <input
                 type="text"
                 placeholder={t("dt.search", { tab: tabLabel(activeTab) })}
@@ -1019,11 +1064,9 @@ ${stack}` : body);
                   onClick={() => setLogSearch("")}
                   aria-label={t("dt.clearSearch") || "Clear search"}
                   title={t("dt.clearSearch") || "Clear search"}
-                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted hover:text-foreground transition-colors"
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted hover:text-foreground transition-colors cursor-pointer"
                 >
-                  <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" d="M18 6L6 18M6 6l12 12" />
-                  </svg>
+                  <Icon icon="lucide:x" className="w-3.5 h-3.5" />
                 </button>
               )}
               <span role="status" aria-live="polite" className="sr-only">
@@ -1094,14 +1137,14 @@ ${stack}` : body);
             {/* Quick Filter for Network */}
             {activeTab === "Network" && (
               <div className="flex flex-wrap items-center justify-between gap-1.5 pt-0.5">
-                <div className="flex flex-wrap items-center gap-1.5">
+                <div className="flex flex-wrap items-center gap-1.5 min-w-0">
                   {networkErrors.length > 0 && (
                     <>
                       <button
                         type="button"
                         onClick={() => setNetworkStatusFilter("all")}
                         aria-pressed={networkStatusFilter === "all"}
-                        className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors ${
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors cursor-pointer ${
                           networkStatusFilter === "all"
                             ? "bg-subtle text-foreground border border-border font-semibold"
                             : "text-muted hover:text-foreground border border-transparent"
@@ -1114,7 +1157,7 @@ ${stack}` : body);
                           type="button"
                           onClick={() => setNetworkStatusFilter(networkStatusFilter === "4xx" ? "all" : "4xx")}
                           aria-pressed={networkStatusFilter === "4xx"}
-                          className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors flex items-center gap-1 ${
+                          className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors flex items-center gap-1 cursor-pointer ${
                             networkStatusFilter === "4xx"
                               ? "bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/40 font-semibold"
                               : "text-amber-600/80 hover:text-amber-700 border border-transparent"
@@ -1129,7 +1172,7 @@ ${stack}` : body);
                           type="button"
                           onClick={() => setNetworkStatusFilter(networkStatusFilter === "5xx" ? "all" : "5xx")}
                           aria-pressed={networkStatusFilter === "5xx"}
-                          className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors flex items-center gap-1 ${
+                          className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors flex items-center gap-1 cursor-pointer ${
                             networkStatusFilter === "5xx"
                               ? "bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/40 font-semibold"
                               : "text-red-600/80 hover:text-red-700 border border-transparent"
@@ -1144,7 +1187,7 @@ ${stack}` : body);
                           type="button"
                           onClick={() => setNetworkStatusFilter(networkStatusFilter === "failed" ? "all" : "failed")}
                           aria-pressed={networkStatusFilter === "failed"}
-                          className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors flex items-center gap-1 ${
+                          className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors flex items-center gap-1 cursor-pointer ${
                             networkStatusFilter === "failed"
                               ? "bg-rose-50 text-rose-700 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800/40 font-semibold"
                               : "text-rose-600/80 hover:text-rose-700 border border-transparent"
@@ -1156,7 +1199,23 @@ ${stack}` : body);
                       )}
                     </>
                   )}
-                  {targetHost && networkErrors.length > 0 && (
+                  {/* Slow (>1s) Filter Chip */}
+                  <button
+                    type="button"
+                    onClick={() => setNetworkSlowOnly((prev) => !prev)}
+                    aria-pressed={networkSlowOnly}
+                    className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors flex items-center gap-1 cursor-pointer ${
+                      networkSlowOnly
+                        ? "bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/40 font-semibold"
+                        : "text-muted hover:text-foreground border border-transparent"
+                    }`}
+                    title={t("dt.slowDesc") || "Requests taking longer than 1 second"}
+                  >
+                    <Icon icon="lucide:hourglass" className="w-3.5 h-3.5 shrink-0" />
+                    <span>{t("dt.slow") || "Slow (>1s)"}</span>
+                    {countSlow > 0 && <span className="tabular-nums">({countSlow})</span>}
+                  </button>
+                  {targetHost && (networkErrors.length > 0 || countSlow > 0) && (
                     /* Status and origin are independent filters; the rule marks the
                        boundary. Pointless when there is no status chip to separate. */
                     <span className="w-px h-3.5 bg-border mx-0.5" aria-hidden="true" />
@@ -1210,10 +1269,10 @@ ${stack}` : body);
                   <button
                     type="button"
                     onClick={handleExportHar}
-                    className="px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors bg-subtle hover:bg-subtle/80 text-muted hover:text-foreground border border-border flex items-center gap-1 cursor-pointer ml-auto"
+                    className="px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors bg-subtle hover:bg-subtle/80 text-muted hover:text-foreground border border-border flex items-center gap-1 cursor-pointer ml-auto shrink-0"
                     title={t("dt.exportHar") || "Export network session as HTTP Archive (.har)"}
                   >
-                    <img src="/icons/download.svg" alt="" className="w-3 h-3" />
+                    <Icon icon="lucide:download" className="w-3 h-3" />
                     <span>{t("dt.exportHar") || "Export HAR"}</span>
                   </button>
                 )}
@@ -1228,9 +1287,7 @@ ${stack}` : body);
             {totalIssuesCount === 0 ? (
               <div className="py-14 flex flex-col items-center gap-2 text-center text-xs text-muted p-4">
                 <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                  <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                  </svg>
+                  <Icon icon="lucide:check" className="w-5 h-5" />
                 </div>
                 <p className="font-semibold text-emerald-700 dark:text-emerald-400 text-sm mt-1">{t("dt.pageRanClean")}</p>
                 <p className="text-xs text-muted max-w-sm">No console errors or failed network requests were detected during this capture session.</p>
@@ -1268,9 +1325,7 @@ ${stack}` : body);
                 {/* Issues Stat Banner */}
                 <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200/60 dark:border-red-800/30 text-xs text-red-800 dark:text-red-300">
                   <span className="font-semibold flex items-center gap-1.5">
-                    <svg className="w-4 h-4 text-red-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
+                    <Icon icon="lucide:triangle-alert" className="w-4 h-4 text-red-600 shrink-0" />
                     {t("dt.issuesDetected", { n: totalIssuesCount })}
                   </span>
                   <div className="flex items-center gap-2 text-[10px] font-medium text-red-700 dark:text-red-400">
@@ -1288,7 +1343,7 @@ ${stack}` : body);
 
                 {hasSpaWarning && (
                   <div className="p-2.5 rounded-lg border bg-amber-500/10 border-amber-500/30 text-amber-900 dark:text-amber-300 text-xs flex items-start gap-2">
-                    <span className="text-sm">⚠️</span>
+                    <Icon icon="lucide:alert-triangle" className="w-4 h-4 shrink-0 text-amber-500 mt-0.5" />
                     <div className="min-w-0 flex-1">
                       <p className="font-semibold text-[11px]">{t("dt.spaHealthAlert")}</p>
                       <p className="text-[10px] text-muted leading-relaxed mt-0.5">
@@ -1324,7 +1379,7 @@ ${stack}` : body);
                               {cleanStackTrace(cLog.stack) ? (
                                 <details className="group mt-2">
                                   <summary className="flex list-none cursor-pointer items-center gap-1 text-[10px] font-semibold text-muted hover:text-foreground">
-                                    <svg className="w-3 h-3 transition-transform group-open:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+                                    <Icon icon="lucide:chevron-right" className="w-3 h-3 transition-transform group-open:rotate-90" />
                                     {t("dt.stack")}
                                   </summary>
                                   <pre className="mt-1.5 p-2 rounded-lg bg-red-950 text-red-200 font-mono text-[10px] leading-relaxed whitespace-pre-wrap break-all overflow-x-auto">
@@ -1376,7 +1431,7 @@ ${stack}` : body);
                               <span className="font-mono text-foreground font-medium text-[11px]">{path}</span>
                             </div>
                           </div>
-                          <svg className="w-3.5 h-3.5 text-muted transition-transform group-open:rotate-180 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"/></svg>
+                          <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5 text-muted transition-transform group-open:rotate-180 shrink-0" />
                         </summary>
                         <div className="px-3.5 pb-3.5 pt-1 space-y-2 border-t border-border/40 text-[11px] bg-subtle/30 font-mono">
                           {preceding && <ActionBreadcrumb action={preceding} t={t} />}
@@ -1449,7 +1504,7 @@ ${stack}` : body);
               {/* Timestamp Row with Timezone Switcher Dropdown */}
               <div className="relative flex items-center justify-between gap-2 px-3 py-2 border-b border-border/60">
                 <div className="flex items-center gap-2 text-muted shrink-0">
-                  <img src="/icons/clock.svg" alt="" className="w-3.5 h-3.5 shrink-0" />
+                  <Icon icon="lucide:clock" className="w-3.5 h-3.5 shrink-0" />
                   <span className="text-xs">{t("dt.timestamp")}</span>
                 </div>
 
@@ -1461,9 +1516,8 @@ ${stack}` : body);
                     title={`${createdAt} · ${t("dt.changeTz")}`}
                   >
                     <span className="whitespace-nowrap">{createdAtShort}</span>
-                    <img
-                      src="/icons/chevron-down.svg"
-                      alt=""
+                    <Icon
+                      icon="lucide:chevron-down"
                       className={`w-3 h-3 transition-transform ${showTzMenu ? "rotate-180" : ""}`}
                     />
                   </button>
@@ -1486,7 +1540,7 @@ ${stack}` : body);
                           <p className="text-[10px] text-muted mt-0.5 font-normal">Asia/Jakarta (GMT+7)</p>
                         </div>
                         {timeZoneMode === "capture" && (
-                          <img src="/icons/check.svg" alt="" className="w-3.5 h-3.5 shrink-0" />
+                          <Icon icon="lucide:check" className="w-3.5 h-3.5 shrink-0" />
                         )}
                       </button>
 
@@ -1504,7 +1558,7 @@ ${stack}` : body);
                           </p>
                         </div>
                         {timeZoneMode === "local" && (
-                          <img src="/icons/check.svg" alt="" className="w-3.5 h-3.5 shrink-0" />
+                          <Icon icon="lucide:check" className="w-3.5 h-3.5 shrink-0" />
                         )}
                       </button>
 
@@ -1520,7 +1574,7 @@ ${stack}` : body);
                           <p className="text-[10px] text-muted mt-0.5 font-normal">UTC / GMT+0</p>
                         </div>
                         {timeZoneMode === "utc" && (
-                          <img src="/icons/check.svg" alt="" className="w-3.5 h-3.5 shrink-0" />
+                          <Icon icon="lucide:check" className="w-3.5 h-3.5 shrink-0" />
                         )}
                       </button>
                     </div>
@@ -1531,42 +1585,42 @@ ${stack}` : body);
               {(() => {
                 const osLower = (detectedOs || "").toLowerCase();
                 const osIcon = osLower.includes("win")
-                  ? "/icons/windows.svg"
+                  ? "lucide:monitor"
                   : osLower.includes("mac") || osLower.includes("apple") || osLower.includes("ios")
-                  ? "/icons/apple.svg"
+                  ? "lucide:laptop"
                   : osLower.includes("linux")
-                  ? "/icons/linux.svg"
-                  : "/icons/monitor.svg";
+                  ? "lucide:terminal"
+                  : "lucide:monitor";
 
                 const browserLower = (detectedBrowser || "").toLowerCase();
                 const browserIcon = browserLower.includes("chrome")
-                  ? "/icons/chrome.svg"
+                  ? "lucide:chrome"
                   : browserLower.includes("firefox")
-                  ? "/icons/firefox.svg"
+                  ? "lucide:globe"
                   : browserLower.includes("safari")
-                  ? "/icons/safari.svg"
+                  ? "lucide:compass"
                   : browserLower.includes("edge")
-                  ? "/icons/edge.svg"
-                  : "/icons/browser.svg";
+                  ? "lucide:globe"
+                  : "lucide:globe";
 
                 return [
                   {
-                    icon: <img src="/icons/location.svg" alt="" className="w-3.5 h-3.5 shrink-0" />,
+                    icon: <Icon icon="lucide:map-pin" className="w-3.5 h-3.5 shrink-0" />,
                     labelKey: "dt.location",
                     value: "Indonesia",
                   },
                   {
-                    icon: <img src={osIcon} alt={detectedOs} className="w-3.5 h-3.5 shrink-0" />,
+                    icon: <Icon icon={osIcon} className="w-3.5 h-3.5 shrink-0" />,
                     labelKey: "dt.os",
                     value: detectedOs,
                   },
                   {
-                    icon: <img src={browserIcon} alt={detectedBrowser} className="w-3.5 h-3.5 shrink-0" />,
+                    icon: <Icon icon={browserIcon} className="w-3.5 h-3.5 shrink-0" />,
                     labelKey: "dt.browser",
                     value: detectedBrowser,
                   },
                   {
-                    icon: <img src="/icons/window-size.svg" alt="" className="w-3.5 h-3.5 shrink-0" />,
+                    icon: <Icon icon="lucide:maximize" className="w-3.5 h-3.5 shrink-0" />,
                     labelKey: "dt.windowSize",
                     value: capture.window_size || "-",
                   },
@@ -1634,7 +1688,7 @@ ${stack}` : body);
                       : "bg-amber-500/10 border-amber-500/30 text-amber-800 dark:text-amber-300"
                   }`}>
                     <div className="flex items-center gap-1.5 font-semibold text-xs">
-                      <span>{metrics.spaHealth?.status === "critical" ? "🚨" : "⚠️"}</span>
+                      <Icon icon={metrics.spaHealth?.status === "critical" ? "lucide:alert-octagon" : "lucide:alert-triangle"} className="w-3.5 h-3.5 shrink-0" />
                       <span>{t("dt.spaHealthAlert")}</span>
                     </div>
                     <p className="text-[11px] leading-relaxed opacity-90">
@@ -1653,30 +1707,41 @@ ${stack}` : body);
             <div className="p-3 rounded-xl border border-[#89BD49]/30 dark:border-[#89BD49]/40 bg-[#89BD49]/10 dark:bg-[#89BD49]/15 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                  <span className="text-[#6B9A35] dark:text-[#A8D666]">📋</span>
+                  <Icon icon="lucide:clipboard-list" className="w-3.5 h-3.5 text-[#6B9A35] dark:text-[#A8D666] shrink-0" />
                   <span>Markdown Bug Report</span>
                 </p>
                 <p className="text-[11px] text-muted truncate mt-0.5">
                   Environment, causality timeline, top errors, failed cURLs & reproduction steps.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={handleCopyBugReport}
-                className="w-full sm:w-auto justify-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-xs shadow-[#89BD49]/25 transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer"
-              >
-                {copiedBugReport ? (
-                  <>
-                    <img src="/icons/check.svg" alt="" className="w-3.5 h-3.5" />
-                    <span>{t("dt.bugReportCopied") || "Report Copied!"}</span>
-                  </>
-                ) : (
-                  <>
-                    <img src="/icons/copy.svg" alt="" className="w-3.5 h-3.5" />
-                    <span>{t("dt.copyBugReport") || "Copy Bug Report"}</span>
-                  </>
-                )}
-              </button>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
+                <button
+                  type="button"
+                  onClick={handleOpenGitHubIssue}
+                  className="w-full sm:w-auto justify-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-background hover:bg-subtle text-foreground border border-border shadow-xs transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer"
+                  title={t("dt.openGithubIssue") || "Open in GitHub Issues"}
+                >
+                  <Icon icon="lucide:github" className="w-3.5 h-3.5 shrink-0" />
+                  <span>{t("dt.openGithubIssue") || "Open in GitHub Issues"}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleCopyBugReport}
+                  className="w-full sm:w-auto justify-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-xs shadow-[#89BD49]/25 transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer"
+                >
+                  {copiedBugReport ? (
+                    <>
+                      <Icon icon="lucide:check" className="w-3.5 h-3.5 shrink-0" />
+                      <span>{t("dt.bugReportCopied") || "Report Copied!"}</span>
+                    </>
+                  ) : (
+                    <>
+                      <Icon icon="lucide:copy" className="w-3.5 h-3.5 shrink-0" />
+                      <span>{t("dt.copyBugReport") || "Copy Bug Report"}</span>
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
 
           </div>
@@ -1690,7 +1755,7 @@ ${stack}` : body);
                 <div className="p-4 space-y-3">
                   {summary.errors === 0 && summary.warnings === 0 ? (
                     <div className="py-10 flex flex-col items-center gap-2 text-center text-xs text-muted">
-                      <svg className="w-8 h-8 text-emerald-500/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                      <Icon icon="lucide:check" className="w-8 h-8 text-emerald-500/70" />
                       <p className="font-medium text-emerald-700 dark:text-emerald-400">{t("dt.pageRanClean")}</p>
                       <p className="text-[11px]">{t("dt.noConsoleErrors")}</p>
                     </div>
@@ -1767,7 +1832,7 @@ ${stack}` : body);
                           {log.type === "console" && cleanStackTrace(log.stack) ? (
                             <details className="group mt-2">
                               <summary className="flex list-none cursor-pointer items-center gap-1 text-[10px] font-semibold text-muted hover:text-foreground">
-                                <svg className="w-3 h-3 transition-transform group-open:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 18 15 12 9 6"/></svg>
+                                <Icon icon="lucide:chevron-right" className="w-3 h-3 transition-transform group-open:rotate-90" />
                                 {t("dt.stack")}
                               </summary>
                               <pre className="mt-1.5 p-2 rounded-lg bg-red-950 text-red-200 font-mono text-[10px] leading-relaxed whitespace-pre-wrap break-all overflow-x-auto">
@@ -1786,12 +1851,12 @@ ${stack}` : body);
                           onClick={(e) => handleCopyConsole(log, e)}
                           aria-label={t("dt.copyLog") || "Copy log"}
                           title={t("dt.copyLog") || "Copy log"}
-                          className="shrink-0 p-1 rounded text-muted opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-foreground hover:bg-subtle transition-all"
+                          className="shrink-0 p-1 rounded text-muted opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-foreground hover:bg-subtle transition-all cursor-pointer"
                         >
                           {copiedConsole === (log.type === "console" ? consoleText(log) : log.message || ("url" in log ? log.url || "" : "")) ? (
-                            <img src="/icons/check.svg" alt="" className="w-3.5 h-3.5" />
+                            <Icon icon="lucide:check" className="w-3.5 h-3.5" />
                           ) : (
-                            <img src="/icons/copy.svg" alt="" className="w-3.5 h-3.5" />
+                            <Icon icon="lucide:copy" className="w-3.5 h-3.5" />
                           )}
                         </button>
                       </div>
@@ -1820,7 +1885,7 @@ ${stack}` : body);
                 <div className="p-4 space-y-3">
                   {summary.failedRequests === 0 ? (
                     <div className="py-10 flex flex-col items-center gap-2 text-center text-xs text-muted">
-                      <svg className="w-8 h-8 text-emerald-500/70" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+                      <Icon icon="lucide:check" className="w-8 h-8 text-emerald-500/70" />
                       <p className="font-medium text-emerald-700 dark:text-emerald-400">{t("dt.noFailedRequests")}</p>
                       <p className="text-[11px]">{t("dt.allNetworkOk")}</p>
                     </div>
@@ -1850,12 +1915,29 @@ ${stack}` : body);
                 <div className="py-14 text-center text-xs text-muted">{t("dt.noNetworkErrors")}</div>
               )
             ) : visibleGroupedNetworkLogs.length === 0 ? (
-              <EmptyLogState
-                filtered={networkStatusFilter !== "all" || networkPartyFilter !== "all" || Boolean(logSearch)}
-                emptyText={t("dt.noNetworkErrors")}
-                onReset={resetLogFilters}
-                t={t}
-              />
+              networkSlowOnly && countSlow === 0 ? (
+                <div className="py-12 flex flex-col items-center justify-center gap-2 text-center text-xs text-muted p-4">
+                  <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+                    <Icon icon="lucide:check-circle-2" className="w-5 h-5" />
+                  </div>
+                  <p className="font-semibold text-foreground text-xs mt-1">{t("dt.noSlowRequests") || "All requests completed < 1.0s (Fast)"}</p>
+                  <p className="text-[11px] text-muted max-w-xs">{t("dt.noSlowRequestsDesc") || "No network latency or bottleneck detected during capture."}</p>
+                  <button
+                    type="button"
+                    onClick={() => setNetworkSlowOnly(false)}
+                    className="mt-1 px-2.5 py-1 rounded-md text-[11px] font-medium bg-subtle hover:bg-subtle/80 text-foreground border border-border cursor-pointer transition-colors"
+                  >
+                    {t("dt.showAllRequests") || "Show all requests"}
+                  </button>
+                </div>
+              ) : (
+                <EmptyLogState
+                  filtered={networkStatusFilter !== "all" || networkPartyFilter !== "all" || networkSlowOnly || Boolean(logSearch)}
+                  emptyText={t("dt.noNetworkErrors")}
+                  onReset={resetLogFilters}
+                  t={t}
+                />
+              )
             ) : (
               <div className="divide-y divide-border/60">
                 {visibleGroupedNetworkLogs.slice(0, networkLimit).map(({ log, count }) => {
@@ -1915,9 +1997,7 @@ ${stack}` : body);
                               ×{count}
                             </span>
                           )}
-                          <svg className="w-3.5 h-3.5 text-muted transition-transform group-open:rotate-90" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <polyline points="9 18 15 12 9 6" />
-                          </svg>
+                          <Icon icon="lucide:chevron-right" className="w-3.5 h-3.5 text-muted transition-transform group-open:rotate-90 shrink-0" />
                         </div>
                       </summary>
                       <div className="px-3 pb-3 pt-2 space-y-2.5 border-t border-border/40 bg-subtle/20 text-xs">
@@ -1941,7 +2021,7 @@ ${stack}` : body);
                               >
                                 {copiedCurl === log.url ? (
                                   <>
-                                    <img src="/icons/check.svg" alt="" className="w-3 h-3" />
+                                    <Icon icon="lucide:check" className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                                     <span className="text-emerald-600 dark:text-emerald-400 font-medium">{t("dt.curlCopied") || "Copied!"}</span>
                                   </>
                                 ) : (
@@ -1959,12 +2039,12 @@ ${stack}` : body);
                               >
                                 {copiedUrl === log.url ? (
                                   <>
-                                    <img src="/icons/check.svg" alt="" className="w-3 h-3" />
+                                    <Icon icon="lucide:check" className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
                                     <span className="text-emerald-600 dark:text-emerald-400 font-medium">{t("dt.urlCopied")}</span>
                                   </>
                                 ) : (
                                   <>
-                                    <img src="/icons/copy.svg" alt="" className="w-3 h-3" />
+                                    <Icon icon="lucide:copy" className="w-3 h-3" />
                                     <span>{t("dt.copyUrl")}</span>
                                   </>
                                 )}
@@ -2038,9 +2118,7 @@ ${stack}` : body);
                 <EmptyLogState filtered emptyText="" onReset={resetLogFilters} t={t} />
               ) : (
                 <div className="py-14 flex flex-col items-center gap-2 text-muted">
-                  <svg className="w-8 h-8 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5"/>
-                  </svg>
+                  <Icon icon="lucide:mouse-pointer" className="w-8 h-8 opacity-30" />
                   <p className="text-xs">{t("dt.noActions")}</p>
                 </div>
               )
@@ -2084,11 +2162,11 @@ ${stack}` : body);
                         }`}
                       >
                         {isScreenshot ? (
-                          <img src="/icons/screenshot.svg" alt="" className="w-3.5 h-3.5" />
+                          <Icon icon="lucide:camera" className="w-3.5 h-3.5" />
                         ) : isClick ? (
-                          <img src="/icons/click.svg" alt="" className="w-3.5 h-3.5" />
+                          <Icon icon="lucide:mouse-pointer-click" className="w-3.5 h-3.5" />
                         ) : isType ? (
-                          <img src="/icons/keyboard.svg" alt="" className="w-3.5 h-3.5" />
+                          <Icon icon="lucide:keyboard" className="w-3.5 h-3.5" />
                         ) : (
                           <span className="w-2 h-2 rounded-full bg-current" />
                         )}
@@ -2200,7 +2278,7 @@ ${stack}` : body);
                       <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{t("dt.urlCopied") || "Copied!"}</span>
                     ) : (
                       <>
-                        <img src="/icons/copy.svg" alt="" className="w-3 h-3" />
+                        <Icon icon="lucide:copy" className="w-3 h-3" />
                         <span>{t("dt.copyAll") || "Copy All"}</span>
                       </>
                     )}

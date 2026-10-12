@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 import { IconPencil, IconPlayerPlay } from "./TablerIcons";
+import { Icon } from "@/lib/iconify";
 
 export function HeroProductShowcase() {
   const [activeTab, setActiveTab] = useState<"console" | "network" | "annotation" | "storage">("console");
@@ -82,8 +83,8 @@ export function HeroProductShowcase() {
               </div>
 
               {/* BugSnap On-Screen Callout */}
-              <div className="absolute -top-3.5 right-2 bg-site-text text-site-surface text-[10px] font-medium px-2 py-0.5 rounded-full shadow-md flex items-center gap-1 pointer-events-none">
-                <svg className="w-2.5 h-2.5 text-accent" viewBox="0 0 24 24" fill="currentColor">
+              <div className="absolute -top-3.5 right-2 bg-site-text text-site-surface text-[10px] font-medium px-2 py-0.5 rounded-md shadow-md flex items-center gap-1 pointer-events-none">
+                <svg className="w-2.5 h-2.5 text-accent" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
                   <circle cx="12" cy="12" r="10" />
                 </svg>
                 <span>Captured error state</span>
@@ -153,7 +154,7 @@ export function HeroProductShowcase() {
           {activeTab === "console" && (
             <div className="space-y-1.5">
               <div className="flex items-start gap-2 text-red-600 dark:text-red-400 bg-red-500/5 p-2 rounded border border-red-500/20">
-                <span className="text-[10px] font-bold text-red-500 shrink-0">✕</span>
+                <Icon icon="lucide:x" className="w-3 h-3 text-red-500 shrink-0 mt-0.5" aria-hidden="true" />
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-[11px] leading-tight break-all">
                     Uncaught TypeError: Cannot read properties of undefined (reading &apos;checkoutSessionId&apos;)
@@ -165,7 +166,7 @@ export function HeroProductShowcase() {
                 <span className="text-[10px] text-site-text-2 shrink-0">14:22:04</span>
               </div>
               <div className="flex items-center gap-2 text-site-text-2 text-[11px] px-2">
-                <span className="text-amber-500 text-[10px]">⚠</span>
+                <Icon icon="lucide:alert-triangle" className="w-3 h-3 text-amber-500 shrink-0" aria-hidden="true" />
                 <span className="truncate">[Warning] Form submission attempted before stripe.js initialized</span>
               </div>
             </div>
@@ -272,7 +273,14 @@ export function GoogleDriveProofCard() {
       <div className="flex flex-wrap items-center justify-between gap-1 pb-3 border-b border-site-border-subtle">
         <div className="flex items-center gap-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icons/google.svg" alt="" aria-hidden="true" className="w-4 h-4 shrink-0" />
+          <img
+            src="/icons/google.svg"
+            alt=""
+            aria-hidden="true"
+            width={16}
+            height={16}
+            className="w-4 h-4 shrink-0"
+          />
           <span className="font-semibold">My Drive / BugSnap</span>
         </div>
         <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded">
@@ -282,7 +290,7 @@ export function GoogleDriveProofCard() {
       <div className="mt-3 space-y-2">
         <div className="flex items-center justify-between p-2 rounded bg-site-surface-2 text-[11px] gap-2">
           <div className="flex items-center gap-2 truncate min-w-0">
-            <IconPlayerPlay size={10} className="text-accent fill-current shrink-0" />
+            <IconPlayerPlay size={10} className="text-accent fill-current shrink-0" aria-hidden="true" />
             <span className="font-mono text-site-text truncate min-w-0">bug-checkout-error-2026-09.webm</span>
           </div>
           <span className="text-site-text-2 shrink-0 text-[10px]">12.4 MB</span>

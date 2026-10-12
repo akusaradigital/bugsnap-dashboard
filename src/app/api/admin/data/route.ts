@@ -30,6 +30,10 @@ export async function GET(req: Request) {
       { count: openTicketsCount },
       { count: hotProspectsCount },
       { count: abandonedCartsCount },
+      { count: driveConnectedCount },
+      { data: captureOwners },
+      { data: viewedCaptureIds },
+      { data: commentedCaptureIds },
     ] = await Promise.all([
       serviceClient.from("users").select("*", { count: "exact", head: true }),
       serviceClient.from("workspaces").select("*", { count: "exact", head: true }),
@@ -38,7 +42,7 @@ export async function GET(req: Request) {
       serviceClient.from("comments").select("*", { count: "exact", head: true }),
       serviceClient
         .from("users")
-        .select("id, email, full_name, plan, created_at, suspended")
+        .select("plan, created_at")
         .order("created_at", { ascending: false })
         .limit(200),
       serviceClient
@@ -67,15 +71,23 @@ export async function GET(req: Request) {
         .from("support_tickets")
         .select("id", { count: "exact", head: true })
         .eq("status", "open"),
+      // Must mirror isHotProspect() in @/lib/user-segments - a DB count query
+      // can't call the JS predicate directly.
       serviceClient
         .from("users")
         .select("id", { count: "exact", head: true })
         .eq("plan", "free")
         .gt("paywall_hits", 0),
+      // Must mirror isAbandonedCheckout() in @/lib/user-segments.
       serviceClient
         .from("users")
         .select("id", { count: "exact", head: true })
-        .eq("checkout_status", "abandoned"),
+        .or("checkout_status.eq.abandoned,and(checkout_status.eq.initiated,plan.eq.free)"),
+      // Onboarding funnel - small tables, counted client-side like dailyMap/workspaceCaptureCounts above.
+      serviceClient.from("google_drive_connections").select("user_id", { count: "exact", head: true }),
+      serviceClient.from("captures").select("id, user_id").not("user_id", "is", null),
+      serviceClient.from("capture_views").select("capture_id"),
+      serviceClient.from("comments").select("capture_id"),
     ]);
 
     // Compute real 7-day daily activity time series
@@ -173,26 +185,34 @@ export async function GET(req: Request) {
       }
     });
 
-    const promoVal = promoSetting?.value as { enabled?: boolean; message?: string } | null;
-
-    // Schema drift & integrity - only run heavy RPCs when explicitly requested by /admin/system
-    const { searchParams } = new URL(req.url);
-    const includeAudit = searchParams.get("includeAudit") === "true";
-
-    let driftData = null;
-    let integrityData = null;
-    if (includeAudit) {
-      try {
-        const [{ data: drift }, { data: integrity }] = await Promise.all([
-          serviceClient.rpc("run_schema_drift_check"),
-          serviceClient.rpc("run_integrity_audit"),
-        ]);
-        driftData = drift;
-        integrityData = integrity;
-      } catch {
-        // ignore
+    // Onboarding funnel: signup -> Drive connected -> first capture -> first view -> first comment.
+    const captureIdToOwner: Record<string, string> = {};
+    const captureOwnerIds = new Set<string>();
+    (captureOwners || []).forEach((c) => {
+      if (c.id && c.user_id) {
+        captureIdToOwner[c.id] = c.user_id;
+        captureOwnerIds.add(c.user_id);
       }
-    }
+    });
+    const viewedOwnerIds = new Set<string>();
+    (viewedCaptureIds || []).forEach((v) => {
+      const ownerId = v.capture_id ? captureIdToOwner[v.capture_id] : undefined;
+      if (ownerId) viewedOwnerIds.add(ownerId);
+    });
+    const commentedOwnerIds = new Set<string>();
+    (commentedCaptureIds || []).forEach((c) => {
+      const ownerId = c.capture_id ? captureIdToOwner[c.capture_id] : undefined;
+      if (ownerId) commentedOwnerIds.add(ownerId);
+    });
+    const funnel = {
+      signups: totalUsers ?? 0,
+      driveConnected: driveConnectedCount ?? 0,
+      firstCapture: captureOwnerIds.size,
+      firstView: viewedOwnerIds.size,
+      firstComment: commentedOwnerIds.size,
+    };
+
+    const promoVal = promoSetting?.value as { enabled?: boolean; message?: string } | null;
 
     const hasStripeKey = Boolean(process.env.STRIPE_SECRET_KEY);
     const hasGoogleDrive = Boolean(process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
@@ -218,14 +238,7 @@ export async function GET(req: Request) {
       dailyActivity,
       planDistribution: planCounts,
       mediaTypes,
-      users: (usersList || []).map((u) => ({
-        id: u.id,
-        email: u.email,
-        full_name: u.full_name ?? null,
-        plan: u.plan ?? "free",
-        created_at: u.created_at,
-        suspended: u.suspended ?? false,
-      })),
+      funnel,
       topWorkspaces,
       needsAttention: {
         openTickets: openTicketsCount || 0,
@@ -237,8 +250,6 @@ export async function GET(req: Request) {
         message: String(promoVal?.message || ""),
       },
       systemPulse,
-      drift: driftData ?? null,
-      integrity: integrityData ?? null,
     });
   } catch (err) {
     console.error("Admin data fetch error:", err);

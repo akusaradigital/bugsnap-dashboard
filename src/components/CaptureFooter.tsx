@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useT } from "@/components/I18nProvider";
+import { Icon } from "@/lib/iconify";
 
 function ChromeLogo({ className = "w-4 h-4 shrink-0" }: { className?: string }) {
   return (
-    <img src="/icons/chrome.svg" alt="Chrome" className={className} />
+    <Icon icon="logos:chrome" className={className} aria-hidden="true" />
   );
 }
 
@@ -106,10 +107,10 @@ export default function CaptureFooter({ className = "" }: { className?: string }
               >
                 <ChromeLogo className="w-3.5 h-3.5 shrink-0" />
                 <span>{t("footer.addToChrome")}</span>
-                <img
-                  src="/icons/arrow-right.svg"
-                  alt=""
+                <Icon
+                  icon="lucide:arrow-right"
                   className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 shrink-0"
+                  aria-hidden="true"
                 />
               </a>
             </div>
@@ -135,7 +136,9 @@ export default function CaptureFooter({ className = "" }: { className?: string }
               className="flex items-center gap-2 w-fit hover:opacity-85 transition-opacity"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/icon.svg" alt="BugSnap" className="w-4 h-4 sm:w-4.5 sm:h-4.5 object-contain shrink-0" />
+              <img src="/logo-day.svg" alt="BugSnap" className="w-4 h-4 sm:w-4.5 sm:h-4.5 object-contain shrink-0 dark:hidden" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo-dark.svg" alt="BugSnap" className="w-4 h-4 sm:w-4.5 sm:h-4.5 object-contain shrink-0 hidden dark:block" />
               <span className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white tracking-tight leading-none">BugSnap</span>
             </Link>
             <p className="text-[11px] sm:text-xs text-slate-500 dark:text-zinc-400 mt-1 leading-snug">

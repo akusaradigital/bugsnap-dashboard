@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-server";
-import { renderWeeklyDigestEmail } from "@/lib/email-templates";
+import { renderWeeklyDigestEmail, renderAdminDigestEmail } from "@/lib/email-templates";
+import { getSuperAdminEmails } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
 
@@ -85,6 +86,49 @@ export async function GET(req: Request) {
       } catch (sendErr) {
         console.error(`Failed to send digest to ${digest.email}:`, sendErr);
       }
+    }
+
+    // Piggyback the admin ops summary on this same weekly cron run instead of
+    // adding a second Vercel cron entry - the plan's cron slot count is limited
+    // and this already fires on the right schedule.
+    try {
+      const [{ count: newSignups }, { count: newCaptures }, { count: openTickets }, { count: securityAlerts }] = await Promise.all([
+        supabase.from("users").select("id", { count: "exact", head: true }).gte("created_at", since),
+        supabase.from("captures").select("id", { count: "exact", head: true }).gte("created_at", since),
+        supabase.from("support_tickets").select("id", { count: "exact", head: true }).eq("status", "open"),
+        supabase
+          .from("security_audit_logs")
+          .select("id", { count: "exact", head: true })
+          .gte("created_at", since)
+          .in("type", ["honeypot_trap", "spam_email", "turnstile_fail"]),
+      ]);
+
+      if (process.env.RESEND_API_KEY) {
+        const adminEmails = getSuperAdminEmails();
+        const digestEmail = renderAdminDigestEmail({
+          appUrl,
+          newSignups: newSignups ?? 0,
+          newCaptures: newCaptures ?? 0,
+          openTickets: openTickets ?? 0,
+          securityAlerts: securityAlerts ?? 0,
+        });
+        await Promise.allSettled(
+          adminEmails.map((email) =>
+            fetch("https://api.resend.com/emails", {
+              method: "POST",
+              headers: { "Content-Type": "application/json", Authorization: `Bearer ${process.env.RESEND_API_KEY}` },
+              body: JSON.stringify({
+                from: process.env.RESEND_FROM_EMAIL || "BugSnap <no-reply@bugsnap.akusaraproject.my.id>",
+                to: [email],
+                subject: digestEmail.subject,
+                html: digestEmail.html,
+              }),
+            })
+          )
+        );
+      }
+    } catch (adminDigestErr) {
+      console.error("Admin ops digest failed (per-workspace digests already sent):", adminDigestErr);
     }
 
     return NextResponse.json({ ok: true, workspaces: digests.length, sent: sentCount });

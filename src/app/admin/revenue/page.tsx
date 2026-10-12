@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useToast } from "@/components/Toast";
 import { useT } from "@/components/I18nProvider";
 import { getAdminHeaders } from "@/lib/admin-cache";
+import { Icon } from "@/lib/iconify";
 
 interface RevenueData {
   metrics: {
@@ -49,6 +50,14 @@ interface RevenueData {
     attempted_plan: string;
     checkout_status: string;
     checkout_initiated_at: string | null;
+    created_at: string;
+  }>;
+  atRiskCustomers?: Array<{
+    id: string;
+    email: string;
+    full_name: string | null;
+    plan: string;
+    extension_last_seen: string | null;
     created_at: string;
   }>;
   abExperiments?: Record<
@@ -102,7 +111,7 @@ export default function AdminRevenuePage() {
 
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<RevenueData | null>(null);
-  const [activeTab, setActiveTab] = useState<"subscribers" | "prospects" | "abandoned" | "experiments">("subscribers");
+  const [activeTab, setActiveTab] = useState<"subscribers" | "prospects" | "abandoned" | "atrisk" | "experiments">("subscribers");
 
   useEffect(() => {
     loadRevenue();
@@ -129,6 +138,7 @@ export default function AdminRevenuePage() {
   const payingCustomers = data?.payingCustomers || [];
   const hotProspects = data?.hotProspects || [];
   const abandonedCheckouts = data?.abandonedCheckouts || [];
+  const atRiskCustomers = data?.atRiskCustomers || [];
   const stripe = data?.stripeStatus;
 
   function handleExportCsv() {
@@ -183,6 +193,20 @@ export default function AdminRevenuePage() {
       }
       exportToCsv("bugsnap_ab_experiments", rows);
       showToast("Data eksperimen berhasil diekspor ke CSV", "success");
+    } else if (activeTab === "atrisk") {
+      if (atRiskCustomers.length === 0) {
+        showToast("Tidak ada pelanggan berisiko untuk diekspor", "info");
+        return;
+      }
+      const rows = atRiskCustomers.map((c) => ({
+        Name: c.full_name || "Subscriber",
+        Email: c.email,
+        Plan: c.plan,
+        LastSeen: c.extension_last_seen || "Never",
+        JoinedDate: c.created_at,
+      }));
+      exportToCsv("bugsnap_at_risk_customers", rows);
+      showToast("Data pelanggan berisiko berhasil diekspor ke CSV", "success");
     } else {
       if (abandonedCheckouts.length === 0) {
         showToast("Tidak ada keranjang ditinggalkan untuk diekspor", "info");
@@ -207,7 +231,7 @@ export default function AdminRevenuePage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-3 border-b border-slate-200 dark:border-zinc-800">
         <div>
           <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            <span>💰 {t("admin.revenueTitle")}</span>
+            <span className="flex items-center gap-2"><Icon icon="lucide:dollar-sign" className="w-4 h-4 shrink-0 text-[#6B9A35] dark:text-[#A8D666]" /> {t("admin.revenueTitle")}</span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
             {t("admin.revenueDesc")}
@@ -280,8 +304,9 @@ export default function AdminRevenuePage() {
               {stripe?.configured ? "Active & Linked" : "Partially Configured"}
             </span>
           </div>
-          <span className="text-[10px] text-slate-400 mt-1 block">
-            Webhook: {stripe?.hasWebhookSecret ? "Verified ✓" : "Pending Key"}
+          <span className="text-[10px] text-slate-400 mt-1 flex items-center gap-1">
+            <span>Webhook: {stripe?.hasWebhookSecret ? "Verified" : "Pending Key"}</span>
+            {stripe?.hasWebhookSecret && <Icon icon="lucide:check" className="w-3 h-3 text-emerald-500 shrink-0" />}
           </span>
         </div>
       </div>
@@ -347,7 +372,7 @@ export default function AdminRevenuePage() {
                 : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200"
             }`}
           >
-            <span>💰 {t("admin.tabSubscribers")}</span>
+            <span className="flex items-center gap-1.5"><Icon icon="lucide:dollar-sign" className="w-3.5 h-3.5 shrink-0" /> {t("admin.tabSubscribers")}</span>
             <span className="px-1.5 py-0.5 rounded-md text-[10px] bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-bold">
               {payingCustomers.length}
             </span>
@@ -362,7 +387,7 @@ export default function AdminRevenuePage() {
                 : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200"
             }`}
           >
-            <span>🔥 {t("admin.tabProspects")}</span>
+            <span className="flex items-center gap-1.5"><Icon icon="lucide:flame" className="w-3.5 h-3.5 shrink-0 text-amber-500" /> {t("admin.tabProspects")}</span>
             <span
               className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
                 hotProspects.length > 0
@@ -383,7 +408,7 @@ export default function AdminRevenuePage() {
                 : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200"
             }`}
           >
-            <span>🛒 {t("admin.tabAbandoned")}</span>
+            <span className="flex items-center gap-1.5"><Icon icon="lucide:shopping-cart" className="w-3.5 h-3.5 shrink-0 text-rose-500" /> {t("admin.tabAbandoned")}</span>
             <span
               className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
                 abandonedCheckouts.length > 0
@@ -397,6 +422,27 @@ export default function AdminRevenuePage() {
 
           <button
             type="button"
+            onClick={() => setActiveTab("atrisk")}
+            className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-lg transition-all cursor-pointer shrink-0 whitespace-nowrap ${
+              activeTab === "atrisk"
+                ? "bg-white dark:bg-zinc-900 text-slate-900 dark:text-white shadow-xs font-bold"
+                : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200"
+            }`}
+          >
+            <span className="flex items-center gap-1.5"><Icon icon="lucide:trending-down" className="w-3.5 h-3.5 shrink-0 text-rose-500" /> {t("admin.tabAtRisk")}</span>
+            <span
+              className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
+                atRiskCustomers.length > 0
+                  ? "bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300"
+                  : "bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300"
+              }`}
+            >
+              {atRiskCustomers.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
             onClick={() => setActiveTab("experiments")}
             className={`flex items-center gap-1.5 sm:gap-2 px-2.5 sm:px-3.5 py-1.5 rounded-lg transition-all cursor-pointer shrink-0 whitespace-nowrap ${
               activeTab === "experiments"
@@ -404,7 +450,7 @@ export default function AdminRevenuePage() {
                 : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200"
             }`}
           >
-            <span>🧪 {t("admin.tabExperiments")}</span>
+            <span className="flex items-center gap-1.5"><Icon icon="lucide:flask-conical" className="w-3.5 h-3.5 shrink-0 text-purple-500" /> {t("admin.tabExperiments")}</span>
             <span
               className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
                 Object.keys(data?.abExperiments || {}).length > 0
@@ -422,7 +468,7 @@ export default function AdminRevenuePage() {
           onClick={handleExportCsv}
           className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs font-semibold text-slate-700 dark:text-zinc-300 transition-colors shadow-xs cursor-pointer"
         >
-          <span>📥</span>
+          <Icon icon="lucide:download" className="w-3.5 h-3.5 shrink-0" />
           <span>{t("admin.exportCsv")}</span>
         </button>
       </div>
@@ -526,7 +572,7 @@ export default function AdminRevenuePage() {
             <div className="p-4 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between">
               <div>
                 <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
-                  <span>🔥 {t("admin.hotProspects")} ({hotProspects.length})</span>
+                  <span className="flex items-center gap-1.5"><Icon icon="lucide:flame" className="w-3.5 h-3.5 shrink-0 text-amber-500" /> {t("admin.hotProspects")} ({hotProspects.length})</span>
                 </h3>
                 <p className="text-[11px] text-slate-500 dark:text-zinc-400">
                   {t("admin.hotProspectsDesc")}
@@ -595,7 +641,8 @@ export default function AdminRevenuePage() {
                             href={`mailto:${lead.email}?subject=Exclusive%20BugSnap%20Pro%20Offer&body=Hi%20${encodeURIComponent(lead.full_name || "")},%20we%20noticed%20you%20were%20exploring%20${encodeURIComponent(lead.last_paywall_feature)}...`}
                             className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] text-white font-semibold text-[11px] shadow-xs shadow-[#89BD49]/25 transition-colors"
                           >
-                            ✉️ {t("admin.contactLead")}
+                            <Icon icon="lucide:mail" className="w-3.5 h-3.5 shrink-0" />
+                            <span>{t("admin.contactLead")}</span>
                           </a>
                         </td>
                       </tr>
@@ -612,7 +659,7 @@ export default function AdminRevenuePage() {
             <div className="p-4 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between">
               <div>
                 <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
-                  <span>🛒 {t("admin.abandonedCheckouts")} ({abandonedCheckouts.length})</span>
+                  <span className="flex items-center gap-1.5"><Icon icon="lucide:shopping-cart" className="w-3.5 h-3.5 shrink-0 text-rose-500" /> {t("admin.abandonedCheckouts")} ({abandonedCheckouts.length})</span>
                 </h3>
                 <p className="text-[11px] text-slate-500 dark:text-zinc-400">
                   {t("admin.abandonedCheckoutsDesc")}
@@ -681,7 +728,95 @@ export default function AdminRevenuePage() {
                             href={`mailto:${cart.email}?subject=Need%20help%20completing%20your%20BugSnap%20upgrade%3F&body=Hi%20${encodeURIComponent(cart.full_name || "")},%20we%20noticed%20you%20were%20checking%20out%20the%20${encodeURIComponent(cart.attempted_plan)}%20plan...`}
                             className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-[11px] transition-colors"
                           >
-                            ⚡ Recover Cart
+                            <Icon icon="lucide:zap" className="w-3.5 h-3.5 shrink-0" />
+                            <span>Recover Cart</span>
+                          </a>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "atrisk" && (
+          <div>
+            <div className="p-4 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between">
+              <div>
+                <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
+                  <span className="flex items-center gap-1.5"><Icon icon="lucide:trending-down" className="w-3.5 h-3.5 shrink-0 text-rose-500" /> {t("admin.atRiskCustomers")} ({atRiskCustomers.length})</span>
+                </h3>
+                <p className="text-[11px] text-slate-500 dark:text-zinc-400">
+                  {t("admin.atRiskCustomersDesc")}
+                </p>
+              </div>
+            </div>
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead className="border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[10px]">
+                  <tr>
+                    <th className="py-3 px-4">Customer</th>
+                    <th className="py-3 px-4">Plan</th>
+                    <th className="py-3 px-4">{t("admin.lastSeenLabel")}</th>
+                    <th className="py-3 px-4">Since</th>
+                    <th className="py-3 px-4 text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-zinc-800">
+                  {loading ? (
+                    <tr>
+                      <td colSpan={5} className="p-8 text-center text-slate-400">
+                        {t("common.loading")}
+                      </td>
+                    </tr>
+                  ) : atRiskCustomers.length === 0 ? (
+                    <tr>
+                      <td colSpan={5} className="p-8 text-center text-slate-400">
+                        No paying customers have gone quiet. Everyone with a paid plan has used the extension in the last 30 days.
+                      </td>
+                    </tr>
+                  ) : (
+                    atRiskCustomers.map((cust) => (
+                      <tr key={cust.id} className="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
+                        <td className="py-3 px-4 whitespace-nowrap">
+                          <div className="font-bold text-slate-900 dark:text-white">
+                            {cust.full_name || "Subscriber"}
+                          </div>
+                          <div className="text-[11px] text-slate-500 dark:text-zinc-400 font-mono">
+                            {cust.email}
+                          </div>
+                        </td>
+                        <td className="py-3 px-4 whitespace-nowrap">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40">
+                            {cust.plan}
+                          </span>
+                        </td>
+                        <td className="py-3 px-4 whitespace-nowrap text-slate-500 dark:text-zinc-400 text-[11px]">
+                          {cust.extension_last_seen
+                            ? new Date(cust.extension_last_seen).toLocaleDateString("id-ID", {
+                                day: "2-digit",
+                                month: "short",
+                                year: "numeric",
+                              })
+                            : t("admin.neverSeenLabel")}
+                        </td>
+                        <td className="py-3 px-4 whitespace-nowrap text-slate-500 dark:text-zinc-400">
+                          {new Date(cust.created_at).toLocaleDateString("id-ID", {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric",
+                          })}
+                        </td>
+                        <td className="py-3 px-4 text-right whitespace-nowrap">
+                          <a
+                            href={`mailto:${cust.email}?subject=We%20miss%20you%20at%20BugSnap&body=Hi%20${encodeURIComponent(cust.full_name || "")},%20we%20noticed%20you%20haven't%20used%20BugSnap%20in%20a%20while...`}
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-rose-500 hover:bg-rose-600 text-white font-semibold text-[11px] shadow-xs transition-colors"
+                          >
+                            <Icon icon="lucide:mail" className="w-3.5 h-3.5 shrink-0" />
+                            <span>{t("admin.contactLead")}</span>
                           </a>
                         </td>
                       </tr>
@@ -698,7 +833,7 @@ export default function AdminRevenuePage() {
             <div className="p-4 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between">
               <div>
                 <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
-                  <span>🧪 {t("admin.abTitle")}</span>
+                  <span className="flex items-center gap-1.5"><Icon icon="lucide:flask-conical" className="w-3.5 h-3.5 shrink-0 text-purple-500" /> {t("admin.abTitle")}</span>
                 </h3>
                 <p className="text-[11px] text-slate-500 dark:text-zinc-400">
                   {t("admin.abDesc")}

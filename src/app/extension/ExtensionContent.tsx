@@ -6,6 +6,7 @@ import { HotkeyCommandBar } from "@/components/site/HotkeyCommandBar";
 import { DevToolsCard, GoogleDriveProofCard } from "@/components/site/ProductMockups";
 import { IconCamera, IconWorld, IconDatabase } from "@/components/site/TablerIcons";
 import { Reveal } from "@/components/site/motion";
+import { Icon } from "@/lib/iconify";
 
 const CHROME_STORE_URL =
   "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
@@ -60,7 +61,7 @@ export function ExtensionContent() {
                 className="relative overflow-hidden grid grid-cols-1 lg:grid-cols-12 gap-8 items-center p-6 sm:p-10 rounded-2xl border border-site-border bg-gradient-to-b from-site-surface via-site-surface to-site-surface-2/60 shadow-sm"
               >
                 <div
-                  className={`lg:col-span-6 space-y-4 ${
+                  className={`lg:col-span-6 min-w-0 space-y-4 ${
                     i % 2 === 1 ? "lg:order-2" : "lg:order-1"
                   }`}
                 >
@@ -94,7 +95,7 @@ export function ExtensionContent() {
                 </div>
 
                 <div
-                  className={`lg:col-span-6 ${
+                  className={`lg:col-span-6 min-w-0 ${
                     i % 2 === 1 ? "lg:order-1" : "lg:order-2"
                   }`}
                 >
@@ -115,7 +116,7 @@ export function ExtensionContent() {
               }}
             />
             <div className="relative z-10 space-y-4 max-w-xl mx-auto">
-              <span className="inline-block text-xs font-semibold uppercase tracking-wider text-site-accent px-3 py-1 rounded-full bg-site-accent/10 border border-site-accent/20">
+              <span className="inline-block text-xs font-semibold uppercase tracking-widest text-site-accent">
                 Install in 10 Seconds
               </span>
               <h3 className="text-2xl sm:text-4xl font-extrabold text-site-text tracking-tight">
@@ -131,8 +132,7 @@ export function ExtensionContent() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-slate-900 text-xs sm:text-sm font-bold px-6 py-3 rounded-xl transition-all shadow-md shadow-accent/20 hover:scale-[1.02] active:scale-[0.99]"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/icons/chrome.svg" alt="" aria-hidden="true" className="w-4 h-4 shrink-0" />
+                  <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
                   <span>Add to Chrome - Free</span>
                 </a>
               </div>

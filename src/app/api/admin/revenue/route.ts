@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { checkAdminAuth } from "@/lib/admin-auth";
+import { isHotProspect, isAbandonedCheckout } from "@/lib/user-segments";
 
 export const runtime = "nodejs";
 
@@ -96,7 +97,7 @@ export async function GET(req: Request) {
 
     // 1. Hot Prospects: free users who actively bumped into paywalls
     const hotProspects = allUsers
-      .filter((u) => (u.plan || "free").toLowerCase() === "free" && (u.paywall_hits || 0) > 0)
+      .filter(isHotProspect)
       .sort((a, b) => (b.paywall_hits || 0) - (a.paywall_hits || 0))
       .slice(0, 20)
       .map((u) => ({
@@ -111,11 +112,7 @@ export async function GET(req: Request) {
 
     // 2. Abandoned Checkouts: users who opened checkout but didn't finish
     const abandonedCheckouts = allUsers
-      .filter(
-        (u) =>
-          u.checkout_status === "abandoned" ||
-          (u.checkout_status === "initiated" && (u.plan || "free").toLowerCase() === "free")
-      )
+      .filter(isAbandonedCheckout)
       .slice(0, 20)
       .map((u) => ({
         id: u.id,
@@ -124,6 +121,25 @@ export async function GET(req: Request) {
         attempted_plan: u.last_checkout_plan || "pro",
         checkout_status: u.checkout_status,
         checkout_initiated_at: u.checkout_initiated_at,
+        created_at: u.created_at,
+      }));
+
+    // 3. At-Risk Customers: paying users whose extension has gone quiet for 30+ days
+    const thirtyDaysMs = 30 * 24 * 60 * 60 * 1000;
+    const atRiskCustomers = allUsers
+      .filter((u) => {
+        const price = PLAN_PRICES[(u.plan || "free").toLowerCase()] || 0;
+        if (price <= 0) return false;
+        if (!u.extension_last_seen) return true;
+        return nowMs - new Date(u.extension_last_seen).getTime() > thirtyDaysMs;
+      })
+      .slice(0, 20)
+      .map((u) => ({
+        id: u.id,
+        email: u.email,
+        full_name: u.full_name,
+        plan: (u.plan || "free").toLowerCase(),
+        extension_last_seen: u.extension_last_seen,
         created_at: u.created_at,
       }));
 
@@ -205,6 +221,7 @@ export async function GET(req: Request) {
       payingCustomers,
       hotProspects,
       abandonedCheckouts,
+      atRiskCustomers,
       abExperiments,
       stripeStatus: {
         configured: hasStripeSecret && hasStripeWebhook,

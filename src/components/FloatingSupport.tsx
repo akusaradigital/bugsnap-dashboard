@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
+import { Icon } from "@/lib/iconify";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
 import { validateEmail } from "@/lib/email-validator";
@@ -94,6 +95,20 @@ export default function FloatingSupport() {
     };
   }, [isOpen]);
 
+  // Listen for programmatic open requests from HelpMenu or other buttons
+  useEffect(() => {
+    const handleOpen = (e: Event) => {
+      const custom = e as CustomEvent<{ category?: SupportCategory }>;
+      if (custom.detail?.category) {
+        setCategory(custom.detail.category);
+      }
+      setIsOpen(true);
+      setShowPrompt(false);
+    };
+    window.addEventListener("open-support-modal", handleOpen);
+    return () => window.removeEventListener("open-support-modal", handleOpen);
+  }, []);
+
   // Mount Invisible Cloudflare Turnstile only when support drawer is opened
   useEffect(() => {
     if (!isOpen || !turnstileRef.current) return;
@@ -146,7 +161,7 @@ export default function FloatingSupport() {
     {
       id: "bug" as const,
       label: t("support.catBug"),
-      icon: "🐛",
+      icon: "lucide:bug",
       desc: t("support.descBug"),
       placeholder: t("support.placeholderBug"),
       subjectPlaceholder: t("support.subjectPlaceholderBug"),
@@ -154,7 +169,7 @@ export default function FloatingSupport() {
     {
       id: "feature" as const,
       label: t("support.catFeature"),
-      icon: "💡",
+      icon: "lucide:lightbulb",
       desc: t("support.descFeature"),
       placeholder: t("support.placeholderFeature"),
       subjectPlaceholder: t("support.subjectPlaceholderFeature"),
@@ -162,7 +177,7 @@ export default function FloatingSupport() {
     {
       id: "other" as const,
       label: t("support.catOther"),
-      icon: "💬",
+      icon: "lucide:message-square",
       desc: t("support.descOther"),
       placeholder: t("support.placeholderOther"),
       subjectPlaceholder: t("support.subjectPlaceholderOther"),
@@ -288,7 +303,7 @@ export default function FloatingSupport() {
   };
 
   return (
-    <div ref={containerRef} className="fixed bottom-4 right-4 sm:bottom-5 sm:right-5 z-50 select-none">
+    <div ref={containerRef} data-support-widget="true" className="fixed bottom-4 right-4 sm:bottom-5 sm:right-5 z-50 select-none">
       {/* Invisible Cloudflare Turnstile Container */}
       <div
         ref={turnstileRef}
@@ -303,9 +318,7 @@ export default function FloatingSupport() {
           <div className="flex items-center justify-between border-b border-[#6B9A35] dark:border-zinc-800 bg-[#89BD49] dark:bg-zinc-900 px-5 py-4 text-white">
             <div className="flex items-center gap-2.5">
               <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#6B9A35]/60 dark:bg-zinc-800 text-white">
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-                </svg>
+                <Icon icon="lucide:message-square" className="h-4 w-4" />
               </span>
               <div>
                 <h3 className="text-sm font-bold leading-tight text-white">{t("support.title")}</h3>
@@ -329,9 +342,7 @@ export default function FloatingSupport() {
                 className="flex h-7 w-7 items-center justify-center rounded-lg text-white/80 hover:text-white hover:bg-white/10 dark:hover:bg-zinc-800 transition-colors"
                 aria-label={t("support.close")}
               >
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path d="M18 6 6 18M6 6l12 12" />
-                </svg>
+                <Icon icon="lucide:x" className="h-4 w-4" />
               </button>
             </div>
           </div>
@@ -341,7 +352,7 @@ export default function FloatingSupport() {
             {success ? (
               <div className="flex flex-col items-center justify-center py-6 text-center space-y-4">
                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 text-2xl">
-                  ✓
+                  <Icon icon="lucide:check" className="h-7 w-7" />
                 </div>
                 <div>
                   <h4 className="text-base font-bold text-slate-950 dark:text-white">
@@ -397,13 +408,13 @@ export default function FloatingSupport() {
                           key={cat.id}
                           type="button"
                           onClick={() => setCategory(cat.id)}
-                          className={`flex items-center justify-center gap-1 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all ${
+                          className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all ${
                             isActive
                               ? "bg-white dark:bg-zinc-800 text-[#6B9A35] dark:text-[#A8D666] shadow-xs"
                               : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
                           }`}
                         >
-                          <span>{cat.icon}</span>
+                          <Icon icon={cat.icon} className="w-3.5 h-3.5 shrink-0" />
                           <span className="truncate">{cat.label}</span>
                         </button>
                       );
@@ -516,7 +527,7 @@ export default function FloatingSupport() {
           className="absolute bottom-13 sm:bottom-14 right-0 mb-1 flex items-center gap-2.5 rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3.5 sm:px-4 py-2 sm:py-2.5 shadow-2xl animate-in fade-in slide-in-from-bottom-2 duration-300 text-xs font-semibold text-slate-800 dark:text-zinc-100 cursor-pointer hover:border-[#89BD49] dark:hover:border-[#89BD49] transition-all group max-w-[calc(100vw-2.5rem)] sm:max-w-xs z-50"
         >
           <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666] text-sm">
-            👋
+            <Icon icon="lucide:hand" className="w-3.5 h-3.5" />
           </span>
           <div className="flex-1 min-w-0">
             <p className="text-[12px] font-bold leading-tight group-hover:text-[#6B9A35] dark:group-hover:text-[#A8D666] transition-colors">
@@ -530,7 +541,7 @@ export default function FloatingSupport() {
             title={t("support.close")}
             aria-label="Dismiss"
           >
-            ✕
+            <Icon icon="lucide:x" className="w-3 h-3" />
           </button>
         </div>
       )}
@@ -551,7 +562,7 @@ export default function FloatingSupport() {
         aria-label={t("support.btn")}
       >
         {isOpen ? (
-          <span className="text-sm font-bold">✕</span>
+          <Icon icon="lucide:x" className="w-4 h-4" />
         ) : (
           <>
             {/* Live Online Pulse Indicator */}
@@ -559,9 +570,7 @@ export default function FloatingSupport() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
             </span>
-            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-            </svg>
+            <Icon icon="lucide:message-square" className="h-4 w-4" />
             <span className="hidden sm:inline text-xs font-bold tracking-tight">
               {t("support.btn")}
             </span>

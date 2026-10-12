@@ -1,31 +1,11 @@
 import { NextResponse } from "next/server";
-import { createServiceClient } from "@/lib/supabase-server";
-import { isRequestAdminAuthenticated } from "@/lib/admin-auth";
+import { checkAdminAuth } from "@/lib/admin-auth";
+import { logSecurityEvent } from "@/lib/security-audit";
 
 export const runtime = "nodejs";
 
-const getAdminEmails = () =>
-  (process.env.SUPER_ADMIN_EMAILS || "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-
 export async function POST(req: Request) {
-  const isAdminAuthenticated = await isRequestAdminAuthenticated(req);
-  const token = req.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-
-  let authorized = isAdminAuthenticated;
-
-  const supabase = createServiceClient();
-
-  if (!authorized && token) {
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
-    if (!authError && user?.email) {
-      if (getAdminEmails().includes(user.email.toLowerCase())) {
-        authorized = true;
-      }
-    }
-  }
+  const { authorized, callerEmail, supabase } = await checkAdminAuth(req);
 
   if (!authorized) {
     return NextResponse.json({ error: "Forbidden: Super Admin only" }, { status: 403 });
@@ -110,6 +90,12 @@ export async function POST(req: Request) {
         await new Promise((r) => setTimeout(r, 1000));
       }
     }
+
+    await logSecurityEvent({
+      type: "admin_action",
+      title: "Broadcast Email Sent",
+      detail: `Admin ${callerEmail || "Console"} broadcast "${subject}" to ${sentCount}/${emails.length} user(s)`,
+    });
 
     return NextResponse.json({ ok: true, sentCount });
   } catch (err) {

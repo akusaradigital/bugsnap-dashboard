@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { IconCheck, IconPencil } from "./TablerIcons";
+import { Icon } from "@/lib/iconify";
 
 export function HeroRecorderPreview() {
   const [activeTab, setActiveTab] = useState<"console" | "network">("console");
@@ -37,7 +38,7 @@ export function HeroRecorderPreview() {
             </div>
 
             {/* Live REC indicator */}
-            <div className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-[10px] font-mono font-semibold shrink-0">
+            <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-500/10 border border-red-500/30 text-red-600 dark:text-red-400 text-[10px] font-mono font-semibold shrink-0">
               <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
               <span>REC 00:14</span>
             </div>
@@ -65,7 +66,7 @@ export function HeroRecorderPreview() {
               </div>
 
               {/* BugSnap Annotation Callout Badge */}
-              <div className="absolute -top-3 right-3 bg-site-text text-site-surface text-[10px] font-medium px-2 py-0.5 rounded-full shadow-md flex items-center gap-1">
+              <div className="absolute -top-3 right-3 bg-site-text text-site-surface text-[10px] font-medium px-2 py-0.5 rounded-md shadow-md flex items-center gap-1">
                 <IconPencil size={10} className="text-accent" />
                 <span>Captured error state</span>
               </div>
@@ -112,10 +113,10 @@ export function HeroRecorderPreview() {
             {/* DevTools Drawer Body */}
             <div className="p-3 font-mono text-[10px] leading-relaxed">
               {activeTab === "console" ? (
-                <div className="rounded bg-site-surface border border-site-border p-2 space-y-1">
-                  <div className="text-red-500 font-semibold flex items-start gap-1.5">
-                    <span>✕</span>
-                    <span>TypeError: Cannot read properties of undefined (reading &apos;token&apos;)</span>
+                <div className="rounded bg-site-surface border border-site-border p-2 space-y-1 min-w-0">
+                  <div className="text-red-500 font-semibold flex items-start gap-1.5 min-w-0">
+                    <Icon icon="lucide:x" className="w-3 h-3 text-red-500 shrink-0 mt-0.5" />
+                    <span className="break-all">TypeError: Cannot read properties of undefined (reading &apos;token&apos;)</span>
                   </div>
                   <div className="text-site-text-2 pl-4 text-[9px]">
                     at CheckoutButton.tsx:42:18

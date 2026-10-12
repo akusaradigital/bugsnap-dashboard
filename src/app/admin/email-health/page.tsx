@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useToast } from "@/components/Toast";
 import { getAdminHeaders, getAdminCache, setAdminCache } from "@/lib/admin-cache";
+import { Icon } from "@/lib/iconify";
 
 interface EmailHealthData {
   configured: boolean;
@@ -136,7 +137,7 @@ export default function AdminEmailHealthPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-3 border-b border-slate-200 dark:border-zinc-800">
         <div>
           <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            <span>✉️ Email & Broadcast Hub</span>
+            <span className="flex items-center gap-2"><Icon icon="lucide:mail" className="w-4 h-4 shrink-0 text-violet-500" /> Email & Broadcast Hub</span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
             Monitoring koneksi Resend API, status verifikasi DKIM/SPF domain, live delivery probe, dan broadcast email massal.
@@ -146,9 +147,14 @@ export default function AdminEmailHealthPage() {
           type="button"
           onClick={loadHealth}
           disabled={loading}
-          className="self-start sm:self-auto px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs font-semibold text-slate-700 dark:text-zinc-300 transition-colors cursor-pointer"
+          className="self-start sm:self-auto px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs font-semibold text-slate-700 dark:text-zinc-300 transition-colors cursor-pointer inline-flex items-center gap-1.5"
         >
-          {loading ? "Menyegarkan..." : "Uji Ulang Endpoint ⟳"}
+          {loading ? "Menyegarkan..." : (
+            <>
+              <Icon icon="lucide:refresh-cw" className="w-3.5 h-3.5 shrink-0" />
+              <span>Uji Ulang Endpoint</span>
+            </>
+          )}
         </button>
       </div>
 
@@ -242,13 +248,20 @@ export default function AdminEmailHealthPage() {
                       </p>
                     </div>
                     <span
-                      className={`text-[10px] font-bold px-2 py-0.5 rounded-md ${
+                      className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-md ${
                         dom.status === "verified"
                           ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400"
                           : "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400"
                       }`}
                     >
-                      {dom.status === "verified" ? "✓ VERIFIED" : dom.status.toUpperCase()}
+                      {dom.status === "verified" ? (
+                        <>
+                          <Icon icon="lucide:check" className="w-3 h-3 shrink-0" />
+                          <span>VERIFIED</span>
+                        </>
+                      ) : (
+                        dom.status.toUpperCase()
+                      )}
                     </span>
                   </div>
                 ))}
@@ -260,8 +273,8 @@ export default function AdminEmailHealthPage() {
         {/* Live Email Diagnostic Probe */}
         <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm space-y-4">
           <div>
-            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-200">
-              🧪 Live Delivery Probe Tester
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-200 flex items-center gap-2">
+              <span className="flex items-center gap-1.5"><Icon icon="lucide:flask-conical" className="w-3.5 h-3.5 shrink-0 text-violet-500" /> Live Delivery Probe Tester</span>
             </h3>
             <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">
               Kirimkan satu email diagnosis langsung untuk memverifikasi jalur pengiriman serverless ke kotak masuk penerima.
@@ -290,9 +303,16 @@ export default function AdminEmailHealthPage() {
               <button
                 type="submit"
                 disabled={sendingProbe || !testRecipient.trim() || !data?.configured}
-                className="px-4 py-2 text-xs font-bold rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-xs shadow-[#89BD49]/25 disabled:opacity-50 transition-colors"
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-xs shadow-[#89BD49]/25 disabled:opacity-50 transition-colors"
               >
-                {sendingProbe ? "Mengirim Probe..." : "Kirim Email Diagnostik 🚀"}
+                {sendingProbe ? (
+                  "Mengirim Probe..."
+                ) : (
+                  <>
+                    <span>Kirim Email Diagnostik</span>
+                    <Icon icon="lucide:send" className="w-3.5 h-3.5 shrink-0" />
+                  </>
+                )}
               </button>
             </div>
           </form>
@@ -306,7 +326,13 @@ export default function AdminEmailHealthPage() {
               }`}
             >
               <div className="flex items-center justify-between font-bold mb-1">
-                <span>{probeResult.ok ? "✓ Pengujian Sukses" : "✕ Pengujian Gagal"}</span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Icon
+                    icon={probeResult.ok ? "lucide:check-circle" : "lucide:x-circle"}
+                    className="w-3.5 h-3.5 shrink-0"
+                  />
+                  <span>{probeResult.ok ? "Pengujian Sukses" : "Pengujian Gagal"}</span>
+                </span>
                 {probeResult.latencyMs && <span>{probeResult.latencyMs} ms</span>}
               </div>
               <p className="text-[11px] leading-relaxed break-words">{probeResult.message}</p>
@@ -319,7 +345,7 @@ export default function AdminEmailHealthPage() {
       <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm space-y-4">
         <div>
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-200 flex items-center gap-2">
-            <span>📢 Broadcast Email Pengguna Platform</span>
+            <span className="flex items-center gap-1.5"><Icon icon="lucide:megaphone" className="w-3.5 h-3.5 shrink-0 text-amber-500" /> Broadcast Email Pengguna Platform</span>
           </h3>
           <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">
             Kirimkan pengumuman resmi, rilis fitur baru, atau update maintenance langsung ke seluruh akun terdaftar.
@@ -362,9 +388,16 @@ export default function AdminEmailHealthPage() {
             <button
               type="submit"
               disabled={broadcasting || !broadcastSubject.trim() || !broadcastBody.trim()}
-              className="px-4 py-2 text-xs font-bold rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-xs shadow-[#89BD49]/25 disabled:opacity-50 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-xs shadow-[#89BD49]/25 disabled:opacity-50 transition-colors cursor-pointer"
             >
-              {broadcasting ? "Mengirimkan Broadcast..." : "Kirim Broadcast Email 🚀"}
+              {broadcasting ? (
+                "Mengirimkan Broadcast..."
+              ) : (
+                <>
+                  <span>Kirim Broadcast Email</span>
+                  <Icon icon="lucide:send" className="w-3.5 h-3.5 shrink-0" />
+                </>
+              )}
             </button>
           </div>
         </form>

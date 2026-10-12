@@ -14,6 +14,7 @@ import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
 import { Dropdown } from "@/components/Dropdown";
+import { Icon } from "@/lib/iconify";
 import { pickAvatar, initialOf } from "@/lib/avatar";
 import EditModal from "@/components/CaptureEditModal";
 import {
@@ -1098,6 +1099,17 @@ function CapturesContent() {
   // rows it may touch, same as the single-card edit path.
   const [bulkField, setBulkField] = useState<"tag" | "status" | null>(null);
   const [bulkSaving, setBulkSaving] = useState(false);
+
+  useEffect(() => {
+    if (!bulkField) return;
+    function handleBulkOutside(e: MouseEvent) {
+      if (!(e.target as HTMLElement)?.closest?.("[data-bulk-toolbar]")) {
+        setBulkField(null);
+      }
+    }
+    document.addEventListener("mousedown", handleBulkOutside);
+    return () => document.removeEventListener("mousedown", handleBulkOutside);
+  }, [bulkField]);
   async function applyBulkField(field: "tag" | "status", value: string) {
     if (bulkSaving || selectedIds.size === 0) return;
     setBulkSaving(true);
@@ -1337,19 +1349,10 @@ function CapturesContent() {
         >
           <div className="bg-white dark:bg-zinc-900 border border-border p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 max-w-md text-center pointer-events-none transform transition-transform">
             <div className="w-16 h-16 rounded-2xl bg-[#89BD49]/10 dark:bg-[#89BD49]/20 border border-[#89BD49]/30 dark:border-[#89BD49]/40 flex items-center justify-center text-[#6B9A35] dark:text-[#A8D666] shadow-inner">
-              <svg
-                className="w-8 h-8 animate-bounce"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                />
-              </svg>
+              <Icon
+                icon="lucide:upload-cloud"
+                className="w-8 h-8 animate-bounce shrink-0"
+              />
             </div>
             <div>
               <p className="font-semibold text-foreground text-base">
@@ -1384,19 +1387,10 @@ function CapturesContent() {
 
         <div className="flex items-center gap-2 w-full lg:w-auto">
           <div className="relative flex-1 min-w-[150px] sm:min-w-[200px] lg:flex-none lg:w-64">
-            <svg
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-              ></path>
-            </svg>
+            <Icon
+              icon="lucide:search"
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted shrink-0"
+            />
             <input
               type="text"
               placeholder={t("cap.search")}
@@ -1455,39 +1449,15 @@ function CapturesContent() {
                   disabled={uploading}
                 />
                 {uploading ? (
-                  <svg
-                    className="w-4 h-4 animate-spin"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8v8H4z"
-                    />
-                  </svg>
+                  <Icon
+                    icon="lucide:loader-2"
+                    className="w-4 h-4 animate-spin shrink-0"
+                  />
                 ) : (
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
-                    />
-                  </svg>
+                  <Icon
+                    icon="lucide:upload"
+                    className="w-4 h-4 shrink-0"
+                  />
                 )}
                 {/* Progress ring overlay */}
                 {uploading && ringProgress > 0 && (
@@ -1540,19 +1510,10 @@ function CapturesContent() {
               {(showVideo || showScreenshot) && (
                 <span className="w-2 h-2 rounded-full bg-[#89BD49] shrink-0" />
               )}
-              <svg
-                className={`w-3.5 h-3.5 text-muted transition-transform ${typeMenuOpen ? "rotate-180" : ""}`}
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
+              <Icon
+                icon="lucide:chevron-down"
+                className={`w-3.5 h-3.5 text-muted transition-transform shrink-0 ${typeMenuOpen ? "rotate-180" : ""}`}
+              />
             </button>
 
             {typeMenuOpen && (
@@ -1572,35 +1533,17 @@ function CapturesContent() {
                     onClick={() => setShowScreenshot((v) => !v)}
                   >
                     {showScreenshot && (
-                      <svg
-                        className="w-2.5 h-2.5 text-white"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth="3"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
+                      <Icon
+                        icon="lucide:check"
+                        className="w-2.5 h-2.5 text-white shrink-0"
+                      />
                     )}
                   </div>
                   <div className="w-7 h-7 rounded-md bg-rose-100 dark:bg-rose-950/30 flex items-center justify-center shrink-0">
-                    <svg
-                      className="w-4 h-4 text-rose-500 dark:text-rose-400"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth="1.8"
-                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                      />
-                    </svg>
+                    <Icon
+                      icon="lucide:image"
+                      className="w-4 h-4 text-rose-500 dark:text-rose-400 shrink-0"
+                    />
                   </div>
                   <div className="flex-1">
                     <p className="font-medium leading-none">
@@ -1624,29 +1567,17 @@ function CapturesContent() {
                     onClick={() => setShowVideo((v) => !v)}
                   >
                     {showVideo && (
-                      <svg
-                        className="w-2.5 h-2.5 text-white"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth="3"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M5 13l4 4L19 7"
-                        />
-                      </svg>
+                      <Icon
+                        icon="lucide:check"
+                        className="w-2.5 h-2.5 text-white shrink-0"
+                      />
                     )}
                   </div>
                   <div className="w-7 h-7 rounded-md bg-[#89BD49]/15 dark:bg-[#89BD49]/20 flex items-center justify-center shrink-0">
-                    <svg
-                      className="w-4 h-4 text-[#89BD49] dark:text-[#A8D666]"
-                      fill="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
+                    <Icon
+                      icon="lucide:play"
+                      className="w-4 h-4 text-[#89BD49] dark:text-[#A8D666] shrink-0 fill-current"
+                    />
                   </div>
                   <div className="flex-1">
                     <p className="font-medium leading-none">{t("cap.video")}</p>
@@ -1717,6 +1648,7 @@ function CapturesContent() {
             <Dropdown
               variant="inline"
               className="flex-1"
+              align="right"
               value={filterStatus}
               onChange={setFilterStatus}
               options={[
@@ -1759,19 +1691,10 @@ function CapturesContent() {
             className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-border bg-subtle text-muted hover:text-foreground hover:bg-subtle/80 transition-colors cursor-pointer disabled:opacity-50"
             title={t("cap.scanMissing")}
           >
-            <svg
-              className={`w-3.5 h-3.5 ${scanningDrive ? "animate-spin text-amber-500" : "text-muted"}`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-              />
-            </svg>
+            <Icon
+              icon="lucide:refresh-cw"
+              className={`w-3.5 h-3.5 shrink-0 ${scanningDrive ? "animate-spin text-amber-500" : "text-muted"}`}
+            />
             <span className="hidden md:inline">
               {scanningDrive ? t("cap.scanning") : t("cap.scanMissing")}
             </span>
@@ -1792,18 +1715,7 @@ function CapturesContent() {
                 : "text-muted hover:text-foreground"
             }`}
           >
-            <svg
-              className="w-4 h-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <rect x="3" y="3" width="7" height="7" rx="1.5" />
-              <rect x="14" y="3" width="7" height="7" rx="1.5" />
-              <rect x="14" y="14" width="7" height="7" rx="1.5" />
-              <rect x="3" y="14" width="7" height="7" rx="1.5" />
-            </svg>
+            <Icon icon="lucide:layout-grid" className="w-4 h-4 shrink-0" />
           </button>
           <button
             type="button"
@@ -1817,20 +1729,7 @@ function CapturesContent() {
                 : "text-muted hover:text-foreground"
             }`}
           >
-            <svg
-              className="w-4 h-4"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <line x1="8" y1="6" x2="21" y2="6" strokeLinecap="round" />
-              <line x1="8" y1="12" x2="21" y2="12" strokeLinecap="round" />
-              <line x1="8" y1="18" x2="21" y2="18" strokeLinecap="round" />
-              <circle cx="4" cy="6" r="1" fill="currentColor" />
-              <circle cx="4" cy="12" r="1" fill="currentColor" />
-              <circle cx="4" cy="18" r="1" fill="currentColor" />
-            </svg>
+            <Icon icon="lucide:list" className="w-4 h-4 shrink-0" />
           </button>
         </div>
       </div>
@@ -1887,53 +1786,11 @@ function CapturesContent() {
                       }`}
                     >
                       {allDone && failedCount === 0 ? (
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
+                        <Icon icon="lucide:check" className="w-4 h-4 shrink-0" />
                       ) : failedCount > 0 && allDone ? (
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
+                        <Icon icon="lucide:x" className="w-4 h-4 shrink-0" />
                       ) : (
-                        <svg
-                          className="w-4 h-4 animate-spin"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          />
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8v8H4z"
-                          />
-                        </svg>
+                        <Icon icon="lucide:loader-2" className="w-4 h-4 animate-spin shrink-0" />
                       )}
                     </div>
 
@@ -1985,19 +1842,7 @@ function CapturesContent() {
                           }}
                           className="p-1 rounded-md text-muted hover:text-foreground hover:bg-subtle transition-colors"
                         >
-                          <svg
-                            className="w-3.5 h-3.5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M6 18L18 6M6 6l12 12"
-                            />
-                          </svg>
+                          <Icon icon="lucide:x" className="w-3.5 h-3.5 shrink-0" />
                         </button>
                       )}
                     </div>
@@ -2026,53 +1871,20 @@ function CapturesContent() {
                       >
                         <div className="flex items-center gap-2 min-w-0 flex-1">
                           {taskItem.status === "completed" ? (
-                            <svg
+                            <Icon
+                              icon="lucide:check"
                               className="w-3.5 h-3.5 text-emerald-500 shrink-0"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                              strokeWidth="2.5"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M5 13l4 4L19 7"
-                              />
-                            </svg>
+                            />
                           ) : taskItem.status === "error" ? (
-                            <svg
+                            <Icon
+                              icon="lucide:x"
                               className="w-3.5 h-3.5 text-red-500 shrink-0"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              stroke="currentColor"
-                              strokeWidth="2.5"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M6 18L18 6M6 6l12 12"
-                              />
-                            </svg>
+                            />
                           ) : taskItem.status === "syncing" || taskItem.status === "uploading" ? (
-                            <svg
+                            <Icon
+                              icon="lucide:loader-2"
                               className="w-3.5 h-3.5 text-[#89BD49] animate-spin shrink-0"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                            >
-                              <circle
-                                className="opacity-25"
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke="currentColor"
-                                strokeWidth="4"
-                              />
-                              <path
-                                className="opacity-75"
-                                fill="currentColor"
-                                d="M4 12a8 8 0 018-8v8H4z"
-                              />
-                            </svg>
+                            />
                           ) : (
                             <span className="w-2 h-2 rounded-full bg-muted-foreground/30 ml-0.5 mr-1 shrink-0" />
                           )}
@@ -2124,53 +1936,11 @@ function CapturesContent() {
                       }`}
                     >
                       {activeTask.status === "completed" ? (
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
+                        <Icon icon="lucide:check" className="w-4 h-4 shrink-0" />
                       ) : activeTask.status === "error" ? (
-                        <svg
-                          className="w-4 h-4"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
+                        <Icon icon="lucide:x" className="w-4 h-4 shrink-0" />
                       ) : (
-                        <svg
-                          className="w-4 h-4 animate-spin"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          />
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8v8H4z"
-                          />
-                        </svg>
+                        <Icon icon="lucide:loader-2" className="w-4 h-4 animate-spin shrink-0" />
                       )}
                     </div>
 
@@ -2212,19 +1982,7 @@ function CapturesContent() {
                         }}
                         className="p-1 rounded-md text-muted hover:text-foreground hover:bg-subtle transition-colors shrink-0"
                       >
-                        <svg
-                          className="w-3.5 h-3.5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
+                        <Icon icon="lucide:x" className="w-3.5 h-3.5 shrink-0" />
                       </button>
                     )}
                   </div>
@@ -2260,19 +2018,7 @@ function CapturesContent() {
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/20 px-4 py-3 text-xs text-amber-900 dark:text-amber-200 shadow-sm animate-in fade-in duration-200">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0 text-amber-600 dark:text-amber-400">
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                />
-              </svg>
+              <Icon icon="lucide:alert-triangle" className="w-4 h-4 shrink-0" />
             </div>
             <div className="min-w-0">
               <span className="font-semibold">
@@ -2315,19 +2061,10 @@ function CapturesContent() {
               className="rounded-lg border border-amber-300 dark:border-amber-800/60 bg-white dark:bg-subtle text-amber-800 dark:text-amber-200 font-medium px-2.5 py-1.5 hover:bg-amber-100/50 transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1.5 disabled:opacity-50"
               title={t("cap.scanMissing")}
             >
-              <svg
-                className={`w-3.5 h-3.5 ${scanningDrive ? "animate-spin" : ""}`}
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                />
-              </svg>
+              <Icon
+                icon="lucide:refresh-cw"
+                className={`w-3.5 h-3.5 shrink-0 ${scanningDrive ? "animate-spin" : ""}`}
+              />
               <span>
                 {scanningDrive ? t("cap.scanning") : t("cap.scanMissing")}
               </span>
@@ -2356,19 +2093,10 @@ function CapturesContent() {
         activeFilterCount > 0 ? (
           <div className="px-4 py-14 sm:py-20 text-center rounded-xl border border-dashed border-border bg-subtle/50 flex flex-col items-center gap-3">
             <div className="w-16 h-16 rounded-2xl bg-[#89BD49]/10 dark:bg-[#89BD49]/20 border border-[#89BD49]/30 dark:border-[#89BD49]/40 flex items-center justify-center">
-              <svg
-                className="w-8 h-8 text-[#6B9A35] dark:text-[#A8D666]"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth={1.5}
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-                />
-              </svg>
+              <Icon
+                icon="lucide:video"
+                className="w-8 h-8 text-[#6B9A35] dark:text-[#A8D666] shrink-0"
+              />
             </div>
             <div>
               <h3 className="text-base font-semibold text-foreground">
@@ -2420,12 +2148,7 @@ function CapturesContent() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] text-white text-xs font-semibold shadow-xs shadow-[#89BD49]/25 transition-all w-full"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="/icons/chrome.svg"
-                    alt="Chrome"
-                    className="w-3.5 h-3.5 shrink-0"
-                  />
+                  <Icon icon="logos:chrome" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                   <span>{t("cap.install")}</span>
                 </a>
               </div>
@@ -2537,19 +2260,10 @@ function CapturesContent() {
                           : "border-slate-300 dark:border-zinc-600 bg-white dark:bg-zinc-900 text-transparent opacity-0 group-hover:opacity-100"
                     }`}
                   >
-                    <svg
-                      className={`w-3.5 h-3.5 ${isSelected ? "text-white" : "text-transparent"}`}
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="3"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M5 13l4 4L19 7"
-                      />
-                    </svg>
+                    <Icon
+                      icon="lucide:check"
+                      className={`w-3.5 h-3.5 shrink-0 ${isSelected ? "text-white" : "text-transparent"}`}
+                    />
                   </button>
                 </div>
 
@@ -2576,37 +2290,23 @@ function CapturesContent() {
                         />
                         {item.type === "video" && (
                           <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/25">
-                            <svg
-                              className="w-4 h-4 text-white fill-current"
-                              viewBox="0 0 24 24"
-                            >
-                              <path d="M8 5v14l11-7z" />
-                            </svg>
+                            <Icon
+                              icon="lucide:play"
+                              className="w-4 h-4 text-white fill-current shrink-0"
+                            />
                           </div>
                         )}
                       </>
                     ) : item.type === "video" ? (
-                      <svg
-                        className="w-5 h-5 text-[#89BD49]"
-                        fill="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path d="M8 5v14l11-7z" />
-                      </svg>
+                      <Icon
+                        icon="lucide:play"
+                        className="w-5 h-5 text-[#89BD49] fill-current shrink-0"
+                      />
                     ) : (
-                      <svg
-                        className="w-5 h-5 text-rose-500"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={1.8}
-                          d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                        />
-                      </svg>
+                      <Icon
+                        icon="lucide:image"
+                        className="w-5 h-5 text-rose-500 shrink-0"
+                      />
                     )}
                   </div>
 
@@ -2629,16 +2329,7 @@ function CapturesContent() {
                         )}
                       {item.password && (
                         <span className="text-[9px] font-semibold text-amber-700 bg-amber-100 dark:bg-amber-950/40 dark:text-amber-400 px-1.5 py-0.5 rounded flex items-center gap-0.5 shrink-0">
-                          <svg
-                            className="w-2.5 h-2.5"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                          >
-                            <rect x="3" y="11" width="18" height="11" rx="2" />
-                            <path d="M7 11V7a5 5 0 0110 0v4" />
-                          </svg>
+                          <Icon icon="lucide:lock" className="w-2.5 h-2.5 shrink-0" />
                           {t("cap.locked")}
                         </span>
                       )}
@@ -2660,19 +2351,7 @@ function CapturesContent() {
                           className="text-[9px] font-semibold text-amber-700 bg-amber-100 dark:bg-amber-950/40 dark:text-amber-400 hover:bg-amber-200 dark:hover:bg-amber-900/60 px-1.5 py-0.5 rounded flex items-center gap-1 shrink-0 transition-colors cursor-pointer"
                           title={t("cap.driveMissingTooltip")}
                         >
-                          <svg
-                            className="w-2.5 h-2.5"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                            strokeWidth="2.5"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                            />
-                          </svg>
+                          <Icon icon="lucide:alert-triangle" className="w-2.5 h-2.5 shrink-0" />
                           <span>{t("cap.driveMissing")}</span>
                         </button>
                       )}
@@ -2744,35 +2423,21 @@ function CapturesContent() {
                       className="w-7 h-7 rounded-lg hover:bg-slate-100 dark:hover:bg-subtle text-muted hover:text-foreground flex items-center justify-center transition-colors"
                     >
                       {copiedId === item.id ? (
-                        <svg
-                          className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M20 6L9 17l-5-5" />
-                        </svg>
+                        <Icon
+                          icon="lucide:check"
+                          className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0"
+                        />
                       ) : (
-                        <svg
-                          className="w-3.5 h-3.5"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                        </svg>
+                        <Icon
+                          icon="lucide:link"
+                          className="w-3.5 h-3.5 shrink-0"
+                        />
                       )}
                     </button>
 
                     <button
                       type="button"
+                      data-capture-menu
                       aria-label={t("cap.captureOptions")}
                       title={t("cap.optionsMenu")}
                       onClick={(e) => {
@@ -2803,15 +2468,10 @@ function CapturesContent() {
                       }}
                       className="w-7 h-7 rounded-lg hover:bg-slate-100 dark:hover:bg-subtle text-muted hover:text-foreground flex items-center justify-center transition-colors"
                     >
-                      <svg
-                        className="w-3.5 h-3.5"
-                        viewBox="0 0 24 24"
-                        fill="currentColor"
-                      >
-                        <circle cx="12" cy="5" r="1.75" />
-                        <circle cx="12" cy="12" r="1.75" />
-                        <circle cx="12" cy="19" r="1.75" />
-                      </svg>
+                      <Icon
+                        icon="lucide:more-vertical"
+                        className="w-3.5 h-3.5 shrink-0"
+                      />
                     </button>
                   </div>
                 )}
@@ -2886,12 +2546,10 @@ function CapturesContent() {
                         {item.type === "video" ? (
                           <div className="absolute inset-0 z-10 pointer-events-none flex items-center justify-center bg-black/20 group-hover:bg-black/40 transition-colors">
                             <div className="w-12 h-12 rounded-full bg-white/95 dark:bg-zinc-900/95 text-slate-900 dark:text-white shadow-xl flex items-center justify-center border border-white/30 group-hover:bg-[#89BD49] group-hover:text-white group-hover:scale-110 group-hover:border-[#89BD49]/40 group-hover:shadow-[#89BD49]/40 transition-all duration-200">
-                              <svg
-                                className="w-6 h-6 fill-current"
-                                viewBox="0 0 24 24"
-                              >
-                                <path d="M8 5v14l11-7z" />
-                              </svg>
+                              <Icon
+                                icon="lucide:play"
+                                className="w-6 h-6 fill-current shrink-0"
+                              />
                             </div>
                           </div>
                         ) : (
@@ -2902,28 +2560,16 @@ function CapturesContent() {
                       <div className="flex flex-col items-center gap-1.5">
                         {item.type === "video" ? (
                           <div className="w-12 h-12 rounded-full bg-[#89BD49]/15 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] flex items-center justify-center group-hover:scale-110 transition-transform shadow-xs">
-                            <svg
-                              className="w-6 h-6"
-                              fill="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path d="M8 5v14l11-7z" />
-                            </svg>
+                            <Icon
+                              icon="lucide:play"
+                              className="w-6 h-6 fill-current shrink-0"
+                            />
                           </div>
                         ) : (
-                          <svg
-                            className="w-8 h-8 text-[#6B9A35]/80 group-hover:scale-110 transition-transform"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            stroke="currentColor"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={1.5}
-                              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
-                            />
-                          </svg>
+                          <Icon
+                            icon="lucide:image"
+                            className="w-8 h-8 text-[#6B9A35]/80 group-hover:scale-110 transition-transform shrink-0"
+                          />
                         )}
                       </div>
                     )}
@@ -2948,19 +2594,10 @@ function CapturesContent() {
                             : "bg-white/90 dark:bg-zinc-900/90 border-slate-300 dark:border-zinc-600 text-transparent opacity-0 group-hover:opacity-100 hidden group-hover:flex"
                         }`}
                       >
-                        <svg
-                          className={`w-4 h-4 ${isSelected ? "text-white" : "text-transparent group-hover:text-transparent"}`}
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M5 13l4 4L19 7"
-                          />
-                        </svg>
+                        <Icon
+                          icon="lucide:check"
+                          className={`w-4 h-4 shrink-0 ${isSelected ? "text-white" : "text-transparent group-hover:text-transparent"}`}
+                        />
                       </button>
 
                       {/* Author Badge: hidden when selected OR on hover */}
@@ -3014,30 +2651,15 @@ function CapturesContent() {
                           className="w-7 h-7 rounded-lg bg-white/90 hover:bg-white text-slate-700 dark:bg-zinc-900/90 dark:hover:bg-zinc-900 dark:text-slate-200 border border-slate-200/80 dark:border-zinc-700 flex items-center justify-center shadow-md transition-colors"
                         >
                           {copiedId === item.id ? (
-                            <svg
-                              className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2.5"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <path d="M20 6L9 17l-5-5" />
-                            </svg>
+                            <Icon
+                              icon="lucide:check"
+                              className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0"
+                            />
                           ) : (
-                            <svg
-                              className="w-3.5 h-3.5"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            >
-                              <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71" />
-                              <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71" />
-                            </svg>
+                            <Icon
+                              icon="lucide:link"
+                              className="w-3.5 h-3.5 shrink-0"
+                            />
                           )}
                         </button>
 
@@ -3075,15 +2697,10 @@ function CapturesContent() {
                             }}
                             className="w-7 h-7 rounded-lg bg-white/90 hover:bg-white text-slate-700 dark:bg-zinc-900/90 dark:hover:bg-zinc-900 dark:text-slate-200 border border-slate-200/80 dark:border-zinc-700 flex items-center justify-center shadow-md transition-colors"
                           >
-                            <svg
-                              className="w-3.5 h-3.5"
-                              viewBox="0 0 24 24"
-                              fill="currentColor"
-                            >
-                              <circle cx="12" cy="5" r="1.75" />
-                              <circle cx="12" cy="12" r="1.75" />
-                              <circle cx="12" cy="19" r="1.75" />
-                            </svg>
+                            <Icon
+                              icon="lucide:more-vertical"
+                              className="w-3.5 h-3.5 shrink-0"
+                            />
                           </button>
                         </div>
                       </div>
@@ -3092,12 +2709,10 @@ function CapturesContent() {
                     {/* Bottom Right Duration - Only shows for video */}
                     {item.type === "video" && (
                       <div className="absolute bottom-2.5 right-2.5 bg-black/70 backdrop-blur-sm text-white text-[11px] font-medium px-2 py-1 rounded flex items-center gap-1.5 shadow-sm">
-                        <svg
-                          className="w-3.5 h-3.5 text-white fill-current"
-                          viewBox="0 0 24 24"
-                        >
-                          <path d="M8 5v14l11-7z" />
-                        </svg>
+                        <Icon
+                          icon="lucide:play"
+                          className="w-3.5 h-3.5 text-white fill-current shrink-0"
+                        />
                         <span>{formatDuration(item.duration)}</span>
                       </div>
                     )}
@@ -3112,16 +2727,7 @@ function CapturesContent() {
                         )}
                       {item.password && (
                         <span className="text-[10px] font-semibold text-amber-100 bg-amber-600/80 px-2 py-0.5 rounded backdrop-blur-sm flex items-center gap-1 shadow-sm">
-                          <svg
-                            className="w-3 h-3"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                          >
-                            <rect x="3" y="11" width="18" height="11" rx="2" />
-                            <path d="M7 11V7a5 5 0 0110 0v4" />
-                          </svg>
+                          <Icon icon="lucide:lock" className="w-3 h-3 shrink-0" />
                           {t("cap.locked")}
                         </span>
                       )}
@@ -3146,19 +2752,10 @@ function CapturesContent() {
                         className="absolute bottom-2.5 left-2.5 z-20 inline-flex items-center gap-1 rounded-md bg-amber-600/90 hover:bg-amber-700 active:scale-95 backdrop-blur-sm text-white text-[10px] font-semibold px-2 py-0.5 shadow-sm transition-all cursor-pointer"
                         title={t("cap.driveMissingTooltip")}
                       >
-                        <svg
-                          className="w-3 h-3"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-                          />
-                        </svg>
+                        <Icon
+                          icon="lucide:alert-triangle"
+                          className="w-3 h-3 shrink-0"
+                        />
                         <span>{t("cap.driveMissing")}</span>
                       </button>
                     )}
@@ -3183,9 +2780,7 @@ function CapturesContent() {
                             title={t("v.occurrencesHint")}
                             className="mt-1 inline-flex max-w-full min-w-0 items-center gap-1 rounded border border-amber-500/30 bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-400"
                           >
-                            <svg className="h-3 w-3 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                            </svg>
+                            <Icon icon="lucide:alert-triangle" className="h-3 w-3 shrink-0" />
                             <span className="truncate">
                               {t("v.occurrencesUsers", {
                                 count: occurrenceCounts[item.error_fingerprint].occurrences,
@@ -3248,16 +2843,7 @@ function CapturesContent() {
                 }}
                 className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left font-medium hover:bg-subtle disabled:opacity-50"
               >
-                <svg
-                  className="w-3.5 h-3.5 text-muted"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M12 20h9" />
-                  <path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" />
-                </svg>
+                <Icon icon="lucide:edit-3" className="w-3.5 h-3.5 text-muted shrink-0" />
                 {t("cap.rename")}
               </button>
               <button
@@ -3269,15 +2855,7 @@ function CapturesContent() {
                 }}
                 className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 disabled:opacity-50"
               >
-                <svg
-                  className="w-3.5 h-3.5"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                </svg>
+                <Icon icon="lucide:trash-2" className="w-3.5 h-3.5 shrink-0" />
                 Delete
               </button>
             </div>
@@ -3329,19 +2907,7 @@ function CapturesContent() {
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-muted hover:text-foreground hover:bg-slate-100 dark:hover:bg-background transition-colors"
                 aria-label="Close dialog"
               >
-                <svg
-                  className="w-5 h-5"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 18L18 6M6 6l12 12"
-                  />
-                </svg>
+                <Icon icon="lucide:x" className="w-5 h-5 shrink-0" />
               </button>
             </div>
 
@@ -3370,19 +2936,7 @@ function CapturesContent() {
                       }`}
                     >
                       <span className="flex items-center gap-2.5 min-w-0">
-                        <svg
-                          className="w-4 h-4 shrink-0 text-muted"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-                          />
-                        </svg>
+                        <Icon icon="lucide:folder" className="w-4 h-4 shrink-0 text-muted" />
                         <span className="text-sm font-medium truncate">
                           {t("cap.noFolderGeneral")}
                         </span>
@@ -3410,19 +2964,7 @@ function CapturesContent() {
                           }`}
                         >
                           <span className="flex items-center gap-2.5 min-w-0 pr-2">
-                            <svg
-                              className="w-4 h-4 shrink-0 text-muted"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"
-                              />
-                            </svg>
+                            <Icon icon="lucide:folder" className="w-4 h-4 shrink-0 text-muted" />
                             <span className="text-sm font-medium truncate">
                               {folder}
                             </span>
@@ -3574,19 +3116,7 @@ function CapturesContent() {
           />
           <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6">
             <div className="mb-4 w-12 h-12 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/40 flex items-center justify-center text-red-600 dark:text-red-400">
-              <svg
-                className="w-6 h-6"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                />
-              </svg>
+              <Icon icon="lucide:trash-2" className="w-6 h-6 shrink-0" />
             </div>
             <h2
               id="delete-captures-title"
@@ -3724,12 +3254,13 @@ function CapturesContent() {
       {/* Floating Batch Selection Actions Toolbar */}
       {selectedIds.size > 0 && (
         <div
+          data-bulk-toolbar
           onClick={(e) => e.stopPropagation()}
           className="fixed bottom-4 sm:bottom-6 left-1/2 -translate-x-1/2 z-50 w-[calc(100vw-1.5rem)] sm:w-[calc(100vw-2rem)] max-w-2xl bg-white/95 dark:bg-zinc-900/95 text-foreground backdrop-blur-md rounded-2xl shadow-xl dark:shadow-2xl px-3 sm:px-4 py-2 sm:py-2.5 border border-border dark:border-zinc-800 flex flex-wrap items-center justify-between gap-2 sm:gap-2.5 animate-in slide-in-from-bottom-5 duration-200"
         >
           <div className="flex flex-wrap items-center gap-2 sm:gap-2.5">
-            <span className="w-5 h-5 rounded-md bg-[#89BD49] text-white flex items-center justify-center text-[11px] font-bold shadow-xs shrink-0">
-              ✓
+            <span className="w-5 h-5 rounded-md bg-[#89BD49] text-white flex items-center justify-center shadow-xs shrink-0">
+              <Icon icon="lucide:check" className="w-3.5 h-3.5 shrink-0" />
             </span>
             <span className="font-bold text-xs text-foreground whitespace-nowrap">
               {selectedIds.size === filteredCaptures.length
@@ -3773,24 +3304,7 @@ function CapturesContent() {
               className="h-8 px-2.5 rounded-xl border border-border bg-subtle hover:bg-background hover:border-[#89BD49]/40 dark:hover:border-[#89BD49]/50 text-xs font-semibold text-foreground hover:text-[#6B9A35] dark:hover:text-[#A8D666] disabled:opacity-40 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
               title={t("cap.copyAllLinks")}
             >
-              <svg
-                className="w-3.5 h-3.5 text-muted"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"
-                />
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"
-                />
-              </svg>
+              <Icon icon="lucide:link" className="w-3.5 h-3.5 text-muted shrink-0" />
               <span>{t("cap.bulkLinks")}</span>
             </button>
 
@@ -3801,19 +3315,7 @@ function CapturesContent() {
               disabled={moving || deleting}
               className="h-8 px-2.5 rounded-xl border border-border bg-subtle hover:bg-background hover:border-[#89BD49]/40 dark:hover:border-[#89BD49]/50 text-xs font-semibold text-foreground hover:text-[#6B9A35] dark:hover:text-[#A8D666] disabled:opacity-40 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
             >
-              <svg
-                className="w-3.5 h-3.5 text-muted"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-                />
-              </svg>
+              <Icon icon="lucide:arrow-right-left" className="w-3.5 h-3.5 text-muted shrink-0" />
               <span>{t("cap.bulkMove")}</span>
             </button>
 
@@ -3833,7 +3335,7 @@ function CapturesContent() {
                   </span>
                 </button>
                 {bulkField === field && (
-                  <div className="absolute bottom-full mb-1.5 left-0 z-50 min-w-[9rem] bg-white dark:bg-zinc-900 border border-border rounded-lg shadow-lg overflow-hidden">
+                  <div className={`absolute bottom-full mb-1.5 ${field === "status" ? "right-0 sm:left-0" : "left-0"} z-50 min-w-[9rem] bg-white dark:bg-zinc-900 border border-border rounded-lg shadow-lg overflow-hidden`}>
                     {(field === "tag" ? TAG_OPTIONS : STATUS_OPTIONS).map(
                       (opt) => (
                         <button
@@ -3858,19 +3360,7 @@ function CapturesContent() {
               disabled={selectedIds.size === 0 || deleting}
               className="h-8 px-2.5 rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 text-xs font-semibold disabled:opacity-40 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
             >
-              <svg
-                className="w-3.5 h-3.5"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                />
-              </svg>
+              <Icon icon="lucide:trash-2" className="w-3.5 h-3.5 shrink-0" />
               <span>{t("cap.bulkDelete")}</span>
             </button>
           </div>

@@ -161,12 +161,10 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // A shared CDN cache must not hold a members-only body: the next request for
-  // the same id would be served the bytes without ever reaching the gate above.
+  // Cache-Control: private with stale-while-revalidate prevents shared CDN cache pollution
+  // while allowing browser caching for fast seeking and replay.
   const cacheControl =
-    cap?.access_mode === "members"
-      ? "private, max-age=3600"
-      : "public, max-age=3600";
+    "private, max-age=3600, stale-while-revalidate=86400";
 
   const rangeHeader = req.headers.get("range");
   const forwardHeaders: Record<string, string> = {};
@@ -174,9 +172,12 @@ export async function GET(req: Request) {
     forwardHeaders["Range"] = rangeHeader;
   }
 
-  // 1. For video or when Range is requested, try authenticated Drive API v3 first if owner token is available,
-  // as it natively supports HTTP 206 Partial Content and Range headers for video seeking.
-  if (cap?.user_id && (type === "video" || rangeHeader)) {
+  // 1. Try authenticated Drive API v3 first whenever an owner token is available - it's Google's
+  // fast, reliable media endpoint. The public drive.google.com/uc fallback below was being hit
+  // first for every screenshot (only video/Range requests reached this branch before), and that
+  // endpoint is built for interactive browser downloads: it's rate-limited for server/proxy traffic
+  // and intermittently serves an HTML virus-scan interstitial, which is the "sometimes slow" pattern.
+  if (cap?.user_id) {
     try {
       const accessToken = await driveAccessToken(cap.user_id).catch(() => null);
       if (accessToken) {

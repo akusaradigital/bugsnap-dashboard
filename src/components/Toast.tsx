@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from "react";
+import { Icon } from "@/lib/iconify";
 
 export type ToastType = "success" | "error" | "info" | "loading";
 
@@ -128,12 +129,12 @@ function Toast({ toast, onDismiss }: { toast: ToastItem; onDismiss: (id: number)
     >
       {toast.type === "success" && (
         <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
-          ✓
+          <Icon icon="lucide:check" className="w-3.5 h-3.5" />
         </span>
       )}
       {toast.type === "error" && (
         <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-white/20 text-white text-xs font-bold">
-          ✕
+          <Icon icon="lucide:x" className="w-3.5 h-3.5" />
         </span>
       )}
       {toast.type === "loading" && (
@@ -141,7 +142,7 @@ function Toast({ toast, onDismiss }: { toast: ToastItem; onDismiss: (id: number)
       )}
       {toast.type === "info" && (
         <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-neutral-800 text-neutral-300 text-xs font-bold">
-          ℹ
+          <Icon icon="lucide:info" className="w-3.5 h-3.5" />
         </span>
       )}
 
@@ -158,9 +159,7 @@ function Toast({ toast, onDismiss }: { toast: ToastItem; onDismiss: (id: number)
         className={`ml-auto transition-colors p-1 ${closeButtonStyles[toast.type]}`}
         aria-label="Close"
       >
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-        </svg>
+        <Icon icon="lucide:x" className="w-3 h-3" />
       </button>
 
       {toast.type !== "loading" && (

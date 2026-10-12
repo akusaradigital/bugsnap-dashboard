@@ -1,12 +1,20 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { checkAdminAuth } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
 
-export async function GET(req: Request) {
+let cachedStats: { data: unknown; timestamp: number } | null = null;
+const CACHE_TTL_MS = 60_000; // 60s
+
+export async function GET(req: NextRequest) {
   const { authorized, supabase: serviceClient } = await checkAdminAuth(req);
   if (!authorized) {
     return NextResponse.json({ error: "Forbidden: Super Admin only" }, { status: 403 });
+  }
+
+  const isFresh = Boolean(req.nextUrl?.searchParams?.get("fresh"));
+  if (cachedStats && Date.now() - cachedStats.timestamp < CACHE_TTL_MS && !isFresh) {
+    return NextResponse.json(cachedStats.data);
   }
 
   try {
@@ -50,7 +58,7 @@ export async function GET(req: Request) {
       }
     }
 
-    return NextResponse.json({
+    const payload = {
       ok: true,
       stats: dbStats,
       project: projectInfo || {
@@ -64,7 +72,11 @@ export async function GET(req: Request) {
           postgresEngine: "17",
         },
       },
-    });
+    };
+
+    cachedStats = { data: payload, timestamp: Date.now() };
+
+    return NextResponse.json(payload);
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Failed to load database stats";
     console.error("[Admin Supabase Stats] Error:", err);
@@ -108,6 +120,7 @@ export async function POST(req: Request) {
         throw new Error(errJson.message || "Failed to execute VACUUM ANALYZE");
       }
 
+      cachedStats = null;
       return NextResponse.json({
         ok: true,
         message: "VACUUM ANALYZE executed successfully. Dead tuples reclaimed.",
@@ -117,6 +130,7 @@ export async function POST(req: Request) {
     if (action === "prune_views") {
       const { error } = await serviceClient.rpc("prune_capture_views");
       if (error) throw error;
+      cachedStats = null;
       return NextResponse.json({
         ok: true,
         message: "Capture views older than 30 days pruned successfully.",
@@ -126,6 +140,7 @@ export async function POST(req: Request) {
     if (action === "prune_rate_limits") {
       const { error } = await serviceClient.rpc("prune_rate_limits");
       if (error) throw error;
+      cachedStats = null;
       return NextResponse.json({
         ok: true,
         message: "Expired rate limit logs pruned successfully.",

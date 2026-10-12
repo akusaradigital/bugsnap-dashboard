@@ -29,7 +29,7 @@ export function BrowserFrame({
         </div>
 
         {/* Address Bar */}
-        <div className="flex-1 max-w-md mx-auto flex items-center justify-center gap-2 rounded-md border border-site-border-subtle bg-site-surface px-3 py-1 text-xs text-site-text-2">
+        <div className="flex-1 max-w-md mx-auto flex items-center justify-center gap-2 rounded-md border border-site-border-subtle bg-site-surface px-3 py-1 text-xs text-site-text-2 min-w-0">
           <svg
             className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0"
             viewBox="0 0 24 24"
@@ -43,7 +43,7 @@ export function BrowserFrame({
             <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
             <path d="M7 11V7a5 5 0 0 1 10 0v4" />
           </svg>
-          <span className="truncate font-mono text-[11px] select-all">{url}</span>
+          <span className="truncate font-mono text-[11px] select-all min-w-0">{url}</span>
           {badge && (
             <span className="ml-auto text-[10px] font-semibold uppercase tracking-wider text-accent bg-accent/10 px-1.5 py-0.5 rounded">
               {badge}

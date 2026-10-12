@@ -34,7 +34,7 @@ export function DocsContent() {
           {navCards.map((card, i) => (
             <Reveal key={card.id} delay={i * 0.08} className="h-full">
               <div
-                className="h-full rounded-2xl border border-site-border bg-gradient-to-b from-site-surface to-site-surface-2/60 p-6 space-y-3 shadow-sm"
+                className="h-full rounded-2xl border border-site-border bg-gradient-to-b from-site-surface to-site-surface-2/60 p-4 sm:p-6 space-y-3 shadow-sm min-w-0"
               >
                 <span className="text-xs font-bold text-site-accent px-2 py-0.5 rounded bg-site-accent/10 border border-site-accent/20">
                   {card.badge}
@@ -54,7 +54,7 @@ export function DocsContent() {
         <div className="space-y-6">
           {/* Section 1: Shortcuts */}
           <Reveal delay={0.2}>
-            <div className="rounded-xl border border-site-border bg-site-surface p-6 sm:p-8 space-y-6 shadow-xs">
+            <div className="rounded-xl border border-site-border bg-site-surface p-4 sm:p-8 space-y-6 shadow-xs">
               <div className="flex items-center justify-between border-b border-site-border-subtle pb-4">
                 <h3 className="text-base font-bold text-site-text">{t("docs.shortcuts")}</h3>
                 <span className="text-xs text-site-text-2 font-medium">Quick Reference</span>
@@ -62,8 +62,8 @@ export function DocsContent() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {/* Shortcut 1 */}
-                <div className="rounded-lg border border-site-border bg-site-surface-2 p-4 flex items-center justify-between">
-                  <div>
+                <div className="rounded-lg border border-site-border bg-site-surface-2 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="min-w-0">
                     <div className="text-xs font-semibold text-site-text">
                       {t("docs.shortcutScreenshot")}
                     </div>
@@ -71,7 +71,7 @@ export function DocsContent() {
                   </div>
                   <button
                     onClick={() => copyToClipboard("Ctrl + Shift + S", "shot")}
-                    className="inline-flex items-center gap-1.5 bg-site-surface border border-site-border px-2.5 py-1.5 rounded-md text-xs font-mono font-bold text-site-text hover:border-accent transition-colors active:scale-95"
+                    className="inline-flex items-center gap-1.5 bg-site-surface border border-site-border px-2.5 py-1.5 rounded-md text-xs font-mono font-bold text-site-text hover:border-accent transition-colors active:scale-95 shrink-0 self-start sm:self-auto"
                     title={copiedKey === "shot" ? t("docs.terminalCopied") : t("docs.copyCode")}
                   >
                     <span>Ctrl + Shift + S</span>
@@ -82,8 +82,8 @@ export function DocsContent() {
                 </div>
 
                 {/* Shortcut 2 */}
-                <div className="rounded-lg border border-site-border bg-site-surface-2 p-4 flex items-center justify-between">
-                  <div>
+                <div className="rounded-lg border border-site-border bg-site-surface-2 p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div className="min-w-0">
                     <div className="text-xs font-semibold text-site-text">
                       {t("docs.shortcutRecording")}
                     </div>
@@ -91,7 +91,7 @@ export function DocsContent() {
                   </div>
                   <button
                     onClick={() => copyToClipboard("Ctrl + Shift + F", "record")}
-                    className="inline-flex items-center gap-1.5 bg-site-surface border border-site-border px-2.5 py-1.5 rounded-md text-xs font-mono font-bold text-site-text hover:border-accent transition-colors active:scale-95"
+                    className="inline-flex items-center gap-1.5 bg-site-surface border border-site-border px-2.5 py-1.5 rounded-md text-xs font-mono font-bold text-site-text hover:border-accent transition-colors active:scale-95 shrink-0 self-start sm:self-auto"
                     title={copiedKey === "record" ? t("docs.terminalCopied") : t("docs.copyCode")}
                   >
                     <span>Ctrl + Shift + F</span>
@@ -108,20 +108,20 @@ export function DocsContent() {
                   <span className="font-sans font-semibold text-site-text">Chrome Extension Hotkey Mapping</span>
                   <button
                     onClick={() => copyToClipboard("chrome://extensions/shortcuts", "url")}
-                    className="text-[10px] text-site-text-2 hover:text-site-text px-2 py-0.5 rounded bg-site-surface border border-site-border-subtle transition-colors"
+                    className="text-[10px] text-site-text-2 hover:text-site-text px-2 py-0.5 rounded bg-site-surface border border-site-border-subtle transition-colors shrink-0"
                   >
                     {copiedKey === "url" ? t("docs.terminalCopied") : t("docs.copyCode")}
                   </button>
                 </div>
                 <p className="text-site-text-2 text-[11px]"># Configure or rebind shortcuts anytime in your browser</p>
-                <p className="text-accent text-xs mt-1">chrome://extensions/shortcuts</p>
+                <p className="text-accent text-xs mt-1 break-all">chrome://extensions/shortcuts</p>
               </div>
             </div>
           </Reveal>
 
           {/* Section 2: Storage Architecture */}
           <Reveal delay={0.28}>
-            <div className="rounded-xl border border-site-border bg-site-surface p-6 sm:p-8 space-y-4 shadow-xs">
+            <div className="rounded-xl border border-site-border bg-site-surface p-4 sm:p-8 space-y-4 shadow-xs">
               <h3 className="text-base font-bold text-site-text">{t("docs.driveSetup")}</h3>
               <p className="text-xs text-site-text-2 leading-relaxed">
                 {t("docs.driveScopeDesc")}

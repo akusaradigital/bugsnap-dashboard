@@ -8,7 +8,7 @@ import { sanitizePostgrestFilter } from "@/lib/supabase-server";
 export const runtime = "nodejs";
 
 export async function GET(req: Request) {
-  const { authorized, supabase } = await checkAdminAuth(req);
+  const { authorized, callerEmail, supabase } = await checkAdminAuth(req);
   if (!authorized) {
     return NextResponse.json({ error: "Forbidden: Super Admin only" }, { status: 403 });
   }
@@ -72,6 +72,19 @@ export async function GET(req: Request) {
         });
       }
 
+      // Recent comments left on this user's captures - support context without
+      // needing their password or a screen-share.
+      let recentComments: Array<{ id: string; capture_id: string; author_name: string | null; body: string; created_at: string }> = [];
+      if (capIds.length > 0) {
+        const { data: cData } = await supabase
+          .from("comments")
+          .select("id, capture_id, author_name, body, created_at")
+          .in("capture_id", capIds)
+          .order("created_at", { ascending: false })
+          .limit(10);
+        recentComments = cData || [];
+      }
+
       const enrichedCaptures = (captures || []).map((c) => ({
         id: c.id,
         title: c.title,
@@ -94,6 +107,12 @@ export async function GET(req: Request) {
         } | null;
       }
 
+      await logSecurityEvent({
+        type: "admin_action",
+        title: "User Detail Viewed",
+        detail: `Admin ${callerEmail || "Console"} viewed account detail for ${user.email}`,
+      });
+
       return NextResponse.json({
         ok: true,
         user: enrichedUser,
@@ -106,6 +125,7 @@ export async function GET(req: Request) {
         })),
         recentCaptures: enrichedCaptures,
         totalCaptures: totalCaptures || 0,
+        recentComments,
       });
     } catch (err: unknown) {
       const message = (err as Error)?.message || "Failed to fetch user details";

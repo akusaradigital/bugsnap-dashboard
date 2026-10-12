@@ -4,7 +4,8 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
-import { IconArrowLeft } from "@/components/site/TablerIcons";
+import { SiteThemeToggle } from "@/components/site/SiteThemeToggle";
+import { Icon } from "@/lib/iconify";
 
 function getSafeRedirectPath(): string {
   if (typeof window === "undefined") return "/dashboard";
@@ -15,10 +16,10 @@ function getSafeRedirectPath(): string {
 }
 
 // Official Google "G" logo (4-color)
-function GoogleLogo({ className = "w-4 h-4 shrink-0" }: { className?: string }) {
+function GoogleLogo({ className = "w-5 h-5 shrink-0" }: { className?: string }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src="/icons/google.svg" alt="Google" className={className} />
+    <img src="/icons/google.svg" alt="" aria-hidden="true" className={className} />
   );
 }
 
@@ -75,91 +76,136 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-site-bg text-site-text font-site flex flex-col justify-between">
+    <div className="relative min-h-screen bg-site-bg text-site-text font-site flex flex-col justify-between overflow-x-hidden">
+      {/* Subtle Ambient Background Gradients */}
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(59,130,246,0.08),transparent)] pointer-events-none" />
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
+
       {/* Top Bar Navigation */}
-      <header className="w-full border-b border-site-border bg-site-surface">
-        <div className="mx-auto max-w-5xl flex items-center justify-between px-4 sm:px-6 py-3.5">
-          <Link href="/" className="flex items-center gap-2">
+      <header className="relative z-10 w-full border-b border-site-border bg-site-surface/80 backdrop-blur-md">
+        <div className="mx-auto max-w-5xl flex items-center justify-between px-4 sm:px-6 py-3">
+          <Link href="/" className="flex items-center gap-2.5 group">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/icon.svg"
+              src="/logo-day.svg"
               alt="BugSnap"
-              className="w-7 h-7 object-contain"
+              className="w-7 h-7 object-contain transition-transform group-hover:scale-105 dark:hidden"
+            />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo-dark.svg"
+              alt="BugSnap"
+              className="w-7 h-7 object-contain transition-transform group-hover:scale-105 hidden dark:block"
             />
             <span className="text-base font-bold tracking-tight text-site-text">
               BugSnap
             </span>
           </Link>
 
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1.5 text-xs font-medium text-site-text-2 hover:text-site-text transition-colors px-2.5 py-1.5 rounded-md hover:bg-site-surface-2"
-          >
-            <IconArrowLeft size={14} strokeWidth={2} />
-            <span>{t("login.backToHome")}</span>
-          </Link>
+          <div className="flex items-center gap-2 sm:gap-3">
+            <SiteThemeToggle compact />
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-site-text-2 hover:text-site-text transition-colors px-2.5 py-1.5 rounded-lg hover:bg-site-surface-2 border border-transparent hover:border-site-border"
+            >
+              <Icon icon="lucide:arrow-left" className="w-3.5 h-3.5" aria-hidden="true" />
+              <span>{t("login.backToHome")}</span>
+            </Link>
+          </div>
         </div>
       </header>
 
-      {/* Main Form Content */}
-      <main className="flex-1 flex items-center justify-center px-4 sm:px-6 py-12">
-        <div className="w-full max-w-sm">
-          {/* Brand & Heading */}
-          <div className="flex flex-col items-center text-center mb-8">
-            <Link
-              href="/"
-              className="flex items-center justify-center w-12 h-12 rounded-xl bg-site-surface border border-site-border shadow-xs mb-4"
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/icon.svg" alt="BugSnap" className="w-7 h-7 object-contain" />
-            </Link>
-            <h1 className="text-2xl font-bold tracking-tight text-site-text">
-              {t("login.welcomeTitle")}
-            </h1>
-            <p className="text-xs text-site-text-2 mt-2 leading-relaxed">
-              {t("login.welcomeSubtitle")}
-            </p>
-          </div>
-
-          {/* Clean Card */}
-          <div className="rounded-xl border border-site-border bg-site-surface shadow-xs p-4 sm:p-6 space-y-5">
-            {/* Google SSO button */}
-            <button
-              onClick={signInWithGoogle}
-              disabled={signingIn}
-              className="w-full inline-flex items-center justify-center gap-2.5 px-4 py-2.5 rounded-lg bg-site-surface border border-site-border hover:border-site-text-2 hover:bg-site-surface-2 text-site-text text-xs font-semibold transition-colors shadow-2xs disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              <GoogleLogo className="w-4 h-4 shrink-0" />
-              <span>{signingIn ? t("login.connecting") : t("login.continueGoogle")}</span>
-            </button>
-
-            {error && (
-              <div
-                className="p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs text-center font-medium leading-relaxed"
-                role="alert"
+      {/* Main Authentication Card */}
+      <main className="relative z-10 flex-1 flex items-center justify-center px-4 sm:px-6 py-10 sm:py-16">
+        <div className="w-full max-w-[420px] min-w-0">
+          <div className="rounded-2xl border border-site-border bg-site-surface/95 backdrop-blur-md shadow-lg shadow-black/5 p-6 sm:p-8 space-y-6">
+            {/* Brand Header */}
+            <div className="flex flex-col items-center text-center">
+              <Link
+                href="/"
+                className="group flex items-center justify-center w-14 h-14 rounded-2xl bg-site-surface-2 border border-site-border shadow-xs mb-4 p-2.5 transition-transform hover:scale-105"
+                title="BugSnap"
               >
-                {error}
-              </div>
-            )}
-
-            <div className="pt-4 border-t border-site-border-subtle space-y-4">
-              <p className="text-[11px] text-site-text-2 text-center leading-relaxed">
-                {t("login.secureNote")}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/logo-day.svg"
+                  alt="BugSnap"
+                  className="w-full h-full object-contain dark:hidden"
+                />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/logo-dark.svg"
+                  alt="BugSnap"
+                  className="w-full h-full object-contain hidden dark:block"
+                />
+              </Link>
+              <h1 className="text-2xl font-bold tracking-tight text-site-text">
+                {t("login.welcomeTitle")}
+              </h1>
+              <p className="text-xs sm:text-sm text-site-text-2 mt-1.5 leading-relaxed max-w-xs">
+                {t("login.welcomeSubtitle")}
               </p>
+            </div>
 
-              {/* Feature trust strip */}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center text-[10px] text-site-text-2 font-mono">
-                <div className="p-2 rounded-md bg-site-surface-2 border border-site-border-subtle flex sm:flex-col items-center justify-between sm:justify-center gap-1">
-                  <span className="font-bold text-site-text">100%</span>
-                  <span className="text-[9px]">{t("login.badgeData")}</span>
+            {/* Google Single Sign-On Button */}
+            <div className="space-y-3">
+              <button
+                type="button"
+                onClick={signInWithGoogle}
+                disabled={signingIn}
+                className="w-full inline-flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-site-surface border border-site-border hover:border-site-text-2/40 hover:bg-site-surface-2 text-site-text text-sm font-semibold transition-all duration-150 shadow-xs hover:shadow active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+              >
+                {signingIn ? (
+                  <div className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin shrink-0" />
+                ) : (
+                  <GoogleLogo className="w-5 h-5 shrink-0" />
+                )}
+                <span>{signingIn ? t("login.connecting") : t("login.continueGoogle")}</span>
+              </button>
+
+              {error && (
+                <div
+                  className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs text-center font-medium leading-relaxed"
+                  role="alert"
+                >
+                  {error}
                 </div>
-                <div className="p-2 rounded-md bg-site-surface-2 border border-site-border-subtle flex sm:flex-col items-center justify-between sm:justify-center gap-1">
-                  <span className="font-bold text-accent">DevTools</span>
-                  <span className="text-[9px]">{t("login.badgeDevTools")}</span>
+              )}
+            </div>
+
+            {/* Secure Note & Terms */}
+            <p className="text-[11px] text-site-text-2 text-center leading-relaxed px-1">
+              {t("login.secureNote")}
+            </p>
+
+            {/* Feature Trust Strip */}
+            <div className="pt-4 border-t border-site-border-subtle">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <div className="p-2.5 rounded-xl bg-site-surface-2/70 border border-site-border-subtle flex sm:flex-col items-center justify-between sm:justify-center gap-1.5 text-center min-w-0">
+                  <div className="w-6 h-6 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                    <Icon icon="lucide:shield-check" className="w-3.5 h-3.5" aria-hidden="true" />
+                  </div>
+                  <span className="text-[10px] font-bold text-site-text leading-tight truncate sm:max-w-full">
+                    {t("login.badgeData")}
+                  </span>
                 </div>
-                <div className="p-2 rounded-md bg-site-surface-2 border border-site-border-subtle flex sm:flex-col items-center justify-between sm:justify-center gap-1">
-                  <span className="font-bold text-emerald-600 dark:text-emerald-400">Drive</span>
-                  <span className="text-[9px]">{t("login.badgeDrive")}</span>
+
+                <div className="p-2.5 rounded-xl bg-site-surface-2/70 border border-site-border-subtle flex sm:flex-col items-center justify-between sm:justify-center gap-1.5 text-center min-w-0">
+                  <div className="w-6 h-6 rounded-lg bg-accent/10 text-accent flex items-center justify-center shrink-0">
+                    <Icon icon="lucide:terminal" className="w-3.5 h-3.5" aria-hidden="true" />
+                  </div>
+                  <span className="text-[10px] font-bold text-site-text leading-tight truncate sm:max-w-full">
+                    {t("login.badgeDevTools")}
+                  </span>
+                </div>
+
+                <div className="p-2.5 rounded-xl bg-site-surface-2/70 border border-site-border-subtle flex sm:flex-col items-center justify-between sm:justify-center gap-1.5 text-center min-w-0">
+                  <div className="w-6 h-6 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                    <Icon icon="lucide:hard-drive" className="w-3.5 h-3.5" aria-hidden="true" />
+                  </div>
+                  <span className="text-[10px] font-bold text-site-text leading-tight truncate sm:max-w-full">
+                    {t("login.badgeDrive")}
+                  </span>
                 </div>
               </div>
             </div>
@@ -168,7 +214,7 @@ export default function LoginPage() {
       </main>
 
       {/* Footer */}
-      <footer className="w-full border-t border-site-border bg-site-surface py-5 px-4 sm:px-6">
+      <footer className="relative z-10 w-full border-t border-site-border bg-site-surface/80 backdrop-blur-md py-4 px-4 sm:px-6">
         <div className="mx-auto max-w-5xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-site-text-2">
           <p>© {new Date().getFullYear()} BugSnap. All rights reserved.</p>
           <div className="flex flex-wrap items-center justify-center gap-4">

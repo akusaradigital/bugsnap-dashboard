@@ -136,7 +136,7 @@ export function PricingToggle() {
           return (
             <Reveal key={tier.id} delay={i * 0.1} className="h-full">
               <div
-                className={`relative overflow-hidden group h-full rounded-xl border flex flex-col justify-between ${
+                className={`relative overflow-hidden group h-full rounded-xl border flex flex-col justify-between min-w-0 ${
                   tier.popular
                     ? "border-accent/70 bg-gradient-to-b from-site-surface via-site-surface to-accent/10 ring-1 ring-accent/60 shadow-md shadow-accent/10"
                     : "border-site-border bg-gradient-to-b from-site-surface via-site-surface to-site-surface-2/60 shadow-sm"
@@ -148,7 +148,7 @@ export function PricingToggle() {
                 )}
 
                 {/* Header Box */}
-                <div className="p-5 sm:p-6 border-b border-site-border-subtle bg-site-surface-2/40 relative">
+                <div className="p-4 sm:p-6 border-b border-site-border-subtle bg-site-surface-2/40 relative">
                   {tier.popular && (
                     <span className="absolute top-3 right-3 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-gradient-to-r from-accent to-emerald-400 text-slate-950 shadow-xs">
                       {t("pricing.mostPopular")}
@@ -180,11 +180,11 @@ export function PricingToggle() {
                 </div>
 
                 {/* Feature List */}
-                <div className="p-5 sm:p-6 flex-1">
+                <div className="p-4 sm:p-6 flex-1">
                   <ul className="space-y-3 text-xs text-site-text">
                     {tier.features.map((f, featureIdx) => (
                       <li key={featureIdx} className="flex items-start gap-2">
-                        <IconCheck size={14} className="text-accent mt-0.5 shrink-0" />
+                        <IconCheck size={14} className="text-accent mt-0.5 shrink-0" aria-hidden="true" />
                         <span className="leading-relaxed text-site-text-2">{f}</span>
                       </li>
                     ))}

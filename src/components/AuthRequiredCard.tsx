@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useT } from "@/components/I18nProvider";
+import { Icon } from "@/lib/iconify";
 
 const CHROME_WEB_STORE_URL = "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
 
@@ -15,7 +16,9 @@ export function AuthRequiredCard({ title }: { title?: string }) {
         {/* Brand Header */}
         <div className="flex items-center justify-center gap-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icon.svg" alt="BugSnap" className="w-9 h-9 object-contain" />
+          <img src="/logo-day.svg" alt="BugSnap" className="w-9 h-9 object-contain dark:hidden" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-dark.svg" alt="BugSnap" className="w-9 h-9 object-contain hidden dark:block" />
           <span className="text-xl font-bold tracking-tight text-foreground">BugSnap</span>
         </div>
 
@@ -52,8 +55,7 @@ export function AuthRequiredCard({ title }: { title?: string }) {
             rel="noopener noreferrer"
             className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-emerald-200 dark:border-emerald-800/40 bg-emerald-50 dark:bg-emerald-950/30 hover:bg-emerald-100 dark:hover:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 text-sm font-semibold transition-colors"
           >
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/icons/chrome.svg" alt="Chrome" className="w-4 h-4 shrink-0" />
+            <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
             {t("auth.downloadExtension")}
           </a>
         </div>

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-server";
 import { isRequestAdminAuthenticated } from "@/lib/admin-auth";
 import { sanitizeErrorMessage } from "@/lib/redact";
@@ -16,9 +16,21 @@ interface PingResult {
   details?: Record<string, unknown>;
 }
 
-export async function GET(req: Request) {
+let cachedPing: { data: unknown; timestamp: number } | null = null;
+const PING_CACHE_TTL_MS = 30_000; // 30s
+
+export async function GET(req: NextRequest) {
   if (!(await isRequestAdminAuthenticated(req))) {
     return NextResponse.json({ error: "Forbidden: Super Admin only" }, { status: 403 });
+  }
+
+  const searchParams = req.nextUrl?.searchParams || new URL(req.url).searchParams;
+  if (
+    cachedPing &&
+    Date.now() - cachedPing.timestamp < PING_CACHE_TTL_MS &&
+    !searchParams.get("fresh")
+  ) {
+    return NextResponse.json(cachedPing.data);
   }
 
   const results: PingResult[] = [];
@@ -33,7 +45,7 @@ export async function GET(req: Request) {
       results.push({
         id: "supabase",
         name: "Supabase DB & Auth",
-        icon: "⚡",
+        icon: "lucide:database",
         category: "Database & Session",
         status: "degraded",
         latencyMs,
@@ -43,7 +55,7 @@ export async function GET(req: Request) {
       results.push({
         id: "supabase",
         name: "Supabase DB & Auth",
-        icon: "⚡",
+        icon: "lucide:database",
         category: "Database & Session",
         status: "healthy",
         latencyMs,
@@ -54,7 +66,7 @@ export async function GET(req: Request) {
     results.push({
       id: "supabase",
       name: "Supabase DB & Auth",
-      icon: "⚡",
+      icon: "lucide:database",
       category: "Database & Session",
       status: "down",
       latencyMs: Date.now() - dbStart,
@@ -70,7 +82,7 @@ export async function GET(req: Request) {
     results.push({
       id: "gdrive",
       name: "Google Drive OAuth",
-      icon: "📁",
+      icon: "lucide:hard-drive",
       category: "Cloud Storage",
       status: "not_configured",
       latencyMs: 0,
@@ -78,7 +90,7 @@ export async function GET(req: Request) {
     });
   } else {
     try {
-      const res = await fetch("https://www.googleapis.com/oauth2/v1/tokeninfo?access_token=probe", {
+      const res = await fetch("https://googleapis.com/oauth2/v1/tokeninfo?access_token=probe", {
         signal: AbortSignal.timeout(4000),
       });
       const latencyMs = Date.now() - gdriveStart;
@@ -87,7 +99,7 @@ export async function GET(req: Request) {
         results.push({
           id: "gdrive",
           name: "Google Drive OAuth",
-          icon: "📁",
+          icon: "lucide:hard-drive",
           category: "Cloud Storage",
           status: "healthy",
           latencyMs,
@@ -97,7 +109,7 @@ export async function GET(req: Request) {
         results.push({
           id: "gdrive",
           name: "Google Drive OAuth",
-          icon: "📁",
+          icon: "lucide:hard-drive",
           category: "Cloud Storage",
           status: "degraded",
           latencyMs,
@@ -108,7 +120,7 @@ export async function GET(req: Request) {
       results.push({
         id: "gdrive",
         name: "Google Drive OAuth",
-        icon: "📁",
+        icon: "lucide:hard-drive",
         category: "Cloud Storage",
         status: "down",
         latencyMs: Date.now() - gdriveStart,
@@ -124,7 +136,7 @@ export async function GET(req: Request) {
     results.push({
       id: "resend",
       name: "Resend Email API",
-      icon: "✉️",
+      icon: "lucide:mail",
       category: "Notification & Email",
       status: "not_configured",
       latencyMs: 0,
@@ -141,7 +153,7 @@ export async function GET(req: Request) {
         results.push({
           id: "resend",
           name: "Resend Email API",
-          icon: "✉️",
+          icon: "lucide:mail",
           category: "Notification & Email",
           status: "healthy",
           latencyMs,
@@ -151,7 +163,7 @@ export async function GET(req: Request) {
         results.push({
           id: "resend",
           name: "Resend Email API",
-          icon: "✉️",
+          icon: "lucide:mail",
           category: "Notification & Email",
           status: "degraded",
           latencyMs,
@@ -162,7 +174,7 @@ export async function GET(req: Request) {
       results.push({
         id: "resend",
         name: "Resend Email API",
-        icon: "✉️",
+        icon: "lucide:mail",
         category: "Notification & Email",
         status: "down",
         latencyMs: Date.now() - resendStart,
@@ -186,7 +198,7 @@ export async function GET(req: Request) {
       results.push({
         id: "turnstile",
         name: "Cloudflare Turnstile",
-        icon: "🛡️",
+        icon: "lucide:shield-check",
         category: "Security & Anti-Bot",
         status: "healthy",
         latencyMs,
@@ -196,7 +208,7 @@ export async function GET(req: Request) {
       results.push({
         id: "turnstile",
         name: "Cloudflare Turnstile",
-        icon: "🛡️",
+        icon: "lucide:shield-check",
         category: "Security & Anti-Bot",
         status: "degraded",
         latencyMs,
@@ -207,7 +219,7 @@ export async function GET(req: Request) {
     results.push({
       id: "turnstile",
       name: "Cloudflare Turnstile",
-      icon: "🛡️",
+      icon: "lucide:shield-check",
       category: "Security & Anti-Bot",
       status: "down",
       latencyMs: Date.now() - cfStart,
@@ -229,7 +241,7 @@ export async function GET(req: Request) {
     results.push({
       id: "ai",
       name: "AI Summary Engine",
-      icon: "🤖",
+      icon: "lucide:bot",
       category: "Machine Learning",
       status: "not_configured",
       latencyMs: 0,
@@ -239,7 +251,7 @@ export async function GET(req: Request) {
     results.push({
       id: "ai",
       name: "AI Summary Engine",
-      icon: "🤖",
+      icon: "lucide:bot",
       category: "Machine Learning",
       status: "healthy",
       latencyMs: Date.now() - aiStart,
@@ -247,9 +259,13 @@ export async function GET(req: Request) {
     });
   }
 
-  return NextResponse.json({
+  const payload = {
     ok: true,
     timestamp: new Date().toISOString(),
     services: results,
-  });
+  };
+
+  cachedPing = { data: payload, timestamp: Date.now() };
+
+  return NextResponse.json(payload);
 }

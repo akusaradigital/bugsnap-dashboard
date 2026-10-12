@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useToast } from "@/components/Toast";
 import { useT } from "@/components/I18nProvider";
 import { getAdminHeaders, getAdminCache, setAdminCache } from "@/lib/admin-cache";
+import { Icon } from "@/lib/iconify";
 
 interface TableStat {
   schema_name: string;
@@ -87,11 +88,12 @@ export default function AdminSupabasePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  async function loadStats() {
+  async function loadStats(fresh = false) {
     setLoading(true);
     try {
       const headers = await getAdminHeaders();
-      const res = await fetch("/api/admin/supabase-stats", { headers });
+      const url = fresh ? "/api/admin/supabase-stats?fresh=true" : "/api/admin/supabase-stats";
+      const res = await fetch(url, { headers });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Gagal memuat statistik database.");
 
@@ -192,12 +194,12 @@ export default function AdminSupabasePage() {
             </span>
           )}
           <button
-            onClick={loadStats}
+            onClick={() => loadStats(true)}
             disabled={loading}
             className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3.5 py-2 text-xs font-medium text-foreground transition-colors hover:bg-subtle disabled:opacity-50"
           >
-            <span className={loading ? "animate-spin" : ""}>🔄</span>
-            {t("admin.supabase.refresh")}
+            <Icon icon="lucide:refresh-cw" className={`w-3.5 h-3.5 shrink-0 ${loading ? "animate-spin" : ""}`} />
+            <span>{t("admin.supabase.refresh")}</span>
           </button>
         </div>
       </div>
@@ -304,8 +306,9 @@ export default function AdminSupabasePage() {
             <span className="text-2xl font-black tracking-tight text-foreground sm:text-3xl">
               {stats?.performance.cache_hit_ratio ?? 100}%
             </span>
-            <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">
-              ⚡ RAM Cache
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+              <Icon icon="lucide:zap" className="w-3.5 h-3.5 shrink-0" />
+              <span>RAM Cache</span>
             </span>
           </div>
           <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-subtle">
@@ -373,11 +376,11 @@ export default function AdminSupabasePage() {
               className="inline-flex items-center gap-1.5 rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] px-3 py-1.5 text-xs font-semibold text-white shadow-xs shadow-[#89BD49]/25 transition-colors disabled:opacity-50"
             >
               {maintenanceLoading === "vacuum" ? (
-                <span className="animate-spin">🔄</span>
+                <Icon icon="lucide:loader-2" className="w-3.5 h-3.5 shrink-0 animate-spin" />
               ) : (
-                <span>🧹</span>
+                <Icon icon="lucide:sparkles" className="w-3.5 h-3.5 shrink-0" />
               )}
-              {t("admin.supabase.runVacuum")}
+              <span>{t("admin.supabase.runVacuum")}</span>
             </button>
             <button
               onClick={() => handleMaintenance("prune_views")}
@@ -385,11 +388,11 @@ export default function AdminSupabasePage() {
               className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-subtle px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:bg-border/60 disabled:opacity-50"
             >
               {maintenanceLoading === "prune_views" ? (
-                <span className="animate-spin">🔄</span>
+                <Icon icon="lucide:loader-2" className="w-3.5 h-3.5 shrink-0 animate-spin" />
               ) : (
-                <span>✂️</span>
+                <Icon icon="lucide:scissors" className="w-3.5 h-3.5 shrink-0" />
               )}
-              {t("admin.supabase.pruneViews")}
+              <span>{t("admin.supabase.pruneViews")}</span>
             </button>
           </div>
         </div>
@@ -493,7 +496,8 @@ export default function AdminSupabasePage() {
                       <td className="px-4 py-3 font-mono tabular-nums">
                         {hasDeadTuples ? (
                           <span className="inline-flex items-center gap-1 rounded bg-rose-500/10 px-1.5 py-0.5 font-semibold text-rose-600 dark:text-rose-400">
-                            ⚠️ {table.dead_rows}
+                            <Icon icon="lucide:alert-triangle" className="w-3 h-3 shrink-0" />
+                            <span>{table.dead_rows}</span>
                           </span>
                         ) : (
                           <span className="text-muted">{table.dead_rows}</span>

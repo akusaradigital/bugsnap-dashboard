@@ -4,6 +4,7 @@ import Link from "next/link";
 import { StaticShell } from "@/components/StaticShell";
 import { useT } from "@/components/I18nProvider";
 import { Reveal } from "@/components/site/motion";
+import { Icon } from "@/lib/iconify";
 import { CHROME_STORE_URL } from "@/lib/constants";
 
 export function StatusContent() {
@@ -102,8 +103,7 @@ export function StatusContent() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-accent-hover text-slate-900 text-xs font-semibold px-6 py-2.5 transition-all shadow-xs hover:shadow-md hover:scale-[1.01] active:scale-[0.99]"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/icons/chrome.svg" alt="" aria-hidden="true" className="w-4 h-4 shrink-0" />
+                  <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
                   <span>{t("status.installFree")}</span>
                 </a>
                 <Link

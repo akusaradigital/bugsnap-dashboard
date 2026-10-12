@@ -6,6 +6,7 @@ import { useT } from "@/components/I18nProvider";
 import { blogPosts, type BlogPost } from "@/content/blog";
 import { Reveal } from "@/components/site/motion/Reveal";
 import { IconCheck } from "@/components/site/TablerIcons";
+import { Icon } from "@/lib/iconify";
 
 export function BlogListContent() {
   const { t, locale } = useT();
@@ -105,9 +106,15 @@ export function BlogListContent() {
                       <div className="flex items-center gap-2 min-w-0">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
                         <img
-                          src="/icon.svg"
+                          src="/logo-day.svg"
                           alt="BugSnap"
-                          className="w-5 h-5 object-contain shrink-0"
+                          className="w-5 h-5 object-contain shrink-0 dark:hidden"
+                        />
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src="/logo-dark.svg"
+                          alt="BugSnap"
+                          className="w-5 h-5 object-contain shrink-0 hidden dark:block"
                         />
                         <span className="text-xs font-medium text-site-text-2 truncate">
                           {post.author}
@@ -130,7 +137,7 @@ export function BlogListContent() {
 
         {/* Soft Call to Action banner at the bottom of blog list */}
         <Reveal delay={0.3}>
-          <div className="relative overflow-hidden rounded-2xl border border-site-border bg-gradient-to-br from-site-surface via-site-surface to-site-surface-2 p-6 sm:p-10 shadow-sm max-w-4xl mx-auto">
+          <div className="relative overflow-hidden rounded-2xl border border-site-border bg-gradient-to-br from-site-surface via-site-surface to-site-surface-2 p-4 sm:p-8 shadow-sm max-w-4xl mx-auto">
             {/* Subtle ambient corner glow */}
             <div
               className="pointer-events-none absolute -top-12 -right-12 w-48 h-48 rounded-full opacity-40 blur-2xl"
@@ -142,9 +149,8 @@ export function BlogListContent() {
             <div className="relative z-10 grid grid-cols-1 md:grid-cols-12 gap-6 items-center text-left">
               {/* Left Column: Copy & CTAs */}
               <div className="md:col-span-7 space-y-4 min-w-0">
-                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-site-accent/10 border border-site-accent/20 text-[11px] font-bold uppercase tracking-wider text-site-accent">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/icons/chrome.svg" alt="" aria-hidden="true" className="w-3.5 h-3.5 shrink-0" />
+                <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-site-accent">
+                  <Icon icon="logos:chrome" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                   <span>BugSnap Chrome Extension</span>
                 </div>
 
@@ -161,19 +167,19 @@ export function BlogListContent() {
                 <ul className="space-y-1.5 text-xs text-site-text font-medium pt-1">
                   <li className="flex items-center gap-2">
                     <span className="w-4 h-4 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                      <IconCheck size={11} strokeWidth={3} />
+                      <IconCheck size={11} strokeWidth={3} aria-hidden="true" />
                     </span>
                     <span>{isId ? "Rekam layar & mikrofon instan" : "Screen & audio recording"}</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="w-4 h-4 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                      <IconCheck size={11} strokeWidth={3} />
+                      <IconCheck size={11} strokeWidth={3} aria-hidden="true" />
                     </span>
                     <span>{isId ? "Tangkap log console & network otomatis" : "Console & network DevTools capture"}</span>
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="w-4 h-4 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                      <IconCheck size={11} strokeWidth={3} />
+                      <IconCheck size={11} strokeWidth={3} aria-hidden="true" />
                     </span>
                     <span>{isId ? "Tersimpan aman di Google Drive Anda" : "Direct Google Drive file storage"}</span>
                   </li>
@@ -187,8 +193,7 @@ export function BlogListContent() {
                     rel="noopener noreferrer"
                     className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-accent hover:bg-accent-hover text-slate-900 text-xs font-bold transition-all shadow-sm shadow-accent/25 text-center"
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="/icons/chrome.svg" alt="" aria-hidden="true" className="w-4 h-4 shrink-0" />
+                    <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
                     <span>{t("blog.ctaButton") || "Install Extension — Free"}</span>
                   </a>
                   <Link
@@ -207,10 +212,12 @@ export function BlogListContent() {
                   <div className="flex items-center justify-between pb-2 border-b border-site-border-subtle">
                     <div className="flex items-center gap-2">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src="/icon.svg" alt="BugSnap" className="w-5 h-5 object-contain shrink-0" />
+                      <img src="/logo-day.svg" alt="BugSnap" className="w-5 h-5 object-contain shrink-0 dark:hidden" />
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src="/logo-dark.svg" alt="BugSnap" className="w-5 h-5 object-contain shrink-0 hidden dark:block" />
                       <span className="text-xs font-bold text-site-text">BugSnap</span>
                     </div>
-                    <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                    <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                       Active
                     </span>

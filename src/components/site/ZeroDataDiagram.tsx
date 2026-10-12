@@ -30,12 +30,8 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
 
       {/* Outer Card Container */}
       <div className="rounded-2xl border border-site-border bg-site-surface/60 p-5 md:p-7 backdrop-blur-sm shadow-sm">
-        {/* Header Badge & Title */}
+        {/* Header Title */}
         <div className="text-center mb-6">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-accent/10 border border-accent/30 text-accent font-medium text-xs tracking-tight mb-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
-            <span>Zero-Knowledge Architecture</span>
-          </div>
           <h3 className="text-site-text font-semibold text-base md:text-lg">
             Direct-to-Drive Data Flow
           </h3>
@@ -51,7 +47,7 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
           {/* Row of 3 Nodes + Interstitial Connectors */}
           <div className="flex items-stretch justify-between gap-2 relative">
             {/* NODE 1 - Your Browser */}
-            <div className="flex-1 rounded-xl border border-site-border bg-site-surface p-4 text-center flex flex-col items-center justify-between min-h-[160px] shadow-sm transition-transform hover:-translate-y-0.5">
+            <div className="flex-1 rounded-xl border border-site-border bg-site-surface p-4 text-center flex flex-col items-center justify-between min-h-[160px] shadow-sm transition-transform hover:-translate-y-0.5 min-w-0">
               <div className="w-full flex items-center justify-between text-[10px] text-muted font-mono mb-2">
                 <span className="flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
@@ -144,7 +140,7 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
 
             {/* ARROW 1→2 (Direct OAuth Connector) */}
             <div className="w-20 lg:w-24 flex-shrink-0 flex flex-col items-center justify-center px-1">
-              <div className="px-1.5 py-0.5 rounded-full bg-accent/10 border border-accent/30 text-accent font-medium text-[10px] tracking-tight whitespace-nowrap mb-1 flex items-center gap-1 shadow-sm">
+              <div className="px-2 py-0.5 rounded-md bg-accent/10 border border-accent/20 text-accent font-medium text-[10px] tracking-tight whitespace-nowrap mb-1 flex items-center gap-1 shadow-2xs">
                 <span className="w-1.5 h-1.5 rounded-full bg-accent animate-ping" />
                 <span>Direct OAuth</span>
               </div>
@@ -196,7 +192,7 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
             </div>
 
             {/* NODE 2 - Google Drive (Hero Node) */}
-            <div className="flex-1 rounded-xl border-2 border-accent/40 bg-accent/5 p-4 text-center flex flex-col items-center justify-between min-h-[160px] shadow-sm relative overflow-hidden transition-transform hover:-translate-y-0.5">
+            <div className="flex-1 rounded-xl border-2 border-accent/40 bg-accent/5 p-4 text-center flex flex-col items-center justify-between min-h-[160px] shadow-sm relative overflow-hidden transition-transform hover:-translate-y-0.5 min-w-0">
               <div className="w-full flex items-center justify-between text-[10px] text-accent font-mono mb-2">
                 <span className="px-1.5 py-0.2 rounded bg-accent/15 border border-accent/20">
                   PRIMARY
@@ -259,7 +255,7 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
             </div>
 
             {/* NODE 3 - BugSnap Server */}
-            <div className="flex-1 rounded-xl border border-site-border bg-site-surface-2 p-4 text-center opacity-70 flex flex-col items-center justify-between min-h-[160px] shadow-sm transition-opacity hover:opacity-90">
+            <div className="flex-1 rounded-xl border border-site-border bg-site-surface-2 p-4 text-center opacity-70 flex flex-col items-center justify-between min-h-[160px] shadow-sm transition-opacity hover:opacity-90 min-w-0">
               <div className="w-full flex items-center justify-between text-[10px] text-muted font-mono mb-2">
                 <span>METADATA</span>
                 <span>0 BYTES</span>
@@ -351,7 +347,7 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
 
             {/* Centered Label along the curved path */}
             <div className="absolute inset-x-0 bottom-1 flex justify-center pointer-events-none">
-              <span className="px-2.5 py-0.5 rounded-full bg-site-surface border border-site-border-subtle text-muted text-[11px] font-medium shadow-xs">
+              <span className="px-2 py-0.5 rounded-md bg-site-surface border border-site-border-subtle text-muted text-[11px] font-medium shadow-2xs">
                 Metadata only <span className="opacity-75">(no file data)</span>
               </span>
             </div>
@@ -378,7 +374,7 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
 
           {/* ARROW 1→2 (Vertical Direct OAuth) */}
           <div className="flex flex-col items-center py-1">
-            <div className="flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-accent/10 border border-accent/30 text-accent font-medium text-[11px] mb-1 shadow-sm">
+            <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-accent/10 border border-accent/20 text-accent font-medium text-[11px] mb-1 shadow-2xs">
               <span className="w-1.5 h-1.5 rounded-full bg-accent animate-ping" />
               <span>Direct OAuth</span>
             </div>
@@ -430,7 +426,7 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
 
           {/* ARROW 1→3 (Vertical Metadata Only) */}
           <div className="flex flex-col items-center py-1">
-            <div className="px-2.5 py-0.5 rounded-full bg-site-surface-2 border border-site-border-subtle text-muted text-[10px] font-medium mb-1">
+            <div className="px-2 py-0.5 rounded-md bg-site-surface-2 border border-site-border-subtle text-muted text-[10px] font-medium mb-1">
               Metadata only (no file data)
             </div>
             <svg

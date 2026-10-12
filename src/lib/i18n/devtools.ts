@@ -120,6 +120,12 @@ export const devtoolsEn: Dict = {
   "dt.memoryLeakWarning": "Potential memory leak: Heap memory escalated",
   "dt.domGrowth": "DOM Growth",
   "dt.heapGrowth": "Heap Growth",
+  "dt.slow": "Slow (>1s)",
+  "dt.slowDesc": "Requests taking longer than 1 second",
+  "dt.noSlowRequests": "All requests completed < 1.0s (Fast)",
+  "dt.noSlowRequestsDesc": "No network latency or bottleneck detected during capture.",
+  "dt.openGithubIssue": "Open in GitHub Issues",
+  "dt.promptGithubRepo": "Enter GitHub repository (owner/repo):",
 };
 
 export const devtoolsId: Dict = {
@@ -242,4 +248,10 @@ export const devtoolsId: Dict = {
   "dt.memoryLeakWarning": "Potensi kebocoran memori: Penggunaan heap memori meningkat",
   "dt.domGrowth": "Pertumbuhan DOM",
   "dt.heapGrowth": "Pertumbuhan Heap",
+  "dt.slow": "Lambat (>1d)",
+  "dt.slowDesc": "Permintaan yang memakan waktu lebih dari 1 detik",
+  "dt.noSlowRequests": "Semua request selesai < 1.0d (Cepat)",
+  "dt.noSlowRequestsDesc": "Tidak ada latency jaringan atau bottleneck yang terdeteksi saat sesi tangkapan.",
+  "dt.openGithubIssue": "Buka di GitHub Issues",
+  "dt.promptGithubRepo": "Masukkan repositori GitHub (owner/repo):",
 };

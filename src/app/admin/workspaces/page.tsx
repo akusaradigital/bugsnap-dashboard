@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useToast } from "@/components/Toast";
 import { useT } from "@/components/I18nProvider";
 import { getAdminHeaders } from "@/lib/admin-cache";
+import { Icon } from "@/lib/iconify";
 
 interface WorkspaceItem {
   id: string;
@@ -185,7 +186,7 @@ export default function AdminWorkspacesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-3 border-b border-slate-200 dark:border-zinc-800">
         <div>
           <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            <span>🏢 {t("admin.workspacesTitle")}</span>
+            <span className="flex items-center gap-2"><Icon icon="lucide:building-2" className="w-4 h-4 shrink-0 text-[#6B9A35] dark:text-[#A8D666]" /> {t("admin.workspacesTitle")}</span>
             <span className="text-xs px-2 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 font-normal">
               {totalCount.toLocaleString()} {t("admin.workspaces")}
             </span>
@@ -261,13 +262,15 @@ export default function AdminWorkspacesPage() {
                       {ws.owner_email || "-"}
                     </td>
                     <td className="py-3 px-4 whitespace-nowrap">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300">
-                        👥 {ws.member_count}
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300">
+                        <Icon icon="lucide:users" className="w-3 h-3 shrink-0" />
+                        <span>{ws.member_count}</span>
                       </span>
                     </td>
                     <td className="py-3 px-4 whitespace-nowrap">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40">
-                        📹 {ws.capture_count}
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40">
+                        <Icon icon="lucide:video" className="w-3 h-3 shrink-0" />
+                        <span>{ws.capture_count}</span>
                       </span>
                     </td>
                     <td className="py-3 px-4 whitespace-nowrap text-slate-500 dark:text-zinc-400">
@@ -282,10 +285,10 @@ export default function AdminWorkspacesPage() {
                         <button
                           type="button"
                           onClick={() => openWorkspaceDetail(ws)}
-                          className="px-2 py-1 rounded text-xs font-semibold border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
+                          className="px-2 py-1 rounded text-xs font-semibold border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors inline-flex items-center justify-center"
                           title="View Details"
                         >
-                          👁
+                          <Icon icon="lucide:eye" className="w-3.5 h-3.5 shrink-0" />
                         </button>
                         <button
                           type="button"
@@ -293,18 +296,19 @@ export default function AdminWorkspacesPage() {
                             setTransferWs(ws);
                             setNewOwnerEmail(ws.owner_email || "");
                           }}
-                          className="px-2.5 py-1 rounded text-xs font-semibold border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
+                          className="px-2.5 py-1 rounded text-xs font-semibold border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors inline-flex items-center gap-1"
                           title={t("admin.transferOwner")}
                         >
-                          ⇄ Owner
+                          <Icon icon="lucide:arrow-right-left" className="w-3 h-3 shrink-0" />
+                          <span>Owner</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDeleteWorkspace(ws)}
-                          className="px-2 py-1 rounded text-xs font-semibold border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                          className="px-2 py-1 rounded text-xs font-semibold border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors inline-flex items-center justify-center"
                           title={t("admin.deleteWorkspace")}
                         >
-                          🗑
+                          <Icon icon="lucide:trash-2" className="w-3.5 h-3.5 shrink-0" />
                         </button>
                       </div>
                     </td>
@@ -398,7 +402,7 @@ export default function AdminWorkspacesPage() {
             <div className="flex items-start justify-between border-b border-slate-100 dark:border-zinc-800 pb-3">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <span>🏢 {selectedWs.name}</span>
+                  <span className="flex items-center gap-1.5"><Icon icon="lucide:building-2" className="w-4 h-4 shrink-0 text-[#6B9A35] dark:text-[#A8D666]" /> {selectedWs.name}</span>
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-zinc-400 font-mono mt-0.5 break-all">
                   Owner: {selectedWs.owner_email || "-"} (ID: {selectedWs.id})
@@ -407,9 +411,10 @@ export default function AdminWorkspacesPage() {
               <button
                 type="button"
                 onClick={() => setSelectedWs(null)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-white text-base"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"
+                aria-label="Close"
               >
-                ✕
+                <Icon icon="lucide:x" className="w-4 h-4 shrink-0" />
               </button>
             </div>
 

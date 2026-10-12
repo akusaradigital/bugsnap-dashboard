@@ -63,16 +63,27 @@ export function SiteNavbar() {
         <Link href="/" className="flex items-center gap-2 group shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/icon.svg"
+            src="/logo-day.svg"
             alt=""
             aria-hidden="true"
-            className="w-6 h-6 object-contain transition-transform group-hover:scale-105"
+            width={24}
+            height={24}
+            className="w-6 h-6 object-contain transition-transform group-hover:scale-105 dark:hidden"
+          />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo-dark.svg"
+            alt=""
+            aria-hidden="true"
+            width={24}
+            height={24}
+            className="w-6 h-6 object-contain transition-transform group-hover:scale-105 hidden dark:block"
           />
           <span className="text-sm font-bold tracking-tight text-site-text">BugSnap</span>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden md:flex items-center gap-1 text-xs font-medium text-site-text-2">
+        <nav className="hidden lg:flex items-center gap-1 text-xs font-medium text-site-text-2">
           {navLinks.map((link) => {
             const isActive = pathname === link.href;
             return (
@@ -108,7 +119,14 @@ export function SiteNavbar() {
               className="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-site-border bg-site-surface hover:bg-site-surface-2 text-xs font-semibold text-site-text transition-all"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/icons/google.svg" alt="" aria-hidden="true" className="w-3.5 h-3.5 shrink-0" />
+              <img
+                src="/icons/google.svg"
+                alt=""
+                aria-hidden="true"
+                width={14}
+                height={14}
+                className="w-3.5 h-3.5 shrink-0"
+              />
               <span>Login with Google</span>
             </Link>
           )}
@@ -117,7 +135,7 @@ export function SiteNavbar() {
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-1.5 rounded-md text-site-text-2 hover:text-site-text hover:bg-site-surface-2 transition-colors"
+            className="lg:hidden p-1.5 rounded-md text-site-text-2 hover:text-site-text hover:bg-site-surface-2 transition-colors"
             aria-label="Toggle Navigation Menu"
             aria-expanded={mobileMenuOpen}
           >
@@ -128,7 +146,7 @@ export function SiteNavbar() {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-site-border bg-site-surface px-4 py-3 space-y-1 animate-in fade-in slide-in-from-top-2">
+        <div className="lg:hidden border-t border-site-border bg-site-surface px-4 py-3 space-y-1 animate-in fade-in slide-in-from-top-2">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -159,7 +177,14 @@ export function SiteNavbar() {
                 className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-site-text-2 hover:text-site-text hover:bg-site-surface-2/60"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/icons/google.svg" alt="" aria-hidden="true" className="w-4 h-4 shrink-0" />
+                <img
+                  src="/icons/google.svg"
+                  alt=""
+                  aria-hidden="true"
+                  width={16}
+                  height={16}
+                  className="w-4 h-4 shrink-0"
+                />
                 <span>Login with Google</span>
               </Link>
             </div>

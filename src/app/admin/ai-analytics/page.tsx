@@ -4,6 +4,18 @@ import { useEffect, useState } from "react";
 import { useToast } from "@/components/Toast";
 import { useT } from "@/components/I18nProvider";
 import { getAdminHeaders } from "@/lib/admin-cache";
+import { INTEGRATIONS } from "@/lib/integrations";
+import { Icon } from "@/lib/iconify";
+
+interface IntegrationDeliveryEntry {
+  success: number;
+  fail: number;
+  lastFailAt: string | null;
+  lastFailMessage: string | null;
+}
+
+const INTEGRATION_NAMES = Object.fromEntries(INTEGRATIONS.map((i) => [i.id, i.name]));
+const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 interface AiStats {
   totalSummaries: number;
@@ -55,6 +67,7 @@ export default function AdminAiAnalyticsPage() {
   const [aiStats, setAiStats] = useState<AiStats | null>(null);
   const [apiKeysStats, setApiKeysStats] = useState<ApiKeysStats | null>(null);
   const [webhooksStats, setWebhooksStats] = useState<WebhooksStats | null>(null);
+  const [deliveryStats, setDeliveryStats] = useState<Record<string, IntegrationDeliveryEntry>>({});
 
   useEffect(() => {
     loadAiAnalytics();
@@ -65,13 +78,19 @@ export default function AdminAiAnalyticsPage() {
     setLoading(true);
     try {
       const headers = await getAdminHeaders();
-      const res = await fetch("/api/admin/ai-analytics", { headers });
+      const [res, deliveryRes] = await Promise.all([
+        fetch("/api/admin/ai-analytics", { headers }),
+        fetch("/api/admin/integration-stats", { headers }),
+      ]);
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || t("admin.loadFailed"));
 
       setAiStats(json.aiStats || null);
       setApiKeysStats(json.apiKeysStats || null);
       setWebhooksStats(json.webhooksStats || null);
+
+      const deliveryJson = await deliveryRes.json().catch(() => null);
+      if (deliveryRes.ok && deliveryJson?.stats) setDeliveryStats(deliveryJson.stats);
     } catch (err: unknown) {
       showToast((err as Error)?.message || t("admin.loadFailed"), "error");
     } finally {
@@ -85,7 +104,7 @@ export default function AdminAiAnalyticsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-3 border-b border-slate-200 dark:border-zinc-800">
         <div>
           <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            <span>🤖 {t("admin.aiTitle")}</span>
+            <span className="flex items-center gap-2"><Icon icon="lucide:bot" className="w-4 h-4 shrink-0 text-purple-500" /> {t("admin.aiTitle")}</span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
             {t("admin.aiDesc")}
@@ -162,10 +181,11 @@ export default function AdminAiAnalyticsPage() {
         <div className="p-4 border-b border-slate-200 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div>
             <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
-              <span>🔥 Top AI Cost Drivers (Heavy Consumers)</span>
+              <span className="flex items-center gap-1.5"><Icon icon="lucide:flame" className="w-3.5 h-3.5 shrink-0 text-amber-500" /> Top AI Cost Drivers (Heavy Consumers)</span>
               {(aiStats?.topDrivers || []).some((d) => d.is_leech) && (
-                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-300 dark:border-amber-700 animate-pulse">
-                  ⚠ Free Tier Leech Detected
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-300 dark:border-amber-700 animate-pulse">
+                  <Icon icon="lucide:alert-triangle" className="w-3 h-3 shrink-0" />
+                  <span>Free Tier Leech Detected</span>
                 </span>
               )}
             </h3>
@@ -251,6 +271,84 @@ export default function AdminAiAnalyticsPage() {
         </div>
       </div>
 
+      {/* Integration Delivery Health */}
+      <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden">
+        <div className="p-4 border-b border-slate-200 dark:border-zinc-800">
+          <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
+            Integration Delivery Health
+          </h3>
+          <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">
+            Hasil &quot;Send to Integration&quot; dari semua capture - deteksi integrasi yang rutin gagal.
+          </p>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[10px]">
+              <tr>
+                <th className="py-3 px-4">Integration</th>
+                <th className="py-3 px-4">Success</th>
+                <th className="py-3 px-4">Fail</th>
+                <th className="py-3 px-4">Last Failure</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 dark:divide-zinc-800">
+              {Object.keys(deliveryStats).length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="p-8 text-center text-slate-400">
+                    Belum ada aktivitas pengiriman integrasi.
+                  </td>
+                </tr>
+              ) : (
+                Object.entries(deliveryStats)
+                  .sort(([, a], [, b]) => b.fail - a.fail || b.success - a.success)
+                  .map(([service, entry]) => {
+                    const recentFail =
+                      !!entry.lastFailAt && Date.now() - new Date(entry.lastFailAt).getTime() <= SEVEN_DAYS_MS;
+                    return (
+                      <tr key={service} className="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
+                        <td className="py-3 px-4 whitespace-nowrap font-bold text-slate-900 dark:text-white">
+                          {INTEGRATION_NAMES[service] || service}
+                          {recentFail && (
+                            <span className="ml-2 px-1.5 py-0.5 rounded text-[9px] font-bold uppercase bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400 border border-rose-200 dark:border-rose-900">
+                              Failing
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 whitespace-nowrap text-emerald-600 dark:text-emerald-400 font-mono">
+                          {entry.success}
+                        </td>
+                        <td className="py-3 px-4 whitespace-nowrap font-mono text-rose-600 dark:text-rose-400">
+                          {entry.fail}
+                        </td>
+                        <td className="py-3 px-4 min-w-0 max-w-[280px]">
+                          {entry.lastFailAt ? (
+                            <>
+                              <div className="text-[11px] text-slate-500 dark:text-zinc-400">
+                                {new Date(entry.lastFailAt).toLocaleString("id-ID", {
+                                  day: "2-digit",
+                                  month: "short",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                              </div>
+                              <div className="text-[10px] text-slate-400 break-all line-clamp-1" title={entry.lastFailMessage || ""}>
+                                {entry.lastFailMessage}
+                              </div>
+                            </>
+                          ) : (
+                            <span className="text-slate-400">-</span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
       {/* Two Columns: Recent AI Summaries & Active API Keys */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Recent AI Summaries Table */}
@@ -296,8 +394,12 @@ export default function AdminAiAnalyticsPage() {
                         <div className="font-bold text-slate-900 dark:text-white max-w-[200px] truncate">
                           {item.title || "Untitled Capture"}
                         </div>
-                        <div className="text-[10px] text-slate-400 font-mono">
-                          {item.type.includes("video") ? "📹 Video" : "📸 Screenshot"} • {item.id.slice(0, 10)}…
+                        <div className="text-[10px] text-slate-400 font-mono flex items-center gap-1 mt-0.5">
+                          <Icon
+                            icon={item.type.includes("video") ? "lucide:video" : "lucide:image"}
+                            className="w-3 h-3 shrink-0"
+                          />
+                          <span>{item.type.includes("video") ? "Video" : "Screenshot"} • {item.id.slice(0, 10)}…</span>
                         </div>
                       </td>
                       <td className="py-3 px-4 whitespace-nowrap text-slate-600 dark:text-zinc-400 font-mono text-[11px]">
@@ -314,9 +416,10 @@ export default function AdminAiAnalyticsPage() {
                           href={`/v/${item.id}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-[#6B9A35] hover:text-[#557A2B] dark:text-[#A8D666] dark:hover:text-[#C2E688] hover:underline text-[11px] font-semibold"
+                          className="text-[#6B9A35] hover:text-[#557A2B] dark:text-[#A8D666] dark:hover:text-[#C2E688] hover:underline text-[11px] font-semibold inline-flex items-center gap-1"
                         >
-                          Open ↗
+                          <span>Open</span>
+                          <Icon icon="lucide:external-link" className="w-3 h-3 shrink-0" />
                         </a>
                       </td>
                     </tr>

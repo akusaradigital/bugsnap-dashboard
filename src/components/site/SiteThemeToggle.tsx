@@ -2,7 +2,7 @@
 
 import { useTheme, type Theme } from "@/components/ThemeProvider";
 import { useT } from "@/components/I18nProvider";
-import { IconSun, IconDeviceDesktop, IconMoon } from "@/components/site/TablerIcons";
+import { Icon } from "@/lib/iconify";
 
 interface SiteThemeToggleProps {
   compact?: boolean;
@@ -17,10 +17,9 @@ export function SiteThemeToggle({ compact = false }: SiteThemeToggleProps) {
       id: "light",
       labelKey: "site.theme.day",
       icon: (active) => (
-        <IconSun
-          size={14}
-          strokeWidth={2}
-          className={`transition-colors ${active ? "text-amber-600 dark:text-amber-400" : "text-site-text-2"}`}
+        <Icon
+          icon="lucide:sun"
+          className={`w-3.5 h-3.5 transition-colors ${active ? "text-amber-600 dark:text-amber-400" : "text-site-text-2"}`}
         />
       ),
     },
@@ -28,10 +27,9 @@ export function SiteThemeToggle({ compact = false }: SiteThemeToggleProps) {
       id: "system",
       labelKey: "site.theme.system",
       icon: (active) => (
-        <IconDeviceDesktop
-          size={14}
-          strokeWidth={2}
-          className={`transition-colors ${active ? "text-site-text" : "text-site-text-2"}`}
+        <Icon
+          icon="lucide:monitor"
+          className={`w-3.5 h-3.5 transition-colors ${active ? "text-site-text" : "text-site-text-2"}`}
         />
       ),
     },
@@ -39,10 +37,9 @@ export function SiteThemeToggle({ compact = false }: SiteThemeToggleProps) {
       id: "dark",
       labelKey: "site.theme.dark",
       icon: (active) => (
-        <IconMoon
-          size={14}
-          strokeWidth={2}
-          className={`transition-colors ${active ? "text-indigo-500 dark:text-indigo-400" : "text-site-text-2"}`}
+        <Icon
+          icon="lucide:moon"
+          className={`w-3.5 h-3.5 transition-colors ${active ? "text-indigo-500 dark:text-indigo-400" : "text-site-text-2"}`}
         />
       ),
     },

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { IconCheck, IconCopy } from "./TablerIcons";
+import { Icon } from "@/lib/iconify";
 
 type IntegrationKey = "linear" | "jira" | "github" | "slack";
 
@@ -30,14 +31,21 @@ export function IntegrationSwitcher() {
             key={item.key}
             type="button"
             onClick={() => setActive(item.key)}
-            className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold border transition-all ${
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
               active === item.key
                 ? "border-accent bg-accent text-slate-900 shadow-sm"
                 : "border-site-border bg-site-surface text-site-text-2 hover:text-site-text hover:border-site-border-focus"
             }`}
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={item.iconSrc} alt="" className="w-4 h-4 object-contain" />
+            <img
+              src={item.iconSrc}
+              alt=""
+              width={16}
+              height={16}
+              decoding="async"
+              className="w-4 h-4 object-contain"
+            />
             <span>{item.label}</span>
           </button>
         ))}
@@ -65,20 +73,20 @@ export function IntegrationSwitcher() {
         <div className="p-4 sm:p-6">
           {active === "linear" && (
             <div className="space-y-4 animate-in fade-in duration-200">
-              <div className="flex items-center justify-between border-b border-site-border pb-3">
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded bg-violet-500/10 text-violet-600 dark:text-violet-400 font-mono text-xs font-bold">
+              <div className="flex items-center justify-between border-b border-site-border pb-3 gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="px-2 py-0.5 rounded bg-violet-500/10 text-violet-600 dark:text-violet-400 font-mono text-xs font-bold shrink-0">
                     ENG-1042
                   </span>
-                  <span className="text-sm font-bold text-site-text">Checkout button throws TypeError on $2,400 pay</span>
+                  <span className="text-sm font-bold text-site-text truncate min-w-0">Checkout button throws TypeError on $2,400 pay</span>
                 </div>
-                <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium">
+                <span className="text-xs px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400 font-medium shrink-0">
                   In Progress
                 </span>
               </div>
               <div className="text-xs font-mono text-site-text-2 space-y-2 bg-site-surface-2 p-4 rounded-xl border border-site-border">
                 <p className="text-site-text font-sans font-semibold">Reproduction Video & Context:</p>
-                <p className="text-emerald-600 dark:text-emerald-400">▶ https://bugsnap.akusaraproject.my.id/v/8f921a (00:14)</p>
+                <p className="text-emerald-600 dark:text-emerald-400 break-all">▶ https://bugsnap.akusaraproject.my.id/v/8f921a (00:14)</p>
                 <p className="text-red-500 font-bold mt-2">Console Error:</p>
                 <p className="text-site-text">Uncaught TypeError: Cannot read properties of undefined (reading &apos;token&apos;)</p>
                 <p className="text-site-text-2">at CheckoutButton.tsx:42:18</p>
@@ -91,23 +99,23 @@ export function IntegrationSwitcher() {
 
           {active === "jira" && (
             <div className="space-y-4 animate-in fade-in duration-200">
-              <div className="flex items-center justify-between border-b border-site-border pb-3">
-                <div className="flex items-center gap-2">
-                  <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 font-mono text-xs font-bold">
+              <div className="flex items-center justify-between border-b border-site-border pb-3 gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="px-2 py-0.5 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 font-mono text-xs font-bold shrink-0">
                     PROD-4891
                   </span>
-                  <span className="text-sm font-bold text-site-text">[BugSnap] HTTP 500 on POST /api/v1/charge</span>
+                  <span className="text-sm font-bold text-site-text truncate min-w-0">[BugSnap] HTTP 500 on POST /api/v1/charge</span>
                 </div>
-                <span className="text-xs px-2 py-0.5 rounded bg-red-500/10 text-red-600 dark:text-red-400 font-bold">
+                <span className="text-xs px-2 py-0.5 rounded bg-red-500/10 text-red-600 dark:text-red-400 font-bold shrink-0">
                   Priority: High
                 </span>
               </div>
               <div className="text-xs space-y-2 bg-site-surface-2 p-4 rounded-xl border border-site-border">
                 <div className="grid grid-cols-2 gap-2 pb-2 border-b border-site-border text-[11px]">
-                  <div><span className="text-site-text-2">Reporter:</span> <span className="font-semibold text-site-text">Sarah (QA Lead)</span></div>
+                  <div><span className="text-site-text-2">Reporter:</span> <span className="font-semibold text-site-text">Joe (QA Lead)</span></div>
                   <div><span className="text-site-text-2">Environment:</span> <span className="font-semibold text-site-text">Staging EU-West</span></div>
                 </div>
-                <p className="font-mono text-emerald-600 dark:text-emerald-400">Attached Drive Capture: bugsnap-session-2026-09.webm (12.4 MB)</p>
+                <p className="font-mono text-emerald-600 dark:text-emerald-400 break-all">Attached Drive Capture: bugsnap-session-2026-09.webm (12.4 MB)</p>
                 <p className="font-mono text-red-500 text-[11px]">HTTP 500 Internal Server Error (812ms response latency)</p>
               </div>
             </div>
@@ -115,18 +123,18 @@ export function IntegrationSwitcher() {
 
           {active === "github" && (
             <div className="space-y-4 animate-in fade-in duration-200">
-              <div className="flex items-center gap-2 border-b border-site-border pb-3">
-                <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold">
+              <div className="flex items-center gap-2 border-b border-site-border pb-3 min-w-0">
+                <span className="text-xs px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 font-bold shrink-0">
                   ● Open
                 </span>
-                <span className="text-sm font-bold text-site-text">fix(checkout): unhandled promise rejection in token parse #329</span>
+                <span className="text-sm font-bold text-site-text truncate min-w-0">fix(checkout): unhandled promise rejection in token parse #329</span>
               </div>
               <div className="text-xs font-mono text-site-text-2 bg-site-surface-2 p-4 rounded-xl border border-site-border space-y-2">
                 <p className="text-site-text font-sans font-semibold">### Steps to Reproduce</p>
                 <p>1. Open /checkout with cart item &gt; $1,000</p>
                 <p>2. Click Pay Now without pre-selected address</p>
                 <p className="text-site-text font-sans font-semibold pt-2">### Automated Diagnostics</p>
-                <p className="text-emerald-600 dark:text-emerald-400">[Watch Session Video](https://bugsnap.akusaraproject.my.id/v/8f921a)</p>
+                <p className="text-emerald-600 dark:text-emerald-400 break-all">[Watch Session Video](https://bugsnap.akusaraproject.my.id/v/8f921a)</p>
                 <div className="p-2 rounded bg-site-surface border border-site-border text-[10px] text-red-500">
                   TypeError: authPayload.token is undefined at line 42
                 </div>
@@ -146,8 +154,11 @@ export function IntegrationSwitcher() {
                 </div>
               </div>
               <div className="border-l-4 border-red-500 pl-3 py-1 space-y-1.5 text-xs bg-site-surface-2 p-3 rounded-r-lg">
-                <p className="font-bold text-site-text">🚨 New Critical Bug Recorded in #checkout-staging</p>
-                <p className="text-site-text-2">Sarah captured an error on <span className="font-mono text-site-text">app.acme.corp/checkout</span></p>
+                <p className="font-bold text-site-text flex items-center gap-1.5">
+                  <Icon icon="lucide:alert-circle" className="w-4 h-4 text-red-500 shrink-0" />
+                  <span>New Critical Bug Recorded in #checkout-staging</span>
+                </p>
+                <p className="text-site-text-2">Joe captured an error on <span className="font-mono text-site-text">app.acme.corp/checkout</span></p>
                 <div className="flex flex-wrap items-center gap-2 pt-1">
                   <a
                     href="https://bugsnap.akusaraproject.my.id"

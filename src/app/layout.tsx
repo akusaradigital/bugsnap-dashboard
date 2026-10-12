@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { I18nProvider } from "@/components/I18nProvider";
 import { ToastProvider } from "@/components/Toast";
@@ -81,6 +81,15 @@ export const metadata: Metadata = {
     "google-site-verification": "googlee6dec3ee74d840e8.html",
   },
   category: "technology",
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#89BD49" },
+    { media: "(prefers-color-scheme: dark)", color: "#0b0f16" },
+  ],
 };
 
 const jsonLd = {
@@ -170,6 +179,16 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <meta
+          name="theme-color"
+          content="#89BD49"
+          media="(prefers-color-scheme: light)"
+        />
+        <meta
+          name="theme-color"
+          content="#0b0f16"
+          media="(prefers-color-scheme: dark)"
+        />
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

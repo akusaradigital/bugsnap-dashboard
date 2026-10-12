@@ -9,12 +9,13 @@ import { type CapturedLogs } from "@/components/DevToolsPanel";
 import { isIgnoredUrl } from "@/lib/ignored-urls";
 import { timeAgo } from "@/lib/capture-utils";
 import Comments from "@/components/Comments";
-import MediaViewer, { ErrorMarker } from "@/components/MediaViewer";
+import MediaViewer, { type ErrorMarker } from "@/components/MediaViewer";
 import CaptureFooter from "@/components/CaptureFooter";
 import { useT } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
 import { Dropdown } from "@/components/Dropdown";
 import { SubsystemErrorBoundary } from "@/components/SubsystemErrorBoundary";
+import { Icon } from "@/lib/iconify";
 
 const DevToolsPanel = dynamic(() => import("@/components/DevToolsPanel"), {
   ssr: false,
@@ -118,7 +119,7 @@ function WebsiteFavicon({ url, className }: { url?: string | null; className?: s
 
   if (!url || failed || sources.length === 0 || srcIndex >= sources.length) {
     return (
-      <img src="/icons/globe.svg" alt="" className={className || "h-3.5 w-3.5 shrink-0"} />
+      <Icon icon="lucide:globe" className={className || "h-3.5 w-3.5 shrink-0"} />
     );
   }
 
@@ -1148,7 +1149,9 @@ function SingleViewContent() {
             ) : (
               <>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/icon.svg" alt="BugSnap" className="w-8 h-8 shrink-0 object-contain transition-transform duration-200 group-hover:scale-105" />
+                <img src="/logo-day.svg" alt="BugSnap" className="w-8 h-8 shrink-0 object-contain transition-transform duration-200 group-hover:scale-105 dark:hidden" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo-dark.svg" alt="BugSnap" className="w-8 h-8 shrink-0 object-contain transition-transform duration-200 group-hover:scale-105 hidden dark:block" />
                 <div className="min-w-0">
                   <span className="text-sm font-bold tracking-tight text-foreground leading-none truncate block">{brand.name}</span>
                 </div>
@@ -1158,7 +1161,9 @@ function SingleViewContent() {
           {!brand.hideWatermark && (brand.logo || brand.name !== "BugSnap") && (
             <span className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-medium text-muted bg-subtle/80 border border-border shrink-0 select-none shadow-2xs">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/icon.svg" alt="" className="w-3 h-3 object-contain opacity-70" />
+              <img src="/logo-day.svg" alt="" className="w-3 h-3 object-contain opacity-70 dark:hidden" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo-dark.svg" alt="" className="w-3 h-3 object-contain opacity-70 hidden dark:block" />
               <span>Powered by BugSnap</span>
             </span>
           )}
@@ -1181,12 +1186,17 @@ function SingleViewContent() {
                     className="h-4 w-4 object-contain"
                     onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/icons/link.svg"; }}
                   />
-                  <span className="truncate hidden md:inline">
-                    {sendingIntegration === configuredIntegrations[0].id
-                      ? "Sending..."
-                      : sentIntegrations[configuredIntegrations[0].id]
-                      ? `Sent to ${configuredIntegrations[0].name} ✓`
-                      : `Send to ${configuredIntegrations[0].name}`}
+                  <span className="truncate hidden md:inline flex items-center gap-1">
+                    {sendingIntegration === configuredIntegrations[0].id ? (
+                      "Sending..."
+                    ) : sentIntegrations[configuredIntegrations[0].id] ? (
+                      <>
+                        <span>{`Sent to ${configuredIntegrations[0].name}`}</span>
+                        <Icon icon="lucide:check" className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0 inline" />
+                      </>
+                    ) : (
+                      `Send to ${configuredIntegrations[0].name}`
+                    )}
                   </span>
                 </button>
               )}
@@ -1197,14 +1207,12 @@ function SingleViewContent() {
                     onClick={() => setIntegrationMenuOpen((o) => !o)}
                     className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-white dark:bg-background px-3 sm:px-3.5 py-1.5 sm:py-2 text-xs font-semibold text-foreground shadow-xs hover:bg-subtle cursor-pointer"
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="/icons/send.svg" alt="" className="h-4 w-4 shrink-0" />
+                    <Icon icon="lucide:send" className="h-4 w-4 shrink-0" />
                     <span className="hidden md:inline">Push to Integration</span>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="/icons/chevron-down.svg" alt="" className={`h-3 w-3 transition-transform ${integrationMenuOpen ? "rotate-180" : ""}`} />
+                    <Icon icon="lucide:chevron-down" className={`h-3 w-3 transition-transform ${integrationMenuOpen ? "rotate-180" : ""}`} />
                   </button>
                   {integrationMenuOpen && (
-                    <div className="absolute right-0 top-full z-50 mt-2 w-52 rounded-xl border border-border bg-white dark:bg-background p-1 shadow-xl space-y-0.5">
+                    <div className="absolute left-0 sm:left-auto sm:right-0 top-full z-50 mt-2 w-52 max-w-[calc(100vw-2rem)] rounded-xl border border-border bg-white dark:bg-background p-1 shadow-xl space-y-0.5">
                       {configuredIntegrations.map((intItem) => (
                         <button
                           key={intItem.id}
@@ -1224,7 +1232,10 @@ function SingleViewContent() {
                             {sendingIntegration === intItem.id ? "Sending..." : intItem.name}
                           </span>
                           {sentIntegrations[intItem.id] && (
-                            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold">✓ Sent</span>
+                            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold inline-flex items-center gap-1">
+                              <Icon icon="lucide:check" className="w-3 h-3 shrink-0" />
+                              <span>Sent</span>
+                            </span>
                           )}
                         </button>
                       ))}
@@ -1239,8 +1250,7 @@ function SingleViewContent() {
                     onClick={() => { setMoveSubmenuOpen((o) => !o); if (capFolders.length === 0) loadCapFolders(); }}
                     className="inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg border border-border bg-white dark:bg-background px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs font-semibold text-foreground shadow-xs hover:bg-subtle cursor-pointer transition-colors"
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src="/icons/folder.svg" alt="" className="h-4 w-4 shrink-0" />
+                    <Icon icon="lucide:folder" className="h-4 w-4 shrink-0" />
                     <span className="truncate max-w-[80px] sm:max-w-none hidden xs:inline">{capture?.folder_name || t("v.moveToFolder")}</span>
                   </button>
                   {moveSubmenuOpen && (
@@ -1252,7 +1262,7 @@ function SingleViewContent() {
                         className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50 cursor-pointer ${!capture?.folder_name ? "font-semibold text-[#6B9A35] dark:text-[#A8D666] bg-[#89BD49]/10 dark:bg-[#89BD49]/20" : ""}`}
                       >
                         <span>{t("v.noFolder")}</span>
-                        {!capture?.folder_name && <span className="text-xs">✓</span>}
+                        {!capture?.folder_name && <Icon icon="lucide:check" className="w-3.5 h-3.5 shrink-0" />}
                       </button>
                       {capFolders.map((folder) => {
                         const isCurrent = capture?.folder_name === folder;
@@ -1265,7 +1275,7 @@ function SingleViewContent() {
                             className={`w-full flex items-center justify-between truncate rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50 cursor-pointer ${isCurrent ? "font-semibold text-[#6B9A35] dark:text-[#A8D666] bg-[#89BD49]/10 dark:bg-[#89BD49]/20" : ""}`}
                           >
                             <span className="truncate">{folder}</span>
-                            {isCurrent && <span className="text-xs shrink-0 ml-1">✓</span>}
+                            {isCurrent && <Icon icon="lucide:check" className="w-3.5 h-3.5 shrink-0 ml-1" />}
                           </button>
                         );
                       })}
@@ -1285,8 +1295,7 @@ function SingleViewContent() {
                 onClick={handleCopyLink}
                 className="inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg bg-[#89BD49] px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs font-semibold text-white shadow-xs shadow-[#89BD49]/25 hover:bg-[#6B9A35] transition cursor-pointer"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/icons/link-white.svg" alt="" className="h-4 w-4 shrink-0" />
+                <Icon icon="lucide:link" className="h-4 w-4 shrink-0" />
                 <span className="hidden xs:inline">{copied ? t("v.copied") : t("v.copyLinkBtn")}</span>
                 <span className="xs:hidden">{copied ? t("v.copied") : "Copy"}</span>
               </button>
@@ -1332,9 +1341,7 @@ function SingleViewContent() {
           {status === "notfound" && (
             <div className="relative w-full max-w-md mx-auto rounded-3xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle/80 backdrop-blur-xl shadow-2xl shadow-slate-200/60 dark:shadow-none p-5 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
               <div className="relative mx-auto mb-5 flex items-center justify-center w-16 h-16 rounded-2xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200/60 dark:border-amber-900/50 text-amber-600 dark:text-amber-400 shadow-xs">
-                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <Icon icon="lucide:circle-alert" className="w-8 h-8" />
               </div>
 
               <span className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase bg-slate-100 dark:bg-zinc-800 text-muted mb-3 border border-border/60">
@@ -1368,9 +1375,7 @@ function SingleViewContent() {
           {status === "expired" && (
             <div className="relative w-full max-w-md mx-auto rounded-3xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle/80 backdrop-blur-xl shadow-2xl shadow-slate-200/60 dark:shadow-none p-5 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
               <div className="relative mx-auto mb-5 flex items-center justify-center w-16 h-16 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200/60 dark:border-red-900/50 text-red-600 dark:text-red-400 shadow-xs">
-                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <Icon icon="lucide:clock" className="w-8 h-8" />
               </div>
 
               <span className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 mb-3 border border-red-200/60 dark:border-red-900/60">
@@ -1404,9 +1409,7 @@ function SingleViewContent() {
           {status === "unauthorized_ip" && (
             <div className="relative w-full max-w-md mx-auto rounded-3xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle/80 backdrop-blur-xl shadow-2xl shadow-slate-200/60 dark:shadow-none p-5 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
               <div className="relative mx-auto mb-5 flex items-center justify-center w-16 h-16 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200/60 dark:border-red-900/50 text-red-600 dark:text-red-400 shadow-xs">
-                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m0 0v2m0-2h2m-2 0H10m11-3.5a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
+                <Icon icon="lucide:shield-alert" className="w-8 h-8" />
               </div>
 
               <span className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 mb-3 border border-red-200/60 dark:border-red-900/60">
@@ -1432,9 +1435,7 @@ function SingleViewContent() {
           {status === "needs_login" && (
             <div className="relative w-full max-w-md mx-auto rounded-3xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle/80 backdrop-blur-xl shadow-2xl shadow-slate-200/60 dark:shadow-none p-5 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
               <div className="relative mx-auto mb-5 flex items-center justify-center w-16 h-16 rounded-2xl bg-[#89BD49]/10 dark:bg-[#89BD49]/20 border border-[#89BD49]/30 dark:border-[#89BD49]/40 text-[#6B9A35] dark:text-[#A8D666] shadow-xs">
-                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                </svg>
+                <Icon icon="lucide:lock" className="w-8 h-8" />
               </div>
 
               <span className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] mb-3 border border-[#89BD49]/30 dark:border-[#89BD49]/40">
@@ -1468,9 +1469,7 @@ function SingleViewContent() {
           {status === "unauthorized_domain" && (
             <div className="relative w-full max-w-md mx-auto rounded-3xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle/80 backdrop-blur-xl shadow-2xl shadow-slate-200/60 dark:shadow-none p-5 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
               <div className="relative mx-auto mb-5 flex items-center justify-center w-16 h-16 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200/60 dark:border-red-900/50 text-red-600 dark:text-red-400 shadow-xs">
-                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                </svg>
+                <Icon icon="lucide:ban" className="w-8 h-8" />
               </div>
 
               <span className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase bg-red-50 dark:bg-red-950/50 text-red-600 dark:text-red-400 mb-3 border border-red-200/60 dark:border-red-900/60">
@@ -1496,9 +1495,7 @@ function SingleViewContent() {
           {status === "locked" && (
             <div className="relative w-full max-w-md mx-auto rounded-3xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle/80 backdrop-blur-xl shadow-2xl shadow-slate-200/60 dark:shadow-none p-5 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
               <div className="relative mx-auto mb-5 flex items-center justify-center w-16 h-16 rounded-2xl bg-[#89BD49]/10 dark:bg-[#89BD49]/20 border border-[#89BD49]/30 dark:border-[#89BD49]/40 text-[#6B9A35] dark:text-[#A8D666] shadow-xs">
-                <svg className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.75}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
-                </svg>
+                <Icon icon="lucide:lock" className="w-8 h-8" />
               </div>
 
               <span className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase bg-slate-100 dark:bg-zinc-800 text-muted mb-3 border border-border/60">
@@ -1602,7 +1599,7 @@ function SingleViewContent() {
                       </h2>
                       {isTeamMember && (
                         <span className="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity text-xs font-medium text-muted flex items-center gap-1 shrink-0 mt-0.5 rounded-md border border-border/60 bg-white dark:bg-background px-2 py-0.5 shadow-sm">
-                          <img src="/icons/edit.svg" alt="" className="h-3.5 w-3.5" />
+                          <Icon icon="lucide:pencil" className="h-3.5 w-3.5" />
                           Edit
                         </span>
                       )}
@@ -1631,7 +1628,15 @@ function SingleViewContent() {
                       ) : null}
                       <span>•</span>
                       <span>{new Date(capture.created_at).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: "Asia/Jakarta", timeZoneName: "short" })}</span>
-                      {viewCount !== null && <><span>•</span><span>{t("v.viewCount", { count: viewCount })}</span></>}
+                      {viewCount !== null && (
+                        <>
+                          <span>•</span>
+                          <span className="inline-flex items-center gap-1">
+                            <Icon icon="lucide:eye" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                            <span>{t("v.viewCount", { count: viewCount })}</span>
+                          </span>
+                        </>
+                      )}
                       {/* Only shown when the error actually repeats: a badge reading
                           "Reported 1×" on every capture would be noise, not signal. */}
                       {occurrence && occurrence.occurrences > 1 && (
@@ -1639,9 +1644,7 @@ function SingleViewContent() {
                           title={t("v.occurrencesHint")}
                           className="inline-flex min-w-0 items-center gap-1.5 rounded-md border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 font-medium text-amber-700 dark:text-amber-400"
                         >
-                          <svg className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z" />
-                          </svg>
+                          <Icon icon="lucide:alert-triangle" className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                           <span className="truncate">
                             {t("v.occurrences", { count: occurrence.occurrences })}
                             {occurrence.last_seen ? ` · ${t("v.occurrencesLastSeen", { ago: timeAgo(occurrence.last_seen, t) })}` : ""}
@@ -1651,7 +1654,7 @@ function SingleViewContent() {
                     </div>
                     {capture.expires_at && <p className="mt-2 text-[11px] font-medium text-muted">{getExpiryCountdown(capture.expires_at, t)}</p>}
                   </div>
-                  <div className="border-t border-border pt-3">
+                  <div className="border-t border-border pt-3 min-w-0">
                     <SubsystemErrorBoundary fallbackTitle="Comments unavailable" fallbackDescription="An unexpected error occurred while loading comments.">
                       <Comments
                         captureId={capture.id}
@@ -1697,8 +1700,8 @@ function SingleViewContent() {
                         <label className="mb-2 block text-xs font-semibold text-muted">{t("v.generalAccess")}</label>
                         <div ref={accessMenuRef} className="relative">
                           <button type="button" onClick={() => setAccessOpen((open) => !open)} className="flex w-full items-center justify-between rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-subtle">
-                            <span className="flex items-center gap-2"><img src="/icons/globe.svg" alt="" className="h-4 w-4" />{accessMode === "members" ? t("v.membersOnly") : t("v.anyoneWithLink")}</span>
-                            <img src="/icons/chevron-down.svg" alt="" className="h-3 w-3" />
+                            <span className="flex items-center gap-2"><Icon icon="lucide:globe" className="h-4 w-4" />{accessMode === "members" ? t("v.membersOnly") : t("v.anyoneWithLink")}</span>
+                            <Icon icon="lucide:chevron-down" className="h-3 w-3" />
                           </button>
                           {accessOpen && (
                             <div className="absolute left-0 right-0 top-full z-50 mt-2 rounded-xl border border-border bg-white dark:bg-zinc-900 p-1 shadow-xl">
@@ -1712,7 +1715,7 @@ function SingleViewContent() {
                   </div>
                   <div className="mt-6 pt-2">
                     <button type="button" onClick={handleCopyLink} className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] py-3 text-sm font-semibold text-white shadow-xs shadow-[#89BD49]/25">
-                      <img src="/icons/link-white.svg" alt="" className="h-4 w-4" />
+                      <Icon icon="lucide:link" className="h-4 w-4" />
                       {copied ? t("v.copiedLink") : t("v.copyLinkBtn")}
                     </button>
                     {isWorkspaceOwner && (
@@ -1721,7 +1724,7 @@ function SingleViewContent() {
                         onClick={handleDeleteCapture}
                         className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 dark:border-red-900/60 bg-white dark:bg-red-950/20 py-2.5 text-xs font-semibold text-red-600 dark:text-red-400 shadow-sm hover:bg-red-50 dark:hover:bg-red-950/40 hover:border-red-300 dark:hover:border-red-800 transition-colors"
                       >
-                        <img src="/icons/trash.svg" alt="" className="h-3.5 w-3.5" />
+                        <Icon icon="lucide:trash-2" className="h-3.5 w-3.5" />
                         {t("v.deleteCapture")}
                       </button>
                     )}
@@ -1811,10 +1814,7 @@ function SingleViewContent() {
               <button onClick={handleSaveEdit} disabled={savingEdit} className="px-4 py-2 text-xs font-semibold bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-xs shadow-[#89BD49]/25 rounded-lg disabled:opacity-50 min-w-[125px] inline-flex items-center justify-center gap-1.5">
                 {savingEdit ? (
                   <>
-                    <svg className="w-3.5 h-3.5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
+                    <Icon icon="lucide:loader-circle" className="w-3.5 h-3.5 animate-spin text-white" />
                     <span>{t("v.saving")}</span>
                   </>
                 ) : (
@@ -1833,7 +1833,7 @@ function SingleViewContent() {
           <div className="absolute inset-0 bg-black/40" onClick={() => { if (!deletingCapture) { setDeleteCaptureModalOpen(false); setDeleteOperationId(null); } }} />
           <div className="relative w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-xl bg-white dark:bg-zinc-900 shadow-xl border border-border p-6 text-center">
             <div className="mx-auto mb-4 w-12 h-12 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 flex items-center justify-center text-red-600 dark:text-red-400">
-              <img src="/icons/trash.svg" alt="" className="w-6 h-6" />
+              <Icon icon="lucide:trash-2" className="w-6 h-6" />
             </div>
             <h2 className="text-lg font-bold text-foreground mb-2">{t("v.deleteCaptureQ")}</h2>
             <p className="text-xs text-muted leading-relaxed mb-4">

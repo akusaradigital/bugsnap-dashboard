@@ -7,6 +7,7 @@ import { useT } from "@/components/I18nProvider";
 import { getBlogPost, blogPosts, type BlogPost } from "@/content/blog";
 import { Reveal } from "@/components/site/motion/Reveal";
 import { IconCheck } from "@/components/site/TablerIcons";
+import { Icon } from "@/lib/iconify";
 
 const PROSE_CLASSES = [
   "[&_h2]:text-xl [&_h2]:sm:text-2xl [&_h2]:font-bold [&_h2]:text-site-text [&_h2]:mt-10 [&_h2]:mb-4 [&_h2]:tracking-tight",
@@ -106,7 +107,7 @@ export function BlogPostContent({ slug }: { slug: string }) {
             <Reveal delay={0.06}>
               <header className="space-y-4">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs font-bold tracking-widest uppercase text-site-accent px-2.5 py-0.5 rounded-full bg-site-accent/10 border border-site-accent/20">
+                  <span className="text-xs font-bold tracking-widest uppercase text-site-accent">
                     {t("blog.badge") || "BugSnap Blog"}
                   </span>
                   {post.tags.map((tag: string) => (
@@ -128,9 +129,15 @@ export function BlogPostContent({ slug }: { slug: string }) {
                   <div className="flex items-center gap-2">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src="/icon.svg"
+                      src="/logo-day.svg"
                       alt="BugSnap"
-                      className="w-5 h-5 object-contain shrink-0"
+                      className="w-5 h-5 object-contain shrink-0 dark:hidden"
+                    />
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="/logo-dark.svg"
+                      alt="BugSnap"
+                      className="w-5 h-5 object-contain shrink-0 hidden dark:block"
                     />
                     <span className="font-semibold text-site-text">
                       {post.author}
@@ -201,9 +208,8 @@ export function BlogPostContent({ slug }: { slug: string }) {
                 <div className="relative z-10 grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
                   {/* Left Column: Copy & CTAs */}
                   <div className="md:col-span-7 space-y-4 min-w-0">
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-site-accent/10 border border-site-accent/20 text-[11px] font-bold uppercase tracking-wider text-site-accent">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src="/icons/chrome.svg" alt="" aria-hidden="true" className="w-3.5 h-3.5 shrink-0" />
+                    <div className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-site-accent">
+                      <Icon icon="logos:chrome" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                       <span>BugSnap Chrome Extension</span>
                     </div>
 
@@ -246,8 +252,7 @@ export function BlogPostContent({ slug }: { slug: string }) {
                         rel="noopener noreferrer"
                         className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-accent hover:bg-accent-hover text-slate-900 text-xs font-bold transition-all shadow-sm shadow-accent/25 text-center"
                       >
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src="/icons/chrome.svg" alt="" aria-hidden="true" className="w-4 h-4 shrink-0" />
+                        <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
                         <span>{t("blog.ctaButton") || "Install Extension — Free"}</span>
                       </a>
                       <Link
@@ -266,10 +271,12 @@ export function BlogPostContent({ slug }: { slug: string }) {
                       <div className="flex items-center justify-between pb-2 border-b border-site-border-subtle">
                         <div className="flex items-center gap-2">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src="/icon.svg" alt="BugSnap" className="w-5 h-5 object-contain shrink-0" />
+                          <img src="/logo-day.svg" alt="BugSnap" className="w-5 h-5 object-contain shrink-0 dark:hidden" />
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img src="/logo-dark.svg" alt="BugSnap" className="w-5 h-5 object-contain shrink-0 hidden dark:block" />
                           <span className="text-xs font-bold text-site-text">BugSnap</span>
                         </div>
-                        <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                        <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
                           Active
                         </span>

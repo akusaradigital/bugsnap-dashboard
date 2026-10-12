@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useToast } from "@/components/Toast";
 import { useT } from "@/components/I18nProvider";
 import { getAdminHeaders } from "@/lib/admin-cache";
+import { Icon } from "@/lib/iconify";
 
 interface UserItem {
   id: string;
@@ -44,6 +45,14 @@ interface CaptureInfo {
   is_public?: boolean;
 }
 
+interface CommentInfo {
+  id: string;
+  capture_id: string;
+  author_name: string | null;
+  body: string;
+  created_at: string;
+}
+
 export default function AdminUsersPage() {
   const { showToast } = useToast();
   const { t } = useT();
@@ -63,6 +72,7 @@ export default function AdminUsersPage() {
   const [userWorkspaces, setUserWorkspaces] = useState<WorkspaceInfo[]>([]);
   const [userCaptures, setUserCaptures] = useState<CaptureInfo[]>([]);
   const [userTotalCaptures, setUserTotalCaptures] = useState(0);
+  const [userComments, setUserComments] = useState<CommentInfo[]>([]);
 
   // Action states
   const [togglingUser, setTogglingUser] = useState<string | null>(null);
@@ -114,6 +124,7 @@ export default function AdminUsersPage() {
     setUserDetailLoading(true);
     setUserWorkspaces([]);
     setUserCaptures([]);
+    setUserComments([]);
     try {
       const headers = await getAdminHeaders();
       const res = await fetch(`/api/admin/users?userId=${user.id}`, { headers });
@@ -123,6 +134,7 @@ export default function AdminUsersPage() {
         setUserWorkspaces(json.workspaces || []);
         setUserCaptures(json.recentCaptures || []);
         setUserTotalCaptures(json.totalCaptures || 0);
+        setUserComments(json.recentComments || []);
       }
     } catch {
       // silent
@@ -276,7 +288,7 @@ export default function AdminUsersPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-3 border-b border-slate-200 dark:border-zinc-800">
         <div>
           <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            <span>👥 {t("admin.manageUsers")}</span>
+            <span className="flex items-center gap-2"><Icon icon="lucide:users" className="w-4 h-4 shrink-0 text-[#6B9A35] dark:text-[#A8D666]" /> {t("admin.manageUsers")}</span>
             <span className="text-xs px-2 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 font-normal">
               {totalCount.toLocaleString()} {t("admin.user")}
             </span>
@@ -377,8 +389,9 @@ export default function AdminUsersPage() {
                       <div className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
                         <span>{u.full_name || "Tanpa Nama"}</span>
                         {u.google_drive_connected && (
-                          <span className="text-[10px] px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 font-mono">
-                            Drive ✓
+                          <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 font-mono">
+                            <span>Drive</span>
+                            <Icon icon="lucide:check" className="w-2.5 h-2.5 shrink-0" />
                           </span>
                         )}
                       </div>
@@ -400,10 +413,11 @@ export default function AdminUsersPage() {
                             setSelectedNewPlan(u.plan || "free");
                             setSelectedDuration("permanent");
                           }}
-                          className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40 hover:ring-1 hover:ring-[#89BD49]/40 cursor-pointer transition-all"
+                          className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40 hover:ring-1 hover:ring-[#89BD49]/40 cursor-pointer transition-all inline-flex items-center gap-1"
                           title={t("admin.changePlan")}
                         >
-                          {u.plan || "free"} ✎
+                          <span>{u.plan || "free"}</span>
+                          <Icon icon="lucide:pencil" className="w-2.5 h-2.5 shrink-0" />
                         </button>
                         {u.plan_expires_at && (
                           <span className="text-[9px] text-slate-400">
@@ -437,9 +451,10 @@ export default function AdminUsersPage() {
                         <button
                           type="button"
                           onClick={() => openUserDetail(u)}
-                          className="px-2 py-1 rounded text-xs font-semibold border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
+                          className="p-1 rounded text-xs font-semibold border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors inline-flex items-center justify-center"
+                          aria-label={t("admin.viewDetail") || "View detail"}
                         >
-                          👁
+                          <Icon icon="lucide:eye" className="w-3.5 h-3.5 shrink-0" />
                         </button>
                         <button
                           type="button"
@@ -456,18 +471,18 @@ export default function AdminUsersPage() {
                         <button
                           type="button"
                           onClick={() => handleSendResetPassword(u)}
-                          className="px-2 py-1 rounded text-xs font-semibold border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
+                          className="px-2 py-1 rounded text-xs font-semibold border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors inline-flex items-center justify-center"
                           title={t("admin.resetPassword")}
                         >
-                          🔑
+                          <Icon icon="lucide:key" className="w-3.5 h-3.5 shrink-0" />
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDeleteUser(u)}
-                          className="px-2 py-1 rounded text-xs font-semibold border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                          className="px-2 py-1 rounded text-xs font-semibold border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors inline-flex items-center justify-center"
                           title={t("admin.deleteAccount")}
                         >
-                          🗑
+                          <Icon icon="lucide:trash-2" className="w-3.5 h-3.5 shrink-0" />
                         </button>
                       </div>
                     </td>
@@ -600,9 +615,10 @@ export default function AdminUsersPage() {
               <button
                 type="button"
                 onClick={() => setSelectedUser(null)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-white text-base"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1"
+                aria-label="Close"
               >
-                ✕
+                <Icon icon="lucide:x" className="w-4 h-4 shrink-0" />
               </button>
             </div>
 
@@ -620,8 +636,15 @@ export default function AdminUsersPage() {
                   </div>
                   <div className="p-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950">
                     <span className="text-[10px] text-slate-500 uppercase font-bold block">{t("admin.googleDrive")}</span>
-                    <span className="font-bold text-slate-800 dark:text-zinc-200">
-                      {selectedUser.google_drive_connected ? "Connected ✓" : "Not Linked"}
+                    <span className="font-bold text-slate-800 dark:text-zinc-200 inline-flex items-center gap-1">
+                      {selectedUser.google_drive_connected ? (
+                        <>
+                          <span>Connected</span>
+                          <Icon icon="lucide:check" className="w-3 h-3 text-emerald-500 shrink-0" />
+                        </>
+                      ) : (
+                        "Not Linked"
+                      )}
                     </span>
                   </div>
                   <div className="p-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950">
@@ -663,7 +686,12 @@ export default function AdminUsersPage() {
                       className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-xs shadow-[#89BD49]/25 disabled:opacity-50 transition-all flex items-center gap-1.5"
                       title="Tarik status langganan live dari Stripe/Paddle"
                     >
-                      {syncingSubscription ? "Syncing..." : "⚡ Sync from Gateway"}
+                      {syncingSubscription ? "Syncing..." : (
+                        <>
+                          <Icon icon="lucide:zap" className="w-3.5 h-3.5 shrink-0" />
+                          <span>Sync from Gateway</span>
+                        </>
+                      )}
                     </button>
                   </div>
 
@@ -676,7 +704,7 @@ export default function AdminUsersPage() {
                       className="text-[11px] font-semibold text-[#6B9A35] hover:text-[#557A2B] dark:text-[#A8D666] dark:hover:text-[#C2E688] hover:underline flex items-center gap-1"
                     >
                       <span>Stripe Dashboard</span>
-                      <span className="text-[10px]">↗</span>
+                      <Icon icon="lucide:external-link" className="w-3 h-3 shrink-0" />
                     </a>
                     <span className="text-slate-300 dark:text-zinc-700">•</span>
                     <a
@@ -686,7 +714,7 @@ export default function AdminUsersPage() {
                       className="text-[11px] font-semibold text-[#6B9A35] hover:text-[#557A2B] dark:text-[#A8D666] dark:hover:text-[#C2E688] hover:underline flex items-center gap-1"
                     >
                       <span>Paddle Dashboard</span>
-                      <span className="text-[10px]">↗</span>
+                      <Icon icon="lucide:external-link" className="w-3 h-3 shrink-0" />
                     </a>
                   </div>
                 </div>
@@ -741,6 +769,37 @@ export default function AdminUsersPage() {
                           >
                             View
                           </a>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Recent Comments */}
+                <div>
+                  <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-600 dark:text-zinc-400 mb-2">
+                    {t("admin.userComments")}
+                  </h4>
+                  {userComments.length === 0 ? (
+                    <p className="text-slate-400 italic">{t("admin.userNoComments")}</p>
+                  ) : (
+                    <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                      {userComments.map((c) => (
+                        <div
+                          key={c.id}
+                          className="p-2 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 min-w-0"
+                        >
+                          <div className="flex items-center justify-between gap-2 min-w-0">
+                            <span className="font-medium text-slate-900 dark:text-white truncate">
+                              {c.author_name || "Anonymous"}
+                            </span>
+                            <span className="text-[10px] text-slate-400 shrink-0">
+                              {new Date(c.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <p className="text-slate-600 dark:text-zinc-400 mt-1 line-clamp-2 break-words">
+                            {c.body}
+                          </p>
                         </div>
                       ))}
                     </div>

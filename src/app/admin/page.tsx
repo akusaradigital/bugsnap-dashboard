@@ -5,6 +5,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/Toast";
 import { useT } from "@/components/I18nProvider";
+import { Icon } from "@/lib/iconify";
 import { getAdminHeaders, getAdminCache, setAdminCache } from "@/lib/admin-cache";
 
 interface DailyPoint {
@@ -37,6 +38,13 @@ interface AdminData {
     screenshot: number;
     video: number;
     other: number;
+  };
+  funnel?: {
+    signups: number;
+    driveConnected: number;
+    firstCapture: number;
+    firstView: number;
+    firstComment: number;
   };
   topWorkspaces: Array<{
     id: string;
@@ -168,6 +176,17 @@ export default function AdminOverviewPage() {
   const plans = data?.planDistribution || { free: 0, pro: 0, team: 0, enterprise: 0 };
   const media = data?.mediaTypes || { screenshot: 0, video: 0, other: 0 };
 
+  const funnel = data?.funnel;
+  const funnelStages = funnel
+    ? [
+        { label: t("admin.funnelSignups"), count: funnel.signups },
+        { label: t("admin.funnelDriveConnected"), count: funnel.driveConnected },
+        { label: t("admin.funnelFirstCapture"), count: funnel.firstCapture },
+        { label: t("admin.funnelFirstView"), count: funnel.firstView },
+        { label: t("admin.funnelFirstComment"), count: funnel.firstComment },
+      ]
+    : [];
+
   // Calculate coordinates for main 7-day trend chart (SVG)
   const chartHeight = 220;
   const chartWidth = 600;
@@ -239,7 +258,7 @@ export default function AdminOverviewPage() {
         <div className="rounded-xl border border-amber-200/80 dark:border-amber-900/50 bg-gradient-to-r from-amber-50/90 via-white to-amber-50/40 dark:from-amber-950/20 dark:via-zinc-900/70 dark:to-amber-950/10 p-3 shadow-2xs flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2.5">
             <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold text-sm">
-              ⚡
+              <Icon icon="lucide:zap" className="w-3.5 h-3.5" />
             </span>
             <div>
               <div className="flex items-center gap-2">
@@ -248,7 +267,7 @@ export default function AdminOverviewPage() {
                 </span>
                 {totalAttention === 0 ? (
                   <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                    <span>✓</span> {t("admin.allClearToday")}
+                    <Icon icon="lucide:check" className="w-3.5 h-3.5" /> {t("admin.allClearToday")}
                   </span>
                 ) : (
                   <span className="text-[11px] text-slate-500 dark:text-zinc-400 hidden sm:inline">
@@ -269,7 +288,7 @@ export default function AdminOverviewPage() {
                   : "bg-slate-100 dark:bg-zinc-800/60 text-slate-500 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-800"
               }`}
             >
-              <span>📥</span>
+              <Icon icon="lucide:inbox" className="w-3.5 h-3.5" />
               <span>{t("admin.openTicketsLabel")}:</span>
               <span className={`px-1.5 py-0.2 rounded font-bold text-[10px] sm:text-[11px] ${openTickets > 0 ? "bg-rose-600 text-white" : "bg-slate-200 dark:bg-zinc-700 text-slate-700 dark:text-zinc-300"}`}>
                 {openTickets}
@@ -285,7 +304,7 @@ export default function AdminOverviewPage() {
                   : "bg-slate-100 dark:bg-zinc-800/60 text-slate-500 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-800"
               }`}
             >
-              <span>🔥</span>
+              <Icon icon="lucide:flame" className="w-3.5 h-3.5 text-amber-500" />
               <span>{t("admin.hotProspectsLabel")}:</span>
               <span className={`px-1.5 py-0.2 rounded font-bold text-[10px] sm:text-[11px] ${hotProspects > 0 ? "bg-amber-600 text-white" : "bg-slate-200 dark:bg-zinc-700 text-slate-700 dark:text-zinc-300"}`}>
                 {hotProspects}
@@ -301,7 +320,7 @@ export default function AdminOverviewPage() {
                   : "bg-slate-100 dark:bg-zinc-800/60 text-slate-500 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-800"
               }`}
             >
-              <span>🛒</span>
+              <Icon icon="lucide:shopping-cart" className="w-3.5 h-3.5 text-[#89BD49]" />
               <span>{t("admin.abandonedCartsLabel")}:</span>
               <span className={`px-1.5 py-0.2 rounded font-bold text-[10px] sm:text-[11px] ${abandonedCarts > 0 ? "bg-[#89BD49] text-white" : "bg-slate-200 dark:bg-zinc-700 text-slate-700 dark:text-zinc-300"}`}>
                 {abandonedCarts}
@@ -464,6 +483,39 @@ export default function AdminOverviewPage() {
           <Sparkline data={userPoints} color="#89BD49" />
         </div>
       </div>
+
+      {/* ONBOARDING FUNNEL */}
+      {funnelStages.length > 0 && (
+        <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm space-y-4">
+          <div>
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t("admin.funnelTitle")}</h3>
+            <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">{t("admin.funnelSubtitle")}</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+            {funnelStages.map((stage, i) => {
+              const base = funnelStages[0].count || 1;
+              const pctOfTotal = Math.round((stage.count / base) * 100);
+              const prevCount = i > 0 ? funnelStages[i - 1].count || 1 : stage.count || 1;
+              const pctOfPrev = i > 0 ? Math.round((stage.count / prevCount) * 100) : 100;
+              return (
+                <div key={stage.label} className="space-y-1.5">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-slate-700 dark:text-zinc-300 truncate">{stage.label}</span>
+                  </div>
+                  <p className="text-xl font-black text-slate-900 dark:text-white">{stage.count}</p>
+                  <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-zinc-800 overflow-hidden">
+                    <div className="h-full bg-[#89BD49]" style={{ width: `${Math.max(pctOfTotal, 4)}%` }} />
+                  </div>
+                  <span className="text-[10px] text-slate-400 block">
+                    {pctOfTotal}% {t("admin.funnelOfSignups")}
+                    {i > 0 ? ` · ${pctOfPrev}% ${t("admin.funnelOfPrevStage")}` : ""}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* MIDDLE SECTION: MAIN ACTIVITY CHART & USER DISTRIBUTION (STARADMIN LAYOUT) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -638,7 +690,7 @@ export default function AdminOverviewPage() {
       <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-200 flex items-center gap-2">
-            <span>⚡ Master Administration Hubs</span>
+            <span className="flex items-center gap-1.5"><Icon icon="lucide:zap" className="w-4 h-4 text-amber-500" /> Master Administration Hubs</span>
           </h3>
           <span className="text-[11px] text-slate-400">Privileged Super Admin Modules</span>
         </div>
@@ -647,7 +699,7 @@ export default function AdminOverviewPage() {
             href="/admin/users"
             className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#89BD49]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
           >
-            <span className="text-xl">👥</span>
+            <Icon icon="lucide:users" className="w-5 h-5 text-indigo-500" />
             <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#6B9A35] dark:group-hover:text-[#A8D666] transition-colors">
               {t("admin.manageUsers")}
             </p>
@@ -658,7 +710,7 @@ export default function AdminOverviewPage() {
             href="/admin/workspaces"
             className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#89BD49]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
           >
-            <span className="text-xl">🏢</span>
+            <Icon icon="lucide:building-2" className="w-5 h-5 text-sky-500" />
             <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#6B9A35] dark:group-hover:text-[#A8D666] transition-colors">
               {t("admin.navWorkspaces")}
             </p>
@@ -669,7 +721,7 @@ export default function AdminOverviewPage() {
             href="/admin/captures"
             className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#89BD49]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
           >
-            <span className="text-xl">📸</span>
+            <Icon icon="lucide:camera" className="w-5 h-5 text-emerald-500" />
             <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#6B9A35] dark:group-hover:text-[#A8D666] transition-colors">
               {t("admin.navCaptures")}
             </p>
@@ -680,7 +732,7 @@ export default function AdminOverviewPage() {
             href="/admin/revenue"
             className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#89BD49]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
           >
-            <span className="text-xl">💰</span>
+            <Icon icon="lucide:dollar-sign" className="w-5 h-5 text-amber-500" />
             <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#6B9A35] dark:group-hover:text-[#A8D666] transition-colors">
               {t("admin.navRevenue")}
             </p>
@@ -691,7 +743,7 @@ export default function AdminOverviewPage() {
             href="/admin/ai-analytics"
             className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#89BD49]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
           >
-            <span className="text-xl">🤖</span>
+            <Icon icon="lucide:bot" className="w-5 h-5 text-purple-500" />
             <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#6B9A35] dark:group-hover:text-[#A8D666] transition-colors">
               {t("admin.navAiAnalytics")}
             </p>
@@ -702,7 +754,7 @@ export default function AdminOverviewPage() {
             href="/admin/security-audit"
             className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#89BD49]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
           >
-            <span className="text-xl">🛡️</span>
+            <Icon icon="lucide:shield-check" className="w-5 h-5 text-rose-500" />
             <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#6B9A35] dark:group-hover:text-[#A8D666] transition-colors">
               {t("admin.auditTitle")}
             </p>
@@ -779,9 +831,10 @@ export default function AdminOverviewPage() {
               type="button"
               onClick={savePromo}
               disabled={savingPromo}
-              className="px-4 py-1.5 text-xs font-semibold bg-[#89BD49] text-white rounded-lg hover:bg-[#6B9A35] disabled:opacity-50 transition-colors shadow-sm cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold bg-[#89BD49] text-white rounded-lg hover:bg-[#6B9A35] disabled:opacity-50 transition-colors shadow-sm cursor-pointer"
             >
-              {savingPromo ? t("admin.savingBanner") : t("admin.saveBanner")}
+              <Icon icon="lucide:check" className="w-3.5 h-3.5 shrink-0" />
+              <span>{savingPromo ? t("admin.savingBanner") : t("admin.saveBanner")}</span>
             </button>
           </div>
         </div>

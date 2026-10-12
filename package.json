@@ -1,6 +1,6 @@
 {
   "name": "bugsnap",
-  "version": "0.9.1",
+  "version": "0.9.2",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -9,16 +9,19 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "test": "node --test tests/helpers.test.mjs tests/google-drive.test.mjs tests/contract.test.mjs tests/extension-dashboard-contract.test.mjs tests/safe-url.test.mjs tests/download-signing.test.mjs tests/redact.test.mjs tests/experiments.test.mjs tests/paddle-webhook.test.mjs tests/ignored-urls.test.mjs tests/party-classification.test.mjs tests/devtools-derived.test.mjs tests/fingerprint.test.mjs tests/sourcemap.test.mjs tests/disposable-email.test.mjs tests/video-duration-calc.test.mjs tests/notification-prefs.test.mjs tests/settings-crud.test.mjs tests/branding.test.mjs tests/dashboard-crud.test.mjs tests/remediation.test.mjs tests/rls-initplan.test.mjs tests/error-escalation.test.mjs tests/user-segments.test.mjs",
+    "build:icons": "node scripts/build-icons.mjs",
+    "test": "node --test tests/helpers.test.mjs tests/google-drive.test.mjs tests/contract.test.mjs tests/extension-dashboard-contract.test.mjs tests/safe-url.test.mjs tests/download-signing.test.mjs tests/redact.test.mjs tests/experiments.test.mjs tests/paddle-webhook.test.mjs tests/ignored-urls.test.mjs tests/party-classification.test.mjs tests/devtools-derived.test.mjs tests/fingerprint.test.mjs tests/sourcemap.test.mjs tests/disposable-email.test.mjs tests/video-duration-calc.test.mjs tests/notification-prefs.test.mjs tests/settings-crud.test.mjs tests/branding.test.mjs tests/dashboard-crud.test.mjs tests/remediation.test.mjs tests/rls-initplan.test.mjs tests/error-escalation.test.mjs tests/user-segments.test.mjs tests/icons.test.mjs",
     "test:integration": "node --test tests/rpc.test.mjs"
   },
   "dependencies": {
+    "@iconify/react": "^6.0.2",
     "@supabase/supabase-js": "^2.111.0",
     "motion": "^13.4.3",
     "react": "^18",
     "react-dom": "^18"
   },
   "devDependencies": {
+    "@iconify-json/lucide": "^1.2.142",
     "@playwright/test": "^1.55.0",
     "@types/node": "^20",
     "@types/react": "^18",

@@ -11,6 +11,7 @@ import {
   IconCheck,
 } from "@/components/site/TablerIcons";
 import { Reveal } from "@/components/site/motion";
+import { Icon } from "@/lib/iconify";
 
 const CHROME_STORE_URL =
   "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
@@ -121,8 +122,7 @@ export function SecurityContent() {
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-accent-hover text-slate-900 hover:text-white text-xs font-semibold px-5 py-2.5 transition-colors shadow-xs"
               >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src="/icons/chrome.svg" alt="" aria-hidden="true" className="w-4 h-4 shrink-0" />
+                <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
                 <span>{t("security.installFree")}</span>
               </a>
               <Link

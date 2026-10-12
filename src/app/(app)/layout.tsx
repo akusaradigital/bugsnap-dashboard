@@ -13,10 +13,12 @@ import DriveStorageMeter from "@/components/DriveStorageMeter";
 import FloatingSupport from "@/components/FloatingSupport";
 import HelpMenu from "@/components/HelpMenu";
 import { SiteThemeToggle } from "@/components/site/SiteThemeToggle";
+import { Icon } from "@/lib/iconify";
+import { getNavIcon } from "@/lib/icons";
 
 const navItems = [
-  { labelKey: "nav.dashboard", href: "/dashboard", icon: "📊" },
-  { labelKey: "nav.captures", href: "/captures", icon: "📸" },
+  { labelKey: "nav.dashboard", href: "/dashboard", icon: getNavIcon("dashboard") },
+  { labelKey: "nav.captures", href: "/captures", icon: getNavIcon("captures") },
 ];
 
 type Workspace = {
@@ -48,7 +50,33 @@ export default function DashboardLayout({
   const [wsOpen, setWsOpen] = useState(false);
   const [workspacePickerOpen, setWorkspacePickerOpen] = useState(false);
   const workspaceMenuRef = useRef<HTMLDivElement>(null);
+  const wsPickerTimerRef = useRef<NodeJS.Timeout | null>(null);
   const notifMenuRef = useRef<HTMLDivElement>(null);
+
+  const handleWsPickerEnter = () => {
+    if (wsPickerTimerRef.current) {
+      clearTimeout(wsPickerTimerRef.current);
+      wsPickerTimerRef.current = null;
+    }
+    setWorkspacePickerOpen(true);
+  };
+
+  const handleWsPickerLeave = () => {
+    if (wsPickerTimerRef.current) {
+      clearTimeout(wsPickerTimerRef.current);
+    }
+    wsPickerTimerRef.current = setTimeout(() => {
+      setWorkspacePickerOpen(false);
+    }, 180);
+  };
+
+  useEffect(() => {
+    return () => {
+      if (wsPickerTimerRef.current) {
+        clearTimeout(wsPickerTimerRef.current);
+      }
+    };
+  }, []);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [promoBanner, setPromoBanner] = useState<{ enabled: boolean; message: string } | null>(null);
   const [promoDismissed, setPromoDismissed] = useState(false);
@@ -118,6 +146,10 @@ export default function DashboardLayout({
   });
 
   function closeWorkspaceMenus() {
+    if (wsPickerTimerRef.current) {
+      clearTimeout(wsPickerTimerRef.current);
+      wsPickerTimerRef.current = null;
+    }
     setWorkspacePickerOpen(false);
     setWsOpen(false);
   }
@@ -551,9 +583,7 @@ export default function DashboardLayout({
       <div className="min-h-screen flex items-center justify-center bg-background p-6">
         <div className="max-w-md w-full bg-subtle border border-border rounded-xl p-8 text-center shadow-sm">
           <div className="mx-auto mb-4 w-14 h-14 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 flex items-center justify-center text-red-600 dark:text-red-400">
-            <svg className="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-            </svg>
+            <Icon icon="lucide:ban" className="w-7 h-7" />
           </div>
           <h1 className="text-lg font-bold text-foreground">{t("layout.accountSuspended")}</h1>
           <p className="text-sm text-muted mt-2 leading-relaxed">
@@ -892,7 +922,7 @@ export default function DashboardLayout({
             }}
             className="shrink-0 text-white/80 hover:text-white transition-colors"
           >
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="m6 6 12 12M18 6 6 18" /></svg>
+            <Icon icon="lucide:x" className="w-5 h-5" />
           </button>
         </div>
       )}
@@ -903,13 +933,13 @@ export default function DashboardLayout({
           className="p-2.5 rounded-lg text-muted hover:text-foreground hover:bg-subtle transition-colors"
           aria-label="Open menu"
         >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
+          <Icon icon="lucide:menu" className="w-5 h-5" />
         </button>
         <a href="/dashboard" className="flex items-center gap-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icon.svg" alt="BugSnap" className="w-6 h-6 object-contain" />
+          <img src="/logo-day.svg" alt="BugSnap" className="w-6 h-6 object-contain dark:hidden" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-dark.svg" alt="BugSnap" className="w-6 h-6 object-contain hidden dark:block" />
           <span className="text-sm font-bold tracking-tight">BugSnap</span>
         </a>
         <button
@@ -918,9 +948,7 @@ export default function DashboardLayout({
           className="relative p-2.5 rounded-lg text-muted hover:text-foreground hover:bg-subtle transition-colors"
           aria-label={t("layout.notifications")}
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-          </svg>
+          <Icon icon="lucide:bell" className="w-4 h-4" />
           {newCommentCount > 0 && (
             <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 rounded-md bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center">
               {newCommentCount}
@@ -947,7 +975,9 @@ export default function DashboardLayout({
         >
         <div className="px-5 py-5 border-b border-border flex items-center gap-2.5">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icon.svg" alt="BugSnap" className="w-7 h-7 shrink-0 object-contain" />
+          <img src="/logo-day.svg" alt="BugSnap" className="w-7 h-7 shrink-0 object-contain dark:hidden" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-dark.svg" alt="BugSnap" className="w-7 h-7 shrink-0 object-contain hidden dark:block" />
           <div>
             <h1 className="text-sm font-bold tracking-tight text-foreground leading-none">
               BugSnap
@@ -963,9 +993,7 @@ export default function DashboardLayout({
               className="relative p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-subtle transition-colors"
               aria-label={t("layout.notifications")}
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
+              <Icon icon="lucide:bell" className="w-4 h-4" />
               {newCommentCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 rounded-md bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center">
                   {newCommentCount > 99 ? "99+" : newCommentCount}
@@ -1011,7 +1039,7 @@ export default function DashboardLayout({
                       }}
                     >
                       <div className="flex items-center gap-1.5 min-w-0">
-                        <span className="shrink-0">{isRead ? "💬" : "🔵"}</span>
+                        <Icon icon={isRead ? "lucide:message-square" : "lucide:circle"} className={`w-3.5 h-3.5 shrink-0 ${isRead ? "text-muted" : "text-emerald-500 fill-emerald-500"}`} />
                         <p className="truncate font-semibold text-[11px] flex-1">
                           {n.capture_title || "Untitled capture"}
                         </p>
@@ -1054,9 +1082,7 @@ export default function DashboardLayout({
               </span>
             )}
             <span className="flex-1 truncate">{activeWs?.name || "Workspace"}</span>
-            <svg className={`w-3.5 h-3.5 text-muted transition-transform ${wsOpen ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6 9l6 6 6-6" />
-            </svg>
+            <Icon icon="lucide:chevron-down" className={`w-3.5 h-3.5 text-muted transition-transform ${wsOpen ? "rotate-180" : ""}`} />
           </button>
 
           {wsOpen && (
@@ -1090,37 +1116,46 @@ export default function DashboardLayout({
                   onClick={() => setWsOpen(false)}
                   className="w-full flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-subtle transition-colors border-b border-border"
                 >
-                  <svg className="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                  </svg>
+                  <Icon icon="lucide:settings" className="w-4 h-4 text-muted shrink-0" />
                   {t("nav.settings")}
                 </Link>
 
                 <div
                   className="px-4 py-3 border-b border-border relative"
-                  onMouseEnter={() => setWorkspacePickerOpen(true)}
-                  onMouseLeave={() => setWorkspacePickerOpen(false)}
+                  onMouseEnter={handleWsPickerEnter}
+                  onMouseLeave={handleWsPickerLeave}
                 >
                   <button
                     type="button"
-                    onClick={() => setWorkspacePickerOpen((o) => !o)}
+                    onClick={() => {
+                      if (wsPickerTimerRef.current) {
+                        clearTimeout(wsPickerTimerRef.current);
+                        wsPickerTimerRef.current = null;
+                      }
+                      setWorkspacePickerOpen((o) => !o);
+                    }}
                     className="w-full flex items-center justify-between gap-3 rounded-lg py-1 text-left text-sm font-medium text-foreground hover:bg-subtle transition-colors"
                   >
                     <span className="flex items-center gap-3">
-                      <svg className="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                      </svg>
+                      <Icon icon="lucide:building-2" className="w-4 h-4 text-muted shrink-0" />
                       Switch workspace
                     </span>
-                    <svg className={`w-4 h-4 text-muted transition-transform ${workspacePickerOpen ? "rotate-90" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
-                    </svg>
+                    <Icon icon="lucide:chevron-right" className={`w-4 h-4 text-muted transition-transform ${workspacePickerOpen ? "rotate-90" : ""}`} />
                   </button>
                   {workspacePickerOpen && (
                     <>
-                      <div className="hidden lg:block absolute left-full top-0 ml-0 w-3 h-full z-[55]" />
-                      <div className="mt-2 w-full rounded-xl border border-border bg-white dark:bg-background/95 shadow-md overflow-hidden lg:absolute lg:left-full lg:top-0 lg:ml-2 lg:mt-0 lg:w-72 lg:rounded-2xl lg:shadow-xl z-[60]">
+                      {/* Invisible hover bridge over the 8px (lg:ml-2) margin gap to prevent premature closure */}
+                      <div
+                        className="hidden lg:block absolute left-full top-0 ml-0 w-3 h-full z-[55]"
+                        onMouseEnter={handleWsPickerEnter}
+                        onMouseLeave={handleWsPickerLeave}
+                        aria-hidden="true"
+                      />
+                      <div
+                        onMouseEnter={handleWsPickerEnter}
+                        onMouseLeave={handleWsPickerLeave}
+                        className="mt-2 w-full rounded-xl border border-border bg-white dark:bg-background/95 shadow-md overflow-hidden lg:absolute lg:left-full lg:top-0 lg:ml-2 lg:mt-0 lg:w-72 lg:rounded-2xl lg:shadow-xl z-[60] before:hidden lg:before:block before:absolute before:-left-3 before:top-0 before:bottom-0 before:w-3 before:content-['']"
+                      >
                       {workspaces.map((ws) => (
                         <button
                           key={ws.id}
@@ -1159,7 +1194,7 @@ export default function DashboardLayout({
                         }}
                         className="w-full flex items-center gap-3 px-3 py-3 text-sm text-left text-foreground hover:bg-subtle transition-colors border-t border-border"
                       >
-                        <span className="text-xl leading-none">+</span>
+                        <Icon icon="lucide:plus" className="w-4 h-4 shrink-0" />
                         Join or create workspace
                       </button>
                     </div>
@@ -1174,9 +1209,7 @@ export default function DashboardLayout({
                   }}
                   className="w-full flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-subtle transition-colors"
                 >
-                  <svg className="w-4 h-4 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                  </svg>
+                  <Icon icon="lucide:log-out" className="w-4 h-4 text-muted shrink-0" />
                   {t("nav.signOut")}
                 </button>
               </div>
@@ -1210,7 +1243,7 @@ export default function DashboardLayout({
                       : "border-transparent text-muted hover:text-foreground hover:bg-subtle"
                   }`}
                 >
-                  <span className="text-base" aria-hidden="true">{item.icon}</span>
+                  <Icon icon={item.icon} className="w-4 h-4 shrink-0" aria-hidden="true" />
                   {t(item.labelKey)}
                 </Link>
               );
@@ -1221,9 +1254,7 @@ export default function DashboardLayout({
           <div className="flex-1 flex flex-col min-h-0 pt-3 mt-2 border-t border-border/60">
             <div className="flex items-center justify-between px-3 pb-1.5 shrink-0">
               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted flex items-center gap-1.5">
-                <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
-                </svg>
+                <Icon icon="lucide:folder" className="w-3.5 h-3.5 shrink-0" />
                 {t("layout.folders")}
               </p>
               {activeWsRole === "owner" && (
@@ -1276,7 +1307,7 @@ export default function DashboardLayout({
                         isActiveFolder ? "text-[#6B9A35] dark:text-[#A8D666] font-semibold" : "text-muted hover:text-foreground"
                       }`}
                     >
-                      <span className="text-xs shrink-0">📁</span>
+                      <Icon icon="lucide:folder" className="w-3.5 h-3.5 shrink-0 text-muted" />
                       <span className="truncate">{folder}</span>
                     </Link>
 
@@ -1297,7 +1328,7 @@ export default function DashboardLayout({
                           aria-label={`${folder} actions`}
                           className="flex h-6 w-6 items-center justify-center rounded-md text-muted hover:bg-subtle hover:text-foreground transition-colors"
                         >
-                          <span aria-hidden="true">⋯</span>
+                          <Icon icon="lucide:more-horizontal" className="w-3.5 h-3.5" aria-hidden="true" />
                         </button>
                         {folderMenuOpen === folder && folderMenuPos && (
                           <div

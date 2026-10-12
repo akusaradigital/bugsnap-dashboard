@@ -3,6 +3,7 @@
 import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useT } from "@/components/I18nProvider";
 import { supabase } from "@/lib/supabase";
+import { Icon } from "@/lib/iconify";
 
 export interface ErrorMarker {
   timeSec: number;
@@ -1398,10 +1399,11 @@ function MediaViewer({
 
       {/* Tooltip on hovered marker */}
       {hoveredMarker && (
-        <div className={`mt-2 text-xs font-mono truncate ${
+        <div className={`mt-2 text-xs font-mono truncate flex items-center gap-1 ${
           inFs ? "text-rose-400" : "text-rose-600 dark:text-rose-400"
         }`}>
-          📍 [{formatSec(hoveredMarker.timeSec)}] {hoveredMarker.label}
+          <Icon icon="lucide:map-pin" className="w-3.5 h-3.5 shrink-0" />
+          <span>[{formatSec(hoveredMarker.timeSec)}] {hoveredMarker.label}</span>
         </div>
       )}
     </>

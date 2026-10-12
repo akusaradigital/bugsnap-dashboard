@@ -282,6 +282,86 @@ export function renderWeeklyDigestEmail({
   return { subject, html };
 }
 
+interface AdminDigestOptions {
+  appUrl: string;
+  newSignups: number;
+  newCaptures: number;
+  openTickets: number;
+  securityAlerts: number;
+}
+
+export function renderAdminDigestEmail({
+  appUrl,
+  newSignups,
+  newCaptures,
+  openTickets,
+  securityAlerts,
+}: AdminDigestOptions): { subject: string; html: string } {
+  const adminUrl = `${appUrl.replace(/\/$/, "")}/admin`;
+  const safeAdminUrl = escapeHtml(adminUrl);
+  const subject = `BugSnap Weekly Ops Summary`;
+
+  const stat = (value: number, label: string) => `
+            <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 18px 20px;">
+              <div style="font-size: 26px; font-weight: 700; color: #0f172a; line-height: 1;">
+                ${value}
+              </div>
+              <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-top: 6px;">
+                ${label}
+              </div>
+            </div>`;
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+</head>
+<body style="margin: 0; padding: 32px 16px; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #0f172a;">
+  <div style="max-width: 560px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);">
+    <div style="padding: 24px 32px; border-bottom: 1px solid #f1f5f9; background-color: #ffffff;">
+      <span style="font-size: 16px; font-weight: 700; color: #0f172a; letter-spacing: -0.02em;">BugSnap</span>
+      <span style="font-size: 13px; color: #64748b; margin-left: 8px;">·</span>
+      <span style="font-size: 13px; color: #64748b; margin-left: 8px;">Admin Ops Report</span>
+    </div>
+    <div style="padding: 32px;">
+      <h1 style="margin: 0 0 8px; font-size: 20px; font-weight: 700; color: #0f172a; line-height: 1.3;">
+        Past 7 days
+      </h1>
+      <p style="margin: 0 0 28px; font-size: 14px; line-height: 1.5; color: #64748b;">
+        Platform-wide activity summary across all workspaces.
+      </p>
+      <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 32px;">
+        <tr>
+          <td width="50%" style="padding-right: 8px; padding-bottom: 16px;">${stat(newSignups, "New Signups")}</td>
+          <td width="50%" style="padding-left: 8px; padding-bottom: 16px;">${stat(newCaptures, "New Captures")}</td>
+        </tr>
+        <tr>
+          <td width="50%" style="padding-right: 8px;">${stat(openTickets, "Open Tickets")}</td>
+          <td width="50%" style="padding-left: 8px;">${stat(securityAlerts, "Security Alerts")}</td>
+        </tr>
+      </table>
+      <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td align="center" style="border-radius: 6px; background-color: #89BD49;">
+            <a href="${safeAdminUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 11px 22px; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 6px; background-color: #89BD49;">
+              Open admin console
+            </a>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <div style="padding: 20px 32px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; font-size: 12px; line-height: 1.5; color: #64748b;">
+      <p style="margin: 0;">Automated weekly report sent to BugSnap super admins.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  return { subject, html };
+}
+
 interface WorkspaceInviteOptions {
   appUrl: string;
   workspaceName: string;

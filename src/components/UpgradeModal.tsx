@@ -5,6 +5,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { openPaddleCheckout } from "@/lib/paddle";
 import { useT } from "@/components/I18nProvider";
+import { Icon } from "@/lib/iconify";
 
 interface UpgradeModalProps {
   isOpen: boolean;
@@ -95,9 +96,7 @@ export function UpgradeModal({
           aria-label="Close"
           className="absolute top-4 sm:top-6 left-4 sm:left-6 p-2 rounded-full text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
         >
-          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          <Icon icon="lucide:x" className="w-5 h-5 shrink-0" />
         </button>
 
         {/* Heading */}
@@ -110,7 +109,7 @@ export function UpgradeModal({
         {/* Floating Urgency Banner (Feature 5) */}
         <div className="mb-3 rounded-2xl border border-amber-300 dark:border-amber-800/70 bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-amber-500/10 p-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs">
           <div className="flex items-center gap-2">
-            <span>⚡</span>
+            <Icon icon="lucide:zap" className="w-3.5 h-3.5 shrink-0 text-amber-500" />
             <span className="font-semibold text-amber-950 dark:text-amber-200">
               {t("upgrade.urgencyBanner")}
             </span>
@@ -130,7 +129,7 @@ export function UpgradeModal({
         {/* Regional PPP Banner */}
         <div className="mb-4 rounded-2xl border border-[#89BD49]/30 dark:border-[#89BD49]/40 bg-[#89BD49]/10 dark:bg-[#89BD49]/15 p-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
           <div className="flex items-center gap-2">
-            <span>🌏</span>
+            <Icon icon="lucide:globe" className="w-3.5 h-3.5 shrink-0 text-[#6B9A35] dark:text-[#A8D666]" />
             <span className="text-neutral-700 dark:text-neutral-300">
               <strong>Regional Pricing:</strong> Indonesian creators get 40% off with code <code className="font-mono bg-white dark:bg-neutral-800 px-1 py-0.5 rounded font-bold text-[#6B9A35] dark:text-[#A8D666]">INDO40</code>
             </span>
@@ -314,11 +313,20 @@ export function UpgradeModal({
                     {t("upgrade.trustPaddle")}
                   </span>
                   <span>·</span>
-                  <span>💳 {t("upgrade.trustCards")}</span>
+                  <span className="inline-flex items-center gap-1">
+                    <Icon icon="lucide:credit-card" className="w-3 h-3 shrink-0" />
+                    <span>{t("upgrade.trustCards")}</span>
+                  </span>
                   <span>·</span>
-                  <span>🍏 {t("upgrade.trustAppleGoogle")}</span>
+                  <span className="inline-flex items-center gap-1">
+                    <Icon icon="lucide:smartphone" className="w-3 h-3 shrink-0" />
+                    <span>{t("upgrade.trustAppleGoogle")}</span>
+                  </span>
                   <span>·</span>
-                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold">↩️ {t("upgrade.trustGuarantee")}</span>
+                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold inline-flex items-center gap-1">
+                    <Icon icon="lucide:shield-check" className="w-3 h-3 shrink-0" />
+                    <span>{t("upgrade.trustGuarantee")}</span>
+                  </span>
                 </div>
               </div>
 
@@ -328,36 +336,23 @@ export function UpgradeModal({
                 </p>
                 <ul className="space-y-3.5 text-xs text-neutral-700 dark:text-neutral-300">
                   <li className="flex items-center gap-3 font-medium">
-                    <svg className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                    <Icon icon="lucide:play-circle" className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                     <span>Unlimited Captures & Jams</span>
                   </li>
                   <li className="flex items-center gap-3 font-medium">
-                    <svg className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                    </svg>
+                    <Icon icon="lucide:link" className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                     <span>150 Recording Links</span>
                   </li>
                   <li className="flex items-center gap-3 font-medium">
-                    <svg className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10" />
-                      <polyline points="12 6 12 12 16 14" />
-                    </svg>
+                    <Icon icon="lucide:clock" className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
                     <span>15 minute recording time</span>
                   </li>
                   <li className="flex items-center gap-3 font-medium">
-                    <svg className="w-4 h-4 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                    </svg>
+                    <Icon icon="lucide:sparkles" className="w-4 h-4 text-amber-500 shrink-0" />
                     <span>200 AI bug summaries</span>
                   </li>
                   <li className="flex items-center gap-3 font-medium">
-                    <svg className="w-4 h-4 text-[#6B9A35] dark:text-[#A8D666] shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-                      <path d="M7 11V7a5 5 0 0110 0v4" />
-                    </svg>
+                    <Icon icon="lucide:shield" className="w-4 h-4 text-[#6B9A35] dark:text-[#A8D666] shrink-0" />
                     <span>Access controls & Custom Branding</span>
                   </li>
                 </ul>
@@ -366,21 +361,34 @@ export function UpgradeModal({
                   <button
                     type="button"
                     onClick={() => setShowAllFeatures(!showAllFeatures)}
-                    className="text-xs text-[#6B9A35] dark:text-[#A8D666] font-semibold hover:underline flex items-center gap-1"
+                    className="text-xs text-[#6B9A35] dark:text-[#A8D666] font-semibold hover:underline flex items-center gap-1 cursor-pointer"
                   >
                     <span>{showAllFeatures ? "Hide feature details" : "See all features"}</span>
-                    <svg className={`w-3.5 h-3.5 transition-transform ${showAllFeatures ? "rotate-180" : ""}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
+                    <Icon icon="lucide:chevron-down" className={`w-3.5 h-3.5 shrink-0 transition-transform ${showAllFeatures ? "rotate-180" : ""}`} />
                   </button>
 
                   {showAllFeatures && (
                     <div className="mt-3 p-3 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 text-[11px] text-neutral-600 dark:text-neutral-400 space-y-1.5 animate-in fade-in">
-                      <p>✓ Unlimited team workspace seats</p>
-                      <p>✓ Remove BugSnap watermark</p>
-                      <p>✓ Custom brand logo & colors</p>
-                      <p>✓ Webhook triggers for Slack, Discord & Zapier</p>
-                      <p>✓ Priority support response SLA</p>
+                      <p className="flex items-center gap-1.5">
+                        <Icon icon="lucide:check" className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                        <span>Unlimited team workspace seats</span>
+                      </p>
+                      <p className="flex items-center gap-1.5">
+                        <Icon icon="lucide:check" className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                        <span>Remove BugSnap watermark</span>
+                      </p>
+                      <p className="flex items-center gap-1.5">
+                        <Icon icon="lucide:check" className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                        <span>Custom brand logo & colors</span>
+                      </p>
+                      <p className="flex items-center gap-1.5">
+                        <Icon icon="lucide:check" className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                        <span>Webhook triggers for Slack, Discord & Zapier</span>
+                      </p>
+                      <p className="flex items-center gap-1.5">
+                        <Icon icon="lucide:check" className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                        <span>Priority support response SLA</span>
+                      </p>
                     </div>
                   )}
                 </div>

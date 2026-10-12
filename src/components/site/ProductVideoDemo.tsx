@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { IconCheck, IconPencil, IconTerminal2, IconFolder, IconShare } from "./TablerIcons";
+import { Icon } from "@/lib/iconify";
 
 type DemoStep = "ready" | "capturing" | "devtools" | "saving" | "shared";
 
@@ -64,6 +65,7 @@ export function ProductVideoDemo() {
                   : "w-2 bg-site-border"
               }`}
               title={step.label}
+              aria-label={step.label}
             />
           ))}
           <button
@@ -87,28 +89,28 @@ export function ProductVideoDemo() {
           }}
         />
 
-        {/* Floating status pill (top-right) */}
+        {/* Floating status badge (top-right) */}
         <div className="absolute top-4 right-4 z-20 flex items-center gap-2">
           {currentStep === "capturing" && (
-            <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-red-500/20 border border-red-500/40 text-red-300 text-xs font-mono animate-pulse">
+            <div className="flex items-center gap-2 px-3 py-1 rounded-lg bg-red-500/20 border border-red-500/40 text-red-300 text-xs font-mono animate-pulse">
               <span className="w-2 h-2 rounded-full bg-red-500" />
               REC 00:04 · 60fps
             </div>
           )}
           {currentStep === "devtools" && (
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-mono">
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-300 text-xs font-mono">
               <IconTerminal2 size={13} />
               DevTools Attached (2 Errors)
             </div>
           )}
           {currentStep === "saving" && (
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/20 border border-blue-500/40 text-blue-300 text-xs font-mono">
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-blue-500/20 border border-blue-500/40 text-blue-300 text-xs font-mono">
               <IconFolder size={13} />
               Syncing to Google Drive...
             </div>
           )}
           {currentStep === "shared" && (
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-mono">
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 text-xs font-mono">
               <IconCheck size={13} />
               Saved & Link Copied!
             </div>
@@ -160,7 +162,7 @@ export function ProductVideoDemo() {
                 </div>
 
                 {/* BugSnap Callout Pin */}
-                <div className="absolute -top-3 left-6 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1 shadow">
+                <div className="absolute -top-3 left-6 bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-md flex items-center gap-1 shadow">
                   <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                   <span>BugSnap Callout #1</span>
                 </div>
@@ -203,9 +205,9 @@ export function ProductVideoDemo() {
               {/* DevTools Log Stream */}
               <div className="p-4 space-y-2 text-xs font-mono">
                 <div className="flex items-start gap-2 p-2 rounded bg-red-500/10 border border-red-500/20 text-red-300">
-                  <span className="text-red-500 font-bold">✕</span>
-                  <div className="flex-1 space-y-0.5">
-                    <div className="font-semibold">Uncaught TypeError: Cannot read properties of undefined (reading &apos;token&apos;)</div>
+                  <Icon icon="lucide:x" className="w-3.5 h-3.5 text-red-500 shrink-0 mt-0.5" />
+                  <div className="flex-1 min-w-0 space-y-0.5">
+                    <div className="font-semibold break-all">Uncaught TypeError: Cannot read properties of undefined (reading &apos;token&apos;)</div>
                     <div className="text-[10px] text-slate-500">at CheckoutButton.tsx:42:18</div>
                   </div>
                 </div>
@@ -285,11 +287,11 @@ export function ProductVideoDemo() {
                 </span>
               </div>
 
-              <div className="flex items-center justify-between text-[11px] text-slate-400 pt-1">
-                <span>✓ Interactive video</span>
-                <span>✓ Console errors</span>
-                <span>✓ Network HAR</span>
-                <span>✓ 1-click Jira export</span>
+              <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-slate-400 pt-1">
+                <span className="flex items-center gap-1"><Icon icon="lucide:check" className="w-3 h-3 text-emerald-400 shrink-0" /> Interactive video</span>
+                <span className="flex items-center gap-1"><Icon icon="lucide:check" className="w-3 h-3 text-emerald-400 shrink-0" /> Console errors</span>
+                <span className="flex items-center gap-1"><Icon icon="lucide:check" className="w-3 h-3 text-emerald-400 shrink-0" /> Network HAR</span>
+                <span className="flex items-center gap-1"><Icon icon="lucide:check" className="w-3 h-3 text-emerald-400 shrink-0" /> 1-click Jira export</span>
               </div>
             </div>
           )}
@@ -298,7 +300,7 @@ export function ProductVideoDemo() {
 
         {/* Bottom Timeline Stepper Bar */}
         <div className="relative z-10 px-4 sm:px-6 py-3 border-t border-slate-800 bg-slate-950/80 flex items-center justify-between text-xs">
-          <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto">
+          <div className="flex items-center gap-2 sm:gap-4 overflow-x-auto [scrollbar-width:none]">
             {STEPS.map((s, idx) => (
               <button
                 key={s.key}

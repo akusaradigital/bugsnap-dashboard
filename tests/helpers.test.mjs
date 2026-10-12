@@ -880,5 +880,57 @@ test("admin toggle-suspend: prevents super admin suspension and self-suspension"
   assert.equal(guardUnsuspend.ok, true);
 });
 
+// ---------------------------------------------------------------------------
+// Admin In-Memory Cache & Audit Log Pruning Unit Tests
+// ---------------------------------------------------------------------------
+function shouldServeFromCache(cacheEntry, ttlMs, isFresh) {
+  if (!cacheEntry) return false;
+  if (isFresh) return false;
+  return Date.now() - cacheEntry.timestamp < ttlMs;
+}
+
+function resolveAuditCutoff(daysParam, nowMs = Date.now()) {
+  if (!daysParam) return null;
+  const days = parseInt(daysParam, 10);
+  if (!Number.isFinite(days) || days <= 0) return null;
+  return new Date(nowMs - days * 24 * 60 * 60 * 1000).toISOString();
+}
+
+test("admin cache: in-memory cache respects TTL and fresh bypass", () => {
+  const now = Date.now();
+  const validEntry = { data: { ok: true }, timestamp: now - 10_000 };
+  const expiredEntry = { data: { ok: true }, timestamp: now - 70_000 };
+
+  // supabase-stats (60s TTL)
+  assert.equal(shouldServeFromCache(validEntry, 60_000, false), true);
+  assert.equal(shouldServeFromCache(validEntry, 60_000, true), false, "fresh=true must bypass valid cache");
+  assert.equal(shouldServeFromCache(expiredEntry, 60_000, false), false, "expired entry must miss cache");
+  assert.equal(shouldServeFromCache(null, 60_000, false), false);
+
+  // integrations ping (30s TTL)
+  const pingEntry = { data: { ok: true }, timestamp: now - 15_000 };
+  const expiredPingEntry = { data: { ok: true }, timestamp: now - 35_000 };
+  assert.equal(shouldServeFromCache(pingEntry, 30_000, false), true);
+  assert.equal(shouldServeFromCache(pingEntry, 30_000, true), false);
+  assert.equal(shouldServeFromCache(expiredPingEntry, 30_000, false), false);
+});
+
+test("admin audit: calculates correct cutoff timestamp for pruning", () => {
+  const fixedNow = 1770000000000;
+  const cutoff90d = resolveAuditCutoff("90", fixedNow);
+  assert.ok(cutoff90d !== null);
+
+  const expected90d = new Date(fixedNow - 90 * 24 * 60 * 60 * 1000).toISOString();
+  assert.equal(cutoff90d, expected90d);
+
+  // Missing or non-positive returns null (triggers full clear)
+  assert.equal(resolveAuditCutoff(null, fixedNow), null);
+  assert.equal(resolveAuditCutoff("", fixedNow), null);
+  assert.equal(resolveAuditCutoff("0", fixedNow), null);
+  assert.equal(resolveAuditCutoff("-10", fixedNow), null);
+  assert.equal(resolveAuditCutoff("invalid", fixedNow), null);
+});
+
+
 
 

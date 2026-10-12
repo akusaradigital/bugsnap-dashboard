@@ -12,6 +12,7 @@ import { HotkeyCommandBar } from "@/components/site/HotkeyCommandBar";
 import { PillTabs } from "@/components/site/PillTabs";
 import { IconCheck, IconBolt, IconShieldCheck, IconFolder, IconTerminal2 } from "@/components/site/TablerIcons";
 import { Reveal } from "@/components/site/motion";
+import { Icon } from "@/lib/iconify";
 
 const CHROME_STORE_URL =
   "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
@@ -53,11 +54,11 @@ export function FeaturesContent() {
           {/* Feature 1: Instant Capture */}
           {showCapture && (
             <Reveal delay={0.06}>
-              <div className="relative overflow-hidden rounded-2xl border border-site-border bg-gradient-to-b from-site-surface via-site-surface to-site-surface-2/60 p-6 sm:p-10 shadow-sm">
+              <div className="relative overflow-hidden rounded-2xl border border-site-border bg-gradient-to-b from-site-surface via-site-surface to-site-surface-2/60 p-4 sm:p-8 shadow-sm">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-                  <div className="lg:col-span-6 space-y-4">
+                  <div className="lg:col-span-6 min-w-0 space-y-4">
                     <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-site-accent px-2.5 py-1 rounded-md bg-site-accent/10 border border-site-accent/20">
-                      <IconBolt size={12} />
+                      <IconBolt size={12} aria-hidden="true" />
                       {t("features.f1Eyebrow") || "Instant Screen Recorder"}
                     </span>
                     <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-site-text">
@@ -69,21 +70,21 @@ export function FeaturesContent() {
                     </p>
                     <ul className="space-y-2 text-xs sm:text-sm text-site-text pt-2">
                       <li className="flex items-center gap-2">
-                        <IconCheck size={16} className="text-site-accent shrink-0" />
+                        <IconCheck size={16} className="text-site-accent shrink-0" aria-hidden="true" />
                         <span>{t("features.f1HotkeyScreen") || "Ctrl+Shift+S: Area & full-page screenshot"}</span>
                       </li>
                       <li className="flex items-center gap-2">
-                        <IconCheck size={16} className="text-site-accent shrink-0" />
+                        <IconCheck size={16} className="text-site-accent shrink-0" aria-hidden="true" />
                         <span>{t("features.f1HotkeyVideo") || "Ctrl+Shift+F: Instant HD screen recording"}</span>
                       </li>
                       <li className="flex items-center gap-2">
-                        <IconCheck size={16} className="text-site-accent shrink-0" />
+                        <IconCheck size={16} className="text-site-accent shrink-0" aria-hidden="true" />
                         <span>{t("features.f1Editor") || "Built-in canvas editor with blur tool for sensitive data"}</span>
                       </li>
                     </ul>
                   </div>
 
-                  <div className="lg:col-span-6">
+                  <div className="lg:col-span-6 min-w-0">
                     <HotkeyCommandBar />
                   </div>
                 </div>
@@ -94,15 +95,15 @@ export function FeaturesContent() {
           {/* Feature 2: DevTools Telemetry */}
           {showDevTools && (
             <Reveal delay={0.12}>
-              <div className="relative overflow-hidden rounded-2xl border border-site-border bg-gradient-to-b from-site-surface via-site-surface to-site-surface-2/60 p-6 sm:p-10 shadow-sm">
+              <div className="relative overflow-hidden rounded-2xl border border-site-border bg-gradient-to-b from-site-surface via-site-surface to-site-surface-2/60 p-4 sm:p-8 shadow-sm">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-                  <div className="lg:col-span-6 order-2 lg:order-1">
+                  <div className="lg:col-span-6 min-w-0 order-2 lg:order-1">
                     <DevToolsCard />
                   </div>
 
-                  <div className="lg:col-span-6 order-1 lg:order-2 space-y-4">
+                  <div className="lg:col-span-6 min-w-0 order-1 lg:order-2 space-y-4">
                     <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-site-accent px-2.5 py-1 rounded-md bg-site-accent/10 border border-site-accent/20">
-                      <IconTerminal2 size={12} />
+                      <IconTerminal2 size={12} aria-hidden="true" />
                       {t("features.f2Eyebrow") || "Automated Diagnostics"}
                     </span>
                     <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-site-text">
@@ -127,11 +128,11 @@ export function FeaturesContent() {
           {/* Feature 3: Drive Storage & Collaboration */}
           {showStorage && (
             <Reveal delay={0.18}>
-              <div className="relative overflow-hidden rounded-2xl border border-site-border bg-gradient-to-b from-site-surface via-site-surface to-site-surface-2/60 p-6 sm:p-10 shadow-sm">
+              <div className="relative overflow-hidden rounded-2xl border border-site-border bg-gradient-to-b from-site-surface via-site-surface to-site-surface-2/60 p-4 sm:p-8 shadow-sm">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-                  <div className="lg:col-span-6 space-y-4">
+                  <div className="lg:col-span-6 min-w-0 space-y-4">
                     <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-site-accent px-2.5 py-1 rounded-md bg-site-accent/10 border border-site-accent/20">
-                      <IconFolder size={12} />
+                      <IconFolder size={12} aria-hidden="true" />
                       {t("features.f3Eyebrow") || "100% Data Ownership"}
                     </span>
                     <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-site-text">
@@ -143,21 +144,21 @@ export function FeaturesContent() {
                     </p>
                     <ul className="space-y-2 text-xs sm:text-sm text-site-text pt-2">
                       <li className="flex items-center gap-2">
-                        <IconShieldCheck size={16} className="text-site-accent shrink-0" />
+                        <IconShieldCheck size={16} className="text-site-accent shrink-0" aria-hidden="true" />
                         <span>Zero server storage: we never hold a copy of your files</span>
                       </li>
                       <li className="flex items-center gap-2">
-                        <IconCheck size={16} className="text-site-accent shrink-0" />
+                        <IconCheck size={16} className="text-site-accent shrink-0" aria-hidden="true" />
                         <span>Shareable link works for anyone — viewers don&apos;t need BugSnap</span>
                       </li>
                       <li className="flex items-center gap-2">
-                        <IconCheck size={16} className="text-site-accent shrink-0" />
+                        <IconCheck size={16} className="text-site-accent shrink-0" aria-hidden="true" />
                         <span>Interactive player with timestamped feedback directly on the video</span>
                       </li>
                     </ul>
                   </div>
 
-                  <div className="lg:col-span-6">
+                  <div className="lg:col-span-6 min-w-0">
                     <GoogleDriveProofCard />
                   </div>
                 </div>
@@ -167,12 +168,12 @@ export function FeaturesContent() {
 
           {/* Feature 4: Linear / Jira Export Mockup */}
           <Reveal delay={0.24}>
-            <div className="relative overflow-hidden rounded-2xl border border-site-border bg-gradient-to-b from-site-surface via-site-surface to-site-surface-2/60 p-6 sm:p-10 shadow-sm">
+            <div className="relative overflow-hidden rounded-2xl border border-site-border bg-gradient-to-b from-site-surface via-site-surface to-site-surface-2/60 p-4 sm:p-8 shadow-sm">
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-                <div className="lg:col-span-6 order-2 lg:order-1">
+                <div className="lg:col-span-6 min-w-0 order-2 lg:order-1">
                   <ExportTicketCard />
                 </div>
-                <div className="lg:col-span-6 order-1 lg:order-2 space-y-4">
+                <div className="lg:col-span-6 min-w-0 order-1 lg:order-2 space-y-4">
                   <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-site-accent px-2.5 py-1 rounded-md bg-site-accent/10 border border-site-accent/20">
                     Integration Ready
                   </span>
@@ -190,7 +191,7 @@ export function FeaturesContent() {
 
         {/* Bottom Callout */}
         <Reveal delay={0.3}>
-          <div className="relative overflow-hidden rounded-3xl border border-site-border bg-gradient-to-br from-site-surface via-site-surface to-site-surface-2 p-8 sm:p-14 text-center shadow-lg">
+          <div className="relative overflow-hidden rounded-3xl border border-site-border bg-gradient-to-br from-site-surface via-site-surface to-site-surface-2 p-5 sm:p-12 text-center shadow-lg">
             <div
               className="pointer-events-none absolute inset-0 -z-0 opacity-40"
               style={{
@@ -198,7 +199,7 @@ export function FeaturesContent() {
               }}
             />
             <div className="relative z-10 space-y-4 max-w-xl mx-auto">
-              <span className="inline-block text-xs font-semibold uppercase tracking-wider text-site-accent px-3 py-1 rounded-full bg-site-accent/10 border border-site-accent/20">
+              <span className="inline-block text-xs font-semibold uppercase tracking-widest text-site-accent">
                 Get Started in 30 Seconds
               </span>
               <h3 className="text-2xl sm:text-4xl font-extrabold text-site-text tracking-tight">
@@ -215,8 +216,7 @@ export function FeaturesContent() {
                   rel="noopener noreferrer"
                   className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-slate-900 text-xs sm:text-sm font-bold px-6 py-3 rounded-xl transition-all shadow-md shadow-accent/20 hover:scale-[1.02] active:scale-[0.99]"
                 >
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src="/icons/chrome.svg" alt="" aria-hidden="true" className="w-4 h-4 shrink-0" />
+                  <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
                   <span>{t("features.ctaButton") || "Add to Chrome - Free"}</span>
                 </a>
               </div>

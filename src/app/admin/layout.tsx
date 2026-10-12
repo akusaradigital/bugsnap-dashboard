@@ -6,7 +6,9 @@ import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/Toast";
 import { useT } from "@/components/I18nProvider";
+import { Icon } from "@/lib/iconify";
 import { CommandPalette } from "./CommandPalette";
+import { ADMIN_NAV_ROUTES, ADMIN_NAV_HUBS, ADMIN_NAV_HUB_ORDER } from "./adminNav";
 
 interface AdminNotificationItem {
   id: string;
@@ -82,53 +84,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     subItems?: NavSubItem[];
   }
 
-  const masterHubs: MasterHub[] = [
-    {
-      title: t("admin.hubOverview"),
-      href: "/admin",
-      icon: "📊",
-    },
-    {
-      title: t("admin.hubUsers"),
-      href: "/admin/users",
-      icon: "👥",
-      subItems: [
-        { href: "/admin/users", label: t("admin.manageUsers") },
-        { href: "/admin/workspaces", label: t("admin.navWorkspaces") },
-        { href: "/admin/captures", label: t("admin.navCaptures") },
-      ],
-    },
-    {
-      title: t("admin.hubRevenue"),
-      href: "/admin/revenue",
-      icon: "💰",
-      subItems: [
-        { href: "/admin/revenue", label: t("admin.navRevenue") },
-        { href: "/admin/ai-analytics", label: t("admin.navAiAnalytics") },
-      ],
-    },
-    {
-      title: t("admin.hubOperations"),
-      href: "/admin/support",
-      icon: "📥",
-      badgeKey: "support",
-      subItems: [
-        { href: "/admin/support", label: t("admin.supportInbox"), badgeKey: "support" },
-        { href: "/admin/extension", label: t("admin.extensionFleet") },
-        { href: "/admin/email-health", label: t("admin.emailHealth") },
-      ],
-    },
-    {
-      title: t("admin.hubSystem"),
-      href: "/admin/supabase",
-      icon: "🛠️",
-      subItems: [
-        { href: "/admin/supabase", label: t("admin.navSupabase") },
-        { href: "/admin/system", label: t("admin.systemDrive") },
-        { href: "/admin/security-audit", label: t("admin.auditTitle") },
-      ],
-    },
-  ];
+  const masterHubs: MasterHub[] = ADMIN_NAV_HUB_ORDER.map((hubKey) => {
+    const hub = ADMIN_NAV_HUBS[hubKey];
+    const routes = ADMIN_NAV_ROUTES.filter((r) => r.hub === hubKey);
+    return {
+      title: t(hub.titleKey),
+      href: hub.href,
+      icon: hub.icon,
+      badgeKey: hub.badgeKey,
+      subItems:
+        routes.length > 1
+          ? routes.map((r) => ({ href: r.href, label: t(r.titleKey), badgeKey: r.badgeKey }))
+          : undefined,
+    };
+  });
 
   // Global Ctrl+K / Cmd+K listener
   useEffect(() => {
@@ -382,7 +351,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="flex flex-col items-center text-center mb-6">
             <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white dark:bg-zinc-800 p-2 mb-3 shadow-md border border-slate-200 dark:border-zinc-700">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/icon.svg" alt="BugSnap" className="h-8 w-8 object-contain" />
+              <img src="/logo-day.svg" alt="BugSnap" className="h-8 w-8 object-contain dark:hidden" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo-dark.svg" alt="BugSnap" className="h-8 w-8 object-contain hidden dark:block" />
             </div>
             <h1 className="text-lg font-bold tracking-tight">BugSnap Admin Console</h1>
             <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1">
@@ -399,6 +370,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 onClick={handleGoogleLogin}
                 className="w-full flex items-center justify-center gap-2.5 rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-800 dark:text-zinc-200 text-xs font-semibold py-2.5 transition-colors shadow-sm disabled:opacity-50"
               >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/icons/google.svg" alt="Google" className="h-4 w-4 shrink-0" />
                 <span>{signingInGoogle ? "Menghubungkan Google..." : "Masuk dengan Google"}</span>
               </button>
@@ -507,7 +479,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="flex items-center gap-3 min-w-0">
             <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#89BD49]/10 dark:bg-zinc-800 shrink-0 p-1.5 shadow-xs border border-[#89BD49]/20 dark:border-zinc-700">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/icon.svg" alt="BugSnap" className="h-6 w-6 object-contain" />
+              <img src="/logo-day.svg" alt="BugSnap" className="h-6 w-6 object-contain dark:hidden" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo-dark.svg" alt="BugSnap" className="h-6 w-6 object-contain hidden dark:block" />
             </div>
             {sidebarOpen && (
               <div className="overflow-hidden whitespace-nowrap">
@@ -529,7 +503,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 text-sm cursor-pointer"
               title="Close Sidebar"
             >
-              ✕
+              <Icon icon="lucide:x" className="w-4 h-4" />
             </button>
           )}
         </div>
@@ -552,7 +526,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   }`}
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <span className="text-base shrink-0">{hub.icon}</span>
+                    <Icon icon={hub.icon} className="w-4 h-4 shrink-0" />
                     {sidebarOpen && <span className="truncate">{hub.title}</span>}
                   </div>
 
@@ -602,7 +576,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             href="/dashboard"
             className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 hover:text-slate-900 dark:hover:text-zinc-100 transition-colors font-medium"
           >
-            <span className="text-sm"></span>
+            <Icon icon="lucide:arrow-left" className="w-4 h-4 shrink-0" />
             {sidebarOpen && <span className="truncate">{t("admin.toUserDashboard")}</span>}
           </Link>
 
@@ -611,7 +585,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             onClick={handleLogout}
             className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors font-semibold"
           >
-            <span>🔒</span>
+            <Icon icon="lucide:lock" className="w-4 h-4 shrink-0" />
             {sidebarOpen && <span className="truncate">{t("admin.lockConsole")}</span>}
           </button>
         </div>
@@ -629,9 +603,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-colors cursor-pointer shrink-0"
               title="Toggle Sidebar"
             >
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
+              <Icon icon="lucide:menu" className="w-5 h-5" />
             </button>
 
             <div className="hidden md:flex items-center gap-4 text-xs text-slate-500 dark:text-zinc-400 font-medium truncate">
@@ -653,7 +625,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               className="hidden sm:flex items-center justify-between w-44 lg:w-60 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 text-slate-400 dark:text-zinc-500 hover:border-slate-300 dark:hover:border-zinc-700 hover:text-slate-600 dark:hover:text-zinc-300 text-xs transition-colors cursor-pointer shadow-2xs"
             >
               <div className="flex items-center gap-2 min-w-0">
-                <span>🔍</span>
+                <Icon icon="lucide:search" className="w-3.5 h-3.5 shrink-0" />
                 <span className="truncate">{t("admin.commandSearchHint")}</span>
               </div>
               <kbd className="inline-flex items-center gap-0.5 px-1.5 py-0.5 text-[10px] font-bold text-slate-500 dark:text-zinc-400 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded shadow-2xs shrink-0">
@@ -668,17 +640,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               className="sm:hidden p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
               title={t("admin.commandSearchHint")}
             >
-              <span className="text-base">🔍</span>
+              <Icon icon="lucide:search" className="w-4 h-4" />
             </button>
 
             {/* Language Switcher (i18n) */}
             <button
               type="button"
               onClick={() => setLocale(locale === "id" ? "en" : "id")}
-              className="px-2 sm:px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-xs font-bold transition-colors flex items-center gap-1 cursor-pointer shadow-xs"
+              className="px-2 sm:px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
               title={locale === "id" ? "Switch to English" : "Ganti ke Bahasa Indonesia"}
             >
-              <span className="text-sm">🌐</span>
+              <Icon icon="lucide:globe" className="w-3.5 h-3.5 shrink-0" />
               <span className="uppercase text-[11px]">{locale}</span>
             </button>
 
@@ -693,7 +665,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 className="relative p-1.5 sm:p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
                 title={t("admin.notificationsTitle")}
               >
-                <span className="text-base">🔔</span>
+                <Icon icon="lucide:bell" className="w-4 h-4" />
                 {notifCount > 0 && (
                   <span className="absolute top-1 right-1 flex h-4 min-w-[16px] px-1 items-center justify-center rounded-md bg-rose-500 text-white text-[9px] font-black animate-pulse">
                     {notifCount}
@@ -702,7 +674,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </button>
 
               {notifOpen && (
-                <div className="absolute right-0 mt-2 w-[calc(100vw-1.5rem)] max-w-sm sm:w-96 rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
+                <div className="fixed right-3 top-14 sm:absolute sm:right-0 sm:top-full sm:mt-2 w-[min(24rem,calc(100vw-1.5rem))] rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl overflow-hidden z-50 animate-in fade-in zoom-in-95 duration-150">
                   <div className="p-4 border-b border-slate-100 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 flex items-center justify-between">
                     <div>
                       <h4 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider">
@@ -715,9 +687,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <button
                       type="button"
                       onClick={loadNotifications}
-                      className="text-[11px] text-[#6B9A35] dark:text-[#A8D666] font-semibold hover:underline"
+                      className="text-[11px] text-[#6B9A35] dark:text-[#A8D666] font-semibold hover:underline flex items-center gap-1"
                     >
-                      Segarkan ⟳
+                      <Icon icon="lucide:refresh-cw" className="w-3 h-3" />
+                      <span>Segarkan</span>
                     </button>
                   </div>
 
@@ -737,13 +710,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                           }`}
                         >
                           <div className="flex items-start gap-2.5">
-                            <span className="text-base shrink-0 mt-0.5">
-                              {n.category === "support" && "📥"}
-                              {n.category === "security" && "🛡️"}
-                              {n.category === "extension" && "🧩"}
-                              {n.category === "email" && "✉️"}
-                              {n.category === "integrations" && "🌐"}
-                              {n.category === "system" && "✅"}
+                            <span className="shrink-0 mt-0.5">
+                              {n.category === "support" && <Icon icon="lucide:inbox" className="w-4 h-4 text-sky-500" />}
+                              {n.category === "security" && <Icon icon="lucide:shield-check" className="w-4 h-4 text-emerald-500" />}
+                              {n.category === "extension" && <Icon icon="lucide:puzzle" className="w-4 h-4 text-amber-500" />}
+                              {n.category === "email" && <Icon icon="lucide:mail" className="w-4 h-4 text-violet-500" />}
+                              {n.category === "integrations" && <Icon icon="lucide:globe" className="w-4 h-4 text-teal-500" />}
+                              {n.category === "system" && <Icon icon="lucide:check-circle" className="w-4 h-4 text-emerald-500" />}
                             </span>
                             <div className="min-w-0 flex-1">
                               <div className="flex items-center justify-between gap-1">
@@ -799,7 +772,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     Super Admin
                   </span>
                 </div>
-                <span className="text-slate-400 text-xs">▾</span>
+                <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5 text-slate-400 shrink-0" />
               </button>
 
               {/* Profile Dropdown */}
@@ -824,7 +797,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                       }}
                       className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors font-medium text-left"
                     >
-                      <span>🔑</span>
+                      <Icon icon="lucide:key" className="w-4 h-4 shrink-0 text-slate-400" />
                       <span>{t("admin.changePassword")}</span>
                     </button>
 
@@ -833,7 +806,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                       onClick={() => setProfileOpen(false)}
                       className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors font-medium text-left"
                     >
-                      <span></span>
+                      <Icon icon="lucide:arrow-left" className="w-4 h-4 shrink-0 text-slate-400" />
                       <span>{t("admin.toUserDashboard")}</span>
                     </Link>
 
@@ -844,7 +817,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                       onClick={handleLogout}
                       className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors font-semibold text-left"
                     >
-                      <span>🚪</span>
+                      <Icon icon="lucide:log-out" className="w-4 h-4 shrink-0 text-rose-500" />
                       <span>{t("admin.lockConsole")}</span>
                     </button>
                   </div>
@@ -866,15 +839,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           <div className="w-full max-w-sm rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-2xl space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-zinc-800">
               <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                <span>🔑</span>
+                <Icon icon="lucide:key" className="w-4 h-4 text-[#89BD49]" />
                 <span>{t("admin.changePassword")}</span>
               </h3>
               <button
                 type="button"
                 onClick={() => setChangePasswordOpen(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 text-sm"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 text-sm p-1 rounded-md"
               >
-                ✕
+                <Icon icon="lucide:x" className="w-4 h-4" />
               </button>
             </div>
 

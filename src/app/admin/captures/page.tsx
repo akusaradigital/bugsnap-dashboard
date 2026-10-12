@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useToast } from "@/components/Toast";
 import { useT } from "@/components/I18nProvider";
 import { getAdminHeaders } from "@/lib/admin-cache";
+import { Icon } from "@/lib/iconify";
 
 interface CaptureItem {
   id: string;
@@ -130,7 +131,7 @@ export default function AdminCapturesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-3 border-b border-slate-200 dark:border-zinc-800">
         <div>
           <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            <span>🛡️ {t("admin.capturesTitle")}</span>
+            <span className="flex items-center gap-2"><Icon icon="lucide:camera" className="w-4 h-4 shrink-0 text-[#6B9A35] dark:text-[#A8D666]" /> {t("admin.capturesTitle")}</span>
             <span className="text-xs px-2 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 font-normal">
               {totalCount.toLocaleString()} {t("admin.captures")}
             </span>
@@ -229,9 +230,10 @@ export default function AdminCapturesPage() {
                   <tr key={cap.id} className="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
                     <td className="py-3 px-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
-                        <span className="text-base">
-                          {cap.type.includes("video") ? "📹" : "📸"}
-                        </span>
+                        <Icon
+                          icon={cap.type.includes("video") ? "lucide:video" : "lucide:image"}
+                          className="w-4 h-4 shrink-0 text-slate-500"
+                        />
                         <div>
                           <div className="font-bold text-slate-900 dark:text-white max-w-xs truncate">
                             {cap.title || "Untitled Capture"}
@@ -278,7 +280,10 @@ export default function AdminCapturesPage() {
                       )}
                     </td>
                     <td className="py-3 px-4 whitespace-nowrap font-semibold text-slate-700 dark:text-zinc-300">
-                      👁 {cap.views_count || 0}
+                      <span className="inline-flex items-center gap-1">
+                        <Icon icon="lucide:eye" className="w-3.5 h-3.5 shrink-0 text-slate-400" />
+                        <span>{cap.views_count || 0}</span>
+                      </span>
                     </td>
                     <td className="py-3 px-4 whitespace-nowrap text-slate-500 dark:text-zinc-400">
                       {new Date(cap.created_at).toLocaleDateString("id-ID", {
@@ -302,23 +307,25 @@ export default function AdminCapturesPage() {
                           type="button"
                           disabled={actionLoading === cap.id}
                           onClick={() => handleToggleVisibility(cap)}
-                          className={`px-2 py-1 rounded text-xs font-semibold border transition-colors ${
+                          className={`px-2 py-1 rounded text-xs font-semibold border transition-colors inline-flex items-center gap-1 ${
                             cap.is_public
                               ? "border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40"
                               : "border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
                           }`}
                           title={cap.is_public ? t("admin.makePrivate") : t("admin.makePublic")}
                         >
-                          {cap.is_public ? `🔒 ${t("admin.makePrivate")}` : `🌐 ${t("admin.makePublic")}`}
+                          <Icon icon={cap.is_public ? "lucide:lock" : "lucide:globe"} className="w-3.5 h-3.5 shrink-0" />
+                          <span>{cap.is_public ? t("admin.makePrivate") : t("admin.makePublic")}</span>
                         </button>
                         <button
                           type="button"
                           disabled={actionLoading === cap.id}
                           onClick={() => handleTakedown(cap)}
-                          className="px-2 py-1 rounded text-xs font-semibold border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors"
+                          className="px-2 py-1 rounded text-xs font-semibold border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors inline-flex items-center gap-1"
                           title={t("admin.takedown")}
                         >
-                          🗑 {t("admin.takedown")}
+                          <Icon icon="lucide:trash-2" className="w-3.5 h-3.5 shrink-0" />
+                          <span>{t("admin.takedown")}</span>
                         </button>
                       </div>
                     </td>

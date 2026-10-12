@@ -28,6 +28,10 @@ function buildCsp(): string {
     "https://challenges.cloudflare.com",
     "https://www.googleapis.com",
     "https://drive.google.com",
+    "https://api.iconify.design",
+    "https://*.iconify.design",
+    "https://api.simplesvg.com",
+    "https://api.unisvg.com",
   ].filter(Boolean);
 
   return [

@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { Icon } from "@/lib/iconify";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
 import { fetchDriveStatus } from "@/lib/google-drive-values";
@@ -385,9 +386,7 @@ function DashboardContent() {
           href="/captures"
           className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#89BD49] hover:bg-[#6B9A35] active:scale-95 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs shadow-[#89BD49]/25 transition-all hover:shadow-md"
         >
-          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path strokeLinecap="round" strokeLinejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-          </svg>
+          <Icon icon="lucide:layout-grid" className="w-4 h-4" />
           <span>{t("dash.viewAll")}</span>
         </Link>
       </div>
@@ -402,11 +401,7 @@ function DashboardContent() {
               ? `+${stats.totals.week_count} ${t("dash.week")}`
               : null,
             subtextBadge: true,
-            icon: (
-              <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-              </svg>
-            ),
+            icon: <Icon icon="lucide:layers" className="w-5 h-5 shrink-0" />,
             accent: "bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border-[#89BD49]/30 dark:border-[#89BD49]/40",
             hoverAccent: "hover:border-[#89BD49] hover:shadow-xs",
           },
@@ -417,11 +412,7 @@ function DashboardContent() {
               pct: totalCount > 0 ? Math.round((videoCount / totalCount) * 100) : 0,
             }),
             subtextBadge: false,
-            icon: (
-              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            ),
+            icon: <Icon icon="lucide:video" className="w-5 h-5 shrink-0" />,
             accent: "bg-rose-50 dark:bg-rose-950/30 text-rose-500 dark:text-rose-400 border-rose-200 dark:border-rose-800/40",
             hoverAccent: "hover:border-rose-400 hover:shadow-rose-50/50 dark:hover:shadow-none",
           },
@@ -432,11 +423,7 @@ function DashboardContent() {
               pct: totalCount > 0 ? Math.round((screenshotCount / totalCount) * 100) : 0,
             }),
             subtextBadge: false,
-            icon: (
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-            ),
+            icon: <Icon icon="lucide:image" className="w-5 h-5 shrink-0" />,
             accent: "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40",
             hoverAccent: "hover:border-emerald-400 hover:shadow-emerald-50/50 dark:hover:shadow-none",
           },
@@ -445,11 +432,7 @@ function DashboardContent() {
             value: storageUsageText,
             subtext: storageSubtext,
             subtextBadge: false,
-            icon: (
-              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M3 15a4 4 0 004 4h9a5 5 0 10-.1-9.999 5.002 5.002 0 10-9.78 2.096A4.001 4.001 0 003 15z" />
-              </svg>
-            ),
+            icon: <Icon icon="lucide:cloud" className="w-5 h-5 shrink-0" />,
             accent: "bg-amber-50 dark:bg-amber-950/30 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800/40",
             hoverAccent: "hover:border-amber-400 hover:shadow-amber-50/50 dark:hover:shadow-none",
           },
@@ -469,9 +452,7 @@ function DashboardContent() {
               <div className="mt-2 text-[11px] text-muted">
                 {stat.subtextBadge && stat.subtext ? (
                   <span className="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800/40">
-                    <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M5 10l7-7m0 0l7 7m-7-7v18" />
-                    </svg>
+                    <Icon icon="lucide:trending-up" className="w-3 h-3" />
                     {stat.subtext}
                   </span>
                 ) : (
@@ -506,9 +487,7 @@ function DashboardContent() {
                   </option>
                 ))}
               </select>
-              <svg className="w-3.5 h-3.5 text-muted pointer-events-none absolute right-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
+              <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5 text-muted pointer-events-none absolute right-2" />
             </div>
 
             {/* Year Selector */}
@@ -524,9 +503,7 @@ function DashboardContent() {
                   </option>
                 ))}
               </select>
-              <svg className="w-3.5 h-3.5 text-muted pointer-events-none absolute right-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-              </svg>
+              <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5 text-muted pointer-events-none absolute right-2" />
             </div>
 
             <div className="flex items-center gap-1.5 text-xs text-muted font-medium bg-subtle px-2.5 py-1 rounded-lg border border-border">
@@ -602,7 +579,7 @@ function DashboardContent() {
             className="text-xs font-semibold text-[#6B9A35] dark:text-[#A8D666] hover:underline flex items-center gap-1"
           >
             <span>{t("qa.triage")}</span>
-            <span></span>
+            <Icon icon="lucide:arrow-right" className="w-3.5 h-3.5 shrink-0" />
           </Link>
         </div>
 

@@ -18,6 +18,7 @@ import { DeleteAccountModal } from "./DeleteAccountModal";
 import { RemoveMemberModal } from "./RemoveMemberModal";
 import { RetentionModal } from "./RetentionModal";
 import { ConnectDriveModal } from "./ConnectDriveModal";
+import { Icon } from "@/lib/iconify";
 
 function SettingsContent() {
   const { t } = useT();
@@ -817,7 +818,9 @@ function SettingsContent() {
       <aside className="hidden lg:flex w-60 shrink-0 border-r border-border bg-subtle flex-col h-full overflow-hidden">
         <div className="px-5 py-5 border-b border-border flex items-center gap-2.5 shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/icon.svg" alt="BugSnap" className="w-7 h-7 shrink-0 object-contain" />
+          <img src="/logo-day.svg" alt="BugSnap" className="w-7 h-7 shrink-0 object-contain dark:hidden" />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo-dark.svg" alt="BugSnap" className="w-7 h-7 shrink-0 object-contain hidden dark:block" />
           <div>
             <h1 className="text-sm font-bold tracking-tight text-foreground leading-none">
               BugSnap
@@ -889,7 +892,9 @@ function SettingsContent() {
             </button>
             <div className="flex items-center gap-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/icon.svg" alt="BugSnap" className="w-5 h-5 object-contain" />
+              <img src="/logo-day.svg" alt="BugSnap" className="w-5 h-5 object-contain dark:hidden" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo-dark.svg" alt="BugSnap" className="w-5 h-5 object-contain hidden dark:block" />
               <span className="text-xs font-bold text-foreground">Settings</span>
             </div>
           </div>
@@ -1190,7 +1195,9 @@ function SettingsContent() {
                     ) : (
                       <div className="flex items-center gap-2">
                         {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img src="/icon.svg" alt="BugSnap" className="w-6 h-6 shrink-0 object-contain" />
+                        <img src="/logo-day.svg" alt="BugSnap" className="w-6 h-6 shrink-0 object-contain dark:hidden" />
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src="/logo-dark.svg" alt="BugSnap" className="w-6 h-6 shrink-0 object-contain hidden dark:block" />
                         <span className="text-sm font-bold tracking-tight text-foreground truncate max-w-[180px]">
                           {brandName.trim() || "BugSnap"}
                         </span>
@@ -1460,7 +1467,8 @@ function SettingsContent() {
               <div className="rounded-xl border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm">
                 <div>
                   <p className="font-bold text-amber-900 dark:text-amber-200 flex items-center gap-1.5">
-                    <span>⚠️</span> {t("settings.pastDueWarning")}
+                    <Icon icon="lucide:alert-triangle" className="w-4 h-4 shrink-0 text-amber-600 dark:text-amber-400" />
+                    <span>{t("settings.pastDueWarning")}</span>
                   </p>
                   <p className="text-xs text-amber-800 dark:text-amber-300 mt-0.5">
                     {t("settings.pastDueDesc")}
@@ -1480,7 +1488,8 @@ function SettingsContent() {
               <div className="rounded-xl border border-blue-300 dark:border-blue-800 bg-blue-50 dark:bg-blue-950/40 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-sm">
                 <div>
                   <p className="font-bold text-blue-900 dark:text-blue-200 flex items-center gap-1.5">
-                    <span>⏸️</span> {t("settings.pausedNotice")}
+                    <Icon icon="lucide:pause" className="w-4 h-4 shrink-0 text-blue-600 dark:text-blue-400" />
+                    <span>{t("settings.pausedNotice")}</span>
                   </p>
                   <p className="text-xs text-blue-800 dark:text-blue-300 mt-0.5">
                     {t("settings.pausedDesc")}
@@ -1561,14 +1570,17 @@ function SettingsContent() {
             <div className="rounded-xl border border-border bg-subtle p-4 space-y-3 shadow-xs">
               <h2 className="text-sm font-semibold text-foreground border-b border-border pb-2">Plan features</h2>
               {[
-                { label:"Weekly capture quota", value: userPlan==="free" ? "5 captures/week" : "Unlimited" },
-                { label:"Team seats", value: seatLimit(userPlan) !== null ? `${seatLimit(userPlan)}` : "Unlimited" },
-                { label:"AI bug reports", value: userPlan==="pro_plus"||userPlan==="enterprise" ? "✓ Included" : "Pro+ only" },
-                { label:"Custom branding", value: hasBranding(userPlan) ? "✓ Included" : "Pro+ only" },
+                { label:"Weekly capture quota", value: userPlan==="free" ? "5 captures/week" : "Unlimited", included: true },
+                { label:"Team seats", value: seatLimit(userPlan) !== null ? `${seatLimit(userPlan)}` : "Unlimited", included: true },
+                { label:"AI bug reports", value: userPlan==="pro_plus"||userPlan==="enterprise" ? "Included" : "Pro+ only", included: userPlan==="pro_plus"||userPlan==="enterprise" },
+                { label:"Custom branding", value: hasBranding(userPlan) ? "Included" : "Pro+ only", included: hasBranding(userPlan) },
               ].map(r => (
                 <div key={r.label} className="flex items-center justify-between text-sm">
                   <span className="text-muted">{r.label}</span>
-                  <span className="font-medium text-foreground">{r.value}</span>
+                  <span className="font-medium text-foreground inline-flex items-center gap-1.5">
+                    {r.included && <Icon icon="lucide:check" className="w-3.5 h-3.5 text-[#6B9A35] dark:text-[#A8D666] shrink-0" />}
+                    <span>{r.value}</span>
+                  </span>
                 </div>
               ))}
             </div>
@@ -1786,7 +1798,12 @@ function SettingsContent() {
             <div className="rounded-xl border border-border bg-subtle p-4 space-y-4 shadow-xs">
               <div className="flex items-center justify-between gap-3 border-b border-border pb-2">
                 <h2 className="text-sm font-semibold text-foreground">{t("settings.profileTitle")}</h2>
-                {profileSaved && <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium">✓ {t("settings.profileSaved")}</span>}
+                {profileSaved && (
+                  <span className="text-xs text-emerald-600 dark:text-emerald-400 font-medium inline-flex items-center gap-1">
+                    <Icon icon="lucide:check" className="w-3.5 h-3.5 shrink-0" />
+                    <span>{t("settings.profileSaved")}</span>
+                  </span>
+                )}
               </div>
               <div className="pb-2 flex items-center gap-3">
                 <div className="group relative h-16 w-16 shrink-0">
@@ -2256,9 +2273,9 @@ function SettingsContent() {
                       </button>
                     </div>
                     {webhookTestResult && (
-                      <div className={`p-2.5 rounded-lg text-xs font-medium border ${webhookTestResult.ok ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40" : "bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/40"}`}>
-                        {webhookTestResult.ok ? "✓ " : "✕ "}
-                        {webhookTestResult.msg}
+                      <div className={`p-2.5 rounded-lg text-xs font-medium border flex items-center gap-1.5 ${webhookTestResult.ok ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40" : "bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/40"}`}>
+                        <Icon icon={webhookTestResult.ok ? "lucide:check" : "lucide:x"} className="w-3.5 h-3.5 shrink-0" />
+                        <span>{webhookTestResult.msg}</span>
                       </div>
                     )}
                   </div>
