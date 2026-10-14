@@ -202,7 +202,7 @@ export default function TeamManagementPage() {
               <button
                 type="button"
                 onClick={() => setRoleMenuOpen((o) => !o)}
-                className="w-full sm:auto flex items-center justify-between gap-1.5 text-sm rounded-lg border border-border px-3.5 py-2.5 bg-subtle hover:bg-border/30 text-foreground transition-colors"
+                className="w-full sm:auto min-h-[44px] flex items-center justify-between gap-1.5 text-sm rounded-lg border border-border px-3.5 py-2.5 bg-subtle hover:bg-border/30 text-foreground transition-colors touch-manipulation"
               >
                 {inviteRole === "creator" ? "Creator" : "Viewer"}
                 <svg className={`w-3.5 h-3.5 text-muted transition-transform ${roleMenuOpen ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -221,7 +221,7 @@ export default function TeamManagementPage() {
                         key={opt.value}
                         type="button"
                         onClick={() => { setInviteRole(opt.value); setRoleMenuOpen(false); }}
-                        className="w-full flex items-start justify-between gap-2 px-3.5 py-2 text-left hover:bg-subtle transition-colors"
+                        className="w-full flex items-start justify-between gap-2 px-3.5 py-2.5 min-h-[44px] text-left hover:bg-subtle transition-colors touch-manipulation"
                       >
                         <span>
                           <span className="block text-sm font-medium text-foreground">{opt.label}</span>
@@ -241,7 +241,7 @@ export default function TeamManagementPage() {
             <button
               onClick={handleInvite}
               disabled={inviting || !inviteEmail.trim() || (cap !== null && members.length >= cap)}
-              className="px-5 py-2.5 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] shadow-xs shadow-[#89BD49]/25 disabled:opacity-50 transition-colors shrink-0"
+              className="px-5 py-2.5 min-h-[44px] rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] shadow-xs shadow-[#89BD49]/25 disabled:opacity-50 transition-colors shrink-0 touch-manipulation flex items-center justify-center"
             >
               {inviting ? t("members.inviting") : t("members.invite")}
             </button>
@@ -311,7 +311,7 @@ export default function TeamManagementPage() {
                 {m.role !== "owner" && (
                   <button
                     onClick={() => handleRemove(m)}
-                    className="text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 px-2.5 py-1.5 rounded-lg transition-colors"
+                    className="text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 px-2.5 py-1.5 min-h-[36px] flex items-center justify-center rounded-lg transition-colors touch-manipulation"
                   >
                     {t("members.remove")}
                   </button>

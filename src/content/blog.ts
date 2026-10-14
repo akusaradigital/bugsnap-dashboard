@@ -18,6 +18,70 @@ const CHROME_STORE_URL =
   "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
 
 export const blogPosts: BlogPost[] = [
+  // ─── Article: Detecting SPA Memory Leaks & DOM Bloat in Single Page Applications ───
+  {
+    slug: "detecting-spa-memory-leaks-and-dom-bloat",
+    title: "Detecting SPA Memory Leaks & DOM Bloat in Single Page Applications",
+    titleId: "Mendeteksi Kebocoran Memori & Pembengkakan DOM pada Aplikasi SPA",
+    description: "Unmounted components and detached DOM nodes silently degrade web performance. Learn how to track JS heap growth and element bloat during QA testing.",
+    descriptionId: "Komponen yang di-unmount dan node DOM yang tertinggal dapat menurunkan performa web. Pelajari cara melacak kenaikan heap JS dan pembengkakan elemen saat pengujian QA.",
+    date: "2026-10-13",
+    author: "BugSnap Team",
+    readTime: "5 min read",
+    tags: ["web-performance", "spa", "memory-leaks", "devtools"],
+    coverImage: "/blog/detecting-spa-memory-leaks-and-dom-bloat.webp",
+    ogImage: "/blog/detecting-spa-memory-leaks-and-dom-bloat.webp",
+    content: `
+<p>Modern frontend frameworks like React, Vue, and Next.js make dynamic user interfaces effortless, but they also introduce an insidious class of bugs: <strong>Single Page Application (SPA) memory leaks and DOM bloat</strong>.</p>
+
+<p>Unlike traditional multi-page websites where every navigation wipes the JavaScript heap clean, an SPA retains its runtime context indefinitely. If a developer forgets to clear an interval, detach a global event listener, or clean up an RxJS subscription, retained DOM nodes accumulate in memory, causing the browser tab to slow down, stutter, and eventually crash.</p>
+
+<h2>What Causes SPA DOM Bloat?</h2>
+<p>DOM bloat occurs when components unmount visually, but references to their DOM elements remain in closures or global registries. Common culprits include:</p>
+<ul>
+  <li><strong>Global Event Listeners:</strong> <code>window.addEventListener('resize', handler)</code> without a matching <code>removeEventListener</code> in a cleanup effect.</li>
+  <li><strong>Dangling Timers:</strong> <code>setInterval</code> or trailing debounces that hold references to component props.</li>
+  <li><strong>Detached DOM Nodes:</strong> Third-party charting or editor libraries appending elements directly to <code>document.body</code> without lifecycle synchronization.</li>
+</ul>
+
+<h2>The 1,500 Element Benchmark</h2>
+<p>Google's Lighthouse and Chrome Web Vitals teams recommend keeping total DOM nodes under <strong>1,500 elements</strong> per page. Pages with 3,000+ nodes increase reflow computation time quadratically, degrading Interaction to Next Paint (INP) and causing mobile device battery drain.</p>
+
+<h2>How to Catch Memory Leaks Before Release</h2>
+<ol>
+  <li><strong>Monitor JS Heap Delta:</strong> Measure memory before and after repeated user journeys (e.g. Opening and closing a modal 10 times). If the heap consistently climbs without returning to baseline, an object leak is present.</li>
+  <li><strong>Track DOM Element Count:</strong> Check <code>document.getElementsByTagName('*').length</code> across client-side route transitions.</li>
+  <li><strong>Use Automated QA Diagnostics:</strong> Rather than forcing testers to keep DevTools Memory Profiler open, modern tools like <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> automatically track DOM growth percentage, peak heap usage, and flag critical SPA health anomalies directly in bug reports.</li>
+</ol>
+
+<h2>Conclusion</h2>
+<p>Catching memory leaks in production requires waiting for user complaints about sluggish tabs. Catching them in QA requires under 60 seconds with the right telemetry. Monitor your DOM growth, enforce cleanup lifecycles, and keep your SPAs lightweight.</p>
+    `.trim(),
+    contentId: `
+<p>Framework modern seperti React, Vue, dan Next.js membuat pembuatan antarmuka dinamis menjadi mudah, namun juga memicu kelas bug yang sulit dilacak: <strong>kebocoran memori SPA dan pembengkakan elemen DOM</strong>.</p>
+
+<p>Berbeda dari web multi-halaman konvensional di mana setiap pergantian halaman membersihkan JavaScript heap secara otomatis, aplikasi SPA mempertahankan konteks runtime-nya tanpa batas waktu. Jika developer lupa membersihkan interval, listener event global, atau subscription, elemen DOM yang tertinggal akan terus menumpuk di memori hingga membuat browser lambat dan crash.</p>
+
+<h2>Penyebab Utama Pembengkakan DOM pada SPA</h2>
+<p>Pembengkakan DOM terjadi ketika komponen tampak hilang dari layar, namun referensi elemennya masih tersimpan di memory heap. Penyebab paling sering meliputi:</p>
+<ul>
+  <li><strong>Event Listener Global:</strong> <code>window.addEventListener('resize', handler)</code> yang tidak dibersihkan dengan <code>removeEventListener</code> pada lifecycle cleanup.</li>
+  <li><strong>Timer Tanpa Henti:</strong> <code>setInterval</code> atau trailing debounce yang masih memegang referensi ke state komponen.</li>
+  <li><strong>Detached DOM Nodes:</strong> Library pihak ketiga (grafik atau rich-text editor) yang menempelkan elemen langsung ke <code>document.body</code> tanpa sinkronisasi lifecycle.</li>
+</ul>
+
+<h2>Batas Standar 1.500 Elemen DOM</h2>
+<p>Rekomendasi resmi Google Lighthouse adalah menjaga total elemen DOM di bawah <strong>1.500 elemen</strong> per halaman. Halaman dengan lebih dari 3.000 elemen akan mengalami perlambatan perhitungan reflow yang tajam dan memperburuk skor Interaction to Next Paint (INP).</p>
+
+<h2>Cara Praktis Menangkap Memory Leak Saat QA Testing</h2>
+<ol>
+  <li><strong>Pantau Pertumbuhan Heap JS:</strong> Catat penggunaan memori sebelum dan sesudah melakukan alur yang sama berulang kali (misal: buka-tutup modal 10 kali berturut-turut).</li>
+  <li><strong>Pantau Jumlah Elemen DOM:</strong> Periksa pertumbuhan <code>document.getElementsByTagName('*').length</code> saat navigasi rute client-side.</li>
+  <li><strong>Gunakan Telemetri Otomatis:</strong> Ekstensi seperti <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> otomatis merekam lonjakan elemen DOM dan pertumbuhan heap memori, sehingga peringatan kebocoran memori langsung terlampir di laporan bug tanpa perlu membuka tab Profiler.</li>
+</ol>
+    `.trim(),
+  },
+
   // ─── Article 1 ───────────────────────────────────────────────────────────────
   {
     slug: "how-to-report-bugs-effectively",
@@ -34,7 +98,7 @@ export const blogPosts: BlogPost[] = [
     coverImage: "/blog/how-to-report-bugs-effectively.webp",
     ogImage: "/blog/how-to-report-bugs-effectively.webp",
     content: `
-<p>A bad bug report wastes everyone's time. The developer spends an hour trying to reproduce something they can't see, asks five follow-up questions, and the reporter has already forgotten the exact steps they took. A good bug report, by contrast, gets triaged, prioritized, and fixed — often without a single back-and-forth message.</p>
+<p>A bad bug report wastes everyone's time. The developer spends an hour trying to reproduce something they can't see, asks five follow-up questions, and the reporter has already forgotten the exact steps they took. A good bug report, by contrast, gets triaged, prioritized, and fixed, often without a single back-and-forth message.</p>
 
 <p>Here's what separates the two.</p>
 
@@ -44,7 +108,7 @@ export const blogPosts: BlogPost[] = [
   <li><strong>Bad:</strong> "Login is broken"</li>
   <li><strong>Good:</strong> "Login button unresponsive on /checkout after entering wrong password once"</li>
 </ul>
-<p>The specific title tells the developer which component, which condition, and which page — before they even open the report.</p>
+<p>The specific title tells the developer which component, condition, and page are involved before they even open the report.</p>
 
 <h2>2. Include Steps to Reproduce</h2>
 <p>This is the most important section. Number them clearly:</p>
@@ -52,7 +116,7 @@ export const blogPosts: BlogPost[] = [
   <li>Navigate to <code>/checkout</code></li>
   <li>Click "Sign in" and enter a wrong password</li>
   <li>Correct the password and click "Sign in" again</li>
-  <li>The button becomes unresponsive — no loading state, no error</li>
+  <li>The button becomes unresponsive (no loading state, no error)</li>
 </ol>
 <p>If you cannot write reproducible steps, the bug is nearly impossible to fix reliably. Before filing, try reproducing it yourself once more.</p>
 
@@ -62,19 +126,19 @@ export const blogPosts: BlogPost[] = [
 <p>This framing forces clarity and instantly shows the developer what success looks like.</p>
 
 <h2>4. Attach a Screenshot or Screen Recording</h2>
-<p>Text can describe a layout bug, but a screenshot proves it. A video proves a timing or flow issue in a way no text can. Annotate the screenshot with an arrow or highlight — "the button is here, and nothing happens" — so reviewers don't have to hunt for it.</p>
+<p>Text can describe a layout bug, but a screenshot proves it. A video proves a timing or flow issue in a way no text can. Annotate the screenshot with an arrow or highlight ("the button is here, and nothing happens") so reviewers don't have to hunt for it.</p>
 
 <h2>5. Include Console Errors and Network Logs</h2>
-<p>A <code>401 Unauthorized</code> on <code>/api/session</code> tells a developer exactly where the problem is. An unhandled JavaScript exception with a stack trace points to the exact file and line. Without these, the developer has to reproduce your steps, open DevTools, and manually find the errors themselves — adding 30–60 minutes to every bug.</p>
+<p>A <code>401 Unauthorized</code> on <code>/api/session</code> tells a developer exactly where the problem is. An unhandled JavaScript exception with a stack trace points to the exact file and line. Without these, the developer has to reproduce your steps, open DevTools, and manually find the errors themselves, adding 30 to 60 minutes to every bug.</p>
 
 <h2>6. Capture Environment Details</h2>
 <p>Browser version, OS, screen resolution, and user account type all matter. A bug on Safari 17 + macOS that can't be reproduced on Chrome on Windows is a very different debugging task than a universal regression.</p>
 
 <h2>One Tool That Does All of This Automatically</h2>
-<p>If you find yourself skipping half of these steps because they're tedious, that's a tooling problem. <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> is a free Chrome extension that captures your screen, automatically attaches console errors, network logs, and system info to every report — in a single click. Your team gets a shareable link with everything a developer needs, without you having to open DevTools once.</p>
+<p>If you find yourself skipping half of these steps because they are tedious, tooling can help. <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> is a free Chrome extension that captures your screen, automatically attaches console errors, network logs, and system info to every report in a single click. Your team gets a shareable link with everything a developer needs, without you having to open DevTools once.</p>
     `.trim(),
     contentId: `
-<p>Bug report yang buruk membuang waktu semua orang. Developer menghabiskan satu jam mencoba mereproduksi sesuatu yang tidak bisa mereka lihat, mengajukan lima pertanyaan lanjutan, dan pelapor sudah lupa langkah-langkah persis yang mereka ambil. Bug report yang baik, sebaliknya, langsung ditindaklanjuti dan diperbaiki — seringkali tanpa satu pun pesan bolak-balik.</p>
+<p>Bug report yang buruk membuang waktu semua orang. Developer menghabiskan satu jam mencoba mereproduksi sesuatu yang tidak bisa mereka lihat, mengajukan lima pertanyaan lanjutan, dan pelapor sudah lupa langkah-langkah persis yang mereka ambil. Bug report yang baik, sebaliknya, langsung ditindaklanjuti dan diperbaiki, sering kali tanpa satu pun pesan bolak-balik.</p>
 
 <p>Inilah yang membedakan keduanya.</p>
 
@@ -84,7 +148,7 @@ export const blogPosts: BlogPost[] = [
   <li><strong>Buruk:</strong> "Login rusak"</li>
   <li><strong>Baik:</strong> "Tombol login tidak merespons di /checkout setelah memasukkan password salah sekali"</li>
 </ul>
-<p>Judul yang spesifik memberi tahu developer komponen mana, kondisi apa, dan halaman mana — sebelum mereka membuka laporan.</p>
+<p>Judul yang spesifik memberi tahu developer komponen mana, kondisi apa, dan halaman mana, bahkan sebelum mereka membuka laporan.</p>
 
 <h2>2. Sertakan Langkah-Langkah Reproduksi</h2>
 <p>Ini adalah bagian terpenting. Tulis dengan nomor yang jelas:</p>
@@ -92,7 +156,7 @@ export const blogPosts: BlogPost[] = [
   <li>Buka halaman <code>/checkout</code></li>
   <li>Klik "Sign in" dan masukkan password yang salah</li>
   <li>Perbaiki password dan klik "Sign in" lagi</li>
-  <li>Tombol menjadi tidak merespons — tidak ada loading state, tidak ada error</li>
+  <li>Tombol menjadi tidak merespons (tidak ada loading state, tidak ada error)</li>
 </ol>
 <p>Jika kamu tidak bisa menuliskan langkah reproduksi, bug hampir mustahil diperbaiki secara andal. Sebelum mengajukan laporan, coba reproduksi sendiri sekali lagi.</p>
 
@@ -104,13 +168,13 @@ export const blogPosts: BlogPost[] = [
 <p>Teks bisa mendeskripsikan bug layout, tapi screenshot membuktikannya. Video membuktikan masalah timing atau alur dengan cara yang tidak bisa dilakukan teks. Beri anotasi pada screenshot dengan panah atau highlight agar reviewer tidak perlu mencarinya.</p>
 
 <h2>5. Sertakan Console Error dan Network Log</h2>
-<p><code>401 Unauthorized</code> pada <code>/api/session</code> langsung memberi tahu developer di mana masalahnya. Error JavaScript yang tidak tertangani dengan stack trace menunjukkan file dan baris yang tepat. Tanpa ini, developer harus mereproduksi langkahmu, membuka DevTools, dan mencari error secara manual — menambahkan 30–60 menit untuk setiap bug.</p>
+<p><code>401 Unauthorized</code> pada <code>/api/session</code> langsung memberi tahu developer di mana masalahnya. Error JavaScript yang tidak tertangani dengan stack trace menunjukkan file dan baris yang tepat. Tanpa ini, developer harus mereproduksi langkahmu, membuka DevTools, dan mencari error secara manual, menambah 30 hingga 60 menit untuk setiap bug.</p>
 
 <h2>6. Catat Detail Environment</h2>
 <p>Versi browser, OS, resolusi layar, dan tipe akun pengguna semuanya penting. Bug di Safari 17 + macOS yang tidak bisa direproduksi di Chrome Windows adalah tugas debugging yang sangat berbeda dari regresi universal.</p>
 
 <h2>Satu Alat yang Melakukan Semua Ini Secara Otomatis</h2>
-<p>Jika kamu sering melewati setengah langkah ini karena membosankan, itu adalah masalah tooling. <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> adalah ekstensi Chrome gratis yang merekam layarmu, secara otomatis melampirkan console error, network log, dan info sistem ke setiap laporan — dalam satu klik. Timmu mendapatkan link berbagi dengan semua yang dibutuhkan developer, tanpa kamu harus membuka DevTools sekali pun.</p>
+<p>Jika kamu sering melewatkan langkah-langkah ini karena memakan waktu, masalahnya ada pada alat kerja. <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> adalah ekstensi Chrome gratis yang merekam layar dan otomatis melampirkan console error, network log, serta info sistem ke setiap laporan dalam satu klik. Timmu mendapatkan link berbagi dengan semua data yang dibutuhkan developer tanpa perlu membuka DevTools sekali pun.</p>
     `.trim(),
   },
 
@@ -120,7 +184,7 @@ export const blogPosts: BlogPost[] = [
     title: "Chrome DevTools for QA Testers and PMs: What You Actually Need to Know",
     titleId: "Chrome DevTools untuk QA Tester dan PM: Yang Benar-Benar Perlu Kamu Tahu",
     description:
-      "You don't need to be a developer to read browser errors. This guide covers the Console and Network tabs in plain language — and how to share what you find.",
+      "You don't need to be a developer to read browser errors. This guide covers the Console and Network tabs in plain language, along with how to share what you find.",
     descriptionId:
       "Kamu tidak perlu menjadi developer untuk membaca error browser. Panduan ini membahas tab Console dan Network dalam bahasa yang mudah dipahami.",
     date: "2026-09-15",
@@ -130,7 +194,7 @@ export const blogPosts: BlogPost[] = [
     coverImage: "/blog/chrome-devtools-for-non-developers.webp",
     ogImage: "/opengraph-image.png",
     content: `
-<p>Chrome DevTools feels intimidating if you've never used it before. Six panels, cryptic numbers, walls of red text. But for bug reporting, you only need two tabs: <strong>Console</strong> and <strong>Network</strong>. Everything else is a bonus.</p>
+<p>Chrome DevTools can feel overwhelming if you have never used it before. With numerous panels and technical logs, it is easy to get lost. For bug reporting, however, you only need two tabs: <strong>Console</strong> and <strong>Network</strong>.</p>
 
 <p>Here's the non-developer guide.</p>
 
@@ -138,12 +202,12 @@ export const blogPosts: BlogPost[] = [
 <p>Press <code>F12</code> on Windows/Linux or <code>Cmd + Option + I</code> on Mac. A panel opens at the bottom or side of your browser. Click the <strong>Console</strong> tab to start.</p>
 
 <h2>The Console Tab</h2>
-<p>The Console shows messages from the webpage's JavaScript. Most are harmless info logs you can ignore. The ones that matter are red — they're errors.</p>
+<p>The Console shows messages from the webpage's JavaScript. Most are harmless info logs you can ignore. The ones that matter are red: they indicate errors.</p>
 
 <p>A typical error looks like this:</p>
 <p><code>Uncaught TypeError: Cannot read properties of null (reading 'submit')</code></p>
 
-<p>You don't need to understand what this means — you just need to copy it. That stack trace tells developers exactly which file and line of code failed. Include it in your bug report and it saves them 30 minutes of guessing.</p>
+<p>You don't need to understand what this means; you only need to copy it. That stack trace tells developers exactly which file and line of code failed. Include it in your bug report and it saves them 30 minutes of guessing.</p>
 
 <p><strong>Tip:</strong> Right-click inside the Console and choose "Save as" to export all logged errors to a file.</p>
 
@@ -152,9 +216,9 @@ export const blogPosts: BlogPost[] = [
 
 <p>What to look for:</p>
 <ul>
-  <li><strong>Red rows</strong> — failed requests. A <code>400</code> means bad data was sent. A <code>401</code> means authentication failed. A <code>500</code> means the server crashed.</li>
-  <li><strong>Request URL</strong> — which endpoint was called (e.g. <code>/api/checkout</code>)</li>
-  <li><strong>Response body</strong> — click the request, then "Response" tab to see what the server returned (often contains a helpful error message)</li>
+  <li><strong>Red rows:</strong> Failed requests. A <code>400</code> means bad data was sent. A <code>401</code> means authentication failed. A <code>500</code> means the server crashed.</li>
+  <li><strong>Request URL:</strong> The endpoint that was called (e.g. <code>/api/checkout</code>)</li>
+  <li><strong>Response body:</strong> Click the request, then "Response" tab to see what the server returned (often contains a helpful error message)</li>
 </ul>
 
 <p>Click the red row, screenshot the headers and response, and paste both into your bug report.</p>
@@ -168,10 +232,10 @@ export const blogPosts: BlogPost[] = [
 </ol>
 
 <h2>A Faster Way to Capture All of This</h2>
-<p>Opening DevTools, switching tabs, screenshotting, and copying errors is a process that takes 5–10 minutes per bug. <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> captures your screen recording and silently attaches console errors, network logs, and environment specs automatically — so your bug report arrives with everything above already included, and you never have to open DevTools at all.</p>
+<p>Opening DevTools, switching tabs, screenshotting, and copying errors is a process that takes 5 to 10 minutes per bug. <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> captures your screen recording and silently attaches console errors, network logs, and environment specs automatically. Your bug report arrives with everything above already included, and you never have to open DevTools at all.</p>
     `.trim(),
     contentId: `
-<p>Chrome DevTools terasa menakutkan jika kamu belum pernah menggunakannya. Enam panel, angka-angka misterius, tumpukan teks merah. Tapi untuk pelaporan bug, kamu hanya butuh dua tab: <strong>Console</strong> dan <strong>Network</strong>. Sisanya adalah bonus.</p>
+<p>Chrome DevTools bisa terasa membingungkan jika baru pertama kali digunakan karena banyaknya panel dan log teknis. Namun untuk pelaporan bug, kamu hanya membutuhkan dua tab: <strong>Console</strong> dan <strong>Network</strong>.</p>
 
 <p>Ini panduan untuk non-developer.</p>
 
@@ -179,12 +243,12 @@ export const blogPosts: BlogPost[] = [
 <p>Tekan <code>F12</code> di Windows/Linux atau <code>Cmd + Option + I</code> di Mac. Panel akan terbuka di bagian bawah atau samping browser. Klik tab <strong>Console</strong> untuk memulai.</p>
 
 <h2>Tab Console</h2>
-<p>Console menampilkan pesan dari JavaScript halaman web. Kebanyakan adalah info log yang tidak berbahaya. Yang penting adalah yang berwarna merah — itu adalah error.</p>
+<p>Console menampilkan pesan dari JavaScript halaman web. Kebanyakan adalah info log yang tidak berbahaya. Yang paling penting adalah yang berwarna merah: baris tersebut menandakan error.</p>
 
 <p>Error khas terlihat seperti ini:</p>
 <p><code>Uncaught TypeError: Cannot read properties of null (reading 'submit')</code></p>
 
-<p>Kamu tidak perlu memahami artinya — cukup salin. Stack trace itu memberi tahu developer persis file dan baris kode mana yang gagal. Sertakan dalam bug reportmu dan itu menghemat 30 menit dugaan mereka.</p>
+<p>Kamu tidak perlu memahami artinya; cukup salin pesan tersebut. Stack trace itu memberi tahu developer persis file dan baris kode mana yang gagal. Sertakan dalam bug reportmu dan itu menghemat 30 menit dugaan mereka.</p>
 
 <p><strong>Tips:</strong> Klik kanan di dalam Console dan pilih "Save as" untuk mengekspor semua error yang tercatat ke file.</p>
 
@@ -193,13 +257,13 @@ export const blogPosts: BlogPost[] = [
 
 <p>Apa yang harus dicari:</p>
 <ul>
-  <li><strong>Baris merah</strong> — permintaan yang gagal. Kode <code>400</code> berarti data yang dikirim salah. Kode <code>401</code> berarti autentikasi gagal. Kode <code>500</code> berarti server crash.</li>
-  <li><strong>URL permintaan</strong> — endpoint mana yang dipanggil (misalnya <code>/api/checkout</code>)</li>
-  <li><strong>Response body</strong> — klik permintaan, lalu tab "Response" untuk melihat apa yang dikembalikan server</li>
+  <li><strong>Baris merah:</strong> Permintaan yang gagal. Kode <code>400</code> berarti data yang dikirim salah. Kode <code>401</code> berarti autentikasi gagal. Kode <code>500</code> berarti server crash.</li>
+  <li><strong>URL permintaan:</strong> Endpoint mana yang dipanggil (misalnya <code>/api/checkout</code>)</li>
+  <li><strong>Response body:</strong> Klik permintaan, lalu tab "Response" untuk melihat apa yang dikembalikan server</li>
 </ul>
 
 <h2>Cara Lebih Cepat untuk Menangkap Semua Ini</h2>
-<p>Membuka DevTools, berpindah tab, screenshot, dan menyalin error adalah proses yang memakan 5–10 menit per bug. <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> merekam layarmu dan secara otomatis melampirkan console error, network log, dan spesifikasi environment — sehingga bug reportmu tiba dengan semua informasi di atas sudah disertakan, dan kamu tidak perlu membuka DevTools sama sekali.</p>
+<p>Membuka DevTools, berpindah tab, screenshot, dan menyalin error adalah proses yang memakan 5 hingga 10 menit per bug. <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> merekam layarmu dan secara otomatis melampirkan console error, network log, dan spesifikasi environment, sehingga bug reportmu tiba dengan semua informasi di atas sudah disertakan, dan kamu tidak perlu membuka DevTools sama sekali.</p>
     `.trim(),
   },
 
@@ -219,12 +283,12 @@ export const blogPosts: BlogPost[] = [
     coverImage: "/blog/screen-recording-for-bug-reports.webp",
     ogImage: "/opengraph-image.png",
     content: `
-<p>Picture this: a QA tester files a bug report saying "the form doesn't submit when I click the button." The developer tries it on their machine, it works fine. They ask for more details. The tester writes two more paragraphs. Still can't reproduce. Four days later, someone discovers it only fails when the user has previously visited the billing tab in the same session.</p>
+<p>Consider a common scenario: a QA tester files a report stating that a form does not submit when clicking the button. The developer tests it locally, finds no issue, and asks for more details. After multiple rounds of clarifying messages, the issue remains unresolved until days later, when someone discovers it only triggers if the user previously visited the billing tab in that session.</p>
 
 <p>A 30-second screen recording would have shown all of this instantly.</p>
 
 <h2>What Text Descriptions Miss</h2>
-<p>When you describe a bug in text, you're making decisions about what to include. You write what you consciously noticed — but bugs often live in the details you didn't think were relevant:</p>
+<p>When you describe a bug in text, you are making decisions about what to include. You write what you consciously noticed, but bugs often live in the details you did not think were relevant:</p>
 <ul>
   <li>Which tab you were on before navigating to the broken page</li>
   <li>The exact speed at which you clicked (double-click vs. slow click)</li>
@@ -235,7 +299,7 @@ export const blogPosts: BlogPost[] = [
 
 <h2>When Recordings Are Essential</h2>
 <ul>
-  <li><strong>Timing bugs:</strong> Race conditions, loading flickers, premature redirects — things that exist only for a fraction of a second</li>
+  <li><strong>Timing bugs:</strong> Race conditions, loading flickers, and premature redirects that exist only for a fraction of a second</li>
   <li><strong>Multi-step flows:</strong> Checkout funnels, multi-page forms, wizard flows with state carried across steps</li>
   <li><strong>Animation and transition bugs:</strong> "The dropdown jumps" is nearly impossible to describe precisely</li>
   <li><strong>Intermittent bugs:</strong> Record a session, and even if the bug doesn't appear, the context of what led up to it is preserved</li>
@@ -243,25 +307,25 @@ export const blogPosts: BlogPost[] = [
 
 <h2>How to Make a Good Bug Recording</h2>
 <ol>
-  <li><strong>Start before the bug:</strong> Begin recording from a clean state — don't start mid-flow</li>
-  <li><strong>Narrate as you go:</strong> Say out loud what you expect to happen. "I'm clicking Save now, and the form should submit" — so if it doesn't, the mismatch is audible</li>
+  <li><strong>Start before the bug:</strong> Begin recording from a clean state instead of starting mid-flow</li>
+  <li><strong>Narrate as you go:</strong> State aloud what you expect to happen. "I am clicking Save now, and the form should submit," so if it fails, the mismatch is audible</li>
   <li><strong>Don't stop at the bug:</strong> Keep recording for a few seconds after the failure so the full failure state is visible</li>
-  <li><strong>Keep it short:</strong> 30–90 seconds covers most bugs. Longer recordings have diminishing returns</li>
+  <li><strong>Keep it short:</strong> 30 to 90 seconds covers most bugs. Longer recordings have diminishing returns</li>
 </ol>
 
 <h2>Pair the Recording With Logs</h2>
-<p>A recording shows what the user saw. Console errors and network logs show what happened underneath. Together, they give a developer both the symptom and the cause — dramatically reducing the debugging cycle.</p>
+<p>A recording shows what the user saw. Console errors and network logs show what happened underneath. Together, they give a developer both the symptom and the cause, dramatically reducing the debugging cycle.</p>
 
 <h2>One-Click Capture</h2>
-<p>If setting up a recording workflow feels like too much friction, <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> makes it a single keyboard shortcut. Press <code>Ctrl+Shift+F</code>, record your screen with audio narration, and stop. The extension automatically attaches console logs and network errors to the recording — no manual copy-paste, no DevTools gymnastics.</p>
+<p>If setting up a recording workflow feels like too much friction, <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> makes it a single keyboard shortcut. Press <code>Ctrl+Shift+F</code>, record your screen with audio narration, and stop. The extension automatically attaches console logs and network errors to the recording, eliminating manual copy-paste and DevTools work.</p>
     `.trim(),
     contentId: `
-<p>Bayangkan ini: seorang QA tester mengajukan bug report yang mengatakan "form tidak submit ketika saya klik tombol." Developer mencobanya di mesin mereka, berjalan dengan baik. Mereka meminta detail lebih lanjut. Tester menulis dua paragraf lagi. Masih tidak bisa direproduksi. Empat hari kemudian, seseorang menemukan bahwa itu hanya gagal ketika pengguna sebelumnya telah mengunjungi tab billing dalam sesi yang sama.</p>
+<p>Situasi ini sering terjadi: seorang QA tester melaporkan bahwa formulir tidak dapat dikirim ketika tombol diklik. Developer mencobanya secara lokal, merasa semuanya normal, lalu meminta penjelasan tambahan. Setelah beberapa kali bertukar pesan, masalah masih belum terpecahkan hingga beberapa hari kemudian ditemukan bahwa bug hanya muncul jika pengguna membuka tab billing terlebih dahulu dalam sesi yang sama.</p>
 
 <p>Screen recording 30 detik sudah menunjukkan semua ini secara instan.</p>
 
 <h2>Apa yang Terlewat dalam Deskripsi Teks</h2>
-<p>Ketika kamu mendeskripsikan bug dalam teks, kamu membuat keputusan tentang apa yang harus disertakan. Kamu menulis apa yang kamu sadari — tetapi bug sering hidup di detail yang tidak kamu anggap relevan:</p>
+<p>Ketika kamu mendeskripsikan bug dalam teks, kamu membuat keputusan tentang apa yang harus disertakan. Kamu menulis apa yang kamu sadari, tetapi bug sering kali berada pada detail yang tampak sepele:</p>
 <ul>
   <li>Tab mana yang kamu kunjungi sebelum beralih ke halaman yang rusak</li>
   <li>Kecepatan klik yang tepat (double-click vs. klik lambat)</li>
@@ -272,7 +336,7 @@ export const blogPosts: BlogPost[] = [
 
 <h2>Kapan Recording Sangat Penting</h2>
 <ul>
-  <li><strong>Bug timing:</strong> Race condition, loading flicker, redirect prematur — hal-hal yang hanya ada selama sepersekian detik</li>
+  <li><strong>Bug timing:</strong> Race condition, loading flicker, dan redirect prematur yang hanya muncul selama sepersekian detik</li>
   <li><strong>Alur multi-langkah:</strong> Checkout funnel, form multi-halaman, wizard dengan state yang dibawa antar langkah</li>
   <li><strong>Bug animasi dan transisi:</strong> "Dropdown-nya loncat" hampir mustahil dideskripsikan dengan tepat</li>
   <li><strong>Bug intermiten:</strong> Rekam sesi, dan meskipun bug tidak muncul, konteks yang mendahuluinya tersimpan</li>
@@ -280,14 +344,14 @@ export const blogPosts: BlogPost[] = [
 
 <h2>Cara Membuat Recording Bug yang Baik</h2>
 <ol>
-  <li><strong>Mulai sebelum bug:</strong> Mulai merekam dari keadaan bersih — jangan mulai di tengah alur</li>
+  <li><strong>Mulai sebelum bug:</strong> Mulai merekam dari kondisi awal yang bersih, bukan di tengah alur</li>
   <li><strong>Narasi saat berjalan:</strong> Ucapkan keras apa yang kamu harapkan terjadi</li>
   <li><strong>Jangan berhenti di bug:</strong> Tetap rekam beberapa detik setelah kegagalan</li>
-  <li><strong>Tetap singkat:</strong> 30–90 detik mencakup sebagian besar bug</li>
+  <li><strong>Tetap singkat:</strong> 30 hingga 90 detik mencakup sebagian besar bug</li>
 </ol>
 
 <h2>Tangkap Satu Klik</h2>
-<p>Jika menyiapkan alur rekaman terasa terlalu rumit, <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> menjadikannya satu pintasan keyboard. Tekan <code>Ctrl+Shift+F</code>, rekam layarmu dengan narasi audio, dan stop. Ekstensi secara otomatis melampirkan console log dan network error ke rekaman — tanpa copy-paste manual.</p>
+<p>Jika menyiapkan alur rekaman terasa terlalu rumit, <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> menjadikannya satu pintasan keyboard. Tekan <code>Ctrl+Shift+F</code>, rekam layarmu dengan narasi audio, dan stop. Ekstensi secara otomatis melampirkan console log dan network error ke rekaman tanpa perlu copy-paste manual.</p>
     `.trim(),
   },
 
@@ -307,7 +371,7 @@ export const blogPosts: BlogPost[] = [
     coverImage: "/blog/google-drive-file-ownership-for-teams.webp",
     ogImage: "/opengraph-image.png",
     content: `
-<p>When your team records a screen, uploads a video, or attaches a file in a collaboration tool, where does that file actually live? For most tools, the honest answer is: on their servers, under their terms, accessible only through their product.</p>
+<p>When your team records a screen, uploads a video, or attaches a file in a collaboration tool, where does that file actually live? For most tools, the files live on their servers, under their terms, accessible only through their product.</p>
 
 <p>That's a significant operational dependency that's easy to overlook until it matters.</p>
 
@@ -319,14 +383,14 @@ export const blogPosts: BlogPost[] = [
   <li>Shared links break when your subscription lapses</li>
   <li>Teammates who didn't pay for the tool can't access the files at all</li>
 </ul>
-<p>This isn't a bug — it's a business model. Retention through data gravity.</p>
+<p>This is not an accident; it is their business model: retention through data gravity.</p>
 
 <h2>What Real File Ownership Looks Like</h2>
 <p>True ownership means the files are in a location you control, in a format you can read without the vendor's software, and accessible to anyone you share them with regardless of whether they use the tool.</p>
 <p>Google Drive is a good proxy for this. Files stored in your Drive are:</p>
 <ul>
   <li>Accessible forever, even if the tool that created them disappears</li>
-  <li>Shareable with anyone via a link — no account required for viewers</li>
+  <li>Shareable with anyone via a link (no account required for viewers)</li>
   <li>Searchable and organizable in a file system you already use</li>
   <li>Downloadable in standard formats at any time</li>
 </ul>
@@ -338,10 +402,10 @@ export const blogPosts: BlogPost[] = [
 <p>For teams in regulated industries, knowing exactly where data lives isn't optional. Your security team needs to be able to point to a location and say "that's where our diagnostic recordings are stored, and that's who has access." "It's in the vendor's cloud" is not a sufficient answer for an audit.</p>
 
 <h2>How BugSnap Handles This</h2>
-<p>BugSnap was designed around this principle from the start. Every screen recording and screenshot is saved directly to your own Google Drive — not to our servers. The <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap Chrome extension</a> uploads captures straight to the Drive account you authorize, and generates shareable links from Drive directly. We never hold a copy. If you uninstall the extension tomorrow, every file you've ever captured is still in your Drive, accessible and shareable, exactly as it was.</p>
+<p>BugSnap was designed around this principle from the start. Every screen recording and screenshot is saved directly to your own Google Drive, never to our servers. The <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap Chrome extension</a> uploads captures straight to the Drive account you authorize, and generates shareable links from Drive directly. We never hold a copy. If you uninstall the extension tomorrow, every file you've ever captured is still in your Drive, accessible and shareable, exactly as it was.</p>
     `.trim(),
     contentId: `
-<p>Ketika timmu merekam layar, mengunggah video, atau melampirkan file dalam alat kolaborasi, di mana file itu sebenarnya berada? Untuk sebagian besar alat, jawaban jujurnya adalah: di server mereka, di bawah ketentuan mereka, hanya dapat diakses melalui produk mereka.</p>
+<p>Ketika timmu merekam layar, mengunggah video, atau melampirkan file dalam alat kolaborasi, di mana file itu sebenarnya berada? Untuk sebagian besar alat, file tersebut tersimpan di server mereka, di bawah ketentuan mereka, dan hanya dapat diakses melalui produk mereka.</p>
 
 <p>Itu adalah ketergantungan operasional yang signifikan yang mudah diabaikan sampai menjadi masalah.</p>
 
@@ -353,18 +417,19 @@ export const blogPosts: BlogPost[] = [
   <li>Tautan berbagi rusak ketika langgananmu berakhir</li>
   <li>Rekan tim yang tidak membayar alat tidak dapat mengakses file sama sekali</li>
 </ul>
+<p>Ini bukan ketidaksengajaan; ini adalah model bisnis mereka: retensi pengguna melalui keterikatan data.</p>
 
 <h2>Seperti Apa Kepemilikan File yang Sebenarnya</h2>
 <p>Kepemilikan sejati berarti file berada di lokasi yang kamu kendalikan, dalam format yang dapat kamu baca tanpa perangkat lunak vendor, dan dapat diakses oleh siapa pun yang kamu bagikan terlepas dari apakah mereka menggunakan alat tersebut.</p>
 <p>Google Drive adalah proxy yang baik untuk ini. File yang disimpan di Drive kamu:</p>
 <ul>
   <li>Dapat diakses selamanya, bahkan jika alat yang membuatnya menghilang</li>
-  <li>Dapat dibagikan kepada siapa saja melalui tautan — tidak perlu akun untuk penampil</li>
+  <li>Dapat dibagikan kepada siapa saja melalui tautan (tanpa perlu akun bagi penerima)</li>
   <li>Dapat dicari dan diorganisir dalam sistem file yang sudah kamu gunakan</li>
 </ul>
 
 <h2>Cara BugSnap Menangani Ini</h2>
-<p>BugSnap dirancang berdasarkan prinsip ini sejak awal. Setiap screen recording dan screenshot disimpan langsung ke Google Drive kamu sendiri — bukan ke server kami. <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">Ekstensi Chrome BugSnap</a> mengunggah tangkapan langsung ke akun Drive yang kamu otorisasi. Kami tidak pernah menyimpan salinan. Jika kamu menguninstall ekstensi besok, setiap file yang pernah kamu tangkap masih ada di Drive kamu.</p>
+<p>BugSnap dirancang berdasarkan prinsip ini sejak awal. Setiap screen recording dan screenshot disimpan langsung ke Google Drive kamu sendiri, bukan ke server kami. <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">Ekstensi Chrome BugSnap</a> mengunggah tangkapan langsung ke akun Drive yang kamu otorisasi. Kami tidak pernah menyimpan salinan. Jika kamu menguninstall ekstensi besok, setiap file yang pernah kamu tangkap masih ada di Drive kamu.</p>
     `.trim(),
   },
 
@@ -384,7 +449,7 @@ export const blogPosts: BlogPost[] = [
     coverImage: "/blog/reduce-back-and-forth-in-bug-fixing.webp",
     ogImage: "/opengraph-image.png",
     content: `
-<p>"Can you reproduce it?" Four words that signal a bug report has failed. The reporter knows what happened. The developer doesn't. And both of them are about to spend the next 30 minutes in Slack threading what should have been a 5-minute conversation.</p>
+<p>Hearing "Can you reproduce it?" usually means a bug report lacks crucial context. While the reporter witnessed the issue firsthand, the developer cannot see what led to it, turning a quick fix into an extended Slack thread.</p>
 
 <p>The cycle is expensive. Here's why it happens and how to break it.</p>
 
@@ -401,7 +466,7 @@ export const blogPosts: BlogPost[] = [
 </ul>
 
 <h2>What a Reproduction-Ready Bug Report Looks Like</h2>
-<p>A developer should be able to read your report and immediately begin debugging — not gather more information. The bar is: "If I follow these steps on an account that matches the described state, I will see the same failure."</p>
+<p>A developer should be able to read your report and immediately begin debugging instead of chasing missing details. The benchmark is straightforward: following the steps on a matching account reproduces the exact same failure.</p>
 
 <p>That requires:</p>
 <ol>
@@ -409,22 +474,22 @@ export const blogPosts: BlogPost[] = [
   <li>The exact URL where the bug occurred</li>
   <li>Account/data state (e.g. "a workspace with one member and no captures")</li>
   <li>Browser + OS + version</li>
-  <li>Console errors (full stack trace, not just the error message)</li>
+  <li>Console errors (full stack trace rather than only the error message)</li>
   <li>Network tab: any failed requests, their status codes and response bodies</li>
   <li>A screen recording showing the entire interaction</li>
 </ol>
 
 <h2>Timestamped Comments Cut Review Time</h2>
-<p>When a developer watches a recording and wants to ask "what happened at 0:23?", they need to be able to reference that moment precisely. Timestamped comments on a video — like a developer leaving a note at a specific frame — collapse review cycles from multi-day email threads into a single focused conversation.</p>
+<p>When a developer watches a recording and wants to ask what happened at a specific second, they need to reference that moment precisely. Timestamped comments on a video, such as notes left at a specific frame, collapse review cycles from multi-day threads into a single focused conversation.</p>
 
 <h2>The Asymmetry of Bug Reporting</h2>
-<p>The reporter spends 2 minutes capturing; the developer saves 2 hours debugging. When the reporter provides a complete bug report upfront, the total team cost of fixing a bug drops dramatically. The back-and-forth isn't just a communication problem — it's a leverage problem that good tooling can solve.</p>
+<p>The reporter spends 2 minutes capturing; the developer saves 2 hours debugging. When the reporter provides a complete bug report upfront, the total team cost of fixing a bug drops dramatically. The back-and-forth is fundamentally an efficiency problem: better tooling gives reporters the leverage to share full context instantly.</p>
 
 <h2>Put It All in One Link</h2>
-<p><a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> was built specifically to solve this. One keyboard shortcut captures your screen recording with audio narration, and automatically packages console errors, network request logs, and system environment info alongside it. The result is a shareable link containing everything a developer needs — steps visible in the video, logs attached below, environment specs included. No follow-up questions. No "can you reproduce it?" Just a fix.</p>
+<p><a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> was built specifically to solve this. One keyboard shortcut captures your screen recording with audio narration, and automatically packages console errors, network request logs, and system environment info alongside it. The result is a shareable link containing everything a developer needs: visible user actions in the video, network and console logs below, and complete environment specs. Developers receive the full diagnostic context upfront, eliminating clarifying questions and back-and-forth threads.</p>
     `.trim(),
     contentId: `
-<p>"Bisa direproduksi nggak?" Empat kata yang menandakan bug report telah gagal. Pelapor tahu apa yang terjadi. Developer tidak tahu. Dan keduanya akan menghabiskan 30 menit berikutnya di Slack untuk apa yang seharusnya menjadi percakapan 5 menit.</p>
+<p>Pertanyaan "Bisa direproduksi nggak?" biasanya menandakan bahwa bug report kekurangan konteks penting. Pelapor melihat langsung masalahnya, tetapi developer tidak dapat mengetahui pemicunya, sehingga perbaikan cepat berubah menjadi diskusi panjang di Slack.</p>
 
 <p>Siklus ini mahal. Inilah mengapa itu terjadi dan cara memutusnya.</p>
 
@@ -441,7 +506,7 @@ export const blogPosts: BlogPost[] = [
 </ul>
 
 <h2>Seperti Apa Bug Report yang Siap Direproduksi</h2>
-<p>Developer harus bisa membaca laporan kamu dan langsung mulai debugging — bukan mengumpulkan informasi lebih lanjut. Standarnya adalah: "Jika saya mengikuti langkah-langkah ini di akun yang cocok dengan state yang dijelaskan, saya akan melihat kegagalan yang sama."</p>
+<p>Developer harus bisa membaca laporan kamu dan langsung mulai melakukan debugging tanpa perlu meminta informasi tambahan. Standarnya jelas: mengikuti langkah-langkah pada akun dengan kondisi serupa akan memicu kegagalan yang sama persis.</p>
 
 <ol>
   <li>Langkah reproduksi bernomor dimulai dari state yang konsisten</li>
@@ -454,10 +519,22 @@ export const blogPosts: BlogPost[] = [
 </ol>
 
 <h2>Satu Link untuk Semuanya</h2>
-<p><a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> dibangun khusus untuk menyelesaikan ini. Satu pintasan keyboard merekam layarmu dengan narasi audio, dan secara otomatis mengemas console error, log network request, dan info environment sistem bersamanya. Hasilnya adalah link berbagi yang berisi semua yang dibutuhkan developer — langkah-langkah terlihat dalam video, log terlampir di bawah, spesifikasi environment disertakan. Tidak ada pertanyaan lanjutan. Tidak ada "bisa direproduksi nggak?" Hanya perbaikan.</p>
+<p><a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> dibangun khusus untuk menyelesaikan ini. Satu pintasan keyboard merekam layarmu dengan narasi audio, dan secara otomatis mengemas console error, log network request, dan info environment sistem bersamanya. Hasilnya adalah link berbagi yang memuat seluruh kebutuhan developer: alur tindakan terlihat pada video, log jaringan dan console terlampir di bawah, serta spesifikasi sistem lengkap. Developer mendapatkan konteks teknis yang lengkap sejak awal tanpa perlu pertanyaan susulan atau proses klarifikasi berulang.</p>
     `.trim(),
   },
 ];
+
+export function getSortedBlogPosts(): BlogPost[] {
+  return [...blogPosts].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+}
+
+export function getAllCategories(): string[] {
+  const set = new Set<string>();
+  blogPosts.forEach((post) => {
+    post.tags.forEach((tag) => set.add(tag));
+  });
+  return Array.from(set);
+}
 
 export function getBlogPost(slug: string): BlogPost | undefined {
   return blogPosts.find((p) => p.slug === slug);

@@ -110,32 +110,39 @@ export function SecurityContent() {
 
         {/* Bottom CTA Box */}
         <Reveal delay={0.25}>
-          <div className="rounded-xl border border-site-border bg-site-surface p-8 text-center space-y-4 shadow-xs transition-all duration-200 hover:border-site-border-focus">
-            <h3 className="text-xl font-bold text-site-text">{t("security.ctaTitle")}</h3>
-            <p className="text-xs text-site-text-2 max-w-md mx-auto leading-relaxed">
-              {t("security.ctaDesc")}
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
-              <a
-                href={CHROME_STORE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-lg bg-accent hover:bg-accent-hover text-slate-900 hover:text-white text-xs font-semibold px-5 py-2.5 transition-colors shadow-xs"
-              >
-                <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
-                <span>{t("security.installFree")}</span>
-              </a>
-              <Link
-                href="/pricing"
-                className="inline-flex items-center rounded-lg border border-site-border bg-site-surface hover:bg-site-surface-2 text-site-text text-xs font-semibold px-5 py-2.5 transition-colors"
-              >
-                {t("security.seePricing")}
-              </Link>
-            </div>
-            <div className="pt-2">
-              <Link href="/privacy" className="inline-flex items-center text-xs font-medium text-site-text-2 hover:text-site-text transition-colors">
-                {t("security.readPrivacy")} →
-              </Link>
+          <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-site-border bg-site-surface p-6 sm:p-8 lg:p-10 shadow-lg">
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6 min-w-0">
+              <div className="space-y-1.5 text-left min-w-0 flex-1">
+                <h3 className="text-xl sm:text-2xl font-extrabold text-site-text tracking-tight leading-snug">
+                  {t("security.ctaTitle")}
+                </h3>
+                <p className="text-xs sm:text-sm text-site-text-2 leading-relaxed max-w-2xl">
+                  {t("security.ctaDesc")}
+                </p>
+                <div className="pt-1">
+                  <Link href="/privacy" className="inline-flex items-center gap-1 text-xs font-medium text-site-text-2 hover:text-site-text transition-colors touch-manipulation">
+                    <span>{t("security.readPrivacy")}</span>
+                    <Icon icon="lucide:arrow-right" className="w-3 h-3" aria-hidden="true" />
+                  </Link>
+                </div>
+              </div>
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 w-full md:w-auto">
+                <a
+                  href={CHROME_STORE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-accent hover:bg-accent-hover text-slate-900 text-xs sm:text-sm font-bold px-6 py-3 min-h-[44px] transition-all shadow-md shadow-accent/20 hover:scale-[1.02] active:scale-[0.99] touch-manipulation whitespace-nowrap"
+                >
+                  <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
+                  <span>{t("security.installFree")}</span>
+                </a>
+                <Link
+                  href="/pricing"
+                  className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl border border-site-border bg-site-surface hover:bg-site-surface-2 text-site-text text-xs sm:text-sm font-semibold px-5 py-3 min-h-[44px] transition-colors touch-manipulation whitespace-nowrap"
+                >
+                  {t("security.seePricing")}
+                </Link>
+              </div>
             </div>
           </div>
         </Reveal>

@@ -950,7 +950,6 @@ ${stack}` : body);
 
   return (
     <div className={`w-full rounded-xl border border-border bg-white shadow-sm dark:bg-background flex flex-col shrink-0 max-h-[520px] sm:max-h-[600px] xl:max-h-[calc(100vh-16rem)] overflow-hidden ${className || ""}`}>
-      {/* Header */}
       <div className="h-11 border-b border-border px-4 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-sm font-semibold text-foreground">{t("v.devTools")}</span>
@@ -1039,7 +1038,6 @@ ${stack}` : body);
         })}
       </div>
 
-      {/* Content */}
       <div
         role="tabpanel"
         id="dt-tabpanel"
@@ -1703,22 +1701,26 @@ ${stack}` : body);
               </div>
             )}
 
-            {/* Quick Export Bug Report Card */}
-            <div className="p-3 rounded-xl border border-[#89BD49]/30 dark:border-[#89BD49]/40 bg-[#89BD49]/10 dark:bg-[#89BD49]/15 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xs">
+            {/* Quick Export Bug Report Card - always stacked: this card only ever
+                renders in the narrow DevTools sidebar, never a wide column, and a
+                sm: (viewport-width) breakpoint doesn't know that - it was flipping
+                to a cramped row on any desktop viewport regardless of how narrow
+                the actual sidebar was. */}
+            <div className="p-3 rounded-xl border border-[#89BD49]/30 dark:border-[#89BD49]/40 bg-[#89BD49]/10 dark:bg-[#89BD49]/15 flex flex-col gap-3 shadow-2xs">
               <div className="min-w-0">
                 <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
                   <Icon icon="lucide:clipboard-list" className="w-3.5 h-3.5 text-[#6B9A35] dark:text-[#A8D666] shrink-0" />
                   <span>Markdown Bug Report</span>
                 </p>
-                <p className="text-[11px] text-muted truncate mt-0.5">
+                <p className="text-[11px] text-muted mt-0.5">
                   Environment, causality timeline, top errors, failed cURLs & reproduction steps.
                 </p>
               </div>
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0">
+              <div className="flex flex-col items-stretch gap-2 shrink-0">
                 <button
                   type="button"
                   onClick={handleOpenGitHubIssue}
-                  className="w-full sm:w-auto justify-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-background hover:bg-subtle text-foreground border border-border shadow-xs transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer"
+                  className="w-full justify-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-background hover:bg-subtle text-foreground border border-border shadow-xs transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer"
                   title={t("dt.openGithubIssue") || "Open in GitHub Issues"}
                 >
                   <Icon icon="lucide:github" className="w-3.5 h-3.5 shrink-0" />
@@ -1727,7 +1729,7 @@ ${stack}` : body);
                 <button
                   type="button"
                   onClick={handleCopyBugReport}
-                  className="w-full sm:w-auto justify-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-xs shadow-[#89BD49]/25 transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer"
+                  className="w-full justify-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-xs shadow-[#89BD49]/25 transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer"
                 >
                   {copiedBugReport ? (
                     <>

@@ -57,7 +57,7 @@ export function AboutContent() {
 
         {/* Story Section */}
         <Reveal delay={0.3}>
-          <div className="rounded-3xl border border-site-border bg-site-surface-2/50 p-8 sm:p-12 space-y-4">
+          <div className="rounded-3xl border border-site-border bg-site-surface-2/50 p-5 sm:p-8 md:p-12 space-y-4">
             <span className="text-xs font-semibold uppercase tracking-wider text-site-accent">
               Our Philosophy
             </span>

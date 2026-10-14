@@ -131,21 +131,6 @@ const IntegrationSwitcher = dynamic(
   },
 );
 
-const TestimonialWall = dynamic(
-  () =>
-    import("@/components/site/TestimonialWall").then(
-      (m) => m.TestimonialWall,
-    ),
-  {
-    loading: () => (
-      <div
-        className="w-full min-h-[420px] rounded-2xl border border-site-border bg-site-surface/50 animate-pulse"
-        aria-hidden="true"
-      />
-    ),
-  },
-);
-
 const CHROME_STORE_URL =
   "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
 
@@ -298,37 +283,37 @@ export default function LandingPage() {
 
   const steps = [
     {
-      num: "01",
+      id: "flow-record",
       icon: IconBug,
       title: t("site.flow.step1.title"),
       desc: t("site.flow.step1.desc"),
     },
     {
-      num: "02",
+      id: "flow-capture",
       icon: IconCamera,
       title: t("site.flow.step2.title"),
       desc: t("site.flow.step2.desc"),
     },
     {
-      num: "03",
+      id: "flow-diagnose",
       icon: IconTerminal2,
       title: t("site.flow.step3.title"),
       desc: t("site.flow.step3.desc"),
     },
     {
-      num: "04",
+      id: "flow-store",
       icon: IconFolder,
       title: t("site.flow.step4.title"),
       desc: t("site.flow.step4.desc"),
     },
     {
-      num: "05",
+      id: "flow-share",
       icon: IconShare,
       title: t("site.flow.step5.title"),
       desc: t("site.flow.step5.desc"),
     },
     {
-      num: "06",
+      id: "flow-resolve",
       icon: IconBolt,
       title: t("site.flow.step6.title"),
       desc: t("site.flow.step6.desc"),
@@ -408,10 +393,8 @@ export default function LandingPage() {
       <div className="relative z-10 flex flex-col flex-1">
         <SiteNavbar />
 
-        <main className="flex-1">
-          {/* ================================================================ */}
-          {/* HERO - Split 2-column                                           */}
-          {/* ================================================================ */}
+        <main id="main-content" className="flex-1">
+          {/* Hero */}
           <section className="relative pt-16 sm:pt-24 pb-0 px-4 sm:px-6 overflow-hidden">
             {/* Ambient theme gradient */}
             <div
@@ -421,46 +404,6 @@ export default function LandingPage() {
                   "radial-gradient(ellipse 80% 60% at 50% -20%, var(--glow-primary), transparent 70%), radial-gradient(ellipse 60% 50% at 85% 30%, var(--glow-secondary), transparent 60%)",
               }}
             />
-
-            {/* Animated floating orbs */}
-            <div
-              className="pointer-events-none absolute -top-20 -left-20 w-96 h-96 rounded-full blur-3xl opacity-40 -z-10"
-              style={{
-                background: "var(--glow-primary)",
-                animation: "heroOrb1 10s ease-in-out infinite",
-              }}
-            />
-            <div
-              className="pointer-events-none absolute top-1/3 -right-20 w-[28rem] h-[28rem] rounded-full blur-3xl opacity-30 -z-10"
-              style={{
-                background: "var(--glow-secondary)",
-                animation: "heroOrb2 13s ease-in-out infinite",
-              }}
-            />
-            <div
-              className="pointer-events-none absolute -bottom-10 left-1/3 w-80 h-80 rounded-full blur-3xl opacity-25 -z-10"
-              style={{
-                background: "var(--glow-accent)",
-                animation: "heroOrb3 15s ease-in-out infinite",
-              }}
-            />
-
-            <style>{`
-              @keyframes heroOrb1 {
-                0%, 100% { transform: translate(0, 0) scale(1); }
-                33% { transform: translate(60px, 40px) scale(1.15); }
-                66% { transform: translate(-30px, 70px) scale(0.9); }
-              }
-              @keyframes heroOrb2 {
-                0%, 100% { transform: translate(0, 0) scale(1); }
-                40% { transform: translate(-70px, -40px) scale(1.2); }
-                70% { transform: translate(40px, -30px) scale(0.85); }
-              }
-              @keyframes heroOrb3 {
-                0%, 100% { transform: translate(0, 0) scale(1); }
-                50% { transform: translate(50px, -50px) scale(1.25); }
-              }
-            `}</style>
 
             <div className="mx-auto max-w-6xl">
               <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-10 lg:gap-14 items-center">
@@ -489,19 +432,19 @@ export default function LandingPage() {
 
                   {/* CTAs */}
                   <Reveal delay={0.15}>
-                    <div className="flex flex-col sm:flex-row items-start gap-3 mb-6">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-6">
                       <a
                         href={CHROME_STORE_URL}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 px-6 py-3 rounded-lg bg-accent hover:bg-accent-hover text-slate-900 text-sm font-semibold shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all"
+                        className="inline-flex items-center justify-center gap-2 px-6 py-3 min-h-[44px] rounded-lg bg-accent hover:bg-accent-hover text-slate-900 text-sm font-semibold shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all touch-manipulation"
                       >
                         <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
                         {t("site.bugsnap.split.cta")}
                       </a>
                       <a
                         href="#how-it-works"
-                        className="inline-flex items-center gap-1.5 px-5 py-3 text-sm font-medium text-site-text-2 hover:text-site-text transition-colors"
+                        className="inline-flex items-center justify-center gap-1.5 px-5 py-3 min-h-[44px] text-sm font-medium text-site-text-2 hover:text-site-text transition-colors touch-manipulation"
                       >
                         {t("site.hero.ctaSecondary")}
                         <IconArrowDown size={14} />
@@ -525,14 +468,12 @@ export default function LandingPage() {
             </div>
           </section>
 
-          {/* ================================================================ */}
-          {/* METRICS - "Results you can measure"                              */}
-          {/* ================================================================ */}
+          {/* Metrics */}
           <section className="py-16 sm:py-20 px-4 sm:px-6 border-y border-site-border">
             <div className="mx-auto max-w-6xl">
               <Reveal>
                 <div className="mb-12">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-3">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-site-accent mb-3">
                     {t("site.bugsnap.metricsEyebrow")}
                   </p>
                   <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-site-text max-w-2xl text-balance">
@@ -562,14 +503,12 @@ export default function LandingPage() {
             </div>
           </section>
 
-          {/* ================================================================ */}
-          {/* DEMO - Animated Product Simulation "See It Live"                 */}
-          {/* ================================================================ */}
+          {/* Demo */}
           <section className="py-16 sm:py-24 px-4 sm:px-6 bg-slate-950">
             <div className="mx-auto max-w-6xl">
               <Reveal>
                 <div className="text-center mb-10">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-3">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-site-accent mb-3">
                     {t("site.bugsnap.demoEyebrow")}
                   </p>
                   <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white max-w-3xl mx-auto text-balance">
@@ -586,14 +525,12 @@ export default function LandingPage() {
             </div>
           </section>
 
-          {/* ================================================================ */}
-          {/* LIVE VIEWER - "What your developer receives"                      */}
-          {/* ================================================================ */}
+          {/* Live viewer */}
           <section className="py-16 sm:py-24 px-4 sm:px-6 border-b border-site-border">
             <div className="mx-auto max-w-6xl">
               <Reveal>
                 <div className="text-center mb-12">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-3">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-site-accent mb-3">
                     {t("site.viewer.eyebrow")}
                   </p>
                   <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-site-text max-w-3xl mx-auto text-balance">
@@ -610,14 +547,12 @@ export default function LandingPage() {
             </div>
           </section>
 
-          {/* ================================================================ */}
-          {/* COMPARISON - "Why teams switch"                                  */}
-          {/* ================================================================ */}
+          {/* Comparison */}
           <section className="py-16 sm:py-24 px-4 sm:px-6">
             <div className="mx-auto max-w-5xl">
               <Reveal>
                 <div className="mb-12">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-3">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-site-accent mb-3">
                     {t("site.bugsnap.compareEyebrow")}
                   </p>
                   <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-site-text max-w-2xl text-balance">
@@ -661,7 +596,7 @@ export default function LandingPage() {
                       className="absolute inset-y-0 left-0 w-[3px] bg-accent rounded-l-2xl"
                       aria-hidden="true"
                     />
-                    <p className="text-[11px] font-bold uppercase tracking-widest text-accent mb-4">
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-site-accent mb-4">
                       {t("site.bugsnap.newTitle")}
                     </p>
                     <p className="text-sm text-site-text-2 mb-6">
@@ -688,14 +623,12 @@ export default function LandingPage() {
             </div>
           </section>
 
-          {/* ================================================================ */}
-          {/* BEFORE / AFTER - "From Slack threads to 1 link"                  */}
-          {/* ================================================================ */}
+          {/* Before / After */}
           <section className="py-16 sm:py-24 px-4 sm:px-6 bg-site-surface-2 border-b border-site-border">
             <div className="mx-auto max-w-6xl">
               <Reveal>
                 <div className="text-center mb-12">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-3">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-site-accent mb-3">
                     {t("site.before.eyebrow")}
                   </p>
                   <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-site-text text-balance">
@@ -712,14 +645,12 @@ export default function LandingPage() {
             </div>
           </section>
 
-          {/* ================================================================ */}
-          {/* ROLES - "Built for your whole team"                              */}
-          {/* ================================================================ */}
+          {/* Roles */}
           <section className="py-16 sm:py-24 px-4 sm:px-6 bg-site-surface-2 border-y border-site-border">
             <div className="mx-auto max-w-6xl">
               <Reveal>
                 <div className="text-center mb-12">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-3">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-site-accent mb-3">
                     {t("site.bugsnap.roleEyebrow")}
                   </p>
                   <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-site-text text-balance">
@@ -736,9 +667,7 @@ export default function LandingPage() {
             </div>
           </section>
 
-          {/* ================================================================ */}
-          {/* HOW IT WORKS - Numbered steps (01 / → 06 /)                     */}
-          {/* ================================================================ */}
+          {/* How it works */}
           <section
             id="how-it-works"
             className="border-y border-site-border bg-site-surface/50 py-16 sm:py-24 px-4 sm:px-6"
@@ -746,7 +675,7 @@ export default function LandingPage() {
             <div className="mx-auto max-w-6xl">
               <Reveal>
                 <div className="text-center mb-12">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-3">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-site-accent mb-3">
                     {t("site.flow.badge")}
                   </p>
                   <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-site-text text-balance">
@@ -762,7 +691,7 @@ export default function LandingPage() {
                 {steps.map((step, i) => {
                   const Icon = step.icon;
                   return (
-                    <Reveal key={step.num} delay={i * 0.07}>
+                    <Reveal key={step.id} delay={i * 0.07}>
                       <div className="group relative p-6 rounded-xl border border-site-border bg-site-surface hover:border-accent/40 transition-colors duration-200 h-full flex flex-col gap-4">
                         <div className="w-9 h-9 rounded-lg border border-site-border bg-site-surface-2 group-hover:border-accent/30 group-hover:bg-accent/10 flex items-center justify-center text-site-text-2 group-hover:text-accent transition-colors duration-200">
                           <Icon size={18} strokeWidth={2} />
@@ -783,14 +712,12 @@ export default function LandingPage() {
             </div>
           </section>
 
-          {/* ================================================================ */}
-          {/* HOTKEYS - "Two shortcuts. Configurable in Chrome."                */}
-          {/* ================================================================ */}
+          {/* Hotkeys */}
           <section className="py-16 sm:py-20 px-4 sm:px-6 border-b border-site-border">
             <div className="mx-auto max-w-6xl">
               <Reveal>
                 <div className="text-center mb-12">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-3">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-site-accent mb-3">
                     {t("site.hotkeys.eyebrow")}
                   </p>
                   <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-site-text text-balance">
@@ -807,14 +734,12 @@ export default function LandingPage() {
             </div>
           </section>
 
-          {/* ================================================================ */}
-          {/* FEATURES - Five modules, one complete diagnostic                 */}
-          {/* ================================================================ */}
+          {/* Features */}
           <section id="features" className="py-16 sm:py-24 px-4 sm:px-6">
             <div className="mx-auto max-w-6xl">
               <Reveal>
                 <div className="text-center mb-12">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-3">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-site-accent mb-3">
                     {t("site.features.sectionBadge")}
                   </p>
                   <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-site-text text-balance">
@@ -999,7 +924,6 @@ export default function LandingPage() {
                     {/* Share dialog mini */}
                     <div className="flex-1 flex flex-col justify-start">
                       <div className="rounded-lg border border-site-border bg-site-surface-2 overflow-hidden text-[10px]">
-                        {/* Header */}
                         <div className="flex items-center gap-2 px-3 py-2 bg-site-surface border-b border-site-border">
                           <span className="w-1.5 h-1.5 rounded-full bg-accent" />
                           <span className="font-semibold text-site-text text-[11px]">
@@ -1072,14 +996,12 @@ export default function LandingPage() {
             </div>
           </section>
 
-          {/* ================================================================ */}
-          {/* TRUST - "Your files never touch our servers"                      */}
-          {/* ================================================================ */}
+          {/* Trust */}
           <section className="py-16 sm:py-24 px-4 sm:px-6 bg-site-surface-2 border-y border-site-border">
             <div className="mx-auto max-w-6xl">
               <Reveal>
                 <div className="text-center mb-12">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-3">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-site-accent mb-3">
                     {t("site.trust.eyebrow")}
                   </p>
                   <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-site-text text-balance">
@@ -1096,14 +1018,12 @@ export default function LandingPage() {
             </div>
           </section>
 
-          {/* ================================================================ */}
-          {/* INTEGRATIONS - Interactive switcher                             */}
-          {/* ================================================================ */}
+          {/* Integrations */}
           <section className="border-y border-site-border bg-site-surface/50 py-16 sm:py-20 px-4 sm:px-6">
             <div className="mx-auto max-w-6xl">
               <Reveal>
                 <div className="text-center max-w-2xl mx-auto mb-12">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-3">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-site-accent mb-3">
                     {t("site.bugsnap.integrationsEyebrow")}
                   </p>
                   <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-site-text mb-3 text-balance">
@@ -1120,33 +1040,7 @@ export default function LandingPage() {
             </div>
           </section>
 
-          {/* ================================================================ */}
-          {/* TESTIMONIALS - "Loved by teams"                                   */}
-          {/* ================================================================ */}
-          <section className="py-16 sm:py-24 px-4 sm:px-6 border-b border-site-border">
-            <div className="mx-auto max-w-6xl">
-              <Reveal>
-                <div className="text-center mb-12">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-accent mb-3">
-                    {t("site.testimonials.eyebrow")}
-                  </p>
-                  <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-site-text text-balance">
-                    {t("site.testimonials.title")}
-                  </h2>
-                  <p className="text-sm text-site-text-2 mt-3 max-w-xl mx-auto">
-                    {t("site.testimonials.sub")}
-                  </p>
-                </div>
-              </Reveal>
-              <Reveal delay={0.1}>
-                <TestimonialWall />
-              </Reveal>
-            </div>
-          </section>
-
-          {/* ================================================================ */}
-          {/* FAQ - Left intro, right accordion                                */}
-          {/* ================================================================ */}
+          {/* FAQ */}
           <section id="faq" className="py-16 sm:py-24 px-4 sm:px-6">
             <div className="mx-auto max-w-6xl">
               <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-12 lg:gap-16">
@@ -1177,7 +1071,7 @@ export default function LandingPage() {
                             );
                             setExpandedFaqIndex(null);
                           }}
-                          className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors border ${
+                          className={`px-3.5 py-2 min-h-[40px] rounded-lg text-xs font-semibold transition-colors border touch-manipulation ${
                             activeFaqCategory === cat.key
                               ? "border-accent bg-accent text-slate-900 font-bold"
                               : "border-site-border bg-site-surface text-site-text-2 hover:text-site-text"
@@ -1204,7 +1098,9 @@ export default function LandingPage() {
                               onClick={() =>
                                 setExpandedFaqIndex(isExpanded ? null : faq.id)
                               }
-                              className="w-full text-left px-5 py-4 flex items-start justify-between gap-4 transition-colors hover:bg-site-surface-2"
+                              aria-expanded={isExpanded}
+                              aria-controls={`landing-faq-${faq.id}`}
+                              className="w-full text-left px-5 py-4 flex items-start justify-between gap-4 transition-colors hover:bg-site-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1"
                             >
                               <span className="text-sm font-semibold text-site-text leading-snug">
                                 {t(faq.q)}
@@ -1220,7 +1116,10 @@ export default function LandingPage() {
                               </span>
                             </button>
                             {isExpanded && (
-                              <div className="px-5 pb-5 pt-3 text-xs text-site-text-2 leading-relaxed border-t border-site-border">
+                              <div
+                                id={`landing-faq-${faq.id}`}
+                                className="px-5 pb-5 pt-3 text-xs text-site-text-2 leading-relaxed border-t border-site-border"
+                              >
                                 {t(faq.a)}
                               </div>
                             )}
@@ -1233,12 +1132,10 @@ export default function LandingPage() {
             </div>
           </section>
 
-          {/* ================================================================ */}
-          {/* FINAL CTA - Clean, confident                                     */}
-          {/* ================================================================ */}
+          {/* Final CTA */}
           <section className="px-4 sm:px-6 pb-20 sm:pb-28">
             <Reveal>
-              <div className="relative mx-auto max-w-3xl rounded-2xl border border-accent/25 bg-accent/5 px-4 sm:px-16 py-10 sm:py-16 text-center overflow-hidden">
+              <div className="relative mx-auto max-w-6xl rounded-2xl sm:rounded-3xl border border-accent/25 bg-accent/5 p-6 sm:p-8 lg:p-10 overflow-hidden">
                 <div
                   className="absolute inset-0 -z-10 pointer-events-none"
                   aria-hidden="true"
@@ -1252,28 +1149,32 @@ export default function LandingPage() {
                   aria-hidden="true"
                 />
 
-                <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-site-text mb-3 text-balance">
-                  {t("site.bugsnap.ctaTitle")}
-                </h2>
-                <p className="text-sm text-site-text-2 mb-8">
-                  {t("site.bugsnap.ctaSub")}
-                </p>
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                  <a
-                    href={CHROME_STORE_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-accent hover:bg-accent-hover text-slate-900 text-sm font-semibold shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all"
-                  >
-                    <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
-                    {t("site.hero.ctaPrimary")}
-                  </a>
-                  <a
-                    href="/features"
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-3 rounded-lg border border-site-border bg-site-surface hover:bg-site-surface-2 text-site-text text-sm font-medium transition-colors"
-                  >
-                    {t("landing.exploreFeatures")}
-                  </a>
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6 min-w-0">
+                  <div className="space-y-1.5 text-left min-w-0 flex-1">
+                    <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-site-text leading-snug">
+                      {t("site.bugsnap.ctaTitle")}
+                    </h2>
+                    <p className="text-xs sm:text-sm text-site-text-2 leading-relaxed max-w-2xl">
+                      {t("site.bugsnap.ctaSub")}
+                    </p>
+                  </div>
+                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 w-full md:w-auto">
+                    <a
+                      href={CHROME_STORE_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 min-h-[44px] rounded-xl bg-accent hover:bg-accent-hover text-slate-900 text-xs sm:text-sm font-bold shadow-md shadow-accent/20 hover:scale-[1.02] active:scale-[0.99] transition-all touch-manipulation whitespace-nowrap"
+                    >
+                      <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
+                      {t("site.hero.ctaPrimary")}
+                    </a>
+                    <a
+                      href="/features"
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-3 min-h-[44px] rounded-xl border border-site-border bg-site-surface hover:bg-site-surface-2 text-site-text text-xs sm:text-sm font-semibold transition-colors touch-manipulation whitespace-nowrap"
+                    >
+                      {t("landing.exploreFeatures")}
+                    </a>
+                  </div>
                 </div>
               </div>
             </Reveal>

@@ -19,6 +19,7 @@ import { getNavIcon } from "@/lib/icons";
 const navItems = [
   { labelKey: "nav.dashboard", href: "/dashboard", icon: getNavIcon("dashboard") },
   { labelKey: "nav.captures", href: "/captures", icon: getNavIcon("captures") },
+  { labelKey: "nav.compare", href: "/compare", icon: getNavIcon("compare") },
 ];
 
 type Workspace = {
@@ -908,6 +909,12 @@ export default function DashboardLayout({
 
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] px-3 py-1.5 bg-[#89BD49] text-slate-900 rounded-lg text-xs font-bold shadow-lg"
+      >
+        {t("layout.skipToContent") || "Skip to main content"}
+      </a>
       {promoBanner && promoBanner.enabled && promoBanner.message && !promoDismissed && (
         <div className="shrink-0 bg-[#89BD49] text-white px-4 py-2.5 flex items-center justify-between gap-4">
           <div className="flex-1 min-w-0 text-sm font-medium leading-snug text-center">
@@ -927,10 +934,10 @@ export default function DashboardLayout({
         </div>
       )}
       {/* Mobile top bar */}
-      <header className="lg:hidden shrink-0 border-b border-border bg-subtle flex items-center justify-between px-4 py-3">
+      <header className="lg:hidden shrink-0 border-b border-border bg-subtle flex items-center justify-between px-3 py-1.5">
         <button
           onClick={() => setSidebarOpen(true)}
-          className="p-2.5 rounded-lg text-muted hover:text-foreground hover:bg-subtle transition-colors"
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-muted hover:text-foreground hover:bg-subtle transition-colors touch-manipulation"
           aria-label="Open menu"
         >
           <Icon icon="lucide:menu" className="w-5 h-5" />
@@ -945,12 +952,12 @@ export default function DashboardLayout({
         <button
           data-notif-trigger
           onClick={() => setNotifOpen((o) => !o)}
-          className="relative p-2.5 rounded-lg text-muted hover:text-foreground hover:bg-subtle transition-colors"
+          className="relative min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-muted hover:text-foreground hover:bg-subtle transition-colors touch-manipulation"
           aria-label={t("layout.notifications")}
         >
           <Icon icon="lucide:bell" className="w-4 h-4" />
           {newCommentCount > 0 && (
-            <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 rounded-md bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center">
+            <span className="absolute top-1.5 right-1.5 min-w-[16px] h-[16px] px-1 rounded-md bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center">
               {newCommentCount}
             </span>
           )}
@@ -1392,7 +1399,7 @@ export default function DashboardLayout({
       )}
 
       {/* Main content */}
-      <main className={`flex-1 h-full ${pathname.startsWith("/settings") ? "overflow-hidden" : "overflow-y-auto"}`}>{children}</main>
+      <main id="main-content" className={`flex-1 h-full ${pathname.startsWith("/settings") ? "overflow-hidden" : "overflow-y-auto"}`}>{children}</main>
 
       {/* Invite Modal */}
       {inviteModalOpen && (

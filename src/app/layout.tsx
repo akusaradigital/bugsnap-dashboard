@@ -155,7 +155,7 @@ const jsonLd = {
           name: "Is BugSnap really free?",
           acceptedAnswer: {
             "@type": "Answer",
-            text: "Yes! The core screen recorder and Google Drive storage integration is completely free. Paid plans unlock advanced team controls for growing teams.",
+            text: "Yes! The core screen recorder and Google Drive storage integration is completely free. Paid plans include advanced team controls for growing teams.",
           },
         },
         {

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { StaticShell } from "@/components/StaticShell";
 import { useT } from "@/components/I18nProvider";
 import { Reveal } from "@/components/site/motion";
+import { Icon } from "@/lib/iconify";
 
 export function DocsContent() {
   const { t } = useT();
@@ -17,10 +18,11 @@ export function DocsContent() {
   };
 
   const navCards = [
-    { id: "getting-started", title: t("docs.gettingStarted"), desc: t("docs.navGettingStartedDesc"), badge: "01" },
-    { id: "shortcuts", title: t("docs.shortcuts"), desc: t("docs.navShortcutsDesc"), badge: "02" },
-    { id: "drive-setup", title: t("docs.driveSetup"), desc: t("docs.navDriveSetupDesc"), badge: "03" },
-    { id: "view-and-share", title: t("docs.viewAndShare"), desc: t("docs.navViewAndShareDesc"), badge: "04" },
+    { id: "getting-started", title: t("docs.gettingStarted"), desc: t("docs.navGettingStartedDesc"), icon: "lucide:file-text" },
+    { id: "shortcuts", title: t("docs.shortcuts"), desc: t("docs.navShortcutsDesc"), icon: "lucide:keyboard" },
+    { id: "drive-setup", title: t("docs.driveSetup"), desc: t("docs.navDriveSetupDesc"), icon: "lucide:hard-drive" },
+    { id: "view-and-share", title: t("docs.viewAndShare"), desc: t("docs.navViewAndShareDesc"), icon: "lucide:share-2" },
+    { id: "mcp", title: t("docs.mcp"), desc: t("docs.navMcpDesc"), icon: "lucide:bot", href: "/docs/mcp" },
   ];
 
   return (
@@ -30,15 +32,15 @@ export function DocsContent() {
     >
       <div className="space-y-12 font-site">
         {/* Quick Nav Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {navCards.map((card, i) => (
-            <Reveal key={card.id} delay={i * 0.08} className="h-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+          {navCards.map((card, i) => {
+            const cardBody = (
               <div
-                className="h-full rounded-2xl border border-site-border bg-gradient-to-b from-site-surface to-site-surface-2/60 p-4 sm:p-6 space-y-3 shadow-sm min-w-0"
+                className="h-full rounded-2xl border border-site-border bg-gradient-to-b from-site-surface to-site-surface-2/60 p-4 sm:p-6 space-y-3 shadow-sm min-w-0 transition-colors hover:border-site-accent/40"
               >
-                <span className="text-xs font-bold text-site-accent px-2 py-0.5 rounded bg-site-accent/10 border border-site-accent/20">
-                  {card.badge}
-                </span>
+                <div className="w-8 h-8 rounded-lg bg-site-accent/10 border border-site-accent/20 flex items-center justify-center text-site-accent">
+                  <Icon icon={card.icon} className="w-4 h-4" aria-hidden="true" />
+                </div>
                 <h4 className="text-base font-bold text-site-text">
                   {card.title}
                 </h4>
@@ -46,8 +48,19 @@ export function DocsContent() {
                   {card.desc}
                 </p>
               </div>
-            </Reveal>
-          ))}
+            );
+            return (
+              <Reveal key={card.id} delay={i * 0.08} className="h-full">
+                {card.href ? (
+                  <Link href={card.href} className="h-full block">
+                    {cardBody}
+                  </Link>
+                ) : (
+                  cardBody
+                )}
+              </Reveal>
+            );
+          })}
         </div>
 
         {/* Documentation Sections */}
@@ -71,7 +84,7 @@ export function DocsContent() {
                   </div>
                   <button
                     onClick={() => copyToClipboard("Ctrl + Shift + S", "shot")}
-                    className="inline-flex items-center gap-1.5 bg-site-surface border border-site-border px-2.5 py-1.5 rounded-md text-xs font-mono font-bold text-site-text hover:border-accent transition-colors active:scale-95 shrink-0 self-start sm:self-auto"
+                    className="inline-flex items-center gap-1.5 bg-site-surface border border-site-border px-3 py-2 min-h-[40px] rounded-md text-xs font-mono font-bold text-site-text hover:border-accent transition-colors active:scale-95 shrink-0 self-start sm:self-auto touch-manipulation"
                     title={copiedKey === "shot" ? t("docs.terminalCopied") : t("docs.copyCode")}
                   >
                     <span>Ctrl + Shift + S</span>
@@ -91,7 +104,7 @@ export function DocsContent() {
                   </div>
                   <button
                     onClick={() => copyToClipboard("Ctrl + Shift + F", "record")}
-                    className="inline-flex items-center gap-1.5 bg-site-surface border border-site-border px-2.5 py-1.5 rounded-md text-xs font-mono font-bold text-site-text hover:border-accent transition-colors active:scale-95 shrink-0 self-start sm:self-auto"
+                    className="inline-flex items-center gap-1.5 bg-site-surface border border-site-border px-3 py-2 min-h-[40px] rounded-md text-xs font-mono font-bold text-site-text hover:border-accent transition-colors active:scale-95 shrink-0 self-start sm:self-auto touch-manipulation"
                     title={copiedKey === "record" ? t("docs.terminalCopied") : t("docs.copyCode")}
                   >
                     <span>Ctrl + Shift + F</span>

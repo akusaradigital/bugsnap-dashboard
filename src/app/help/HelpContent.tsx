@@ -43,7 +43,7 @@ export function HelpContent() {
                     <button
                       type="button"
                       onClick={() => setOpenIndex(isOpen ? null : i)}
-                      className="w-full text-left p-4 sm:p-5 flex items-center justify-between gap-4 focus:outline-none"
+                      className="w-full text-left p-4 sm:p-5 min-h-[44px] flex items-center justify-between gap-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 touch-manipulation"
                       aria-expanded={isOpen}
                       aria-controls={`faq-answer-${i}`}
                       aria-label={isOpen ? t("help.closeFaq") : t("help.openFaq")}
@@ -91,7 +91,7 @@ export function HelpContent() {
               <p className="text-xs text-site-text-2 leading-relaxed">{t("help.needHelpDesc")}</p>
               <a
                 href="mailto:support@akusaradigital.com"
-                className="block text-center border border-site-border bg-site-surface-2 hover:bg-site-surface text-site-text text-xs font-semibold py-2 rounded-lg transition-colors"
+                className="flex items-center justify-center text-center border border-site-border bg-site-surface-2 hover:bg-site-surface text-site-text text-xs font-semibold py-2.5 min-h-[44px] rounded-lg transition-colors touch-manipulation"
               >
                 {t("help.emailSupport")}
               </a>
@@ -105,14 +105,14 @@ export function HelpContent() {
                 href={CHROME_STORE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-slate-900 hover:text-white text-xs font-semibold py-2 rounded-lg transition-colors shadow-xs"
+                className="flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-slate-900 hover:text-white text-xs font-semibold py-2.5 min-h-[44px] rounded-lg transition-colors shadow-xs touch-manipulation"
               >
                 <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
                 <span>{t("help.installFree")}</span>
               </a>
               <Link
                 href="/pricing"
-                className="block text-center border border-site-border bg-site-surface hover:bg-site-surface-2 text-site-text text-xs font-semibold py-2 rounded-lg transition-colors"
+                className="flex items-center justify-center text-center border border-site-border bg-site-surface hover:bg-site-surface-2 text-site-text text-xs font-semibold py-2.5 min-h-[44px] rounded-lg transition-colors touch-manipulation"
               >
                 {t("help.seePricing")}
               </Link>
@@ -122,19 +122,19 @@ export function HelpContent() {
           <Reveal delay={0.29}>
             <div className="rounded-xl border border-site-border bg-site-surface p-4 sm:p-6 space-y-3 shadow-xs hover:-translate-y-0.5 hover:border-site-border-focus transition-all">
               <h3 className="text-sm font-bold text-site-text">{t("help.resources")}</h3>
-              <ul className="space-y-2 text-xs">
+              <ul className="space-y-1 text-xs">
                 <li>
-                  <Link href="/docs" className="text-accent hover:underline">
+                  <Link href="/docs" className="inline-block py-1.5 text-accent hover:underline touch-manipulation">
                     {t("help.viewDocs")} →
                   </Link>
                 </li>
                 <li>
-                  <Link href="/contact" className="text-accent hover:underline">
+                  <Link href="/contact" className="inline-block py-1.5 text-accent hover:underline touch-manipulation">
                     {t("help.contactForm")} →
                   </Link>
                 </li>
                 <li>
-                  <Link href="/status" className="text-accent hover:underline">
+                  <Link href="/status" className="inline-block py-1.5 text-accent hover:underline touch-manipulation">
                     {t("help.systemStatus")} →
                   </Link>
                 </li>

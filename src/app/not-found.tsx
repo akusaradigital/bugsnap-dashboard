@@ -74,7 +74,6 @@ export default function NotFound() {
         }
       `}</style>
 
-      {/* Header */}
       <header className="relative z-10 border-b border-site-border bg-site-surface px-4 sm:px-6 py-3.5">
         <div className="mx-auto max-w-5xl flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 font-bold text-sm text-site-text group shrink-0">

@@ -4,6 +4,7 @@ export const commonEn: Dict = {
   "app.name": "BugSnap",
   "nav.dashboard": "Dashboard",
   "nav.captures": "Captures",
+  "nav.compare": "Compare",
   "nav.settings": "Settings",
   "nav.admin": "Admin",
   "nav.sisterApps": "Sister Apps",
@@ -17,6 +18,7 @@ export const commonEn: Dict = {
   "layout.suspendedMsg":
     "Your BugSnap account has been suspended. If you believe this is a mistake, please contact your workspace administrator.",
   "layout.dismissPromo": "Dismiss promo",
+  "layout.skipToContent": "Skip to main content",
   "layout.screenRecorder": "Screen Recorder",
   "layout.notifications": "Notifications",
   "layout.clearAll": "Clear all",
@@ -36,7 +38,7 @@ export const commonEn: Dict = {
   "layout.createFolder": "Create a folder",
   "layout.upgradeToPro": "Upgrade to Pro",
   "layout.upgradeDesc":
-    "Unlock custom branding, IP whitelist, unlimited seats, and advanced security - while your captures stay in your own Google Drive.",
+    "Get custom branding, IP whitelist, unlimited seats, and advanced security, while your captures stay in your own Google Drive.",
   "layout.upgradeNow": "Upgrade Now",
   "layout.upgradeViaStripe":
     "Billing is handled securely. Upgrades activate automatically after checkout.",
@@ -51,7 +53,7 @@ export const commonEn: Dict = {
   "layout.sendInvite": "Send Invite",
   "layout.createWorkspace": "Create Workspace",
   "layout.createWorkspaceDesc":
-    "Workspaces let you organize captures and members separately - e.g. by team or project.",
+    "Workspaces let you organize captures and members separately (such as by team or project).",
   "layout.workspaceName": "Workspace Name",
   "layout.wsCreated": "Workspace created",
   "layout.wsCreateFailed": "Could not create workspace. Please try again.",
@@ -116,6 +118,7 @@ export const commonEn: Dict = {
   "helpMenu.reportIssue": "Report an issue with BugSnap",
   "helpMenu.contactSupport": "Contact support",
   "helpMenu.docs": "Docs",
+  "helpMenu.mcp": "Connect MCP",
   "helpMenu.security": "Security",
   "helpMenu.systemStatus": "System status",
   "helpMenu.pricing": "Pricing",
@@ -141,11 +144,11 @@ export const commonEn: Dict = {
   "common.submit": "Submit",
   "login.welcomeTitle": "Welcome to BugSnap",
   "login.welcomeSubtitle":
-    "Capture screen recordings with full DevTools context - saved directly to your own Google Drive.",
+    "Capture screen recordings with full DevTools context, saved directly to your own Google Drive.",
   "login.continueGoogle": "Continue with Google",
   "login.connecting": "Connecting to Google...",
   "login.secureNote":
-    "Sign in with Google to get started. Your captures are stored directly in your own Google Drive - your data stays yours.",
+    "Sign in with Google to get started. Your captures are stored directly in your own Google Drive: your data stays yours.",
   "login.backToHome": "Back to Home",
   "login.privacy": "Privacy",
   "login.terms": "Terms",
@@ -166,9 +169,9 @@ export const commonEn: Dict = {
     "Sorry, we couldn't find the page you're looking for. It may have been moved, deleted, or never existed.",
   "notFound.backHome": "Back to Home",
   "notFound.goDashboard": "Go to Dashboard",
-  "notFound.footer": "BugSnap - From Click to Fix",
-  "auth.requiredDefaultTitle": "404 - Page Requires Authentication",
-  "auth.dashboardProtectedTitle": "404 - Dashboard Access Protected",
+  "notFound.footer": "BugSnap: From Click to Fix",
+  "auth.requiredDefaultTitle": "404: Page Requires Authentication",
+  "auth.dashboardProtectedTitle": "404: Dashboard Access Protected",
   "auth.requiredDesc":
     "This dashboard page is protected. Sign in to your BugSnap account to access workspace features and screen captures.",
   "auth.signInBugSnap": "Sign In to BugSnap",
@@ -180,6 +183,7 @@ export const commonId: Dict = {
   "app.name": "BugSnap",
   "nav.dashboard": "Dasbor",
   "nav.captures": "Tangkapan",
+  "nav.compare": "Bandingkan",
   "nav.settings": "Pengaturan",
   "nav.admin": "Admin",
   "nav.sisterApps": "Aplikasi Terkait",
@@ -193,6 +197,7 @@ export const commonId: Dict = {
   "layout.suspendedMsg":
     "Akun BugSnap Anda telah ditangguhkan. Jika Anda merasa ini sebuah kesalahan, hubungi administrator workspace Anda.",
   "layout.dismissPromo": "Tutup promo",
+  "layout.skipToContent": "Lewati ke konten utama",
   "layout.screenRecorder": "Perekam Layar",
   "layout.notifications": "Notifikasi",
   "layout.clearAll": "Bersihkan semua",
@@ -212,7 +217,7 @@ export const commonId: Dict = {
   "layout.createFolder": "Buat folder",
   "layout.upgradeToPro": "Naik ke Pro",
   "layout.upgradeDesc":
-    "Aktifkan branding kustom, whitelist IP, kursi tanpa batas, dan keamanan lanjutan.",
+    "Dapatkan branding kustom, whitelist IP, kursi tanpa batas, dan keamanan lanjutan, sementara tangkapan tetap di Google Drive Anda sendiri.",
   "layout.upgradeNow": "Upgrade Sekarang",
   "layout.upgradeViaStripe":
     "Tagihan dikelola dengan aman. Upgrade aktif otomatis setelah checkout.",
@@ -228,7 +233,7 @@ export const commonId: Dict = {
   "layout.sendInvite": "Kirim Undangan",
   "layout.createWorkspace": "Buat Workspace",
   "layout.createWorkspaceDesc":
-    "Workspace memungkinkan Anda mengatur tangkapan dan anggota secara terpisah - mis. per tim atau proyek.",
+    "Workspace memungkinkan Anda mengatur tangkapan dan anggota secara terpisah (misalnya per tim atau proyek).",
   "layout.workspaceName": "Nama Workspace",
   "layout.wsCreated": "Workspace berhasil dibuat",
   "layout.wsCreateFailed": "Gagal membuat workspace. Silakan coba lagi.",
@@ -297,6 +302,7 @@ export const commonId: Dict = {
   "helpMenu.reportIssue": "Laporkan masalah BugSnap",
   "helpMenu.contactSupport": "Hubungi dukungan",
   "helpMenu.docs": "Dokumentasi",
+  "helpMenu.mcp": "Hubungkan MCP",
   "helpMenu.security": "Keamanan",
   "helpMenu.systemStatus": "Status sistem",
   "helpMenu.pricing": "Harga",
@@ -322,11 +328,11 @@ export const commonId: Dict = {
   "common.submit": "Kirim",
   "login.welcomeTitle": "Selamat Datang di BugSnap",
   "login.welcomeSubtitle":
-    "Rekam layar dengan konteks lengkap DevTools - tersimpan langsung di Google Drive pribadi Anda.",
+    "Rekam layar dengan konteks lengkap DevTools, tersimpan langsung di Google Drive pribadi Anda.",
   "login.continueGoogle": "Lanjutkan dengan Google",
   "login.connecting": "Menghubungkan ke Google...",
   "login.secureNote":
-    "Masuk dengan Google untuk memulai. Tangkapan Anda tersimpan langsung di Google Drive pribadi Anda - data sepenuhnya milik Anda.",
+    "Masuk dengan Google untuk memulai. Tangkapan Anda tersimpan langsung di Google Drive pribadi Anda: data sepenuhnya milik Anda.",
   "login.backToHome": "Kembali ke Beranda",
   "login.privacy": "Privasi",
   "login.terms": "Ketentuan",
@@ -348,9 +354,9 @@ export const commonId: Dict = {
     "Maaf, kami tidak dapat menemukan halaman yang Anda cari. Halaman mungkin telah dipindahkan, dihapus, atau tidak pernah ada.",
   "notFound.backHome": "Kembali ke Beranda",
   "notFound.goDashboard": "Ke Dashboard",
-  "notFound.footer": "BugSnap - From Click to Fix",
-  "auth.requiredDefaultTitle": "404 - Halaman Memerlukan Autentikasi",
-  "auth.dashboardProtectedTitle": "404 - Akses Dasbor Dilindungi",
+  "notFound.footer": "BugSnap: From Click to Fix",
+  "auth.requiredDefaultTitle": "404: Halaman Memerlukan Autentikasi",
+  "auth.dashboardProtectedTitle": "404: Akses Dasbor Dilindungi",
   "auth.requiredDesc":
     "Halaman dasbor ini dilindungi. Masuk ke akun BugSnap Anda untuk mengakses fitur ruang kerja dan rekaman layar.",
   "auth.signInBugSnap": "Masuk ke BugSnap",

@@ -96,9 +96,9 @@ function UpgradeContent() {
           type="button"
           onClick={handleClose}
           aria-label="Close"
-          className="p-2 rounded-lg border border-site-border bg-site-surface text-site-text-2 hover:text-site-text shadow-2xs hover:bg-site-surface-2 transition-colors"
+          className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg border border-site-border bg-site-surface text-site-text-2 hover:text-site-text shadow-2xs hover:bg-site-surface-2 transition-colors touch-manipulation"
         >
-          <IconX size={16} />
+          <IconX size={18} />
         </button>
       </div>
 
@@ -287,7 +287,7 @@ function UpgradeContent() {
                   type="button"
                   onClick={() => handleUpgrade("pro")}
                   disabled={loading}
-                  className="w-full py-2.5 px-4 rounded-lg bg-accent hover:bg-accent-hover text-slate-900 hover:text-white font-semibold text-xs transition-colors shadow-xs flex items-center justify-center gap-2"
+                  className="w-full py-3 px-4 min-h-[44px] rounded-lg bg-accent hover:bg-accent-hover text-slate-900 hover:text-white font-semibold text-xs transition-colors shadow-xs flex items-center justify-center gap-2 touch-manipulation"
                 >
                   {loading ? (
                     <div className="w-4 h-4 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
@@ -382,7 +382,7 @@ function UpgradeContent() {
                 type="button"
                 onClick={() => handleBuyAddon("ai_summaries")}
                 disabled={loading}
-                className="px-3 py-1.5 rounded-lg border border-site-border bg-site-surface hover:bg-site-surface-2 text-xs font-semibold text-site-text transition-colors"
+                className="px-3 py-2 min-h-[44px] rounded-lg border border-site-border bg-site-surface hover:bg-site-surface-2 text-xs font-semibold text-site-text transition-colors touch-manipulation"
               >
                 +100 AI Summaries ($3)
               </button>
@@ -390,7 +390,7 @@ function UpgradeContent() {
                 type="button"
                 onClick={() => handleBuyAddon("captures_pack")}
                 disabled={loading}
-                className="px-3 py-1.5 rounded-lg border border-site-border bg-site-surface hover:bg-site-surface-2 text-xs font-semibold text-site-text transition-colors"
+                className="px-3 py-2 min-h-[44px] rounded-lg border border-site-border bg-site-surface hover:bg-site-surface-2 text-xs font-semibold text-site-text transition-colors touch-manipulation"
               >
                 +50 Captures Pack ($5)
               </button>

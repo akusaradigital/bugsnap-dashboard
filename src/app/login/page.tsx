@@ -106,7 +106,7 @@ export default function LoginPage() {
             <SiteThemeToggle compact />
             <Link
               href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-site-text-2 hover:text-site-text transition-colors px-2.5 py-1.5 rounded-lg hover:bg-site-surface-2 border border-transparent hover:border-site-border"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-site-text-2 hover:text-site-text transition-colors px-2.5 py-1.5 min-h-[44px] rounded-lg hover:bg-site-surface-2 border border-transparent hover:border-site-border touch-manipulation"
             >
               <Icon icon="lucide:arrow-left" className="w-3.5 h-3.5" aria-hidden="true" />
               <span>{t("login.backToHome")}</span>
@@ -153,7 +153,7 @@ export default function LoginPage() {
                 type="button"
                 onClick={signInWithGoogle}
                 disabled={signingIn}
-                className="w-full inline-flex items-center justify-center gap-3 px-4 py-3 rounded-xl bg-site-surface border border-site-border hover:border-site-text-2/40 hover:bg-site-surface-2 text-site-text text-sm font-semibold transition-all duration-150 shadow-xs hover:shadow active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer"
+                className="w-full inline-flex items-center justify-center gap-3 px-4 py-3 min-h-[44px] rounded-xl bg-site-surface border border-site-border hover:border-site-text-2/40 hover:bg-site-surface-2 text-site-text text-sm font-semibold transition-all duration-150 shadow-xs hover:shadow active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer touch-manipulation"
               >
                 {signingIn ? (
                   <div className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin shrink-0" />
@@ -213,7 +213,6 @@ export default function LoginPage() {
         </div>
       </main>
 
-      {/* Footer */}
       <footer className="relative z-10 w-full border-t border-site-border bg-site-surface/80 backdrop-blur-md py-4 px-4 sm:px-6">
         <div className="mx-auto max-w-5xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-site-text-2">
           <p>© {new Date().getFullYear()} BugSnap. All rights reserved.</p>

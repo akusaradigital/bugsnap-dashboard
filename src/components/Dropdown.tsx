@@ -19,7 +19,7 @@ interface DropdownProps {
   align?: "left" | "right";
 }
 
-const TRIGGER_BASE = "flex items-center gap-2 outline-none transition-all duration-150";
+const TRIGGER_BASE = "flex items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 focus-visible:ring-offset-background transition-all duration-150";
 const TRIGGER_VARIANT: Record<NonNullable<DropdownProps["variant"]>, string> = {
   field: "w-full rounded-lg border border-border px-3 py-2 text-sm bg-subtle text-foreground justify-between hover:border-accent/40 hover:bg-subtle/80",
   pill: "border border-border bg-subtle rounded-lg px-2 py-1.5 text-xs text-muted hover:text-foreground hover:border-accent/40 hover:bg-subtle/80",

@@ -1,8 +1,60 @@
 import { NextResponse } from "next/server";
 import { authenticateApiRequest } from "@/lib/api-auth";
 import { createServiceClient } from "@/lib/supabase-server";
+import { isRateLimited } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
+
+const STATUS_VALUES = new Set(["open", "in-progress", "fixed", "closed"]);
+
+// GET /api/public/v1/captures - list recent captures for the authenticated
+// workspace. Read path for integrations (e.g. the bugsnap-mcp MCP server) -
+// separate, DB-backed rate limit from the POST ingestion path below.
+export async function GET(request: Request) {
+  try {
+    const auth = await authenticateApiRequest(request);
+    if (!auth) {
+      return NextResponse.json(
+        { error: "Unauthorized. Missing or invalid API key. Expected: Bearer bugsnap_..." },
+        { status: 401 }
+      );
+    }
+
+    if (await isRateLimited(`mcp-list:${auth.workspaceId}`, 60, 60)) {
+      return NextResponse.json({ error: "Rate limit exceeded (60 req/min)" }, { status: 429 });
+    }
+
+    const url = new URL(request.url);
+    const limitParam = Number(url.searchParams.get("limit"));
+    const limit = Number.isFinite(limitParam) && limitParam > 0 ? Math.min(Math.floor(limitParam), 25) : 10;
+    const status = url.searchParams.get("status");
+    if (status && !STATUS_VALUES.has(status)) {
+      return NextResponse.json(
+        { error: `Invalid "status". Expected one of: ${Array.from(STATUS_VALUES).join(", ")}` },
+        { status: 400 }
+      );
+    }
+
+    const db = createServiceClient();
+    let query = db
+      .from("captures")
+      .select("id, title, type, status, tag, site_url, created_at, folder_name")
+      .eq("workspace_id", auth.workspaceId)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+    if (status) query = query.eq("status", status);
+
+    const { data, error } = await query;
+    if (error) {
+      return NextResponse.json({ error: error.message }, { status: 500 });
+    }
+
+    return NextResponse.json({ captures: data || [] });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Internal server error";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}
 
 // ponytail: in-memory rate limiter (30 req/min per key), ceiling is single-instance reset on restart
 const rateLimitMap = new Map<string, number[]>();

@@ -1379,7 +1379,6 @@ function CapturesContent() {
           </div>
         </div>
       )}
-      {/* Header */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 sm:mb-8 gap-4">
         <h1 className="text-2xl font-bold tracking-tight text-foreground">
           {t("cap.title")}
@@ -1709,7 +1708,7 @@ function CapturesContent() {
             aria-pressed={viewMode === "grid"}
             aria-label={t("cap.viewGrid")}
             title={t("cap.viewGrid")}
-            className={`p-1.5 rounded-md transition-colors ${
+            className={`p-1.5 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-md transition-colors touch-manipulation ${
               viewMode === "grid"
                 ? "bg-white dark:bg-background text-foreground shadow-xs"
                 : "text-muted hover:text-foreground"
@@ -1723,7 +1722,7 @@ function CapturesContent() {
             aria-pressed={viewMode === "list"}
             aria-label={t("cap.viewList")}
             title={t("cap.viewList")}
-            className={`p-1.5 rounded-md transition-colors ${
+            className={`p-1.5 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-md transition-colors touch-manipulation ${
               viewMode === "list"
                 ? "bg-white dark:bg-background text-foreground shadow-xs"
                 : "text-muted hover:text-foreground"
@@ -1841,6 +1840,7 @@ function CapturesContent() {
                             setCurrentUpload(null);
                           }}
                           className="p-1 rounded-md text-muted hover:text-foreground hover:bg-subtle transition-colors"
+                          aria-label="Dismiss upload tasks"
                         >
                           <Icon icon="lucide:x" className="w-3.5 h-3.5 shrink-0" />
                         </button>
@@ -2129,7 +2129,6 @@ function CapturesContent() {
 
             {/* 3 Step Onboarding Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
-              {/* Step 1 */}
               <div className="rounded-xl border border-border bg-white dark:bg-subtle p-5 flex flex-col justify-between space-y-4 hover:border-[#89BD49]/40 transition-colors">
                 <div className="space-y-2.5">
                   <div className="w-9 h-9 rounded-lg bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666] flex items-center justify-center font-bold text-sm">
@@ -2153,7 +2152,6 @@ function CapturesContent() {
                 </a>
               </div>
 
-              {/* Step 2 */}
               <div className="rounded-xl border border-border bg-white dark:bg-subtle p-5 flex flex-col justify-between space-y-4 hover:border-[#89BD49]/40 transition-colors">
                 <div className="space-y-2.5">
                   <div className="w-9 h-9 rounded-lg bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666] flex items-center justify-center font-bold text-sm">
@@ -2176,7 +2174,6 @@ function CapturesContent() {
                 </div>
               </div>
 
-              {/* Step 3 */}
               <div className="rounded-xl border border-border bg-white dark:bg-subtle p-5 flex flex-col justify-between space-y-4 hover:border-[#89BD49]/40 transition-colors">
                 <div className="space-y-2.5">
                   <div className="w-9 h-9 rounded-lg bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666] flex items-center justify-center font-bold text-sm">
@@ -2846,6 +2843,22 @@ function CapturesContent() {
                 <Icon icon="lucide:edit-3" className="w-3.5 h-3.5 text-muted shrink-0" />
                 {t("cap.rename")}
               </button>
+              {item.type !== "video" && (
+                <button
+                  type="button"
+                  disabled={isItemDeleting}
+                  onClick={() => {
+                    setActiveMenuId(null);
+                    const qs = new URLSearchParams({ left: item.id });
+                    if (workspaceParam) qs.set("ws", workspaceParam);
+                    router.push(`/compare?${qs.toString()}`);
+                  }}
+                  className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1.5 text-left font-medium hover:bg-subtle disabled:opacity-50"
+                >
+                  <Icon icon="lucide:columns-2" className="w-3.5 h-3.5 text-muted shrink-0" />
+                  {t("cap.compare")}
+                </button>
+              )}
               <button
                 type="button"
                 disabled={deleting}
@@ -2886,7 +2899,6 @@ function CapturesContent() {
             onClick={() => !moving && setMoveToOpen(false)}
           />
           <div className="relative w-full max-w-2xl max-h-[90vh] flex flex-col rounded-2xl bg-white dark:bg-subtle shadow-2xl border border-border overflow-hidden">
-            {/* Header */}
             <div className="flex items-center justify-between px-6 py-5 border-b border-border">
               <div>
                 <h2
@@ -2911,7 +2923,6 @@ function CapturesContent() {
               </button>
             </div>
 
-            {/* Modal Body */}
             <div className="p-6 overflow-y-auto">
               <div className="grid grid-cols-1 md:grid-cols-[1fr_240px] gap-6 items-start">
                 {/* Left Column: Folders */}
@@ -3079,7 +3090,6 @@ function CapturesContent() {
               )}
             </div>
 
-            {/* Footer */}
             <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border bg-slate-50/50 dark:bg-background/50">
               <button
                 type="button"
@@ -3296,12 +3306,31 @@ function CapturesContent() {
           </div>
 
           <div className="flex flex-wrap items-center gap-1.5">
+            {/* Compare (When exactly 2 selected) */}
+            {selectedIds.size === 2 && (
+              <button
+                type="button"
+                onClick={() => {
+                  const [left, right] = Array.from(selectedIds);
+                  const qs = new URLSearchParams({ left, right });
+                  if (workspaceParam) qs.set("ws", workspaceParam);
+                  router.push(`/compare?${qs.toString()}`);
+                }}
+                disabled={moving || deleting}
+                className="h-8 min-h-[36px] sm:min-h-0 px-2.5 rounded-xl border border-[#89BD49]/50 bg-[#89BD49]/10 hover:bg-[#89BD49]/20 text-xs font-semibold text-[#6B9A35] dark:text-[#A8D666] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs touch-manipulation"
+                title={t("cap.compareSelected")}
+              >
+                <Icon icon="lucide:columns-2" className="w-3.5 h-3.5 shrink-0" />
+                <span>{t("cap.compare")}</span>
+              </button>
+            )}
+
             {/* Copy Links */}
             <button
               type="button"
               onClick={handleBulkCopyLinks}
               disabled={moving || deleting}
-              className="h-8 px-2.5 rounded-xl border border-border bg-subtle hover:bg-background hover:border-[#89BD49]/40 dark:hover:border-[#89BD49]/50 text-xs font-semibold text-foreground hover:text-[#6B9A35] dark:hover:text-[#A8D666] disabled:opacity-40 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+              className="h-8 min-h-[36px] sm:min-h-0 px-2.5 rounded-xl border border-border bg-subtle hover:bg-background hover:border-[#89BD49]/40 dark:hover:border-[#89BD49]/50 text-xs font-semibold text-foreground hover:text-[#6B9A35] dark:hover:text-[#A8D666] disabled:opacity-40 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs touch-manipulation"
               title={t("cap.copyAllLinks")}
             >
               <Icon icon="lucide:link" className="w-3.5 h-3.5 text-muted shrink-0" />
@@ -3313,7 +3342,7 @@ function CapturesContent() {
               type="button"
               onClick={() => void openMoveToModal()}
               disabled={moving || deleting}
-              className="h-8 px-2.5 rounded-xl border border-border bg-subtle hover:bg-background hover:border-[#89BD49]/40 dark:hover:border-[#89BD49]/50 text-xs font-semibold text-foreground hover:text-[#6B9A35] dark:hover:text-[#A8D666] disabled:opacity-40 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+              className="h-8 min-h-[36px] sm:min-h-0 px-2.5 rounded-xl border border-border bg-subtle hover:bg-background hover:border-[#89BD49]/40 dark:hover:border-[#89BD49]/50 text-xs font-semibold text-foreground hover:text-[#6B9A35] dark:hover:text-[#A8D666] disabled:opacity-40 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs touch-manipulation"
             >
               <Icon icon="lucide:arrow-right-left" className="w-3.5 h-3.5 text-muted shrink-0" />
               <span>{t("cap.bulkMove")}</span>
@@ -3328,7 +3357,7 @@ function CapturesContent() {
                     setBulkField((f) => (f === field ? null : field))
                   }
                   disabled={moving || deleting || bulkSaving}
-                  className="h-8 px-2.5 rounded-xl border border-border bg-subtle hover:bg-background hover:border-[#89BD49]/40 dark:hover:border-[#89BD49]/50 text-xs font-semibold text-foreground hover:text-[#6B9A35] dark:hover:text-[#A8D666] disabled:opacity-40 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+                  className="h-8 min-h-[36px] sm:min-h-0 px-2.5 rounded-xl border border-border bg-subtle hover:bg-background hover:border-[#89BD49]/40 dark:hover:border-[#89BD49]/50 text-xs font-semibold text-foreground hover:text-[#6B9A35] dark:hover:text-[#A8D666] disabled:opacity-40 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs touch-manipulation"
                 >
                   <span>
                     {field === "tag" ? t("cap.bulkTag") : t("cap.bulkStatus")}
@@ -3342,7 +3371,7 @@ function CapturesContent() {
                           key={opt}
                           type="button"
                           onClick={() => void applyBulkField(field, opt)}
-                          className="w-full text-left px-3 py-2 text-xs text-foreground hover:bg-subtle transition-colors cursor-pointer"
+                          className="w-full text-left px-3 py-2 text-xs text-foreground hover:bg-subtle transition-colors cursor-pointer touch-manipulation"
                         >
                           {opt}
                         </button>
@@ -3358,7 +3387,7 @@ function CapturesContent() {
               type="button"
               onClick={() => openDeleteConfirmation(Array.from(selectedIds))}
               disabled={selectedIds.size === 0 || deleting}
-              className="h-8 px-2.5 rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 text-xs font-semibold disabled:opacity-40 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs"
+              className="h-8 min-h-[36px] sm:min-h-0 px-2.5 rounded-xl border border-rose-200 dark:border-rose-900/50 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/40 dark:hover:bg-rose-900/50 text-rose-600 dark:text-rose-400 text-xs font-semibold disabled:opacity-40 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs touch-manipulation"
             >
               <Icon icon="lucide:trash-2" className="w-3.5 h-3.5 shrink-0" />
               <span>{t("cap.bulkDelete")}</span>

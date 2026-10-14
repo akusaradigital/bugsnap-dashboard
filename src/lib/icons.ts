@@ -9,6 +9,7 @@ export const APP_ICONS = {
   nav: {
     dashboard: "lucide:layout-dashboard",
     captures: "lucide:camera",
+    compare: "lucide:columns-2",
     settings: "lucide:settings",
     workspaces: "lucide:building-2",
     users: "lucide:users",
@@ -41,6 +42,10 @@ export const APP_ICONS = {
     sparkles: "lucide:sparkles",
     help: "lucide:help-circle",
     lock: "lucide:lock",
+    swap: "lucide:arrow-right-left",
+    split: "lucide:split",
+    layers: "lucide:layers",
+    columns: "lucide:columns-2",
   },
   // Status & Diagnostics
   status: {

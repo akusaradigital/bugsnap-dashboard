@@ -40,9 +40,7 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
           </p>
         </div>
 
-        {/* ========================================================= */}
-        {/* DESKTOP LAYOUT (md+): 3 Nodes in a horizontal row        */}
-        {/* ========================================================= */}
+        {/* Desktop layout: 3 horizontal nodes */}
         <div className="hidden md:block">
           {/* Row of 3 Nodes + Interstitial Connectors */}
           <div className="flex items-stretch justify-between gap-2 relative">
@@ -354,9 +352,7 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
           </div>
         </div>
 
-        {/* ========================================================= */}
-        {/* MOBILE LAYOUT (< md): Vertically Stacked Nodes            */}
-        {/* ========================================================= */}
+        {/* Mobile layout: vertically stacked nodes */}
         <div className="md:hidden flex flex-col items-stretch space-y-2">
           {/* NODE 1 - Your Browser */}
           <div className="rounded-xl border border-site-border bg-site-surface p-4 text-center shadow-sm">
@@ -468,9 +464,7 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
           </div>
         </div>
 
-        {/* ========================================================= */}
-        {/* KEY / LEGEND ROW                                          */}
-        {/* ========================================================= */}
+        {/* Legend */}
         <div className="mt-6 pt-5 border-t border-site-border/60 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-site-text-2">
           <div className="flex items-start gap-2">
             <IconCheck

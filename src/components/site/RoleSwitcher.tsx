@@ -59,25 +59,25 @@ export function RoleSwitcher() {
 
   const workflowSteps = [
     {
-      step: "01",
+      id: "s1",
       role: t("site.roles.loop.s1"),
       sub: t("site.roles.loop.s1Sub"),
       icon: "lucide:video",
     },
     {
-      step: "02",
+      id: "s2",
       role: t("site.roles.loop.s2"),
       sub: t("site.roles.loop.s2Sub"),
       icon: "lucide:database",
     },
     {
-      step: "03",
+      id: "s3",
       role: t("site.roles.loop.s3"),
       sub: t("site.roles.loop.s3Sub"),
       icon: "lucide:terminal",
     },
     {
-      step: "04",
+      id: "s4",
       role: t("site.roles.loop.s4"),
       sub: t("site.roles.loop.s4Sub"),
       icon: "lucide:check-circle-2",
@@ -88,7 +88,7 @@ export function RoleSwitcher() {
     <div className="w-full space-y-6 sm:space-y-8 font-site">
       {/* 3 Simple, Hook-Driven Role Cards */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 sm:gap-6 items-stretch">
-        {roles.map((role, idx) => (
+        {roles.map((role) => (
           <div
             key={role.key}
             className="group relative rounded-2xl border border-site-border bg-site-surface p-4 sm:p-6 flex flex-col justify-between shadow-xs hover:shadow-md hover:border-accent/40 transition-all duration-200 min-w-0"
@@ -150,14 +150,9 @@ export function RoleSwitcher() {
             </div>
 
             {/* Bottom Outcome Metric */}
-            <div className="mt-6 pt-3.5 border-t border-site-border-subtle flex items-center justify-between gap-2 text-xs">
-              <span className="inline-flex items-center gap-1.5 text-site-text font-semibold truncate">
-                <Icon icon="lucide:zap" className="w-3.5 h-3.5 text-accent shrink-0" aria-hidden="true" />
-                <span className="truncate">{role.metric}</span>
-              </span>
-              <span className="text-[10px] font-mono font-bold text-site-text-2 bg-site-surface-2 px-1.5 py-0.5 rounded border border-site-border-subtle shrink-0">
-                0{idx + 1}
-              </span>
+            <div className="mt-6 pt-3.5 border-t border-site-border-subtle flex items-center gap-1.5 text-xs text-site-text font-semibold min-w-0">
+              <Icon icon="lucide:zap" className="w-3.5 h-3.5 text-accent shrink-0" aria-hidden="true" />
+              <span className="truncate">{role.metric}</span>
             </div>
           </div>
         ))}
@@ -184,16 +179,11 @@ export function RoleSwitcher() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-4">
           {workflowSteps.map((ws) => (
             <div
-              key={ws.step}
-              className="rounded-xl border border-site-border-subtle bg-site-surface-2/60 p-3.5 space-y-1.5 min-w-0"
+              key={ws.id}
+              className="rounded-xl border border-site-border-subtle bg-site-surface-2/60 p-3.5 space-y-2 min-w-0"
             >
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] font-mono font-bold text-accent">
-                  {ws.step} /
-                </span>
-                <span className="w-5 h-5 rounded-md bg-accent/10 text-accent flex items-center justify-center">
-                  <Icon icon={ws.icon} className="w-3 h-3 shrink-0" aria-hidden="true" />
-                </span>
+              <div className="w-6 h-6 rounded-md bg-accent/10 text-accent flex items-center justify-center">
+                <Icon icon={ws.icon} className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
               </div>
               <h5 className="text-xs font-bold text-site-text truncate">
                 {ws.role}

@@ -374,7 +374,6 @@ function DashboardContent() {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-6xl mx-auto space-y-6 sm:space-y-8">
-      {/* Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
@@ -384,7 +383,7 @@ function DashboardContent() {
         </div>
         <Link
           href="/captures"
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-[#89BD49] hover:bg-[#6B9A35] active:scale-95 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs shadow-[#89BD49]/25 transition-all hover:shadow-md"
+          className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] bg-[#89BD49] hover:bg-[#6B9A35] active:scale-95 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs shadow-[#89BD49]/25 transition-all hover:shadow-md touch-manipulation"
         >
           <Icon icon="lucide:layout-grid" className="w-4 h-4" />
           <span>{t("dash.viewAll")}</span>
@@ -479,7 +478,7 @@ function DashboardContent() {
               <select
                 value={selectedMonth}
                 onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                className="appearance-none bg-background hover:bg-subtle border border-border rounded-xl pl-3 pr-7 py-1.5 text-xs font-semibold text-foreground outline-hidden cursor-pointer shadow-xs transition-colors"
+                className="appearance-none bg-background hover:bg-subtle border border-border rounded-xl pl-3 pr-7 py-2 min-h-[38px] text-xs font-semibold text-foreground outline-hidden cursor-pointer shadow-xs transition-colors touch-manipulation"
               >
                 {MONTH_NAMES.map((name, idx) => (
                   <option key={name} value={idx} className="bg-background text-foreground">
@@ -495,7 +494,7 @@ function DashboardContent() {
               <select
                 value={selectedYear}
                 onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="appearance-none bg-background hover:bg-subtle border border-border rounded-xl pl-3 pr-7 py-1.5 text-xs font-semibold text-foreground outline-hidden cursor-pointer shadow-xs transition-colors"
+                className="appearance-none bg-background hover:bg-subtle border border-border rounded-xl pl-3 pr-7 py-2 min-h-[38px] text-xs font-semibold text-foreground outline-hidden cursor-pointer shadow-xs transition-colors touch-manipulation"
               >
                 {Array.from({ length: 6 }, (_, i) => currentYear - 3 + i).map((yr) => (
                   <option key={yr} value={yr} className="bg-background text-foreground">

@@ -1125,16 +1125,9 @@ function SingleViewContent() {
       className={`min-h-screen font-sans flex flex-col selection:bg-[#89BD49] selection:text-white ${
         status === "ready"
           ? "h-screen bg-white dark:bg-background overflow-y-auto lg:overflow-hidden"
-          : "bg-[radial-gradient(ellipse_at_top_left,#f4f9ed_0%,#ffffff_40%,#f0fdf4_100%)] dark:bg-none dark:bg-background text-slate-900 dark:text-foreground relative justify-between overflow-x-hidden"
+          : "bg-slate-50 dark:bg-background text-slate-900 dark:text-foreground relative justify-between overflow-x-hidden"
       }`}
     >
-      {status !== "ready" && (
-        <>
-          <div className="pointer-events-none absolute -top-32 left-1/2 -z-10 h-80 w-[42rem] -translate-x-1/2 rounded-full bg-gradient-to-tr from-[#89BD49]/15 via-slate-400/10 to-emerald-300/15 blur-3xl dark:from-[#89BD49]/10 dark:via-slate-800/15 dark:to-emerald-900/10 animate-pulse-slow" />
-          <div className="pointer-events-none absolute -bottom-32 right-1/4 -z-10 h-80 w-[36rem] rounded-full bg-gradient-to-br from-[#89BD49]/10 to-slate-400/10 blur-3xl dark:from-[#89BD49]/10 dark:to-slate-900/20" />
-        </>
-      )}
-
       <header className="h-16 border-b border-border/80 bg-white/80 dark:bg-background/80 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between shrink-0 sticky top-0 z-30">
         <div className="flex items-center gap-3 min-w-0">
           <Link href={isTeamMember ? "/dashboard" : "/"} className="flex items-center gap-2.5 hover:opacity-90 transition-opacity min-w-0 group">
@@ -1177,7 +1170,7 @@ function SingleViewContent() {
                   disabled={!!sendingIntegration}
                   onClick={() => handleSendToIntegration(configuredIntegrations[0].id)}
                   title={`Send capture to ${configuredIntegrations[0].name}`}
-                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-white dark:bg-background px-3 sm:px-3.5 py-1.5 sm:py-2 text-xs font-semibold text-foreground shadow-xs hover:bg-subtle disabled:opacity-50 transition cursor-pointer"
+                  className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-white dark:bg-background px-3 sm:px-3.5 py-1.5 sm:py-2 min-h-[38px] text-xs font-semibold text-foreground shadow-xs hover:bg-subtle disabled:opacity-50 transition cursor-pointer touch-manipulation"
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
@@ -1205,7 +1198,7 @@ function SingleViewContent() {
                   <button
                     type="button"
                     onClick={() => setIntegrationMenuOpen((o) => !o)}
-                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-white dark:bg-background px-3 sm:px-3.5 py-1.5 sm:py-2 text-xs font-semibold text-foreground shadow-xs hover:bg-subtle cursor-pointer"
+                    className="inline-flex items-center justify-center gap-2 rounded-lg border border-border bg-white dark:bg-background px-3 sm:px-3.5 py-1.5 sm:py-2 min-h-[38px] text-xs font-semibold text-foreground shadow-xs hover:bg-subtle cursor-pointer touch-manipulation"
                   >
                     <Icon icon="lucide:send" className="h-4 w-4 shrink-0" />
                     <span className="hidden md:inline">Push to Integration</span>
@@ -1248,7 +1241,7 @@ function SingleViewContent() {
                   <button
                     type="button"
                     onClick={() => { setMoveSubmenuOpen((o) => !o); if (capFolders.length === 0) loadCapFolders(); }}
-                    className="inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg border border-border bg-white dark:bg-background px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs font-semibold text-foreground shadow-xs hover:bg-subtle cursor-pointer transition-colors"
+                    className="inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg border border-border bg-white dark:bg-background px-2.5 sm:px-3.5 py-1.5 sm:py-2 min-h-[38px] text-xs font-semibold text-foreground shadow-xs hover:bg-subtle cursor-pointer transition-colors touch-manipulation"
                   >
                     <Icon icon="lucide:folder" className="h-4 w-4 shrink-0" />
                     <span className="truncate max-w-[80px] sm:max-w-none hidden xs:inline">{capture?.folder_name || t("v.moveToFolder")}</span>
@@ -1293,7 +1286,7 @@ function SingleViewContent() {
               <button
                 type="button"
                 onClick={handleCopyLink}
-                className="inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg bg-[#89BD49] px-2.5 sm:px-3.5 py-1.5 sm:py-2 text-xs font-semibold text-white shadow-xs shadow-[#89BD49]/25 hover:bg-[#6B9A35] transition cursor-pointer"
+                className="inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg bg-[#89BD49] px-2.5 sm:px-3.5 py-1.5 sm:py-2 min-h-[38px] sm:min-h-[40px] text-xs font-semibold text-white shadow-xs shadow-[#89BD49]/25 hover:bg-[#6B9A35] transition cursor-pointer touch-manipulation"
               >
                 <Icon icon="lucide:link" className="h-4 w-4 shrink-0" />
                 <span className="hidden xs:inline">{copied ? t("v.copied") : t("v.copyLinkBtn")}</span>
@@ -1304,7 +1297,7 @@ function SingleViewContent() {
           {status !== "ready" && isTeamMember && (
             <Link
               href="/captures"
-              className="px-3 sm:px-4 py-2 rounded-xl border border-border bg-subtle/80 hover:bg-background text-xs font-semibold text-foreground flex items-center transition-all shadow-2xs hover:shadow-xs shrink-0"
+              className="px-3 sm:px-4 py-2 min-h-[40px] rounded-xl border border-border bg-subtle/80 hover:bg-background text-xs font-semibold text-foreground flex items-center transition-all shadow-2xs hover:shadow-xs shrink-0 touch-manipulation"
             >
               <span className="hidden sm:inline">{t("v.backToDashboard")}</span>
               <span className="sm:hidden">{t("nav.captures")}</span>
@@ -1314,13 +1307,13 @@ function SingleViewContent() {
             <div className="flex items-center gap-2">
               <Link
                 href="/login"
-                className="px-3 sm:px-3.5 py-1.5 rounded-xl border border-border bg-subtle/80 hover:bg-background text-xs font-semibold text-foreground transition-all shadow-2xs hover:shadow-xs"
+                className="px-3 sm:px-3.5 py-1.5 min-h-[38px] flex items-center rounded-xl border border-border bg-subtle/80 hover:bg-background text-xs font-semibold text-foreground transition-all shadow-2xs hover:shadow-xs touch-manipulation"
               >
                 {t("v.signIn")}
               </Link>
               <Link
                 href="/"
-                className="px-3 sm:px-3.5 py-1.5 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] text-xs font-semibold text-white transition-all shadow-xs shadow-[#89BD49]/25 active:scale-95"
+                className="px-3 sm:px-3.5 py-1.5 min-h-[38px] flex items-center rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] text-xs font-semibold text-white transition-all shadow-xs shadow-[#89BD49]/25 active:scale-95 touch-manipulation"
               >
                 {t("login.backToHome")}
               </Link>
@@ -1358,13 +1351,13 @@ function SingleViewContent() {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full">
                 <Link
                   href={isTeamMember ? "/captures" : "/"}
-                  className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-md shadow-[#89BD49]/20 hover:shadow-lg transition-all"
+                  className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 min-h-[44px] rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-md shadow-[#89BD49]/20 hover:shadow-lg transition-all touch-manipulation"
                 >
                   <span>{isTeamMember ? t("v.backToDashboard") : t("login.backToHome")}</span>
                 </Link>
                 <Link
                   href="/login"
-                  className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border border-border bg-subtle hover:bg-background active:scale-95 text-foreground text-xs sm:text-sm font-semibold shadow-2xs hover:shadow-xs transition-all"
+                  className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 min-h-[44px] rounded-xl border border-border bg-subtle hover:bg-background active:scale-95 text-foreground text-xs sm:text-sm font-semibold shadow-2xs hover:shadow-xs transition-all touch-manipulation"
                 >
                   <span>{t("v.loginToBugSnap")}</span>
                 </Link>
@@ -1551,7 +1544,7 @@ function SingleViewContent() {
 
       {status !== "ready" && (
         <footer className="py-6 text-center text-xs text-muted/70 border-t border-border/40 shrink-0">
-          BugSnap &mdash; From Click to Fix
+          BugSnap · From Click to Fix
         </footer>
       )}
 
@@ -1714,7 +1707,7 @@ function SingleViewContent() {
                     )}
                   </div>
                   <div className="mt-6 pt-2">
-                    <button type="button" onClick={handleCopyLink} className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] py-3 text-sm font-semibold text-white shadow-xs shadow-[#89BD49]/25">
+                    <button type="button" onClick={handleCopyLink} className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] py-3 min-h-[44px] text-sm font-semibold text-white shadow-xs shadow-[#89BD49]/25 touch-manipulation cursor-pointer">
                       <Icon icon="lucide:link" className="h-4 w-4" />
                       {copied ? t("v.copiedLink") : t("v.copyLinkBtn")}
                     </button>
@@ -1722,7 +1715,7 @@ function SingleViewContent() {
                       <button
                         type="button"
                         onClick={handleDeleteCapture}
-                        className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 dark:border-red-900/60 bg-white dark:bg-red-950/20 py-2.5 text-xs font-semibold text-red-600 dark:text-red-400 shadow-sm hover:bg-red-50 dark:hover:bg-red-950/40 hover:border-red-300 dark:hover:border-red-800 transition-colors"
+                        className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 dark:border-red-900/60 bg-white dark:bg-red-950/20 py-2.5 min-h-[44px] text-xs font-semibold text-red-600 dark:text-red-400 shadow-sm hover:bg-red-50 dark:hover:bg-red-950/40 hover:border-red-300 dark:hover:border-red-800 transition-colors touch-manipulation cursor-pointer"
                       >
                         <Icon icon="lucide:trash-2" className="h-3.5 w-3.5" />
                         {t("v.deleteCapture")}

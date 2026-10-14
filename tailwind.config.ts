@@ -17,6 +17,7 @@ const config: Config = {
         muted: "var(--muted)",
         accent: "var(--accent)",
         "accent-hover": "var(--accent-hover)",
+        "site-accent": "var(--site-accent)",
         "site-bg": "var(--site-bg)",
         "site-surface": "var(--site-surface)",
         "site-surface-2": "var(--site-surface-2)",

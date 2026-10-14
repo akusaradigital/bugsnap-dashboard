@@ -119,8 +119,6 @@ export function ProductVideoDemo() {
 
         {/* Content Layer (changes based on step) */}
         <div className="relative z-10 p-6 sm:p-10 flex-1 flex flex-col justify-center">
-
-          {/* STEP 1: Ready / Trigger Bug */}
           {currentStep === "ready" && (
             <div className="max-w-md mx-auto w-full bg-slate-900/90 rounded-xl border border-slate-800 p-6 space-y-4 shadow-xl animate-in fade-in zoom-in-95 duration-300">
               <div className="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -146,7 +144,6 @@ export function ProductVideoDemo() {
             </div>
           )}
 
-          {/* STEP 2: Capturing & Annotation */}
           {currentStep === "capturing" && (
             <div className="max-w-lg mx-auto w-full space-y-4 animate-in fade-in duration-300">
               {/* Highlighted error element */}
@@ -182,7 +179,6 @@ export function ProductVideoDemo() {
             </div>
           )}
 
-          {/* STEP 3: DevTools Auto-Capture */}
           {currentStep === "devtools" && (
             <div className="max-w-xl mx-auto w-full bg-slate-900/95 rounded-xl border border-slate-800 shadow-2xl overflow-hidden animate-in slide-in-from-bottom-4 duration-300">
               {/* DevTools Tab Bar */}
@@ -229,7 +225,6 @@ export function ProductVideoDemo() {
             </div>
           )}
 
-          {/* STEP 4: Saving to Google Drive */}
           {currentStep === "saving" && (
             <div className="max-w-md mx-auto w-full bg-slate-900/90 rounded-xl border border-slate-800 p-6 space-y-4 shadow-2xl text-center animate-in fade-in zoom-in-95 duration-300">
               <div className="w-12 h-12 rounded-full bg-blue-500/20 border border-blue-500/30 flex items-center justify-center mx-auto text-blue-400">
@@ -264,7 +259,6 @@ export function ProductVideoDemo() {
             </div>
           )}
 
-          {/* STEP 5: Instant Share Link */}
           {currentStep === "shared" && (
             <div className="max-w-md mx-auto w-full bg-slate-900/90 rounded-xl border border-emerald-500/40 p-6 space-y-4 shadow-2xl animate-in zoom-in-95 duration-300">
               <div className="flex items-center gap-3">

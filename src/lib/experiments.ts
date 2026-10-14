@@ -1,7 +1,5 @@
-// =====================================================================
 // BugSnap Lightweight A/B Testing & Conversion Analytics Framework
 // ponytail: deterministic FNV-1a hash routing, zero heavy 3rd-party libs.
-// =====================================================================
 
 "use client";
 

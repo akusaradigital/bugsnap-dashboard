@@ -109,14 +109,14 @@ export function ContactContent() {
                   href={CHROME_STORE_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-slate-900 hover:text-white text-xs font-semibold py-2.5 rounded-lg transition-colors shadow-xs"
+                  className="flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-slate-900 hover:text-white text-xs font-semibold py-2.5 min-h-[44px] rounded-lg transition-colors shadow-xs touch-manipulation"
                 >
                   <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
                   <span>{t("contact.installFree")}</span>
                 </a>
                 <Link
                   href="/pricing"
-                  className="block text-center border border-site-border bg-site-surface hover:bg-site-surface-2 text-site-text text-xs font-semibold py-2.5 rounded-lg transition-colors"
+                  className="flex items-center justify-center text-center border border-site-border bg-site-surface hover:bg-site-surface-2 text-site-text text-xs font-semibold py-2.5 min-h-[44px] rounded-lg transition-colors touch-manipulation"
                 >
                   {t("contact.seePricing")}
                 </Link>

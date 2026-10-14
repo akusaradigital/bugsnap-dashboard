@@ -274,7 +274,7 @@ export async function POST(req: Request) {
       100,
     );
 
-    // ---- AI-powered summary via Multi-Model Waterfall Fallback ----
+    // Multi-model waterfall fallback
     const promptPayload = {
       messages: [
         {
@@ -401,7 +401,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ summary: aiSummary });
     }
 
-    // ---- Local smart summary logic (fallback, no API key worked) ----
+    // Local smart summary fallback when AI keys are exhausted
     const stepsText = steps.length
       ? steps.map((s, i) => `${i + 1}. ${s || "User action"}`).join("\n")
       : "1. Open application\n2. Perform actions on screen\n3. Observed issue";

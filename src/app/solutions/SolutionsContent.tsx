@@ -22,7 +22,7 @@ export function SolutionsContent() {
   const useCases = [
     {
       role: t("solutions.qa.title") || "For QA Engineers",
-      badge: "Quality Assurance",
+      badge: t("solutions.qa.badge") || "Quality Assurance",
       headline: t("solutions.qa.role") || "Capture visual bugs + silent console errors in one go",
       desc:
         t("solutions.qa.desc") ||
@@ -36,7 +36,7 @@ export function SolutionsContent() {
     },
     {
       role: t("solutions.dev.title") || "For Software Engineers",
-      badge: "Engineering",
+      badge: t("solutions.dev.badge") || "Engineering",
       headline: t("solutions.dev.role") || "Everything you need to reproduce and fix immediately",
       desc:
         t("solutions.dev.desc") ||
@@ -50,7 +50,7 @@ export function SolutionsContent() {
     },
     {
       role: t("solutions.pm.title") || "For Product Managers",
-      badge: "Product Management",
+      badge: t("solutions.pm.badge") || "Product Management",
       headline: t("solutions.pm.role") || "Review staging releases and leave visual feedback",
       desc:
         t("solutions.pm.desc") ||
@@ -83,7 +83,7 @@ export function SolutionsContent() {
     },
     {
       role: t("solutions.support.title") || "For Customer Support",
-      badge: "Customer Support",
+      badge: t("solutions.support.badge") || "Customer Support",
       headline: t("solutions.support.role") || "Turn customer bug reports into actionable dev tickets",
       desc:
         t("solutions.support.desc") ||
@@ -103,7 +103,7 @@ export function SolutionsContent() {
       title={t("solutions.title") || "Solutions"}
       subtitle={
         t("solutions.subtitle") ||
-        "Built for the entire product team — QA, Engineering, Product, and Support."
+        "Built for the entire product team: QA, Engineering, Product, and Support."
       }
     >
       <div className="space-y-16">
@@ -117,7 +117,7 @@ export function SolutionsContent() {
           {useCases.map((uc, i) => (
             <Reveal key={uc.role} delay={i * 0.08}>
               <div
-                className="relative overflow-hidden grid grid-cols-1 lg:grid-cols-12 gap-8 items-center p-4 sm:p-8 rounded-2xl border border-site-border bg-gradient-to-b from-site-surface via-site-surface to-site-surface-2/60 shadow-sm"
+                className="relative overflow-hidden grid grid-cols-1 lg:grid-cols-12 gap-8 items-center p-4 sm:p-8 rounded-2xl border border-site-border bg-site-surface shadow-sm"
               >
                 <div
                   className={`lg:col-span-6 min-w-0 space-y-4 ${
@@ -157,32 +157,34 @@ export function SolutionsContent() {
 
         {/* Bottom CTA */}
         <Reveal delay={0.3}>
-          <div className="relative overflow-hidden rounded-3xl border border-site-border bg-gradient-to-br from-site-surface via-site-surface to-site-surface-2 p-5 sm:p-12 text-center shadow-lg">
+          <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-site-border bg-site-surface p-6 sm:p-8 lg:p-10 shadow-lg">
             <div
               className="pointer-events-none absolute inset-0 -z-0 opacity-40"
               style={{
                 background: "radial-gradient(ellipse 70% 60% at 50% -10%, var(--glow-primary), transparent 70%)",
               }}
             />
-            <div className="relative z-10 space-y-4 max-w-xl mx-auto">
-              <span className="inline-block text-xs font-semibold uppercase tracking-widest text-site-accent">
-                Ready to Ship Faster?
-              </span>
-              <h3 className="text-2xl sm:text-4xl font-extrabold text-site-text tracking-tight">
-                Empower your whole team with BugSnap
-              </h3>
-              <p className="text-xs sm:text-sm text-site-text-2 leading-relaxed">
-                Free. Saves directly to your team&apos;s Google Drive. No server lock-in.
-              </p>
-              <div className="pt-3">
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6 min-w-0">
+              <div className="space-y-1.5 text-left min-w-0 flex-1">
+                <span className="inline-block text-xs font-semibold uppercase tracking-widest text-site-accent">
+                  {t("solutions.ctaEyebrow") || "Ready to Ship Faster?"}
+                </span>
+                <h3 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-site-text tracking-tight leading-snug">
+                  {t("solutions.ctaTitle") || "Equip your whole team with BugSnap"}
+                </h3>
+                <p className="text-xs sm:text-sm text-site-text-2 leading-relaxed max-w-2xl">
+                  {t("solutions.ctaDesc") || "Free. Saves directly to your team's Google Drive. No server lock-in."}
+                </p>
+              </div>
+              <div className="shrink-0 w-full md:w-auto">
                 <a
                   href={CHROME_STORE_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 bg-accent hover:bg-accent-hover text-slate-900 text-xs sm:text-sm font-bold px-6 py-3 rounded-xl transition-all shadow-md shadow-accent/20 hover:scale-[1.02] active:scale-[0.99]"
+                  className="w-full md:w-auto inline-flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-slate-900 text-xs sm:text-sm font-bold px-6 py-3 min-h-[44px] rounded-xl transition-all shadow-md shadow-accent/20 hover:scale-[1.02] active:scale-[0.99] touch-manipulation whitespace-nowrap"
                 >
                   <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
-                  <span>Add to Chrome - Free</span>
+                  <span>{t("features.ctaButton") || "Add to Chrome - Free"}</span>
                 </a>
               </div>
             </div>

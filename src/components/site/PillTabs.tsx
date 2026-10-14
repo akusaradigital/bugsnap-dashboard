@@ -20,7 +20,7 @@ export function PillTabs<T extends string>({
 }) {
   return (
     <div
-      className={`inline-flex max-w-full overflow-x-auto items-center p-1.5 rounded-xl border border-site-border bg-site-surface-2/60 backdrop-blur-sm gap-1 ${className}`}
+      className={`inline-flex max-w-full overflow-x-auto items-center p-1 sm:p-1.5 rounded-xl border border-site-border bg-site-surface-2/60 backdrop-blur-sm gap-1 ${className}`}
       role="tablist"
     >
       {tabs.map((tab) => {
@@ -32,7 +32,7 @@ export function PillTabs<T extends string>({
             role="tab"
             aria-selected={isActive}
             onClick={() => onChange(tab.id)}
-            className={`flex items-center gap-1.5 px-3 sm:px-4 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 select-none shrink-0 ${
+            className={`flex items-center gap-1.5 px-3 sm:px-4 py-2 min-h-[38px] sm:min-h-0 sm:py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 select-none shrink-0 touch-manipulation ${
               isActive
                 ? "bg-site-surface text-site-text shadow-sm border border-site-border"
                 : "text-site-text-2 hover:text-site-text hover:bg-site-surface/50"

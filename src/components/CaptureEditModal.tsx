@@ -126,7 +126,6 @@ export default function EditModal({ capture, onClose, onSaved }: EditModalProps)
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
       <div className="absolute inset-0 bg-black/40" onClick={onClose} />
       <div role="dialog" aria-modal="true" aria-labelledby="edit-modal-title" className="relative w-full max-w-md rounded-xl bg-subtle shadow-xl border border-border flex flex-col max-h-[85vh] overflow-hidden">
-        {/* Header */}
         <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-border shrink-0">
           <h2 id="edit-modal-title" className="text-base font-bold text-foreground">{t("cap.editTitle")}</h2>
           <button

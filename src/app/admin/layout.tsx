@@ -343,7 +343,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  // --- LOGIN LOCK SCREEN ---
+  // Login lock screen
   if (!isAuthenticated) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4 bg-slate-100 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100">
@@ -455,9 +455,16 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     );
   }
 
-  // --- STARADMIN-STYLE DASHBOARD LAYOUT ---
+  // Admin console shell
   return (
     <div className="h-screen flex bg-slate-100 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 overflow-hidden">
+      <a
+        href="#main-admin-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] px-3 py-1.5 bg-emerald-500 text-white rounded-lg text-xs font-bold shadow-lg"
+      >
+        Skip to main content
+      </a>
+
       {/* Mobile Drawer Backdrop */}
       {sidebarOpen && (
         <div
@@ -502,6 +509,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               onClick={() => setSidebarOpen(false)}
               className="md:hidden p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 text-sm cursor-pointer"
               title="Close Sidebar"
+              aria-label="Close sidebar"
             >
               <Icon icon="lucide:x" className="w-4 h-4" />
             </button>
@@ -600,15 +608,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <button
               type="button"
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-colors cursor-pointer shrink-0"
+              className="p-1.5 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-colors cursor-pointer shrink-0 touch-manipulation"
               title="Toggle Sidebar"
+              aria-label="Toggle navigation sidebar"
+              aria-expanded={sidebarOpen}
             >
               <Icon icon="lucide:menu" className="w-5 h-5" />
             </button>
 
             <div className="hidden md:flex items-center gap-4 text-xs text-slate-500 dark:text-zinc-400 font-medium truncate">
               <span className="flex items-center gap-1.5 shrink-0">
-                <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
                 <span>Supabase: Online</span>
               </span>
               <span>•</span>
@@ -637,7 +647,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <button
               type="button"
               onClick={() => setCommandOpen(true)}
-              className="sm:hidden p-1.5 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+              className="sm:hidden p-1.5 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-colors cursor-pointer touch-manipulation"
               title={t("admin.commandSearchHint")}
             >
               <Icon icon="lucide:search" className="w-4 h-4" />
@@ -647,7 +657,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <button
               type="button"
               onClick={() => setLocale(locale === "id" ? "en" : "id")}
-              className="px-2 sm:px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+              className="px-2 sm:px-2.5 py-1.5 min-h-[40px] rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-xs font-bold transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs touch-manipulation"
               title={locale === "id" ? "Switch to English" : "Ganti ke Bahasa Indonesia"}
             >
               <Icon icon="lucide:globe" className="w-3.5 h-3.5 shrink-0" />
@@ -662,8 +672,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                   setNotifOpen(!notifOpen);
                   loadNotifications();
                 }}
-                className="relative p-1.5 sm:p-2 rounded-lg text-slate-500 hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
+                className="relative p-1.5 sm:p-2 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-colors cursor-pointer touch-manipulation"
                 title={t("admin.notificationsTitle")}
+                aria-label={t("admin.notificationsTitle")}
+                aria-expanded={notifOpen}
               >
                 <Icon icon="lucide:bell" className="w-4 h-4" />
                 {notifCount > 0 && (
@@ -828,7 +840,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </header>
 
         {/* MAIN BODY CONTENT */}
-        <main className="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-8">
+        <main id="main-admin-content" className="flex-1 overflow-y-auto p-3 sm:p-6 lg:p-8">
           <div className="max-w-7xl mx-auto">{children}</div>
         </main>
       </div>

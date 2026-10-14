@@ -162,7 +162,22 @@ export default function HelpMenu({ className = "" }: HelpMenuProps) {
             <span className="truncate flex-1">{t("helpMenu.docs")}</span>
           </Link>
 
-          {/* 4. Security */}
+          {/* 4. Connect MCP */}
+          <Link
+            href="/docs/mcp"
+            role="menuitem"
+            onClick={closeAll}
+            className="flex items-center gap-2.5 px-3 py-2 text-slate-700 dark:text-zinc-200 hover:text-foreground hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
+          >
+            <Icon
+              icon="lucide:bot"
+              className="w-4 h-4 shrink-0 text-slate-500 dark:text-zinc-400"
+              aria-hidden="true"
+            />
+            <span className="truncate flex-1">{t("helpMenu.mcp")}</span>
+          </Link>
+
+          {/* 5. Security */}
           <Link
             href="/security"
             role="menuitem"
@@ -177,7 +192,7 @@ export default function HelpMenu({ className = "" }: HelpMenuProps) {
             <span className="truncate flex-1">{t("helpMenu.security")}</span>
           </Link>
 
-          {/* 5. System status */}
+          {/* 6. System status */}
           <Link
             href="/status"
             role="menuitem"
@@ -192,7 +207,7 @@ export default function HelpMenu({ className = "" }: HelpMenuProps) {
             <span className="truncate flex-1">{t("helpMenu.systemStatus")}</span>
           </Link>
 
-          {/* 6. Pricing */}
+          {/* 7. Pricing */}
           <Link
             href="/pricing"
             role="menuitem"
@@ -207,7 +222,7 @@ export default function HelpMenu({ className = "" }: HelpMenuProps) {
             <span className="truncate flex-1">{t("helpMenu.pricing")}</span>
           </Link>
 
-          {/* 7. Blog */}
+          {/* 8. Blog */}
           <Link
             href="/blog"
             role="menuitem"
@@ -225,7 +240,7 @@ export default function HelpMenu({ className = "" }: HelpMenuProps) {
           {/* Divider */}
           <div className="my-1 border-t border-slate-100 dark:border-zinc-800" />
 
-          {/* 8. Install BugSnap with Browser Submenu */}
+          {/* 9. Install BugSnap with Browser Submenu */}
           <div
             className="relative"
             onMouseEnter={handleSubmenuEnter}

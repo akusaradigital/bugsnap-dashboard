@@ -594,7 +594,6 @@ function Comments({
 
   return (
     <div className="space-y-3 min-w-0">
-      {/* Header */}
       <div className="flex items-center justify-between min-w-0">
         <div className="flex items-center gap-2 min-w-0">
           <div className="flex h-5 w-5 items-center justify-center rounded-md bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666]">

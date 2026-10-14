@@ -347,7 +347,6 @@ export default function FloatingSupport() {
             </div>
           </div>
 
-          {/* Body */}
           <div className="flex-1 overflow-y-auto p-5 text-slate-800 dark:text-zinc-200">
             {success ? (
               <div className="flex flex-col items-center justify-center py-6 text-center space-y-4">

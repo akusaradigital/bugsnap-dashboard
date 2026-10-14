@@ -708,6 +708,21 @@ function SettingsContent() {
     }
   }, [activeTab, activeWsId, loadBugsnapApiKeys]);
 
+  // Explicit scroll-to-anchor for deep links like /settings?tab=integrations#bugsnap-api-keys
+  // (e.g. from the MCP docs page). This is a client component on an SPA route, so the
+  // target node can mount after the browser's one-shot native hash scroll already fired -
+  // don't rely on that alone, or a visitor following the link lands on the tab but still
+  // has to hunt for the card themselves.
+  useEffect(() => {
+    if (activeTab !== "integrations" || typeof window === "undefined") return;
+    const hash = window.location.hash.slice(1);
+    if (!hash) return;
+    const raf = requestAnimationFrame(() => {
+      document.getElementById(hash)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [activeTab]);
+
   useEffect(() => {
     if (activeTab !== "notifications") return;
     let isMounted = true;
@@ -913,7 +928,7 @@ function SettingsContent() {
                 key={t.id}
                 type="button"
                 onClick={() => setTab(t.id as Tab)}
-                className={`shrink-0 px-3 py-1.5 text-xs rounded-lg font-medium transition-all ${
+                className={`shrink-0 px-3.5 py-2 min-h-[38px] text-xs rounded-lg font-medium transition-all touch-manipulation flex items-center ${
                   activeTab === t.id
                     ? "bg-[#89BD49] text-white font-semibold shadow-xs shadow-[#89BD49]/25"
                     : "text-muted hover:text-foreground hover:bg-subtle"
@@ -1684,7 +1699,7 @@ function SettingsContent() {
             {filteredIntegrations.length === 0 && <p className="text-sm text-muted text-center py-8">No integrations match your search.</p>}
 
             {/* ── BugSnap Public API Keys ─────────────────────────────────── */}
-            <div className="rounded-xl border border-border bg-subtle p-4 space-y-4 pt-5 border-t-2 shadow-xs">
+            <div id="bugsnap-api-keys" className="rounded-xl border border-border bg-subtle p-4 space-y-4 pt-5 border-t-2 shadow-xs scroll-mt-24">
               <div>
                 <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
                   <span>BugSnap API Keys</span>

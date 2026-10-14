@@ -54,51 +54,51 @@ export function SiteFooter() {
             </div>
           </Reveal>
 
-          {/* Links Grid: 3-column on mobile, spanning md:col-span-3 on desktop */}
-          <div className="md:col-span-3 grid grid-cols-3 gap-3 sm:gap-6 min-w-0">
+          {/* Links Grid: 2-column on mobile, 3-column on tablet/desktop */}
+          <div className="md:col-span-3 grid grid-cols-2 sm:grid-cols-3 gap-6 min-w-0">
             {/* Product Links */}
             <Reveal delay={0.08} className="space-y-3 min-w-0">
-              <h5 className="text-[11px] sm:text-xs font-bold text-site-text uppercase tracking-wider truncate">
+              <h5 className="text-xs font-bold text-site-text uppercase tracking-wider truncate">
                 {t("landing.product")}
               </h5>
-              <ul className="space-y-2 text-[11px] sm:text-xs text-site-text-2">
-                <li><Link href="/features" className="hover:text-site-text transition-colors block truncate">{t("site.nav.features")}</Link></li>
-                <li><Link href="/solutions" className="hover:text-site-text transition-colors block truncate">{t("site.nav.solutions")}</Link></li>
-                <li><Link href="/extension" className="hover:text-site-text transition-colors block truncate">{t("site.nav.extension")}</Link></li>
-                <li><Link href="/how-it-works" className="hover:text-site-text transition-colors block truncate">{t("site.nav.howItWorks")}</Link></li>
-                <li><Link href="/pricing" className="hover:text-site-text transition-colors block truncate">{t("site.nav.pricing")}</Link></li>
+              <ul className="space-y-2.5 text-xs text-site-text-2">
+                <li><Link href="/features" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("site.nav.features")}</Link></li>
+                <li><Link href="/solutions" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("site.nav.solutions")}</Link></li>
+                <li><Link href="/extension" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("site.nav.extension")}</Link></li>
+                <li><Link href="/how-it-works" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("site.nav.howItWorks")}</Link></li>
+                <li><Link href="/pricing" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("site.nav.pricing")}</Link></li>
               </ul>
             </Reveal>
 
             {/* Resources Links */}
             <Reveal delay={0.16} className="space-y-3 min-w-0">
-              <h5 className="text-[11px] sm:text-xs font-bold text-site-text uppercase tracking-wider truncate">
+              <h5 className="text-xs font-bold text-site-text uppercase tracking-wider truncate">
                 {t("landing.resources")}
               </h5>
-              <ul className="space-y-2 text-[11px] sm:text-xs text-site-text-2">
-                <li><Link href="/docs" className="hover:text-site-text transition-colors block truncate">{t("landing.docs")}</Link></li>
-                <li><Link href="/blog" className="hover:text-site-text transition-colors block truncate">{t("site.nav.blog")}</Link></li>
-                <li><Link href="/help" className="hover:text-site-text transition-colors block truncate">{t("landing.help")}</Link></li>
-                <li><Link href="/security" className="hover:text-site-text transition-colors block truncate">{t("landing.security")}</Link></li>
-                <li><Link href="/contact" className="hover:text-site-text transition-colors block truncate">{t("landing.contact")}</Link></li>
+              <ul className="space-y-2.5 text-xs text-site-text-2">
+                <li><Link href="/docs" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("landing.docs")}</Link></li>
+                <li><Link href="/blog" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("site.nav.blog")}</Link></li>
+                <li><Link href="/help" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("landing.help")}</Link></li>
+                <li><Link href="/security" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("landing.security")}</Link></li>
+                <li><Link href="/contact" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("landing.contact")}</Link></li>
               </ul>
             </Reveal>
 
             {/* Company & Legal */}
-            <Reveal delay={0.24} className="space-y-3 min-w-0">
-              <h5 className="text-[11px] sm:text-xs font-bold text-site-text uppercase tracking-wider truncate">
+            <Reveal delay={0.24} className="col-span-2 sm:col-span-1 space-y-3 min-w-0">
+              <h5 className="text-xs font-bold text-site-text uppercase tracking-wider truncate">
                 {t("landing.company")}
               </h5>
-              <ul className="space-y-2 text-[11px] sm:text-xs text-site-text-2">
-                <li><Link href="/about" className="hover:text-site-text transition-colors block truncate">{t("landing.about")}</Link></li>
-                <li><Link href="/privacy" className="hover:text-site-text transition-colors block truncate">{t("landing.privacy")}</Link></li>
-                <li><Link href="/terms" className="hover:text-site-text transition-colors block truncate">{t("landing.terms")}</Link></li>
+              <ul className="space-y-2.5 text-xs text-site-text-2">
+                <li><Link href="/about" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("landing.about")}</Link></li>
+                <li><Link href="/privacy" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("landing.privacy")}</Link></li>
+                <li><Link href="/terms" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("landing.terms")}</Link></li>
                 <li>
                   <a
                     href="https://akusaradigital.com"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="hover:text-site-text transition-colors block truncate"
+                    className="hover:text-site-text transition-colors block py-0.5 truncate"
                   >
                     Akusara Digital
                   </a>

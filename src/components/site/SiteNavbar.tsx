@@ -42,6 +42,18 @@ export function SiteNavbar() {
     setMobileMenuOpen(false);
   }, [pathname]);
 
+  // Close mobile menu on Escape key
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        setMobileMenuOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [mobileMenuOpen]);
+
   const navLinks = [
     { href: "/features", label: t("site.nav.features") },
     { href: "/solutions", label: t("site.nav.solutions") },
@@ -58,6 +70,12 @@ export function SiteNavbar() {
         scrolled ? "shadow-sm shadow-black/5" : ""
       }`}
     >
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] px-4 py-2 bg-accent text-slate-900 rounded-lg text-xs font-bold shadow-lg"
+      >
+        Skip to main content
+      </a>
       <div className="mx-auto max-w-6xl px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
         {/* Brand */}
         <Link href="/" className="flex items-center gap-2 group shrink-0">
@@ -108,7 +126,7 @@ export function SiteNavbar() {
           {isLoggedIn ? (
             <Link
               href="/dashboard"
-              className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg bg-accent text-slate-900 text-xs font-semibold hover:bg-accent-hover hover:text-white transition-all shadow-2xs"
+              className="inline-flex items-center gap-1.5 px-3 py-2 min-h-[40px] sm:min-h-0 sm:py-1.5 rounded-lg bg-accent text-slate-900 text-xs font-semibold hover:bg-accent-hover text-slate-900 hover:text-slate-900 transition-all shadow-2xs"
             >
               <IconHome size={14} className="shrink-0" />
               <span>{t("site.nav.dashboard")}</span>
@@ -135,7 +153,7 @@ export function SiteNavbar() {
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-1.5 rounded-md text-site-text-2 hover:text-site-text hover:bg-site-surface-2 transition-colors"
+            className="lg:hidden inline-flex items-center justify-center min-w-[44px] min-h-[44px] p-2 rounded-md text-site-text-2 hover:text-site-text hover:bg-site-surface-2 transition-colors touch-manipulation"
             aria-label="Toggle Navigation Menu"
             aria-expanded={mobileMenuOpen}
           >
@@ -151,7 +169,7 @@ export function SiteNavbar() {
             <Link
               key={link.href}
               href={link.href}
-              className={`block px-3 py-2 rounded-md text-sm font-medium transition-colors ${
+              className={`flex items-center min-h-[44px] px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
                 pathname === link.href
                   ? "text-site-text bg-site-surface-2 font-semibold"
                   : "text-site-text-2 hover:text-site-text hover:bg-site-surface-2/60"
@@ -164,7 +182,7 @@ export function SiteNavbar() {
             <div className="pt-2 border-t border-site-border-subtle mt-2">
               <Link
                 href="/dashboard"
-                className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-semibold bg-accent text-slate-900"
+                className="flex items-center gap-2 min-h-[44px] px-3 py-2.5 rounded-md text-sm font-semibold bg-accent text-slate-900"
               >
                 <IconHome size={16} className="shrink-0" />
                 <span>{t("site.nav.dashboard")}</span>
@@ -174,7 +192,7 @@ export function SiteNavbar() {
             <div className="pt-2 border-t border-site-border-subtle mt-2">
               <Link
                 href="/login"
-                className="flex items-center gap-2 px-3 py-2 rounded-md text-sm font-medium text-site-text-2 hover:text-site-text hover:bg-site-surface-2/60"
+                className="flex items-center gap-2 min-h-[44px] px-3 py-2.5 rounded-md text-sm font-medium text-site-text-2 hover:text-site-text hover:bg-site-surface-2/60"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
