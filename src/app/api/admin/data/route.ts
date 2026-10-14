@@ -212,7 +212,7 @@ export async function GET(req: Request) {
       firstComment: commentedOwnerIds.size,
     };
 
-    const promoVal = promoSetting?.value as { enabled?: boolean; message?: string } | null;
+    const promoVal = promoSetting?.value as { enabled?: boolean; message?: string; expiresAt?: string; expires_at?: string; targetPlan?: string; target_plan?: string } | null;
 
     const hasStripeKey = Boolean(process.env.STRIPE_SECRET_KEY);
     const hasGoogleDrive = Boolean(process.env.GOOGLE_CLIENT_ID || process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID);
@@ -248,6 +248,8 @@ export async function GET(req: Request) {
       promo: {
         enabled: Boolean(promoVal?.enabled),
         message: String(promoVal?.message || ""),
+        expiresAt: promoVal?.expiresAt || promoVal?.expires_at || null,
+        targetPlan: promoVal?.targetPlan || promoVal?.target_plan || "all",
       },
       systemPulse,
     });

@@ -11,22 +11,31 @@ export async function GET(req: Request) {
   }
 
   try {
-    // 1. AI Summaries Analytics
-    const { data: aiCaptures, count: totalAiCount, error: aiErr } = await supabase
+    // 1. Real AI usage (tokens + hit counts) - one row per actual LLM call,
+    // logged by the extension's AI Polish button, the dashboard's AI Clue
+    // button, and the admin ping/test-polish actions. Replaces the old flat
+    // "1200 tokens x count(captures.ai_summary)" guess, which also never saw
+    // AI Polish calls at all since those never touch the captures table.
+    const { data: usageRows } = await supabase
+      .from("ai_usage_logs")
+      .select("source, user_email, total_tokens, success, created_at")
+      .order("created_at", { ascending: false })
+      .limit(5000);
+
+    const rows = usageRows || [];
+    const totalAiCalls = rows.length;
+    const totalTokens = rows.reduce((sum, r) => sum + (r.total_tokens || 0), 0);
+    const estimatedCostUsd = ((totalTokens / 1_000_000) * 1.5).toFixed(3); // ~$1.50 per 1M blended
+
+    // Recent AI-analyzed captures (AI Clue), shown in the "Recent AI Bug
+    // Reports" table - a different view (which captures, not how much spent).
+    const { data: aiCaptures } = await supabase
       .from("captures")
-      .select("id, title, created_at, user_id, type", { count: "exact" })
+      .select("id, title, created_at, user_id, type")
       .not("ai_summary", "is", null)
       .order("created_at", { ascending: false })
       .limit(20);
 
-    if (aiErr) throw aiErr;
-
-    // Estimate token consumption (avg 1,200 tokens per analysis, input + output)
-    const totalAiSummaries = totalAiCount || 0;
-    const estimatedTokens = totalAiSummaries * 1200;
-    const estimatedCostUsd = ((estimatedTokens / 1_000_000) * 1.5).toFixed(3); // ~$1.50 per 1M blended
-
-    // Enrich creators of recent AI summaries
     const userIds = Array.from(new Set((aiCaptures || []).map((c) => c.user_id).filter(Boolean)));
     const userEmailMap: Record<string, string> = {};
 
@@ -46,7 +55,10 @@ export async function GET(req: Request) {
       creator_email: c.user_id ? userEmailMap[c.user_id] || "-" : "-",
     }));
 
-    // Aggregate Top AI Cost Drivers (to catch free-tier abusers / heavy consumption)
+    // Aggregate Top AI Cost Drivers per account (to catch free-tier abusers /
+    // heavy consumption). Only real end-user activity counts here - the
+    // admin's own ping/test-polish clicks are excluded so they don't show up
+    // as a "leech" account.
     let topDrivers: Array<{
       user_id: string;
       email: string;
@@ -60,48 +72,42 @@ export async function GET(req: Request) {
     }> = [];
 
     try {
-      const { data: allAiUsers } = await supabase
-        .from("captures")
-        .select("user_id")
-        .not("ai_summary", "is", null)
-        .not("user_id", "is", null)
-        .limit(2500);
+      const perUser: Record<string, { count: number; tokens: number }> = {};
+      for (const r of rows) {
+        if (!r.user_email) continue;
+        if (r.source !== "extension_polish" && r.source !== "ai_clue") continue;
+        const stat = (perUser[r.user_email] ||= { count: 0, tokens: 0 });
+        stat.count += 1;
+        stat.tokens += r.total_tokens || 0;
+      }
 
-      const userAiCounts: Record<string, number> = {};
-      (allAiUsers || []).forEach((c) => {
-        if (c.user_id) {
-          userAiCounts[c.user_id] = (userAiCounts[c.user_id] || 0) + 1;
-        }
-      });
-
-      const sortedUserIds = Object.entries(userAiCounts)
-        .sort((a, b) => b[1] - a[1])
+      const sortedEmails = Object.entries(perUser)
+        .sort((a, b) => b[1].count - a[1].count)
         .slice(0, 10);
 
-      if (sortedUserIds.length > 0) {
+      if (sortedEmails.length > 0) {
         const { data: driversUsers } = await supabase
           .from("users")
           .select("id, email, full_name, plan, plan_expires_at")
-          .in("id", sortedUserIds.map(([uid]) => uid));
+          .in("email", sortedEmails.map(([email]) => email));
 
-        const driverMap = new Map((driversUsers || []).map((u) => [u.id, u]));
+        const driverMap = new Map((driversUsers || []).map((u) => [(u.email || "").toLowerCase(), u]));
 
-        topDrivers = sortedUserIds.map(([uid, count]) => {
-          const u = driverMap.get(uid);
+        topDrivers = sortedEmails.map(([email, stat]) => {
+          const u = driverMap.get(email);
           const effectivePlan = resolvePlanWithExpiry(u?.plan || "free", u?.plan_expires_at);
-          const tokens = count * 1200;
-          const cost = ((tokens / 1_000_000) * 1.5).toFixed(3);
+          const cost = ((stat.tokens / 1_000_000) * 1.5).toFixed(3);
           // Flag as leech if high usage on free tier
-          const isLeech = effectivePlan === "free" && count >= 5;
+          const isLeech = effectivePlan === "free" && stat.count >= 5;
 
           return {
-            user_id: uid,
-            email: u?.email || "Unknown",
+            user_id: u?.id || email,
+            email: u?.email || email,
             full_name: u?.full_name || "",
             plan: u?.plan || "free",
             effective_plan: effectivePlan,
-            ai_count: count,
-            estimated_tokens: tokens,
+            ai_count: stat.count,
+            estimated_tokens: stat.tokens,
             estimated_cost_usd: `$${cost}`,
             is_leech: isLeech,
           };
@@ -164,8 +170,8 @@ export async function GET(req: Request) {
     return NextResponse.json({
       ok: true,
       aiStats: {
-        totalSummaries: totalAiSummaries,
-        estimatedTokens,
+        totalSummaries: totalAiCalls,
+        estimatedTokens: totalTokens,
         estimatedCostUsd: `$${estimatedCostUsd}`,
         recentSummaries: enrichedAiCaptures,
         topDrivers,

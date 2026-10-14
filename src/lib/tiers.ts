@@ -13,6 +13,9 @@ export type Plan =
   | typeof PLAN_PRO_PLUS
   | typeof PLAN_ENTERPRISE;
 
+/** Single source of truth for every valid plan - admin UI/API build their pickers from this. */
+export const PLANS: Plan[] = [PLAN_FREE, PLAN_PRO, PLAN_PRO_PLUS, PLAN_ENTERPRISE];
+
 export const isPlan = (p: unknown): p is Plan =>
   p === PLAN_FREE ||
   p === PLAN_PRO ||

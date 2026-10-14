@@ -55,6 +55,8 @@ interface AdminData {
   promo: {
     enabled: boolean;
     message: string;
+    expiresAt?: string | null;
+    targetPlan?: string | null;
   };
   needsAttention?: {
     openTickets: number;
@@ -112,6 +114,8 @@ export default function AdminOverviewPage() {
   // Promo Banner State
   const [promoMessage, setPromoMessage] = useState(cached?.promo?.message || "");
   const [promoEnabled, setPromoEnabled] = useState(Boolean(cached?.promo?.enabled));
+  const [promoExpiresAt, setPromoExpiresAt] = useState(cached?.promo?.expiresAt ? cached.promo.expiresAt.slice(0, 16) : "");
+  const [promoTargetPlan, setPromoTargetPlan] = useState(cached?.promo?.targetPlan || "all");
   const [savingPromo, setSavingPromo] = useState(false);
 
   useEffect(() => {
@@ -133,6 +137,8 @@ export default function AdminOverviewPage() {
       setAdminCache("admin_overview_data", json);
       setPromoMessage(json.promo?.message || "");
       setPromoEnabled(Boolean(json.promo?.enabled));
+      setPromoExpiresAt(json.promo?.expiresAt ? json.promo.expiresAt.slice(0, 16) : "");
+      setPromoTargetPlan(json.promo?.targetPlan || "all");
     } catch (err: unknown) {
       if (!data) setError((err as Error)?.message || "Gagal memuat data.");
     } finally {
@@ -152,7 +158,12 @@ export default function AdminOverviewPage() {
           "Content-Type": "application/json",
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: JSON.stringify({ message: promoMessage, enabled: promoEnabled }),
+        body: JSON.stringify({
+          message: promoMessage,
+          enabled: promoEnabled,
+          expires_at: promoExpiresAt ? new Date(promoExpiresAt).toISOString() : null,
+          target_plan: promoTargetPlan,
+        }),
       });
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || "Gagal menyimpan banner");
@@ -814,6 +825,36 @@ export default function AdminOverviewPage() {
               placeholder={t("admin.promoBannerPlaceholder")}
               className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-3 outline-none focus:border-[#89BD49] resize-none leading-relaxed"
             />
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <div>
+              <label className="block text-[11px] font-medium text-slate-600 dark:text-zinc-400 mb-1">
+                {t("admin.promoExpiresAt")}
+              </label>
+              <input
+                type="datetime-local"
+                value={promoExpiresAt}
+                onChange={(e) => setPromoExpiresAt(e.target.value)}
+                className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#89BD49]"
+              />
+            </div>
+            <div>
+              <label className="block text-[11px] font-medium text-slate-600 dark:text-zinc-400 mb-1">
+                {t("admin.promoTargetPlan")}
+              </label>
+              <select
+                value={promoTargetPlan}
+                onChange={(e) => setPromoTargetPlan(e.target.value)}
+                className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#89BD49]"
+              >
+                <option value="all">{t("admin.promoTargetAll")}</option>
+                <option value="free">{t("admin.promoTargetFree")}</option>
+                <option value="pro">{t("admin.promoTargetPro")}</option>
+                <option value="pro_plus">{t("admin.promoTargetProPlus")}</option>
+                <option value="enterprise">{t("admin.promoTargetEnterprise")}</option>
+              </select>
+            </div>
           </div>
 
           <div className="flex items-center justify-between pt-1">

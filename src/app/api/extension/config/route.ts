@@ -46,6 +46,10 @@ export async function GET() {
     // fallback gracefully to defaults
   }
 
+  const rawFeatures = (extConfig as { features?: { webcamRecording?: boolean; domReplay?: boolean } }).features || {};
+  const webcamRecording = rawFeatures.webcamRecording !== false;
+  const domReplay = rawFeatures.domReplay !== false;
+
   return NextResponse.json(
     {
       supabaseUrl: clean(process.env.NEXT_PUBLIC_SUPABASE_URL),
@@ -57,6 +61,8 @@ export async function GET() {
         watermark: true,
         aiSummary: true,
         uploadQueue: true,
+        webcamRecording,
+        domReplay,
       },
     },
     {

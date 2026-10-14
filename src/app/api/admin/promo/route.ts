@@ -53,12 +53,21 @@ export async function POST(req: Request) {
       expiresAt = parsed.toISOString();
     }
 
+    // Validate target plan (if provided: all, free, pro, pro_plus, enterprise)
+    const targetPlanVal = body.target_plan ?? body.targetPlan;
+    let targetPlan = "all";
+    if (typeof targetPlanVal === "string" && ["all", "free", "pro", "pro_plus", "enterprise"].includes(targetPlanVal)) {
+      targetPlan = targetPlanVal;
+    }
+
     const promoValue: Record<string, unknown> = {
       message,
       enabled,
+      target_plan: targetPlan,
+      targetPlan,
       ...(discountPercent !== undefined && { discount_percent: discountPercent }),
       ...(maxUses !== undefined && { max_uses: maxUses }),
-      ...(expiresAt !== undefined && { expires_at: expiresAt }),
+      ...(expiresAt !== undefined && { expires_at: expiresAt, expiresAt }),
     };
 
     const { error } = await supabase

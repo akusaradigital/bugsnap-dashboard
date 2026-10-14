@@ -1,5 +1,5 @@
 ﻿import { isDisposableEmail } from "@/lib/disposable-email";
-import { resolvePlanWithExpiry } from "@/lib/tiers";
+import { resolvePlanWithExpiry, normalizePlan, PLANS } from "@/lib/tiers";
 import { NextResponse } from "next/server";
 import { checkAdminAuth, isSuperAdminEmail } from "@/lib/admin-auth";
 import { logSecurityEvent } from "@/lib/security-audit";
@@ -160,6 +160,19 @@ export async function GET(req: Request) {
       query = query.eq("suspended", false);
     } else if (status === "suspended") {
       query = query.eq("suspended", true);
+    } else if (status === "stuck") {
+      const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+      query = query.eq("suspended", false).lt("created_at", threeDaysAgo);
+
+      // Exclude users who have at least one capture
+      const { data: capUsers } = await supabase
+        .from("captures")
+        .select("user_id")
+        .not("user_id", "is", null);
+      const activeUserIds = Array.from(new Set((capUsers || []).map((c) => c.user_id as string).filter(Boolean)));
+      if (activeUserIds.length > 0) {
+        query = query.not("id", "in", `(${activeUserIds.join(",")})`);
+      }
     }
 
     const { data: users, count, error } = await query
@@ -233,9 +246,13 @@ export async function PATCH(req: Request) {
 
     // 1. Update Subscription Plan (with optional expiry / comp duration)
     if (action === "set_plan") {
-      const validPlans = ["free", "pro", "team", "enterprise"];
+      // Was a hand-written ["free","pro","team","enterprise"] that diverged
+      // from tiers.ts's real Plan type: "team" has no distinct pricing (it's
+      // aliased to "pro" in paddle.ts) and silently normalized to "free"
+      // everywhere else via normalizePlan(), while "pro_plus" - a real tier
+      // with its own Paddle pricing - couldn't be granted here at all.
       const targetPlan = (plan || "").toLowerCase();
-      if (!validPlans.includes(targetPlan)) {
+      if (!PLANS.includes(targetPlan as (typeof PLANS)[number])) {
         return NextResponse.json({ error: "Invalid plan specified" }, { status: 400 });
       }
 
@@ -292,6 +309,7 @@ export async function PATCH(req: Request) {
       const stripeSecret = process.env.STRIPE_SECRET_KEY;
       let synced = false;
       let gatewayPlan: string | null = null;
+      let gatewayExpiresAt: string | null = null;
       let source: string | null = null;
 
       if (stripeSecret) {
@@ -304,17 +322,31 @@ export async function PATCH(req: Request) {
           );
           if (stripeRes.ok) {
             const stripeData = await stripeRes.json();
-            const customer = stripeData.data?.[0];
-            const subs = customer?.subscriptions?.data || [];
-            const activeSub = subs.find(
-              (s: { status?: string }) => s.status === "active" || s.status === "trialing"
-            );
+            // A re-signup or a test+prod split can leave >1 Stripe customer
+            // record for the same email - data[0] silently ignored every
+            // subscription that wasn't on the first one.
+            const customers = Array.isArray(stripeData.data) ? stripeData.data : [];
+            let activeSub: { status?: string; cancel_at_period_end?: boolean; current_period_end?: number; metadata?: { plan?: string }; items?: { data?: Array<{ price?: { metadata?: { plan?: string } } }> } } | undefined;
+            for (const customer of customers) {
+              const subs = customer?.subscriptions?.data || [];
+              activeSub = subs.find(
+                (s: { status?: string }) => s.status === "active" || s.status === "trialing"
+              );
+              if (activeSub) break;
+            }
             if (activeSub) {
               synced = true;
               source = "Stripe";
               const metaPlan =
                 activeSub.metadata?.plan || activeSub.items?.data?.[0]?.price?.metadata?.plan;
-              gatewayPlan = metaPlan ? String(metaPlan).toLowerCase() : "pro";
+              gatewayPlan = metaPlan ? normalizePlan(String(metaPlan).toLowerCase()) : "pro";
+              // A subscription can be status "active" and still be scheduled
+              // to end (cancel_at_period_end) - writing null here silently
+              // turned a scheduled cancellation into permanent access.
+              gatewayExpiresAt =
+                activeSub.cancel_at_period_end && activeSub.current_period_end
+                  ? new Date(activeSub.current_period_end * 1000).toISOString()
+                  : null;
             }
           }
         } catch (stripeErr) {
@@ -325,13 +357,13 @@ export async function PATCH(req: Request) {
       if (synced && gatewayPlan) {
         await supabase
           .from("users")
-          .update({ plan: gatewayPlan, plan_expires_at: null, checkout_status: "completed" })
+          .update({ plan: gatewayPlan, plan_expires_at: gatewayExpiresAt, checkout_status: "completed" })
           .eq("id", user_id);
 
         await logSecurityEvent({
           type: "admin_action",
           title: "Subscription Reconciled",
-          detail: `Admin reconciled ${user.email} from ${source}: set plan to ${gatewayPlan}`,
+          detail: `Admin reconciled ${user.email} from ${source}: set plan to ${gatewayPlan}${gatewayExpiresAt ? ` (expires ${gatewayExpiresAt})` : ""}`,
         });
 
         return NextResponse.json({
@@ -419,6 +451,69 @@ export async function PATCH(req: Request) {
       });
 
       return NextResponse.json({ ok: true, message: `Reset email sent to ${user.email}` });
+    }
+
+    // 4. Send Onboarding Re-engagement Email
+    if (action === "send_reengagement") {
+      const { data: user, error: fetchErr } = await supabase
+        .from("users")
+        .select("id, email, full_name")
+        .eq("id", user_id)
+        .single();
+
+      if (fetchErr || !user) {
+        return NextResponse.json({ error: "User not found" }, { status: 404 });
+      }
+
+      if (!process.env.RESEND_API_KEY) {
+        return NextResponse.json({ error: "RESEND_API_KEY is not configured" }, { status: 400 });
+      }
+
+      const userName = user.full_name || "there";
+      const appUrl = (process.env.NEXT_PUBLIC_APP_URL || "https://bugsnap.akusaraproject.my.id").replace(/\/+$/, "");
+      const chromeStoreUrl = "https://chromewebstore.google.com";
+
+      const htmlBody = `<div style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; color: #1e293b; line-height: 1.6;">
+        <h2 style="color: #0f172a; margin-top: 0;">Halo ${userName}! 👋</h2>
+        <p>Kami melihat Anda telah mendaftar di BugSnap, tetapi belum sempat mencoba capture bug pertama Anda.</p>
+        <p>Dengan ekstensi Chrome BugSnap, Anda bisa merekam layar, tangkapan layar, dan dev logs (Console error & Network 4xx/5xx) hanya dengan 1 klik langsung ke Google Drive Anda!</p>
+        <div style="margin: 28px 0;">
+          <a href="${chromeStoreUrl}" style="background-color: #89BD49; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block;">
+            Pasang Ekstensi Chrome & Mulai Capture 🚀
+          </a>
+        </div>
+        <p style="font-size: 13px; color: #64748b;">Butuh bantuan atau panduan? Kunjungi <a href="${appUrl}/dashboard" style="color: #89BD49;">Dashboard BugSnap</a> atau balas email ini langsung.</p>
+        <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
+        <p style="font-size: 12px; color: #94a3b8;">Email ini dikirim oleh tim BugSnap.</p>
+      </div>`;
+
+      const fromEmail = process.env.RESEND_FROM_EMAIL || "BugSnap <noreply@akusaraproject.my.id>";
+      const res = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: fromEmail,
+          to: [user.email],
+          subject: "Ambil Bug Pertama Anda dengan BugSnap ⚡",
+          html: htmlBody,
+        }),
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.message || "Failed to send email via Resend");
+      }
+
+      await logSecurityEvent({
+        type: "admin_action",
+        title: "Re-engagement Email Sent",
+        detail: `Admin ${callerEmail || "Console"} sent onboarding re-engagement email to ${user.email}`,
+      });
+
+      return NextResponse.json({ ok: true, message: `Re-engagement email sent to ${user.email}` });
     }
 
     return NextResponse.json({ error: "Unsupported action" }, { status: 400 });

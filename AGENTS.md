@@ -6,7 +6,7 @@
 
 1. **Graphify MANDATORY**: Read `../graphify-out/GRAPH_REPORT.md` before touching code. No sweep-reading.
 2. **Tools**: Use `PowerShell`/`Bash`, `Read`, `Edit`, `Write`, `Grep`, `Glob`, `Agent`. No `cat`.
-3. **No auto-push**: NEVER `git push` without explicit instruction.
+3. **No auto-push**: NEVER `git push` without explicit instruction. Sebelum melakukan `git push`, wajib jalankan `/graphify --update`.
 4. **PowerShell 5.1**: No `&&` - use `;` or Bash tool.
 5. **Free tier stubs**: `tiers.ts` + `quota.ts` are deliberately unlimited. Do NOT add paywalls.
 6. **i18n**: All UI text via `src/lib/i18n.ts` + `useT()`. Both `en` + `id`. No hardcoded strings.

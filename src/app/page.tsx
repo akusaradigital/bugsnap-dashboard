@@ -86,21 +86,6 @@ const RoleSwitcher = dynamic(
   },
 );
 
-const HotkeyCommandBar = dynamic(
-  () =>
-    import("@/components/site/HotkeyCommandBar").then(
-      (m) => m.HotkeyCommandBar,
-    ),
-  {
-    loading: () => (
-      <div
-        className="w-full max-w-2xl mx-auto min-h-[320px] rounded-2xl border border-site-border bg-site-surface/50 animate-pulse"
-        aria-hidden="true"
-      />
-    ),
-  },
-);
-
 const ZeroDataDiagram = dynamic(
   () =>
     import("@/components/site/ZeroDataDiagram").then(
@@ -709,28 +694,6 @@ export default function LandingPage() {
                   );
                 })}
               </div>
-            </div>
-          </section>
-
-          {/* Hotkeys */}
-          <section className="py-16 sm:py-20 px-4 sm:px-6 border-b border-site-border">
-            <div className="mx-auto max-w-6xl">
-              <Reveal>
-                <div className="text-center mb-12">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-site-accent mb-3">
-                    {t("site.hotkeys.eyebrow")}
-                  </p>
-                  <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-site-text text-balance">
-                    {t("site.hotkeys.title")}
-                  </h2>
-                  <p className="text-sm text-site-text-2 mt-3 max-w-xl mx-auto">
-                    {t("site.hotkeys.sub")}
-                  </p>
-                </div>
-              </Reveal>
-              <Reveal delay={0.1}>
-                <HotkeyCommandBar />
-              </Reveal>
             </div>
           </section>
 

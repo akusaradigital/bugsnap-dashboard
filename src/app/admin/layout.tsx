@@ -211,8 +211,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     }
 
     checkSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (!isMounted) return;
+        if (session?.access_token && (event === "SIGNED_IN" || event === "TOKEN_REFRESHED")) {
+          checkSession();
+        }
+      }
+    );
+
     return () => {
       isMounted = false;
+      authListener?.subscription?.unsubscribe();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

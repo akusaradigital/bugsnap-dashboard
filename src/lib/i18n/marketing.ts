@@ -559,6 +559,7 @@ export const marketingEn: Dict = {
   "security.h6Title": "Infrastructure Security",
   "security.h6Desc":
     "Our cloud database and authentication layers follow current security standards to protect your workspace metadata.",
+  "security.architectureEyebrow": "Architecture & Data Sovereignty",
   "security.comparisonTitle": "What we store vs. what we never store",
   "security.comparisonDesc":
     "We only store: metadata needed to render the dashboard and tracking (title, type, duration, OS, browser, timestamps), plus comments/captures you explicitly delete from the dashboard. We never store your Google passwords, Drive file contents, or browsing history.",
@@ -895,8 +896,20 @@ export const marketingEn: Dict = {
     "Compatible with Google Chrome, Brave, Microsoft Edge, and Chromium browsers.",
   "extension.viewDocs": "View Documentation",
   "extension.trustDrive": "Stored in your Google Drive",
+  "extension.trustMv3": "Manifest V3 (<25MB RAM)",
+  "extension.trustPermissions": "Strict tabCapture Scope",
   "extension.trustFree": "Free & Unlimited Recordings",
   "extension.trustNoAccount": "No Account Needed for Viewers",
+  "extension.permissionsEyebrow": "Security & Privacy",
+  "extension.permissionsTitle": "Transparent Chrome Permissions",
+  "extension.permTabCapture":
+    "Streams audio & video from the selected recording tab. Never monitors background tabs.",
+  "extension.permStorage":
+    "Saves your local hotkey shortcuts, target folder preferences, and recent capture tags.",
+  "extension.permIdentity":
+    "Authenticates directly with Google to get an access token scoped strictly to drive.file.",
+  "extension.permNever":
+    "BugSnap has zero access to browsing history, passwords, or cross-origin cookies.",
   "extension.f1Badge": "Fast Capture",
   "extension.f1Title": "Screen Recording & HD Screenshots",
   "extension.f1Desc":
@@ -932,6 +945,8 @@ export const marketingEn: Dict = {
   "extension.chromeDesc": "Available now on the official Chrome Web Store with instant updates.",
   "extension.edgeDesc":
     "Fully compatible with Microsoft Edge via Chrome Store. Native Add-on coming soon.",
+  "extension.braveDesc":
+    "Fully supported across all Chromium-based desktop browsers without extra configuration.",
   "extension.firefoxDesc": "Native Firefox WebExtension version currently in active development.",
   "extension.availableNow": "Available Now",
   "extension.comingSoon": "Coming Soon",
@@ -1019,6 +1034,7 @@ export const marketingEn: Dict = {
   "blog.pagePrev": "Previous",
   "blog.pageNext": "Next",
   "blog.pageOf": "Page {current} of {total}",
+  "blog.pagination": "Pagination",
   "blog.newsletterTitle": "Get weekly debugging & QA insights",
   "blog.newsletterDesc": "Curated guides on browser diagnostics, DevTools tricks, and team workflows. No spam, ever.",
   "blog.newsletterPlaceholder": "Enter your work email",
@@ -1615,6 +1631,7 @@ export const marketingId: Dict = {
   "security.h6Title": "Keamanan Infrastruktur",
   "security.h6Desc":
     "Metadata database diamankan dengan row-level security, enkripsi selama transit, dan kontrol akses berbasis peran.",
+  "security.architectureEyebrow": "Arsitektur & Kedaulatan Data",
   "security.comparisonTitle":
     "Apa yang kami simpan vs. apa yang tidak pernah kami simpan",
   "security.comparisonDesc":
@@ -1953,8 +1970,20 @@ export const marketingId: Dict = {
     "Kompatibel dengan Google Chrome, Brave, Microsoft Edge, dan peramban Chromium lainnya.",
   "extension.viewDocs": "Lihat Dokumentasi",
   "extension.trustDrive": "Tersimpan di Google Drive Anda",
+  "extension.trustMv3": "Manifest V3 (<25MB RAM)",
+  "extension.trustPermissions": "Cakupan tabCapture Ketat",
   "extension.trustFree": "Gratis & Rekaman Tanpa Batas",
   "extension.trustNoAccount": "Tanpa Perlu Akun untuk Penonton",
+  "extension.permissionsEyebrow": "Keamanan & Privasi",
+  "extension.permissionsTitle": "Transparansi Izin Chrome",
+  "extension.permTabCapture":
+    "Mengalirkan audio & video dari tab perekaman yang dipilih. Tidak pernah memantau tab di latar belakang.",
+  "extension.permStorage":
+    "Menyimpan pintasan tombol lokal, preferensi folder target, dan label tangkapan terbaru.",
+  "extension.permIdentity":
+    "Otentikasi langsung dengan Google untuk mendapatkan token akses yang dibatasi secara ketat ke drive.file.",
+  "extension.permNever":
+    "BugSnap sama sekali tidak memiliki akses ke riwayat penjelajahan, kata sandi, atau kuki lintas-asal.",
   "extension.f1Badge": "Tangkapan Cepat",
   "extension.f1Title": "Perekaman Layar & Tangkapan HD",
   "extension.f1Desc":
@@ -1990,6 +2019,8 @@ export const marketingId: Dict = {
   "extension.chromeDesc": "Tersedia sekarang di Chrome Web Store resmi dengan pembaruan otomatis.",
   "extension.edgeDesc":
     "Kompatibel penuh dengan Microsoft Edge melalui Chrome Store. Ekstensi resmi Edge segera hadir.",
+  "extension.braveDesc":
+    "Didukung penuh di semua browser desktop berbasis Chromium tanpa konfigurasi tambahan.",
   "extension.firefoxDesc": "Versi native Firefox WebExtension sedang dalam tahap pengembangan aktif.",
   "extension.availableNow": "Tersedia Sekarang",
   "extension.comingSoon": "Segera Hadir",
@@ -2078,6 +2109,7 @@ export const marketingId: Dict = {
   "blog.pagePrev": "Sebelumnya",
   "blog.pageNext": "Selanjutnya",
   "blog.pageOf": "Halaman {current} dari {total}",
+  "blog.pagination": "Paginasi",
   "blog.newsletterTitle": "Dapatkan tips debugging & QA mingguan",
   "blog.newsletterDesc": "Panduan ringkas seputar diagnostik browser, trik DevTools, dan alur kerja tim. Tanpa spam.",
   "blog.newsletterPlaceholder": "Masukkan email kerja Anda",

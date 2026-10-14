@@ -79,7 +79,7 @@ export default function DashboardLayout({
     };
   }, []);
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [promoBanner, setPromoBanner] = useState<{ enabled: boolean; message: string } | null>(null);
+  const [promoBanner, setPromoBanner] = useState<{ enabled: boolean; message: string; expiresAt?: string | null; targetPlan?: string | null; target_plan?: string | null } | null>(null);
   const [promoDismissed, setPromoDismissed] = useState(false);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [activeWsId, setActiveWsId] = useState<string | null>(null);
@@ -915,24 +915,30 @@ export default function DashboardLayout({
       >
         {t("layout.skipToContent") || "Skip to main content"}
       </a>
-      {promoBanner && promoBanner.enabled && promoBanner.message && !promoDismissed && (
-        <div className="shrink-0 bg-[#89BD49] text-white px-4 py-2.5 flex items-center justify-between gap-4">
-          <div className="flex-1 min-w-0 text-sm font-medium leading-snug text-center">
-            {promoBanner.message}
+      {promoBanner && promoBanner.enabled && promoBanner.message && !promoDismissed && (() => {
+        const targetPlan = promoBanner.targetPlan || promoBanner.target_plan;
+        if (targetPlan && targetPlan !== "all" && currentUser && currentUser.plan !== targetPlan) {
+          return null;
+        }
+        return (
+          <div className="shrink-0 bg-[#89BD49] text-white px-4 py-2.5 flex items-center justify-between gap-4">
+            <div className="flex-1 min-w-0 text-sm font-medium leading-snug text-center">
+              {promoBanner.message}
+            </div>
+            <button
+              type="button"
+              aria-label={t("layout.dismissPromo")}
+              onClick={() => {
+                try { localStorage.setItem("BugSnap_promo_dismissed", promoBanner.message); } catch {}
+                setPromoDismissed(true);
+              }}
+              className="shrink-0 text-white/80 hover:text-white transition-colors"
+            >
+              <Icon icon="lucide:x" className="w-5 h-5" />
+            </button>
           </div>
-          <button
-            type="button"
-            aria-label={t("layout.dismissPromo")}
-            onClick={() => {
-              try { localStorage.setItem("BugSnap_promo_dismissed", promoBanner.message); } catch {}
-              setPromoDismissed(true);
-            }}
-            className="shrink-0 text-white/80 hover:text-white transition-colors"
-          >
-            <Icon icon="lucide:x" className="w-5 h-5" />
-          </button>
-        </div>
-      )}
+        );
+      })()}
       {/* Mobile top bar */}
       <header className="lg:hidden shrink-0 border-b border-border bg-subtle flex items-center justify-between px-3 py-1.5">
         <button
@@ -1208,6 +1214,15 @@ export default function DashboardLayout({
                     </>
                   )}
                 </div>
+
+                <Link
+                  href="/admin"
+                  onClick={() => setSidebarOpen(false)}
+                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-foreground hover:bg-subtle transition-colors border-t border-border"
+                >
+                  <Icon icon="lucide:shield" className="w-4 h-4 text-purple-500 shrink-0" />
+                  <span>{t("nav.admin")} Console</span>
+                </Link>
 
                 <button
                   onClick={async () => {

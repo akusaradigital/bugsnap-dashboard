@@ -1,0 +1,13 @@
+[
+  {"column_name":"workspace_id","data_type":"uuid","is_nullable":"NO"},
+  {"column_name":"webhook_url","data_type":"text","is_nullable":"NO"},
+  {"column_name":"brand_name","data_type":"text","is_nullable":"NO"},
+  {"column_name":"custom_logo_url","data_type":"text","is_nullable":"NO"},
+  {"column_name":"hide_watermark","data_type":"boolean","is_nullable":"NO"},
+  {"column_name":"custom_domain","data_type":"text","is_nullable":"NO"},
+  {"column_name":"auto_delete_months","data_type":"integer","is_nullable":"NO"},
+  {"column_name":"updated_at","data_type":"timestamp with time zone","is_nullable":"NO"},
+  {"column_name":"integrations","data_type":"jsonb","is_nullable":"NO"},
+  {"column_name":"auto_escalate_errors","data_type":"boolean","is_nullable":"NO"},
+  {"column_name":"error_escalation_threshold","data_type":"integer","is_nullable":"NO"}
+]

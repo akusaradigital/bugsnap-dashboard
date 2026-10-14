@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useToast } from "@/components/Toast";
 import { getAdminHeaders, getAdminCache, setAdminCache } from "@/lib/admin-cache";
 import { Icon } from "@/lib/iconify";
+import { useT } from "@/components/I18nProvider";
 
 interface ExtensionConfig {
   minVersion: string;
@@ -12,6 +13,10 @@ interface ExtensionConfig {
   updateUrl: string;
   maintenanceMode: boolean;
   announcement: string;
+  features?: {
+    webcamRecording: boolean;
+    domReplay: boolean;
+  };
 }
 
 interface ExtensionError {
@@ -44,6 +49,7 @@ function compareSemver(a: string, b: string): number {
 }
 
 export default function AdminExtensionFleetPage() {
+  const { t } = useT();
   const { showToast } = useToast();
   const cached = getAdminCache<{ config: ExtensionConfig; errors: ExtensionError[] }>("admin_extension_data");
   const [loading, setLoading] = useState(!cached);
@@ -57,6 +63,10 @@ export default function AdminExtensionFleetPage() {
       updateUrl: "https://chromewebstore.google.com",
       maintenanceMode: false,
       announcement: "",
+      features: {
+        webcamRecording: true,
+        domReplay: true,
+      },
     }
   );
 
@@ -369,6 +379,70 @@ export default function AdminExtensionFleetPage() {
                   </span>
                 </div>
               </label>
+            </div>
+
+            {/* Capture Features Kill Switches */}
+            <div className="pt-2 border-t border-slate-100 dark:border-zinc-800 space-y-3">
+              <div>
+                <span className="text-xs font-bold text-slate-800 dark:text-zinc-200 block">
+                  {t("admin.captureFeatures")}
+                </span>
+                <span className="text-[11px] text-slate-500 dark:text-zinc-400">
+                  {t("admin.captureFeaturesDesc")}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950/40 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={config.features?.webcamRecording !== false}
+                    onChange={(e) =>
+                      setConfig({
+                        ...config,
+                        features: {
+                          webcamRecording: e.target.checked,
+                          domReplay: config.features?.domReplay !== false,
+                        },
+                      })
+                    }
+                    className="mt-0.5 w-4 h-4 rounded border-slate-300 text-[#89BD49] focus:ring-[#89BD49] accent-[#89BD49]"
+                  />
+                  <div className="min-w-0">
+                    <span className="text-xs font-bold text-slate-900 dark:text-white block">
+                      {t("admin.webcamRecording")}
+                    </span>
+                    <span className="text-[11px] text-slate-500 dark:text-zinc-400">
+                      {t("admin.webcamRecordingHint")}
+                    </span>
+                  </div>
+                </label>
+
+                <label className="flex items-start gap-3 p-3 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-950/40 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={config.features?.domReplay !== false}
+                    onChange={(e) =>
+                      setConfig({
+                        ...config,
+                        features: {
+                          webcamRecording: config.features?.webcamRecording !== false,
+                          domReplay: e.target.checked,
+                        },
+                      })
+                    }
+                    className="mt-0.5 w-4 h-4 rounded border-slate-300 text-[#89BD49] focus:ring-[#89BD49] accent-[#89BD49]"
+                  />
+                  <div className="min-w-0">
+                    <span className="text-xs font-bold text-slate-900 dark:text-white block">
+                      {t("admin.domReplay")}
+                    </span>
+                    <span className="text-[11px] text-slate-500 dark:text-zinc-400">
+                      {t("admin.domReplayHint")}
+                    </span>
+                  </div>
+                </label>
+              </div>
             </div>
 
             {/* Announcement Box */}

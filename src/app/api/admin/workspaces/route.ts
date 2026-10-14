@@ -38,6 +38,16 @@ export async function GET(req: Request) {
         if (ownerUser?.email) ownerEmail = ownerUser.email;
       }
 
+      // Fetch workspace settings (VIP & Quota override)
+      const { data: wsSettings } = await supabase
+        .from("workspace_settings")
+        .select("is_vip, ai_token_limit_override")
+        .eq("workspace_id", workspaceId)
+        .maybeSingle();
+
+      const isVip = Boolean(wsSettings?.is_vip);
+      const aiTokenLimitOverride = wsSettings?.ai_token_limit_override ?? null;
+
       // Members
       const { data: members } = await supabase
         .from("workspace_members")
@@ -87,7 +97,12 @@ export async function GET(req: Request) {
 
       return NextResponse.json({
         ok: true,
-        workspace: { ...ws, owner_email: ownerEmail },
+        workspace: {
+          ...ws,
+          owner_email: ownerEmail,
+          is_vip: isVip,
+          ai_token_limit_override: aiTokenLimitOverride,
+        },
         members: ((members as unknown as MemberDetailRow[]) || []).map((m) => ({
           id: m.id,
           user_id: m.user_id,
@@ -144,15 +159,17 @@ export async function GET(req: Request) {
 
     if (error) throw error;
 
-    // Fetch member and capture counts for these workspaces
+    // Fetch member, capture, and VIP settings for these workspaces
     const wsIds = (workspaces || []).map((w) => w.id);
     const memberCounts: Record<string, number> = {};
     const captureCounts: Record<string, number> = {};
+    const settingsMap: Record<string, { is_vip: boolean; ai_token_limit_override: number | null }> = {};
 
     if (wsIds.length > 0) {
-      const [{ data: mData }, { data: cData }] = await Promise.all([
+      const [{ data: mData }, { data: cData }, { data: sData }] = await Promise.all([
         supabase.from("workspace_members").select("workspace_id").in("workspace_id", wsIds),
         supabase.from("captures").select("workspace_id").in("workspace_id", wsIds),
+        supabase.from("workspace_settings").select("workspace_id, is_vip, ai_token_limit_override").in("workspace_id", wsIds),
       ]);
 
       (mData || []).forEach((m) => {
@@ -160,6 +177,14 @@ export async function GET(req: Request) {
       });
       (cData || []).forEach((c) => {
         if (c.workspace_id) captureCounts[c.workspace_id] = (captureCounts[c.workspace_id] || 0) + 1;
+      });
+      (sData || []).forEach((s) => {
+        if (s.workspace_id) {
+          settingsMap[s.workspace_id] = {
+            is_vip: Boolean(s.is_vip),
+            ai_token_limit_override: s.ai_token_limit_override ?? null,
+          };
+        }
       });
     }
 
@@ -180,6 +205,8 @@ export async function GET(req: Request) {
       owner_email: w.owner_user_id ? ownerEmailMap[w.owner_user_id] || "-" : "-",
       member_count: memberCounts[w.id] || 0,
       capture_count: captureCounts[w.id] || 0,
+      is_vip: Boolean(settingsMap[w.id]?.is_vip),
+      ai_token_limit_override: settingsMap[w.id]?.ai_token_limit_override ?? null,
     }));
 
     return NextResponse.json({
@@ -289,6 +316,42 @@ export async function PATCH(req: Request) {
       });
 
       return NextResponse.json({ ok: true, workspace: { ...updatedWs, owner_email: targetUser.email } });
+    }
+
+    if (action === "set_vip_override") {
+      const { is_vip, ai_token_limit_override } = body;
+      const vipVal = Boolean(is_vip);
+      const tokenLimit =
+        typeof ai_token_limit_override === "number" && !isNaN(ai_token_limit_override) && ai_token_limit_override > 0
+          ? Math.floor(ai_token_limit_override)
+          : null;
+
+      const { data: updatedSettings, error: sErr } = await supabase
+        .from("workspace_settings")
+        .upsert(
+          {
+            workspace_id,
+            is_vip: vipVal,
+            ai_token_limit_override: tokenLimit,
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: "workspace_id" }
+        )
+        .select("workspace_id, is_vip, ai_token_limit_override")
+        .single();
+
+      if (sErr) throw sErr;
+
+      await logSecurityEvent({
+        type: "admin_action",
+        title: "Workspace VIP / Quota Updated",
+        detail: `Admin ${callerEmail || "Console"} set workspace ${workspace_id} VIP=${vipVal}, token_override=${tokenLimit ?? "unlimited"}`,
+      });
+
+      return NextResponse.json({
+        ok: true,
+        settings: updatedSettings,
+      });
     }
 
     return NextResponse.json({ error: "Unsupported action" }, { status: 400 });

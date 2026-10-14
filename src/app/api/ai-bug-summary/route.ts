@@ -12,6 +12,9 @@ import {
   cleanStackTrace,
 } from "@/lib/redact";
 import { resolveStack, formatResolvedStack } from "@/lib/sourcemap";
+import { parseLlmContent, parseLlmUsage, normalizeEndpointUrl } from "@/lib/ai-endpoint";
+import { assertPublicUrl } from "@/lib/safe-url";
+import { logAiUsage } from "@/lib/ai-usage-log";
 
 interface DevLog {
   type: string;
@@ -37,6 +40,11 @@ interface DevLogSummary {
 }
 
 export const runtime = "nodejs"; // fetch to OpenAI works in edge too, but nodejs is safest
+// Worst case is the admin provider timing out (25s) then falling through the
+// env-var waterfall (7s each); 60s keeps that comfortably inside Vercel
+// Hobby's ceiling whether the project is on the legacy 10s/60s model or Fluid
+// Compute's 300s one. See the matching comment in extension/ai-polish/route.ts.
+export const maxDuration = 60;
 
 // Every call spends paid upstream AI tokens, so one authenticated account
 // could otherwise drain the API budget in a loop.
@@ -74,8 +82,8 @@ export async function POST(req: Request) {
     // who owns the capture - captureId alone must not leak another user's data.
     const cacheId =
       typeof captureId === "string" && isUuid(captureId) ? captureId : null;
-    const db = cacheId ? createServiceClient() : null;
-    if (cacheId && db) {
+    const db = createServiceClient();
+    if (cacheId) {
       const { data: cached } = await db
         .from("captures")
         .select("ai_summary, user_id")
@@ -302,9 +310,17 @@ export async function POST(req: Request) {
       key: string,
       model: string,
       extraHeaders = {},
-    ) => {
+      timeoutMs = 7000, // fast free-tier fallbacks; the admin-configured provider below overrides this
+    ): Promise<{ content: string | null; usage: ReturnType<typeof parseLlmUsage> }> => {
       const controller = new AbortController();
-      const id = setTimeout(() => controller.abort(), 7000); // 7s timeout to prevent Vercel 10s hang
+      const id = setTimeout(() => controller.abort(), timeoutMs);
+      const startTime = Date.now();
+      let host: string | null = null;
+      try {
+        host = new URL(url).host;
+      } catch {
+        // malformed provider URL, logged below without a host
+      }
       try {
         const res = await fetch(url, {
           method: "POST",
@@ -316,28 +332,90 @@ export async function POST(req: Request) {
           },
           body: JSON.stringify({ model, ...promptPayload }),
         });
+        const rawText = await res.text().catch(() => "");
+        const usage = parseLlmUsage(rawText);
         if (res.ok) {
-          const json = await res.json();
-          return json.choices?.[0]?.message?.content;
+          const content = parseLlmContent(rawText) || null;
+          await logAiUsage({
+            source: "ai_clue",
+            userEmail: user.email,
+            model,
+            endpointHost: host,
+            promptTokens: usage?.promptTokens,
+            completionTokens: usage?.completionTokens,
+            totalTokens: usage?.totalTokens,
+            latencyMs: Date.now() - startTime,
+            success: !!content,
+            errorMessage: content ? undefined : "Empty response",
+          });
+          return { content, usage };
         }
+        await logAiUsage({
+          source: "ai_clue",
+          userEmail: user.email,
+          model,
+          endpointHost: host,
+          latencyMs: Date.now() - startTime,
+          success: false,
+          errorMessage: `HTTP ${res.status}: ${rawText}`,
+        });
       } catch (err) {
         console.warn(
           `[AI] Request failed for model ${model}:`,
           err instanceof Error ? err.message : String(err),
         );
+        await logAiUsage({
+          source: "ai_clue",
+          userEmail: user.email,
+          model,
+          endpointHost: host,
+          latencyMs: Date.now() - startTime,
+          success: false,
+          errorMessage: err instanceof Error ? err.message : String(err),
+        });
       } finally {
         clearTimeout(id);
       }
-      return null;
+      return { content: null, usage: null };
     };
 
-    const providers = [];
+    const providers: Array<{ url: string; key: string; model: string; headers: Record<string, string>; timeoutMs?: number }> = [];
     const openrouterHeaders = {
       "HTTP-Referer":
         process.env.NEXT_PUBLIC_APP_URL ||
         "https://bugsnap.akusaraproject.my.id",
       "X-Title": "BugSnap",
     };
+
+    // 0. Admin-configured provider (/admin/ai-analytics) - the same model
+    // already used for AI Polish. Tried first since it's the one BugSnap
+    // actually configures day-to-day; the env-var providers below are a
+    // fallback for environments where no admin config has been saved yet.
+    try {
+      const { data: settingsRow } = await db
+        .from("app_settings")
+        .select("value")
+        .eq("key", "ai_polish_config")
+        .maybeSingle();
+      const cfg = settingsRow?.value as
+        | { enabled?: boolean; endpointUrl?: string; apiKey?: string; model?: string }
+        | undefined;
+      if (cfg?.enabled !== false && cfg?.endpointUrl && cfg?.apiKey && cfg?.model) {
+        const adminUrl = normalizeEndpointUrl(cfg.endpointUrl);
+        await assertPublicUrl(adminUrl); // defense in depth - already validated at save time too
+        providers.push({
+          url: adminUrl,
+          key: cfg.apiKey,
+          model: cfg.model,
+          headers: openrouterHeaders,
+          // Admin-picked models are often reasoning models (15-25s), unlike
+          // the fast free-tier fallbacks below - give it real room to answer.
+          timeoutMs: 25000,
+        });
+      }
+    } catch {
+      // Admin config is optional - the env-var waterfall below still applies.
+    }
 
     // 1. 9Router Custom
     if (process.env.CUSTOM_ROUTER_API_KEY) {
@@ -379,9 +457,10 @@ export async function POST(req: Request) {
     }
 
     // Execute Waterfall
-    let aiSummary = null;
+    let aiSummary: string | null = null;
     for (const p of providers) {
-      aiSummary = await fetchAi(p.url, p.key, p.model, p.headers);
+      const result = await fetchAi(p.url, p.key, p.model, p.headers, p.timeoutMs);
+      aiSummary = result.content;
       if (aiSummary) break;
     }
 

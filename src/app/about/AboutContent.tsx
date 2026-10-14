@@ -2,32 +2,58 @@
 
 import { StaticShell } from "@/components/StaticShell";
 import { useT } from "@/components/I18nProvider";
-import { IconLock, IconWorld, IconShieldCheck, IconFolder } from "@/components/site/TablerIcons";
 import { Reveal } from "@/components/site/motion";
+import { Icon } from "@/lib/iconify";
+
+const CHROME_STORE_URL =
+  "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
 
 export function AboutContent() {
   const { t } = useT();
 
-  const pillars = [
+  const corePrinciples = [
     {
-      title: "Data Sovereignty by Design",
-      desc: "We believe your diagnostic captures and screen recordings belong to you, not your tools vendor. Every video and screenshot is uploaded directly to your own Google Drive. No proprietary lock-in.",
-      icon: <IconFolder size={20} className="text-site-accent" />,
+      title: "Data Sovereignty Over Cloud Lock-In",
+      desc: "Your internal screen recordings and reproduction videos should never be held hostage on proprietary SaaS clouds. Files stream directly to your enterprise Google Drive under your own organization's compliance boundaries.",
+      icon: "lucide:hard-drive",
     },
     {
-      title: "Zero-Knowledge Architecture",
-      desc: "Our backend never stores your video streams, console logs, or customer data. Everything stays within your authorized Google Drive infrastructure, protected by Google's enterprise security.",
-      icon: <IconShieldCheck size={20} className="text-site-accent" />,
+      title: "Zero-Overhead Engineering",
+      desc: "Modern browser extensions shouldn't consume gigabytes of RAM or inject heavy tracking scripts into your DOM. BugSnap is built strictly on Chrome Manifest V3, consuming under 25MB RAM and staying dormant when not recording.",
+      icon: "lucide:cpu",
     },
     {
-      title: "Built by Developers, for Teams",
-      desc: "Created by Akusara Digital in Indonesia, BugSnap was born from the frustration of vague bug reports and endless 'can you reproduce it?' Slack threads. We build the tool we wanted to use every day.",
-      icon: <IconWorld size={20} className="text-site-accent" />,
+      title: "Honest, Respectful Tooling",
+      desc: "We don't believe in bait-and-switch pricing or crippled free tiers. BugSnap provides real utility for developers and QA engineers from day one without holding basic debugging telemetry behind paywalls.",
+      icon: "lucide:heart-handshake",
     },
     {
-      title: "Privacy First",
-      desc: "Automated sensitive data blurring ensures passwords, tokens, and PII are redacted before captures leave your screen. Compliance-ready for GDPR and SOC 2 teams.",
-      icon: <IconLock size={20} className="text-site-accent" />,
+      title: "Global Standards, Indonesian Craftsmanship",
+      desc: "Engineered by Akusara Digital in Indonesia, BugSnap is built for distributed engineering teams worldwide who value speed, precision, and respectful software architecture.",
+      icon: "lucide:globe",
+    },
+  ];
+
+  const milestones = [
+    {
+      metric: "0 KB",
+      label: "User media stored on BugSnap servers",
+      detail: "Direct-to-Drive streaming architecture",
+    },
+    {
+      metric: "<25 MB",
+      label: "Active memory footprint in Chrome",
+      detail: "Manifest V3 background worker design",
+    },
+    {
+      metric: "100%",
+      label: "Client-side telemetry redaction",
+      detail: "Bearer tokens & passwords scrubbed in RAM",
+    },
+    {
+      metric: "30s",
+      label: "Average time to reproduce an issue",
+      detail: "Full stack trace, network & cURL included",
     },
   ];
 
@@ -36,37 +62,112 @@ export function AboutContent() {
       title={t("about.title") || "About BugSnap"}
       subtitle={
         t("about.subtitle") ||
-        "We're on a mission to eliminate vague bug reports and give engineering teams their time back."
+        "Built by Akusara Digital to make bug reporting clear, respectful, and instant for modern software teams."
       }
     >
-      <div className="space-y-16">
-        {/* Pillars Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
-          {pillars.map((p, i) => (
-            <Reveal key={p.title} delay={i * 0.08}>
-              <div className="h-full rounded-2xl border border-site-border bg-gradient-to-b from-site-surface to-site-surface-2/60 p-6 sm:p-8 space-y-3 shadow-sm">
-                <div className="p-2.5 w-fit rounded-xl bg-site-accent/10 border border-site-accent/20">
-                  {p.icon}
+      <div className="space-y-16 font-site">
+        {/* Origin Story Section */}
+        <Reveal delay={0.06}>
+          <div className="rounded-2xl border border-site-border bg-site-surface p-6 sm:p-10 space-y-6 shadow-sm">
+            <div className="max-w-3xl space-y-4">
+              <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-site-accent px-2.5 py-1 rounded-md bg-site-accent/10 border border-site-accent/20">
+                <Icon icon="lucide:sparkles" className="w-3 h-3 text-site-accent" aria-hidden="true" />
+                <span>Our Origin</span>
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-site-text">
+                {t("about.headline") || "From Click to Fix: Eliminating Friction in Bug Reports"}
+              </h2>
+              <p className="text-sm sm:text-base text-site-text-2 leading-relaxed">
+                Every software engineer has experienced the dread of receiving an ambiguous bug report: <em>&ldquo;the checkout button is broken&rdquo;</em> with zero reproduction steps, no console errors, and no network details. Hours are wasted on back-and-forth Slack threads, screen-sharing sessions, and attempts to replicate the issue on staging.
+              </p>
+              <p className="text-sm sm:text-base text-site-text-2 leading-relaxed">
+                We founded BugSnap at <strong>Akusara Digital</strong> to fix this broken loop forever. By automatically bundling screen recordings with source-mapped console errors, HTTP waterfalls, and environment specifications, BugSnap gives engineers everything they need to fix issues immediately upon opening a ticket.
+              </p>
+            </div>
+          </div>
+        </Reveal>
+
+        {/* Engineering Metrics / Milestones Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+          {milestones.map((m, idx) => (
+            <Reveal key={m.label} delay={0.1 + idx * 0.05}>
+              <div className="rounded-2xl border border-site-border bg-site-surface p-5 sm:p-6 space-y-2 shadow-xs">
+                <div className="text-2xl sm:text-3xl font-extrabold font-mono text-site-accent">
+                  {m.metric}
                 </div>
-                <h3 className="text-xl font-bold text-site-text">{p.title}</h3>
-                <p className="text-sm text-site-text-2 leading-relaxed">{p.desc}</p>
+                <div className="text-xs sm:text-sm font-bold text-site-text">
+                  {m.label}
+                </div>
+                <div className="text-[11px] text-site-text-2">
+                  {m.detail}
+                </div>
               </div>
             </Reveal>
           ))}
         </div>
 
-        {/* Story Section */}
-        <Reveal delay={0.3}>
-          <div className="rounded-3xl border border-site-border bg-site-surface-2/50 p-5 sm:p-8 md:p-12 space-y-4">
-            <span className="text-xs font-semibold uppercase tracking-wider text-site-accent">
-              Our Philosophy
+        {/* Engineering Philosophy & Core Principles */}
+        <div className="space-y-6">
+          <div className="text-center max-w-xl mx-auto space-y-2">
+            <span className="text-xs font-bold uppercase tracking-widest text-site-accent">
+              Core Principles
             </span>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-site-text">
-              The Best Bug Report is One That Fixes Itself
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-site-text tracking-tight">
+              How We Build Software
             </h2>
-            <p className="text-sm sm:text-base text-site-text-2 leading-relaxed">
-              When a developer gets a bug report with a screen recording, synchronized console errors, and exact network request payloads, the debugging phase takes minutes instead of hours. No back-and-forth questions. No waiting for staging deployments. Just pure, focused problem-solving.
+            <p className="text-xs sm:text-sm text-site-text-2">
+              Our engineering values reflect the kind of tools we want to use ourselves every day.
             </p>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {corePrinciples.map((p, i) => (
+              <Reveal key={p.title} delay={0.16 + i * 0.06}>
+                <div className="h-full rounded-2xl border border-site-border bg-site-surface p-6 sm:p-8 space-y-3 shadow-xs">
+                  <div className="p-2.5 w-fit rounded-xl bg-site-accent/10 border border-site-accent/20 text-site-accent">
+                    <Icon icon={p.icon} className="w-5 h-5" aria-hidden="true" />
+                  </div>
+                  <h3 className="text-lg font-bold text-site-text">{p.title}</h3>
+                  <p className="text-xs sm:text-sm text-site-text-2 leading-relaxed">{p.desc}</p>
+                </div>
+              </Reveal>
+            ))}
+          </div>
+        </div>
+
+        {/* Akusara Digital Company Banner */}
+        <Reveal delay={0.28}>
+          <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-site-border bg-site-surface p-6 sm:p-8 lg:p-10 shadow-lg">
+            <div
+              className="pointer-events-none absolute inset-0 -z-0 opacity-40"
+              style={{
+                background: "radial-gradient(ellipse 70% 60% at 50% -10%, var(--glow-primary), transparent 70%)",
+              }}
+            />
+            <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6 min-w-0">
+              <div className="space-y-1.5 text-left min-w-0 flex-1">
+                <span className="inline-block text-xs font-semibold uppercase tracking-widest text-site-accent">
+                  Akusara Digital
+                </span>
+                <h3 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-site-text tracking-tight leading-snug">
+                  Join hundreds of engineers building bug-free apps
+                </h3>
+                <p className="text-xs sm:text-sm text-site-text-2 leading-relaxed max-w-2xl">
+                  Install the Chrome extension in seconds and experience the fastest path from bug discovery to code commit.
+                </p>
+              </div>
+              <div className="shrink-0 w-full md:w-auto">
+                <a
+                  href={CHROME_STORE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-full md:w-auto inline-flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-slate-900 text-xs sm:text-sm font-bold px-6 py-3 min-h-[44px] rounded-xl transition-all shadow-md shadow-accent/20 hover:scale-[1.02] active:scale-[0.99] touch-manipulation whitespace-nowrap"
+                >
+                  <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
+                  <span>Add to Chrome - Free</span>
+                </a>
+              </div>
+            </div>
           </div>
         </Reveal>
       </div>

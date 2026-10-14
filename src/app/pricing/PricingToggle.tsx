@@ -549,62 +549,7 @@ export function PricingToggle() {
         </Reveal>
       </div>
 
-      {/* 4. Whimsical "Safe & Secure" Google Drive Trust Box */}
-      <Reveal delay={0.3}>
-        <div className="rounded-3xl border border-site-border bg-site-surface-2/50 p-6 sm:p-10 shadow-xs">
-          <div className="max-w-3xl mb-8">
-            <p className="text-[11px] font-bold uppercase tracking-wider text-[#6B9A35] dark:text-[#A8D666]">
-              {t("pricing.trustEyebrow")}
-            </p>
-            <h3 className="text-xl sm:text-2xl font-extrabold text-site-text tracking-tight mt-2.5">
-              {t("pricing.trustTitle")}
-            </h3>
-            <p className="text-xs sm:text-sm text-site-text-2 mt-1.5 leading-relaxed">
-              {t("pricing.trustSubtitle")}
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            <div className="p-5 rounded-2xl bg-site-surface border border-site-border flex flex-col gap-2">
-              <div className="w-8 h-8 rounded-xl bg-blue-500/10 text-blue-500 flex items-center justify-center">
-                <Icon icon="lucide:hard-drive" className="w-4 h-4" />
-              </div>
-              <h4 className="text-xs font-bold text-site-text mt-1">
-                {t("pricing.trust1Title")}
-              </h4>
-              <p className="text-[11px] text-site-text-2 leading-relaxed">
-                {t("pricing.trust1Desc")}
-              </p>
-            </div>
-
-            <div className="p-5 rounded-2xl bg-site-surface border border-site-border flex flex-col gap-2">
-              <div className="w-8 h-8 rounded-xl bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666] flex items-center justify-center">
-                <Icon icon="lucide:shield-check" className="w-4 h-4" />
-              </div>
-              <h4 className="text-xs font-bold text-site-text mt-1">
-                {t("pricing.trust2Title")}
-              </h4>
-              <p className="text-[11px] text-site-text-2 leading-relaxed">
-                {t("pricing.trust2Desc")}
-              </p>
-            </div>
-
-            <div className="p-5 rounded-2xl bg-site-surface border border-site-border flex flex-col gap-2">
-              <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center">
-                <Icon icon="lucide:lock" className="w-4 h-4" />
-              </div>
-              <h4 className="text-xs font-bold text-site-text mt-1">
-                {t("pricing.trust3Title")}
-              </h4>
-              <p className="text-[11px] text-site-text-2 leading-relaxed">
-                {t("pricing.trust3Desc")}
-              </p>
-            </div>
-          </div>
-        </div>
-      </Reveal>
-
-      {/* 5. Whimsical FAQ Accordion */}
+      {/* 4. Whimsical FAQ Accordion */}
       <div className="max-w-3xl mx-auto pt-4">
         <Reveal delay={0.35}>
           <div className="text-center mb-8">

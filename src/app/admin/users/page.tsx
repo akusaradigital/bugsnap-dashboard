@@ -81,6 +81,7 @@ export default function AdminUsersPage() {
   const [selectedDuration, setSelectedDuration] = useState<string>("permanent");
   const [savingPlan, setSavingPlan] = useState(false);
   const [syncingSubscription, setSyncingSubscription] = useState(false);
+  const [sendingReengagement, setSendingReengagement] = useState(false);
 
   useEffect(() => {
     loadUsers();
@@ -243,6 +244,25 @@ export default function AdminUsersPage() {
     }
   }
 
+  async function handleSendReengagement(user: UserItem) {
+    setSendingReengagement(true);
+    try {
+      const headers = await getAdminHeaders();
+      const res = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: user.id, action: "send_reengagement" }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || t("admin.reengagementFailed"));
+      showToast(t("admin.reengagementSent"), "success");
+    } catch (err: unknown) {
+      showToast((err as Error)?.message || t("admin.reengagementFailed"), "error");
+    } finally {
+      setSendingReengagement(false);
+    }
+  }
+
   async function handleSendResetPassword(user: UserItem) {
     if (!confirm(`Send password reset email to ${user.email}?`)) return;
     try {
@@ -320,7 +340,7 @@ export default function AdminUsersPage() {
             <option value="all">{t("admin.allPlans")}</option>
             <option value="free">Free</option>
             <option value="pro">Pro</option>
-            <option value="team">Team</option>
+            <option value="pro_plus">Pro Plus</option>
             <option value="enterprise">Enterprise</option>
           </select>
 
@@ -335,6 +355,7 @@ export default function AdminUsersPage() {
             <option value="all">{t("admin.allStatuses")}</option>
             <option value="active">{t("admin.active")}</option>
             <option value="suspended">{t("admin.suspended")}</option>
+            <option value="stuck">{t("admin.statusStuck")}</option>
           </select>
         </div>
 
@@ -532,7 +553,7 @@ export default function AdminUsersPage() {
             </p>
 
             <div className="space-y-2">
-              {(["free", "pro", "team", "enterprise"] as const).map((p) => (
+              {(["free", "pro", "pro_plus", "enterprise"] as const).map((p) => (
                 <label
                   key={p}
                   className={`flex items-center justify-between p-3 rounded-xl border text-xs cursor-pointer transition-all ${
@@ -541,7 +562,7 @@ export default function AdminUsersPage() {
                       : "border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800"
                   }`}
                 >
-                  <span className="capitalize">{p}</span>
+                  <span className="capitalize">{p === "pro_plus" ? "Pro Plus" : p}</span>
                   <input
                     type="radio"
                     name="plan"
@@ -659,6 +680,34 @@ export default function AdminUsersPage() {
                     </span>
                   </div>
                 </div>
+
+                {/* Stuck User Re-engagement Action */}
+                {userTotalCaptures === 0 && (
+                  <div className="p-3.5 rounded-xl border border-amber-200 dark:border-amber-950/60 bg-amber-50/50 dark:bg-amber-950/20 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-200 dark:bg-amber-900/60 text-amber-800 dark:text-amber-300">
+                          {t("admin.stuckUserBadge")}
+                        </span>
+                        <span className="text-xs font-bold text-amber-800 dark:text-amber-300">
+                          0 Captures
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-amber-700/80 dark:text-amber-400/80 mt-0.5">
+                        Pengguna terdaftar belum pernah membuat rekaman/tangkapan bug.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      disabled={sendingReengagement}
+                      onClick={() => handleSendReengagement(selectedUser)}
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-amber-500 hover:bg-amber-600 text-white shadow-xs disabled:opacity-50 transition-all flex items-center gap-1.5 shrink-0 self-start sm:self-auto cursor-pointer"
+                    >
+                      <Icon icon="lucide:mail" className="w-3.5 h-3.5 shrink-0" />
+                      <span>{sendingReengagement ? t("common.loading") : t("admin.sendReengagement")}</span>
+                    </button>
+                  </div>
+                )}
 
                 {/* Billing & Subscription Gateway Reconcile */}
                 <div className="p-3.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/70 dark:bg-zinc-950/60 space-y-2.5">

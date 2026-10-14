@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-server";
 import { verifiedGoogleEmail } from "@/lib/google-token";
 import { captureFingerprint } from "@/lib/fingerprint";
+import { maybeAlertAdminOfSpike } from "@/lib/spike-detector";
 
 export const runtime = "nodejs";
 
@@ -76,6 +77,10 @@ export async function POST(request: Request) {
     p_error_fingerprint: errorFingerprint,
   });
   if (error) return NextResponse.json({ error: error.message, code: error.code }, { status: 422 });
+
+  if (data && errorFingerprint) {
+    void maybeAlertAdminOfSpike(db, errorFingerprint, siteUrl).catch(() => {});
+  }
 
   // Non-blocking trigger for workspace team webhooks (Discord / Slack / Telegram)
   if (data) {

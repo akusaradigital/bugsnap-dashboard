@@ -3,7 +3,7 @@
 
 import { APP_ICONS } from "@/lib/icons";
 
-export type AdminNavHub = "overview" | "users" | "revenue" | "operations" | "system";
+export type AdminNavHub = "overview" | "users" | "ai" | "revenue" | "operations" | "system";
 
 export interface AdminNavRoute {
   id: string;
@@ -49,19 +49,19 @@ export const ADMIN_NAV_ROUTES: AdminNavRoute[] = [
     hub: "users",
   },
   {
+    id: "ai",
+    href: "/admin/ai-analytics",
+    icon: "lucide:sparkles",
+    titleKey: "admin.hubAi",
+    keywords: ["ai", "tokens", "analytics", "claude", "gpt", "biaya", "model", "polish", "provider", "endpoint"],
+    hub: "ai",
+  },
+  {
     id: "revenue",
     href: "/admin/revenue",
     icon: APP_ICONS.nav.revenue,
     titleKey: "admin.navRevenue",
     keywords: ["revenue", "sales", "mrr", "pendapatan", "stripe", "subscribers", "leads"],
-    hub: "revenue",
-  },
-  {
-    id: "ai",
-    href: "/admin/ai-analytics",
-    icon: APP_ICONS.nav.aiAnalytics,
-    titleKey: "admin.navAiAnalytics",
-    keywords: ["ai", "tokens", "analytics", "claude", "gpt", "biaya"],
     hub: "revenue",
   },
   {
@@ -87,6 +87,14 @@ export const ADMIN_NAV_ROUTES: AdminNavRoute[] = [
     icon: APP_ICONS.nav.emailHealth,
     titleKey: "admin.emailHealth",
     keywords: ["email", "resend", "health", "surat", "deliverability"],
+    hub: "operations",
+  },
+  {
+    id: "error-spikes",
+    href: "/admin/error-spikes",
+    icon: "lucide:alert-triangle",
+    titleKey: "admin.navErrorSpikes",
+    keywords: ["error", "spikes", "crash", "incidents", "lonjakan", "gangguan", "surges"],
     hub: "operations",
   },
   {
@@ -121,9 +129,10 @@ export const ADMIN_NAV_HUBS: Record<
 > = {
   overview: { titleKey: "admin.hubOverview", href: "/admin", icon: APP_ICONS.nav.dashboard },
   users: { titleKey: "admin.hubUsers", href: "/admin/users", icon: APP_ICONS.nav.users },
+  ai: { titleKey: "admin.hubAi", href: "/admin/ai-analytics", icon: "lucide:sparkles" },
   revenue: { titleKey: "admin.hubRevenue", href: "/admin/revenue", icon: APP_ICONS.nav.revenue },
   operations: { titleKey: "admin.hubOperations", href: "/admin/support", icon: APP_ICONS.nav.support, badgeKey: "support" },
   system: { titleKey: "admin.hubSystem", href: "/admin/supabase", icon: APP_ICONS.nav.system },
 };
 
-export const ADMIN_NAV_HUB_ORDER: AdminNavHub[] = ["overview", "users", "revenue", "operations", "system"];
+export const ADMIN_NAV_HUB_ORDER: AdminNavHub[] = ["overview", "users", "ai", "revenue", "operations", "system"];

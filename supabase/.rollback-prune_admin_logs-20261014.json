@@ -1,0 +1,2 @@
+OK 201
+[{"pg_get_functiondef":"CREATE OR REPLACE FUNCTION public.prune_admin_logs()\n RETURNS void\n LANGUAGE sql\n SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\n  DELETE FROM public.security_audit_logs  WHERE created_at < now() - interval '90 days';\n  DELETE FROM public.extension_error_logs WHERE created_at < now() - interval '30 days';\n  DELETE FROM public.support_tickets      WHERE status = 'resolved' AND created_at < now() - interval '180 days';\n$function$\n"}]

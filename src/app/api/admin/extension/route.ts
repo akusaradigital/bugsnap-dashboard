@@ -11,6 +11,10 @@ const DEFAULT_CONFIG = {
   updateUrl: "https://chromewebstore.google.com",
   maintenanceMode: false,
   announcement: "",
+  features: {
+    webcamRecording: true,
+    domReplay: true,
+  },
 };
 
 export async function GET(req: Request) {
@@ -60,6 +64,10 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json().catch(() => ({}));
+    const features = {
+      webcamRecording: body.features?.webcamRecording !== undefined ? Boolean(body.features.webcamRecording) : true,
+      domReplay: body.features?.domReplay !== undefined ? Boolean(body.features.domReplay) : true,
+    };
     const newConfig = {
       minVersion: String(body.minVersion || DEFAULT_CONFIG.minVersion).trim(),
       latestVersion: String(
@@ -69,6 +77,7 @@ export async function POST(req: Request) {
       updateUrl: String(body.updateUrl || DEFAULT_CONFIG.updateUrl).trim(),
       maintenanceMode: Boolean(body.maintenanceMode),
       announcement: String(body.announcement || "").trim(),
+      features,
     };
 
     const db = createServiceClient();

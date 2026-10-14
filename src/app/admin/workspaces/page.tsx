@@ -15,6 +15,8 @@ interface WorkspaceItem {
   created_at: string;
   member_count: number;
   capture_count: number;
+  is_vip?: boolean;
+  ai_token_limit_override?: number | null;
 }
 
 interface MemberInfo {
@@ -53,6 +55,9 @@ export default function AdminWorkspacesPage() {
   const [members, setMembers] = useState<MemberInfo[]>([]);
   const [recentCaptures, setRecentCaptures] = useState<CaptureInfo[]>([]);
   const [totalSizeBytes, setTotalSizeBytes] = useState(0);
+  const [vipOverride, setVipOverride] = useState(false);
+  const [tokenLimitOverride, setTokenLimitOverride] = useState<string>("");
+  const [savingVip, setSavingVip] = useState(false);
 
   // Transfer Ownership Modal
   const [transferWs, setTransferWs] = useState<WorkspaceItem | null>(null);
@@ -96,6 +101,8 @@ export default function AdminWorkspacesPage() {
 
   async function openWorkspaceDetail(ws: WorkspaceItem) {
     setSelectedWs(ws);
+    setVipOverride(Boolean(ws.is_vip));
+    setTokenLimitOverride(ws.ai_token_limit_override != null ? String(ws.ai_token_limit_override) : "");
     setWsDetailLoading(true);
     setMembers([]);
     setRecentCaptures([]);
@@ -108,11 +115,66 @@ export default function AdminWorkspacesPage() {
         setMembers(json.members || []);
         setRecentCaptures(json.recentCaptures || []);
         setTotalSizeBytes(json.totalSizeBytes || 0);
+        if (json.workspace) {
+          setVipOverride(Boolean(json.workspace.is_vip));
+          setTokenLimitOverride(
+            json.workspace.ai_token_limit_override != null ? String(json.workspace.ai_token_limit_override) : ""
+          );
+        }
       }
     } catch {
       // silent
     } finally {
       setWsDetailLoading(false);
+    }
+  }
+
+  async function handleSaveVipOverride() {
+    if (!selectedWs) return;
+    setSavingVip(true);
+    try {
+      const headers = await getAdminHeaders();
+      const rawLimit = tokenLimitOverride.trim();
+      const parsedLimit = rawLimit ? parseInt(rawLimit, 10) : null;
+      const res = await fetch("/api/admin/workspaces", {
+        method: "PATCH",
+        headers: { ...headers, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          workspace_id: selectedWs.id,
+          action: "set_vip_override",
+          is_vip: vipOverride,
+          ai_token_limit_override: parsedLimit && !isNaN(parsedLimit) ? parsedLimit : null,
+        }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || t("admin.vipOverrideFailed"));
+
+      const finalLimit = parsedLimit && !isNaN(parsedLimit) ? parsedLimit : null;
+      setWorkspaces((prev) =>
+        prev.map((w) =>
+          w.id === selectedWs.id
+            ? {
+                ...w,
+                is_vip: vipOverride,
+                ai_token_limit_override: finalLimit,
+              }
+            : w
+        )
+      );
+      setSelectedWs((prev) =>
+        prev
+          ? {
+              ...prev,
+              is_vip: vipOverride,
+              ai_token_limit_override: finalLimit,
+            }
+          : null
+      );
+      showToast(t("admin.vipOverrideSaved"), "success");
+    } catch (err: unknown) {
+      showToast((err as Error)?.message || t("admin.vipOverrideFailed"), "error");
+    } finally {
+      setSavingVip(false);
     }
   }
 
@@ -254,7 +316,15 @@ export default function AdminWorkspacesPage() {
                 workspaces.map((ws) => (
                   <tr key={ws.id} className="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
                     <td className="py-3 px-4 whitespace-nowrap">
-                      <div className="font-bold text-slate-900 dark:text-white">{ws.name}</div>
+                      <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
+                        <span>{ws.name}</span>
+                        {ws.is_vip && (
+                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800">
+                            <Icon icon="lucide:crown" className="w-2.5 h-2.5 shrink-0" />
+                            <span>{t("admin.vipBadge")}</span>
+                          </span>
+                        )}
+                      </div>
                       <div className="text-[10px] text-slate-400 font-mono">{ws.id.slice(0, 12)}…</div>
                     </td>
                     <td className="py-3 px-4 whitespace-nowrap text-slate-600 dark:text-zinc-300 font-mono">
@@ -402,6 +472,12 @@ export default function AdminWorkspacesPage() {
               <div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   <span className="flex items-center gap-1.5"><Icon icon="lucide:building-2" className="w-4 h-4 shrink-0 text-[#6B9A35] dark:text-[#A8D666]" /> {selectedWs.name}</span>
+                  {selectedWs.is_vip && (
+                    <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800">
+                      <Icon icon="lucide:crown" className="w-2.5 h-2.5 shrink-0" />
+                      <span>{t("admin.vipBadge")}</span>
+                    </span>
+                  )}
                 </h3>
                 <p className="text-xs text-slate-500 dark:text-zinc-400 font-mono mt-0.5 break-all">
                   Owner: {selectedWs.owner_email || "-"} (ID: {selectedWs.id})
@@ -434,6 +510,62 @@ export default function AdminWorkspacesPage() {
                   <div className="p-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950">
                     <span className="text-[10px] text-slate-500 uppercase font-bold block">{t("admin.storageUsed")}</span>
                     <span className="font-bold text-slate-800 dark:text-zinc-200 text-sm">{formatBytes(totalSizeBytes)}</span>
+                  </div>
+                </div>
+
+                {/* VIP Status & AI Token Quota Override */}
+                <div className="p-3.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/70 dark:bg-zinc-950/60 space-y-3">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-300 flex items-center gap-1.5">
+                        <Icon icon="lucide:crown" className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                        <span>{t("admin.vipOverrideTitle")}</span>
+                      </span>
+                      <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">
+                        {t("admin.vipOverrideDesc")}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <label className="flex items-center gap-2 p-2.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={vipOverride}
+                        onChange={(e) => setVipOverride(e.target.checked)}
+                        className="w-4 h-4 rounded text-[#89BD49] focus:ring-[#89BD49] border-slate-300 dark:border-zinc-700 cursor-pointer"
+                      />
+                      <span className="text-xs font-semibold text-slate-700 dark:text-zinc-300">
+                        {t("admin.isVipLabel")}
+                      </span>
+                    </label>
+
+                    <div>
+                      <label className="text-[10px] uppercase font-bold text-slate-500 dark:text-zinc-400 block mb-1">
+                        {t("admin.aiTokenLimitOverride")}
+                      </label>
+                      <input
+                        type="number"
+                        min="0"
+                        step="1000"
+                        value={tokenLimitOverride}
+                        onChange={(e) => setTokenLimitOverride(e.target.value)}
+                        placeholder={t("admin.aiTokenLimitUnlimited")}
+                        className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-1.5 outline-none focus:border-[#89BD49] text-slate-900 dark:text-white"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end pt-1">
+                    <button
+                      type="button"
+                      disabled={savingVip}
+                      onClick={handleSaveVipOverride}
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-xs disabled:opacity-50 transition-colors flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Icon icon="lucide:save" className="w-3.5 h-3.5 shrink-0" />
+                      <span>{savingVip ? t("common.loading") : t("common.save")}</span>
+                    </button>
                   </div>
                 </div>
 

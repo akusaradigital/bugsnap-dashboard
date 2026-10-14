@@ -6,7 +6,7 @@
 
 1. **Graphify MANDATORY**: Read `../graphify-out/GRAPH_REPORT.md` before opening any file.
 2. **Tooling**: `PowerShell`/`Bash`, `Read`, `Edit`, `Write`, `Grep`, `Glob`, `Agent`. No `cat`.
-3. **No auto-push**: NEVER `git push` without explicit user instruction.
+3. **No auto-push**: NEVER `git push` without explicit user instruction. Sebelum melakukan `git push`, wajib jalankan `/graphify --update`.
 4. **PowerShell 5.1**: `&&` not supported - use `;` or Bash tool.
 5. **Free tier stubs**: `tiers.ts` + `quota.ts` are intentionally unlimited - do NOT add paywalls.
 6. **i18n MANDATORY**: All UI text via `src/lib/i18n.ts` + `useT()`. Both `en` + `id` keys. No hardcoded strings.
@@ -33,7 +33,7 @@ The script posts to the Supabase Management API using `SUPABASE_PAT` + `NEXT_PUB
 - **MINOR** `0.7.x → 0.8.0`: new user-facing feature, route, module.
 - **MAJOR** `0.x → 1.0.0`: breaking API/auth/UI change.
 
-Current version: **`0.9.3`**
+Current version: **`0.10.0`**
 
 ## 3. Architecture & Data Flow
 

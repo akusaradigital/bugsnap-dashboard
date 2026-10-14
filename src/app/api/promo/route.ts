@@ -12,10 +12,23 @@ export async function GET() {
       .eq("key", "promo_banner")
       .maybeSingle();
 
+    const rawPromo = data?.value;
+    const promo = rawPromo ? { ...(rawPromo as Record<string, unknown>) } : null;
+
+    if (promo && typeof promo === "object") {
+      const exp = (promo.expires_at || promo.expiresAt) as string | undefined;
+      if (exp) {
+        const expTime = new Date(exp).getTime();
+        if (!isNaN(expTime) && expTime < Date.now()) {
+          promo.enabled = false;
+        }
+      }
+    }
+
     return NextResponse.json(
       {
         ok: true,
-        promo: data?.value ?? null,
+        promo,
       },
       {
         headers: {

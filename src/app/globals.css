@@ -318,6 +318,12 @@ a:active {
   border-radius: 999px;
 }
 
+/* Disable Microsoft Edge native password reveal and clear buttons to avoid collision with custom UI */
+input::-ms-reveal,
+input::-ms-clear {
+  display: none;
+}
+
 ::-webkit-scrollbar-thumb:hover {
   background: color-mix(in srgb, var(--muted) 70%, transparent);
 }
