@@ -16,16 +16,38 @@ import {
 
 const ALLOWED_CURL_METHODS = new Set(["GET", "POST", "PUT", "PATCH", "DELETE", "HEAD", "OPTIONS"]);
 
+function harHeaders(headers: Record<string, string> | undefined, body: string) {
+  const list = Object.entries(headers || {}).map(([name, value]) => ({ name, value: String(value) }));
+  if (list.length === 0 && body) return [{ name: "Content-Type", value: "application/json" }];
+  return list;
+}
+
+function mimeOf(headers: Record<string, string> | undefined): string {
+  const hit = Object.entries(headers || {}).find(([n]) => n.toLowerCase() === "content-type");
+  return hit ? String(hit[1]).split(";")[0].trim() : "application/json";
+}
+
 export function buildCurlCommand(log: NetworkLog): string {
   const rawMethod = (log.method || "GET").toUpperCase().trim();
   const method = ALLOWED_CURL_METHODS.has(rawMethod) ? rawMethod : "GET";
   const cleanUrl = (log.url || "").replace(/[\x00-\x1f\x7f]/g, "").trim();
   const safeUrl = cleanUrl.replace(/(["\\$`])/g, "\\$1");
   let cmd = `curl -X ${method} "${safeUrl}"`;
+  // Replaying a request needs the headers it actually carried; the old
+  // hardcoded Content-Type produced a curl that 415s on half the APIs.
+  const headerEntries = Object.entries(log.requestHeaders || {});
+  for (const [name, value] of headerEntries) {
+    const safeName = String(name).replace(/[^\w.-]/g, "");
+    if (!safeName) continue;
+    const safeValue = String(value).replace(/[\x00-\x1f\x7f]/g, "").replace(/(["\\$`])/g, "\\$1");
+    cmd += ` -H "${safeName}: ${safeValue}"`;
+  }
   if (log.requestBody) {
     const cleanBody = log.requestBody.replace(/[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]/g, "");
     const escaped = cleanBody.replace(/'/g, "'\\''");
-    cmd += ` -H "Content-Type: application/json" -d '${escaped}'`;
+    const hasContentType = headerEntries.some(([n]) => n.toLowerCase() === "content-type");
+    if (!hasContentType) cmd += ' -H "Content-Type: application/json"';
+    cmd += ` -d '${escaped}'`;
   }
   return cmd;
 }
@@ -179,9 +201,9 @@ export function buildHarExport(networkLogs: NetworkLog[], siteUrl?: string | nul
         url: log.url || "",
         httpVersion: "HTTP/1.1",
         cookies: [],
-        headers: reqBody ? [{ name: "Content-Type", value: "application/json" }] : [],
+        headers: harHeaders(log.requestHeaders, reqBody),
         queryString: [],
-        postData: reqBody ? { mimeType: "application/json", text: reqBody } : undefined,
+        postData: reqBody ? { mimeType: mimeOf(log.requestHeaders), text: reqBody } : undefined,
         headersSize: -1,
         bodySize: reqBody ? reqBody.length : 0,
       },
@@ -190,10 +212,10 @@ export function buildHarExport(networkLogs: NetworkLog[], siteUrl?: string | nul
         statusText,
         httpVersion: "HTTP/1.1",
         cookies: [],
-        headers: resBody ? [{ name: "Content-Type", value: "application/json" }] : [],
+        headers: harHeaders(log.responseHeaders, resBody),
         content: {
           size: resBody ? resBody.length : 0,
-          mimeType: "application/json",
+          mimeType: mimeOf(log.responseHeaders),
           text: resBody,
         },
         redirectURL: "",

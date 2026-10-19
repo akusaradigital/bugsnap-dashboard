@@ -1236,62 +1236,6 @@ function SingleViewContent() {
                   )}
                 </div>
               )}
-              {isTeamMember && (
-                <div ref={moveMenuRef} className="relative">
-                  <button
-                    type="button"
-                    onClick={() => { setMoveSubmenuOpen((o) => !o); if (capFolders.length === 0) loadCapFolders(); }}
-                    className="inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg border border-border bg-white dark:bg-background px-2.5 sm:px-3.5 py-1.5 sm:py-2 min-h-[38px] text-xs font-semibold text-foreground shadow-xs hover:bg-subtle cursor-pointer transition-colors touch-manipulation"
-                  >
-                    <Icon icon="lucide:folder" className="h-4 w-4 shrink-0" />
-                    <span className="truncate max-w-[80px] sm:max-w-none hidden xs:inline">{capture?.folder_name || t("v.moveToFolder")}</span>
-                  </button>
-                  {moveSubmenuOpen && (
-                    <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-xl border border-border bg-white dark:bg-zinc-900 p-1 shadow-xl">
-                      <button
-                        type="button"
-                        disabled={movingCapture}
-                        onClick={() => handleMoveCapture(null)}
-                        className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50 cursor-pointer ${!capture?.folder_name ? "font-semibold text-[#6B9A35] dark:text-[#A8D666] bg-[#89BD49]/10 dark:bg-[#89BD49]/20" : ""}`}
-                      >
-                        <span>{t("v.noFolder")}</span>
-                        {!capture?.folder_name && <Icon icon="lucide:check" className="w-3.5 h-3.5 shrink-0" />}
-                      </button>
-                      {capFolders.map((folder) => {
-                        const isCurrent = capture?.folder_name === folder;
-                        return (
-                          <button
-                            key={folder}
-                            type="button"
-                            disabled={movingCapture}
-                            onClick={() => handleMoveCapture(folder)}
-                            className={`w-full flex items-center justify-between truncate rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50 cursor-pointer ${isCurrent ? "font-semibold text-[#6B9A35] dark:text-[#A8D666] bg-[#89BD49]/10 dark:bg-[#89BD49]/20" : ""}`}
-                          >
-                            <span className="truncate">{folder}</span>
-                            {isCurrent && <Icon icon="lucide:check" className="w-3.5 h-3.5 shrink-0 ml-1" />}
-                          </button>
-                        );
-                      })}
-                      {newFolderMode ? (
-                        <form onSubmit={(e) => { e.preventDefault(); handleCreateFolderAndMove(); }} className="p-2 border-t border-border mt-1">
-                          <input autoFocus value={newFolderName} onChange={(e) => setNewFolderName(e.target.value)} placeholder={t("v.folderName")} className="w-full rounded-md border border-border bg-white dark:bg-zinc-800 text-foreground px-2 py-1 text-xs outline-none" />
-                        </form>
-                      ) : (
-                        <button type="button" onClick={() => setNewFolderMode(true)} className="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-[#6B9A35] dark:text-[#A8D666] hover:bg-[#89BD49]/10 dark:hover:bg-[#89BD49]/20 cursor-pointer border-t border-border mt-1">{t("v.newFolder")}</button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-              <button
-                type="button"
-                onClick={handleCopyLink}
-                className="inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg bg-[#89BD49] px-2.5 sm:px-3.5 py-1.5 sm:py-2 min-h-[38px] sm:min-h-[40px] text-xs font-semibold text-white shadow-xs shadow-[#89BD49]/25 hover:bg-[#6B9A35] transition cursor-pointer touch-manipulation"
-              >
-                <Icon icon="lucide:link" className="h-4 w-4 shrink-0" />
-                <span className="hidden xs:inline">{copied ? t("v.copied") : t("v.copyLinkBtn")}</span>
-                <span className="xs:hidden">{copied ? t("v.copied") : "Copy"}</span>
-              </button>
             </div>
           )}
           {status !== "ready" && isTeamMember && (
@@ -1552,13 +1496,71 @@ function SingleViewContent() {
         <main className="flex-1 overflow-y-auto bg-[#fbfbfd] dark:bg-background flex flex-col justify-between">
           <div className="mx-auto flex w-full max-w-[1560px] flex-col gap-3 px-3 sm:px-6 pt-3 sm:pt-4 pb-12 sm:pb-16 lg:pb-20">
             {isTeamMember && (
-              <div className="flex items-center justify-between gap-2 w-full">
+              <div className="flex items-center justify-between gap-2 w-full flex-wrap">
                 <Link
                   href="/captures"
                   className="inline-flex items-center justify-center rounded-lg border border-border bg-white dark:bg-background px-3.5 py-2 text-xs font-semibold text-foreground shadow-sm hover:bg-subtle transition-colors"
                 >
                   <span>{t("v.backToDashboard")}</span>
                 </Link>
+                {capture && (
+                  <div className="flex items-center gap-2">
+                    <div ref={moveMenuRef} className="relative">
+                      <button
+                        type="button"
+                        onClick={() => { setMoveSubmenuOpen((o) => !o); if (capFolders.length === 0) loadCapFolders(); }}
+                        className="inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg border border-border bg-white dark:bg-background px-2.5 sm:px-3.5 py-1.5 sm:py-2 min-h-[38px] text-xs font-semibold text-foreground shadow-xs hover:bg-subtle cursor-pointer transition-colors touch-manipulation"
+                      >
+                        <Icon icon="lucide:folder" className="h-4 w-4 shrink-0" />
+                        <span className="truncate max-w-[100px] sm:max-w-none">{capture?.folder_name || t("v.moveToFolder")}</span>
+                      </button>
+                      {moveSubmenuOpen && (
+                        <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-xl border border-border bg-white dark:bg-zinc-900 p-1 shadow-xl">
+                          <button
+                            type="button"
+                            disabled={movingCapture}
+                            onClick={() => handleMoveCapture(null)}
+                            className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50 cursor-pointer ${!capture?.folder_name ? "font-semibold text-[#6B9A35] dark:text-[#A8D666] bg-[#89BD49]/10 dark:bg-[#89BD49]/20" : ""}`}
+                          >
+                            <span>{t("v.noFolder")}</span>
+                            {!capture?.folder_name && <Icon icon="lucide:check" className="w-3.5 h-3.5 shrink-0" />}
+                          </button>
+                          {capFolders.map((folder) => {
+                            const isCurrent = capture?.folder_name === folder;
+                            return (
+                              <button
+                                key={folder}
+                                type="button"
+                                disabled={movingCapture}
+                                onClick={() => handleMoveCapture(folder)}
+                                className={`w-full flex items-center justify-between truncate rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50 cursor-pointer ${isCurrent ? "font-semibold text-[#6B9A35] dark:text-[#A8D666] bg-[#89BD49]/10 dark:bg-[#89BD49]/20" : ""}`}
+                              >
+                                <span className="truncate">{folder}</span>
+                                {isCurrent && <Icon icon="lucide:check" className="w-3.5 h-3.5 shrink-0 ml-1" />}
+                              </button>
+                            );
+                          })}
+                          {newFolderMode ? (
+                            <form onSubmit={(e) => { e.preventDefault(); handleCreateFolderAndMove(); }} className="p-2 border-t border-border mt-1">
+                              <input autoFocus value={newFolderName} onChange={(e) => setNewFolderName(e.target.value)} placeholder={t("v.folderName")} className="w-full rounded-md border border-border bg-white dark:bg-zinc-800 text-foreground px-2 py-1 text-xs outline-none" />
+                            </form>
+                          ) : (
+                            <button type="button" onClick={() => setNewFolderMode(true)} className="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-[#6B9A35] dark:text-[#A8D666] hover:bg-[#89BD49]/10 dark:hover:bg-[#89BD49]/20 cursor-pointer border-t border-border mt-1">{t("v.newFolder")}</button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleCopyLink}
+                      className="inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg bg-[#89BD49] px-2.5 sm:px-3.5 py-1.5 sm:py-2 min-h-[38px] sm:min-h-[40px] text-xs font-semibold text-white shadow-xs shadow-[#89BD49]/25 hover:bg-[#6B9A35] transition cursor-pointer touch-manipulation"
+                    >
+                      <Icon icon="lucide:link" className="h-4 w-4 shrink-0" />
+                      <span className="hidden xs:inline">{copied ? t("v.copied") : t("v.copyLinkBtn")}</span>
+                      <span className="xs:hidden">{copied ? t("v.copied") : "Copy"}</span>
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 

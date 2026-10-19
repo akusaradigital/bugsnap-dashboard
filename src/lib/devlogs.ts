@@ -31,6 +31,12 @@ export interface NetworkLog extends TimedLog {
   duration?: number;
   requestBody?: string | null;
   responseBody?: string;
+  requestHeaders?: Record<string, string>;
+  responseHeaders?: Record<string, string>;
+  /** Transferred bytes, from resource timing or content-length. */
+  size?: number;
+  /** Negotiated protocol (h2, http/1.1), from resource timing. */
+  protocol?: string;
   error?: string;
 }
 
@@ -130,6 +136,14 @@ export function normalizeDevLog(log: Record<string, unknown>): DevLog {
   const requestBody = typeof log.requestBody === "string" || log.requestBody === null ? log.requestBody : undefined;
   const responseBody = typeof log.responseBody === "string" ? log.responseBody : undefined;
   const error = typeof log.error === "string" ? log.error : undefined;
+  const headerMap = (v: unknown): Record<string, string> | undefined =>
+    v && typeof v === "object" && !Array.isArray(v)
+      ? Object.fromEntries(Object.entries(v as Record<string, unknown>).map(([k, val]) => [k, String(val)]))
+      : undefined;
+  const requestHeaders = headerMap(log.requestHeaders);
+  const responseHeaders = headerMap(log.responseHeaders);
+  const size = typeof log.size === "number" ? log.size : undefined;
+  const protocol = typeof log.protocol === "string" ? log.protocol : undefined;
   const time = typeof log.time === "string" || typeof log.time === "number" ? log.time : undefined;
   const timestamp = typeof log.timestamp === "string" || typeof log.timestamp === "number" ? log.timestamp : undefined;
   const count = typeof log.count === "number" ? log.count : undefined;
@@ -150,7 +164,7 @@ export function normalizeDevLog(log: Record<string, unknown>): DevLog {
     return { type: "console", level, message, text, stack, time, timestamp, count };
   }
   if (type === "network" || (type === "" && (method !== undefined || status !== undefined || requestBody !== undefined || responseBody !== undefined))) {
-    return { type: "network", level, method, status, resourceType, url, statusText, duration, requestBody, responseBody, error, time, timestamp, count };
+    return { type: "network", level, method, status, resourceType, url, statusText, duration, requestBody, responseBody, requestHeaders, responseHeaders, size, protocol, error, time, timestamp, count };
   }
   if (type === "navigation") {
     return { type: "navigation", message, url, time, timestamp, count };
@@ -272,6 +286,46 @@ export function cleanStackTrace(stack?: string | null): string {
     })
     .join("\n")
     .trim();
+}
+
+export type NetworkKind = "fetchxhr" | "ws" | "js" | "css" | "media" | "font" | "doc" | "other";
+
+export const NETWORK_KINDS: NetworkKind[] = ["fetchxhr", "ws", "js", "css", "media", "font", "doc", "other"];
+
+const EXT_KIND: Array<[RegExp, NetworkKind]> = [
+  [/\.(?:m?js|cjs|jsx?|tsx?)(?:[?#]|$)/i, "js"],
+  [/\.(?:css|scss|sass|less)(?:[?#]|$)/i, "css"],
+  [/\.(?:png|jpe?g|gif|webp|avif|svg|ico|bmp|mp4|webm|mp3|wav|ogg|mov)(?:[?#]|$)/i, "media"],
+  [/\.(?:woff2?|ttf|otf|eot)(?:[?#]|$)/i, "font"],
+  [/\.(?:html?|php)(?:[?#]|$)/i, "doc"],
+];
+
+/** Which filter bucket a request belongs to. One source of truth so the chip
+ *  counts and the Type column can never disagree. */
+export function networkKind(log: { resourceType?: string; method?: string; url?: string }): NetworkKind {
+  const rt = (log.resourceType || "").toLowerCase();
+  if (rt === "websocket" || (log.method || "").toUpperCase() === "WS") return "ws";
+  if (rt === "xmlhttprequest" || rt === "fetch" || rt === "beacon" || rt === "ping") return "fetchxhr";
+  if (rt === "script") return "js";
+  if (rt === "stylesheet") return "css";
+  if (rt === "image" || rt === "media") return "media";
+  if (rt === "font") return "font";
+  if (rt === "main_frame" || rt === "sub_frame" || rt === "document") return "doc";
+  if (rt && rt !== "resource" && rt !== "other") return "other";
+  // No usable resourceType: fall back to the URL, then to fetch/XHR, which is
+  // what a page-side patch necessarily observed.
+  const url = log.url || "";
+  for (const [re, kind] of EXT_KIND) if (re.test(url)) return kind;
+  if (/^wss?:\/\//i.test(url)) return "ws";
+  return "fetchxhr";
+}
+
+/** Byte count as a short human string: 29 B, 4.3 KiB, 2.5 MiB. */
+export function formatBytes(n?: number): string {
+  if (n == null || !Number.isFinite(n) || n < 0) return "-";
+  if (n < 1024) return `${n} B`;
+  if (n < 1024 * 1024) return `${(n / 1024).toFixed(1)} KiB`;
+  return `${(n / (1024 * 1024)).toFixed(1)} MiB`;
 }
 
 export function networkLocation(value?: string) {

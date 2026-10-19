@@ -16,6 +16,7 @@ import {
   type DevLogSummary,
   type DriveExternalLogReference,
   type NavigationLog,
+  type NetworkKind,
   type NetworkLog,
   type PerformanceLog,
   type ScreenshotLog,
@@ -36,6 +37,9 @@ import {
   isSummary,
   isTracker,
   logCount,
+  NETWORK_KINDS,
+  formatBytes,
+  networkKind,
   networkLocation,
   normalizeDevLog,
   normalizeLevel,
@@ -96,6 +100,36 @@ function FormattedErrorMessage({ msg }: { msg: string }) {
   );
 }
 
+
+function HeaderTable({
+  headers,
+  title,
+  defaultOpen = false,
+}: {
+  headers?: Record<string, string>;
+  title: string;
+  defaultOpen?: boolean;
+}) {
+  const entries = Object.entries(headers || {});
+  if (entries.length === 0) return null;
+  return (
+    <details className="group/h mt-1.5" open={defaultOpen}>
+      <summary className="flex list-none cursor-pointer items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted hover:text-foreground">
+        <Icon icon="lucide:chevron-right" className="w-3 h-3 transition-transform group-open/h:rotate-90 shrink-0" />
+        <span>{title}</span>
+        <span className="text-[9px] font-mono lowercase">({entries.length})</span>
+      </summary>
+      <div className="mt-1 rounded-lg border border-border bg-subtle overflow-hidden">
+        {entries.map(([name, value]) => (
+          <div key={name} className="flex flex-col sm:flex-row gap-0.5 sm:gap-2 px-2 py-1.5 border-b border-border/40 last:border-b-0">
+            <span className="font-mono text-[10px] font-semibold text-muted break-all sm:w-40 sm:shrink-0">{name}</span>
+            <span className="font-mono text-[10px] text-foreground break-all min-w-0 select-all">{value}</span>
+          </div>
+        ))}
+      </div>
+    </details>
+  );
+}
 
 function FormattedJsonBody({
   content,
@@ -228,6 +262,389 @@ function ActionBreadcrumb({
   );
 }
 
+type NetRow = { log: NetworkLog & { srcIdx?: number }; count: number };
+type NetDetailTab = "headers" | "request" | "response";
+
+function rowKey(log: NetworkLog) {
+  return `${log.method || "GET"}|${log.status ?? "FAILED"}|${log.url}`;
+}
+
+/** One request's detail pane: the Headers / Request / Response sub-tabs. */
+function NetworkDetail({
+  log,
+  count,
+  tab,
+  onTab,
+  precedingAction,
+  onCopyCurl,
+  onCopyUrl,
+  copiedCurl,
+  copiedUrl,
+  t,
+}: {
+  log: NetworkLog;
+  count: number;
+  tab: NetDetailTab;
+  onTab: (tab: NetDetailTab) => void;
+  precedingAction: { message: string; deltaSec: number | null } | null;
+  onCopyCurl: (log: NetworkLog, e: React.MouseEvent) => void;
+  onCopyUrl: (url: string, e: React.MouseEvent) => void;
+  copiedCurl: string | null;
+  copiedUrl: string | null;
+  t: (key: string, vars?: Record<string, string | number>) => string;
+}) {
+  const isFailed = !log.status || log.status >= 400;
+  const isOk = Boolean(log.status && log.status < 300);
+  const statusText = log.statusText || statusLabel(t, log.status) || undefined;
+  const hasPayload = log.requestBody != null || Boolean(log.responseBody);
+  const TABS: NetDetailTab[] = ["headers", "request", "response"];
+
+  return (
+    <div className="flex flex-col min-h-0 border-t border-border bg-background">
+      {/* Sub-tabs + Copy cURL, the row Jam puts at the top of its detail pane */}
+      <div className="flex items-center gap-1 px-2 py-1.5 border-b border-border/60 shrink-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {TABS.map((tb) => (
+          <button
+            key={tb}
+            type="button"
+            onClick={() => onTab(tb)}
+            aria-pressed={tab === tb}
+            className={`px-2 py-1 rounded-md text-[11px] font-medium whitespace-nowrap transition-colors cursor-pointer ${
+              tab === tb
+                ? "bg-subtle text-foreground border border-border font-semibold"
+                : "text-muted hover:text-foreground border border-transparent"
+            }`}
+          >
+            {t(`dt.detail.${tb}`) || tb}
+          </button>
+        ))}
+        <div className="flex-1" />
+        {log.url && (
+          <button
+            type="button"
+            onClick={(e) => onCopyCurl(log, e)}
+            className="shrink-0 text-[10px] px-2 py-1 rounded bg-subtle hover:bg-subtle/80 text-muted hover:text-foreground border border-border transition-colors flex items-center gap-1 cursor-pointer"
+            title={t("dt.copyCurl") || "Copy as cURL"}
+          >
+            {copiedCurl === log.url ? (
+              <>
+                <Icon icon="lucide:check" className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
+                <span className="text-emerald-600 dark:text-emerald-400 font-medium">{t("dt.curlCopied") || "Copied!"}</span>
+              </>
+            ) : (
+              <span className="font-mono text-[9px] font-bold text-[#6B9A35] dark:text-[#A8D666]">{t("dt.copyCurl") || "Copy cURL"}</span>
+            )}
+          </button>
+        )}
+      </div>
+
+      <div className="flex-1 min-h-0 overflow-y-auto p-2.5 space-y-2.5 text-xs">
+        {precedingAction && <ActionBreadcrumb action={precedingAction} t={t} />}
+
+        {tab === "headers" && (
+          <>
+            {/* General: the first block Jam shows, same field order */}
+            <div className="rounded-lg border border-border overflow-hidden">
+              <div className="px-2.5 py-1.5 bg-subtle border-b border-border/60 text-[10px] font-semibold uppercase tracking-wider text-muted">
+                {t("dt.general") || "General"}
+              </div>
+              <dl className="divide-y divide-border/40">
+                {log.url && (
+                  <div className="flex flex-col sm:flex-row gap-0.5 sm:gap-3 px-2.5 py-1.5">
+                    <dt className="text-[10px] font-semibold text-muted sm:w-36 sm:shrink-0">{t("dt.requestUrl") || "Request URL"}</dt>
+                    <dd className="min-w-0 flex items-start gap-1.5">
+                      <span className="font-mono text-[10px] text-foreground break-all select-all min-w-0">{log.url}</span>
+                      <button
+                        type="button"
+                        onClick={(e) => onCopyUrl(log.url!, e)}
+                        className="shrink-0 p-0.5 rounded text-muted hover:text-foreground hover:bg-subtle transition-colors cursor-pointer"
+                        title={t("dt.copyUrl")}
+                      >
+                        <Icon icon={copiedUrl === log.url ? "lucide:check" : "lucide:copy"} className="w-3 h-3" />
+                      </button>
+                    </dd>
+                  </div>
+                )}
+                <div className="flex flex-col sm:flex-row gap-0.5 sm:gap-3 px-2.5 py-1.5">
+                  <dt className="text-[10px] font-semibold text-muted sm:w-36 sm:shrink-0">{t("dt.requestMethod") || "Request Method"}</dt>
+                  <dd className="font-mono text-[10px] text-foreground">{log.method || "GET"}</dd>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-0.5 sm:gap-3 px-2.5 py-1.5">
+                  <dt className="text-[10px] font-semibold text-muted sm:w-36 sm:shrink-0">{t("dt.statusCode") || "Status Code"}</dt>
+                  <dd className="flex items-center gap-1.5 font-mono text-[10px]">
+                    <span
+                      className={`w-1.5 h-1.5 rounded-full shrink-0 ${
+                        isFailed ? "bg-red-500" : isOk ? "bg-emerald-500" : "bg-amber-500"
+                      }`}
+                      aria-hidden="true"
+                    />
+                    <span className={isFailed ? "text-red-600 dark:text-red-400 font-semibold" : "text-foreground"}>
+                      {log.status || t("dt.statusFailed") || "Failed"}
+                      {statusText ? ` ${statusText}` : ""}
+                    </span>
+                  </dd>
+                </div>
+                {log.protocol && (
+                  <div className="flex flex-col sm:flex-row gap-0.5 sm:gap-3 px-2.5 py-1.5">
+                    <dt className="text-[10px] font-semibold text-muted sm:w-36 sm:shrink-0">{t("dt.protocol") || "Protocol"}</dt>
+                    <dd className="font-mono text-[10px] text-foreground">{log.protocol}</dd>
+                  </div>
+                )}
+                {log.size != null && (
+                  <div className="flex flex-col sm:flex-row gap-0.5 sm:gap-3 px-2.5 py-1.5">
+                    <dt className="text-[10px] font-semibold text-muted sm:w-36 sm:shrink-0">{t("dt.size") || "Size"}</dt>
+                    <dd className="font-mono text-[10px] text-foreground tabular-nums" title={`${log.size} bytes`}>{formatBytes(log.size)}</dd>
+                  </div>
+                )}
+                {log.duration != null && (
+                  <div className="flex flex-col sm:flex-row gap-0.5 sm:gap-3 px-2.5 py-1.5">
+                    <dt className="text-[10px] font-semibold text-muted sm:w-36 sm:shrink-0">{t("dt.duration")}</dt>
+                    <dd className={`font-mono text-[10px] tabular-nums ${log.duration > 1000 ? "text-amber-600 dark:text-amber-400 font-semibold" : "text-foreground"}`}>
+                      {log.duration} ms
+                    </dd>
+                  </div>
+                )}
+                {count > 1 && (
+                  <div className="flex flex-col sm:flex-row gap-0.5 sm:gap-3 px-2.5 py-1.5">
+                    <dt className="text-[10px] font-semibold text-muted sm:w-36 sm:shrink-0">{t("dt.occurrences") || "Occurrences"}</dt>
+                    <dd className="font-mono text-[10px] text-foreground tabular-nums">×{count}</dd>
+                  </div>
+                )}
+                {log.error && (
+                  <div className="flex flex-col sm:flex-row gap-0.5 sm:gap-3 px-2.5 py-1.5">
+                    <dt className="text-[10px] font-semibold text-muted sm:w-36 sm:shrink-0">{t("dt.error")}</dt>
+                    <dd className="font-mono text-[10px] text-red-600 dark:text-red-400 break-all">{log.error}</dd>
+                  </div>
+                )}
+              </dl>
+            </div>
+
+            <HeaderTable headers={log.responseHeaders} title={t("dt.responseHeaders") || "Response headers"} defaultOpen />
+            <HeaderTable headers={log.requestHeaders} title={t("dt.requestHeaders") || "Request headers"} defaultOpen />
+            {!log.responseHeaders && !log.requestHeaders && (
+              <p className="px-1 text-[11px] text-muted italic">{t("dt.noHeaders") || "No headers were recorded for this request."}</p>
+            )}
+          </>
+        )}
+
+        {tab === "request" && (
+          log.requestBody != null && log.requestBody !== "" ? (
+            <FormattedJsonBody content={log.requestBody} title={t("dt.requestBody")} t={t} />
+          ) : (
+            <p className="px-1 text-[11px] text-muted italic">{t("dt.noRequestBody") || "This request had no body."}</p>
+          )
+        )}
+
+        {tab === "response" && (
+          log.responseBody ? (
+            <FormattedJsonBody content={log.responseBody} title={t("dt.responseBody")} t={t} />
+          ) : (
+            <p className="px-1 text-[11px] text-muted italic">
+              {hasPayload || log.resourceType === "image" || log.resourceType === "stylesheet" || log.resourceType === "font"
+                ? t("dt.noBodyStatic")
+                : t("dt.noBodyRecorded")}
+            </p>
+          )
+        )}
+      </div>
+    </div>
+  );
+}
+
+/** Jam's Network view: a scrollable table, and a detail pane for the selected
+ *  row. Selecting a row splits the area rather than pushing rows down, so the
+ *  surrounding requests stay visible while one is being read. */
+function NetworkTable({
+  rows,
+  limit,
+  onLoadMore,
+  selectedKey,
+  onSelect,
+  detailTab,
+  onDetailTab,
+  targetHost,
+  partyIsMixed,
+  isLogActive,
+  findPrecedingAction,
+  onCopyCurl,
+  onCopyUrl,
+  copiedCurl,
+  copiedUrl,
+  t,
+}: {
+  rows: NetRow[];
+  limit: number;
+  onLoadMore: () => void;
+  selectedKey: string | null;
+  onSelect: (key: string | null) => void;
+  detailTab: NetDetailTab;
+  onDetailTab: (tab: NetDetailTab) => void;
+  targetHost?: string;
+  partyIsMixed: boolean;
+  isLogActive: (log: TimedLog) => boolean;
+  findPrecedingAction: (log: TimedLog, knownIdx?: number) => { message: string; deltaSec: number | null } | null;
+  onCopyCurl: (log: NetworkLog, e: React.MouseEvent) => void;
+  onCopyUrl: (url: string, e: React.MouseEvent) => void;
+  copiedCurl: string | null;
+  copiedUrl: string | null;
+  t: (key: string, vars?: Record<string, string | number>) => string;
+}) {
+  const shown = rows.slice(0, limit);
+  const selected = selectedKey ? shown.find(({ log }) => rowKey(log) === selectedKey) : undefined;
+  // The longest duration sets the waterfall scale, so the bars stay comparable
+  // within the current filter instead of against an absolute ceiling.
+  const maxDuration = Math.max(1, ...shown.map(({ log }) => log.duration || 0));
+
+  return (
+    <div className="flex-1 min-h-0 flex flex-col">
+      <div className={`min-h-0 overflow-auto ${selected ? "max-h-[45%] shrink-0" : "flex-1"}`}>
+        <table className="w-full border-collapse text-[11px]">
+          <thead className="sticky top-0 z-10 bg-subtle">
+            <tr className="text-left text-[10px] font-semibold uppercase tracking-wider text-muted">
+              <th scope="col" className="px-2 py-1.5 font-semibold border-b border-border">{t("dt.col.name") || "Name"}</th>
+              <th scope="col" className="px-2 py-1.5 font-semibold border-b border-border w-16 hidden sm:table-cell">{t("dt.col.method") || "Method"}</th>
+              <th scope="col" className="px-2 py-1.5 font-semibold border-b border-border w-14">{t("dt.col.status") || "Status"}</th>
+              <th scope="col" className="px-2 py-1.5 font-semibold border-b border-border w-20 hidden lg:table-cell">{t("dt.col.type") || "Type"}</th>
+              <th scope="col" className="px-2 py-1.5 font-semibold border-b border-border w-20 text-right hidden sm:table-cell">{t("dt.col.size") || "Size"}</th>
+              <th scope="col" className="px-2 py-1.5 font-semibold border-b border-border w-20 text-right">{t("dt.col.time") || "Time"}</th>
+              <th scope="col" className="px-2 py-1.5 font-semibold border-b border-border w-24 hidden xl:table-cell">{t("dt.col.waterfall") || "Waterfall"}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {shown.map(({ log, count }, idx) => {
+              const key = rowKey(log);
+              const { domain, path } = networkLocation(log.url);
+              const isFailed = !log.status || log.status >= 400;
+              const isOk = Boolean(log.status && log.status < 300);
+              const isSelected = key === selectedKey;
+              const atPlayhead = isLogActive(log);
+              const is1st = isFirstPartyUrl(log.url, targetHost);
+              const kind = networkKind(log);
+              // Filename-ish tail, which is what identifies a request at a glance.
+              const name = (path && path !== "/" ? path.split("?")[0].split("/").filter(Boolean).pop() : "") || domain || "-";
+              return (
+                <tr
+                  key={key}
+                  onClick={() => onSelect(isSelected ? null : key)}
+                  aria-selected={isSelected}
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      onSelect(isSelected ? null : key);
+                    }
+                  }}
+                  className={`cursor-pointer border-b border-border/40 transition-colors ${
+                    isSelected
+                      ? "bg-[#89BD49]/15 dark:bg-[#89BD49]/20"
+                      : atPlayhead
+                      ? "bg-[#89BD49]/8 dark:bg-[#89BD49]/12"
+                      : isFailed
+                      ? "bg-red-50/40 dark:bg-red-950/15 hover:bg-red-50/70 dark:hover:bg-red-950/25"
+                      : idx % 2 === 1
+                      ? "bg-subtle/30 hover:bg-subtle/60"
+                      : "hover:bg-subtle/50"
+                  }`}
+                >
+                  <td className="px-2 py-1.5 min-w-0 max-w-0">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      {partyIsMixed && (
+                        <span
+                          className={`w-1.5 h-1.5 rounded-full shrink-0 ${is1st ? "bg-emerald-500" : "bg-zinc-400 dark:bg-zinc-500"}`}
+                          title={is1st ? `1st-party: ${targetHost}` : "3rd-party"}
+                          aria-hidden="true"
+                        />
+                      )}
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate font-medium text-foreground" title={log.url}>{name}</p>
+                        <p className="truncate text-[10px] text-muted" title={domain}>{domain}</p>
+                      </div>
+                      {count > 1 && (
+                        <span className="shrink-0 px-1 rounded bg-subtle border border-border text-[9px] font-bold text-muted tabular-nums">×{count}</span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-2 py-1.5 font-mono text-[10px] text-muted hidden sm:table-cell">{log.method || "GET"}</td>
+                  <td className="px-2 py-1.5">
+                    <span
+                      className={`font-mono text-[10px] font-bold ${
+                        isFailed ? "text-red-600 dark:text-red-400" : isOk ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"
+                      }`}
+                    >
+                      {log.status || "FAIL"}
+                    </span>
+                  </td>
+                  <td className="px-2 py-1.5 font-mono text-[10px] text-muted hidden lg:table-cell">{t(`dt.kind.${kind}`) || kind}</td>
+                  <td className="px-2 py-1.5 font-mono text-[10px] text-muted text-right tabular-nums hidden sm:table-cell" title={log.size != null ? `${log.size} bytes` : undefined}>
+                    {formatBytes(log.size)}
+                  </td>
+                  <td className={`px-2 py-1.5 font-mono text-[10px] text-right tabular-nums ${log.duration && log.duration > 1000 ? "text-amber-600 dark:text-amber-400 font-semibold" : "text-muted"}`}>
+                    {log.duration != null ? `${log.duration} ms` : "-"}
+                  </td>
+                  <td className="px-2 py-1.5 hidden xl:table-cell">
+                    {/* Relative duration only: the capture has no connection-phase
+                        timings, so this is a bar, not a real waterfall offset. */}
+                    <div className="h-1.5 rounded-full bg-border/60 overflow-hidden" title={log.duration != null ? `${log.duration} ms` : undefined}>
+                      <div
+                        className={`h-full rounded-full ${isFailed ? "bg-red-400" : log.duration && log.duration > 1000 ? "bg-amber-400" : "bg-[#89BD49]"}`}
+                        style={{ width: `${Math.max(2, Math.round(((log.duration || 0) / maxDuration) * 100))}%` }}
+                      />
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+        {rows.length > limit && (
+          <button
+            type="button"
+            onClick={onLoadMore}
+            className="w-full py-2.5 text-center text-xs font-semibold text-muted hover:text-foreground hover:bg-subtle border-t border-border transition-colors cursor-pointer"
+          >
+            {t("dt.loadMore", { n: rows.length - limit }) || `Load more (${rows.length - limit} remaining)`}
+          </button>
+        )}
+      </div>
+
+      {selected && (
+        <div className="flex-1 min-h-0 flex flex-col">
+          <div className="flex items-center justify-between gap-2 px-2.5 py-1 bg-subtle border-t border-border shrink-0">
+            <span className="truncate font-mono text-[10px] text-muted min-w-0" title={selected.log.url}>
+              {selected.log.url}
+            </span>
+            <button
+              type="button"
+              onClick={() => onSelect(null)}
+              aria-label={t("dt.closeDetail") || "Close details"}
+              title={t("dt.closeDetail") || "Close details"}
+              className="shrink-0 p-0.5 rounded text-muted hover:text-foreground hover:bg-background transition-colors cursor-pointer"
+            >
+              <Icon icon="lucide:x" className="w-3.5 h-3.5" />
+            </button>
+          </div>
+          <NetworkDetail
+            log={selected.log}
+            count={selected.count}
+            tab={detailTab}
+            onTab={onDetailTab}
+            precedingAction={
+              (!selected.log.status || selected.log.status >= 400)
+                ? findPrecedingAction(selected.log, selected.log.srcIdx)
+                : null
+            }
+            onCopyCurl={onCopyCurl}
+            onCopyUrl={onCopyUrl}
+            copiedCurl={copiedCurl}
+            copiedUrl={copiedUrl}
+            t={t}
+          />
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function DevToolsPanel({ capture, currentTime, onSeekToTime, unlockPassword = null, className }: Props) {
   const { t } = useT();
   const [activeTab, setActiveTab] = useState<Tab>("Info");
@@ -235,6 +652,13 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime, unlo
   const [networkStatusFilter, setNetworkStatusFilter] = useState<"all" | "4xx" | "5xx" | "failed">("all");
   const [networkPartyFilter, setNetworkPartyFilter] = useState<"all" | "1st" | "3rd">("all");
   const [networkSlowOnly, setNetworkSlowOnly] = useState(false);
+  const [networkKindFilter, setNetworkKindFilter] = useState<"all" | NetworkKind>("all");
+  // Which request the detail pane is showing, and which of its sub-tabs.
+  const [selectedNetworkKey, setSelectedNetworkKey] = useState<string | null>(null);
+  const [netDetailTab, setNetDetailTab] = useState<NetDetailTab>("headers");
+  // Console level filter: a capture with 90 info rows and 2 errors is unreadable
+  // without one, and the Errors-only toggle cannot isolate warnings.
+  const [consoleLevelFilter, setConsoleLevelFilter] = useState<"all" | "error" | "warn" | "info" | "log" | "debug">("all");
   // Actions was the only list tab with no chips - just the shared search box.
   const [actionKindFilter, setActionKindFilter] = useState<string>("all");
   const [logSearch, setLogSearch] = useState("");
@@ -246,6 +670,9 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime, unlo
     setNetworkStatusFilter("all");
     setNetworkPartyFilter("all");
     setNetworkSlowOnly(false);
+    setNetworkKindFilter("all");
+    setSelectedNetworkKey(null);
+    setConsoleLevelFilter("all");
     setActionKindFilter("all");
     setConsoleLimit(100);
     setNetworkLimit(100);
@@ -666,9 +1093,27 @@ ${stack}` : body);
   );
 
   const visibleConsoleLogs = useMemo(
-    () => (consoleErrorsOnly ? consoleLogs.filter((l) => l.type === "console" && isConsoleError(l)) : consoleLogs),
-    [consoleLogs, consoleErrorsOnly]
+    () => {
+      const base = consoleErrorsOnly
+        ? consoleLogs.filter((l) => l.type === "console" && isConsoleError(l))
+        : consoleLogs;
+      if (consoleLevelFilter === "all") return base;
+      // navigation/screenshot rows are not console levels; a level filter is a
+      // statement about console output, so they drop out of a narrowed view.
+      return base.filter((l) => l.type === "console" && normalizeLevel(l.level) === consoleLevelFilter);
+    },
+    [consoleLogs, consoleErrorsOnly, consoleLevelFilter]
   );
+
+  const consoleLevelCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    allConsoleLogs.forEach((l) => {
+      if (l.type !== "console") return;
+      const lvl = normalizeLevel(l.level);
+      counts.set(lvl, (counts.get(lvl) || 0) + 1);
+    });
+    return counts;
+  }, [allConsoleLogs]);
 
   const visibleGroupedNetworkLogs = useMemo(
     () =>
@@ -686,9 +1131,21 @@ ${stack}` : body);
           if (networkPartyFilter === "all" || !targetHost) return true;
           const is1st = isFirstPartyUrl(log.url, targetHost);
           return networkPartyFilter === "1st" ? is1st : !is1st;
-        }),
-    [groupedNetworkLogs, networkSlowOnly, networkStatusFilter, networkPartyFilter, targetHost]
+        })
+        .filter(({ log }) => networkKindFilter === "all" || networkKind(log) === networkKindFilter),
+    [groupedNetworkLogs, networkSlowOnly, networkStatusFilter, networkPartyFilter, networkKindFilter, targetHost]
   );
+
+  // Only show a chip for a bucket the capture actually has - a zero chip is a
+  // dead control. Counted before the search filter, like the tab badges.
+  const networkKindCounts = useMemo(() => {
+    const counts = new Map<NetworkKind, number>();
+    allNetworkLogs.forEach((l) => {
+      const k = networkKind(l);
+      counts.set(k, (counts.get(k) || 0) + 1);
+    });
+    return counts;
+  }, [allNetworkLogs]);
 
   const countSlow = useMemo(
     () => networkLogs.filter((l) => Boolean(l.duration && l.duration > 1000)).length,
@@ -1074,6 +1531,28 @@ ${stack}` : body);
               </span>
             </div>
             {/* Quick Filter for Console */}
+            {activeTab === "Console" && consoleLevelCounts.size > 1 && (
+              <div className="flex items-center gap-1.5 pt-0.5">
+                <label htmlFor="dt-level" className="sr-only">
+                  {t("dt.levelFilter") || "Filter by level"}
+                </label>
+                <select
+                  id="dt-level"
+                  value={consoleLevelFilter}
+                  onChange={(e) => setConsoleLevelFilter(e.target.value as typeof consoleLevelFilter)}
+                  className="px-2 py-1 rounded-md text-[10px] font-medium bg-subtle border border-border text-foreground cursor-pointer hover:bg-subtle/80 transition-colors"
+                >
+                  <option value="all">{t("dt.allLevels") || "All levels"}</option>
+                  {(["error", "warn", "info", "log", "debug"] as const)
+                    .filter((lvl) => consoleLevelCounts.has(lvl))
+                    .map((lvl) => (
+                      <option key={lvl} value={lvl}>
+                        {`${t(`dt.lvl.${lvl}`) || lvl} (${consoleLevelCounts.get(lvl)})`}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            )}
             {activeTab === "Console" && consoleErrors.length > 0 && (
               <div className="flex items-center gap-1.5 pt-0.5">
                 <button
@@ -1127,6 +1606,36 @@ ${stack}` : body);
                         {k === "all"
                           ? `${t("dt.allOrigins") || "All"} (${allActionLogs.length})`
                           : `${t(`dt.act.${k}`)} (${actionKindCounts.get(k)})`}
+                      </button>
+                    );
+                  })}
+              </div>
+            )}
+            {/* Resource-type buckets, the row Jam shows above its table. */}
+            {activeTab === "Network" && networkKindCounts.size > 1 && (
+              <div
+                role="group"
+                aria-label={t("dt.kindFilter") || "Filter by resource type"}
+                className="flex flex-wrap items-center gap-1.5 pt-0.5"
+              >
+                {(["all", ...NETWORK_KINDS] as const)
+                  .filter((k) => k === "all" || networkKindCounts.has(k as NetworkKind))
+                  .map((k) => {
+                    const on = networkKindFilter === k;
+                    const n = k === "all" ? allNetworkLogs.length : networkKindCounts.get(k as NetworkKind);
+                    return (
+                      <button
+                        key={k}
+                        type="button"
+                        onClick={() => setNetworkKindFilter(k as "all" | NetworkKind)}
+                        aria-pressed={on}
+                        className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors cursor-pointer ${
+                          on
+                            ? "bg-[#89BD49]/15 text-[#6B9A35] border border-[#89BD49]/30 dark:bg-[#89BD49]/20 dark:text-[#A8D666] dark:border-[#89BD49]/40 font-semibold"
+                            : "text-muted hover:text-foreground border border-transparent"
+                        }`}
+                      >
+                        {`${t(`dt.kind.${k}`) || k} (${n})`}
                       </button>
                     );
                   })}
@@ -1941,173 +2450,24 @@ ${stack}` : body);
                 />
               )
             ) : (
-              <div className="divide-y divide-border/60">
-                {visibleGroupedNetworkLogs.slice(0, networkLimit).map(({ log, count }) => {
-                  const { domain, path } = networkLocation(log.url);
-                  const isFailed = !log.status || log.status >= 400;
-                  const isOk = log.status && log.status < 300;
-                  const active = isLogActive(log);
-                  const effectiveStatusText = log.statusText || statusLabel(t, log.status) || undefined;
-                  const hasPayload = log.requestBody != null || Boolean(log.responseBody);
-                  return (
-                    <details key={`${log.method || "GET"}|${log.status ?? "FAILED"}|${log.url}`} className={`group hover:bg-subtle/50 transition-all ${active ? "ring-2 ring-[#89BD49] bg-[#89BD49]/10 dark:bg-[#89BD49]/20 rounded-sm" : ""}`}>
-                      <summary
-                        className="p-3 cursor-pointer list-none flex items-center justify-between gap-2 min-w-0"
-                      >
-                        <div className="flex items-center gap-2 min-w-0 flex-1">
-                          <span className="px-1.5 py-0.5 rounded text-[9px] font-bold font-mono uppercase bg-subtle text-foreground border border-border shrink-0">
-                            {log.method || "GET"}
-                          </span>
-                          <span
-                            className={`px-1.5 py-0.5 rounded text-[10px] font-bold font-mono shrink-0 ${
-                              isFailed
-                                ? "bg-red-100 dark:bg-red-950/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800/40"
-                                : isOk
-                                ? "bg-emerald-100 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40"
-                                : "bg-amber-100 dark:bg-amber-950/30 text-amber-800 dark:text-amber-400 border border-amber-200 dark:border-amber-800/40"
-                            }`}
-                          >
-                            {log.status || "FAIL"}
-                          </span>
-                          {partyIsMixed && (
-                            <span
-                              className={`px-1 py-0.2 rounded text-[8px] font-bold font-mono shrink-0 uppercase tracking-tight ${
-                                isFirstPartyUrl(log.url, targetHost)
-                                  ? "bg-emerald-50 text-emerald-700 border border-emerald-200/70 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800/40"
-                                  : "bg-zinc-100 text-zinc-600 border border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700"
-                              }`}
-                              title={isFirstPartyUrl(log.url, targetHost) ? `1st-Party: matches ${targetHost}` : "3rd-Party: external host"}
-                            >
-                              {isFirstPartyUrl(log.url, targetHost) ? "1ST" : "3RD"}
-                            </span>
-                          )}
-                          <div className="min-w-0 flex-1 truncate">
-                            <p className="text-xs font-medium text-foreground truncate" title={log.url}>
-                              {domain}
-                            </p>
-                            {path && (
-                              <p className="text-[10px] font-mono text-muted truncate" title={path}>
-                                {path}
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          {renderTimeBadge(log)}
-                          {count > 1 && (
-                            <span className="px-1.5 py-0.5 rounded-md bg-subtle text-[10px] font-bold text-muted border border-border">
-                              ×{count}
-                            </span>
-                          )}
-                          <Icon icon="lucide:chevron-right" className="w-3.5 h-3.5 text-muted transition-transform group-open:rotate-90 shrink-0" />
-                        </div>
-                      </summary>
-                      <div className="px-3 pb-3 pt-2 space-y-2.5 border-t border-border/40 bg-subtle/20 text-xs">
-                        {isFailed && (() => {
-                          const preceding = findPrecedingAction(log, log.srcIdx);
-                          return preceding ? <ActionBreadcrumb action={preceding} t={t} /> : null;
-                        })()}
-                        {/* Full URL row with copy button */}
-                        {log.url && (
-                          <div className="flex items-start justify-between gap-2 p-2 rounded-lg bg-background border border-border/60">
-                            <div className="min-w-0 flex-1 font-mono text-[11px] break-all leading-relaxed">
-                              <span className="text-muted select-none font-semibold mr-1.5">URL:</span>
-                              <span className="text-foreground select-all">{log.url}</span>
-                            </div>
-                            <div className="flex items-center gap-1.5 shrink-0">
-                              <button
-                                type="button"
-                                onClick={(e) => handleCopyCurl(log, e)}
-                                className="shrink-0 text-[10px] px-2 py-1 rounded bg-subtle hover:bg-subtle/80 text-muted hover:text-foreground border border-border transition-colors flex items-center gap-1 cursor-pointer"
-                                title={t("dt.copyCurl") || "Copy as cURL"}
-                              >
-                                {copiedCurl === log.url ? (
-                                  <>
-                                    <Icon icon="lucide:check" className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                                    <span className="text-emerald-600 dark:text-emerald-400 font-medium">{t("dt.curlCopied") || "Copied!"}</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <span className="font-mono text-[9px] font-bold text-[#6B9A35] dark:text-[#A8D666]">cURL</span>
-                                    <span>{t("dt.copyCurl") || "Copy as cURL"}</span>
-                                  </>
-                                )}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={(e) => handleCopyUrl(log.url!, e)}
-                                className="shrink-0 text-[10px] px-2 py-1 rounded bg-subtle hover:bg-subtle/80 text-muted hover:text-foreground border border-border transition-colors flex items-center gap-1 cursor-pointer"
-                                title={t("dt.copyUrl")}
-                              >
-                                {copiedUrl === log.url ? (
-                                  <>
-                                    <Icon icon="lucide:check" className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                                    <span className="text-emerald-600 dark:text-emerald-400 font-medium">{t("dt.urlCopied")}</span>
-                                  </>
-                                ) : (
-                                  <>
-                                    <Icon icon="lucide:copy" className="w-3 h-3" />
-                                    <span>{t("dt.copyUrl")}</span>
-                                  </>
-                                )}
-                              </button>
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Metadata Row */}
-                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 font-mono text-[10px]">
-                          {log.method && (
-                            <span><span className="text-muted">{t("dt.method")}:</span> <span className="font-semibold text-foreground">{log.method}</span></span>
-                          )}
-                          {log.status !== undefined && (
-                            <span>
-                              <span className="text-muted">{t("dt.status")}:</span>{" "}
-                              <span className={`font-semibold ${isFailed ? "text-red-600 dark:text-red-400" : isOk ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"}`}>
-                                {log.status} {effectiveStatusText ? `(${effectiveStatusText})` : ""}
-                              </span>
-                            </span>
-                          )}
-                          {log.resourceType && (
-                            <span><span className="text-muted">{t("dt.resourceType")}:</span> <span className="text-foreground capitalize">{log.resourceType}</span></span>
-                          )}
-                          {log.duration != null && (
-                            <span><span className="text-muted">{t("dt.duration")}:</span> <span className="text-foreground">{log.duration}ms</span></span>
-                          )}
-                          {log.error && (
-                            <span className="text-red-600 dark:text-red-400 font-semibold">{t("dt.error")}: {log.error}</span>
-                          )}
-                        </div>
-
-                        {/* Request Body */}
-                        {log.requestBody != null && (
-                          <FormattedJsonBody content={log.requestBody} title={t("dt.requestBody")} t={t} />
-                        )}
-
-                        {/* Response Body */}
-                        {log.responseBody ? (
-                          <FormattedJsonBody content={log.responseBody} title={t("dt.responseBody")} t={t} />
-                        ) : !hasPayload && (
-                          <div className="py-2 px-2.5 rounded bg-subtle/50 border border-border/40 text-[11px] text-muted italic">
-                            {log.resourceType === "image" || log.resourceType === "stylesheet" || log.resourceType === "font"
-                              ? t("dt.noBodyStatic")
-                              : t("dt.noBodyRecorded")}
-                          </div>
-                        )}
-                      </div>
-                    </details>
-                  );
-                })}
-                {visibleGroupedNetworkLogs.length > networkLimit && (
-                  <button
-                    type="button"
-                    onClick={() => setNetworkLimit((prev) => prev + 100)}
-                    className="w-full py-2.5 text-center text-xs font-semibold text-muted hover:text-foreground hover:bg-subtle border-t border-border transition-colors"
-                  >
-                    Load more ({visibleGroupedNetworkLogs.length - networkLimit} remaining)
-                  </button>
-                )}
-              </div>
+              <NetworkTable
+                rows={visibleGroupedNetworkLogs}
+                limit={networkLimit}
+                onLoadMore={() => setNetworkLimit((prev) => prev + 100)}
+                selectedKey={selectedNetworkKey}
+                onSelect={setSelectedNetworkKey}
+                detailTab={netDetailTab}
+                onDetailTab={setNetDetailTab}
+                targetHost={targetHost}
+                partyIsMixed={partyIsMixed}
+                isLogActive={isLogActive}
+                findPrecedingAction={findPrecedingAction}
+                onCopyCurl={handleCopyCurl}
+                onCopyUrl={handleCopyUrl}
+                copiedCurl={copiedCurl}
+                copiedUrl={copiedUrl}
+                t={t}
+              />
             )}
           </div>
         )}
