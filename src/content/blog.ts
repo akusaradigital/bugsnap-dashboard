@@ -18,6 +18,66 @@ const CHROME_STORE_URL =
   "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
 
 export const blogPosts: BlogPost[] = [
+  // ─── Article: From Bug Recording to Automated Playwright Test: Closing the QA-Dev Loop ───
+  {
+    slug: "from-bug-recording-to-automated-playwright-test",
+    title: "From Bug Recording to Automated Playwright Test: Closing the QA-Dev Loop",
+    titleId: "Dari Rekaman Bug ke Tes Otomatis Playwright: Mempercepat Siklus QA-Dev",
+    description: "Stop manually writing test reproductions from scratch. Learn how capturing structured user action telemetry transforms bug videos into automated Playwright scripts.",
+    descriptionId: "Hentikan penulisan skrip uji reproduksi manual dari nol. Pelajari cara mengubah rekaman aksi pengguna menjadi skrip otomatis Playwright yang siap pakai.",
+    date: "2026-10-19",
+    author: "BugSnap Team",
+    readTime: "6 min read",
+    tags: ["playwright", "test-automation", "qa", "developer-productivity"],
+    coverImage: "/blog/from-bug-recording-to-automated-playwright-test.webp",
+    ogImage: "/blog/from-bug-recording-to-automated-playwright-test.webp",
+    content: `
+<p>One of the most tedious tasks in software development is turning a bug report into a reliable automated regression test. A QA engineer records a video showing an unexpected checkout failure, files a ticket, and then an automation engineer or developer spends an hour reconstructing the exact DOM selectors and sequence in Playwright or Cypress.</p>
+
+<p>This manual translation is where valuable engineering hours disappear. Here is how modern QA workflows bridge the gap between visual bug captures and automated regression suites.</p>
+
+<h2>The Missing Link: Action Telemetry</h2>
+<p>A video recording provides visual proof, but Playwright requires deterministic locators: CSS selectors, roles, input values, and network mock points. By capturing structured user breadcrumbs alongside the recording, every click, navigation, and input becomes immediately actionable.</p>
+
+<h2>Synthesizing Playwright Locators from User Events</h2>
+<p>When an action event records both the DOM target and its interactive context, generating a test script becomes an automated transformation:</p>
+<pre><code>// Automatically generated reproduction snippet
+import { test, expect } from '@playwright/test';
+
+test('reproduce checkout button failure', async ({ page }) => {
+  await page.goto('https://app.example.com/checkout');
+  await page.getByRole('button', { name: 'Apply Coupon' }).click();
+  await page.locator('#promo-code-input').fill('DISCOUNT50');
+  await page.getByRole('button', { name: 'Submit' }).click();
+
+  // Expect network failure or alert state
+  await expect(page.locator('.toast-error')).toBeVisible();
+});</code></pre>
+
+<h2>Benefits for Agile QA Teams</h2>
+<ol>
+  <li><strong>Instant Regression Guard:</strong> Once a developer merges the fix, the generated script immediately becomes part of the permanent CI test suite.</li>
+  <li><strong>Zero Selector Guesswork:</strong> Automation engineers don't have to inspect staging DOM trees to guess whether <code>#submit-btn</code> or <code>.btn-checkout</code> was clicked.</li>
+  <li><strong>Complete Causality:</strong> Coupling network responses with action steps ensures network mocks represent real-world server failures.</li>
+</ol>
+    `.trim(),
+    contentId: `
+<p>Salah satu pekerjaan yang paling memakan waktu adalah mengubah laporan bug menjadi tes regresi otomatis. Tim QA merekam video saat checkout gagal, membuat tiket, lalu engineer automation harus menghabiskan waktu berjam-jam merekonstruksi urutan selektor DOM di Playwright atau Cypress.</p>
+
+<p>Di sinilah jam kerja produktif sering terbuang. Berikut cara menyambungkan bukti rekaman visual langsung menjadi skrip regresi otomatis.</p>
+
+<h2>Kunci Penghubung: Telemetri Aksi Pengguna</h2>
+<p>Rekaman video memberikan bukti visual, namun Playwright membutuhkan data pasti: selektor CSS, role aksesibilitas, nilai input, dan titik mock network. Dengan merekam jejak aksi pengguna secara terstruktur bersama video, setiap klik dan navigasi langsung dapat diekspor menjadi kode.</p>
+
+<h2>Keuntungan untuk Tim QA & Developer</h2>
+<ol>
+  <li><strong>Perlindungan Regresi Instan:</strong> Setelah bug diperbaiki, skrip yang digenerate langsung masuk ke pipeline CI/CD untuk mencegah bug terulang kembali.</li>
+  <li><strong>Bebas Tebak Selektor:</strong> Engineer tidak perlu lagi mereka-reka ID atau class elemen mana yang diklik tester.</li>
+  <li><strong>Sinkronisasi Bukti & Kode:</strong> Laporan bug yang menyertakan skrip Playwright mempercepat waktu investigasi hingga 3 kali lebih cepat.</li>
+</ol>
+    `.trim(),
+  },
+
   // ─── Article: Detecting SPA Memory Leaks & DOM Bloat in Single Page Applications ───
   {
     slug: "detecting-spa-memory-leaks-and-dom-bloat",
