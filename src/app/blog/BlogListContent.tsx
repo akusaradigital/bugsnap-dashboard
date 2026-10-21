@@ -150,7 +150,7 @@ export function BlogListContent() {
                     className="w-full h-full object-cover max-w-full"
                   />
                   {/* Featured Badge */}
-                  <div className="absolute top-3 left-3 sm:top-4 sm:left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-site-accent text-slate-900 text-xs font-extrabold shadow-sm">
+                  <div className="absolute top-3 left-3 sm:top-4 sm:left-4 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-site-accent text-white dark:text-slate-900 text-xs font-extrabold shadow-sm">
                     <Icon icon="lucide:sparkles" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                     <span>{t("blog.featured") || "Featured Article"}</span>
                   </div>
@@ -382,7 +382,7 @@ export function BlogListContent() {
                       }}
                       className={`w-9 h-9 sm:w-8 sm:h-8 min-h-[38px] min-w-[38px] sm:min-h-0 sm:min-w-0 rounded-lg text-xs font-bold transition-colors touch-manipulation ${
                         p === page
-                          ? "bg-site-accent text-slate-900 shadow-xs"
+                          ? "bg-site-accent text-white dark:text-slate-900 shadow-xs"
                           : "border border-site-border bg-site-surface hover:bg-site-surface-2 text-site-text"
                       }`}
                       aria-current={p === page ? "page" : undefined}

@@ -6,8 +6,8 @@ export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
-    const body = (await request.json().catch(() => null)) as { access_token?: unknown } | null;
-    const access_token = typeof body?.access_token === "string" ? body.access_token : null;
+    const body = (await request.json().catch(() => null)) as { access_token?: unknown; token?: unknown; redirectTo?: unknown } | null;
+    const access_token = typeof body?.access_token === "string" ? body.access_token : (typeof body?.token === "string" ? body.token : null);
     if (!access_token) {
       return NextResponse.json({ error: "Access token is required" }, { status: 400 });
     }
@@ -92,11 +92,15 @@ export async function POST(request: Request) {
 
     // 4. Generate a one-time login link (magic link) for this email
     const origin = new URL(request.url).origin;
+    const rawRedirect = typeof body?.redirectTo === "string" ? body.redirectTo.trim() : "";
+    const safeRedirect = /^\/(?!\/|\\)/.test(rawRedirect) && !rawRedirect.startsWith("/login")
+      ? rawRedirect
+      : "/dashboard";
     const { data: linkData, error: linkErr } = await supabaseAdmin.auth.admin.generateLink({
       type: "magiclink",
       email: email,
       options: {
-        redirectTo: `${origin}/dashboard`
+        redirectTo: `${origin}${safeRedirect}`
       }
     });
 

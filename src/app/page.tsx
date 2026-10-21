@@ -37,7 +37,7 @@ const ProductVideoDemo = dynamic(
   {
     loading: () => (
       <div
-        className="w-full max-w-5xl mx-auto min-h-[550px] sm:min-h-[600px] rounded-2xl border border-slate-800 bg-slate-900/50 animate-pulse"
+        className="w-full max-w-5xl mx-auto min-h-[550px] sm:min-h-[600px] rounded-2xl border border-site-border bg-site-surface/50 animate-pulse"
         aria-hidden="true"
       />
     ),
@@ -131,13 +131,13 @@ export default function LandingPage() {
   useEffect(() => {
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
-      const token = params.get("token");
+      const token = params.get("token") || params.get("provider_token");
       if (token) {
         setAutoLoggingIn(true);
         fetch("/api/auth/token-login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ token }),
+          body: JSON.stringify({ token, access_token: token }),
         })
           .then((res) => res.json())
           .then((data) => {
@@ -344,25 +344,11 @@ export default function LandingPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-site-bg text-site-text font-site">
         <div className="flex flex-col items-center gap-3">
-          <svg
+          <Icon
+            icon="lucide:loader-2"
             className="w-7 h-7 text-accent animate-spin"
-            viewBox="0 0 24 24"
-            fill="none"
-          >
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
-            />
-          </svg>
+            aria-hidden="true"
+          />
           <p className="text-sm text-site-text-2 font-medium">
             {t("landing.redirecting")}
           </p>
@@ -468,7 +454,7 @@ export default function LandingPage() {
               </Reveal>
 
               {/* Metrics horizontal strip, dividers */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-0 lg:divide-x divide-site-border">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-0 lg:divide-x lg:divide-site-border">
                 {metrics.map((m, i) => (
                   <Reveal key={m.label} delay={i * 0.07}>
                     <div className="py-2 sm:py-3 lg:px-6 flex flex-col gap-1 lg:first:pl-0">

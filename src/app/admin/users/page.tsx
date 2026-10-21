@@ -649,13 +649,13 @@ export default function AdminUsersPage() {
                 {/* Status Pills */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                   <div className="p-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950">
-                    <span className="text-[10px] text-slate-500 uppercase font-bold block">Status</span>
-                    <span className={`font-bold ${selectedUser.suspended ? "text-rose-600" : "text-emerald-600"}`}>
+                    <span className="text-[10px] text-slate-500 dark:text-zinc-400 uppercase font-bold block">Status</span>
+                    <span className={`font-bold ${selectedUser.suspended ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"}`}>
                       {selectedUser.suspended ? "Suspended" : "Active"}
                     </span>
                   </div>
                   <div className="p-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950">
-                    <span className="text-[10px] text-slate-500 uppercase font-bold block">{t("admin.googleDrive")}</span>
+                    <span className="text-[10px] text-slate-500 dark:text-zinc-400 uppercase font-bold block">{t("admin.googleDrive")}</span>
                     <span className="font-bold text-slate-800 dark:text-zinc-200 inline-flex items-center gap-1">
                       {selectedUser.google_drive_connected ? (
                         <>
@@ -668,13 +668,13 @@ export default function AdminUsersPage() {
                     </span>
                   </div>
                   <div className="p-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950">
-                    <span className="text-[10px] text-slate-500 uppercase font-bold block">{t("admin.userWorkspaces")}</span>
+                    <span className="text-[10px] text-slate-500 dark:text-zinc-400 uppercase font-bold block">{t("admin.userWorkspaces")}</span>
                     <span className="font-bold text-slate-800 dark:text-zinc-200">
                       {userWorkspaces.length}
                     </span>
                   </div>
                   <div className="p-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950">
-                    <span className="text-[10px] text-slate-500 uppercase font-bold block">{t("admin.capturesCount")}</span>
+                    <span className="text-[10px] text-slate-500 dark:text-zinc-400 uppercase font-bold block">{t("admin.capturesCount")}</span>
                     <span className="font-bold text-slate-800 dark:text-zinc-200">
                       {userTotalCaptures}
                     </span>

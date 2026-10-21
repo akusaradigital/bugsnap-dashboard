@@ -177,38 +177,23 @@ export function UpgradeModal({
                 </p>
                 <ul className="space-y-3.5 text-xs text-neutral-700 dark:text-neutral-300">
                   <li className="flex items-center gap-3">
-                    <svg className="w-4 h-4 text-neutral-600 dark:text-neutral-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
+                    <Icon icon="lucide:play-circle" className="w-4 h-4 text-neutral-600 dark:text-neutral-400 shrink-0" aria-hidden="true" />
                     <span>5 captures / week</span>
                   </li>
                   <li className="flex items-center gap-3">
-                    <svg className="w-4 h-4 text-neutral-600 dark:text-neutral-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
-                    </svg>
+                    <Icon icon="lucide:link" className="w-4 h-4 text-neutral-600 dark:text-neutral-400 shrink-0" aria-hidden="true" />
                     <span>5 Recording Links</span>
                   </li>
                   <li className="flex items-center gap-3">
-                    <svg className="w-4 h-4 text-neutral-600 dark:text-neutral-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <circle cx="12" cy="12" r="10" />
-                      <polyline points="12 6 12 12 16 14" />
-                    </svg>
+                    <Icon icon="lucide:clock" className="w-4 h-4 text-neutral-600 dark:text-neutral-400 shrink-0" aria-hidden="true" />
                     <span>5 minute recording time</span>
                   </li>
                   <li className="flex items-center gap-3">
-                    <svg className="w-4 h-4 text-neutral-600 dark:text-neutral-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <rect x="3" y="3" width="7" height="7" rx="1" />
-                      <rect x="14" y="3" width="7" height="7" rx="1" />
-                      <rect x="14" y="14" width="7" height="7" rx="1" />
-                      <rect x="3" y="14" width="7" height="7" rx="1" />
-                    </svg>
+                    <Icon icon="lucide:layout-grid" className="w-4 h-4 text-neutral-600 dark:text-neutral-400 shrink-0" aria-hidden="true" />
                     <span>Connect Jira, Linear and more</span>
                   </li>
                   <li className="flex items-center gap-3">
-                    <svg className="w-4 h-4 text-neutral-600 dark:text-neutral-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
-                    </svg>
+                    <Icon icon="lucide:code-2" className="w-4 h-4 text-neutral-600 dark:text-neutral-400 shrink-0" aria-hidden="true" />
                     <span>Debug via Console & Network Logs</span>
                   </li>
                 </ul>
@@ -306,9 +291,7 @@ export function UpgradeModal({
                 {/* Trust & Security Badges (Feature 4) */}
                 <div className="mt-3.5 pt-3 border-t border-neutral-200/60 dark:border-neutral-800/80 flex flex-wrap items-center justify-center gap-2 text-[11px] text-neutral-500 dark:text-neutral-400">
                   <span className="flex items-center gap-1 font-medium text-emerald-600 dark:text-emerald-400">
-                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                    </svg>
+                    <Icon icon="lucide:shield-check" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                     {t("upgrade.trustPaddle")}
                   </span>
                   <span>·</span>

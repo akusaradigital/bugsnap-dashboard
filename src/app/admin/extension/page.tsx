@@ -351,7 +351,7 @@ export default function AdminExtensionFleetPage() {
                   type="checkbox"
                   checked={config.forceUpdate}
                   onChange={(e) => setConfig({ ...config, forceUpdate: e.target.checked })}
-                  className="mt-0.5 w-4 h-4 rounded border-slate-300 text-[#89BD49] focus:ring-[#89BD49] accent-[#89BD49]"
+                  className="mt-0.5 w-4 h-4 rounded border-slate-300 dark:border-zinc-700 text-[#89BD49] focus:ring-[#89BD49] accent-[#89BD49]"
                 />
                 <div className="min-w-0">
                   <span className="text-xs font-bold text-slate-900 dark:text-white block">
@@ -368,7 +368,7 @@ export default function AdminExtensionFleetPage() {
                   type="checkbox"
                   checked={config.maintenanceMode}
                   onChange={(e) => setConfig({ ...config, maintenanceMode: e.target.checked })}
-                  className="mt-0.5 w-4 h-4 rounded border-rose-300 text-rose-600 focus:ring-rose-500"
+                  className="mt-0.5 w-4 h-4 rounded border-rose-300 dark:border-rose-700 text-rose-600 focus:ring-rose-500"
                 />
                 <div className="min-w-0">
                   <span className="text-xs font-bold text-rose-600 dark:text-rose-400 block">
@@ -406,7 +406,7 @@ export default function AdminExtensionFleetPage() {
                         },
                       })
                     }
-                    className="mt-0.5 w-4 h-4 rounded border-slate-300 text-[#89BD49] focus:ring-[#89BD49] accent-[#89BD49]"
+                    className="mt-0.5 w-4 h-4 rounded border-slate-300 dark:border-zinc-700 text-[#89BD49] focus:ring-[#89BD49] accent-[#89BD49]"
                   />
                   <div className="min-w-0">
                     <span className="text-xs font-bold text-slate-900 dark:text-white block">
@@ -431,7 +431,7 @@ export default function AdminExtensionFleetPage() {
                         },
                       })
                     }
-                    className="mt-0.5 w-4 h-4 rounded border-slate-300 text-[#89BD49] focus:ring-[#89BD49] accent-[#89BD49]"
+                    className="mt-0.5 w-4 h-4 rounded border-slate-300 dark:border-zinc-700 text-[#89BD49] focus:ring-[#89BD49] accent-[#89BD49]"
                   />
                   <div className="min-w-0">
                     <span className="text-xs font-bold text-slate-900 dark:text-white block">
@@ -504,7 +504,7 @@ export default function AdminExtensionFleetPage() {
                       v{err.version}
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-700 dark:text-zinc-300 font-mono bg-slate-50 dark:bg-zinc-950 p-2 rounded border border-slate-200 dark:border-zinc-850 break-all leading-relaxed">
+                  <p className="text-[11px] text-slate-700 dark:text-zinc-300 font-mono bg-slate-50 dark:bg-zinc-950 p-2 rounded border border-slate-200 dark:border-zinc-800 break-all leading-relaxed">
                     {err.message}
                   </p>
                   <div className="flex items-center justify-between mt-1 text-[10px] text-slate-400">

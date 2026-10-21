@@ -192,6 +192,25 @@ const DEMO_CAPTURE: Capture = {
       status: 500,
       statusText: "Internal Server Error",
       duration: 420,
+      size: 1850,
+      frameId: 0,
+      timings: {
+        dns: 15,
+        connect: 30,
+        ssl: 45,
+        ttfb: 280,
+        download: 50,
+      },
+      requestHeaders: {
+        "content-type": "application/json",
+        "accept": "application/json, text/plain, */*",
+        "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+      },
+      responseHeaders: {
+        "content-type": "application/json; charset=utf-8",
+        "server": "cloudflare",
+        "cf-ray": "8d3e91a2bc4e-CGK",
+      },
       time: "0:08",
       timestamp: 1725978725000,
       requestBody: JSON.stringify({
@@ -327,6 +346,10 @@ function SingleViewContent() {
   const [moveSubmenuOpen, setMoveSubmenuOpen] = useState(false);
   const moveMenuRef = useRef<HTMLDivElement>(null);
   const [capFolders, setCapFolders] = useState<string[]>([]);
+  const [capFolderEntries, setCapFolderEntries] = useState<
+    Array<{ id: string; name: string; color?: string | null; parent_id?: string | null; depth: number }>
+  >([]);
+  const [capFolderColors, setCapFolderColors] = useState<Record<string, string>>({});
   const [movingCapture, setMovingCapture] = useState(false);
   const [newFolderMode, setNewFolderMode] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
@@ -989,10 +1012,43 @@ function SingleViewContent() {
     if (!capture?.workspace_id) return;
     const { data } = await supabase
       .from("workspace_folders")
-      .select("name")
+      .select("id, name, color, parent_id")
       .eq("workspace_id", capture.workspace_id)
       .order("name");
-    setCapFolders((data || []).map((r) => r.name as string));
+    const colors: Record<string, string> = {};
+    const rows = (data || []) as Array<{ id: string; name: string; color?: string | null; parent_id?: string | null }>;
+    for (const r of rows) {
+      if (r.color) colors[r.name] = r.color;
+    }
+
+    const childrenMap = new Map<string, typeof rows>();
+    const idSet = new Set(rows.map((r) => r.id));
+    const roots: typeof rows = [];
+    for (const f of rows) {
+      if (f.parent_id && idSet.has(f.parent_id)) {
+        const list = childrenMap.get(f.parent_id) || [];
+        list.push(f);
+        childrenMap.set(f.parent_id, list);
+      } else {
+        roots.push(f);
+      }
+    }
+
+    const entries: Array<{ id: string; name: string; color?: string | null; parent_id?: string | null; depth: number }> = [];
+    function traverse(list: typeof rows, depth: number) {
+      for (const item of list) {
+        entries.push({ ...item, depth });
+        const children = childrenMap.get(item.id);
+        if (children && children.length > 0) {
+          traverse(children, depth + 1);
+        }
+      }
+    }
+    traverse(roots, 0);
+
+    setCapFolderColors(colors);
+    setCapFolderEntries(entries);
+    setCapFolders(entries.map((e) => e.name));
   }
 
   async function handleMoveCapture(folderName: string | null) {
@@ -1128,7 +1184,7 @@ function SingleViewContent() {
           : "bg-slate-50 dark:bg-background text-slate-900 dark:text-foreground relative justify-between overflow-x-hidden"
       }`}
     >
-      <header className="h-16 border-b border-border/80 bg-white/80 dark:bg-background/80 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between shrink-0 sticky top-0 z-30">
+      <header className="h-16 border-b border-border/80 bg-white/80 dark:bg-background/80 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between shrink-0 relative sm:sticky top-0 z-30">
         <div className="flex items-center gap-3 min-w-0">
           <Link href={isTeamMember ? "/dashboard" : "/"} className="flex items-center gap-2.5 hover:opacity-90 transition-opacity min-w-0 group">
             {brand.logo && !brandLogoFailed ? (
@@ -1499,8 +1555,9 @@ function SingleViewContent() {
               <div className="flex items-center justify-between gap-2 w-full flex-wrap">
                 <Link
                   href="/captures"
-                  className="inline-flex items-center justify-center rounded-lg border border-border bg-white dark:bg-background px-3.5 py-2 text-xs font-semibold text-foreground shadow-sm hover:bg-subtle transition-colors"
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-white dark:bg-background px-3 sm:px-3.5 py-1.5 sm:py-2 min-h-[38px] text-xs font-semibold text-foreground shadow-xs hover:bg-subtle transition-colors shrink-0"
                 >
+                  <Icon icon="lucide:arrow-left" className="h-3.5 w-3.5 shrink-0" />
                   <span>{t("v.backToDashboard")}</span>
                 </Link>
                 {capture && (
@@ -1509,13 +1566,13 @@ function SingleViewContent() {
                       <button
                         type="button"
                         onClick={() => { setMoveSubmenuOpen((o) => !o); if (capFolders.length === 0) loadCapFolders(); }}
-                        className="inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg border border-border bg-white dark:bg-background px-2.5 sm:px-3.5 py-1.5 sm:py-2 min-h-[38px] text-xs font-semibold text-foreground shadow-xs hover:bg-subtle cursor-pointer transition-colors touch-manipulation"
+                        className="inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg border border-border bg-white dark:bg-background px-2.5 sm:px-3.5 py-1.5 sm:py-2 min-h-[38px] text-xs font-semibold text-foreground shadow-xs hover:bg-subtle cursor-pointer transition-colors touch-manipulation min-w-0"
                       >
                         <Icon icon="lucide:folder" className="h-4 w-4 shrink-0" />
                         <span className="truncate max-w-[100px] sm:max-w-none">{capture?.folder_name || t("v.moveToFolder")}</span>
                       </button>
                       {moveSubmenuOpen && (
-                        <div className="absolute right-0 top-full z-50 mt-2 w-48 rounded-xl border border-border bg-white dark:bg-zinc-900 p-1 shadow-xl">
+                        <div className="absolute right-0 top-full z-50 mt-2 w-48 max-w-[calc(100vw-2rem)] rounded-xl border border-border bg-white dark:bg-zinc-900 p-1 shadow-xl">
                           <button
                             type="button"
                             disabled={movingCapture}
@@ -1525,17 +1582,36 @@ function SingleViewContent() {
                             <span>{t("v.noFolder")}</span>
                             {!capture?.folder_name && <Icon icon="lucide:check" className="w-3.5 h-3.5 shrink-0" />}
                           </button>
-                          {capFolders.map((folder) => {
+                          {(capFolderEntries.length > 0
+                            ? capFolderEntries
+                            : capFolders.map((f) => ({ id: f, name: f, depth: 0 }))
+                          ).map((folderEntry) => {
+                            const folder = folderEntry.name;
                             const isCurrent = capture?.folder_name === folder;
                             return (
                               <button
-                                key={folder}
+                                key={folderEntry.id || folder}
                                 type="button"
                                 disabled={movingCapture}
                                 onClick={() => handleMoveCapture(folder)}
+                                style={{ paddingLeft: `${12 + folderEntry.depth * 10}px` }}
                                 className={`w-full flex items-center justify-between truncate rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50 cursor-pointer ${isCurrent ? "font-semibold text-[#6B9A35] dark:text-[#A8D666] bg-[#89BD49]/10 dark:bg-[#89BD49]/20" : ""}`}
                               >
-                                <span className="truncate">{folder}</span>
+                                <span className="flex items-center gap-2 truncate min-w-0">
+                                  {folderEntry.depth > 0 && (
+                                    <Icon icon="lucide:corner-down-right" className="w-3 h-3 text-muted/60 shrink-0" />
+                                  )}
+                                  <Icon
+                                    icon={capFolderColors[folder] ? "custom:folder-filled" : "lucide:folder"}
+                                    className={`w-3.5 h-3.5 shrink-0 ${capFolderColors[folder] ? "" : "text-muted"}`}
+                                    style={
+                                      capFolderColors[folder]
+                                        ? { color: capFolderColors[folder] }
+                                        : undefined
+                                    }
+                                  />
+                                  <span className="truncate">{folder}</span>
+                                </span>
                                 {isCurrent && <Icon icon="lucide:check" className="w-3.5 h-3.5 shrink-0 ml-1" />}
                               </button>
                             );
@@ -1553,11 +1629,10 @@ function SingleViewContent() {
                     <button
                       type="button"
                       onClick={handleCopyLink}
-                      className="inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg bg-[#89BD49] px-2.5 sm:px-3.5 py-1.5 sm:py-2 min-h-[38px] sm:min-h-[40px] text-xs font-semibold text-white shadow-xs shadow-[#89BD49]/25 hover:bg-[#6B9A35] transition cursor-pointer touch-manipulation"
+                      className="inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg bg-[#89BD49] px-2.5 sm:px-3.5 py-1.5 sm:py-2 min-h-[38px] text-xs font-semibold text-white shadow-xs shadow-[#89BD49]/25 hover:bg-[#6B9A35] transition cursor-pointer touch-manipulation shrink-0"
                     >
                       <Icon icon="lucide:link" className="h-4 w-4 shrink-0" />
-                      <span className="hidden xs:inline">{copied ? t("v.copied") : t("v.copyLinkBtn")}</span>
-                      <span className="xs:hidden">{copied ? t("v.copied") : "Copy"}</span>
+                      <span>{copied ? t("v.copied") : t("v.copyLinkBtn")}</span>
                     </button>
                   </div>
                 )}
@@ -1675,17 +1750,17 @@ function SingleViewContent() {
                     />
                   </SubsystemErrorBoundary>
                 )}
-                <section className="rounded-xl border border-border bg-white p-5 shadow-sm dark:bg-background">
+                <section className="rounded-xl border border-border bg-white p-4 sm:p-6 lg:p-7 shadow-sm dark:bg-background">
                   <div>
                     <h3 className="mb-4 text-base font-bold text-foreground">{t("v.shareCapture")}</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5 text-center">
-                      <button type="button" onClick={() => setShareType("devtools")} className={`rounded-lg border p-3 sm:p-4 text-xs font-semibold ${shareType === "devtools" ? "border-[#89BD49] text-[#6B9A35] dark:text-[#A8D666]" : "border-border text-muted hover:text-foreground"}`}>
-                        <div className="mx-auto mb-2 sm:mb-3 flex h-10 sm:h-12 w-16 sm:w-20 items-center justify-center rounded-md border border-[#89BD49]/30 bg-[#89BD49]/10 text-[#6B9A35] dark:text-[#A8D666] text-xs sm:text-sm">▷ ▯</div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5 text-center items-stretch">
+                      <button type="button" onClick={() => setShareType("devtools")} className={`h-full flex flex-col items-center rounded-lg border p-3 sm:p-4 text-xs font-semibold ${shareType === "devtools" ? "border-[#89BD49] text-[#6B9A35] dark:text-[#A8D666]" : "border-border text-muted hover:text-foreground"}`}>
+                        <div className="mb-2 sm:mb-3 flex h-10 sm:h-12 w-16 sm:w-20 items-center justify-center rounded-md border border-[#89BD49]/30 bg-[#89BD49]/10 text-[#6B9A35] dark:text-[#A8D666] text-xs sm:text-sm">▷ ▯</div>
                         <span>{t("v.withDevTools")}</span>
                         <p className="mt-1 text-[10px] font-normal text-muted">{t("v.withDevToolsHint")}</p>
                       </button>
-                      <button type="button" onClick={() => setShareType("content")} className={`rounded-lg border p-3 sm:p-4 text-xs font-semibold ${shareType === "content" ? "border-[#89BD49] text-[#6B9A35] dark:text-[#A8D666]" : "border-border text-muted hover:text-foreground"}`}>
-                        <div className="mx-auto mb-2 sm:mb-3 flex h-10 sm:h-12 w-16 sm:w-20 items-center justify-center rounded-md border border-[#89BD49]/30 bg-[#89BD49]/10 text-[#6B9A35] dark:text-[#A8D666] text-xs sm:text-sm">▷</div>
+                      <button type="button" onClick={() => setShareType("content")} className={`h-full flex flex-col items-center rounded-lg border p-3 sm:p-4 text-xs font-semibold ${shareType === "content" ? "border-[#89BD49] text-[#6B9A35] dark:text-[#A8D666]" : "border-border text-muted hover:text-foreground"}`}>
+                        <div className="mb-2 sm:mb-3 flex h-10 sm:h-12 w-16 sm:w-20 items-center justify-center rounded-md border border-[#89BD49]/30 bg-[#89BD49]/10 text-[#6B9A35] dark:text-[#A8D666] text-xs sm:text-sm">▷</div>
                         <span>{t("v.contentOnly")}</span>
                         <p className="mt-1 text-[10px] font-normal text-muted">{t("v.contentOnlyHint")}</p>
                       </button>

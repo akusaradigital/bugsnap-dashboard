@@ -7,6 +7,7 @@ import { useT } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
 import { normalizePlan, seatLimit, type Plan } from "@/lib/tiers";
 import { Dropdown } from "@/components/Dropdown";
+import { Icon } from "@/lib/iconify";
 
 interface Member {
   user_id: string;
@@ -202,12 +203,10 @@ export default function TeamManagementPage() {
               <button
                 type="button"
                 onClick={() => setRoleMenuOpen((o) => !o)}
-                className="w-full sm:auto min-h-[44px] flex items-center justify-between gap-1.5 text-sm rounded-lg border border-border px-3.5 py-2.5 bg-subtle hover:bg-border/30 text-foreground transition-colors touch-manipulation"
+                className="w-full sm:w-auto min-h-[44px] flex items-center justify-between gap-1.5 text-sm rounded-lg border border-border px-3.5 py-2.5 bg-subtle hover:bg-border/30 text-foreground transition-colors touch-manipulation"
               >
                 {inviteRole === "creator" ? "Creator" : "Viewer"}
-                <svg className={`w-3.5 h-3.5 text-muted transition-transform ${roleMenuOpen ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                </svg>
+                <Icon icon="lucide:chevron-down" className={`w-3.5 h-3.5 text-muted shrink-0 transition-transform ${roleMenuOpen ? "rotate-180" : ""}`} aria-hidden="true" />
               </button>
               {roleMenuOpen && (
                 <>
@@ -228,9 +227,7 @@ export default function TeamManagementPage() {
                           <span className="block text-xs text-muted">{opt.hint}</span>
                         </span>
                         {inviteRole === opt.value && (
-                          <svg className="w-4 h-4 text-[#89BD49] shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                          </svg>
+                          <Icon icon="lucide:check" className="w-4 h-4 text-[#89BD49] shrink-0 mt-0.5" aria-hidden="true" />
                         )}
                       </button>
                     ))}
@@ -274,9 +271,7 @@ export default function TeamManagementPage() {
         ) : members.length === 0 ? (
           <div className="p-8 text-center space-y-3">
             <div className="mx-auto w-12 h-12 rounded-full bg-subtle flex items-center justify-center text-muted">
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="1.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6-3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-              </svg>
+              <Icon icon="lucide:users" className="w-6 h-6" aria-hidden="true" />
             </div>
             <p className="text-sm text-muted">{t("members.none")}</p>
           </div>

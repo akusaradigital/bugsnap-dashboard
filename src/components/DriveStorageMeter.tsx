@@ -42,21 +42,22 @@ export default function DriveStorageMeter() {
     let active = true;
     async function loadQuota() {
       try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
+        const currentUserId = sessionData.session?.user?.id;
+        if (!token) return;
+
         const cached = typeof sessionStorage !== "undefined" ? sessionStorage.getItem("bs_drive_quota") : null;
         if (cached) {
           try {
             const parsed = JSON.parse(cached);
-            if (Date.now() - parsed.timestamp < 180000) { // 3 min cache
+            if (Date.now() - parsed.timestamp < 180000 && parsed.userId === currentUserId) { // 3 min cache & same user
               setData(parsed.data);
               setLoading(false);
               return;
             }
           } catch {}
         }
-
-        const { data: sessionData } = await supabase.auth.getSession();
-        const token = sessionData.session?.access_token;
-        if (!token) return;
 
         const json = (await fetchDriveStatus(token)) as DriveStatusResponse | null;
         if (!json) return;
@@ -65,7 +66,7 @@ export default function DriveStorageMeter() {
           try {
             sessionStorage.setItem(
               "bs_drive_quota",
-              JSON.stringify({ timestamp: Date.now(), data: json })
+              JSON.stringify({ timestamp: Date.now(), data: json, userId: currentUserId })
             );
           } catch {}
         }

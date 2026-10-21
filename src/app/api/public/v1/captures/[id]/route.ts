@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { authenticateApiRequest } from "@/lib/api-auth";
 import { createServiceClient } from "@/lib/supabase-server";
 import { isRateLimited } from "@/lib/rate-limit";
-import { isUuid } from "@/lib/google-drive-values";
+import { isUuid, parseDriveFileId } from "@/lib/google-drive-values";
 import { decompressDevLogs } from "@/lib/devlogs-compression";
 import { normalizeDevLog, isConsoleError, isNetworkFailed, type DevLog, type DevLogSummary, type DriveExternalLogReference } from "@/lib/devlogs";
 import { cleanStackTrace, cleanUrlForTelemetry, sanitizePromptData } from "@/lib/redact";
@@ -48,7 +48,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     const { data: cap, error } = await db
       .from("captures")
       .select(
-        "id, title, description, type, status, tag, site_url, os, browser, window_size, duration, created_at, folder_name, drive_file_id, dev_logs, ai_summary, workspace_id"
+        "id, title, description, type, status, tag, site_url, os, browser, window_size, duration, created_at, folder_name, drive_file_id, drive_url, dev_logs, ai_summary, workspace_id"
       )
       .eq("id", id)
       .eq("workspace_id", auth.workspaceId)
@@ -123,34 +123,45 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
 
     let screenshotUrl: string | null = null;
     let videoUrl: string | null = null;
-    if (cap.drive_file_id) {
-      const { sig, exp } = signDownload(cap.drive_file_id);
-      const mediaUrl = `${new URL(request.url).origin}/api/google-drive/download?id=${encodeURIComponent(cap.drive_file_id)}&type=${cap.type === "video" ? "video" : "screenshot"}&disposition=inline&sig=${sig}&exp=${exp}`;
+    // drive_file_id is not populated on existing rows, but drive_url is - without
+    // this fallback both media URLs stayed null and an MCP client received the
+    // text report with no screenshot attached.
+    const driveFileId = cap.drive_file_id || parseDriveFileId(cap.drive_url || null);
+    if (driveFileId) {
+      const { sig, exp } = signDownload(driveFileId);
+      const mediaUrl = `${new URL(request.url).origin}/api/google-drive/download?id=${encodeURIComponent(driveFileId)}&type=${cap.type === "video" ? "video" : "screenshot"}&disposition=inline&sig=${sig}&exp=${exp}`;
       if (cap.type === "video") videoUrl = mediaUrl;
       else screenshotUrl = mediaUrl;
     }
 
-    return NextResponse.json({
-      id: cap.id,
-      title: cap.title,
-      description: cap.description || "",
-      type: cap.type,
-      status: cap.status,
-      tag: cap.tag,
-      site_url: cap.site_url,
-      os: cap.os,
-      browser: cap.browser,
-      window_size: cap.window_size,
-      duration: cap.duration,
-      created_at: cap.created_at,
-      folder_name: cap.folder_name,
-      screenshot_url: screenshotUrl,
-      video_url: videoUrl,
-      console_errors: consoleErrors,
-      network_errors: networkErrors,
-      user_steps: userSteps,
-      ai_summary: cap.ai_summary || null,
-    });
+    return NextResponse.json(
+      {
+        id: cap.id,
+        title: cap.title,
+        description: cap.description || "",
+        type: cap.type,
+        status: cap.status,
+        tag: cap.tag,
+        site_url: cap.site_url,
+        os: cap.os,
+        browser: cap.browser,
+        window_size: cap.window_size,
+        duration: cap.duration,
+        created_at: cap.created_at,
+        folder_name: cap.folder_name,
+        screenshot_url: screenshotUrl,
+        video_url: videoUrl,
+        console_errors: consoleErrors,
+        network_errors: networkErrors,
+        user_steps: userSteps,
+        ai_summary: cap.ai_summary || null,
+      },
+      {
+        headers: {
+          "Cache-Control": "private, max-age=60, stale-while-revalidate=300",
+        },
+      }
+    );
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : "Internal server error";
     return NextResponse.json({ error: msg }, { status: 500 });

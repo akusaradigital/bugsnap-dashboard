@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
+import { Icon } from "@/lib/iconify";
 
 export interface DropdownOption {
   value: string;
@@ -99,9 +100,7 @@ export function Dropdown({ value, options, onChange, variant = "field", placehol
         className={`${TRIGGER_BASE} ${TRIGGER_VARIANT[variant]} ${disabled ? "opacity-50 cursor-not-allowed pointer-events-none" : ""}`}
       >
         <span className="truncate">{selected?.label ?? placeholder ?? value}</span>
-        <svg className={`w-3.5 h-3.5 text-muted shrink-0 transition-transform ${open ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-        </svg>
+        <Icon icon="lucide:chevron-down" className={`w-3.5 h-3.5 text-muted shrink-0 transition-transform ${open ? "rotate-180" : ""}`} aria-hidden="true" />
       </button>
 
       {open && (
@@ -112,7 +111,7 @@ export function Dropdown({ value, options, onChange, variant = "field", placehol
           className={`absolute ${align === "right" ? "right-0" : "left-0"} min-w-full w-max max-w-[min(16rem,calc(100vw-1.5rem))] max-h-60 overflow-y-auto border border-border bg-subtle py-1 shadow-xl overflow-x-hidden ${
             isUp
               ? "bottom-full mb-1.5 z-50 rounded-xl text-xs"
-              : "top-full mt-1.5 z-30 rounded-lg text-sm"
+              : "top-full mt-1.5 z-50 rounded-lg text-sm"
           }`}
         >
           {options.map((o, idx) => {

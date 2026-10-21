@@ -12,7 +12,19 @@ function getSafeRedirectPath(): string {
   const raw = new URLSearchParams(window.location.search).get("redirectTo") || "/dashboard";
   if (!/^\/(?!\/|\\)/.test(raw)) return "/dashboard";
   if (raw.startsWith("/login")) return "/dashboard";
-  return raw;
+  // Strip auth error query and hash params if previous attempt failed
+  try {
+    const url = new URL(raw, "http://localhost");
+    url.searchParams.delete("error");
+    url.searchParams.delete("error_description");
+    url.searchParams.delete("error_code");
+    url.searchParams.delete("sb");
+    const query = url.searchParams.toString();
+    const clean = url.pathname + (query ? `?${query}` : "");
+    return clean === "/login" ? "/dashboard" : clean || "/dashboard";
+  } catch {
+    return "/dashboard";
+  }
 }
 
 // Official Google "G" logo (4-color)
@@ -33,11 +45,67 @@ export default function LoginPage() {
   useEffect(() => {
     const target = getSafeRedirectPath();
     setRedirectPath(target);
+
+    // Extract any OAuth error passed in query, hash, or nested in redirectTo
+    let hasAuthError = false;
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      let errDesc = params.get("error_description") || hashParams.get("error_description");
+      if (!errDesc) {
+        const rawRedirect = params.get("redirectTo");
+        if (rawRedirect) {
+          try {
+            const nested = new URL(rawRedirect, "http://localhost");
+            errDesc = nested.searchParams.get("error_description");
+          } catch {
+            // ignore
+          }
+        }
+      }
+      if (errDesc) {
+        hasAuthError = true;
+        setError(decodeURIComponent(errDesc.replace(/\+/g, " ")));
+      } else if (params.has("error") || hashParams.has("error")) {
+        hasAuthError = true;
+        setError(params.get("error") || hashParams.get("error"));
+      }
+    }
+
+    // Check for auto-login token from Extension or auth links
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get("token") || params.get("provider_token");
+      if (token) {
+        setSigningIn(true);
+        fetch("/api/auth/token-login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token, access_token: token, redirectTo: target }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.actionLink) {
+              window.location.assign(data.actionLink);
+            } else {
+              throw new Error("Invalid token login response");
+            }
+          })
+          .catch((err) => {
+            console.error("Auto login failed:", err);
+            setSigningIn(false);
+            setLoadingSession(false);
+          });
+        return;
+      }
+    }
+
     supabase.auth
       .getSession()
       .then(({ data }) => {
         setLoadingSession(false);
-        if (data.session?.user) window.location.assign(target);
+        // Do not auto-redirect if an auth error occurred, preventing bounce loops
+        if (data.session?.user && !hasAuthError) window.location.assign(target);
       })
       .catch(() => setLoadingSession(false));
   }, []);
@@ -50,7 +118,10 @@ export default function LoginPage() {
       const redirectTo = `${window.location.origin}${target}`;
       const { error: authError } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo },
+        options: {
+          redirectTo,
+          queryParams: { prompt: "select_account", access_type: "offline" },
+        },
       });
       if (authError) {
         console.warn("Google sign-in failed:", authError.message);

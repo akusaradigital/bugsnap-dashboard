@@ -44,7 +44,7 @@ export function BlogBottomBanner() {
       <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
         {/* Left Column: Floating Newsletter Card ("Berlangganan Artikel") */}
         <div className="lg:col-span-5 w-full min-w-0">
-          <div className="relative rounded-3xl bg-white dark:bg-site-surface border border-slate-200/90 dark:border-site-border p-6 sm:p-8 shadow-xl shadow-slate-300/40 dark:shadow-black/50 overflow-hidden">
+          <div className="relative rounded-3xl bg-site-surface border border-site-border p-6 sm:p-8 shadow-xl shadow-slate-300/40 dark:shadow-black/50 overflow-hidden">
             {/* Subtle background watermark icons */}
             <div
               className="pointer-events-none absolute -top-4 -right-4 text-sky-500/10 dark:text-sky-400/5 select-none"
@@ -93,7 +93,7 @@ export function BlogBottomBanner() {
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       placeholder={t("blog.subNamePlaceholder")}
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-site-border bg-slate-50 dark:bg-site-surface-2/60 text-site-text placeholder:text-site-text-2/60 text-xs sm:text-sm focus:outline-hidden focus:border-sky-500 dark:focus:border-site-accent transition-colors"
+                      className="w-full px-4 py-3 rounded-xl border border-site-border bg-site-surface-2/60 text-site-text placeholder:text-site-text-2/60 text-xs sm:text-sm focus:outline-hidden focus:border-sky-500 dark:focus:border-site-accent transition-colors"
                     />
                   </div>
 
@@ -111,12 +111,12 @@ export function BlogBottomBanner() {
                       }}
                       placeholder={t("blog.subEmailPlaceholder")}
                       required
-                      className="w-full px-4 py-3 rounded-xl border border-slate-200 dark:border-site-border bg-slate-50 dark:bg-site-surface-2/60 text-site-text placeholder:text-site-text-2/60 text-xs sm:text-sm focus:outline-hidden focus:border-sky-500 dark:focus:border-site-accent transition-colors"
+                      className="w-full px-4 py-3 rounded-xl border border-site-border bg-site-surface-2/60 text-site-text placeholder:text-site-text-2/60 text-xs sm:text-sm focus:outline-hidden focus:border-sky-500 dark:focus:border-site-accent transition-colors"
                     />
                   </div>
 
                   {/* Cloudflare Turnstile / Trust Verification Badge */}
-                  <div className="flex items-center justify-between px-3.5 py-2 rounded-xl border border-slate-200 dark:border-site-border bg-slate-50 dark:bg-site-surface-2/50 text-[11px] text-site-text-2">
+                  <div className="flex items-center justify-between px-3.5 py-2 rounded-xl border border-site-border bg-site-surface-2/50 text-[11px] text-site-text-2">
                     <div className="flex items-center gap-2">
                       <span className="w-4 h-4 rounded-full bg-emerald-500 text-white flex items-center justify-center text-[10px] font-bold">
                         ✓

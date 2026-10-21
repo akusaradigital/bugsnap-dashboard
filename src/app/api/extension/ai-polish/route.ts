@@ -88,8 +88,9 @@ export async function POST(req: Request) {
 
     if (customEndpointUrl) {
       endpointUrl = customEndpointUrl;
-      apiKey = customApiKey || storedConfig?.apiKey || "custom-key";
-      model = customModel || storedConfig?.model || "gpt-4o-mini";
+      // Never forward server API keys to external custom endpoints
+      apiKey = customApiKey || "custom-key";
+      model = customModel || "gpt-4o-mini";
       maxTokens = Math.min(storedConfig?.maxTokens || 200, 250);
       temperature = storedConfig?.temperature ?? 0.2;
     } else if (storedConfig && storedConfig.enabled !== false && storedConfig.apiKey && storedConfig.endpointUrl) {
@@ -151,19 +152,18 @@ export async function POST(req: Request) {
     }
 
     // 2. Build Multilingual Polish Prompt
-    const systemInstruction = `You are a professional QA lead, software engineer, and technical copy editor.
-Your task is to refine, polish, and structure draft notes into a crystal-clear, professional bug or task summary.
+    const systemInstruction = `You are a language clarity editor embedded in a bug-reporting tool.
 
 STRICT INSTRUCTIONS:
-1. MULTILINGUAL AUTO-DETECTION: Read the user's input language (Indonesian, English, Japanese, etc.) and write the entire response in the EXACT SAME LANGUAGE as the user wrote.
-2. CLARITY & PRECISION: Turn fragmented, informal, or confusing draft sentences into a clear, direct, and well-structured statement.
-3. CONTEXT INTEGRATION: If page URL, page title, or error clues are provided, use them naturally to give precise context without hallucinating facts.
-4. ZERO CHATTER: Do NOT include conversational filler like "Tentu, ini ringkasannya:", "Here is the polished summary:", or markdown code fences (\`\`\`).
-5. Output ONLY the polished summary text directly.`;
+1. SAME LANGUAGE: Detect the user's input language (Indonesian, English, etc.) and respond in that exact same language. Never translate.
+2. FIX ONLY: Correct grammar, spelling, and word choice so the sentence is clear and natural. Do NOT add bullet points, headings, labels, or any formatting that was not in the original.
+3. PRESERVE LENGTH & INTENT: Keep roughly the same length and the user's original meaning. Do not expand, summarize, or restructure into a different format.
+4. CONTEXT (optional): If a page URL or error clue is provided, you may weave it in only if it genuinely helps clarity — never fabricate details.
+5. ZERO CHATTER: Output ONLY the corrected text. No preamble, no explanation, no markdown fences.`;
 
     const userContent = rawText
-      ? `Draft Note from User:\n"${sanitizePromptData(rawText, 800)}"\n\nContext:\n- Target Page: ${sanitizedUrl || "Unknown"}\n- Title: ${sanitizedTitle || "Untitled"}${errorClue ? `\n- Technical Clue: ${sanitizePromptData(errorClue, 200)}` : ""}`
-      : `Create a clean, 1-2 sentence bug report summary based on this captured context:\n- Target Page: ${sanitizedUrl || "Unknown"}\n- Title: ${sanitizedTitle || "Untitled"}${errorClue ? `\n- Technical Clue: ${sanitizePromptData(errorClue, 200)}` : ""}`;
+      ? `Fix the language of this text (grammar, clarity, natural phrasing — keep the same format and length):\n"${sanitizePromptData(rawText, 800)}"${sanitizedUrl ? `\n\nPage context: ${sanitizedUrl}` : ""}${errorClue ? `\nError clue: ${sanitizePromptData(errorClue, 200)}` : ""}`
+      : `Write a short, clear bug report sentence based on this context:\n- Page: ${sanitizedUrl || "Unknown"}\n- Title: ${sanitizedTitle || "Untitled"}${errorClue ? `\n- Error: ${sanitizePromptData(errorClue, 200)}` : ""}`;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout for reasoning models & tunnel proxies
@@ -190,6 +190,7 @@ STRICT INSTRUCTIONS:
       const aiRes = await fetch(endpointUrl, {
         method: "POST",
         signal: controller.signal,
+        redirect: "manual",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${apiKey}`,

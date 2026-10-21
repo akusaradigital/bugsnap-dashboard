@@ -90,8 +90,8 @@ export function AboutContent() {
         {/* Engineering Metrics / Milestones Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
           {milestones.map((m, idx) => (
-            <Reveal key={m.label} delay={0.1 + idx * 0.05}>
-              <div className="rounded-2xl border border-site-border bg-site-surface p-5 sm:p-6 space-y-2 shadow-xs">
+            <Reveal key={m.label} delay={0.1 + idx * 0.05} className="h-full">
+              <div className="h-full rounded-2xl border border-site-border bg-site-surface p-5 sm:p-6 space-y-2 shadow-xs">
                 <div className="text-2xl sm:text-3xl font-extrabold font-mono text-site-accent">
                   {m.metric}
                 </div>

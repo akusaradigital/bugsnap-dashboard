@@ -2,6 +2,7 @@
 
 import { useEffect } from "react";
 import { useT } from "@/components/I18nProvider";
+import { Icon } from "@/lib/iconify";
 
 export default function GlobalError({
   error,
@@ -19,9 +20,7 @@ export default function GlobalError({
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center p-6 text-center">
       <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-rose-50 border border-rose-200 text-rose-600 dark:bg-rose-950/30 dark:border-rose-900/50 dark:text-rose-400">
-        <svg className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-        </svg>
+        <Icon icon="lucide:alert-triangle" className="h-6 w-6 shrink-0" aria-hidden="true" />
       </div>
       <h2 className="text-base font-bold text-foreground">{t("error.title")}</h2>
       <p className="mt-1 max-w-sm text-xs text-muted">

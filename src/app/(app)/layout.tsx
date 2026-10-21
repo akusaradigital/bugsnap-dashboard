@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
@@ -20,6 +20,29 @@ const navItems = [
   { labelKey: "nav.dashboard", href: "/dashboard", icon: getNavIcon("dashboard") },
   { labelKey: "nav.captures", href: "/captures", icon: getNavIcon("captures") },
   { labelKey: "nav.compare", href: "/compare", icon: getNavIcon("compare") },
+];
+
+const GOOGLE_DRIVE_FOLDER_COLORS = [
+  { name: "Chocolate", value: "#8c5e58" },
+  { name: "Earth", value: "#8f6c4f" },
+  { name: "Radicchio", value: "#d50000" },
+  { name: "Red", value: "#ef4444" },
+  { name: "Orange", value: "#f97316" },
+  { name: "Amber", value: "#f59e0b" },
+  { name: "Yellow", value: "#eab308" },
+  { name: "Olive", value: "#84cc16" },
+  { name: "Green", value: "#22c55e" },
+  { name: "Forest green", value: "#10b981" },
+  { name: "Teal", value: "#14b8a6" },
+  { name: "Peacock", value: "#06b6d4" },
+  { name: "Sky", value: "#0ea5e9" },
+  { name: "Blue", value: "#3b82f6" },
+  { name: "Cobalt", value: "#2563eb" },
+  { name: "Indigo", value: "#6366f1" },
+  { name: "Violet", value: "#8b5cf6" },
+  { name: "Purple", value: "#a855f7" },
+  { name: "Pink", value: "#ec4899" },
+  { name: "Rose", value: "#f43f5e" },
 ];
 
 type Workspace = {
@@ -124,6 +147,25 @@ export default function DashboardLayout({
   const [deleteFolderModalOpen, setDeleteFolderModalOpen] = useState(false);
   const [folderToDelete, setFolderToDelete] = useState<string | null>(null);
   const [deletingFolder, setDeletingFolder] = useState(false);
+
+  // Folder Color Modal states (Google Drive Style)
+  const [folderColors, setFolderColors] = useState<Record<string, string>>({});
+  const [folderColorModalOpen, setFolderColorModalOpen] = useState(false);
+  const [folderToColor, setFolderToColor] = useState<string | null>(null);
+  const [selectedFolderColor, setSelectedFolderColor] = useState<string | null>(null);
+  const [savingFolderColor, setSavingFolderColor] = useState(false);
+
+  // Nested Folder states (Parent-Child Hierarchy)
+  interface FolderItem {
+    id: string;
+    name: string;
+    parent_id: string | null;
+    color?: string | null;
+    is_default: boolean;
+  }
+  const [folderItems, setFolderItems] = useState<FolderItem[]>([]);
+  const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [parentFolderId, setParentFolderId] = useState<string | null>(null);
 
   // Custom Rename & Delete Workspace Modal states
 
@@ -256,8 +298,27 @@ export default function DashboardLayout({
       const u = data.session?.user;
       if (!u) {
         setSession({ loading: false, user: null });
-        const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-        router.replace(`/login?redirectTo=${encodeURIComponent(current || "/dashboard")}`);
+        const searchParams = new URLSearchParams(window.location.search);
+        const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+        const errDesc = searchParams.get("error_description") || hashParams.get("error_description");
+        const errCode = searchParams.get("error") || hashParams.get("error");
+        const hasAuthError = !!(errDesc || errCode);
+
+        ["error", "error_description", "error_code", "error_uri", "sb", "state", "code"].forEach((k) => {
+          searchParams.delete(k);
+        });
+        const cleanSearch = searchParams.toString() ? `?${searchParams.toString()}` : "";
+        const cleanPath = `${window.location.pathname}${cleanSearch}`;
+        const target = hasAuthError || cleanPath === "/login" ? "/dashboard" : cleanPath || "/dashboard";
+
+        const loginUrl = new URL("/login", window.location.origin);
+        loginUrl.searchParams.set("redirectTo", target);
+        if (errDesc) {
+          loginUrl.searchParams.set("error_description", errDesc);
+        } else if (errCode) {
+          loginUrl.searchParams.set("error_description", errCode);
+        }
+        router.replace(loginUrl.pathname + loginUrl.search);
         return;
       }
       const meta = u.user_metadata || {};
@@ -323,8 +384,13 @@ export default function DashboardLayout({
     const { data: sub } = supabase.auth.onAuthStateChange((event) => {
       if (!active) return;
       if (event === "SIGNED_OUT") {
-        const current = `${window.location.pathname}${window.location.search}${window.location.hash}`;
-        router.replace(`/login?redirectTo=${encodeURIComponent(current || "/dashboard")}`);
+        try {
+          localStorage.removeItem("BugSnap_notif_last_seen");
+          localStorage.removeItem("BugSnap_notif_read_ids");
+          localStorage.removeItem("BugSnap_promo_dismissed");
+          sessionStorage.removeItem("bs_drive_quota");
+        } catch {}
+        router.replace("/login");
       }
     });
     return () => {
@@ -518,7 +584,7 @@ export default function DashboardLayout({
             .limit(300),
           supabase
             .from("workspace_folders")
-            .select("name, is_default, sort_order")
+            .select("id, name, is_default, sort_order, color, parent_id")
             .eq("workspace_id", activeWsId),
           supabase
             .rpc("get_workspace_projects", { p_workspace_id: activeWsId }),
@@ -531,7 +597,7 @@ export default function DashboardLayout({
         const capturesData = capturesRes.data;
         const customFoldersData = customFoldersRes.data;
         const projectsData = projectsRes.data;
-        
+
         // Deduplicate folder names from both sources
         const allFolderNames = [
           ...(capturesData || []).map((c) => c.folder_name),
@@ -549,6 +615,38 @@ export default function DashboardLayout({
           setProjects(typedProjects.map((p) => ({ id: p.id, name: p.name, description: p.description || "", is_default: !!p.is_default })));
           const defSet = new Set((customFoldersData || []).filter((f) => f.is_default).map((f) => f.name));
           setDefaultFolders(defSet);
+
+          const colors: Record<string, string> = {};
+          const typedFolders: FolderItem[] = [];
+          const parentsToExpand = new Set<string>();
+
+          for (const raw of customFoldersData || []) {
+            const f = raw as {
+              id: string;
+              name: string;
+              color?: string | null;
+              is_default?: boolean;
+              parent_id?: string | null;
+            };
+            if (f.name && f.color) {
+              colors[f.name] = f.color;
+            }
+            if (f.id && f.name) {
+              typedFolders.push({
+                id: f.id,
+                name: f.name,
+                parent_id: f.parent_id || null,
+                color: f.color,
+                is_default: !!f.is_default,
+              });
+              if (f.parent_id) {
+                parentsToExpand.add(f.parent_id);
+              }
+            }
+          }
+          setFolderColors(colors);
+          setFolderItems(typedFolders);
+          setExpandedFolders((prev) => new Set([...Array.from(prev), ...Array.from(parentsToExpand)]));
           setFolders(
             uniqueFolders.sort((a, b) => {
               if (a === defaultName || b === defaultName) return a === defaultName ? -1 : 1;
@@ -567,6 +665,53 @@ export default function DashboardLayout({
       active = false;
     };
   }, [activeWsId]);
+
+  const rootFolders = useMemo(() => {
+    const knownNames = new Set(folderItems.map((f) => f.name));
+    const extraRoots: FolderItem[] = folders
+      .filter((name) => !knownNames.has(name))
+      .map((name) => ({
+        id: `extra-${name}`,
+        name,
+        parent_id: null,
+        is_default: defaultFolders.has(name),
+      }));
+
+    const idSet = new Set(folderItems.map((f) => f.id));
+    const roots = folderItems.filter(
+      (f) => !f.parent_id || !idSet.has(f.parent_id),
+    );
+    return [...roots, ...extraRoots];
+  }, [folderItems, folders, defaultFolders]);
+
+  const childrenByParentId = useMemo(() => {
+    const map = new Map<string, FolderItem[]>();
+    for (const f of folderItems) {
+      if (f.parent_id) {
+        const list = map.get(f.parent_id) || [];
+        list.push(f);
+        map.set(f.parent_id, list);
+      }
+    }
+    return map;
+  }, [folderItems]);
+
+  useEffect(() => {
+    if (!currentFolder || folderItems.length === 0) return;
+    const currentItem = folderItems.find((f) => f.name === currentFolder);
+    if (currentItem?.parent_id) {
+      setExpandedFolders((prev) => {
+        const next = new Set(prev);
+        let pId: string | null = currentItem.parent_id;
+        while (pId) {
+          next.add(pId);
+          const parent = folderItems.find((f) => f.id === pId);
+          pId = parent?.parent_id || null;
+        }
+        return next;
+      });
+    }
+  }, [currentFolder, folderItems]);
 
   if (session.loading) {
     return (
@@ -604,21 +749,52 @@ export default function DashboardLayout({
   }
 
   const currentUser = session.user;
+  const isSuperAdmin = currentUser?.email?.toLowerCase().trim() === "contact.akusaraproject@gmail.com";
   const activeWs = workspaces.find((w) => w.id === activeWsId) ?? null;
   const activeWsName = activeWs?.name ?? "Personal Workspace";
   const activeMembers = members[activeWs?.id ?? ""] ?? [];
 
-  const handleCreateFolder = async (name: string) => {
+  const handleCreateFolder = async (name: string, parentId?: string | null) => {
     if (!name || !activeWsId || creatingFolder) return;
     setCreatingFolder(true);
     setCreateFolderError(null);
     try {
-      const { error } = await supabase
+      const targetParent = parentId !== undefined ? parentId : parentFolderId;
+      const insertPayload: {
+        workspace_id: string;
+        name: string;
+        parent_id?: string | null;
+      } = {
+        workspace_id: activeWsId,
+        name: name.trim(),
+      };
+      if (targetParent) {
+        insertPayload.parent_id = targetParent;
+      }
+      const { data, error } = await supabase
         .from("workspace_folders")
-        .insert({ workspace_id: activeWsId, name: name.trim() });
+        .insert(insertPayload)
+        .select("id, name, is_default, sort_order, color, parent_id")
+        .single();
       if (error) throw error;
       setFolders((prev) => Array.from(new Set([...prev, name.trim()])).sort());
+      if (data) {
+        setFolderItems((prev) => [
+          ...prev,
+          {
+            id: data.id,
+            name: data.name,
+            parent_id: data.parent_id || null,
+            color: data.color,
+            is_default: !!data.is_default,
+          },
+        ]);
+        if (targetParent) {
+          setExpandedFolders((prev) => new Set([...Array.from(prev), targetParent]));
+        }
+      }
       setNewFolderName("");
+      setParentFolderId(null);
       setCreateFolderModalOpen(false);
       showToast(`Folder "${name.trim()}" created`, "success");
     } catch (err) {
@@ -755,6 +931,17 @@ export default function DashboardLayout({
       setFolders((prev) =>
         prev.map((f) => (f === folderToRename ? newName : f)).sort()
       );
+      setFolderItems((prev) =>
+        prev.map((f) => (f.name === folderToRename ? { ...f, name: newName } : f))
+      );
+      setFolderColors((prev) => {
+        const next = { ...prev };
+        if (next[folderToRename]) {
+          next[newName] = next[folderToRename];
+          delete next[folderToRename];
+        }
+        return next;
+      });
       
       // Redirect if current folder was active
       const url = new URL(window.location.href);
@@ -792,13 +979,25 @@ export default function DashboardLayout({
 
       // Update local state
       setFolders((prev) => prev.filter((f) => f !== folderToDelete));
-      
+      const deletedItem = folderItems.find((f) => f.name === folderToDelete);
+      const deletedId = deletedItem?.id;
+      setFolderItems((prev) =>
+        prev
+          .filter((f) => f.name !== folderToDelete)
+          .map((f) => (deletedId && f.parent_id === deletedId ? { ...f, parent_id: null } : f))
+      );
+      setFolderColors((prev) => {
+        const next = { ...prev };
+        delete next[folderToDelete];
+        return next;
+      });
+
       // Redirect to main captures if current folder was active
       const url = new URL(window.location.href);
       if (url.searchParams.get("folder") === folderToDelete) {
         router.replace(`/captures?ws=${activeWsId}`, { scroll: false });
       }
-      
+
       setDeleteFolderModalOpen(false);
         showToast(t("layout.folderQueued", { name: folderToDelete }), "success");
     } catch (err) {
@@ -806,6 +1005,56 @@ export default function DashboardLayout({
         showToast(t("layout.errDeleteFolder"), "error");
     } finally {
       setDeletingFolder(false);
+    }
+  };
+
+  const handleOpenFolderColor = (folderName: string) => {
+    setFolderToColor(folderName);
+    setSelectedFolderColor(folderColors[folderName] || null);
+    setFolderColorModalOpen(true);
+  };
+
+  const submitFolderColor = async () => {
+    if (!activeWsId || !folderToColor || savingFolderColor) return;
+    setSavingFolderColor(true);
+    const previousColor = folderColors[folderToColor] || null;
+    const newColor = selectedFolderColor;
+
+    // Optimistic UI update
+    setFolderColors((prev) => {
+      const next = { ...prev };
+      if (newColor) {
+        next[folderToColor] = newColor;
+      } else {
+        delete next[folderToColor];
+      }
+      return next;
+    });
+
+    try {
+      const { error } = await supabase.rpc("set_workspace_folder_color", {
+        p_workspace_id: activeWsId,
+        p_folder_name: folderToColor,
+        p_color: newColor,
+      });
+      if (error) throw error;
+      setFolderColorModalOpen(false);
+      showToast(t("layout.colorUpdated"), "success");
+    } catch (err) {
+      console.warn("Failed to set folder color:", err);
+      // Rollback optimistic update
+      setFolderColors((prev) => {
+        const next = { ...prev };
+        if (previousColor) {
+          next[folderToColor] = previousColor;
+        } else {
+          delete next[folderToColor];
+        }
+        return next;
+      });
+      showToast(t("layout.errColorFolder"), "error");
+    } finally {
+      setSavingFolderColor(false);
     }
   };
 
@@ -907,6 +1156,193 @@ export default function DashboardLayout({
     }
   };
 
+  const toggleFolderExpand = (id: string, e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setExpandedFolders((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const renderFolderItemRow = (item: FolderItem, depth = 0): React.ReactNode => {
+    const children = item.id ? childrenByParentId.get(item.id) || [] : [];
+    const hasChildren = children.length > 0;
+    const isExpanded = expandedFolders.has(item.id);
+    const folder = item.name;
+    const isActiveFolder = pathname === "/captures" && currentFolder === folder;
+    const activeWsRole = workspaces.find((w) => w.id === activeWsId)?.role;
+
+    return (
+      <div key={item.id || item.name} className="flex flex-col">
+        <div
+          draggable={activeWsRole === "owner"}
+          onDragStart={() => setDraggedFolder(folder)}
+          onDragOver={(e) => {
+            if (!draggedFolder) return;
+            e.preventDefault();
+            setDragOverFolder(folder);
+          }}
+          onDragLeave={() => setDragOverFolder((f) => (f === folder ? null : f))}
+          onDrop={(e) => {
+            e.preventDefault();
+            void handleFolderDrop(folder);
+          }}
+          onDragEnd={() => {
+            setDraggedFolder(null);
+            setDragOverFolder(null);
+          }}
+          style={{ paddingLeft: `${4 + depth * 14}px` }}
+          className={`relative w-full flex items-center justify-between gap-1 pr-1 rounded-lg border-l-2 group/folder transition-colors ${
+            isActiveFolder
+              ? "border-[#89BD49] bg-[#89BD49]/10 dark:bg-[#89BD49]/15 font-semibold"
+              : "border-transparent hover:bg-subtle"
+          } ${dragOverFolder === folder && draggedFolder && draggedFolder !== folder ? "ring-2 ring-[#89BD49]" : ""} ${
+            draggedFolder === folder ? "opacity-40" : ""
+          }`}
+        >
+          <div className="flex-1 flex items-center min-w-0">
+            {hasChildren ? (
+              <button
+                type="button"
+                onClick={(e) => toggleFolderExpand(item.id, e)}
+                className="w-4 h-4 shrink-0 flex items-center justify-center text-muted hover:text-foreground mr-0.5 rounded transition-transform"
+                aria-label={isExpanded ? "Collapse folder" : "Expand folder"}
+              >
+                <Icon
+                  icon="lucide:chevron-right"
+                  className={`w-3 h-3 transition-transform ${isExpanded ? "rotate-90" : ""}`}
+                />
+              </button>
+            ) : depth > 0 ? (
+              <span className="w-4 shrink-0 flex items-center justify-center text-muted/50 mr-0.5">
+                <span className="w-1.5 h-1.5 rounded-full bg-border" />
+              </span>
+            ) : null}
+
+            <Link
+              href={`/captures?ws=${activeWsId}&folder=${encodeURIComponent(folder)}`}
+              onClick={() => {
+                setCurrentFolder(folder);
+                setSidebarOpen(false);
+              }}
+              className={`flex-1 flex items-center gap-2 px-1.5 py-2 text-xs truncate ${
+                isActiveFolder
+                  ? "text-[#6B9A35] dark:text-[#A8D666] font-semibold"
+                  : "text-muted hover:text-foreground"
+              }`}
+            >
+              <Icon
+                icon={folderColors[folder] ? "custom:folder-filled" : "lucide:folder"}
+                className={`w-3.5 h-3.5 shrink-0 ${folderColors[folder] ? "" : "text-muted"}`}
+                style={
+                  folderColors[folder]
+                    ? { color: folderColors[folder] }
+                    : undefined
+                }
+              />
+              <span className="truncate">{folder}</span>
+            </Link>
+          </div>
+
+          {/* Folder actions stay behind one menu to keep the sidebar quiet. */}
+          {activeWsRole === "owner" && (
+            <div className="shrink-0 pr-1" data-folder-actions>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  const rect = e.currentTarget.getBoundingClientRect();
+                  const left =
+                    typeof window !== "undefined"
+                      ? Math.max(8, Math.min(rect.right + 4, window.innerWidth - 150))
+                      : rect.right + 4;
+                  const top =
+                    typeof window !== "undefined"
+                      ? Math.min(rect.top, window.innerHeight - 150)
+                      : rect.top;
+                  setFolderMenuPos({ top, left });
+                  setFolderMenuOpen((open) => (open === folder ? null : folder));
+                }}
+                aria-label={`${folder} actions`}
+                className="flex h-6 w-6 items-center justify-center rounded-md text-muted hover:bg-subtle hover:text-foreground transition-colors"
+              >
+                <Icon icon="lucide:more-horizontal" className="w-3.5 h-3.5" aria-hidden="true" />
+              </button>
+              {folderMenuOpen === folder && folderMenuPos && (
+                <div
+                  style={{ top: folderMenuPos.top, left: folderMenuPos.left }}
+                  className="fixed z-50 w-38 overflow-hidden rounded-lg border border-border bg-subtle py-1 text-xs shadow-lg"
+                >
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFolderMenuOpen(null);
+                      handleRenameFolder(folder);
+                    }}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-left text-foreground hover:bg-subtle transition-colors"
+                  >
+                    <Icon icon="lucide:edit-2" className="w-3.5 h-3.5 text-muted shrink-0" />
+                    <span>Rename</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFolderMenuOpen(null);
+                      handleOpenFolderColor(folder);
+                    }}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-left text-foreground hover:bg-subtle transition-colors"
+                  >
+                    <Icon icon="lucide:palette" className="w-3.5 h-3.5 text-muted shrink-0" />
+                    <span>{t("layout.changeColor")}</span>
+                  </button>
+                  {item.id && !item.id.startsWith("extra-") && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFolderMenuOpen(null);
+                        setParentFolderId(item.id);
+                        setCreateFolderError(null);
+                        setNewFolderName("");
+                        setCreateFolderModalOpen(true);
+                      }}
+                      className="flex items-center gap-2 w-full px-3 py-2 text-left text-foreground hover:bg-subtle transition-colors"
+                    >
+                      <Icon icon="lucide:folder-plus" className="w-3.5 h-3.5 text-muted shrink-0" />
+                      <span>{t("layout.addSubfolder")}</span>
+                    </button>
+                  )}
+                  {!defaultFolders.has(folder) && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFolderMenuOpen(null);
+                        handleDeleteFolder(folder);
+                      }}
+                      className="flex items-center gap-2 w-full px-3 py-2 text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
+                    >
+                      <Icon icon="lucide:trash-2" className="w-3.5 h-3.5 shrink-0" />
+                      <span>Delete</span>
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+
+        {hasChildren && isExpanded && (
+          <div className="flex flex-col space-y-0.5">
+            {children.map((child: FolderItem) => renderFolderItemRow(child, depth + 1))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="h-screen bg-background flex flex-col overflow-hidden">
       <a
@@ -943,7 +1379,7 @@ export default function DashboardLayout({
       <header className="lg:hidden shrink-0 border-b border-border bg-subtle flex items-center justify-between px-3 py-1.5">
         <button
           onClick={() => setSidebarOpen(true)}
-          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-muted hover:text-foreground hover:bg-subtle transition-colors touch-manipulation"
+          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-muted hover:text-foreground hover:bg-background transition-colors touch-manipulation"
           aria-label="Open menu"
         >
           <Icon icon="lucide:menu" className="w-5 h-5" />
@@ -958,7 +1394,7 @@ export default function DashboardLayout({
         <button
           data-notif-trigger
           onClick={() => setNotifOpen((o) => !o)}
-          className="relative min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-muted hover:text-foreground hover:bg-subtle transition-colors touch-manipulation"
+          className="relative min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-muted hover:text-foreground hover:bg-background transition-colors touch-manipulation"
           aria-label={t("layout.notifications")}
         >
           <Icon icon="lucide:bell" className="w-4 h-4" />
@@ -1003,7 +1439,7 @@ export default function DashboardLayout({
             <button
               data-notif-trigger
               onClick={() => setNotifOpen((o) => !o)}
-              className="relative p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-subtle transition-colors"
+              className="relative p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-background transition-colors"
               aria-label={t("layout.notifications")}
             >
               <Icon icon="lucide:bell" className="w-4 h-4" />
@@ -1181,7 +1617,7 @@ export default function DashboardLayout({
                             setSidebarOpen(false);
                             router.replace(`${pathname}?ws=${ws.id}`, { scroll: false });
                           }}
-                          className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm text-left transition-colors ${activeWsId === ws.id ? "bg-subtle text-foreground font-semibold" : "text-foreground hover:bg-subtle"}`}
+                          className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm text-left transition-colors ${activeWsId === ws.id ? "bg-background dark:bg-subtle text-foreground font-semibold" : "text-foreground hover:bg-background dark:hover:bg-subtle"}`}
                         >
                           {ws.avatar_url && !failedWsAvatars[ws.id] ? (
                             /* eslint-disable-next-line @next/next/no-img-element */
@@ -1215,21 +1651,29 @@ export default function DashboardLayout({
                   )}
                 </div>
 
-                <Link
-                  href="/admin"
-                  onClick={() => setSidebarOpen(false)}
-                  className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-foreground hover:bg-subtle transition-colors border-t border-border"
-                >
-                  <Icon icon="lucide:shield" className="w-4 h-4 text-purple-500 shrink-0" />
-                  <span>{t("nav.admin")} Console</span>
-                </Link>
+                {isSuperAdmin && (
+                  <Link
+                    href="/admin"
+                    onClick={() => setSidebarOpen(false)}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-foreground hover:bg-subtle transition-colors border-t border-border"
+                  >
+                    <Icon icon="lucide:shield" className="w-4 h-4 text-purple-500 shrink-0" />
+                    <span>{t("nav.admin")} Console</span>
+                  </Link>
+                )}
 
                 <button
                   onClick={async () => {
+                    try {
+                      localStorage.removeItem("BugSnap_notif_last_seen");
+                      localStorage.removeItem("BugSnap_notif_read_ids");
+                      localStorage.removeItem("BugSnap_promo_dismissed");
+                      sessionStorage.removeItem("bs_drive_quota");
+                    } catch {}
                     await supabase.auth.signOut();
-                    router.replace("/");
+                    window.location.assign("/");
                   }}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-subtle transition-colors"
+                  className={`w-full flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-subtle transition-colors ${!isSuperAdmin ? "border-t border-border" : ""}`}
                 >
                   <Icon icon="lucide:log-out" className="w-4 h-4 text-muted shrink-0" />
                   {t("nav.signOut")}
@@ -1282,7 +1726,10 @@ export default function DashboardLayout({
               {activeWsRole === "owner" && (
                 <button
                   type="button"
-                  onClick={() => setCreateFolderModalOpen(true)}
+                  onClick={() => {
+                    setParentFolderId(null);
+                    setCreateFolderModalOpen(true);
+                  }}
                   className="text-[10px] font-bold text-[#6B9A35] dark:text-[#A8D666] hover:underline"
                 >
                   {t("layout.create")}
@@ -1291,108 +1738,17 @@ export default function DashboardLayout({
             </div>
 
             <div className="flex-1 overflow-y-auto space-y-0.5 pr-0.5">
-              {folders.map((folder) => {
-                const isActiveFolder = pathname === "/captures" && currentFolder === folder;
-                const activeWsRole = workspaces.find(w => w.id === activeWsId)?.role;
-                return (
-                  <div
-                    key={folder}
-                    draggable={activeWsRole === "owner"}
-                    onDragStart={() => setDraggedFolder(folder)}
-                    onDragOver={(e) => {
-                      if (!draggedFolder) return;
-                      e.preventDefault();
-                      setDragOverFolder(folder);
-                    }}
-                    onDragLeave={() => setDragOverFolder((f) => (f === folder ? null : f))}
-                    onDrop={(e) => {
-                      e.preventDefault();
-                      void handleFolderDrop(folder);
-                    }}
-                    onDragEnd={() => {
-                      setDraggedFolder(null);
-                      setDragOverFolder(null);
-                    }}
-                    className={`relative w-full flex items-center justify-between gap-1 px-1 rounded-lg border-l-2 group/folder transition-colors ${
-                      isActiveFolder ? "border-[#89BD49] bg-[#89BD49]/10 dark:bg-[#89BD49]/15 font-semibold" : "border-transparent hover:bg-subtle"
-                    } ${dragOverFolder === folder && draggedFolder && draggedFolder !== folder ? "ring-2 ring-[#89BD49]" : ""} ${
-                      draggedFolder === folder ? "opacity-40" : ""
-                    }`}
-                  >
-                    <Link
-                      href={`/captures?ws=${activeWsId}&folder=${encodeURIComponent(folder)}`}
-                      onClick={() => {
-                        setCurrentFolder(folder);
-                        setSidebarOpen(false);
-                      }}
-                      className={`flex-1 flex items-center gap-2.5 px-2 py-2 text-xs truncate ${
-                        isActiveFolder ? "text-[#6B9A35] dark:text-[#A8D666] font-semibold" : "text-muted hover:text-foreground"
-                      }`}
-                    >
-                      <Icon icon="lucide:folder" className="w-3.5 h-3.5 shrink-0 text-muted" />
-                      <span className="truncate">{folder}</span>
-                    </Link>
-
-                    {/* Folder actions stay behind one menu to keep the sidebar quiet. */}
-                    {activeWsRole === "owner" && (
-                      <div className="shrink-0 pr-1" data-folder-actions>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            const rect = e.currentTarget.getBoundingClientRect();
-                            const left = typeof window !== "undefined" ? Math.max(8, Math.min(rect.right + 4, window.innerWidth - 120)) : rect.right + 4;
-                            const top = typeof window !== "undefined" ? Math.min(rect.top, window.innerHeight - 90) : rect.top;
-                            setFolderMenuPos({ top, left });
-                            setFolderMenuOpen((open) => (open === folder ? null : folder));
-                          }}
-                          aria-label={`${folder} actions`}
-                          className="flex h-6 w-6 items-center justify-center rounded-md text-muted hover:bg-subtle hover:text-foreground transition-colors"
-                        >
-                          <Icon icon="lucide:more-horizontal" className="w-3.5 h-3.5" aria-hidden="true" />
-                        </button>
-                        {folderMenuOpen === folder && folderMenuPos && (
-                          <div
-                            style={{ top: folderMenuPos.top, left: folderMenuPos.left }}
-                            className="fixed z-50 w-28 overflow-hidden rounded-lg border border-border bg-subtle py-1 text-xs shadow-lg"
-                          >
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setFolderMenuOpen(null);
-                                  handleRenameFolder(folder);
-                                }}
-                                className="block w-full px-3 py-2 text-left text-foreground hover:bg-subtle"
-                              >
-                                Rename
-                              </button>
-                              {!defaultFolders.has(folder) && (
-                                <button
-                                  type="button"
-                                  onClick={() => {
-                                    setFolderMenuOpen(null);
-                                    handleDeleteFolder(folder);
-                                  }}
-                                  className="block w-full px-3 py-2 text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30"
-                                >
-                                  Delete
-                                </button>
-                              )}
-                            </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+              {rootFolders.map((item: FolderItem) => renderFolderItemRow(item, 0))}
 
               {folders.length === 0 && (
                 <div className="px-3 py-2 text-center rounded-lg border border-dashed border-border/80 mx-1 bg-subtle/30">
                   <p className="text-[10px] text-muted">{t("layout.noFolders")}</p>
                   {activeWsRole === "owner" && (
                     <button
-                      onClick={() => setCreateFolderModalOpen(true)}
+                      onClick={() => {
+                        setParentFolderId(null);
+                        setCreateFolderModalOpen(true);
+                      }}
                       className="text-[10px] font-semibold text-[#6B9A35] dark:text-[#A8D666] hover:underline mt-1"
                     >
                       {t("layout.createFolder")}
@@ -1648,7 +2004,7 @@ export default function DashboardLayout({
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && newFolderName.trim()) {
-                    handleCreateFolder(newFolderName.trim());
+                    handleCreateFolder(newFolderName.trim(), parentFolderId);
                   }
                 }}
               />
@@ -1656,15 +2012,35 @@ export default function DashboardLayout({
                 <p className="text-xs text-red-600 dark:text-red-400 mt-1.5">{createFolderError}</p>
               )}
             </div>
+
+            <div className="mt-4">
+              <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("layout.parentFolder")}</label>
+              <select
+                value={parentFolderId || ""}
+                onChange={(e) => setParentFolderId(e.target.value ? e.target.value : null)}
+                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#89BD49] bg-subtle text-foreground"
+              >
+                <option value="">{t("layout.topLevelFolder")}</option>
+                {folderItems.map((f) => (
+                  <option key={f.id} value={f.id}>
+                    {f.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
             <div className="flex items-center justify-end gap-3 mt-6">
               <button
-                onClick={() => setCreateFolderModalOpen(false)}
+                onClick={() => {
+                  setCreateFolderModalOpen(false);
+                  setParentFolderId(null);
+                }}
                 className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors"
               >
                 {t("common.cancel")}
               </button>
               <button
-                onClick={() => handleCreateFolder(newFolderName.trim())}
+                onClick={() => handleCreateFolder(newFolderName.trim(), parentFolderId)}
                 disabled={!newFolderName.trim() || creatingFolder}
                 className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors shadow-sm shadow-[#89BD49]/25"
               >
@@ -1725,9 +2101,7 @@ export default function DashboardLayout({
           <div className="absolute inset-0 bg-black/40" onClick={() => setDeleteFolderModalOpen(false)} />
           <div className="relative w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6 text-center">
             <div className="mx-auto mb-4 w-12 h-12 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 flex items-center justify-center text-red-600 dark:text-red-400">
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-              </svg>
+              <Icon icon="lucide:trash-2" className="w-6 h-6" aria-hidden="true" />
             </div>
             <h2 className="text-lg font-bold text-foreground mb-2">{t("layout.deleteFolderQ")}</h2>
             <p className="text-xs text-muted leading-relaxed mb-6">
@@ -1747,6 +2121,101 @@ export default function DashboardLayout({
                 className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 disabled:opacity-50 transition-colors"
               >
                 {deletingFolder ? t("layout.deleting") : t("layout.deleteFolderTitle")}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Folder Color Modal (Google Drive Style) */}
+      {folderColorModalOpen && folderToColor && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setFolderColorModalOpen(false)} />
+          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6">
+            <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.folderColor")}</h2>
+            <p className="text-xs text-muted mb-4">
+              {t("layout.folderColorDesc")}
+            </p>
+
+            {/* Folder preview */}
+            <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card mb-4">
+              <Icon
+                icon={selectedFolderColor ? "custom:folder-filled" : "lucide:folder"}
+                className={`w-6 h-6 shrink-0 transition-colors ${selectedFolderColor ? "" : "text-muted"}`}
+                style={
+                  selectedFolderColor
+                    ? { color: selectedFolderColor }
+                    : undefined
+                }
+              />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-foreground truncate">{folderToColor}</p>
+                <p className="text-[11px] text-muted">
+                  {selectedFolderColor
+                    ? (GOOGLE_DRIVE_FOLDER_COLORS.find((c) => c.value.toLowerCase() === selectedFolderColor.toLowerCase())?.name || selectedFolderColor.toUpperCase())
+                    : t("layout.defaultColor")}
+                </p>
+              </div>
+            </div>
+
+            {/* Google Drive Color Grid */}
+            <div className="grid grid-cols-5 gap-2.5 mb-3 justify-items-center">
+              {GOOGLE_DRIVE_FOLDER_COLORS.map((c) => {
+                const isSelected = selectedFolderColor?.toLowerCase() === c.value.toLowerCase();
+                return (
+                  <button
+                    key={c.value}
+                    type="button"
+                    onClick={() => setSelectedFolderColor(c.value)}
+                    title={c.name}
+                    aria-label={c.name}
+                    className={`h-8 w-8 rounded-full flex items-center justify-center transition-all hover:scale-110 focus:outline-none ${
+                      isSelected
+                        ? "ring-2 ring-offset-2 ring-foreground scale-105"
+                        : "hover:ring-1 hover:ring-border"
+                    }`}
+                    style={{ backgroundColor: c.value }}
+                  >
+                    {isSelected && (
+                      <Icon icon="lucide:check" className="w-4 h-4 text-white drop-shadow" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Reset to default color */}
+            <div className="flex items-center justify-between pt-2 mb-5 border-t border-border/60">
+              <button
+                type="button"
+                onClick={() => setSelectedFolderColor(null)}
+                className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors"
+              >
+                <Icon icon="lucide:rotate-ccw" className="w-3.5 h-3.5" />
+                <span>{t("layout.resetColor")}</span>
+              </button>
+              {selectedFolderColor && (
+                <span className="text-[11px] font-mono text-muted uppercase">
+                  {selectedFolderColor}
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setFolderColorModalOpen(false)}
+                className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors"
+              >
+                {t("common.cancel")}
+              </button>
+              <button
+                type="button"
+                onClick={submitFolderColor}
+                disabled={savingFolderColor}
+                className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors shadow-sm shadow-[#89BD49]/25"
+              >
+                {savingFolderColor ? t("layout.saving") : t("layout.saveChanges")}
               </button>
             </div>
           </div>

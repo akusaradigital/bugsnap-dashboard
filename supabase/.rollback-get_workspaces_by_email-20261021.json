@@ -1,0 +1,5 @@
+{
+  "function": "get_workspaces_by_email",
+  "date": "2026-10-21",
+  "pg_get_functiondef": "CREATE OR REPLACE FUNCTION public.get_workspaces_by_email(p_email text)\n RETURNS TABLE(id uuid, name text, role text, is_owner boolean)\n LANGUAGE sql\n STABLE SECURITY DEFINER\n SET search_path TO 'public', 'pg_temp'\nAS $function$\n  SELECT\n    w.id,\n    w.name,\n    wm.role,\n    (wm.role = 'owner') AS is_owner\n  FROM public.workspaces w\n  JOIN public.workspace_members wm ON wm.workspace_id = w.id\n  JOIN public.users u ON u.id = wm.user_id\n  WHERE LOWER(TRIM(u.email)) = LOWER(TRIM(p_email))\n  ORDER BY is_owner DESC, w.created_at ASC;\n$function$\n"
+}

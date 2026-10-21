@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/Toast";
 import { useT } from "@/components/I18nProvider";
 import { Icon } from "@/lib/iconify";
+import { clearAdminCache } from "@/lib/admin-cache";
 import { CommandPalette } from "./CommandPalette";
 import { ADMIN_NAV_ROUTES, ADMIN_NAV_HUBS, ADMIN_NAV_HUB_ORDER } from "./adminNav";
 
@@ -248,7 +249,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       const redirectTo = `${window.location.origin}${pathname}`;
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
-        options: { redirectTo },
+        options: {
+          redirectTo,
+          queryParams: { prompt: "select_account", access_type: "offline" },
+        },
       });
       if (error) throw error;
     } catch (err: unknown) {
@@ -295,6 +299,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   async function handleLogout() {
     setIsAuthenticated(false);
     setProfileOpen(false);
+    clearAdminCache();
     await fetch("/api/admin/logout", { method: "POST" }).catch(() => {});
     await supabase.auth.signOut().catch(() => {});
     showToast(t("admin.lockConsole"), "info");
@@ -431,8 +436,21 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               </div>
 
               {loginError && (
-                <div className="rounded-lg bg-rose-50 dark:bg-rose-950/40 p-2.5 text-xs text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900 leading-snug">
-                  {loginError}
+                <div className="space-y-2">
+                  <div className="rounded-lg bg-rose-50 dark:bg-rose-950/40 p-2.5 text-xs text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-900 leading-snug">
+                    {loginError}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      clearAdminCache();
+                      await supabase.auth.signOut().catch(() => {});
+                      window.location.assign("/admin");
+                    }}
+                    className="text-[11px] text-slate-500 hover:text-slate-800 dark:text-zinc-400 dark:hover:text-zinc-200 underline text-center w-full block cursor-pointer"
+                  >
+                    Sign out / Ganti Akun Google
+                  </button>
                 </div>
               )}
 
@@ -719,7 +737,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
                   <div className="max-h-80 overflow-y-auto divide-y divide-slate-100 dark:divide-zinc-800">
                     {notifications.length === 0 ? (
-                      <div className="p-6 text-center text-xs text-slate-400">
+                      <div className="p-6 text-center text-xs text-slate-500 dark:text-zinc-400">
                         {t("admin.noNotifications")}
                       </div>
                     ) : (
@@ -728,7 +746,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                           key={n.id}
                           href={n.href}
                           onClick={() => setNotifOpen(false)}
-                          className={`block p-3.5 hover:bg-slate-50 dark:hover:bg-zinc-850 transition-colors ${
+                          className={`block p-3.5 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors ${
                             n.unread ? "bg-blue-50/40 dark:bg-blue-950/20" : ""
                           }`}
                         >

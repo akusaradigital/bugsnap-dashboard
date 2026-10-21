@@ -60,5 +60,7 @@ export function clearAdminCache(key?: string): void {
     memoryCache.delete(key);
   } else {
     memoryCache.clear();
+    cachedToken = null;
+    tokenExpiry = 0;
   }
 }

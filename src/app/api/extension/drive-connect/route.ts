@@ -26,6 +26,33 @@ export async function POST(request: Request) {
 
   const action = typeof body.action === "string" ? body.action : "";
 
+  // 0. DISCONNECT / REVOKE FLOW
+  // Invalidates the paired extension secret on the server so old credentials cannot be reused
+  if (action === "disconnect") {
+    const email =
+      typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
+    const secret = typeof body.secret === "string" ? body.secret.trim() : "";
+    if (email && secret) {
+      try {
+        const db = createServiceClient();
+        const { data: conn } = await db
+          .from("google_drive_connections")
+          .select("user_id, extension_secret_hash")
+          .eq("google_email", email)
+          .maybeSingle();
+        if (conn && secretMatches(secret, conn.extension_secret_hash)) {
+          await db
+            .from("google_drive_connections")
+            .update({ extension_secret_hash: null })
+            .eq("user_id", conn.user_id);
+        }
+      } catch (err) {
+        console.warn("[/api/extension/drive-connect] Disconnect revocation error:", err);
+      }
+    }
+    return NextResponse.json({ ok: true, disconnected: true });
+  }
+
   // 1. SILENT BACKGROUND REFRESH (0 popups, uses refresh_token stored in Supabase DB)
   if (action === "refresh") {
     const email =

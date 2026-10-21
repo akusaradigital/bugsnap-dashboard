@@ -334,7 +334,7 @@ export default function AdminRevenuePage() {
           <span className="text-[10px] text-slate-400">$24 / mo</span>
         </div>
         <div className="p-3.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-center">
-          <span className="text-[10px] uppercase font-bold text-amber-500 tracking-wider">Enterprise</span>
+          <span className="text-[10px] uppercase font-bold text-amber-600 dark:text-amber-400 tracking-wider">Enterprise</span>
           <p className="text-xl font-black text-amber-600 dark:text-amber-400 mt-0.5">
             {metrics?.planCounts?.enterprise || 0}
           </p>
@@ -342,7 +342,7 @@ export default function AdminRevenuePage() {
         </div>
         {/* Viral loop attribution */}
         <div className="p-3.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-center">
-          <span className="text-[10px] uppercase font-bold text-emerald-500 tracking-wider">{t("admin.viralSignups")}</span>
+          <span className="text-[10px] uppercase font-bold text-emerald-600 dark:text-emerald-400 tracking-wider">{t("admin.viralSignups")}</span>
           <p className="text-xl font-black text-emerald-600 dark:text-emerald-400 mt-0.5">
             {metrics?.viralSignupsCount || 0}
           </p>
@@ -350,7 +350,7 @@ export default function AdminRevenuePage() {
         </div>
         {/* Extension retention */}
         <div className="p-3.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-center">
-          <span className="text-[10px] uppercase font-bold text-cyan-500 tracking-wider">{t("admin.extRetention")}</span>
+          <span className="text-[10px] uppercase font-bold text-cyan-600 dark:text-cyan-400 tracking-wider">{t("admin.extRetention")}</span>
           <p className="text-xl font-black text-cyan-600 dark:text-cyan-400 mt-0.5">
             {metrics?.extActive7d || 0}
             <span className="text-xs font-normal text-slate-400"> / {metrics?.extActiveTotal || 0}</span>

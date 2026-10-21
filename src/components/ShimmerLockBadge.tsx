@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { Icon } from "@/lib/iconify";
 
 interface ShimmerLockBadgeProps {
   label?: string;
@@ -30,10 +31,7 @@ export function ShimmerLockBadge({
     >
       {/* Subtle shimmer bar */}
       <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/40 dark:via-white/10 to-transparent -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] pointer-events-none" />
-      <svg className="w-2.5 h-2.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-        <path strokeLinecap="round" strokeLinejoin="round" d="M7 11V7a5 5 0 0110 0v4" />
-      </svg>
+      <Icon icon="lucide:lock" className="w-2.5 h-2.5 shrink-0" aria-hidden="true" />
       <span>{label}</span>
     </Tag>
   );

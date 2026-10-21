@@ -604,7 +604,7 @@ export function PricingToggle() {
 
       {/* 6. Whimsical Bottom CTA Banner */}
       <Reveal delay={0.45}>
-        <div className="rounded-2xl border border-site-border bg-site-surface-2/60 p-8 sm:p-12 text-center space-y-4 max-w-4xl mx-auto shadow-xs">
+        <div className="rounded-2xl border border-site-border bg-site-surface-2/60 p-4 sm:p-12 text-center space-y-4 max-w-4xl mx-auto shadow-xs">
           <h3 className="text-xl sm:text-2xl font-extrabold text-site-text tracking-tight">
             {t("pricing.bottomCtaTitle")}
           </h3>

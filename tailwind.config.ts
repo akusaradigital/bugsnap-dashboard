@@ -9,6 +9,9 @@ const config: Config = {
   ],
   theme: {
     extend: {
+      screens: {
+        xs: "440px",
+      },
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
@@ -47,11 +50,16 @@ const config: Config = {
           "0%": { opacity: "0", transform: "translateY(12px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
+        "slide-in-right": {
+          "0%": { opacity: "0", transform: "translateX(12px)" },
+          "100%": { opacity: "1", transform: "translateX(0)" },
+        },
       },
       animation: {
         float: "float 5s ease-in-out infinite",
         "pulse-slow": "pulse-slow 8s ease-in-out infinite",
         "fade-in-up": "fade-in-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards",
+        "slide-in-right": "slide-in-right 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards",
       },
     },
   },

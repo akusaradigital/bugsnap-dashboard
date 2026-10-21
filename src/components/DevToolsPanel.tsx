@@ -16,7 +16,7 @@ import {
   type DevLogSummary,
   type DriveExternalLogReference,
   type NavigationLog,
-  type NetworkKind,
+  type Grouped,
   type NetworkLog,
   type PerformanceLog,
   type ScreenshotLog,
@@ -29,22 +29,27 @@ import {
   conciseConsoleText,
   consoleDetail,
   consoleText,
+  dedupeNetworkLogs,
   getTargetHost,
-  groupBy,
+  groupActionLogs,
+  groupConsoleLogs,
   isConsoleError,
+  isDeadAction,
   isFirstPartyUrl,
   isNetworkFailed,
   isSummary,
   isTracker,
   logCount,
-  NETWORK_KINDS,
   formatBytes,
+  formatFrame,
+  formatFrameDetailed,
+  getTimingBreakdown,
   networkKind,
+  networkKindIcon,
   networkLocation,
   normalizeDevLog,
   normalizeLevel,
   statusLabel,
-  totalLogCount,
 } from "@/lib/devlogs";
 import { buildCurlCommand, buildHarExport, buildMarkdownBugReport } from "@/lib/devlogs-export";
 
@@ -63,7 +68,7 @@ interface Props {
   className?: string;
 }
 
-const TABS = ["Info", "Console", "Network", "Actions", "Storage", "Issues"] as const;
+const TABS = ["Info", "Console", "Network", "Actions", "MCP"] as const;
 type Tab = typeof TABS[number];
 
 // Formats error messages cleanly (e.g. converts "POST\nhttps://..." into structured method + URL badges)
@@ -121,8 +126,8 @@ function HeaderTable({
       </summary>
       <div className="mt-1 rounded-lg border border-border bg-subtle overflow-hidden">
         {entries.map(([name, value]) => (
-          <div key={name} className="flex flex-col sm:flex-row gap-0.5 sm:gap-2 px-2 py-1.5 border-b border-border/40 last:border-b-0">
-            <span className="font-mono text-[10px] font-semibold text-muted break-all sm:w-40 sm:shrink-0">{name}</span>
+          <div key={name} className="flex flex-col gap-0.5 px-2 py-1.5 border-b border-border/40 last:border-b-0">
+            <span className="font-mono text-[10px] font-semibold text-muted break-all">{name}</span>
             <span className="font-mono text-[10px] text-foreground break-all min-w-0 select-all">{value}</span>
           </div>
         ))}
@@ -262,11 +267,14 @@ function ActionBreadcrumb({
   );
 }
 
-type NetRow = { log: NetworkLog & { srcIdx?: number }; count: number };
-type NetDetailTab = "headers" | "request" | "response";
+type NetRow = Grouped<NetworkLog & { srcIdx?: number }>;
+type NetDetailTab = "headers" | "request" | "response" | "timing";
 
-function rowKey(log: NetworkLog) {
-  return `${log.method || "GET"}|${log.status ?? "FAILED"}|${log.url}`;
+/** Identity of one table row. srcIdx is the request's position in the capture:
+ *  method+status+url repeats now that every request gets its own row, so it
+ *  can no longer tell two polls of the same endpoint apart. */
+function rowKey(log: NetworkLog & { srcIdx?: number }) {
+  return `${log.srcIdx ?? "?"}|${log.method || "GET"}|${log.status ?? "FAILED"}|${log.url}`;
 }
 
 /** One request's detail pane: the Headers / Request / Response sub-tabs. */
@@ -297,10 +305,10 @@ function NetworkDetail({
   const isOk = Boolean(log.status && log.status < 300);
   const statusText = log.statusText || statusLabel(t, log.status) || undefined;
   const hasPayload = log.requestBody != null || Boolean(log.responseBody);
-  const TABS: NetDetailTab[] = ["headers", "request", "response"];
+  const TABS: NetDetailTab[] = ["headers", "request", "response", "timing"];
 
   return (
-    <div className="flex flex-col min-h-0 border-t border-border bg-background">
+    <div className="flex flex-col flex-1 min-h-0 overflow-hidden border-t border-border bg-background">
       {/* Sub-tabs + Copy cURL, the row Jam puts at the top of its detail pane */}
       <div className="flex items-center gap-1 px-2 py-1.5 border-b border-border/60 shrink-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {TABS.map((tb) => (
@@ -338,6 +346,10 @@ function NetworkDetail({
         )}
       </div>
 
+      {/* flex-1 + min-h-0 so the body fills the drawer and scrolls only when its
+          content exceeds it. The host is ~252px (flex-1 of the panel), so a long
+          Headers tab must scroll; what was wrong before was a scrollbar over
+          empty space, caused by the drawer not filling its host. */}
       <div className="flex-1 min-h-0 overflow-y-auto p-2.5 space-y-2.5 text-xs">
         {precedingAction && <ActionBreadcrumb action={precedingAction} t={t} />}
 
@@ -350,8 +362,8 @@ function NetworkDetail({
               </div>
               <dl className="divide-y divide-border/40">
                 {log.url && (
-                  <div className="flex flex-col sm:flex-row gap-0.5 sm:gap-3 px-2.5 py-1.5">
-                    <dt className="text-[10px] font-semibold text-muted sm:w-36 sm:shrink-0">{t("dt.requestUrl") || "Request URL"}</dt>
+                  <div className="flex flex-col gap-0.5 px-2.5 py-1.5">
+                    <dt className="text-[10px] font-semibold text-muted">{t("dt.requestUrl") || "Request URL"}</dt>
                     <dd className="min-w-0 flex items-start gap-1.5">
                       <span className="font-mono text-[10px] text-foreground break-all select-all min-w-0">{log.url}</span>
                       <button
@@ -365,12 +377,12 @@ function NetworkDetail({
                     </dd>
                   </div>
                 )}
-                <div className="flex flex-col sm:flex-row gap-0.5 sm:gap-3 px-2.5 py-1.5">
-                  <dt className="text-[10px] font-semibold text-muted sm:w-36 sm:shrink-0">{t("dt.requestMethod") || "Request Method"}</dt>
+                <div className="flex flex-col gap-0.5 px-2.5 py-1.5">
+                  <dt className="text-[10px] font-semibold text-muted">{t("dt.requestMethod") || "Request Method"}</dt>
                   <dd className="font-mono text-[10px] text-foreground">{log.method || "GET"}</dd>
                 </div>
-                <div className="flex flex-col sm:flex-row gap-0.5 sm:gap-3 px-2.5 py-1.5">
-                  <dt className="text-[10px] font-semibold text-muted sm:w-36 sm:shrink-0">{t("dt.statusCode") || "Status Code"}</dt>
+                <div className="flex flex-col gap-0.5 px-2.5 py-1.5">
+                  <dt className="text-[10px] font-semibold text-muted">{t("dt.statusCode") || "Status Code"}</dt>
                   <dd className="flex items-center gap-1.5 font-mono text-[10px]">
                     <span
                       className={`w-1.5 h-1.5 rounded-full shrink-0 ${
@@ -385,34 +397,38 @@ function NetworkDetail({
                   </dd>
                 </div>
                 {log.protocol && (
-                  <div className="flex flex-col sm:flex-row gap-0.5 sm:gap-3 px-2.5 py-1.5">
-                    <dt className="text-[10px] font-semibold text-muted sm:w-36 sm:shrink-0">{t("dt.protocol") || "Protocol"}</dt>
+                  <div className="flex flex-col gap-0.5 px-2.5 py-1.5">
+                    <dt className="text-[10px] font-semibold text-muted">{t("dt.protocol") || "Protocol"}</dt>
                     <dd className="font-mono text-[10px] text-foreground">{log.protocol}</dd>
                   </div>
                 )}
                 {log.size != null && (
-                  <div className="flex flex-col sm:flex-row gap-0.5 sm:gap-3 px-2.5 py-1.5">
-                    <dt className="text-[10px] font-semibold text-muted sm:w-36 sm:shrink-0">{t("dt.size") || "Size"}</dt>
+                  <div className="flex flex-col gap-0.5 px-2.5 py-1.5">
+                    <dt className="text-[10px] font-semibold text-muted">{t("dt.size") || "Size"}</dt>
                     <dd className="font-mono text-[10px] text-foreground tabular-nums" title={`${log.size} bytes`}>{formatBytes(log.size)}</dd>
                   </div>
                 )}
                 {log.duration != null && (
-                  <div className="flex flex-col sm:flex-row gap-0.5 sm:gap-3 px-2.5 py-1.5">
-                    <dt className="text-[10px] font-semibold text-muted sm:w-36 sm:shrink-0">{t("dt.duration")}</dt>
+                  <div className="flex flex-col gap-0.5 px-2.5 py-1.5">
+                    <dt className="text-[10px] font-semibold text-muted">{t("dt.duration")}</dt>
                     <dd className={`font-mono text-[10px] tabular-nums ${log.duration > 1000 ? "text-amber-600 dark:text-amber-400 font-semibold" : "text-foreground"}`}>
                       {log.duration} ms
                     </dd>
                   </div>
                 )}
+                <div className="flex flex-col gap-0.5 px-2.5 py-1.5">
+                  <dt className="text-[10px] font-semibold text-muted">{t("dt.frame") || "Frame"}</dt>
+                  <dd className="font-mono text-[10px] text-foreground">{formatFrameDetailed(log.frameId)}</dd>
+                </div>
                 {count > 1 && (
-                  <div className="flex flex-col sm:flex-row gap-0.5 sm:gap-3 px-2.5 py-1.5">
-                    <dt className="text-[10px] font-semibold text-muted sm:w-36 sm:shrink-0">{t("dt.occurrences") || "Occurrences"}</dt>
+                  <div className="flex flex-col gap-0.5 px-2.5 py-1.5">
+                    <dt className="text-[10px] font-semibold text-muted">{t("dt.occurrences") || "Occurrences"}</dt>
                     <dd className="font-mono text-[10px] text-foreground tabular-nums">×{count}</dd>
                   </div>
                 )}
                 {log.error && (
-                  <div className="flex flex-col sm:flex-row gap-0.5 sm:gap-3 px-2.5 py-1.5">
-                    <dt className="text-[10px] font-semibold text-muted sm:w-36 sm:shrink-0">{t("dt.error")}</dt>
+                  <div className="flex flex-col gap-0.5 px-2.5 py-1.5">
+                    <dt className="text-[10px] font-semibold text-muted">{t("dt.error")}</dt>
                     <dd className="font-mono text-[10px] text-red-600 dark:text-red-400 break-all">{log.error}</dd>
                   </div>
                 )}
@@ -446,6 +462,60 @@ function NetworkDetail({
             </p>
           )
         )}
+
+        {tab === "timing" && (() => {
+          const tb = getTimingBreakdown(log);
+          if (!tb) {
+            return (
+              <p className="px-1 text-[11px] text-muted italic">
+                {t("dt.noTimingData") || "No granular timing breakdown recorded for this request."}
+              </p>
+            );
+          }
+          const total = tb.total || log.duration || 1;
+          const phases = [
+            { key: "dns", label: t("dt.timing.dns") || "DNS Lookup", val: tb.dns, color: "bg-cyan-500" },
+            { key: "connect", label: t("dt.timing.connect") || "Initial Connection", val: tb.connect, color: "bg-blue-500" },
+            { key: "ssl", label: t("dt.timing.ssl") || "SSL Handshake", val: tb.ssl, color: "bg-indigo-500" },
+            { key: "ttfb", label: t("dt.timing.ttfb") || "Waiting (TTFB)", val: tb.ttfb, color: "bg-amber-500" },
+            { key: "download", label: t("dt.timing.download") || "Content Download", val: tb.download, color: "bg-emerald-500" },
+          ].filter((p) => p.val != null && p.val > 0);
+
+          return (
+            <div className="space-y-3">
+              <div className="rounded-lg border border-border p-3 bg-subtle/40 space-y-2">
+                <div className="flex items-center justify-between text-[11px]">
+                  <span className="font-semibold text-foreground">{t("dt.timing.total") || "Total Duration"}</span>
+                  <span className="font-mono font-bold text-foreground tabular-nums">{log.duration ?? total} ms</span>
+                </div>
+                <div className="h-2 rounded-full bg-border/60 overflow-hidden flex w-full">
+                  {phases.map((p) => (
+                    <div
+                      key={p.key}
+                      className={`h-full ${p.color}`}
+                      style={{ width: `${Math.max(2, Math.round(((p.val || 0) / total) * 100))}%` }}
+                      title={`${p.label}: ${p.val} ms`}
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-border overflow-hidden">
+                <dl className="divide-y divide-border/40">
+                  {phases.map((p) => (
+                    <div key={p.key} className="flex items-center justify-between px-2.5 py-1.5">
+                      <dt className="flex items-center gap-2 text-[10px] font-semibold text-muted">
+                        <span className={`w-2 h-2 rounded-full ${p.color}`} aria-hidden="true" />
+                        <span>{p.label}</span>
+                      </dt>
+                      <dd className="font-mono text-[10px] text-foreground tabular-nums">{p.val} ms</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            </div>
+          );
+        })()}
       </div>
     </div>
   );
@@ -489,6 +559,17 @@ function NetworkTable({
   copiedUrl: string | null;
   t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
+  // Esc closes the overlay: it covers the list, so a keyboard user needs a way
+  // back that is not the X button.
+  useEffect(() => {
+    if (!selectedKey) return;
+    const onEsc = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onSelect(null);
+    };
+    window.addEventListener("keydown", onEsc);
+    return () => window.removeEventListener("keydown", onEsc);
+  }, [selectedKey, onSelect]);
+
   const shown = rows.slice(0, limit);
   const selected = selectedKey ? shown.find(({ log }) => rowKey(log) === selectedKey) : undefined;
   // The longest duration sets the waterfall scale, so the bars stay comparable
@@ -496,18 +577,28 @@ function NetworkTable({
   const maxDuration = Math.max(1, ...shown.map(({ log }) => log.duration || 0));
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col">
-      <div className={`min-h-0 overflow-auto ${selected ? "max-h-[45%] shrink-0" : "flex-1"}`}>
-        <table className="w-full border-collapse text-[11px]">
+    // The detail pane is an overlay, not a split: the request list stays put
+    // behind it, so closing the pane does not reflow the rows you were reading.
+    // The table stays in normal flow - the panel is sized by max-height, so an
+    // absolutely-positioned table would leave flex-1 with nothing to measure
+    // and collapse the whole area to zero height.
+    <div className="flex-1 min-h-0 relative flex flex-col">
+      <div className="flex-1 min-h-0 overflow-auto">
+        <table className="w-full min-w-0 md:min-w-[46rem] border-collapse text-[11px]">
           <thead className="sticky top-0 z-10 bg-subtle">
             <tr className="text-left text-[10px] font-semibold uppercase tracking-wider text-muted">
-              <th scope="col" className="px-2 py-1.5 font-semibold border-b border-border">{t("dt.col.name") || "Name"}</th>
-              <th scope="col" className="px-2 py-1.5 font-semibold border-b border-border w-16 hidden sm:table-cell">{t("dt.col.method") || "Method"}</th>
+              {/* Row number: Jam numbers its rows, and it is the only stable way to
+                  refer to one request among repeated polls of the same endpoint. */}
+              <th scope="col" className="hidden sm:table-cell px-1.5 py-1.5 font-semibold border-b border-border w-9 text-right tabular-nums">#</th>
+              <th scope="col" className="px-2 py-1.5 font-semibold border-b border-border min-w-0">{t("dt.col.name") || "Name"}</th>
+              <th scope="col" className="hidden md:table-cell px-2 py-1.5 font-semibold border-b border-border w-16">{t("dt.col.method") || "Method"}</th>
               <th scope="col" className="px-2 py-1.5 font-semibold border-b border-border w-14">{t("dt.col.status") || "Status"}</th>
-              <th scope="col" className="px-2 py-1.5 font-semibold border-b border-border w-20 hidden lg:table-cell">{t("dt.col.type") || "Type"}</th>
-              <th scope="col" className="px-2 py-1.5 font-semibold border-b border-border w-20 text-right hidden sm:table-cell">{t("dt.col.size") || "Size"}</th>
+              <th scope="col" className="hidden lg:table-cell px-2 py-1.5 font-semibold border-b border-border w-28">{t("dt.col.domain") || "Domain"}</th>
+              <th scope="col" className="hidden sm:table-cell px-2 py-1.5 font-semibold border-b border-border w-20">{t("dt.col.type") || "Type"}</th>
+              <th scope="col" className="hidden sm:table-cell px-2 py-1.5 font-semibold border-b border-border w-20 text-right">{t("dt.col.size") || "Size"}</th>
               <th scope="col" className="px-2 py-1.5 font-semibold border-b border-border w-20 text-right">{t("dt.col.time") || "Time"}</th>
-              <th scope="col" className="px-2 py-1.5 font-semibold border-b border-border w-24 hidden xl:table-cell">{t("dt.col.waterfall") || "Waterfall"}</th>
+              <th scope="col" className="hidden md:table-cell px-2 py-1.5 font-semibold border-b border-border w-14">{t("dt.col.frame") || "Frame"}</th>
+              <th scope="col" className="hidden sm:table-cell px-2 py-1.5 font-semibold border-b border-border w-24">{t("dt.col.waterfall") || "Waterfall"}</th>
             </tr>
           </thead>
           <tbody>
@@ -534,7 +625,7 @@ function NetworkTable({
                       onSelect(isSelected ? null : key);
                     }
                   }}
-                  className={`cursor-pointer border-b border-border/40 transition-colors ${
+                  className={`h-7 cursor-pointer border-b border-border/40 transition-colors ${
                     isSelected
                       ? "bg-[#89BD49]/15 dark:bg-[#89BD49]/20"
                       : atPlayhead
@@ -546,7 +637,10 @@ function NetworkTable({
                       : "hover:bg-subtle/50"
                   }`}
                 >
-                  <td className="px-2 py-1.5 min-w-0 max-w-0">
+                  <td className="hidden sm:table-cell px-1.5 py-1 h-7 text-right align-middle font-mono text-[10px] text-muted tabular-nums select-none">
+                    {idx + 1}
+                  </td>
+                  <td className="px-2 py-1 h-7 align-middle min-w-0 sm:w-[11rem]">
                     <div className="flex items-center gap-1.5 min-w-0">
                       {partyIsMixed && (
                         <span
@@ -555,17 +649,19 @@ function NetworkTable({
                           aria-hidden="true"
                         />
                       )}
-                      <div className="min-w-0 flex-1">
-                        <p className="truncate font-medium text-foreground" title={log.url}>{name}</p>
-                        <p className="truncate text-[10px] text-muted" title={domain}>{domain}</p>
-                      </div>
+                      <Icon
+                        icon={networkKindIcon(kind)}
+                        className="w-3.5 h-3.5 shrink-0 text-muted"
+                        aria-hidden="true"
+                      />
+                      <span className="truncate font-medium text-foreground min-w-0 flex-1" title={log.url}>{name}</span>
                       {count > 1 && (
                         <span className="shrink-0 px-1 rounded bg-subtle border border-border text-[9px] font-bold text-muted tabular-nums">×{count}</span>
                       )}
                     </div>
                   </td>
-                  <td className="px-2 py-1.5 font-mono text-[10px] text-muted hidden sm:table-cell">{log.method || "GET"}</td>
-                  <td className="px-2 py-1.5">
+                  <td className="hidden md:table-cell px-2 py-1 h-7 align-middle whitespace-nowrap font-mono text-[10px] text-muted">{log.method || "GET"}</td>
+                  <td className="px-2 py-1 h-7 align-middle whitespace-nowrap">
                     <span
                       className={`font-mono text-[10px] font-bold ${
                         isFailed ? "text-red-600 dark:text-red-400" : isOk ? "text-emerald-600 dark:text-emerald-400" : "text-amber-600 dark:text-amber-400"
@@ -574,22 +670,65 @@ function NetworkTable({
                       {log.status || "FAIL"}
                     </span>
                   </td>
-                  <td className="px-2 py-1.5 font-mono text-[10px] text-muted hidden lg:table-cell">{t(`dt.kind.${kind}`) || kind}</td>
-                  <td className="px-2 py-1.5 font-mono text-[10px] text-muted text-right tabular-nums hidden sm:table-cell" title={log.size != null ? `${log.size} bytes` : undefined}>
+                  <td className="hidden lg:table-cell px-2 py-1 h-7 align-middle min-w-0 w-[9rem]">
+                    <span className="block truncate font-mono text-[10px] text-muted" title={domain}>{domain}</span>
+                  </td>
+                  <td className="hidden sm:table-cell px-2 py-1 h-7 align-middle whitespace-nowrap font-mono text-[10px] text-muted">{t(`dt.kind.${kind}`) || kind}</td>
+                  <td className="hidden sm:table-cell px-2 py-1 h-7 align-middle whitespace-nowrap font-mono text-[10px] text-muted text-right tabular-nums" title={log.size != null ? `${log.size} bytes` : undefined}>
                     {formatBytes(log.size)}
                   </td>
-                  <td className={`px-2 py-1.5 font-mono text-[10px] text-right tabular-nums ${log.duration && log.duration > 1000 ? "text-amber-600 dark:text-amber-400 font-semibold" : "text-muted"}`}>
-                    {log.duration != null ? `${log.duration} ms` : "-"}
+                  <td className={`px-2 py-1 h-7 align-middle whitespace-nowrap font-mono text-[10px] text-right tabular-nums ${log.duration && log.duration > 1000 ? "text-amber-600 dark:text-amber-400 font-semibold" : "text-muted"}`}>
+                    {/* A cache hit has no transfer time; printing "0 ms" reads as a
+                        suspiciously fast request rather than as no request at all. */}
+                    {log.fromCache
+                      ? (t("dt.cached") || "(Cached)")
+                      : log.duration != null
+                      ? `${log.duration} ms`
+                      : "-"}
                   </td>
-                  <td className="px-2 py-1.5 hidden xl:table-cell">
-                    {/* Relative duration only: the capture has no connection-phase
-                        timings, so this is a bar, not a real waterfall offset. */}
-                    <div className="h-1.5 rounded-full bg-border/60 overflow-hidden" title={log.duration != null ? `${log.duration} ms` : undefined}>
-                      <div
-                        className={`h-full rounded-full ${isFailed ? "bg-red-400" : log.duration && log.duration > 1000 ? "bg-amber-400" : "bg-[#89BD49]"}`}
-                        style={{ width: `${Math.max(2, Math.round(((log.duration || 0) / maxDuration) * 100))}%` }}
-                      />
-                    </div>
+                  <td className="hidden md:table-cell px-2 py-1 h-7 align-middle whitespace-nowrap font-mono text-[10px] text-muted">
+                    {formatFrame(log.frameId)}
+                  </td>
+                  <td className="hidden sm:table-cell px-2 py-1 h-7 align-middle whitespace-nowrap">
+                    {(() => {
+                      const tb = getTimingBreakdown(log);
+                      const total = log.duration || 0;
+                      if (tb && (tb.dns != null || tb.connect != null || tb.ttfb != null)) {
+                        const phases = [
+                          { k: "dns", v: tb.dns, c: "bg-cyan-500", l: "DNS" },
+                          { k: "connect", v: tb.connect, c: "bg-blue-500", l: "Connect" },
+                          { k: "ssl", v: tb.ssl, c: "bg-indigo-500", l: "SSL" },
+                          { k: "ttfb", v: tb.ttfb, c: isFailed ? "bg-red-500" : "bg-amber-500", l: "TTFB" },
+                          { k: "dl", v: tb.download, c: "bg-emerald-500", l: "Download" },
+                        ].filter((p) => p.v != null && p.v > 0);
+
+                        const tooltip = phases.map((p) => `${p.l}: ${p.v}ms`).join(" • ") + (total > 0 ? ` (Total: ${total}ms)` : "");
+                        const barWidth = Math.min(100, Math.max(4, Math.round(((total || 1) / maxDuration) * 100)));
+
+                        return (
+                          <div className="h-1.5 rounded-full bg-border/60 overflow-hidden" title={tooltip}>
+                            <div className="h-full flex" style={{ width: `${barWidth}%` }}>
+                              {phases.map((p) => (
+                                <div
+                                  key={p.k}
+                                  className={`h-full ${p.c}`}
+                                  style={{ width: `${Math.max(4, Math.round(((p.v || 0) / (total || 1)) * 100))}%` }}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      }
+
+                      return (
+                        <div className="h-1.5 rounded-full bg-border/60 overflow-hidden" title={log.duration != null ? `${log.duration} ms` : undefined}>
+                          <div
+                            className={`h-full rounded-full ${isFailed ? "bg-red-400" : log.duration && log.duration > 1000 ? "bg-amber-400" : "bg-[#89BD49]"}`}
+                            style={{ width: `${Math.min(100, Math.max(2, Math.round(((log.duration || 0) / maxDuration) * 100)))}%` }}
+                          />
+                        </div>
+                      );
+                    })()}
                   </td>
                 </tr>
               );
@@ -608,8 +747,17 @@ function NetworkTable({
       </div>
 
       {selected && (
-        <div className="flex-1 min-h-0 flex flex-col">
-          <div className="flex items-center justify-between gap-2 px-2.5 py-1 bg-subtle border-t border-border shrink-0">
+        <div
+          role="dialog"
+          aria-label={t("dt.detail.headers") || "Request details"}
+          /* Covers the table. The panel is only ~440px wide on the capture page,
+             so insetting the drawer to keep a row strip visible left ~288px for
+             URLs and headers - they shredded one character per line.
+             Top-anchored and content-sized, not inset-0: a two-line Headers tab
+             used to stretch to the full panel height and scroll over nothing. */
+          className="absolute inset-0 flex flex-col bg-background shadow-2xl motion-safe:animate-slide-in-right z-20"
+        >
+          <div className="flex items-center justify-between gap-2 px-2.5 py-1 bg-subtle border-b border-border shrink-0">
             <span className="truncate font-mono text-[10px] text-muted min-w-0" title={selected.log.url}>
               {selected.log.url}
             </span>
@@ -645,14 +793,162 @@ function NetworkTable({
   );
 }
 
+function McpTabPanel({
+  capture,
+  consoleErrors,
+  networkFailures,
+  t,
+}: {
+  capture: CaptureMeta;
+  consoleErrors: ConsoleLog[];
+  networkFailures: NetworkLog[];
+  t: (key: string, vars?: Record<string, string | number>) => string;
+}) {
+  const [copiedPrompt, setCopiedPrompt] = useState(false);
+  const [copiedCmd, setCopiedCmd] = useState<string | null>(null);
+
+  const captureId = capture.id || (typeof window !== "undefined" ? window.location.pathname.split("/").filter(Boolean).pop() : "") || "capture-id";
+  const shareUrl = typeof window !== "undefined"
+    ? `${window.location.origin}/v/${captureId}`
+    : `https://bugsnap.akusaraproject.my.id/v/${captureId}`;
+
+  const promptText = `Fix this BugSnap issue: ${capture.title || "Bug Report"}
+Capture URL: ${shareUrl}
+Description: ${capture.description || "No description provided"}
+Environment: ${capture.browser || "Browser"} / ${capture.os || "OS"} / ${capture.window_size || "Screen"}
+Errors detected: ${consoleErrors.length} console error(s), ${networkFailures.length} failed network request(s).
+
+Please inspect the capture details via BugSnap MCP or the link above and propose a fix.`;
+
+  const claudeCodeCmd = `claude mcp add --scope user -e BUGSNAP_API_KEY=YOUR_KEY --transport stdio bugsnap -- npx -y bugsnap-mcp`;
+
+  const claudeDesktopConfig = `{
+  "mcpServers": {
+    "bugsnap": {
+      "command": "npx",
+      "args": ["-y", "bugsnap-mcp"],
+      "env": { "BUGSNAP_API_KEY": "YOUR_KEY" }
+    }
+  }
+}`;
+
+  const handleCopyPrompt = () => {
+    try {
+      navigator.clipboard.writeText(promptText);
+      setCopiedPrompt(true);
+      setTimeout(() => setCopiedPrompt(false), 2000);
+    } catch {}
+  };
+
+  const handleCopyCmd = (text: string, id: string) => {
+    try {
+      navigator.clipboard.writeText(text);
+      setCopiedCmd(id);
+      setTimeout(() => setCopiedCmd(null), 2000);
+    } catch {}
+  };
+
+  return (
+    <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-5 text-xs">
+      <div className="rounded-xl border border-border bg-[#89BD49]/10 dark:bg-[#89BD49]/15 p-4 sm:p-5 space-y-2">
+        <div className="flex items-center gap-2">
+          <span className="px-2 py-0.5 rounded bg-[#89BD49] text-white font-mono text-[10px] font-bold">MCP</span>
+          <h3 className="text-sm font-bold text-foreground">
+            {t("dt.mcp.title") || "Fix with AI Coding Agents (BugSnap MCP)"}
+          </h3>
+        </div>
+        <p className="text-muted leading-relaxed text-[11px]">
+          {t("dt.mcp.desc") || "Give Claude Code, Cursor, Windsurf, or Claude Desktop direct context to fix this bug report without manual copy-pasting."}
+        </p>
+      </div>
+
+      <div className="rounded-xl border border-border bg-subtle/80 p-4 space-y-3">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 font-semibold text-foreground text-xs">
+            <Icon icon="lucide:sparkles" className="w-4 h-4 text-[#6B9A35] dark:text-[#A8D666]" />
+            <span>{t("dt.mcp.promptTitle") || "Prompt for AI Assistant"}</span>
+          </div>
+          <button
+            type="button"
+            onClick={handleCopyPrompt}
+            className="px-3 py-1.5 rounded-md text-xs font-semibold bg-[#89BD49] hover:bg-[#7BAA3F] text-white transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+          >
+            <Icon icon={copiedPrompt ? "lucide:check" : "lucide:copy"} className="w-3.5 h-3.5" />
+            <span>{copiedPrompt ? (t("dt.mcp.promptCopied") || "Prompt Copied!") : (t("dt.mcp.copyPrompt") || "Copy AI Prompt")}</span>
+          </button>
+        </div>
+        <pre className="p-3 rounded-lg bg-subtle text-foreground border border-border font-mono text-[11px] leading-relaxed whitespace-pre-wrap select-all overflow-x-auto">
+          {promptText}
+        </pre>
+      </div>
+
+      <div className="rounded-xl border border-border bg-subtle/80 p-4 space-y-3">
+        <div className="flex items-center gap-1.5 font-semibold text-foreground text-xs">
+          <Icon icon="lucide:terminal" className="w-4 h-4 text-[#89BD49]" />
+          <span>{t("dt.mcp.setupTitle") || "Connect BugSnap MCP Server"}</span>
+        </div>
+
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-[11px] font-medium text-muted">
+            <span>Claude Code CLI</span>
+            <button
+              type="button"
+              onClick={() => handleCopyCmd(claudeCodeCmd, "claude-code")}
+              className="text-[10px] text-[#6B9A35] dark:text-[#A8D666] hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              <Icon icon={copiedCmd === "claude-code" ? "lucide:check" : "lucide:copy"} className="w-3 h-3" />
+              <span>{copiedCmd === "claude-code" ? "Copied" : "Copy"}</span>
+            </button>
+          </div>
+          <pre className="p-2.5 rounded bg-subtle text-foreground border border-border font-mono text-[10px] whitespace-pre-wrap break-all select-all">
+            {claudeCodeCmd}
+          </pre>
+        </div>
+
+        <div className="space-y-2 pt-1">
+          <div className="flex items-center justify-between text-[11px] font-medium text-muted">
+            <span>Cursor / Claude Desktop JSON</span>
+            <button
+              type="button"
+              onClick={() => handleCopyCmd(claudeDesktopConfig, "claude-desktop")}
+              className="text-[10px] text-[#6B9A35] dark:text-[#A8D666] hover:underline flex items-center gap-1 cursor-pointer"
+            >
+              <Icon icon={copiedCmd === "claude-desktop" ? "lucide:check" : "lucide:copy"} className="w-3 h-3" />
+              <span>{copiedCmd === "claude-desktop" ? "Copied" : "Copy"}</span>
+            </button>
+          </div>
+          <pre className="p-2.5 rounded bg-subtle text-foreground border border-border font-mono text-[10px] whitespace-pre-wrap break-all select-all">
+            {claudeDesktopConfig}
+          </pre>
+        </div>
+
+        <div className="pt-2 flex flex-wrap items-center gap-4 text-[11px]">
+          <span className="text-muted">
+            {t("dt.mcp.apiKeyHint") || "Need an API key? Generate one in"}{" "}
+            <a href="/settings?tab=integrations#bugsnap-api-keys" className="font-semibold text-[#6B9A35] dark:text-[#A8D666] hover:underline">
+              {t("dt.mcp.settingsLink") || "Settings → BugSnap API Keys"}
+            </a>
+          </span>
+          <a
+            href="/docs/mcp"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[#6B9A35] dark:text-[#A8D666] font-semibold hover:underline flex items-center gap-1 ml-auto"
+          >
+            <span>{t("dt.mcp.docsLink") || "View Full MCP Tutorial"}</span>
+            <Icon icon="lucide:external-link" className="w-3 h-3" />
+          </a>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function DevToolsPanel({ capture, currentTime, onSeekToTime, unlockPassword = null, className }: Props) {
   const { t } = useT();
   const [activeTab, setActiveTab] = useState<Tab>("Info");
   const [consoleErrorsOnly, setConsoleErrorsOnly] = useState(false);
   const [networkStatusFilter, setNetworkStatusFilter] = useState<"all" | "4xx" | "5xx" | "failed">("all");
-  const [networkPartyFilter, setNetworkPartyFilter] = useState<"all" | "1st" | "3rd">("all");
-  const [networkSlowOnly, setNetworkSlowOnly] = useState(false);
-  const [networkKindFilter, setNetworkKindFilter] = useState<"all" | NetworkKind>("all");
   // Which request the detail pane is showing, and which of its sub-tabs.
   const [selectedNetworkKey, setSelectedNetworkKey] = useState<string | null>(null);
   const [netDetailTab, setNetDetailTab] = useState<NetDetailTab>("headers");
@@ -668,9 +964,6 @@ export default function DevToolsPanel({ capture, currentTime, onSeekToTime, unlo
     setLogSearch("");
     setConsoleErrorsOnly(false);
     setNetworkStatusFilter("all");
-    setNetworkPartyFilter("all");
-    setNetworkSlowOnly(false);
-    setNetworkKindFilter("all");
     setSelectedNetworkKey(null);
     setConsoleLevelFilter("all");
     setActionKindFilter("all");
@@ -993,9 +1286,11 @@ ${stack}` : body);
 
   const allNetworkLogs = useMemo(
     () =>
-      logs
-        .map((l, srcIdx) => (l.type === "network" ? { ...l, srcIdx } : null))
-        .filter((l): l is NetworkLog & { srcIdx: number } => l !== null && !isTracker(l.url)),
+      dedupeNetworkLogs(
+        logs
+          .map((l, srcIdx) => (l.type === "network" ? { ...l, srcIdx } : null))
+          .filter((l): l is NetworkLog & { srcIdx: number } => l !== null && !isTracker(l.url))
+      ),
     [logs]
   );
   const networkLogs = useMemo(
@@ -1005,14 +1300,15 @@ ${stack}` : body);
 
   const eventTime = (log: TimedLog) => log.time || log.timestamp || "";
 
-  const allConsoleLogs = useMemo<(ConsoleLog | NavigationLog | ScreenshotLog)[]>(
+  const allConsoleLogs = useMemo<(ConsoleLog & { srcIdx: number; count: number })[]>(
     () =>
-      logs
-        .map((log, srcIdx) => ({ log, srcIdx }))
-        .filter((e): e is { log: ConsoleLog | NavigationLog | ScreenshotLog; srcIdx: number } =>
-          e.log.type === "console" || e.log.type === "navigation" || e.log.type === "screenshot")
-        .filter(({ log }) => !isTracker(consoleDetail(log)) && !("url" in log && isTracker(log.url)))
-        .map(({ log, srcIdx }) => ({ ...log, srcIdx })),
+      groupConsoleLogs(
+        logs
+          .map((log, srcIdx) => ({ log, srcIdx }))
+          .filter((e): e is { log: ConsoleLog; srcIdx: number } => e.log.type === "console")
+          .filter(({ log }) => !isTracker(consoleDetail(log)))
+          .map(({ log, srcIdx }) => ({ ...log, srcIdx, count: logCount(log) }))
+      ),
     [logs]
   );
   const consoleLogs = useMemo(
@@ -1022,11 +1318,14 @@ ${stack}` : body);
 
   const allActionLogs = useMemo(
     () =>
-      logs
-        .map((log, srcIdx) => ({ log, srcIdx }))
-        .filter((e): e is { log: ActionLog | NavigationLog | ScreenshotLog; srcIdx: number } =>
-          e.log.type === "step" || e.log.type === "navigation" || e.log.type === "screenshot")
-        .map(({ log, srcIdx }) => ({ ...log, srcIdx, message: cleanActionMessage(log.message) })),
+      groupActionLogs(
+        logs
+          .map((log, srcIdx) => ({ log, srcIdx }))
+          .filter((e): e is { log: ActionLog | NavigationLog | ScreenshotLog; srcIdx: number } =>
+            e.log.type === "step" || e.log.type === "navigation" || e.log.type === "screenshot")
+          .filter(({ log }) => !isDeadAction(log))
+          .map(({ log, srcIdx }) => ({ ...log, srcIdx, message: cleanActionMessage(log.message), count: logCount(log) }))
+      ),
     [logs]
   );
   const actionLogs = useMemo(
@@ -1048,13 +1347,14 @@ ${stack}` : body);
     return counts;
   }, [allActionLogs]);
 
+  // One row per captured request, in capture order - what Jam shows: its own
+  // panel lists /notifications four times within rows 1-10. Grouping repeats
+  // into one row with a count chip discards each attempt's own status and
+  // timing, which is what you read when a retry succeeded and the first did
+  // not. Same-millisecond double-reports from the two capture sources are
+  // already collapsed upstream in insertDevLog, so these rows are real.
   const groupedNetworkLogs = useMemo(
-    () =>
-      groupBy(
-        networkLogs,
-        (log) => `${(log.method || "GET").toUpperCase()}\u0000${log.status ?? "FAILED"}\u0000${canonicalUrl(log.url)}`,
-        (log) => ({ ...log, url: canonicalUrl(log.url) })  // srcIdx rides along in the spread
-      ),
+    () => networkLogs.map((log) => ({ log: { ...log, url: canonicalUrl(log.url) }, count: logCount(log) })),
     [networkLogs]
   );
 
@@ -1063,44 +1363,20 @@ ${stack}` : body);
     [logs]
   );
   const metrics = performanceLog?.metrics;
-  const hasSpaWarning = Boolean(
-    metrics?.spaHealth?.isBloated ||
-    metrics?.spaHealth?.isMemoryLeakSuspected ||
-    (metrics?.domNodes && metrics.domNodes > 3000)
-  );
 
   const consoleErrors = useMemo(
-    () => consoleLogs.filter((l): l is ConsoleLog => l.type === "console" && isConsoleError(l)),
+    () => consoleLogs.filter((l) => isConsoleError(l)),
     [consoleLogs]
   );
   const networkErrors = useMemo(() => networkLogs.filter(isNetworkFailed), [networkLogs]);
-  const totalIssuesCount = (summary
-    ? (summary.errors || 0) + (summary.failedRequests || 0)
-    : consoleErrors.length + networkErrors.length) + (hasSpaWarning ? 1 : 0);
-
-  type IssueItem = {
-    id: string;
-    type: "console" | "network";
-    log: ConsoleLog | NetworkLog;
-  };
-
-  const issueItems: IssueItem[] = useMemo(
-    () => [
-      ...consoleErrors.map((log, i) => ({ id: `err_c_${i}`, type: "console" as const, log })),
-      ...networkErrors.map((log, i) => ({ id: `err_n_${i}`, type: "network" as const, log })),
-    ],
-    [consoleErrors, networkErrors]
-  );
 
   const visibleConsoleLogs = useMemo(
     () => {
       const base = consoleErrorsOnly
-        ? consoleLogs.filter((l) => l.type === "console" && isConsoleError(l))
+        ? consoleLogs.filter((l) => isConsoleError(l))
         : consoleLogs;
       if (consoleLevelFilter === "all") return base;
-      // navigation/screenshot rows are not console levels; a level filter is a
-      // statement about console output, so they drop out of a narrowed view.
-      return base.filter((l) => l.type === "console" && normalizeLevel(l.level) === consoleLevelFilter);
+      return base.filter((l) => normalizeLevel(l.level) === consoleLevelFilter);
     },
     [consoleLogs, consoleErrorsOnly, consoleLevelFilter]
   );
@@ -1119,37 +1395,14 @@ ${stack}` : body);
     () =>
       groupedNetworkLogs
         .filter(({ log }) => {
-          if (networkSlowOnly && (!log.duration || log.duration <= 1000)) return false;
           if (networkStatusFilter === "all") return true;
           const status = log.status ?? 0;
           if (networkStatusFilter === "4xx") return status >= 400 && status < 500;
           if (networkStatusFilter === "5xx") return status >= 500;
           if (networkStatusFilter === "failed") return isNetworkFailed(log) && status < 400;
           return true;
-        })
-        .filter(({ log }) => {
-          if (networkPartyFilter === "all" || !targetHost) return true;
-          const is1st = isFirstPartyUrl(log.url, targetHost);
-          return networkPartyFilter === "1st" ? is1st : !is1st;
-        })
-        .filter(({ log }) => networkKindFilter === "all" || networkKind(log) === networkKindFilter),
-    [groupedNetworkLogs, networkSlowOnly, networkStatusFilter, networkPartyFilter, networkKindFilter, targetHost]
-  );
-
-  // Only show a chip for a bucket the capture actually has - a zero chip is a
-  // dead control. Counted before the search filter, like the tab badges.
-  const networkKindCounts = useMemo(() => {
-    const counts = new Map<NetworkKind, number>();
-    allNetworkLogs.forEach((l) => {
-      const k = networkKind(l);
-      counts.set(k, (counts.get(k) || 0) + 1);
-    });
-    return counts;
-  }, [allNetworkLogs]);
-
-  const countSlow = useMemo(
-    () => networkLogs.filter((l) => Boolean(l.duration && l.duration > 1000)).length,
-    [networkLogs]
+        }),
+    [groupedNetworkLogs, networkStatusFilter]
   );
 
   const count4xx = useMemo(
@@ -1180,9 +1433,6 @@ ${stack}` : body);
 
   const storageLog = logs.findLast((l): l is StorageLog => l.type === "storage");
   const storageData = storageLog?.storage;
-  const [storageType, setStorageType] = useState<"local" | "session">("local");
-  const [copiedStorageKey, setCopiedStorageKey] = useState<string | null>(null);
-  const [copiedAllStorage, setCopiedAllStorage] = useState(false);
   const [copiedBugReport, setCopiedBugReport] = useState(false);
 
   // <details> closes itself on the summary, but not on a click elsewhere. One
@@ -1336,11 +1586,11 @@ ${stack}` : body);
   // in Console also shrank the Network and Actions badges, while Storage - which
   // is filtered elsewhere - never shrank at all.
   const tabCount = (tab: Tab): number => {
-    if (tab === "Issues") return totalIssuesCount;
-    if (tab === "Console") return totalLogCount(allConsoleLogs);
-    if (tab === "Network") return totalLogCount(allNetworkLogs);
-    if (tab === "Actions") return totalLogCount(allActionLogs);
-    if (tab === "Storage") return Object.keys(storageData?.localStorage || {}).length + Object.keys(storageData?.sessionStorage || {}).length;
+    if (tab === "Console") return allConsoleLogs.length;
+    // Rows, which now equal captured requests - the badge and the table cannot
+    // disagree because they count the same list.
+    if (tab === "Network") return allNetworkLogs.length;
+    if (tab === "Actions") return allActionLogs.length;
     return 0;
   };
 
@@ -1362,8 +1612,7 @@ ${stack}` : body);
   };
 
   const tabName = (tab: Tab) => {
-    if (tab === "Issues") return t("dt.issues") || "Issues";
-    if (tab === "Storage") return t("dt.storage") || "Storage";
+    if (tab === "MCP") return t("dt.tab.mcp") || "MCP";
     return t(`dt.${tab.toLowerCase()}`);
   };
 
@@ -1378,13 +1627,13 @@ ${stack}` : body);
       : [
           { key: "errors", label: t("dt.errors") || "Errors", n: consoleErrors.length },
           { key: "failed", label: t("dt.failedReq") || "Failed requests", n: networkErrors.length },
-          { key: "console", label: tabName("Console"), n: totalLogCount(consoleLogs) },
-          { key: "network", label: tabName("Network"), n: totalLogCount(networkLogs) },
-          { key: "actions", label: tabName("Actions"), n: totalLogCount(actionLogs) },
+          { key: "console", label: tabName("Console"), n: consoleLogs.length },
+          { key: "network", label: tabName("Network"), n: networkLogs.length },
+          { key: "actions", label: tabName("Actions"), n: actionLogs.length },
         ];
     const total = summary
       ? rows.reduce((sum, r) => sum + r.n, 0)
-      : totalLogCount(consoleLogs) + totalLogCount(networkLogs) + totalLogCount(actionLogs);
+      : consoleLogs.length + networkLogs.length + actionLogs.length;
     const label = summary && total === 0 ? t("dt.clean", { n: 0 }) : t("dt.events", { n: total });
     return { label, rows };
   })();
@@ -1406,7 +1655,7 @@ ${stack}` : body);
   };
 
   return (
-    <div className={`w-full rounded-xl border border-border bg-white shadow-sm dark:bg-background flex flex-col shrink-0 max-h-[520px] sm:max-h-[600px] xl:max-h-[calc(100vh-16rem)] overflow-hidden ${className || ""}`}>
+    <div className={`w-full rounded-xl border border-border bg-white shadow-sm dark:bg-background flex flex-col shrink-0 ${activeTab === "Network" && selectedNetworkKey ? "min-h-[34rem] " : ""}max-h-[520px] sm:max-h-[600px] xl:max-h-[calc(100vh-16rem)] overflow-hidden ${className || ""}`}>
       <div className="h-11 border-b border-border px-4 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-sm font-semibold text-foreground">{t("v.devTools")}</span>
@@ -1441,8 +1690,6 @@ ${stack}` : body);
         className="flex border-b border-border shrink-0 px-2.5 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {TABS.map((tab) => {
-          const isIssues = tab === "Issues";
-          const hasIssues = isIssues && totalIssuesCount > 0;
           const count = tabCount(tab);
           return (
             <button
@@ -1462,33 +1709,20 @@ ${stack}` : body);
               tabIndex={activeTab === tab ? 0 : -1}
               className={`px-2 py-2 text-[11px] font-medium relative transition-colors whitespace-nowrap flex items-center gap-1 ${
                 activeTab === tab
-                  ? isIssues && hasIssues
-                    ? "text-red-600 dark:text-red-400 font-semibold"
-                    : "text-[#6B9A35] dark:text-[#A8D666] font-semibold"
-                  : isIssues && hasIssues
-                  ? "text-red-600/90 dark:text-red-400/90 hover:text-red-700 font-medium"
+                  ? "text-[#6B9A35] dark:text-[#A8D666] font-semibold"
                   : "text-muted hover:text-foreground"
               }`}
             >
               {tabName(tab)}
               {count > 0 && (
                 <span className={`px-1 py-px rounded text-[9px] font-semibold leading-none tabular-nums ${
-                  isIssues
-                    ? "bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-400"
-                    : activeTab === tab
+                  activeTab === tab
                     ? "bg-[#89BD49]/15 text-[#6B9A35] dark:bg-[#89BD49]/20 dark:text-[#A8D666]"
                     : "bg-subtle text-muted"
                 }`}>{count}</span>
               )}
-              {isIssues && hasIssues && (
-                <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-              )}
               {activeTab === tab && (
-                <span
-                  className={`absolute bottom-0 left-0 right-0 h-0.5 rounded-full ${
-                    isIssues && hasIssues ? "bg-red-600" : "bg-[#89BD49]"
-                  }`}
-                />
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-[#89BD49]" />
               )}
             </button>
           );
@@ -1502,7 +1736,7 @@ ${stack}` : body);
         className="flex-1 min-h-0 flex flex-col overflow-hidden"
       >
         {/* Global Search & Filters */}
-        {activeTab !== "Info" && (
+        {activeTab !== "Info" && activeTab !== "MCP" && (
           <div className="p-3 border-b border-border bg-subtle/30 flex flex-col gap-2 shrink-0">
             <div className="relative">
               <Icon icon="lucide:search" className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted pointer-events-none" />
@@ -1553,31 +1787,22 @@ ${stack}` : body);
                 </select>
               </div>
             )}
+            {/* A two-state toggle rendered as two buttons read as two filters;
+                Jam uses one checkbox, which is what the control actually is. */}
             {activeTab === "Console" && consoleErrors.length > 0 && (
               <div className="flex items-center gap-1.5 pt-0.5">
-                <button
-                  type="button"
-                  onClick={() => setConsoleErrorsOnly(false)}
-                  className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors ${
-                    !consoleErrorsOnly
-                      ? "bg-[#89BD49]/15 text-[#6B9A35] border border-[#89BD49]/30 dark:bg-[#89BD49]/20 dark:text-[#A8D666] dark:border-[#89BD49]/40 font-semibold"
-                      : "text-muted hover:text-foreground border border-transparent"
-                  }`}
-                >
-                  {t("dt.all") || "All"} ({consoleLogs.length})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setConsoleErrorsOnly(true)}
-                  className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors flex items-center gap-1 ${
-                    consoleErrorsOnly
-                      ? "bg-red-50 text-red-700 border border-red-200 dark:bg-red-950/40 dark:text-red-300 dark:border-red-800/40 font-semibold"
-                      : "text-red-600/80 hover:text-red-700 border border-transparent"
-                  }`}
-                >
-                  <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                  {t("dt.errorsOnly") || "Errors Only"} ({consoleErrors.length})
-                </button>
+                <label className="flex items-center gap-1.5 text-[10px] font-medium text-muted hover:text-foreground cursor-pointer select-none">
+                  <input
+                    type="checkbox"
+                    checked={consoleErrorsOnly}
+                    onChange={(e) => setConsoleErrorsOnly(e.target.checked)}
+                    className="w-3 h-3 rounded border-border accent-red-600 cursor-pointer"
+                  />
+                  <span className={consoleErrorsOnly ? "text-red-700 dark:text-red-300 font-semibold" : ""}>
+                    {t("dt.errorsOnly") || "Errors only"}
+                  </span>
+                  <span className="tabular-nums">({consoleErrors.length})</span>
+                </label>
               </div>
             )}
             {/* Quick Filter for Actions */}
@@ -1604,38 +1829,8 @@ ${stack}` : body);
                         }`}
                       >
                         {k === "all"
-                          ? `${t("dt.allOrigins") || "All"} (${allActionLogs.length})`
+                          ? `${t("dt.all") || "All"} (${allActionLogs.length})`
                           : `${t(`dt.act.${k}`)} (${actionKindCounts.get(k)})`}
-                      </button>
-                    );
-                  })}
-              </div>
-            )}
-            {/* Resource-type buckets, the row Jam shows above its table. */}
-            {activeTab === "Network" && networkKindCounts.size > 1 && (
-              <div
-                role="group"
-                aria-label={t("dt.kindFilter") || "Filter by resource type"}
-                className="flex flex-wrap items-center gap-1.5 pt-0.5"
-              >
-                {(["all", ...NETWORK_KINDS] as const)
-                  .filter((k) => k === "all" || networkKindCounts.has(k as NetworkKind))
-                  .map((k) => {
-                    const on = networkKindFilter === k;
-                    const n = k === "all" ? allNetworkLogs.length : networkKindCounts.get(k as NetworkKind);
-                    return (
-                      <button
-                        key={k}
-                        type="button"
-                        onClick={() => setNetworkKindFilter(k as "all" | NetworkKind)}
-                        aria-pressed={on}
-                        className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors cursor-pointer ${
-                          on
-                            ? "bg-[#89BD49]/15 text-[#6B9A35] border border-[#89BD49]/30 dark:bg-[#89BD49]/20 dark:text-[#A8D666] dark:border-[#89BD49]/40 font-semibold"
-                            : "text-muted hover:text-foreground border border-transparent"
-                        }`}
-                      >
-                        {`${t(`dt.kind.${k}`) || k} (${n})`}
                       </button>
                     );
                   })}
@@ -1706,70 +1901,6 @@ ${stack}` : body);
                       )}
                     </>
                   )}
-                  {/* Slow (>1s) Filter Chip */}
-                  <button
-                    type="button"
-                    onClick={() => setNetworkSlowOnly((prev) => !prev)}
-                    aria-pressed={networkSlowOnly}
-                    className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors flex items-center gap-1 cursor-pointer ${
-                      networkSlowOnly
-                        ? "bg-amber-50 text-amber-700 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/40 font-semibold"
-                        : "text-muted hover:text-foreground border border-transparent"
-                    }`}
-                    title={t("dt.slowDesc") || "Requests taking longer than 1 second"}
-                  >
-                    <Icon icon="lucide:hourglass" className="w-3.5 h-3.5 shrink-0" />
-                    <span>{t("dt.slow") || "Slow (>1s)"}</span>
-                    {countSlow > 0 && <span className="tabular-nums">({countSlow})</span>}
-                  </button>
-                  {targetHost && (networkErrors.length > 0 || countSlow > 0) && (
-                    /* Status and origin are independent filters; the rule marks the
-                       boundary. Pointless when there is no status chip to separate. */
-                    <span className="w-px h-3.5 bg-border mx-0.5" aria-hidden="true" />
-                  )}
-                  {targetHost && (
-                    <>
-                      <button
-                        type="button"
-                        onClick={() => setNetworkPartyFilter("all")}
-                        aria-pressed={networkPartyFilter === "all"}
-                        className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors ${
-                          networkPartyFilter === "all"
-                            ? "bg-subtle text-foreground border border-border font-semibold"
-                            : "text-muted hover:text-foreground border border-transparent"
-                        }`}
-                      >
-                        {t("dt.allOrigins") || "All Origins"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setNetworkPartyFilter("1st")}
-                        aria-pressed={networkPartyFilter === "1st"}
-                        className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors flex items-center gap-1 ${
-                          networkPartyFilter === "1st"
-                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800/40 font-semibold"
-                            : "text-muted hover:text-emerald-600 border border-transparent"
-                        }`}
-                        title={`Requests to ${targetHost} or subdomains`}
-                      >
-                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                        {t("dt.firstParty") || "1st-Party"} ({firstPartyCount})
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setNetworkPartyFilter("3rd")}
-                        aria-pressed={networkPartyFilter === "3rd"}
-                        className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors ${
-                          networkPartyFilter === "3rd"
-                            ? "bg-subtle text-foreground border border-border font-semibold"
-                            : "text-muted hover:text-foreground border border-transparent"
-                        }`}
-                        title="External SaaS, CDNs, 3rd-party APIs"
-                      >
-                        {t("dt.thirdParty") || "3rd-Party"} ({thirdPartyCount})
-                      </button>
-                    </>
-                  )}
                 </div>
 
                 {networkLogs.length > 0 && (
@@ -1788,202 +1919,6 @@ ${stack}` : body);
           </div>
         )}
 
-        {/* ISSUES TAB */}
-        {activeTab === "Issues" && (
-          <div className="flex-1 min-h-0 overflow-y-auto">
-            {totalIssuesCount === 0 ? (
-              <div className="py-14 flex flex-col items-center gap-2 text-center text-xs text-muted p-4">
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                  <Icon icon="lucide:check" className="w-5 h-5" />
-                </div>
-                <p className="font-semibold text-emerald-700 dark:text-emerald-400 text-sm mt-1">{t("dt.pageRanClean")}</p>
-                <p className="text-xs text-muted max-w-sm">No console errors or failed network requests were detected during this capture session.</p>
-              </div>
-            ) : summary ? (
-              <div className="p-4 space-y-3">
-                <div className="flex items-center gap-2.5 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200/80 dark:border-red-800/40 px-3.5 py-2.5 shadow-sm">
-                  <div className="w-7 h-7 rounded-lg bg-red-100 dark:bg-red-950/40 border border-red-200 dark:border-red-800/40 flex items-center justify-center shrink-0 text-red-600 dark:text-red-400 text-xs font-bold">
-                    {totalIssuesCount}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-xs font-semibold text-red-800 dark:text-red-300 leading-tight">
-                      {t("dt.issuesDetected", { n: totalIssuesCount })}
-                    </p>
-                    <p className="text-[10px] text-red-700/80 dark:text-red-400/80 mt-0.5">
-                      {t("dt.issueSplit", { errors: summary.errors, failed: summary.failedRequests })}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-2 pt-1">
-                  {(summary.topErrors || []).filter((msg) => !isIgnoredUrl(msg)).map((msg, i) => (
-                    <FormattedErrorMessage key={`se_${i}`} msg={msg} />
-                  ))}
-                  {(summary.failedUrls || []).filter((url) => !isIgnoredUrl(url)).map((url, i) => (
-                    <div key={`su_${i}`} className="pl-2.5 border-l-2 border-red-300 dark:border-red-800/40 py-0.5">
-                      <span className="text-[9px] font-bold uppercase tracking-wider text-red-600 bg-red-50 dark:bg-red-950/30 px-1 py-0.2 rounded border border-red-200 dark:border-red-800/40 mr-1.5">FAIL</span>
-                      <span className="text-[11px] font-mono text-red-700 dark:text-red-400 break-all">{url}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <div className="p-3 space-y-2.5">
-                {/* Issues Stat Banner */}
-                <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-red-50 dark:bg-red-950/20 border border-red-200/60 dark:border-red-800/30 text-xs text-red-800 dark:text-red-300">
-                  <span className="font-semibold flex items-center gap-1.5">
-                    <Icon icon="lucide:triangle-alert" className="w-4 h-4 text-red-600 shrink-0" />
-                    {t("dt.issuesDetected", { n: totalIssuesCount })}
-                  </span>
-                  <div className="flex items-center gap-2 text-[10px] font-medium text-red-700 dark:text-red-400">
-                    <span>{consoleErrors.length} console</span>
-                    <span>•</span>
-                    <span>{networkErrors.length} network</span>
-                    {hasSpaWarning && (
-                      <>
-                        <span>•</span>
-                        <span className="text-amber-600 dark:text-amber-400">1 SPA alert</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {hasSpaWarning && (
-                  <div className="p-2.5 rounded-lg border bg-amber-500/10 border-amber-500/30 text-amber-900 dark:text-amber-300 text-xs flex items-start gap-2">
-                    <Icon icon="lucide:alert-triangle" className="w-4 h-4 shrink-0 text-amber-500 mt-0.5" />
-                    <div className="min-w-0 flex-1">
-                      <p className="font-semibold text-[11px]">{t("dt.spaHealthAlert")}</p>
-                      <p className="text-[10px] text-muted leading-relaxed mt-0.5">
-                        {metrics?.spaHealth?.warning || `${t("dt.domBloatWarning")}: ${metrics?.domNodes?.toLocaleString()} elements.`}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                <div className="divide-y divide-border/60 border border-border rounded-lg overflow-hidden bg-background">
-                  {issueItems.map(({ id, type, log }) => {
-                    const active = isLogActive(log);
-                    if (type === "console") {
-                      const cLog = log as ConsoleLog;
-                      const detail = conciseConsoleText(cLog) || t("dt.consoleError");
-                      const fullText = consoleText(cLog);
-                      const preceding = findPrecedingAction(cLog, cLog.srcIdx);
-                      return (
-                        <div
-                          key={id}
-                          className={`p-3 text-xs transition-all ${
-                            active ? "ring-2 ring-[#89BD49] bg-[#89BD49]/10 dark:bg-[#89BD49]/20" : "bg-red-50/30 dark:bg-red-950/10 hover:bg-red-50/60 dark:hover:bg-red-950/20"
-                          }`}
-                        >
-                          <div className="flex items-start gap-2.5 min-w-0">
-                            {renderTimeBadge(cLog)}
-                            <span className="px-1.5 py-0.2 rounded text-[9px] font-bold uppercase shrink-0 bg-red-100 dark:bg-red-950/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800/40">
-                              CONSOLE
-                            </span>
-                            <div className="min-w-0 flex-1">
-                              <FormattedErrorMessage msg={fullText || detail} />
-                              {preceding && <ActionBreadcrumb action={preceding} t={t} />}
-                              {cleanStackTrace(cLog.stack) ? (
-                                <details className="group mt-2">
-                                  <summary className="flex list-none cursor-pointer items-center gap-1 text-[10px] font-semibold text-muted hover:text-foreground">
-                                    <Icon icon="lucide:chevron-right" className="w-3 h-3 transition-transform group-open:rotate-90" />
-                                    {t("dt.stack")}
-                                  </summary>
-                                  <pre className="mt-1.5 p-2 rounded-lg bg-red-950 text-red-200 font-mono text-[10px] leading-relaxed whitespace-pre-wrap break-all overflow-x-auto">
-                                    {cleanStackTrace(cLog.stack)}
-                                  </pre>
-                                </details>
-                              ) : null}
-                            </div>
-                          </div>
-                        </div>
-                      );
-                    }
-
-                    // Network failed log
-                    const nLog = log as NetworkLog;
-                    const { domain, path } = networkLocation(nLog.url);
-                    const preceding = findPrecedingAction(nLog, nLog.srcIdx);
-                    return (
-                      <details
-                        key={id}
-                        className={`group transition-all ${
-                          active ? "ring-2 ring-[#89BD49] bg-[#89BD49]/10 dark:bg-[#89BD49]/20" : "bg-red-50/20 dark:bg-red-950/10 hover:bg-red-50/50 dark:hover:bg-red-950/20"
-                        }`}
-                      >
-                        <summary
-                          className="p-3 cursor-pointer list-none flex items-center justify-between gap-2 min-w-0"
-                        >
-                          <div className="flex items-center gap-2 min-w-0 flex-1">
-                            {renderTimeBadge(nLog)}
-                            <span className="px-1.5 py-0.5 rounded text-[9px] font-bold font-mono uppercase bg-subtle text-foreground border border-border shrink-0">
-                              {nLog.method || "GET"}
-                            </span>
-                            <span className="px-1.5 py-0.5 rounded text-[10px] font-bold font-mono shrink-0 bg-red-100 dark:bg-red-950/30 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800/40">
-                              {nLog.status || "FAIL"}
-                            </span>
-                            {partyIsMixed && (
-                              <span
-                                className={`px-1 py-0.2 rounded text-[8px] font-bold font-mono shrink-0 uppercase tracking-tight ${
-                                  isFirstPartyUrl(nLog.url, targetHost)
-                                    ? "bg-emerald-50 text-emerald-700 border border-emerald-200/70 dark:bg-emerald-950/30 dark:text-emerald-400 dark:border-emerald-800/40"
-                                    : "bg-zinc-100 text-zinc-600 border border-zinc-200 dark:bg-zinc-800 dark:text-zinc-400 dark:border-zinc-700"
-                                }`}
-                              >
-                                {isFirstPartyUrl(nLog.url, targetHost) ? "1ST" : "3RD"}
-                              </span>
-                            )}
-                            <div className="min-w-0 flex-1 truncate">
-                              <span className="font-mono text-muted text-[11px]">{domain}</span>
-                              <span className="font-mono text-foreground font-medium text-[11px]">{path}</span>
-                            </div>
-                          </div>
-                          <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5 text-muted transition-transform group-open:rotate-180 shrink-0" />
-                        </summary>
-                        <div className="px-3.5 pb-3.5 pt-1 space-y-2 border-t border-border/40 text-[11px] bg-subtle/30 font-mono">
-                          {preceding && <ActionBreadcrumb action={preceding} t={t} />}
-                          {nLog.url && (
-                            <div className="flex items-center justify-between gap-2 p-1.5 rounded bg-background border border-border/60">
-                              <span className="text-muted truncate min-w-0 flex-1"><span className="text-foreground font-semibold">URL:</span> {nLog.url}</span>
-                              <button
-                                type="button"
-                                onClick={(e) => handleCopyCurl(nLog, e)}
-                                className="shrink-0 text-[10px] px-2 py-0.5 rounded bg-subtle hover:bg-subtle/80 text-muted hover:text-foreground border border-border transition-colors flex items-center gap-1 cursor-pointer"
-                                title={t("dt.copyCurl") || "Copy as cURL"}
-                              >
-                                {copiedCurl === nLog.url ? (
-                                  <span className="text-emerald-600 dark:text-emerald-400 font-medium">{t("dt.curlCopied") || "Copied!"}</span>
-                                ) : (
-                                  <>
-                                    <span className="font-mono text-[9px] font-bold text-[#6B9A35] dark:text-[#A8D666]">cURL</span>
-                                    <span>{t("dt.copyCurl") || "Copy as cURL"}</span>
-                                  </>
-                                )}
-                              </button>
-                            </div>
-                          )}
-                          <p className="text-muted">
-                            <span className="text-foreground font-semibold">Status:</span>{" "}
-                            {nLog.status || "FAIL"}{" "}
-                            {nLog.statusText || statusLabel(t, nLog.status) ? `(${nLog.statusText || statusLabel(t, nLog.status)})` : ""}
-                          </p>
-                          {nLog.resourceType && (
-                            <p className="text-muted"><span className="text-foreground font-semibold">Type:</span> <span className="capitalize">{nLog.resourceType}</span></p>
-                          )}
-                          {nLog.error && <p className="text-red-600 dark:text-red-400"><span className="font-semibold">Error:</span> {nLog.error}</p>}
-                          {nLog.responseBody && (
-                            <FormattedJsonBody content={nLog.responseBody} title="Response Body" t={t} />
-                          )}
-                        </div>
-                      </details>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-
         {/* INFO TAB */}
         {activeTab === "Info" && (
           <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
@@ -1995,12 +1930,12 @@ ${stack}` : body);
                     href={capture.site_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block text-[11px] font-mono text-[#6B9A35] dark:text-[#A8D666] hover:underline bg-subtle/60 border border-border rounded-lg px-3 py-2 truncate"
+                    className="block text-[11px] font-mono text-[#6B9A35] dark:text-[#A8D666] hover:underline bg-subtle/60 border border-border rounded-lg px-3 py-2 break-all"
                   >
                     {capture.site_url}
                   </a>
                 ) : (
-                  <span className="block text-[11px] font-mono text-muted bg-subtle/60 border border-border rounded-lg px-3 py-2 truncate">
+                  <span className="block text-[11px] font-mono text-muted bg-subtle/60 border border-border rounded-lg px-3 py-2 break-all">
                     {capture.site_url}
                   </span>
                 )}
@@ -2309,13 +2244,12 @@ ${stack}` : body);
             ) : (
               <div className="divide-y divide-border/60">
                 {visibleConsoleLogs.slice(0, consoleLimit).map((log) => {
-                  const level = log.type === "console" ? normalizeLevel(log.level) : log.type;
+                  const level = normalizeLevel(log.level);
                   const isWarn = level === "warn";
                   const isErr = level === "error";
                   const preceding = isErr ? findPrecedingAction(log, log.srcIdx) : null;
-                  const detail = log.type === "console" ? conciseConsoleText(log) || t("dt.consoleError")
-                    : log.message || ("url" in log ? log.url : "") || (log.type === "screenshot" ? t("dt.screenshotTaken") : t("dt.navigation"));
-                  const fullText = log.type === "console" ? consoleText(log) : detail;
+                  const detail = conciseConsoleText(log) || t("dt.consoleError");
+                  const fullText = consoleText(log);
                   const active = isLogActive(log);
                   return (
                     <div
@@ -2340,20 +2274,20 @@ ${stack}` : body);
                         <div className="min-w-0 flex-1">
                           <FormattedErrorMessage msg={fullText || detail} />
                           {preceding && <ActionBreadcrumb action={preceding} t={t} />}
-                          {log.type === "console" && cleanStackTrace(log.stack) ? (
+                          {cleanStackTrace(log.stack) ? (
                             <details className="group mt-2">
                               <summary className="flex list-none cursor-pointer items-center gap-1 text-[10px] font-semibold text-muted hover:text-foreground">
                                 <Icon icon="lucide:chevron-right" className="w-3 h-3 transition-transform group-open:rotate-90" />
                                 {t("dt.stack")}
                               </summary>
-                              <pre className="mt-1.5 p-2 rounded-lg bg-red-950 text-red-200 font-mono text-[10px] leading-relaxed whitespace-pre-wrap break-all overflow-x-auto">
+                              <pre className="mt-1.5 p-2 rounded-lg bg-subtle text-foreground border border-border font-mono text-[10px] leading-relaxed whitespace-pre-wrap break-all overflow-x-auto">
                                 {cleanStackTrace(log.stack)}
                               </pre>
                             </details>
                           ) : null}
                         </div>
                         {logCount(log) > 1 && (
-                          <span className="px-1.5 py-0.5 rounded-md bg-subtle text-[10px] font-bold text-muted border border-border shrink-0">
+                          <span className="px-1.5 py-0.5 rounded-md bg-[#89BD49]/15 dark:bg-[#89BD49]/20 text-[10px] font-bold text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40 shrink-0 tabular-nums">
                             ×{logCount(log)}
                           </span>
                         )}
@@ -2364,7 +2298,7 @@ ${stack}` : body);
                           title={t("dt.copyLog") || "Copy log"}
                           className="shrink-0 p-1 rounded text-muted opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-foreground hover:bg-subtle transition-all cursor-pointer"
                         >
-                          {copiedConsole === (log.type === "console" ? consoleText(log) : log.message || ("url" in log ? log.url || "" : "")) ? (
+                          {copiedConsole === consoleText(log) ? (
                             <Icon icon="lucide:check" className="w-3.5 h-3.5" />
                           ) : (
                             <Icon icon="lucide:copy" className="w-3.5 h-3.5" />
@@ -2390,7 +2324,7 @@ ${stack}` : body);
 
         {/* NETWORK TAB */}
         {activeTab === "Network" && (
-          <div className="flex-1 min-h-0 overflow-y-auto">
+          <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">
             {networkLogs.length === 0 ? (
               summary ? (
                 <div className="p-4 space-y-3">
@@ -2426,29 +2360,12 @@ ${stack}` : body);
                 <div className="py-14 text-center text-xs text-muted">{t("dt.noNetworkErrors")}</div>
               )
             ) : visibleGroupedNetworkLogs.length === 0 ? (
-              networkSlowOnly && countSlow === 0 ? (
-                <div className="py-12 flex flex-col items-center justify-center gap-2 text-center text-xs text-muted p-4">
-                  <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-                    <Icon icon="lucide:check-circle-2" className="w-5 h-5" />
-                  </div>
-                  <p className="font-semibold text-foreground text-xs mt-1">{t("dt.noSlowRequests") || "All requests completed < 1.0s (Fast)"}</p>
-                  <p className="text-[11px] text-muted max-w-xs">{t("dt.noSlowRequestsDesc") || "No network latency or bottleneck detected during capture."}</p>
-                  <button
-                    type="button"
-                    onClick={() => setNetworkSlowOnly(false)}
-                    className="mt-1 px-2.5 py-1 rounded-md text-[11px] font-medium bg-subtle hover:bg-subtle/80 text-foreground border border-border cursor-pointer transition-colors"
-                  >
-                    {t("dt.showAllRequests") || "Show all requests"}
-                  </button>
-                </div>
-              ) : (
                 <EmptyLogState
-                  filtered={networkStatusFilter !== "all" || networkPartyFilter !== "all" || networkSlowOnly || Boolean(logSearch)}
+                  filtered={networkStatusFilter !== "all" || Boolean(logSearch)}
                   emptyText={t("dt.noNetworkErrors")}
                   onReset={resetLogFilters}
                   t={t}
                 />
-              )
             ) : (
               <NetworkTable
                 rows={visibleGroupedNetworkLogs}
@@ -2535,19 +2452,26 @@ ${stack}` : body);
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-2">
-                          <span
-                            className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
-                              isScreenshot
-                                ? "bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 border border-rose-200/80 dark:border-rose-800/40"
-                                : isClick
-                                ? "bg-[#89BD49]/15 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40"
-                                : isType
-                                ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/40"
-                                : "bg-subtle text-muted border border-border"
-                            }`}
-                          >
-                            {label}
-                          </span>
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <span
+                              className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded ${
+                                isScreenshot
+                                  ? "bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 border border-rose-200/80 dark:border-rose-800/40"
+                                  : isClick
+                                  ? "bg-[#89BD49]/15 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40"
+                                  : isType
+                                  ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/40"
+                                  : "bg-subtle text-muted border border-border"
+                              }`}
+                            >
+                              {label}
+                            </span>
+                            {logCount(log) > 1 && (
+                              <span className="px-1.5 py-0.5 rounded-md bg-[#89BD49]/15 dark:bg-[#89BD49]/20 text-[10px] font-bold text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40 shrink-0">
+                                ×{logCount(log)}
+                              </span>
+                            )}
+                          </div>
                           {eventTime(log) && renderTimeBadge(log)}
                         </div>
                         <p className="text-xs text-foreground font-medium leading-snug break-words mt-1">
@@ -2562,170 +2486,15 @@ ${stack}` : body);
           </div>
         )}
 
-        {/* STORAGE TAB */}
-        {activeTab === "Storage" && (() => {
-          const currentStore = storageType === "local" ? (storageData?.localStorage || {}) : (storageData?.sessionStorage || {});
-          // The extension caps a snapshot at STORAGE_MAX_KEYS and signals the rest by
-          // injecting a synthetic `... N more keys omitted` key with an empty
-          // value (injected_logger.js:276). Rendered as a data row it read as a
-          // real storage entry with no value - it belongs in a notice.
-          const OMITTED_RE = /^\.\.\.\s+(\d+)\s+more keys omitted$/;
-          const allEntries = Object.entries(currentStore);
-          const omittedCount = allEntries.reduce((n, [k]) => {
-            const m = OMITTED_RE.exec(k);
-            return m ? n + Number(m[1]) : n;
-          }, 0);
-          const entries = allEntries
-            .filter(([k]) => !OMITTED_RE.test(k))
-            .filter(([k, v]) => {
-              if (!logSearch) return true;
-              const q = logSearch.toLowerCase();
-              return k.toLowerCase().includes(q) || String(v).toLowerCase().includes(q);
-            });
-          const localCount = Object.keys(storageData?.localStorage || {}).length;
-          const sessionCount = Object.keys(storageData?.sessionStorage || {}).length;
-
-          const handleCopyAllStorage = () => {
-            try {
-              navigator.clipboard.writeText(JSON.stringify(Object.fromEntries(allEntries.filter(([k]) => !OMITTED_RE.test(k))), null, 2));
-              setCopiedAllStorage(true);
-              setTimeout(() => setCopiedAllStorage(false), 2000);
-            } catch {}
-          };
-
-          const handleCopyKey = (key: string, val: unknown) => {
-            try {
-              const textToCopy = typeof val === "object" && val !== null ? JSON.stringify(val, null, 2) : String(val ?? "");
-              navigator.clipboard.writeText(textToCopy);
-              setCopiedStorageKey(key);
-              setTimeout(() => setCopiedStorageKey(null), 2000);
-            } catch {}
-          };
-
-          return (
-            <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-              {/* Storage Switcher Toolbar */}
-              <div className="p-2.5 sm:p-3 border-b border-border bg-subtle/20 flex flex-wrap items-center justify-between gap-2 shrink-0">
-                <div className="flex items-center gap-1.5">
-                  <button
-                    type="button"
-                    onClick={() => setStorageType("local")}
-                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${
-                      storageType === "local"
-                        ? "bg-[#89BD49]/15 text-[#6B9A35] border border-[#89BD49]/30 dark:bg-[#89BD49]/20 dark:text-[#A8D666] dark:border-[#89BD49]/40 font-semibold"
-                        : "text-muted hover:text-foreground border border-transparent"
-                    }`}
-                  >
-                    {t("dt.localStorage") || "Local Storage"} ({localCount})
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setStorageType("session")}
-                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-colors cursor-pointer ${
-                      storageType === "session"
-                        ? "bg-[#89BD49]/15 text-[#6B9A35] border border-[#89BD49]/30 dark:bg-[#89BD49]/20 dark:text-[#A8D666] dark:border-[#89BD49]/40 font-semibold"
-                        : "text-muted hover:text-foreground border border-transparent"
-                    }`}
-                  >
-                    {t("dt.sessionStorage") || "Session Storage"} ({sessionCount})
-                  </button>
-                </div>
-                {entries.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={handleCopyAllStorage}
-                    className="px-2 py-1 rounded text-xs font-medium text-muted hover:text-foreground bg-subtle hover:bg-subtle/80 border border-border transition-colors flex items-center gap-1 cursor-pointer shrink-0"
-                  >
-                    {copiedAllStorage ? (
-                      <span className="text-emerald-600 dark:text-emerald-400 font-semibold">{t("dt.urlCopied") || "Copied!"}</span>
-                    ) : (
-                      <>
-                        <Icon icon="lucide:copy" className="w-3 h-3" />
-                        <span>{t("dt.copyAll") || "Copy All"}</span>
-                      </>
-                    )}
-                  </button>
-                )}
-              </div>
-
-              {/* Storage Entries */}
-              <div className="flex-1 min-h-0 overflow-y-auto">
-                {omittedCount > 0 && (
-                  <p className="px-3 py-2 text-[10px] text-amber-700 dark:text-amber-400 bg-amber-50/60 dark:bg-amber-950/20 border-b border-amber-200/60 dark:border-amber-800/40">
-                    {t("dt.storageOmitted", { n: omittedCount })}
-                  </p>
-                )}
-                {entries.length === 0 ? (
-                  <EmptyLogState
-                    filtered={Boolean(logSearch)}
-                    emptyText={t("dt.noStorage") || "No storage data recorded"}
-                    onReset={resetLogFilters}
-                    t={t}
-                  />
-                ) : (
-                  <div className="divide-y divide-border/60">
-                    {entries.map(([key, rawValue]) => {
-                      const valStr = String(rawValue);
-                      const isCopied = copiedStorageKey === key;
-                      // injected_logger.js:410 caps a value at 200 chars and
-                      // appends this marker. Nothing labelled it, so a clipped
-                      // value looked like the real stored content.
-                      const isTruncated = valStr.endsWith("... (truncated)");
-                      let isJson = false;
-                      let prettyVal = valStr;
-                      const trimmed = valStr.trim();
-                      if ((trimmed.startsWith("{") && trimmed.endsWith("}")) || (trimmed.startsWith("[") && trimmed.endsWith("]"))) {
-                        try {
-                          prettyVal = JSON.stringify(JSON.parse(trimmed), null, 2);
-                          isJson = true;
-                        } catch {}
-                      }
-
-                      return (
-                        <div key={key} className="p-3 text-xs hover:bg-subtle/40 transition-colors space-y-1.5">
-                          <div className="flex items-center justify-between gap-2 min-w-0">
-                            <div className="flex items-center gap-2 min-w-0">
-                              <span className="font-mono font-semibold text-foreground text-xs truncate max-w-[140px] sm:max-w-sm" title={key}>
-                                {key}
-                              </span>
-                              {isJson && (
-                                <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40">
-                                  JSON
-                                </span>
-                              )}
-                              <span className="text-[9px] font-mono text-muted">
-                                ({valStr.length} chars)
-                              </span>
-                              {isTruncated && (
-                                <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200/60 dark:border-amber-800/40">
-                                  {t("dt.storageTruncated")}
-                                </span>
-                              )}
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => handleCopyKey(key, prettyVal)}
-                              className="px-1.5 py-0.5 rounded text-[10px] text-muted hover:text-foreground bg-subtle hover:bg-subtle/80 border border-border transition-colors flex items-center gap-1 cursor-pointer shrink-0"
-                            >
-                              {isCopied ? (
-                                <span className="text-emerald-600 dark:text-emerald-400 font-medium">{t("dt.urlCopied") || "Copied!"}</span>
-                              ) : (
-                                <span>{t("dt.copy") || "Copy"}</span>
-                              )}
-                            </button>
-                          </div>
-                          <pre className="p-2 rounded bg-subtle text-foreground border border-border font-mono text-[10px] leading-relaxed whitespace-pre-wrap break-all max-h-36 overflow-y-auto select-all">
-                            {prettyVal}
-                          </pre>
-                        </div>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })()}
+        {/* MCP TAB */}
+        {activeTab === "MCP" && (
+          <McpTabPanel
+            capture={capture}
+            consoleErrors={consoleErrors}
+            networkFailures={networkErrors}
+            t={t}
+          />
+        )}
       </div>
     </div>
   );

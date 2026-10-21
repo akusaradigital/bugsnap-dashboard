@@ -24,7 +24,7 @@ function getTurnstile(): TurnstileApi | undefined {
 }
 
 export default function FloatingSupport() {
-  const { t, locale, setLocale } = useT();
+  const { t } = useT();
   const [isOpen, setIsOpen] = useState(false);
   const [showPrompt, setShowPrompt] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -327,24 +327,14 @@ export default function FloatingSupport() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setLocale(locale === "id" ? "en" : "id")}
-                className="px-2 py-0.5 rounded text-[10px] font-extrabold uppercase bg-white/10 hover:bg-white/20 text-white transition-colors"
-                title={locale === "id" ? "Ganti ke English" : "Switch to Bahasa Indonesia"}
-              >
-                {locale === "id" ? "ID" : "EN"}
-              </button>
-              <button
-                type="button"
-                onClick={() => setIsOpen(false)}
-                className="flex h-7 w-7 items-center justify-center rounded-lg text-white/80 hover:text-white hover:bg-white/10 dark:hover:bg-zinc-800 transition-colors"
-                aria-label={t("support.close")}
-              >
-                <Icon icon="lucide:x" className="h-4 w-4" />
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={() => setIsOpen(false)}
+              className="flex h-7 w-7 items-center justify-center rounded-lg text-white/80 hover:text-white hover:bg-white/10 dark:hover:bg-zinc-800 transition-colors"
+              aria-label={t("support.close")}
+            >
+              <Icon icon="lucide:x" className="h-4 w-4" />
+            </button>
           </div>
 
           <div className="flex-1 overflow-y-auto p-5 text-slate-800 dark:text-zinc-200">

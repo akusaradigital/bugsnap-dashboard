@@ -166,15 +166,15 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
                   y1="11"
                   x2="80"
                   y2="11"
-                  stroke="#89BD49"
+                  stroke="currentColor"
                   strokeWidth="2"
                   strokeDasharray="6 4"
-                  className="animate-flow-dash-h"
+                  className="text-accent animate-flow-dash-h"
                 />
                 {/* Arrowhead */}
-                <polygon points="76,6 86,11 76,16" fill="#89BD49" />
+                <polygon points="76,6 86,11 76,16" fill="currentColor" className="text-accent" />
                 {/* Moving dot */}
-                <circle cy="11" r="3.5" fill="#89BD49">
+                <circle cy="11" r="3.5" fill="currentColor" className="text-accent">
                   <animate
                     attributeName="cx"
                     from="0"
@@ -386,13 +386,13 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
                 y1="0"
                 x2="10"
                 y2="26"
-                stroke="#89BD49"
+                stroke="currentColor"
                 strokeWidth="2"
                 strokeDasharray="4 3"
-                className="animate-flow-dash-v"
+                className="text-accent animate-flow-dash-v"
               />
-              <polygon points="6,24 10,32 14,24" fill="#89BD49" />
-              <circle cx="10" r="3" fill="#89BD49">
+              <polygon points="6,24 10,32 14,24" fill="currentColor" className="text-accent" />
+              <circle cx="10" r="3" fill="currentColor" className="text-accent">
                 <animate
                   attributeName="cy"
                   from="0"

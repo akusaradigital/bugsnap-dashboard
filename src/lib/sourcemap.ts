@@ -212,7 +212,7 @@ async function fetchText(url: string, maxBytes: number): Promise<string | null> 
   try {
     const res = await fetch(safe.toString(), {
       signal: controller.signal,
-      redirect: "follow",
+      redirect: "manual",
       cache: "no-store",
       headers: { Accept: "application/json, text/plain, */*" },
     });

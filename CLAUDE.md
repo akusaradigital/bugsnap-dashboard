@@ -6,12 +6,12 @@
 
 1. **Graphify MANDATORY**: Read `../graphify-out/GRAPH_REPORT.md` before opening any file.
 2. **Tooling**: `PowerShell`/`Bash`, `Read`, `Edit`, `Write`, `Grep`, `Glob`, `Agent`. No `cat`.
-3. **No auto-push**: NEVER `git push` without explicit user instruction. Sebelum melakukan `git push`, wajib jalankan `/graphify --update`.
+3. **No auto-push**: NEVER `git push` without explicit user instruction. Run `/graphify --update` before executing `git push`.
 4. **PowerShell 5.1**: `&&` not supported - use `;` or Bash tool.
 5. **Free tier stubs**: `tiers.ts` + `quota.ts` are intentionally unlimited - do NOT add paywalls.
 6. **i18n MANDATORY**: All UI text via `src/lib/i18n.ts` + `useT()`. Both `en` + `id` keys. No hardcoded strings.
 7. **Design**: Solid colors, Tailwind tokens, dark/light mode. No heavy gradients.
-8. **Icon Standard (Iconify)**: Gunakan Iconify (https://iconify.design/getting-started/) untuk semua icon agar seragam dan konsisten (`@iconify/react` via `<Icon icon="..." />`). Hindari mencampur icon library yang berbeda atau inline SVG manual tanpa standarisasi.
+8. **Icon Standard (Iconify)**: Use Iconify (https://iconify.design/getting-started/) for all icons for uniformity and consistency (`@iconify/react` via `<Icon icon="..." />`). Avoid mixing different icon libraries or manual inline SVGs without standardization.
 9. **Ethics**: Never compare BugSnap to competitors in UI or docs.
 10. **No `any` TS type**: Use proper types. `@typescript-eslint/no-explicit-any` is enforced.
 11. **DB changes apply immediately**: A migration that only exists as a file has changed nothing. Any new `supabase/migrations/*.sql` must be executed against the live project in the same turn it is written:
@@ -22,7 +22,17 @@ node scripts/apply-migration.mjs supabase/migrations/<file>.sql                 
 node scripts/apply-migration.mjs --sql "<verification query>"                                                                                                               # verify
 ```
 
-The script posts to the Supabase Management API using `SUPABASE_PAT` + `NEXT_PUBLIC_SUPABASE_URL` from `.env.local` (no CLI, no DB password, no linked local project). Save the pre-change definition to `supabase/.rollback-<object>-<date>.json` so there is a way back. Never leave a migration written-but-unapplied. 11. **Mobile View 360px–440px Audit (MANDATORY on Dashboard Changes)**: For every UI, component, or page change in `bugsnap-dashboard`, you MUST verify and audit responsiveness across small mobile viewports (360px–440px, usable width ~328px with 16px horizontal gutters). Horizontal overflow/scrolling is strictly forbidden. Mandatory rules: - Add `min-w-0` to flex child containers to allow nested `truncate` elements to truncate properly without overflowing. - Responsive grids: convert desktop multi-column grids (`grid-cols-2/3/4`) to `grid-cols-1 sm:grid-cols-2/3`, and use `gap-6 sm:gap-0 sm:divide-x` instead of raw `divide-x` to prevent broken border divider lines when wrapped to new rows. - Heavy headers/filters: use `relative sm:sticky top-0` so mobile viewports are not blocked by sticky elements consuming >25% of the screen. - Floating/fixed UI (toasts, batch action toolbars, modal popups, demo widgets): clamp width using `w-[min(...,calc(100vw-2rem))]` and responsive offsets `bottom-4 right-4 sm:bottom-5 sm:right-5`. - Long unbroken technical strings (emails, URLs, stack traces, identifiers): always apply `break-all`. - Modal/card padding: use `p-4 sm:p-6` or `p-4 sm:p-8` (avoid static `p-8` or `p-10`). - Media player video controls: adapt with `flex-wrap sm:flex-nowrap`, preserving scrubber track width with `min-w-[120px]`.
+The script posts to the Supabase Management API using `SUPABASE_PAT` + `NEXT_PUBLIC_SUPABASE_URL` from `.env.local` (no CLI, no DB password, no linked local project). Save the pre-change definition to `supabase/.rollback-<object>-<date>.json` so there is a way back. Never leave a migration written-but-unapplied.
+
+12. **Mobile View 360px–440px Audit (MANDATORY on Dashboard Changes)**: For every UI, component, or page change in `bugsnap-dashboard`, you MUST verify and audit responsiveness across small mobile viewports (360px–440px, usable width ~328px with 16px horizontal gutters). Horizontal overflow/scrolling is strictly forbidden. Mandatory rules:
+    - Add `min-w-0` to flex child containers to allow nested `truncate` elements to truncate properly without overflowing.
+    - Responsive grids: convert desktop multi-column grids (`grid-cols-2/3/4`) to `grid-cols-1 sm:grid-cols-2/3`, and use `gap-6 sm:gap-0 sm:divide-x` instead of raw `divide-x` to prevent broken border divider lines when wrapped to new rows.
+    - Heavy headers/filters: use `relative sm:sticky top-0` so mobile viewports are not blocked by sticky elements consuming >25% of the screen.
+    - Floating/fixed UI (toasts, batch action toolbars, modal popups, demo widgets): clamp width using `w-[min(...,calc(100vw-2rem))]` and responsive offsets `bottom-4 right-4 sm:bottom-5 sm:right-5`.
+    - Long unbroken technical strings (emails, URLs, stack traces, identifiers): always apply `break-all`.
+    - Modal/card padding: use `p-4 sm:p-6` or `p-4 sm:p-8` (avoid static `p-8` or `p-10`).
+    - Media player video controls: adapt with `flex-wrap sm:flex-nowrap`, preserving scrubber track width with `min-w-[120px]`.
+13. **Real Website Testing Standard (MANDATORY)**: For all E2E, Playwright, and browser automation tests, you MUST use REAL production websites from the public internet that match the specific technical characteristics of the test case. Arbitrary mock injections or lazily reusing a single URL (e.g. Wikipedia only) across different test cases is strictly forbidden. Examples: CSP blocking (`https://github.com`), infinite scroll (`https://infinite-scroll.com/demo/full-page/`), Shadow DOM (`https://shoelace.style`), sticky header/nav overlay (`https://vuejs.org`).
 
 ## 2. Versioning (SemVer - ONLY on git push to main)
 
@@ -33,7 +43,7 @@ The script posts to the Supabase Management API using `SUPABASE_PAT` + `NEXT_PUB
 - **MINOR** `0.7.x → 0.8.0`: new user-facing feature, route, module.
 - **MAJOR** `0.x → 1.0.0`: breaking API/auth/UI change.
 
-Current version: **`0.10.0`**
+Current version: **`0.10.1`**
 
 ## 3. Architecture & Data Flow
 

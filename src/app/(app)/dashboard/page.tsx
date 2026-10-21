@@ -39,6 +39,24 @@ function formatBytes(bytes: number | null): string {
   return `${val.toFixed(decimals)} ${units[i]}`;
 }
 
+function getBrowserIcon(name: string): string {
+  const n = name.toLowerCase();
+  if (n.includes("chrome")) return "logos:chrome";
+  if (n.includes("edge") || n.includes("edg")) return "logos:microsoft-edge";
+  if (n.includes("firefox")) return "logos:firefox";
+  if (n.includes("safari")) return "logos:safari";
+  return "lucide:globe";
+}
+
+function getOsIcon(name: string): string {
+  const n = name.toLowerCase();
+  if (n.includes("win")) return "logos:windows";
+  if (n.includes("mac") || n.includes("ios") || n.includes("apple") || n.includes("darwin")) return "logos:apple";
+  if (n.includes("linux")) return "logos:linux";
+  if (n.includes("android")) return "logos:android";
+  return "lucide:cpu";
+}
+
 export default function DashboardAnalyticsPage() {
   return (
     <Suspense fallback={<div className="p-12 text-center text-sm text-muted animate-pulse">···</div>}>
@@ -68,19 +86,13 @@ function DashboardContent() {
   const [driveQuota, setDriveQuota] = useState<{ usedBytes: number | null; totalBytes: number | null } | null>(null);
 
   const [qaData, setQaData] = useState<{
-    statusCounts: { open: number; inProgress: number; fixed: number; closed: number };
-    resolutionRate: number;
-    topBuggyPages: Array<{ domain: string; path: string; count: number }>;
     browserBreakdown: Array<{ name: string; count: number; percent: number; color: string }>;
     osBreakdown: Array<{ name: string; count: number; percent: number; color: string }>;
     loading: boolean;
   }>({
-    statusCounts: { open: 0, inProgress: 0, fixed: 0, closed: 0 },
-    resolutionRate: 0,
-    topBuggyPages: [],
     browserBreakdown: [],
     osBreakdown: [],
-    loading: true
+    loading: true,
   });
 
   useEffect(() => {
@@ -100,25 +112,27 @@ function DashboardContent() {
 
     (async () => {
       try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        const token = sessionData.session?.access_token;
+        const currentUserId = sessionData.session?.user?.id;
+        if (!token) return;
+
         const cached = typeof sessionStorage !== "undefined" ? sessionStorage.getItem("bs_drive_quota") : null;
         if (cached) {
           try {
             const parsed = JSON.parse(cached);
-            if (Date.now() - parsed.timestamp < 180000 && parsed.data?.quota) {
+            if (Date.now() - parsed.timestamp < 180000 && parsed.userId === currentUserId && parsed.data?.quota) {
               if (!cancelled) setDriveQuota(parsed.data.quota);
               return;
             }
           } catch {}
         }
-        const { data: sessionData } = await supabase.auth.getSession();
-        const token = sessionData.session?.access_token;
-        if (!token) return;
         const json = (await fetchDriveStatus(token)) as { quota?: { usedBytes: number | null; totalBytes: number | null } } | null;
         if (!json) return;
         if (!cancelled && json.quota) {
           setDriveQuota(json.quota);
           try {
-            sessionStorage.setItem("bs_drive_quota", JSON.stringify({ timestamp: Date.now(), data: json }));
+            sessionStorage.setItem("bs_drive_quota", JSON.stringify({ timestamp: Date.now(), data: json, userId: currentUserId }));
           } catch {}
         }
       } catch (err) {
@@ -140,11 +154,11 @@ function DashboardContent() {
       }
     })();
 
-    // Fetch workspace defect intelligence
+    // Fetch workspace client environment telemetry
     (async () => {
       let q = supabase
         .from("captures")
-        .select("id, title, status, tag, site_url, browser, os, created_at")
+        .select("browser, os")
         .order("created_at", { ascending: false })
         .limit(300);
 
@@ -158,35 +172,10 @@ function DashboardContent() {
         return;
       }
 
-      const statusCounts = { open: 0, inProgress: 0, fixed: 0, closed: 0 };
-      const urlMap = new Map<string, { domain: string; path: string; count: number }>();
       const browserMap = new Map<string, number>();
       const osMap = new Map<string, number>();
 
       for (const item of data) {
-        const st = (item.status || "open").toLowerCase();
-        if (st === "fixed") statusCounts.fixed++;
-        else if (st === "in-progress" || st === "inprogress") statusCounts.inProgress++;
-        else if (st === "closed") statusCounts.closed++;
-        else statusCounts.open++;
-
-        if (item.site_url) {
-          try {
-            const parsed = new URL(item.site_url);
-            const domain = parsed.hostname;
-            const path = parsed.pathname.length > 1 ? parsed.pathname : "/";
-            const key = `${domain}${path}`;
-            const existing = urlMap.get(key);
-            if (existing) existing.count++;
-            else urlMap.set(key, { domain, path, count: 1 });
-          } catch {
-            const domain = item.site_url.slice(0, 30);
-            const existing = urlMap.get(domain);
-            if (existing) existing.count++;
-            else urlMap.set(domain, { domain, path: "", count: 1 });
-          }
-        }
-
         const b = (item.browser || "Unknown").toLowerCase();
         let bKey = "Other";
         if (b.includes("chrome") && !b.includes("edg")) bKey = "Chrome";
@@ -204,28 +193,20 @@ function DashboardContent() {
         osMap.set(oKey, (osMap.get(oKey) || 0) + 1);
       }
 
-      const totalStatus = statusCounts.open + statusCounts.inProgress + statusCounts.fixed + statusCounts.closed;
-      const resolved = statusCounts.fixed + statusCounts.closed;
-      const resolutionRate = totalStatus > 0 ? Math.round((resolved / totalStatus) * 100) : 100;
-
-      const topBuggyPages = Array.from(urlMap.values())
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 5);
-
       const totalBrowsers = Math.max(1, Array.from(browserMap.values()).reduce((a, b) => a + b, 0));
       const browserColors: Record<string, string> = {
         Chrome: "bg-blue-500",
         Edge: "bg-cyan-500",
         Safari: "bg-sky-500",
         Firefox: "bg-orange-500",
-        Other: "bg-zinc-400"
+        Other: "bg-zinc-400",
       };
       const browserBreakdown = Array.from(browserMap.entries())
         .map(([name, count]) => ({
           name,
           count,
           percent: Math.round((count / totalBrowsers) * 100),
-          color: browserColors[name] || "bg-zinc-400"
+          color: browserColors[name] || "bg-zinc-400",
         }))
         .sort((a, b) => b.count - a.count);
 
@@ -235,25 +216,22 @@ function DashboardContent() {
         "macOS / iOS": "bg-slate-700 dark:bg-slate-300",
         Linux: "bg-amber-500",
         Android: "bg-emerald-500",
-        Other: "bg-zinc-400"
+        Other: "bg-zinc-400",
       };
       const osBreakdown = Array.from(osMap.entries())
         .map(([name, count]) => ({
           name,
           count,
           percent: Math.round((count / totalOs) * 100),
-          color: osColors[name] || "bg-zinc-400"
+          color: osColors[name] || "bg-zinc-400",
         }))
         .sort((a, b) => b.count - a.count);
 
       if (!cancelled) {
         setQaData({
-          statusCounts,
-          resolutionRate,
-          topBuggyPages,
           browserBreakdown,
           osBreakdown,
-          loading: false
+          loading: false,
         });
       }
     })();
@@ -352,20 +330,20 @@ function DashboardContent() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="rounded-2xl border border-border bg-subtle p-5 animate-pulse flex flex-col gap-3">
-              <div className="w-12 h-12 bg-subtle rounded-xl" />
-              <div className="w-1/2 h-3 bg-subtle rounded mt-2" />
-              <div className="w-2/3 h-8 bg-subtle rounded" />
+              <div className="w-12 h-12 bg-border/40 rounded-xl" />
+              <div className="w-1/2 h-3 bg-border/40 rounded mt-2" />
+              <div className="w-2/3 h-8 bg-border/40 rounded" />
             </div>
           ))}
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           <div className="lg:col-span-3 rounded-2xl border border-border bg-subtle p-6 animate-pulse space-y-4">
-            <div className="w-1/3 h-4 bg-subtle rounded" />
-            <div className="h-44 bg-subtle rounded-xl" />
+            <div className="w-1/3 h-4 bg-border/40 rounded" />
+            <div className="h-44 bg-border/40 rounded-xl" />
           </div>
           <div className="lg:col-span-2 rounded-2xl border border-border bg-subtle p-6 animate-pulse space-y-4">
-            <div className="w-1/3 h-4 bg-subtle rounded" />
-            <div className="h-44 bg-subtle rounded-xl" />
+            <div className="w-1/3 h-4 bg-border/40 rounded" />
+            <div className="h-44 bg-border/40 rounded-xl" />
           </div>
         </div>
       </div>
@@ -582,170 +560,81 @@ function DashboardContent() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-          {/* Card 1: Resolution Health */}
-          <div className="rounded-2xl border border-border bg-subtle p-5 flex flex-col justify-between shadow-xs">
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-semibold uppercase tracking-wider text-muted">{t("qa.healthTitle")}</span>
-              </div>
-
-              <div className="flex items-baseline gap-2 mb-4">
-                <span className="text-3xl sm:text-4xl font-extrabold tracking-tight text-foreground">{qaData.resolutionRate}%</span>
-                <span className="text-xs text-muted">{t("qa.healthScore")}</span>
-              </div>
-
-              {/* Stacked Resolution Bar */}
-              <div className="h-3 w-full rounded-full bg-neutral-200 dark:bg-neutral-800 flex overflow-hidden mb-4">
-                {qaData.statusCounts.fixed + qaData.statusCounts.closed > 0 && (
-                  <div
-                    className="bg-emerald-500 h-full transition-all duration-500"
-                    style={{
-                      width: `${((qaData.statusCounts.fixed + qaData.statusCounts.closed) / Math.max(1, qaData.statusCounts.open + qaData.statusCounts.inProgress + qaData.statusCounts.fixed + qaData.statusCounts.closed)) * 100}%`
-                    }}
-                    title={`${t("qa.fixed")}/${t("qa.closed")}: ${qaData.statusCounts.fixed + qaData.statusCounts.closed}`}
-                  />
-                )}
-                {qaData.statusCounts.inProgress > 0 && (
-                  <div
-                    className="bg-amber-500 h-full transition-all duration-500"
-                    style={{
-                      width: `${(qaData.statusCounts.inProgress / Math.max(1, qaData.statusCounts.open + qaData.statusCounts.inProgress + qaData.statusCounts.fixed + qaData.statusCounts.closed)) * 100}%`
-                    }}
-                    title={`${t("qa.inProgress")}: ${qaData.statusCounts.inProgress}`}
-                  />
-                )}
-                {qaData.statusCounts.open > 0 && (
-                  <div
-                    className="bg-rose-500 h-full transition-all duration-500"
-                    style={{
-                      width: `${(qaData.statusCounts.open / Math.max(1, qaData.statusCounts.open + qaData.statusCounts.inProgress + qaData.statusCounts.fixed + qaData.statusCounts.closed)) * 100}%`
-                    }}
-                    title={`${t("qa.open")}: ${qaData.statusCounts.open}`}
-                  />
-                )}
-              </div>
-            </div>
-
-            {/* Status Legend */}
-            <div className="grid grid-cols-3 gap-2 pt-3 border-t border-border/60 text-xs">
-              <div className="flex flex-col">
-                <span className="text-[11px] text-muted flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-rose-500" />
-                  {t("qa.open")}
+        {/* Environment Breakdown Card (Full Width with 2 Columns: Browsers & OS) */}
+        <div className="rounded-2xl border border-border bg-subtle p-4 sm:p-6 shadow-xs">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+            {/* Column 1: Browser Distribution */}
+            <div className="min-w-0">
+              <div className="flex items-center justify-between mb-3.5 gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted flex items-center gap-1.5 min-w-0">
+                  <Icon icon="lucide:globe" className="w-3.5 h-3.5 text-muted shrink-0" aria-hidden="true" />
+                  <span className="truncate">{t("qa.browserTitle")}</span>
                 </span>
-                <span className="text-sm font-bold text-foreground mt-0.5">{qaData.statusCounts.open}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[11px] text-muted flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-amber-500" />
-                  {t("qa.inProgress")}
+                <span className="text-xs text-muted font-mono shrink-0">
+                  {qaData.browserBreakdown.reduce((sum, b) => sum + b.count, 0)} {t("dash.totalCaptures").toLowerCase()}
                 </span>
-                <span className="text-sm font-bold text-foreground mt-0.5">{qaData.statusCounts.inProgress}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="text-[11px] text-muted flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                  {t("qa.fixed")}
-                </span>
-                <span className="text-sm font-bold text-foreground mt-0.5">{qaData.statusCounts.fixed + qaData.statusCounts.closed}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* Card 2: Top Buggy Pages */}
-          <div className="rounded-2xl border border-border bg-subtle p-5 flex flex-col justify-between shadow-xs">
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <span className="text-xs font-semibold uppercase tracking-wider text-muted">{t("qa.hotspotsTitle")}</span>
-                <span className="text-xs text-muted font-mono">{t("qa.activeHotspots", { count: qaData.topBuggyPages.length })}</span>
               </div>
 
-              {qaData.topBuggyPages.length === 0 ? (
-                <div className="py-8 text-center text-xs text-muted">
-                  {t("qa.noHotspots")}
-                </div>
+              {qaData.browserBreakdown.length === 0 ? (
+                <div className="py-6 text-center text-xs text-muted">{t("qa.noBrowser")}</div>
               ) : (
-                <div className="space-y-2.5">
-                  {qaData.topBuggyPages.map((page, idx) => (
-                    <Link
-                      key={idx}
-                      href={`/captures?search=${encodeURIComponent(page.domain)}`}
-                      className="flex items-center justify-between gap-2 p-2 rounded-xl hover:bg-background border border-transparent hover:border-border transition-all group"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <p className="text-xs font-semibold text-foreground truncate group-hover:text-[#6B9A35] dark:group-hover:text-[#A8D666]">
-                          {page.domain}
-                        </p>
-                        {page.path && (
-                          <p className="text-[10px] text-muted font-mono truncate">
-                            {page.path}
-                          </p>
-                        )}
+                <div className="space-y-3">
+                  {qaData.browserBreakdown.map((b) => (
+                    <div key={b.name} className="space-y-1.5">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="font-medium text-foreground flex items-center gap-2 min-w-0">
+                          <Icon icon={getBrowserIcon(b.name)} className="w-4 h-4 shrink-0" aria-hidden="true" />
+                          <span className="truncate">{b.name}</span>
+                        </span>
+                        <span className="text-muted font-mono shrink-0 ml-2">{b.percent}% ({b.count})</span>
                       </div>
-                      <span className="px-2 py-0.5 rounded-md bg-rose-50 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 text-xs font-bold shrink-0 border border-rose-100 dark:border-rose-900/50">
-                        {page.count === 1 ? t("qa.issueCount", { count: page.count }) : t("qa.issuesCount", { count: page.count })}
-                      </span>
-                    </Link>
+                      <div className="h-1.5 w-full rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
+                        <div className={`h-full ${b.color} rounded-full transition-all duration-500`} style={{ width: `${b.percent}%` }} />
+                      </div>
+                    </div>
                   ))}
                 </div>
               )}
             </div>
 
-            <p className="text-[11px] text-muted mt-3 pt-3 border-t border-border/60">
-              {t("qa.hotspotHint")}
-            </p>
-          </div>
-
-          {/* Card 3: Platform & Environment Distribution */}
-          <div className="rounded-2xl border border-border bg-subtle p-5 flex flex-col justify-between shadow-xs">
-            <div>
-              <span className="text-xs font-semibold uppercase tracking-wider text-muted mb-3 block">{t("qa.envTitle")}</span>
-
-              {/* Browsers */}
-              <div className="mb-4">
-                <span className="text-[11px] font-semibold text-muted mb-2 block">{t("qa.browserTitle")}</span>
-                {qaData.browserBreakdown.length === 0 ? (
-                  <div className="text-xs text-muted">{t("qa.noBrowser")}</div>
-                ) : (
-                  <div className="space-y-2">
-                    {qaData.browserBreakdown.slice(0, 4).map((b) => (
-                      <div key={b.name} className="space-y-1">
-                        <div className="flex justify-between text-xs">
-                          <span className="font-medium text-foreground">{b.name}</span>
-                          <span className="text-muted font-mono">{b.percent}% ({b.count})</span>
-                        </div>
-                        <div className="h-1.5 w-full rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
-                          <div className={`h-full ${b.color} rounded-full transition-all duration-500`} style={{ width: `${b.percent}%` }} />
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+            {/* Column 2: Operating Systems */}
+            <div className="min-w-0">
+              <div className="flex items-center justify-between mb-3.5 gap-2">
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted flex items-center gap-1.5 min-w-0">
+                  <Icon icon="lucide:monitor" className="w-3.5 h-3.5 text-muted shrink-0" aria-hidden="true" />
+                  <span className="truncate">{t("qa.osTitle")}</span>
+                </span>
+                <span className="text-xs text-muted font-mono shrink-0">
+                  {qaData.osBreakdown.reduce((sum, os) => sum + os.count, 0)} {t("dash.totalCaptures").toLowerCase()}
+                </span>
               </div>
 
-              {/* Operating Systems */}
-              <div>
-                <span className="text-[11px] font-semibold text-muted mb-2 block">{t("qa.osTitle")}</span>
-                <div className="flex flex-wrap gap-2">
+              {qaData.osBreakdown.length === 0 ? (
+                <div className="py-6 text-center text-xs text-muted">{t("qa.noOs")}</div>
+              ) : (
+                <div className="space-y-3">
                   {qaData.osBreakdown.map((os) => (
-                    <span
-                      key={os.name}
-                      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-background border border-border text-xs text-foreground font-medium"
-                    >
-                      <span className={`w-2 h-2 rounded-full ${os.color}`} />
-                      <span>{os.name}</span>
-                      <span className="text-muted font-mono font-bold text-[10px]">{os.percent}%</span>
-                    </span>
+                    <div key={os.name} className="space-y-1.5">
+                      <div className="flex justify-between items-center text-xs">
+                        <span className="font-medium text-foreground flex items-center gap-2 min-w-0">
+                          <Icon icon={getOsIcon(os.name)} className="w-4 h-4 shrink-0 text-foreground" aria-hidden="true" />
+                          <span className="truncate">{os.name}</span>
+                        </span>
+                        <span className="text-muted font-mono shrink-0 ml-2">{os.percent}% ({os.count})</span>
+                      </div>
+                      <div className="h-1.5 w-full rounded-full bg-neutral-200 dark:bg-neutral-800 overflow-hidden">
+                        <div className={`h-full ${os.color} rounded-full transition-all duration-500`} style={{ width: `${os.percent}%` }} />
+                      </div>
+                    </div>
                   ))}
                 </div>
-              </div>
+              )}
             </div>
-
-            <p className="text-[11px] text-muted mt-3 pt-3 border-t border-border/60">
-              {t("qa.envHint")}
-            </p>
           </div>
+
+          <p className="text-[11px] text-muted mt-5 pt-3.5 border-t border-border/60">
+            {t("qa.envHint")}
+          </p>
         </div>
       </div>
     </div>

@@ -52,12 +52,47 @@ export async function PATCH(request: Request) {
   }
 
   const db = createServiceClient();
-  const { error } = await db
-    .from("users")
-    .update(updates)
-    .eq("id", user.id);
 
-  if (error) return NextResponse.json({ error: "Unable to save profile" }, { status: 500 });
+  let { data: existingUser } = await db
+    .from("users")
+    .select("id")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (!existingUser && user.email) {
+    const { data: userByEmail } = await db
+      .from("users")
+      .select("id")
+      .eq("email", user.email)
+      .maybeSingle();
+    if (userByEmail) {
+      existingUser = userByEmail;
+    } else if (user.email !== user.email.toLowerCase()) {
+      const { data: lowerUser } = await db
+        .from("users")
+        .select("id")
+        .eq("email", user.email.toLowerCase())
+        .maybeSingle();
+      existingUser = lowerUser;
+    }
+  }
+
+  if (existingUser) {
+    const { error } = await db
+      .from("users")
+      .update(updates)
+      .eq("id", existingUser.id);
+    if (error) return NextResponse.json({ error: "Unable to save profile" }, { status: 500 });
+  } else {
+    const { error } = await db
+      .from("users")
+      .upsert({
+        id: user.id,
+        email: user.email || "",
+        ...updates,
+      });
+    if (error) return NextResponse.json({ error: "Unable to save profile" }, { status: 500 });
+  }
 
   return NextResponse.json({ success: true, ...updates });
 }

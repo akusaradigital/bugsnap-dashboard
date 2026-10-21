@@ -24,7 +24,7 @@ export function ConnectDriveModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
       <button className="absolute inset-0 bg-black/40" aria-label="Close" onClick={() => !loading && onClose()} />
-      <div className="relative w-full max-w-sm rounded-xl border border-border bg-background p-6 shadow-xl">
+      <div className="relative w-[min(24rem,calc(100vw-2rem))] rounded-xl border border-border bg-background p-4 sm:p-6 shadow-xl">
         <h2 className="text-lg font-bold text-foreground">{t("settings.connectDriveQ")}</h2>
         <p className="text-sm text-muted mt-2">{t("settings.connectDriveDesc")}</p>
         {driveError && <p className="text-xs text-red-600 dark:text-red-400 mt-3">{driveError}</p>}

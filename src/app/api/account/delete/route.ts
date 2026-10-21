@@ -43,6 +43,7 @@ export async function POST(req: Request) {
       await db.from("workspace_settings").delete().in("workspace_id", ownedWsIds);
       await db.from("workspace_members").delete().in("workspace_id", ownedWsIds);
       await db.from("bugsnap_api_keys").delete().in("workspace_id", ownedWsIds);
+      await db.from("workspace_folders").delete().in("workspace_id", ownedWsIds);
       await db.from("workspaces").delete().in("id", ownedWsIds);
     }
 

@@ -7,6 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
 import { Dropdown } from "@/components/Dropdown";
+import { Icon } from "@/lib/iconify";
 import {
   type Capture,
   EXPIRY_OPTIONS,
@@ -133,9 +134,7 @@ export default function EditModal({ capture, onClose, onSaved }: EditModalProps)
             aria-label={t("common.close")}
             className="text-muted hover:text-foreground transition-colors"
           >
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
-              <path d="M18 6L6 18M6 6l12 12" />
-            </svg>
+            <Icon icon="lucide:x" className="w-5 h-5 shrink-0" aria-hidden="true" />
           </button>
         </div>
 
@@ -144,14 +143,14 @@ export default function EditModal({ capture, onClose, onSaved }: EditModalProps)
           <div className="space-y-4">
           <div>
             <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">
-              <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12 20h9" /><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z" /></svg>
+              <Icon icon="lucide:pencil" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
               {t("cap.titleLabel")}
             </label>
             <input className={inputClasses} value={title} onChange={(e) => setTitle(e.target.value)} />
           </div>
           <div>
             <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">
-              <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8Z" /><path d="M14 2v6h6" /><path d="M9 13h6M9 17h6" /></svg>
+              <Icon icon="lucide:file-text" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
               {t("cap.descLabel")}
             </label>
             <textarea
@@ -170,7 +169,7 @@ export default function EditModal({ capture, onClose, onSaved }: EditModalProps)
               {/* Tag */}
               <div>
                 <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">
-              <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M12.59 2.59A2 2 0 0 0 11.17 2H4a2 2 0 0 0-2 2v7.17c0 .53.21 1.04.59 1.41l8.83 8.83a2 2 0 0 0 2.83 0l7.17-7.17a2 2 0 0 0 0-2.83Z" /><circle cx="7" cy="7" r="1.5" fill="currentColor" stroke="none" /></svg>
+              <Icon icon="lucide:tag" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
               {t("cap.tagLabel")}
             </label>
                 <Dropdown
@@ -183,7 +182,7 @@ export default function EditModal({ capture, onClose, onSaved }: EditModalProps)
               {/* Status */}
               <div>
                 <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">
-              <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4" /><path d="M12 2v3M12 19v3M22 12h-3M5 12H2" /></svg>
+              <Icon icon="lucide:crosshair" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
               {t("cap.statusLabel")}
             </label>
                 <Dropdown
@@ -195,7 +194,7 @@ export default function EditModal({ capture, onClose, onSaved }: EditModalProps)
               </div>
               <div>
                 <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">
-              <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2" /><path d="M7 11V7a5 5 0 0 1 10 0v4" /></svg>
+              <Icon icon="lucide:lock" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
               {t("cap.passwordLabel")}
             </label>
                 <input
@@ -208,7 +207,7 @@ export default function EditModal({ capture, onClose, onSaved }: EditModalProps)
               </div>
               <div>
                 <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">
-              <svg className="w-3.5 h-3.5 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="10" /><polyline points="12 6 12 12 16 14" /></svg>
+              <Icon icon="lucide:clock" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
               {t("cap.expiresLabel")}
             </label>
                 <div className="inline-flex rounded-lg border border-border bg-subtle p-1 w-full">
@@ -295,7 +294,7 @@ export default function EditModal({ capture, onClose, onSaved }: EditModalProps)
           {error && <p className="mr-auto text-xs text-red-600 dark:text-red-400 w-full sm:w-auto">{error}</p>}
           <button
             onClick={onClose}
-            className="flex-1 sm:flex-initial rounded-lg border border-border bg-subtle px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle transition-colors text-center"
+            className="flex-1 sm:flex-initial rounded-lg border border-border bg-subtle px-4 py-2 text-sm font-medium text-foreground hover:bg-background transition-colors text-center"
           >
             {t("common.cancel")}
           </button>

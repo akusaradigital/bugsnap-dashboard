@@ -37,6 +37,18 @@ export interface NetworkLog extends TimedLog {
   size?: number;
   /** Negotiated protocol (h2, http/1.1), from resource timing. */
   protocol?: string;
+  /** Frame ID or label (0 for top/main, >0 for iframe). */
+  frameId?: number | string;
+  /** Served from the HTTP cache: a 0ms row is otherwise ambiguous. */
+  fromCache?: boolean;
+  /** Detailed network timing breakdown from Resource Timing API. */
+  timings?: {
+    dns?: number;
+    connect?: number;
+    ssl?: number;
+    ttfb?: number;
+    download?: number;
+  };
   error?: string;
 }
 
@@ -144,6 +156,11 @@ export function normalizeDevLog(log: Record<string, unknown>): DevLog {
   const responseHeaders = headerMap(log.responseHeaders);
   const size = typeof log.size === "number" ? log.size : undefined;
   const protocol = typeof log.protocol === "string" ? log.protocol : undefined;
+  const frameId = typeof log.frameId === "number" || typeof log.frameId === "string" ? log.frameId : undefined;
+  const fromCache = log.fromCache === true ? true : undefined;
+  const timings = typeof log.timings === "object" && log.timings !== null
+    ? (log.timings as NetworkLog["timings"])
+    : undefined;
   const time = typeof log.time === "string" || typeof log.time === "number" ? log.time : undefined;
   const timestamp = typeof log.timestamp === "string" || typeof log.timestamp === "number" ? log.timestamp : undefined;
   const count = typeof log.count === "number" ? log.count : undefined;
@@ -164,7 +181,7 @@ export function normalizeDevLog(log: Record<string, unknown>): DevLog {
     return { type: "console", level, message, text, stack, time, timestamp, count };
   }
   if (type === "network" || (type === "" && (method !== undefined || status !== undefined || requestBody !== undefined || responseBody !== undefined))) {
-    return { type: "network", level, method, status, resourceType, url, statusText, duration, requestBody, responseBody, requestHeaders, responseHeaders, size, protocol, error, time, timestamp, count };
+    return { type: "network", level, method, status, resourceType, url, statusText, duration, requestBody, responseBody, requestHeaders, responseHeaders, size, protocol, frameId, fromCache, timings, error, time, timestamp, count };
   }
   if (type === "navigation") {
     return { type: "navigation", message, url, time, timestamp, count };
@@ -208,6 +225,9 @@ export function isSummary(logs: unknown): logs is DevLogSummary {
 
 /** The capture fields the panel and the exporters read. */
 export interface CaptureMeta {
+  id?: string;
+  title?: string | null;
+  description?: string | null;
   type?: string;
   drive_url: string;
   site_url?: string | null;
@@ -218,6 +238,8 @@ export interface CaptureMeta {
   dev_logs?: CapturedLogs;
 }
 
+/** One row of a log table: the entry, plus how many identical reports it
+ *  absorbed upstream (1 for a request seen once). */
 export type Grouped<T> = { log: T; count: number };
 
 export function normalizeText(value?: string) {
@@ -328,6 +350,61 @@ export function formatBytes(n?: number): string {
   return `${(n / (1024 * 1024)).toFixed(1)} MiB`;
 }
 
+/** Format frame ID as display string: "top", "iframe #1", etc. */
+/** Iconify name for a resource kind, so the row glyph and the Type column
+ *  can never disagree about what a request is. */
+export function networkKindIcon(kind: NetworkKind): string {
+  switch (kind) {
+    case "ws": return "lucide:plug-zap";
+    case "js": return "lucide:file-code-2";
+    case "css": return "lucide:palette";
+    case "media": return "lucide:image";
+    case "font": return "lucide:type";
+    case "doc": return "lucide:file-text";
+    case "other": return "lucide:file";
+    default: return "lucide:arrow-left-right";
+  }
+}
+
+export function formatFrame(frameId?: number | string): string {
+  if (frameId == null || frameId === 0 || frameId === "0" || frameId === "top") return "top";
+  return typeof frameId === "number" ? `iframe #${frameId}` : String(frameId);
+}
+
+export function formatFrameDetailed(frameId?: number | string): string {
+  if (frameId == null || frameId === 0 || frameId === "0" || frameId === "top") return "top (main frame)";
+  return typeof frameId === "number" ? `iframe (id: ${frameId})` : `iframe (${frameId})`;
+}
+
+export interface TimingBreakdown {
+  dns?: number;
+  connect?: number;
+  ssl?: number;
+  ttfb?: number;
+  download?: number;
+  total?: number;
+}
+
+export function getTimingBreakdown(log: NetworkLog): TimingBreakdown | null {
+  if (log.timings && (log.timings.dns != null || log.timings.connect != null || log.timings.ttfb != null || log.timings.download != null)) {
+    return {
+      ...log.timings,
+      total: log.duration,
+    };
+  }
+  if (log.duration != null && log.duration > 0) {
+    // Basic estimation when granular timings are unavailable: ~75% waiting (TTFB), ~25% download
+    const ttfb = Math.round(log.duration * 0.75);
+    const download = Math.max(1, log.duration - ttfb);
+    return {
+      ttfb,
+      download,
+      total: log.duration,
+    };
+  }
+  return null;
+}
+
 export function networkLocation(value?: string) {
   try {
     const url = new URL(value || "");
@@ -400,32 +477,139 @@ export function isClassSoup(text: string) {
 }
 
 export function cleanActionMessage(message?: string) {
-  const text = (message || "").trim();
+  let text = (message || "").trim();
   if (!text) return "";
 
   // Format "Clicked select: Select Category Type Automotive B2B..." -> "Clicked select: Select Category"
-  const selectMatch = text.match(/^(Clicked\s+select:\s*)([^\n]+)$/i);
+  const selectMatch = text.match(/^(Clicked\s+select:\s*)([^\n\r]+)/i);
   if (selectMatch) {
     const rawVal = selectMatch[2].trim();
-    const shortVal = rawVal.split(/\s{2,}|\t|\n/)[0].slice(0, 35);
+    const shortVal = rawVal.split(/\s{2,}|\t/)[0].slice(0, 35);
     return `${selectMatch[1]}${shortVal}`;
   }
 
+  // Strip selector soup in parentheses: e.g. "Clicked button (div.grid.grid-cols-5 > ...)" -> "Clicked button"
+  text = text.replace(/\s*\([^)]*[\.>:>#][^)]*\)$/, "");
+
   const match = text.match(/^(Clicked|Typed in)\s+([^:]+):\s+(.+)$/i);
-  if (!match) return text;
-  return isClassSoup(match[3]) ? `${match[1]} ${match[2]}` : text;
+  if (match && isClassSoup(match[3])) {
+    return `${match[1]} ${match[2]}`;
+  }
+
+  // Format "Clicked on tag.class.soup" -> "Clicked on tag"
+  const clickedOnMatch = text.match(/^Clicked on ([a-z0-9_-]+)\.[a-z0-9_\.:-]+/i);
+  if (clickedOnMatch) {
+    return `Clicked on ${clickedOnMatch[1]}`;
+  }
+
+  return text;
 }
 
-export function groupBy<T extends TimedLog>(items: T[], keyFor: (item: T) => string, mapItem?: (item: T) => T): Grouped<T>[] {
-  const groups = new Map<string, Grouped<T>>();
-  items.forEach((item) => {
-    const key = keyFor(item);
-    const existing = groups.get(key);
-    const itemCount = logCount(item);
-    if (existing) existing.count += itemCount;
-    else groups.set(key, { log: mapItem ? mapItem(item) : item, count: itemCount });
-  });
-  return Array.from(groups.values());
+export function isDeadAction(log: { type: string; message?: string }) {
+  if (log.type !== "step") return false;
+  const msg = (log.message || "").trim();
+  if (!msg) return true;
+  return (
+    /^(clicked|click)(\s+on)?\s+(page\s+body|body|html|unknown\s+element)$/i.test(msg) ||
+    /^(clicked|click)(\s+on)?\s+(div|span|section|main|svg|path|canvas)$/i.test(msg) ||
+    /^(typed\s+in|type)(\s+on)?\s*(unknown\s+element)?$/i.test(msg)
+  );
+}
+
+export function groupConsoleLogs<T extends { type: string; level?: string; message?: string; text?: string; count?: number; stack?: string | null }>(
+  items: T[]
+): (T & { count: number })[] {
+  const grouped: (T & { count: number })[] = [];
+  for (const item of items) {
+    const last = grouped[grouped.length - 1];
+    const isSameType = Boolean(last && last.type === item.type);
+    const isSameLevel = Boolean(last && normalizeLevel(last.level) === normalizeLevel(item.level));
+    const lastMsg = (last ? last.message || last.text || "" : "").trim();
+    const itemMsg = (item.message || item.text || "").trim();
+    const isSameMessage = Boolean(last && lastMsg === itemMsg);
+
+    if (last && isSameType && isSameLevel && isSameMessage) {
+      last.count = (last.count || 1) + (item.count || 1);
+      if (!last.stack && item.stack) last.stack = item.stack;
+    } else {
+      grouped.push({
+        ...item,
+        count: item.count || 1,
+      });
+    }
+  }
+  return grouped;
+}
+
+export function dedupeNetworkLogs<T extends NetworkLog>(logs: T[]): T[] {
+  const result: T[] = [];
+  for (const log of logs) {
+    const normUrl = canonicalUrl(log.url);
+    const method = (log.method || "GET").toUpperCase();
+    const status = Number(log.status || 0);
+
+    // Look back for a duplicate observation of the same HTTP transaction
+    // (e.g. chrome.webRequest vs page-side fetch hook, or consecutive identical requests within 3s)
+    const prevIdx = result.findLastIndex((p) => {
+      const pNormUrl = canonicalUrl(p.url);
+      const pMethod = (p.method || "GET").toUpperCase();
+      const pStatus = Number(p.status || 0);
+      if (pMethod !== method || pNormUrl !== normUrl || pStatus !== status) return false;
+
+      const pSrc = (p as Record<string, unknown>).src || "";
+      const logSrc = (log as Record<string, unknown>).src || "";
+      const isDualSource = (pSrc === "wr") !== (logSrc === "wr");
+      const timeDiff = Math.abs(Number(log.timestamp || 0) - Number(p.timestamp || 0));
+
+      return isDualSource || timeDiff <= 3000;
+    });
+
+    if (prevIdx >= 0) {
+      const prev = result[prevIdx];
+      if (!prev.requestBody && log.requestBody) prev.requestBody = log.requestBody;
+      if (!prev.responseBody && log.responseBody) prev.responseBody = log.responseBody;
+      if (!prev.requestHeaders && log.requestHeaders) prev.requestHeaders = log.requestHeaders;
+      if (!prev.responseHeaders && log.responseHeaders) prev.responseHeaders = log.responseHeaders;
+      if (prev.duration == null && log.duration != null) prev.duration = log.duration;
+      if (prev.size == null && log.size != null) prev.size = log.size;
+      if (!prev.protocol && log.protocol) prev.protocol = log.protocol;
+      if (prev.frameId == null && log.frameId != null) prev.frameId = log.frameId;
+      if (!prev.timings && log.timings) prev.timings = log.timings;
+      if (prev.fromCache == null && log.fromCache != null) prev.fromCache = log.fromCache;
+      if (!prev.error && log.error) prev.error = log.error;
+
+      const pSrc = (prev as Record<string, unknown>).src || "";
+      const logSrc = (log as Record<string, unknown>).src || "";
+      if (pSrc === logSrc) {
+        prev.count = (prev.count || 1) + (log.count || 1);
+      }
+    } else {
+      result.push({ ...log });
+    }
+  }
+  return result;
+}
+
+export function groupActionLogs<T extends { type: string; message?: string; count?: number; url?: string }>(
+  items: T[]
+): (T & { count: number })[] {
+  const grouped: (T & { count: number })[] = [];
+  for (const item of items) {
+    const last = grouped[grouped.length - 1];
+    const isSameType = last && last.type === item.type;
+    const isSameMessage = last && (last.message || "") === (item.message || "");
+    const isSameUrl = last && (last.url || "") === (item.url || "");
+
+    if (last && isSameType && isSameMessage && isSameUrl) {
+      last.count = (last.count || 1) + (item.count || 1);
+    } else {
+      grouped.push({
+        ...item,
+        count: item.count || 1,
+      });
+    }
+  }
+  return grouped;
 }
 
 export function isTracker(url?: string) {

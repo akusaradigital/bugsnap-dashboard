@@ -164,7 +164,7 @@ export function HowItWorksContent() {
     >
       <div className="space-y-16">
         {/* Step Selector Pills for Fast Navigation */}
-        <div className="flex items-center justify-center gap-2 overflow-x-auto pb-2">
+        <div className="flex items-center justify-start sm:justify-center gap-2 overflow-x-auto pb-2 max-w-full">
           {workflowStages.map((stage, idx) => (
             <button
               key={stage.number}

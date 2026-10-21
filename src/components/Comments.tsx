@@ -682,7 +682,7 @@ function Comments({
                     <div className="flex-1 min-w-0">
                       <div
                         data-comment-id={c.id}
-                        className={`rounded-xl border bg-white dark:bg-zinc-900/60 p-3.5 shadow-xs transition-all ${
+                        className={`rounded-xl border bg-white dark:bg-zinc-900 p-3.5 shadow-xs transition-all ${
                           highlightId === c.id
                             ? "border-[#89BD49] ring-2 ring-[#89BD49]/20"
                             : "border-border/70 hover:border-border"
@@ -864,7 +864,7 @@ function Comments({
           {effAuthorName ? effAuthorName.charAt(0).toUpperCase() : <Icon icon="lucide:user" className="h-3.5 w-3.5" />}
         </div>
 
-        <div className="flex-1 min-w-0 rounded-xl border border-border bg-white dark:bg-zinc-950 shadow-xs transition-all focus-within:border-[#89BD49] focus-within:ring-2 focus-within:ring-[#89BD49]/15 overflow-hidden">
+        <div className="flex-1 min-w-0 rounded-xl border border-border bg-white dark:bg-zinc-900 shadow-xs transition-all focus-within:border-[#89BD49] focus-within:ring-2 focus-within:ring-[#89BD49]/15 overflow-hidden">
           <textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}

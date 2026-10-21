@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-server";
+import { isRateLimited, clientIp } from "@/lib/rate-limit";
+import { isRequestAdminAuthenticated } from "@/lib/admin-auth";
 
 export const runtime = "nodejs";
 
@@ -35,6 +37,11 @@ interface ExperimentMetrics {
 
 export async function POST(req: Request) {
   try {
+    const ip = clientIp(req);
+    if (await isRateLimited(`experiment:${ip}`, 60, 60)) {
+      return NextResponse.json({ ok: false, error: "Too many requests" }, { status: 429, headers: corsHeaders });
+    }
+
     const body = (await req.json().catch(() => ({}))) as EventPayload;
     const { experimentId, variantId, type, goal } = body;
 
@@ -98,8 +105,13 @@ export async function POST(req: Request) {
   }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const isAdmin = await isRequestAdminAuthenticated(req);
+    if (!isAdmin) {
+      return NextResponse.json({ ok: false, error: "Unauthorized" }, { status: 401, headers: corsHeaders });
+    }
+
     const supabase = createServiceClient();
 
     const { data } = await supabase

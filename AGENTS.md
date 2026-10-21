@@ -6,12 +6,12 @@
 
 1. **Graphify MANDATORY**: Read `../graphify-out/GRAPH_REPORT.md` before touching code. No sweep-reading.
 2. **Tools**: Use `PowerShell`/`Bash`, `Read`, `Edit`, `Write`, `Grep`, `Glob`, `Agent`. No `cat`.
-3. **No auto-push**: NEVER `git push` without explicit instruction. Sebelum melakukan `git push`, wajib jalankan `/graphify --update`.
+3. **No auto-push**: NEVER `git push` without explicit instruction. Before executing `git push`, run `/graphify --update`.
 4. **PowerShell 5.1**: No `&&` - use `;` or Bash tool.
 5. **Free tier stubs**: `tiers.ts` + `quota.ts` are deliberately unlimited. Do NOT add paywalls.
 6. **i18n**: All UI text via `src/lib/i18n.ts` + `useT()`. Both `en` + `id`. No hardcoded strings.
 7. **No `any` TS type**: Proper types only.
-8. **Icon Standard (Iconify)**: Gunakan Iconify (https://iconify.design/getting-started/) untuk semua icon agar seragam dan konsisten (`@iconify/react` via `<Icon icon="..." />`). Hindari mencampur icon library yang berbeda atau inline SVG manual tanpa standarisasi.
+8. **Icon Standard (Iconify)**: Use Iconify (https://iconify.design/getting-started/) for all icons for uniformity and consistency (`@iconify/react` via `<Icon icon="..." />`). Avoid mixing different icon libraries or manual inline SVGs without standardization.
 9. **DB changes apply immediately**: A new `supabase/migrations/*.sql` is not done until it runs against the live project. Execute it with `node scripts/apply-migration.mjs <file.sql>` (Management API + `SUPABASE_PAT` from `.env.local`) in the same turn it is written. Snapshot what you are replacing first - `--sql "select pg_get_functiondef(...)"` - and verify afterwards. Never leave a migration written-but-unapplied.
 10. **Mobile View 360px–440px Audit (MANDATORY on Dashboard Changes)**: For every UI, component, or page change in `bugsnap-dashboard`, you MUST verify and audit responsiveness across small mobile viewports (360px–440px, usable width ~328px with 16px horizontal gutters). Horizontal overflow/scrolling is strictly forbidden. Mandatory rules:
    - Add `min-w-0` to flex child containers to allow nested `truncate` elements to truncate properly without overflowing.
@@ -21,6 +21,7 @@
    - Long unbroken technical strings (emails, URLs, stack traces, identifiers): always apply `break-all`.
    - Modal/card padding: use `p-4 sm:p-6` or `p-4 sm:p-8` (avoid static `p-8` or `p-10`).
    - Media player video controls: adapt with `flex-wrap sm:flex-nowrap`, preserving scrubber track width with `min-w-[120px]`.
+11. **Real Website Testing Standard (MANDATORY)**: For all E2E, Playwright, and browser automation tests, you MUST use REAL production websites from the public internet that match the specific technical characteristics of the test case. Arbitrary mock injections or lazily reusing a single URL (e.g. Wikipedia only) across different test cases is strictly forbidden. Examples: CSP blocking (`https://github.com`), infinite scroll (`https://infinite-scroll.com/demo/full-page/`), Shadow DOM (`https://shoelace.style`), sticky header/nav overlay (`https://vuejs.org`).
 
 ## Versioning (SemVer - ONLY on git push to main)
 

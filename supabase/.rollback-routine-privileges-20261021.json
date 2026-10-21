@@ -1,0 +1,12 @@
+[
+  {"routine_name":"get_captures_by_fingerprint","grantee":"PUBLIC","privilege_type":"EXECUTE"},
+  {"routine_name":"get_captures_by_fingerprint","grantee":"anon","privilege_type":"EXECUTE"},
+  {"routine_name":"get_workspace_fingerprint_counts","grantee":"PUBLIC","privilege_type":"EXECUTE"},
+  {"routine_name":"get_workspace_fingerprint_counts","grantee":"anon","privilege_type":"EXECUTE"},
+  {"routine_name":"get_workspace_top_errors","grantee":"PUBLIC","privilege_type":"EXECUTE"},
+  {"routine_name":"get_workspace_top_errors","grantee":"anon","privilege_type":"EXECUTE"},
+  {"routine_name":"get_workspaces_by_email","grantee":"PUBLIC","privilege_type":"EXECUTE"},
+  {"routine_name":"get_workspaces_by_email","grantee":"anon","privilege_type":"EXECUTE"},
+  {"routine_name":"set_workspace_folder_parent","grantee":"PUBLIC","privilege_type":"EXECUTE"},
+  {"routine_name":"set_workspace_folder_parent","grantee":"anon","privilege_type":"EXECUTE"}
+]

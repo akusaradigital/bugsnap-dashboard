@@ -684,12 +684,12 @@ export default function AdminOverviewPage() {
               {t("admin.mediaFormats")}
             </h4>
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="p-2 rounded-lg bg-slate-50 dark:bg-zinc-950 border border-slate-100 dark:border-zinc-850">
-                <span className="text-[10px] text-slate-400 block font-semibold">{t("admin.screenshots")}</span>
+              <div className="p-2 rounded-lg bg-slate-50 dark:bg-zinc-950 border border-slate-100 dark:border-zinc-800">
+                <span className="text-[10px] text-slate-500 dark:text-zinc-400 block font-semibold">{t("admin.screenshots")}</span>
                 <span className="text-sm font-bold text-slate-900 dark:text-white">{media.screenshot}</span>
               </div>
-              <div className="p-2 rounded-lg bg-slate-50 dark:bg-zinc-950 border border-slate-100 dark:border-zinc-850">
-                <span className="text-[10px] text-slate-400 block font-semibold">{t("admin.videoRecords")}</span>
+              <div className="p-2 rounded-lg bg-slate-50 dark:bg-zinc-950 border border-slate-100 dark:border-zinc-800">
+                <span className="text-[10px] text-slate-500 dark:text-zinc-400 block font-semibold">{t("admin.videoRecords")}</span>
                 <span className="text-sm font-bold text-slate-900 dark:text-white">{media.video}</span>
               </div>
             </div>
@@ -863,7 +863,7 @@ export default function AdminOverviewPage() {
                 type="checkbox"
                 checked={promoEnabled}
                 onChange={(e) => setPromoEnabled(e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 text-[#89BD49] focus:ring-[#89BD49]"
+                className="w-4 h-4 rounded border-slate-300 dark:border-zinc-700 text-[#89BD49] focus:ring-[#89BD49]"
               />
               <span>{t("admin.enableBanner")}</span>
             </label>

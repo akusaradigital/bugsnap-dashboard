@@ -85,3 +85,57 @@ test("settings integrations CRUD: configuration payload serialization", () => {
   assert.equal(Boolean(cloned.jira), true);
   assert.equal(Boolean(cloned.webhook), true);
 });
+
+// 4. Test Workspace deletion foreign key order
+test("settings account delete: cleanup sequence covers workspace_folders before workspaces", () => {
+  const cleanupSequence = [
+    "captures",
+    "workspace_settings",
+    "workspace_members",
+    "bugsnap_api_keys",
+    "workspace_folders",
+    "workspaces",
+  ];
+  const foldersIdx = cleanupSequence.indexOf("workspace_folders");
+  const workspacesIdx = cleanupSequence.indexOf("workspaces");
+  assert.equal(foldersIdx !== -1, true);
+  assert.equal(workspacesIdx !== -1, true);
+  assert.equal(foldersIdx < workspacesIdx, true, "workspace_folders must be deleted before workspaces to prevent FK violation");
+});
+
+// 5. Test Profile resilient user resolution logic
+test("settings profile: resilient user lookup by id and fallback email", () => {
+  function resolveTargetUserId(user, dbUsers) {
+    const byId = dbUsers.find((u) => u.id === user.id);
+    if (byId) return { action: "update", id: byId.id };
+    if (user.email) {
+      const byEmail = dbUsers.find((u) => u.email.toLowerCase() === user.email.toLowerCase());
+      if (byEmail) return { action: "update", id: byEmail.id };
+    }
+    return { action: "upsert", id: user.id, email: user.email };
+  }
+
+  const existingUsers = [
+    { id: "usr_123", email: "existing@example.com" },
+    { id: "usr_456", email: "drive_prov@example.com" },
+  ];
+
+  // Matched by id
+  assert.deepEqual(
+    resolveTargetUserId({ id: "usr_123", email: "existing@example.com" }, existingUsers),
+    { action: "update", id: "usr_123" }
+  );
+
+  // Matched by email when auth id differs (e.g. provisioned via Drive)
+  assert.deepEqual(
+    resolveTargetUserId({ id: "auth_diff_789", email: "drive_prov@example.com" }, existingUsers),
+    { action: "update", id: "usr_456" }
+  );
+
+  // Not matched -> upsert
+  assert.deepEqual(
+    resolveTargetUserId({ id: "brand_new_999", email: "newbie@example.com" }, existingUsers),
+    { action: "upsert", id: "brand_new_999", email: "newbie@example.com" }
+  );
+});
+

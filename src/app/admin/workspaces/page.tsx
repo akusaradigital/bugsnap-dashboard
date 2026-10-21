@@ -500,15 +500,15 @@ export default function AdminWorkspacesPage() {
                 {/* Stats row */}
                 <div className="grid grid-cols-3 gap-2.5">
                   <div className="p-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950">
-                    <span className="text-[10px] text-slate-500 uppercase font-bold block">{t("admin.membersCount")}</span>
+                    <span className="text-[10px] text-slate-500 dark:text-zinc-400 uppercase font-bold block">{t("admin.membersCount")}</span>
                     <span className="font-bold text-slate-800 dark:text-zinc-200 text-sm">{members.length}</span>
                   </div>
                   <div className="p-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950">
-                    <span className="text-[10px] text-slate-500 uppercase font-bold block">{t("admin.capturesCount")}</span>
+                    <span className="text-[10px] text-slate-500 dark:text-zinc-400 uppercase font-bold block">{t("admin.capturesCount")}</span>
                     <span className="font-bold text-slate-800 dark:text-zinc-200 text-sm">{selectedWs.capture_count}</span>
                   </div>
                   <div className="p-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950">
-                    <span className="text-[10px] text-slate-500 uppercase font-bold block">{t("admin.storageUsed")}</span>
+                    <span className="text-[10px] text-slate-500 dark:text-zinc-400 uppercase font-bold block">{t("admin.storageUsed")}</span>
                     <span className="font-bold text-slate-800 dark:text-zinc-200 text-sm">{formatBytes(totalSizeBytes)}</span>
                   </div>
                 </div>

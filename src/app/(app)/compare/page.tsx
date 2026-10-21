@@ -291,6 +291,9 @@ function CompareContent() {
   }, [workspaceCaptures, searchQuery]);
 
   const bothSelected = Boolean(leftSlot && rightSlot);
+  const hasAnySelected = Boolean(leftSlot || rightSlot);
+  const activeSingleSlot = leftSlot || rightSlot;
+  const missingTarget: "left" | "right" = !leftSlot ? "left" : "right";
 
   return (
     <div className="min-h-full flex flex-col bg-background text-foreground pb-12">
@@ -304,7 +307,7 @@ function CompareContent() {
       />
 
       {/* Top Header Bar */}
-      <div className="border-b border-border bg-card/50 backdrop-blur-xs px-4 sm:px-6 py-4">
+      <div className="border-b border-border bg-subtle/50 backdrop-blur-xs px-4 sm:px-6 py-4">
         <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-4">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
@@ -380,7 +383,7 @@ function CompareContent() {
               type="button"
               onClick={handleSwap}
               disabled={!leftSlot && !rightSlot}
-              className="h-9 min-h-[36px] px-3 rounded-xl border border-border bg-card hover:bg-subtle text-foreground text-xs font-semibold flex items-center gap-1.5 disabled:opacity-40 transition-colors cursor-pointer shadow-xs touch-manipulation"
+              className="h-9 min-h-[36px] px-3 rounded-xl border border-border bg-subtle hover:bg-background text-foreground text-xs font-semibold flex items-center gap-1.5 disabled:opacity-40 transition-colors cursor-pointer shadow-xs touch-manipulation"
               title={t("compare.swap")}
             >
               <Icon icon="lucide:arrow-right-left" className="w-3.5 h-3.5 text-muted shrink-0" />
@@ -395,7 +398,7 @@ function CompareContent() {
         {/* Slot Headers / Switchers Bar */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
           {/* Left Slot Card */}
-          <div className="border border-border rounded-2xl bg-card p-3 sm:p-4 flex flex-col justify-between gap-3 shadow-xs min-w-0">
+          <div className="border border-border rounded-2xl bg-subtle p-3 sm:p-4 flex flex-col justify-between gap-3 shadow-xs min-w-0">
             <div className="flex items-center justify-between gap-2 min-w-0">
               <div className="flex items-center gap-2 min-w-0">
                 <span className="px-2 py-0.5 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 font-bold text-[11px] shrink-0 uppercase tracking-wider">
@@ -449,7 +452,7 @@ function CompareContent() {
           </div>
 
           {/* Right Slot Card */}
-          <div className="border border-border rounded-2xl bg-card p-3 sm:p-4 flex flex-col justify-between gap-3 shadow-xs min-w-0">
+          <div className="border border-border rounded-2xl bg-subtle p-3 sm:p-4 flex flex-col justify-between gap-3 shadow-xs min-w-0">
             <div className="flex items-center justify-between gap-2 min-w-0">
               <div className="flex items-center gap-2 min-w-0">
                 <span className="px-2 py-0.5 rounded-md bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666] font-bold text-[11px] shrink-0 uppercase tracking-wider">
@@ -505,7 +508,7 @@ function CompareContent() {
 
         {/* Loading Spinner */}
         {loadingCaptures && (
-          <div className="flex-1 flex flex-col items-center justify-center py-20 border border-border rounded-2xl bg-card/40">
+          <div className="flex-1 flex flex-col items-center justify-center py-20 border border-border rounded-2xl bg-subtle/40">
             <Icon
               icon="lucide:refresh-cw"
               className="w-6 h-6 animate-spin text-[#89BD49] mb-3"
@@ -514,9 +517,9 @@ function CompareContent() {
           </div>
         )}
 
-        {/* Empty State (when one or both slots are missing) */}
-        {!loadingCaptures && !bothSelected && (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 sm:p-12 border-2 border-dashed border-border rounded-3xl bg-card/30 text-center min-w-0">
+        {/* Empty State (when neither slot is selected) */}
+        {!loadingCaptures && !hasAnySelected && (
+          <div className="flex-1 flex flex-col items-center justify-center p-8 sm:p-12 border-2 border-dashed border-border rounded-3xl bg-subtle/30 text-center min-w-0">
             <div className="w-14 h-14 rounded-2xl bg-[#89BD49]/10 text-[#6B9A35] dark:text-[#A8D666] flex items-center justify-center mb-4">
               <Icon icon="lucide:columns-2" className="w-7 h-7" />
             </div>
@@ -538,7 +541,7 @@ function CompareContent() {
               <button
                 type="button"
                 onClick={() => handleTriggerUpload(!leftSlot ? "left" : "right")}
-                className="px-4 py-2 min-h-[44px] rounded-xl border border-border bg-card hover:bg-subtle text-foreground font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer touch-manipulation"
+                className="px-4 py-2 min-h-[44px] rounded-xl border border-border bg-subtle hover:bg-background text-foreground font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer touch-manipulation"
               >
                 <Icon icon="lucide:upload" className="w-4 h-4 shrink-0" />
                 <span>{t("compare.uploadImage")}</span>
@@ -547,11 +550,11 @@ function CompareContent() {
           </div>
         )}
 
-        {/* Comparison Viewer Area */}
-        {!loadingCaptures && bothSelected && leftSlot && rightSlot && (
+        {/* Comparison Viewer Area (active when at least one slot is selected) */}
+        {!loadingCaptures && hasAnySelected && (
           <div className="flex-1 flex flex-col min-w-0">
-            {/* Split Slider Mode */}
-            {mode === "split" && (
+            {/* Split Slider Mode - Both Selected */}
+            {mode === "split" && bothSelected && leftSlot && rightSlot && (
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between text-xs text-muted px-1">
                   <span>{t("compare.dragSliderHint")}</span>
@@ -625,63 +628,213 @@ function CompareContent() {
               </div>
             )}
 
-            {/* Side by Side Mode */}
-            {mode === "side" && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {/* Left Panel */}
-                <div className="flex flex-col border border-border rounded-2xl bg-zinc-950 overflow-hidden shadow-xs min-w-0">
-                  <div className="px-3 py-2 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between">
-                    <span className="text-xs font-semibold text-white truncate">
-                      {leftSlot.title}
-                    </span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-blue-400">
-                      {t("compare.original")}
+            {/* Split Slider Mode - Single Selected Preview */}
+            {mode === "split" && !bothSelected && activeSingleSlot && (
+              <div className="flex flex-col min-w-0">
+                <div className="flex flex-wrap items-center justify-between gap-3 p-3 sm:p-3.5 rounded-2xl border border-border bg-subtle/80 backdrop-blur-xs text-xs mb-3 shadow-xs min-w-0">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div
+                      className={`w-2.5 h-2.5 rounded-full shrink-0 animate-pulse ${
+                        leftSlot ? "bg-blue-500" : "bg-[#89BD49]"
+                      }`}
+                    />
+                    <span className="text-muted truncate">
+                      {t("compare.oneSelectedNotice", {
+                        selected: leftSlot ? t("compare.original") : t("compare.modified"),
+                        missing: !leftSlot ? t("compare.original") : t("compare.modified"),
+                        mode: t("compare.splitMode"),
+                      })}
                     </span>
                   </div>
-                  <div className="p-2 flex items-center justify-center min-h-[360px] max-h-[70vh]">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={leftSlot.imageUrl}
-                      alt={leftSlot.title}
-                      onError={(e) => {
-                        if (leftSlot.fallbackUrl && e.currentTarget.src !== leftSlot.fallbackUrl) {
-                          e.currentTarget.src = leftSlot.fallbackUrl;
-                        }
-                      }}
-                      className="max-w-full max-h-[65vh] object-contain rounded-lg"
-                    />
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => void openPickerModal(missingTarget)}
+                      className="px-3 py-1.5 min-h-[36px] rounded-xl bg-[#89BD49] hover:bg-[#78a83f] text-white font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer touch-manipulation"
+                    >
+                      <Icon icon="lucide:camera" className="w-3.5 h-3.5 shrink-0" />
+                      <span>{t("compare.pickCapture")}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleTriggerUpload(missingTarget)}
+                      className="px-3 py-1.5 min-h-[36px] rounded-xl border border-border bg-background hover:bg-subtle text-foreground font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer touch-manipulation"
+                    >
+                      <Icon icon="lucide:upload" className="w-3.5 h-3.5 shrink-0" />
+                      <span>{t("compare.uploadImage")}</span>
+                    </button>
                   </div>
                 </div>
 
-                {/* Right Panel */}
-                <div className="flex flex-col border border-border rounded-2xl bg-zinc-950 overflow-hidden shadow-xs min-w-0">
-                  <div className="px-3 py-2 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between">
-                    <span className="text-xs font-semibold text-white truncate">
-                      {rightSlot.title}
-                    </span>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#89BD49]/20 text-[#A8D666]">
-                      {t("compare.modified")}
+                <div className="relative w-full max-h-[75vh] min-h-[360px] rounded-2xl overflow-hidden border border-border bg-zinc-950 shadow-md select-none flex items-center justify-center p-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={activeSingleSlot.imageUrl}
+                    alt={activeSingleSlot.title}
+                    onError={(e) => {
+                      if (
+                        activeSingleSlot.fallbackUrl &&
+                        e.currentTarget.src !== activeSingleSlot.fallbackUrl
+                      ) {
+                        e.currentTarget.src = activeSingleSlot.fallbackUrl;
+                      }
+                    }}
+                    className="max-w-full max-h-[70vh] object-contain pointer-events-none rounded-lg"
+                  />
+
+                  <div className="absolute top-3 left-3 z-10 pointer-events-none">
+                    <span
+                      className={`px-2.5 py-1 rounded-lg text-white backdrop-blur-xs font-semibold text-[11px] shadow-sm ${
+                        leftSlot ? "bg-blue-600/90" : "bg-[#89BD49]/90"
+                      }`}
+                    >
+                      {leftSlot ? t("compare.original") : t("compare.modified")}
                     </span>
                   </div>
-                  <div className="p-2 flex items-center justify-center min-h-[360px] max-h-[70vh]">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={rightSlot.imageUrl}
-                      alt={rightSlot.title}
-                      onError={(e) => {
-                        if (rightSlot.fallbackUrl && e.currentTarget.src !== rightSlot.fallbackUrl) {
-                          e.currentTarget.src = rightSlot.fallbackUrl;
-                        }
-                      }}
-                      className="max-w-full max-h-[65vh] object-contain rounded-lg"
-                    />
-                  </div>
+                  {Boolean(activeSingleSlot.dimensions) && (
+                    <div className="absolute top-3 right-3 z-10 pointer-events-none">
+                      <span className="px-2.5 py-1 rounded-lg bg-black/70 text-zinc-300 backdrop-blur-xs font-medium text-[11px] shadow-sm">
+                        {activeSingleSlot.dimensions}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
 
-            {/* Diff / Difference Overlay Mode */}
-            {mode === "diff" && (
+            {/* Side by Side Mode (handles 1 or 2 slots seamlessly) */}
+            {mode === "side" && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Left Panel */}
+                {leftSlot ? (
+                  <div className="flex flex-col border border-border rounded-2xl bg-zinc-950 overflow-hidden shadow-xs min-w-0">
+                    <div className="px-3 py-2 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between">
+                      <span className="text-xs font-semibold text-white truncate">
+                        {leftSlot.title}
+                      </span>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-blue-400">
+                        {t("compare.original")}
+                      </span>
+                    </div>
+                    <div className="p-2 flex items-center justify-center min-h-[360px] max-h-[70vh]">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={leftSlot.imageUrl}
+                        alt={leftSlot.title}
+                        onError={(e) => {
+                          if (
+                            leftSlot.fallbackUrl &&
+                            e.currentTarget.src !== leftSlot.fallbackUrl
+                          ) {
+                            e.currentTarget.src = leftSlot.fallbackUrl;
+                          }
+                        }}
+                        className="max-w-full max-h-[65vh] object-contain rounded-lg"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center p-6 sm:p-8 border-2 border-dashed border-border rounded-2xl bg-subtle/30 text-center min-h-[360px] min-w-0">
+                    <div className="w-12 h-12 rounded-2xl bg-blue-500/10 text-blue-500 flex items-center justify-center mb-3">
+                      <Icon icon="lucide:image" className="w-6 h-6" />
+                    </div>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-500/20 text-blue-400 mb-2">
+                      {t("compare.original")}
+                    </span>
+                    <h3 className="text-sm font-semibold text-foreground">
+                      {t("compare.selectLeft")}
+                    </h3>
+                    <p className="text-xs text-muted max-w-xs mt-1 mb-4">
+                      {t("compare.emptySlotHint")}
+                    </p>
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => void openPickerModal("left")}
+                        className="px-3 py-1.5 min-h-[36px] rounded-xl bg-[#89BD49] hover:bg-[#78a83f] text-white font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer touch-manipulation"
+                      >
+                        <Icon icon="lucide:camera" className="w-3.5 h-3.5 shrink-0" />
+                        <span>{t("compare.pickCapture")}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleTriggerUpload("left")}
+                        className="px-3 py-1.5 min-h-[36px] rounded-xl border border-border bg-background hover:bg-subtle text-foreground font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer touch-manipulation"
+                      >
+                        <Icon icon="lucide:upload" className="w-3.5 h-3.5 shrink-0" />
+                        <span>{t("compare.uploadImage")}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Right Panel */}
+                {rightSlot ? (
+                  <div className="flex flex-col border border-border rounded-2xl bg-zinc-950 overflow-hidden shadow-xs min-w-0">
+                    <div className="px-3 py-2 bg-zinc-900 border-b border-zinc-800 flex items-center justify-between">
+                      <span className="text-xs font-semibold text-white truncate">
+                        {rightSlot.title}
+                      </span>
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#89BD49]/20 text-[#A8D666]">
+                        {t("compare.modified")}
+                      </span>
+                    </div>
+                    <div className="p-2 flex items-center justify-center min-h-[360px] max-h-[70vh]">
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={rightSlot.imageUrl}
+                        alt={rightSlot.title}
+                        onError={(e) => {
+                          if (
+                            rightSlot.fallbackUrl &&
+                            e.currentTarget.src !== rightSlot.fallbackUrl
+                          ) {
+                            e.currentTarget.src = rightSlot.fallbackUrl;
+                          }
+                        }}
+                        className="max-w-full max-h-[65vh] object-contain rounded-lg"
+                      />
+                    </div>
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center justify-center p-6 sm:p-8 border-2 border-dashed border-border rounded-2xl bg-subtle/30 text-center min-h-[360px] min-w-0">
+                    <div className="w-12 h-12 rounded-2xl bg-[#89BD49]/10 text-[#6B9A35] dark:text-[#A8D666] flex items-center justify-center mb-3">
+                      <Icon icon="lucide:image-plus" className="w-6 h-6" />
+                    </div>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#89BD49]/20 text-[#A8D666] mb-2">
+                      {t("compare.modified")}
+                    </span>
+                    <h3 className="text-sm font-semibold text-foreground">
+                      {t("compare.selectRight")}
+                    </h3>
+                    <p className="text-xs text-muted max-w-xs mt-1 mb-4">
+                      {t("compare.emptySlotHint")}
+                    </p>
+                    <div className="flex flex-wrap items-center justify-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => void openPickerModal("right")}
+                        className="px-3 py-1.5 min-h-[36px] rounded-xl bg-[#89BD49] hover:bg-[#78a83f] text-white font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer touch-manipulation"
+                      >
+                        <Icon icon="lucide:camera" className="w-3.5 h-3.5 shrink-0" />
+                        <span>{t("compare.pickCapture")}</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleTriggerUpload("right")}
+                        className="px-3 py-1.5 min-h-[36px] rounded-xl border border-border bg-background hover:bg-subtle text-foreground font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer touch-manipulation"
+                      >
+                        <Icon icon="lucide:upload" className="w-3.5 h-3.5 shrink-0" />
+                        <span>{t("compare.uploadImage")}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Diff / Difference Overlay Mode - Both Selected */}
+            {mode === "diff" && bothSelected && leftSlot && rightSlot && (
               <div className="flex flex-col gap-2">
                 <div className="flex items-center justify-between text-xs text-muted px-1">
                   <span>{t("compare.diffMode")}: pixels in common turn dark; differences light up brightly</span>
@@ -724,6 +877,80 @@ function CompareContent() {
                 </div>
               </div>
             )}
+
+            {/* Diff / Difference Overlay Mode - Single Selected Preview */}
+            {mode === "diff" && !bothSelected && activeSingleSlot && (
+              <div className="flex flex-col min-w-0">
+                <div className="flex flex-wrap items-center justify-between gap-3 p-3 sm:p-3.5 rounded-2xl border border-border bg-subtle/80 backdrop-blur-xs text-xs mb-3 shadow-xs min-w-0">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div
+                      className={`w-2.5 h-2.5 rounded-full shrink-0 animate-pulse ${
+                        leftSlot ? "bg-blue-500" : "bg-[#89BD49]"
+                      }`}
+                    />
+                    <span className="text-muted truncate">
+                      {t("compare.oneSelectedNotice", {
+                        selected: leftSlot ? t("compare.original") : t("compare.modified"),
+                        missing: !leftSlot ? t("compare.original") : t("compare.modified"),
+                        mode: t("compare.diffMode"),
+                      })}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => void openPickerModal(missingTarget)}
+                      className="px-3 py-1.5 min-h-[36px] rounded-xl bg-[#89BD49] hover:bg-[#78a83f] text-white font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer touch-manipulation"
+                    >
+                      <Icon icon="lucide:camera" className="w-3.5 h-3.5 shrink-0" />
+                      <span>{t("compare.pickCapture")}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleTriggerUpload(missingTarget)}
+                      className="px-3 py-1.5 min-h-[36px] rounded-xl border border-border bg-background hover:bg-subtle text-foreground font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer touch-manipulation"
+                    >
+                      <Icon icon="lucide:upload" className="w-3.5 h-3.5 shrink-0" />
+                      <span>{t("compare.uploadImage")}</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="relative w-full max-h-[75vh] min-h-[360px] rounded-2xl overflow-hidden border border-border bg-zinc-950 shadow-md select-none flex items-center justify-center p-2">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={activeSingleSlot.imageUrl}
+                    alt={activeSingleSlot.title}
+                    onError={(e) => {
+                      if (
+                        activeSingleSlot.fallbackUrl &&
+                        e.currentTarget.src !== activeSingleSlot.fallbackUrl
+                      ) {
+                        e.currentTarget.src = activeSingleSlot.fallbackUrl;
+                      }
+                    }}
+                    className="max-w-full max-h-[70vh] object-contain pointer-events-none rounded-lg"
+                  />
+
+                  <div className="absolute top-3 left-3 z-10 pointer-events-none">
+                    <span
+                      className={`px-2.5 py-1 rounded-lg text-white backdrop-blur-xs font-semibold text-[11px] shadow-sm ${
+                        leftSlot ? "bg-blue-600/90" : "bg-[#89BD49]/90"
+                      }`}
+                    >
+                      {leftSlot ? t("compare.original") : t("compare.modified")}
+                    </span>
+                  </div>
+                  {Boolean(activeSingleSlot.dimensions) && (
+                    <div className="absolute top-3 right-3 z-10 pointer-events-none">
+                      <span className="px-2.5 py-1 rounded-lg bg-black/70 text-zinc-300 backdrop-blur-xs font-medium text-[11px] shadow-sm">
+                        {activeSingleSlot.dimensions}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -738,7 +965,7 @@ function CompareContent() {
         >
           <div
             onClick={(e) => e.stopPropagation()}
-            className="w-full max-w-xl max-h-[85vh] bg-card border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-150"
+            className="w-full max-w-xl max-h-[85vh] bg-subtle border border-border rounded-2xl shadow-2xl flex flex-col overflow-hidden animate-in zoom-in-95 duration-150"
           >
             {/* Modal Header */}
             <div className="px-4 sm:px-6 py-4 border-b border-border flex items-center justify-between gap-3">
@@ -816,7 +1043,7 @@ function CompareContent() {
                       }`}
                     >
                       {/* Thumbnail */}
-                      <div className="w-14 h-10 rounded-lg bg-zinc-900 border border-border overflow-hidden shrink-0 flex items-center justify-center">
+                      <div className="w-14 h-10 rounded-lg bg-subtle border border-border overflow-hidden shrink-0 flex items-center justify-center">
                         {thumb ? (
                           // eslint-disable-next-line @next/next/no-img-element
                           <img

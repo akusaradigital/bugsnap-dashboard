@@ -1123,13 +1123,9 @@ function MediaViewer({
           title={isPlaying ? t("mv.pause") : t("mv.play")}
         >
           {isPlaying ? (
-            <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-            </svg>
+            <Icon icon="lucide:pause" className="w-4 h-4 fill-current" aria-hidden="true" />
           ) : (
-            <svg className="w-4 h-4 fill-current" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M8 5v14l11-7z" />
-            </svg>
+            <Icon icon="lucide:play" className="w-4 h-4 fill-current ml-0.5" aria-hidden="true" />
           )}
         </button>
 
@@ -1196,9 +1192,7 @@ function MediaViewer({
                   <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 z-30 pointer-events-none transition-all duration-150 animate-in fade-in zoom-in-95">
                     <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-950/95 dark:bg-black/95 text-white text-[11px] font-semibold shadow-xl border border-white/15 whitespace-nowrap backdrop-blur-xs">
                       <span>{popupTitle}</span>
-                      <svg className="w-3 h-3 text-zinc-300 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="m9 18 6-6-6-6" />
-                      </svg>
+                      <Icon icon="lucide:chevron-right" className="w-3 h-3 text-zinc-300 shrink-0" aria-hidden="true" />
                     </div>
                   </div>
                 )}
@@ -1269,12 +1263,12 @@ function MediaViewer({
               }`}
               title={t("mv.speed")}
             >
-              <option value="0.5" className="bg-zinc-900 text-white">0.5x</option>
-              <option value="0.75" className="bg-zinc-900 text-white">0.75x</option>
-              <option value="1" className="bg-zinc-900 text-white">1x</option>
-              <option value="1.25" className="bg-zinc-900 text-white">1.25x</option>
-              <option value="1.5" className="bg-zinc-900 text-white">1.5x</option>
-              <option value="2" className="bg-zinc-900 text-white">2x</option>
+              <option value="0.5">0.5x</option>
+              <option value="0.75">0.75x</option>
+              <option value="1">1x</option>
+              <option value="1.25">1.25x</option>
+              <option value="1.5">1.5x</option>
+              <option value="2">2x</option>
             </select>
           </div>
 
@@ -1295,21 +1289,11 @@ function MediaViewer({
               title={volumeState.muted || volumeState.volume === 0 ? t("mv.unmute") : t("mv.mute")}
             >
               {volumeState.muted || volumeState.volume === 0 ? (
-                <svg className="w-4 h-4 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" />
-                  <line x1="23" y1="9" x2="17" y2="15" />
-                  <line x1="17" y1="9" x2="23" y2="15" />
-                </svg>
+                <Icon icon="lucide:volume-x" className="w-4 h-4" aria-hidden="true" />
               ) : volumeState.volume < 0.5 ? (
-                <svg className="w-4 h-4 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" />
-                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-                </svg>
+                <Icon icon="lucide:volume-1" className="w-4 h-4" aria-hidden="true" />
               ) : (
-                <svg className="w-4 h-4 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="currentColor" />
-                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07" />
-                </svg>
+                <Icon icon="lucide:volume-2" className="w-4 h-4" aria-hidden="true" />
               )}
             </button>
             <input
@@ -1341,10 +1325,7 @@ function MediaViewer({
               aria-label={t("mv.pip")}
               title={t("mv.pip")}
             >
-              <svg className="w-4 h-4 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <rect x="2" y="4" width="20" height="16" rx="2" />
-                <rect x="12" y="10" width="8" height="6" rx="1" />
-              </svg>
+              <Icon icon="lucide:picture-in-picture-2" className="w-4 h-4" aria-hidden="true" />
             </button>
           )}
 
@@ -1361,11 +1342,7 @@ function MediaViewer({
               aria-label={t("mv.download")}
               title={t("mv.download")}
             >
-              <svg className="w-4 h-4 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                <polyline points="7 10 12 15 17 10" />
-                <line x1="12" y1="15" x2="12" y2="3" />
-              </svg>
+              <Icon icon="lucide:download" className="w-4 h-4" aria-hidden="true" />
             </button>
           )}
 
@@ -1385,13 +1362,9 @@ function MediaViewer({
             title={isFullscreen ? `${t("mv.exitFullscreen")} (Esc)` : t("mv.openFullscreen")}
           >
             {isFullscreen ? (
-              <svg className="w-4 h-4 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
-              </svg>
+              <Icon icon="lucide:minimize" className="w-4 h-4" aria-hidden="true" />
             ) : (
-              <svg className="w-4 h-4 fill-none stroke-current" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3" />
-              </svg>
+              <Icon icon="lucide:maximize" className="w-4 h-4" aria-hidden="true" />
             )}
           </button>
         </div>
@@ -1580,13 +1553,11 @@ function MediaViewer({
                   aria-label={t("mv.play")}
                   title={t("mv.play")}
                 >
-                  <svg
-                    className="w-7 h-7 sm:w-8 sm:h-8 fill-current"
-                    viewBox="0 0 24 24"
+                  <Icon
+                    icon="lucide:play"
+                    className="w-7 h-7 sm:w-8 sm:h-8 fill-current ml-1"
                     aria-hidden="true"
-                  >
-                    <path d="M8 5v14l11-7z" />
-                  </svg>
+                  />
                 </div>
               </div>
 
@@ -1615,9 +1586,7 @@ function MediaViewer({
                     title={t("mv.exitFullscreen")}
                     aria-label={t("mv.exitFullscreen")}
                   >
-                    <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                      <path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3" />
-                    </svg>
+                    <Icon icon="lucide:minimize" className="w-3.5 h-3.5" aria-hidden="true" />
                     <span>{t("mv.exitFullscreen")} (Esc)</span>
                   </button>
                 </div>
@@ -1657,7 +1626,7 @@ function MediaViewer({
                     setVideoFailed(false);
                     setActiveVideoSrc(streamUrl || directUrl || downloadUrl || "");
                   }}
-                  className="rounded-lg bg-surface px-3 py-1.5 text-xs font-semibold text-foreground border border-border hover:bg-subtle transition-colors shadow-2xs"
+                  className="rounded-lg bg-background px-3 py-1.5 text-xs font-semibold text-foreground border border-border hover:bg-subtle transition-colors shadow-2xs"
                 >
                   {t("error.tryAgain")}
                 </button>
@@ -1730,11 +1699,7 @@ function MediaViewer({
                   aria-label={t("mv.download")}
                   title={t("mv.download")}
                 >
-                  <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-                    <polyline points="7 10 12 15 17 10" />
-                    <line x1="12" y1="15" x2="12" y2="3" />
-                  </svg>
+                  <Icon icon="lucide:download" className="h-4 w-4" aria-hidden="true" />
                 </button>
               </div>
             )}
@@ -1779,11 +1744,7 @@ function MediaViewer({
               aria-label={t("mv.zoomOut")}
               title={`${t("mv.zoomOut")} (-)`}
             >
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                <line x1="8" y1="11" x2="14" y2="11" />
-              </svg>
+              <Icon icon="lucide:zoom-out" className="h-4 w-4" aria-hidden="true" />
             </button>
             <button
               type="button"
@@ -1793,12 +1754,7 @@ function MediaViewer({
               aria-label={t("mv.zoomIn")}
               title={`${t("mv.zoomIn")} (+)`}
             >
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                <circle cx="11" cy="11" r="8" />
-                <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                <line x1="11" y1="8" x2="11" y2="14" />
-                <line x1="8" y1="11" x2="14" y2="11" />
-              </svg>
+              <Icon icon="lucide:zoom-in" className="h-4 w-4" aria-hidden="true" />
             </button>
             {zoom > MIN_ZOOM && (
               <button
@@ -1808,10 +1764,7 @@ function MediaViewer({
                 aria-label={t("mv.resetZoom")}
                 title={`${t("mv.resetZoom")} (0)`}
               >
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-                  <path d="M3 3v5h5" />
-                </svg>
+                <Icon icon="lucide:rotate-ccw" className="h-4 w-4" aria-hidden="true" />
               </button>
             )}
             {(directUrl || imageUrl || downloadUrl) && (
@@ -1822,7 +1775,7 @@ function MediaViewer({
                 aria-label={t("mv.download")}
                 title={t("mv.download")}
               >
-                <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
+                <Icon icon="lucide:download" className="h-4 w-4" aria-hidden="true" />
               </button>
             )}
             <button
@@ -1833,7 +1786,7 @@ function MediaViewer({
               aria-label={t("mv.closeViewer")}
               title={`${t("mv.closeViewer")} (Esc)`}
             >
-              <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" /></svg>
+              <Icon icon="lucide:x" className="h-5 w-5" aria-hidden="true" />
             </button>
           </div>
 

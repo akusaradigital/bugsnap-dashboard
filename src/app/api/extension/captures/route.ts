@@ -59,6 +59,13 @@ export async function POST(request: Request) {
     errorFingerprint = null;
   }
 
+  const isUuid = (val: unknown): val is string =>
+    typeof val === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val.trim());
+
+  const validWorkspaceId = isUuid(input.p_workspace_id) ? input.p_workspace_id.trim() : null;
+  const rawFolder = typeof input.p_folder_name === "string" ? input.p_folder_name.trim() : null;
+  const validFolderName = rawFolder && rawFolder !== "No folder" ? rawFolder : null;
+
   const db = createServiceClient();
   const { data, error } = await db.rpc("insert_capture_by_email", {
     p_owner_email: email,
@@ -66,14 +73,14 @@ export async function POST(request: Request) {
     p_type: type,
     p_drive_url: driveUrl,
     p_dev_logs: devLogsValue,
-    p_window_size: typeof input.p_window_size === "string" ? input.p_window_size : null,
-    p_description: typeof input.p_description === "string" ? input.p_description : null,
-    p_duration: typeof input.p_duration === "number" ? input.p_duration : null,
-    p_os: typeof input.p_os === "string" ? input.p_os : null,
-    p_browser: typeof input.p_browser === "string" ? input.p_browser : null,
+    p_window_size: typeof input.p_window_size === "string" && input.p_window_size.trim() ? input.p_window_size.trim() : null,
+    p_description: typeof input.p_description === "string" && input.p_description.trim() ? input.p_description.trim() : null,
+    p_duration: typeof input.p_duration === "number" && !Number.isNaN(input.p_duration) ? input.p_duration : null,
+    p_os: typeof input.p_os === "string" && input.p_os.trim() ? input.p_os.trim() : null,
+    p_browser: typeof input.p_browser === "string" && input.p_browser.trim() ? input.p_browser.trim() : null,
     p_site_url: siteUrl,
-    p_folder_name: typeof input.p_folder_name === "string" ? input.p_folder_name : null,
-    p_workspace_id: typeof input.p_workspace_id === "string" ? input.p_workspace_id : null,
+    p_folder_name: validFolderName,
+    p_workspace_id: validWorkspaceId,
     p_error_fingerprint: errorFingerprint,
   });
   if (error) return NextResponse.json({ error: error.message, code: error.code }, { status: 422 });

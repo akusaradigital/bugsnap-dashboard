@@ -66,7 +66,7 @@ export function SiteNavbar() {
 
   return (
     <header
-      className={`sticky top-0 z-50 border-b border-site-border text-site-text font-site bg-site-surface transition-shadow duration-300 ${
+      className={`relative sm:sticky top-0 z-50 border-b border-site-border text-site-text font-site bg-site-surface transition-shadow duration-300 ${
         scrolled ? "shadow-sm shadow-black/5" : ""
       }`}
     >

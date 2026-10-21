@@ -1,43 +1,43 @@
-# BugSnap
+# BugSnap Dashboard
 
 > **From Click to Fix** - Screen recording, visual feedback, and instant developer-ready bug reports.
 
-BugSnap membantu tim QA, developer, product manager, dan desainer melaporkan serta menyelesaikan bug lebih cepat tanpa perlu menulis langkah reproduksi manual yang berulang.
+BugSnap empowers QA teams, developers, product managers, and designers to report and resolve bugs faster without repetitive manual reproduction steps.
 
 ---
 
-## ✨ Fitur Utama
+## ✨ Key Features
 
-### 1. 📸 Screenshot & Tangkap Layar
+### 1. 📸 Screenshot & Screen Capture
 
-- **Full Page Capture**: Tangkap seluruh halaman web panjang secara otomatis dari atas ke bawah.
-- **Visible Screen**: Ambil tampilan layar yang sedang aktif dalam satu klik.
-- **Selected Area**: Sorot bagian tertentu yang bermasalah dengan pilihan area presisi.
+- **Full Page Capture**: Automatically stitch and capture entire scrolling web pages from top to bottom.
+- **Visible Screen**: Capture active screen viewports with a single click.
+- **Selected Area**: Highlight specific interface sections with precise rectangular crop selection.
 
-### 2. 🎥 Perekaman Video & Audio
+### 2. 🎥 Video & Audio Recording
 
-- **Screen & Tab Recording**: Rekam layar desktop, jendela aplikasi, atau tab browser dengan lancar.
-- **Mic & Webcam (PIP)**: Jelaskan kendala dengan suara mikrofon dan tampilan kamera wajah (Picture-in-Picture).
-- **Video Trimmer**: Potong bagian awal atau akhir video langsung sebelum dibagikan.
+- **Screen & Tab Recording**: Record desktop screens, application windows, or browser tabs smoothly.
+- **Mic & Webcam (PIP)**: Narrate issues with clear microphone audio and picture-in-picture webcam overlays.
+- **Video Trimmer**: Trim beginning or ending segments directly before sharing.
 
 ### 3. ✏️ Visual Annotations & Privacy Redaction
 
-- **Alat Gambar Lengkap**: Tambahkan panah, kotak, lingkaran, teks, dan penomoran langkah (_numbered steps_).
-- **Smart Blur / Redact**: Sensor informasi sensitif seperti kata sandi, email, dan data pribadi sebelum laporan dikirim.
-- **Undo / Redo**: Fleksibilitas penuh dalam mengedit anotasi visual.
+- **Comprehensive Drawing Tools**: Add arrows, rectangles, circles, text callouts, and numbered steps.
+- **Smart Blur / Redact**: Censor sensitive information like passwords, emails, and private tokens before dispatching reports.
+- **Undo / Redo**: Complete flexibility when editing visual annotations.
 
-### 4. 🕵️ Otomatisasi Diagnostik Developer (DevTools)
+### 4. 🕵️ Developer Diagnostics & Telemetry (DevTools)
 
-- **Console Logs**: Otomatis merekam error dan peringatan JavaScript di halaman.
-- **Network Requests**: Memantau API dan network requests (status code, waktu respon, request gagal).
-- **User Actions Timeline**: Melacak langkah interaksi pengguna (klik dan navigasi) sebelum bug terjadi.
-- **System Context**: Deteksi otomatis tipe OS, peramban (browser), resolusi layar, dan URL terkait.
-- **Auto Data Redaction**: Menyensor token otentikasi dan kredensial rahasia pada network header secara otomatis.
+- **Console Logs**: Automatically record JavaScript errors, warnings, and unhandled rejections on the page.
+- **Network Requests**: Monitor API and asset requests (status codes, response latency, 4xx/5xx failures).
+- **User Actions Timeline**: Track user interactions (clicks, keypresses, navigations) leading up to the bug.
+- **System Context**: Automatic detection of OS, browser vendor/version, screen resolution, and target URL.
+- **Auto Data Redaction**: Automatically sanitize auth tokens, Authorization headers, and secret credentials in network logs.
 
-### 5. 🌐 Web Dashboard & Kolaborasi Tim
+### 5. 🌐 Web Dashboard & Team Collaboration
 
-- **Instant Share Link**: Satu klik untuk membuat tautan laporan yang langsung bisa dibuka tanpa download file.
-- **Interactive Player**: Tampilan terpadu untuk memutar video atau zoom gambar sembari memeriksa log teknis.
-- **Workspace & Status Bug**: Kelola, cari, dan kategorikan tiket bug dengan tag serta status penyelesaian.
-- **Keamanan & Akses**: Lindungi link laporan dengan password dan batas waktu kedaluwarsa (_expiry date_).
-- **Komentar & Diskusi**: Beri catatan dan diskusikan perbaikan langsung di halaman laporan.
+- **Instant Share Link**: Generate public or private report links instantly without file attachments.
+- **Interactive Player**: Unified view to playback video recordings or zoom screenshots while inspecting dev logs side-by-side.
+- **Workspace & Bug Status**: Organize, filter, and track tickets with custom tags and status workflows.
+- **Security & Access Controls**: Password protection and configurable expiry dates for shared captures.
+- **Comments & Discussions**: Add inline notes and discuss fixes directly on the capture view.

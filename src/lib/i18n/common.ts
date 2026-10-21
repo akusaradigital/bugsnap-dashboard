@@ -81,8 +81,20 @@ export const commonEn: Dict = {
   "layout.renameFolder": "Rename Folder",
   "layout.renameFolderDesc":
     "Enter a new name for this folder. The change will sync to Google Drive.",
+  "layout.addSubfolder": "Add subfolder",
+  "layout.parentFolder": "Parent Folder (optional)",
+  "layout.topLevelFolder": "Top-level (no parent)",
+  "layout.changeColor": "Change color",
+  "layout.folderColor": "Folder Color",
+  "layout.folderColorDesc":
+    "Choose a color for this folder to organize it like Google Drive.",
+  "layout.colorUpdated": "Folder color updated",
+  "layout.errColorFolder": "Failed to update folder color",
+  "layout.resetColor": "Reset to default",
+  "layout.defaultColor": "Default color",
   "layout.newFolderName": "New Folder Name",
   "layout.saveChanges": "Save Changes",
+  "layout.saving": "Saving…",
   "layout.deleteFolderQ": "Delete Folder?",
   "layout.deleteFolderDesc":
     "Are you sure you want to delete {name}? WARNING: All captures inside this folder will be permanently deleted from this dashboard and Google Drive.",
@@ -261,8 +273,20 @@ export const commonId: Dict = {
   "layout.renameFolder": "Ubah Nama Folder",
   "layout.renameFolderDesc":
     "Masukkan nama baru untuk folder ini. Perubahan akan disinkronkan ke Google Drive.",
+  "layout.addSubfolder": "Tambah subfolder",
+  "layout.parentFolder": "Folder Induk (opsional)",
+  "layout.topLevelFolder": "Tingkat atas (tanpa induk)",
+  "layout.changeColor": "Ubah warna",
+  "layout.folderColor": "Warna Folder",
+  "layout.folderColorDesc":
+    "Pilih warna untuk folder ini agar tertata seperti di Google Drive.",
+  "layout.colorUpdated": "Warna folder diperbarui",
+  "layout.errColorFolder": "Gagal memperbarui warna folder",
+  "layout.resetColor": "Kembalikan ke awal",
+  "layout.defaultColor": "Warna default",
   "layout.newFolderName": "Nama Folder Baru",
   "layout.saveChanges": "Simpan Perubahan",
+  "layout.saving": "Menyimpan…",
   "layout.deleteFolderQ": "Hapus Folder?",
   "layout.deleteFolderDesc":
     "Yakin ingin menghapus {name}? PERINGATAN: Semua tangkapan di dalam folder ini akan dihapus permanen dari dasbor ini dan Google Drive.",

@@ -37,6 +37,7 @@ export const capturesEn: Dict = {
   "cap.never": "Never",
   "cap.hours24": "24 Hours",
   "cap.days7": "7 Days",
+  "cap.days30": "30 Days",
   "cap.neverExpires": "Link never expires.",
   "cap.expiresOn": "Link will expire on {date}.",
   "cap.advancedProtection": "Advanced Protection",
@@ -69,6 +70,7 @@ export const capturesEn: Dict = {
   "cap.bulkMove": "Move",
   "cap.bulkTag": "Tag",
   "cap.bulkStatus": "Status",
+  "cap.bulkExpiry": "Expiry",
   "cap.bulkUpdated": "{count} captures updated",
   "cap.bulkDelete": "Delete",
   "cap.moveToTitle": "Move {count} capture to",
@@ -366,6 +368,8 @@ export const capturesEn: Dict = {
   "compare.dimensions": "Dimensions",
   "compare.loading": "Loading capture...",
   "compare.errorLoad": "Failed to load capture image",
+  "compare.oneSelectedNotice": "Showing {selected} preview. Select {missing} to enable {mode}.",
+  "compare.emptySlotHint": "Pick from workspace or upload image to compare",
 };
 
 export const capturesId: Dict = {
@@ -405,6 +409,7 @@ export const capturesId: Dict = {
   "cap.never": "Tidak Pernah",
   "cap.hours24": "24 Jam",
   "cap.days7": "7 Hari",
+  "cap.days30": "30 Hari",
   "cap.neverExpires": "Tautan tidak pernah kedaluwarsa.",
   "cap.expiresOn": "Tautan akan kedaluwarsa pada {date}.",
   "cap.advancedProtection": "Proteksi Lanjutan",
@@ -437,6 +442,7 @@ export const capturesId: Dict = {
   "cap.bulkMove": "Pindahkan",
   "cap.bulkTag": "Tag",
   "cap.bulkStatus": "Status",
+  "cap.bulkExpiry": "Kedaluwarsa",
   "cap.bulkUpdated": "{count} capture diperbarui",
   "cap.bulkDelete": "Hapus",
   "cap.moveToTitle": "Pindahkan {count} tangkapan ke",
@@ -734,4 +740,6 @@ export const capturesId: Dict = {
   "compare.dimensions": "Dimensi",
   "compare.loading": "Memuat tangkapan...",
   "compare.errorLoad": "Gagal memuat gambar tangkapan",
+  "compare.oneSelectedNotice": "Menampilkan pratinjau {selected}. Pilih {missing} untuk mengaktifkan {mode}.",
+  "compare.emptySlotHint": "Pilih dari workspace atau unggah gambar untuk membandingkan",
 };

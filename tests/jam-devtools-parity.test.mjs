@@ -189,14 +189,13 @@ test("header redaction keeps names and removes secret values", () => {
 // selector, and size/protocol in the per-request General block.
 // ---------------------------------------------------------------------------
 
-test("Network has Jam's resource-type filter buckets", () => {
+test("Network has Jam's resource-type classification buckets", () => {
   // Jam's row reads: All | Fetch/XHR | WS | JS | CSS | Media | Font | Doc | Other
   assert.match(devlogs, /export type NetworkKind =/);
   for (const kind of ["fetchxhr", "ws", "js", "css", "media", "font", "doc", "other"]) {
     assert.match(devlogs, new RegExp(`"${kind}"`), `bucket ${kind} must exist`);
   }
-  assert.match(panel, /networkKindFilter/, "the panel must hold the filter state");
-  assert.match(panel, /networkKindCounts/, "chips must be counted so empty buckets are hidden");
+  assert.match(panel, /networkKind\(log\)/, "Type must be derived per row");
 });
 
 test("Network is a real table with Jam's column set", () => {
@@ -239,10 +238,11 @@ test("changing filters cannot strand the detail pane", () => {
 test("table column labels exist in both locales", () => {
   const keys = [
     "dt.col.name", "dt.col.method", "dt.col.status", "dt.col.type",
-    "dt.col.size", "dt.col.time", "dt.col.waterfall",
-    "dt.detail.headers", "dt.detail.request", "dt.detail.response",
+    "dt.col.size", "dt.col.time", "dt.col.frame", "dt.col.waterfall",
+    "dt.detail.headers", "dt.detail.request", "dt.detail.response", "dt.detail.timing",
     "dt.general", "dt.requestUrl", "dt.requestMethod", "dt.statusCode",
     "dt.occurrences", "dt.noHeaders", "dt.noRequestBody", "dt.closeDetail", "dt.loadMore",
+    "dt.tab.mcp", "dt.mcp.title",
   ];
   for (const key of keys) {
     assert.equal(i18n.split(`"${key}"`).length - 1, 2, `${key} must be in both en and id`);
@@ -276,7 +276,7 @@ test("new filters are cleared by Reset filters", () => {
   // user to reset, and resetting leaves the list still empty.
   const reset = /const resetLogFilters = useCallback\(\(\) => \{([\s\S]*?)\}, \[\]\);/.exec(panel);
   assert.ok(reset, "resetLogFilters must exist");
-  assert.match(reset[1], /setNetworkKindFilter\("all"\)/);
+  assert.match(reset[1], /setNetworkStatusFilter\("all"\)/);
   assert.match(reset[1], /setConsoleLevelFilter\("all"\)/);
 });
 
@@ -350,4 +350,165 @@ test("formatBytes matches the units Jam displays", () => {
   assert.equal(fmt(undefined), "-");
   assert.equal(fmt(-1), "-", "a negative size is not a size");
   assert.equal(fmt(0), "0 B", "zero bytes is a real answer, not unknown");
+});
+
+test("Frame column and Timing sub-tab exist with Jam parity", () => {
+  assert.match(panel, /dt\.col\.frame/, "Frame column must be in the table header");
+  assert.match(panel, /formatFrame\(log\.frameId\)/, "Frame must render in table rows");
+  assert.match(panel, /"timing"/, "Timing sub-tab must exist in NetworkDetail");
+  assert.match(devlogs, /frameId\?: number \| string;/, "NetworkLog must support frameId");
+  assert.match(devlogs, /timings\?:/, "NetworkLog must support timings breakdown");
+  assert.match(background, /frameId:/, "background.js must normalize frameId");
+  assert.match(background, /timings:/, "background.js must normalize timings");
+});
+
+test("MCP tab is available in DevTools panel", () => {
+  assert.match(panel, /"MCP"/, "MCP tab must exist in TABS");
+  assert.match(panel, /function McpTabPanel/, "McpTabPanel component must exist");
+  assert.match(panel, /dt\.mcp\.title/, "MCP title must be translated");
+});
+
+// ---------------------------------------------------------------------------
+// The 89-vs-10 discrepancy: the Network badge summed `count`, so a page polling
+// one endpoint 40 times showed "89" above a table holding 4 rows. Jam's number
+// matches its row count. Counting rows is what makes the two agree.
+// ---------------------------------------------------------------------------
+
+test("every request is its own row, as in Jam", () => {
+  // Jam's own panel lists /notifications four times within rows 1-10, so it
+  // does not group repeats. Grouping them hid 61 captured requests behind 30
+  // rows and threw away each attempt's status and timing.
+  assert.match(
+    panel,
+    /const groupedNetworkLogs = useMemo\(\s*\r?\n\s*\(\) => networkLogs\.map\(/,
+    "the network list must be a straight map, not a groupBy",
+  );
+  assert.doesNotMatch(
+    panel,
+    /groupedAllNetworkLogs/,
+    "the pre-filter grouping existed only to feed the old badge",
+  );
+});
+
+test("every tab badge equals the rows that tab renders", () => {
+  // The reported symptom was a badge that disagreed with its own table.
+  assert.match(panel, /if \(tab === "Network"\) return allNetworkLogs\.length;/);
+  assert.doesNotMatch(
+    panel,
+    /if \(tab === "Network"\) return totalLogCount\(allNetworkLogs\);/,
+    "summing occurrences is what made 61 requests read as 89",
+  );
+});
+
+test("a row can still be identified after ungrouping", () => {
+  // method+status+url now repeats across rows, so it cannot key one.
+  assert.match(panel, /function rowKey\(log: NetworkLog & \{ srcIdx\?: number \}\)/);
+  assert.match(panel, /log\.srcIdx \?\? "\?"/, "the capture index is the stable part");
+});
+
+test("row identity is unique for repeated polls", () => {
+  // Mirrors rowKey in the panel.
+  const rowKey = (l) => `${l.srcIdx ?? "?"}|${l.method || "GET"}|${l.status ?? "FAILED"}|${l.url}`;
+  const polls = [
+    { srcIdx: 3, method: "GET", status: 200, url: "https://api.example.com/notifications?limit=30" },
+    { srcIdx: 9, method: "GET", status: 200, url: "https://api.example.com/notifications?limit=30" },
+    { srcIdx: 14, method: "GET", status: 200, url: "https://api.example.com/notifications?limit=30" },
+  ];
+  const keys = new Set(polls.map(rowKey));
+  assert.equal(keys.size, 3, "three polls of one endpoint are three distinct rows");
+
+  // The old key collapsed them, which is why selecting one row highlighted all.
+  const oldKey = (l) => `${l.method || "GET"}|${l.status ?? "FAILED"}|${l.url}`;
+  assert.equal(new Set(polls.map(oldKey)).size, 1, "the old key could not tell them apart");
+});
+
+test("the detail pane slides in over the list", () => {
+  assert.match(panel, /role="dialog"/, "an overlay needs a dialog role");
+  assert.match(panel, /motion-safe:animate-slide-in-right/, "and slide in");
+  assert.match(panel, /e\.key === "Escape"/, "Esc must close an overlay that covers the list");
+});
+
+test("the slide-in animation actually exists", () => {
+  // tailwindcss-animate is NOT installed (plugins: []), so `animate-in
+  // slide-in-from-right` compiles to nothing. The keyframe has to be local.
+  const tw = read("bugsnap-dashboard/tailwind.config.ts");
+  assert.match(tw, /"slide-in-right": \{/, "the keyframe must be defined");
+  assert.match(tw, /"slide-in-right": "slide-in-right /, "and registered as an animation");
+  assert.doesNotMatch(
+    panel,
+    /animate-in slide-in-from-right/,
+    "that class needs a plugin this project does not have",
+  );
+});
+
+// ---------------------------------------------------------------------------
+// Column set and drawer geometry, read off the shipped Jam panel screenshots:
+// a row-number column, a per-row type glyph, Domain as its own column, Frame,
+// "(Cached)" in Time, an Errors-only checkbox, and a drawer that stops short of
+// the left edge so the row strip stays clickable.
+// ---------------------------------------------------------------------------
+
+test("the table carries Jam's full column set", () => {
+  for (const col of ["name", "method", "status", "domain", "type", "size", "time", "frame", "waterfall"]) {
+    assert.match(panel, new RegExp(`dt\\.col\\.${col}`), `column ${col} must exist`);
+  }
+  assert.match(panel, /w-9 text-right tabular-nums">#</, "rows must be numbered");
+  assert.match(panel, /\{idx \+ 1\}/, "the number must be the row index");
+});
+
+test("each row shows a resource-kind glyph", () => {
+  assert.match(devlogs, /export function networkKindIcon/);
+  assert.match(panel, /icon=\{networkKindIcon\(kind\)\}/, "the glyph must come from the same kind the Type column shows");
+});
+
+test("a cache hit reads as cached, not as a 0ms request", () => {
+  assert.match(devlogs, /fromCache\?: boolean;/);
+  assert.match(devlogs, /const fromCache = log\.fromCache === true/);
+  assert.match(background, /details\.fromCache === true/, "webRequest is the only source that knows");
+  assert.match(background, /fromCache: logData\.fromCache === true/, "the normalizer must keep it");
+  assert.match(panel, /log\.fromCache/, "the Time column must branch on it");
+  assert.match(panel, /dt\.cached/);
+});
+
+test("Errors only is a checkbox, not a pair of buttons", () => {
+  // Two buttons for one boolean read as two independent filters.
+  assert.match(panel, /type="checkbox"[\s\S]{0,160}checked=\{consoleErrorsOnly\}/);
+  assert.doesNotMatch(
+    panel,
+    /onClick=\{\(\) => setConsoleErrorsOnly\(true\)\}/,
+    "the two-button version is what this replaced",
+  );
+});
+
+test("the drawer covers the panel rather than insetting", () => {
+  // Jam's panel is wide enough to keep a row strip beside the drawer; ours is a
+  // ~440px column on the capture page (v/[id]: xl:grid-cols-[1fr_440px]). Insetting
+  // to 9.5rem left ~288px, where a Request URL wrapped to one or two characters
+  // per line. A readable URL beats a visible strip.
+  assert.match(panel, /absolute inset-0 flex flex-col bg-background/, "the drawer fills the panel");
+  assert.doesNotMatch(
+    panel,
+    /sm:left-\[9\.5rem\]/,
+    "the inset drawer shredded URLs at this panel width",
+  );
+  // The panel needs a floor while the drawer is open or the detail is clipped:
+  // measured 430px panel -> 252px for the pane -> 79px of content cut off.
+  assert.match(panel, /min-h-\[34rem\]/, "an open drawer needs room for its content");
+});
+
+test("new column labels exist in both locales", () => {
+  for (const key of ["dt.col.domain", "dt.cached"]) {
+    assert.equal(i18n.split(`"${key}"`).length - 1, 2, `${key} must be in both en and id`);
+  }
+});
+
+test("the kind glyph is defined for every bucket", () => {
+  // A missing case would silently fall through to the default arrow, making a
+  // stylesheet and an API call look identical.
+  const icons = /export function networkKindIcon[\s\S]*?\n\}/.exec(devlogs);
+  assert.ok(icons, "networkKindIcon must exist");
+  for (const kind of ["ws", "js", "css", "media", "font", "doc", "other"]) {
+    assert.ok(icons[0].includes(`case "${kind}"`), `kind ${kind} needs its own glyph`);
+  }
+  assert.match(icons[0], /default:/, "fetch/xhr falls through to the default");
 });

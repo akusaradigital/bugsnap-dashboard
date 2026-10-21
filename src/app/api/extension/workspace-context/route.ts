@@ -9,9 +9,10 @@ const emailFromGoogleToken = verifiedGoogleEmail;
 export async function POST(request: Request) {
   let body: unknown;
   try { body = await request.json(); } catch { return NextResponse.json({ error: "Invalid JSON" }, { status: 400 }); }
-  const input = body as { access_token?: unknown; workspaceId?: unknown };
+  const input = body as { access_token?: unknown; workspaceId?: unknown; workspace_id?: unknown };
   const accessToken = typeof input.access_token === "string" ? input.access_token.trim() : "";
-  const workspaceId = typeof input.workspaceId === "string" ? input.workspaceId : null;
+  const rawWs = typeof input.workspaceId === "string" ? input.workspaceId : (typeof input.workspace_id === "string" ? input.workspace_id : null);
+  const workspaceId = rawWs && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(rawWs.trim()) ? rawWs.trim() : null;
   if (!accessToken) return NextResponse.json({ error: "access_token is required" }, { status: 400 });
 
   let email: string;
@@ -23,7 +24,11 @@ export async function POST(request: Request) {
 
   const db = createServiceClient();
   // Auto-provision user & default workspace if they don't exist yet
-  await db.rpc("ensure_user_and_workspace_by_email", { p_email: email });
+  const { error: ensureErr } = await db.rpc("ensure_user_and_workspace_by_email", { p_email: email });
+  if (ensureErr) {
+    console.error("Failed to ensure user/workspace for extension:", ensureErr);
+    return NextResponse.json({ error: ensureErr.message }, { status: 422 });
+  }
 
   const { data: workspaces, error: wsError } = await db.rpc("get_workspaces_by_email", { p_email: email });
   if (wsError) return NextResponse.json({ error: wsError.message }, { status: 422 });

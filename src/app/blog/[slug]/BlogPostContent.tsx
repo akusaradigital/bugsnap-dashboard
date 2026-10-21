@@ -136,9 +136,7 @@ export function BlogPostContent({ slug }: { slug: string }) {
   if (!post) return null;
 
   const siteUrl =
-    typeof window !== "undefined"
-      ? window.location.origin
-      : "https://bugsnap.akusaraproject.my.id";
+    process.env.NEXT_PUBLIC_APP_URL || "https://bugsnap.akusaraproject.my.id";
 
   const scrollToHeading = (id: string) => {
     const el = document.getElementById(id);

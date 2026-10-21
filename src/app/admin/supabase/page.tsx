@@ -163,10 +163,10 @@ export default function AdminSupabasePage() {
   const usedPercent = stats?.used_percent ?? 0;
   const storageColor =
     usedPercent >= 80
-      ? "bg-rose-500 text-rose-600"
+      ? "bg-rose-500 text-rose-600 dark:text-rose-400"
       : usedPercent >= 60
-      ? "bg-amber-500 text-amber-600"
-      : "bg-emerald-500 text-emerald-600";
+      ? "bg-amber-500 text-amber-600 dark:text-amber-400"
+      : "bg-emerald-500 text-emerald-600 dark:text-emerald-400";
 
   return (
     <div className="space-y-6">
@@ -195,7 +195,7 @@ export default function AdminSupabasePage() {
           <button
             onClick={() => loadStats(true)}
             disabled={loading}
-            className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3.5 py-2 text-xs font-medium text-foreground transition-colors hover:bg-subtle disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-lg border border-border bg-subtle px-3.5 py-2 text-xs font-medium text-foreground transition-colors hover:bg-background disabled:opacity-50"
           >
             <Icon icon="lucide:refresh-cw" className={`w-3.5 h-3.5 shrink-0 ${loading ? "animate-spin" : ""}`} />
             <span>{t("admin.supabase.refresh")}</span>
@@ -205,25 +205,25 @@ export default function AdminSupabasePage() {
 
       {/* Cluster Meta Strip */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
-        <div className="rounded-xl border border-border bg-card p-4">
+        <div className="rounded-xl border border-border bg-subtle p-4">
           <p className="text-xs font-medium text-muted">{t("admin.supabase.status")}</p>
           <p className="mt-1 text-sm font-semibold text-foreground">
             {project?.name || "bugsnap-db"} ({project?.id || "kkmvanwgywrqsudvspge"})
           </p>
         </div>
-        <div className="rounded-xl border border-border bg-card p-4">
+        <div className="rounded-xl border border-border bg-subtle p-4">
           <p className="text-xs font-medium text-muted">{t("admin.supabase.region")}</p>
           <p className="mt-1 text-sm font-semibold text-foreground">
             {project?.region || "ap-southeast-1"} (Singapore)
           </p>
         </div>
-        <div className="rounded-xl border border-border bg-card p-4">
+        <div className="rounded-xl border border-border bg-subtle p-4">
           <p className="text-xs font-medium text-muted">{t("admin.supabase.engine")}</p>
           <p className="mt-1 text-sm font-semibold text-foreground">
             PostgreSQL {project?.database?.postgresEngine || "17"}
           </p>
         </div>
-        <div className="rounded-xl border border-border bg-card p-4">
+        <div className="rounded-xl border border-border bg-subtle p-4">
           <p className="text-xs font-medium text-muted">{t("admin.supabase.uptime")}</p>
           <p className="mt-1 text-sm font-semibold text-foreground truncate" title={stats?.uptime}>
             {stats?.uptime ? stats.uptime.split(".")[0] : "Active"}
@@ -234,7 +234,7 @@ export default function AdminSupabasePage() {
       {/* 4 Core Vital Cards */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {/* Storage Quota */}
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+        <div className="rounded-2xl border border-border bg-subtle p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider text-muted">
               {t("admin.supabase.diskUsage")}
@@ -251,7 +251,7 @@ export default function AdminSupabasePage() {
               {t("admin.supabase.used")}
             </span>
           </div>
-          <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-subtle">
+          <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-zinc-800">
             <div
               className={`h-full transition-all duration-500 ${storageColor.split(" ")[0]}`}
               style={{ width: `${Math.min(100, Math.max(2, usedPercent))}%` }}
@@ -263,7 +263,7 @@ export default function AdminSupabasePage() {
         </div>
 
         {/* Connection Pool */}
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+        <div className="rounded-2xl border border-border bg-subtle p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider text-muted">
               {t("admin.supabase.connPool")}
@@ -280,7 +280,7 @@ export default function AdminSupabasePage() {
               Pool usage
             </span>
           </div>
-          <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-subtle">
+          <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-zinc-800">
             <div
               className="h-full bg-blue-500 transition-all duration-500"
               style={{ width: `${Math.min(100, stats?.connections.used_percent || 0)}%` }}
@@ -292,7 +292,7 @@ export default function AdminSupabasePage() {
         </div>
 
         {/* Memory & Cache Hit Ratio */}
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+        <div className="rounded-2xl border border-border bg-subtle p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider text-muted">
               {t("admin.supabase.cacheHit")}
@@ -310,7 +310,7 @@ export default function AdminSupabasePage() {
               <span>RAM Cache</span>
             </span>
           </div>
-          <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-subtle">
+          <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-zinc-800">
             <div
               className="h-full bg-emerald-500 transition-all duration-500"
               style={{ width: `${Math.min(100, stats?.performance.cache_hit_ratio || 100)}%` }}
@@ -322,7 +322,7 @@ export default function AdminSupabasePage() {
         </div>
 
         {/* Zero-Load Architecture */}
-        <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+        <div className="rounded-2xl border border-border bg-subtle p-5 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="text-xs font-semibold uppercase tracking-wider text-muted">
               {t("admin.supabase.zeroLoadTitle")}
@@ -339,7 +339,7 @@ export default function AdminSupabasePage() {
               / {stats?.captures.total_captures || 0} captures
             </span>
           </div>
-          <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-subtle">
+          <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-zinc-800">
             <div
               className="h-full bg-[#89BD49] transition-all duration-500"
               style={{
@@ -358,7 +358,7 @@ export default function AdminSupabasePage() {
       </div>
 
       {/* Database Maintenance Tools */}
-      <div className="rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <div className="rounded-2xl border border-border bg-subtle p-5 shadow-sm">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h2 className="text-base font-bold text-foreground">
@@ -398,7 +398,7 @@ export default function AdminSupabasePage() {
       </div>
 
       {/* Table-by-Table Granular Breakdown */}
-      <div className="rounded-2xl border border-border bg-card shadow-sm">
+      <div className="rounded-2xl border border-border bg-subtle shadow-sm overflow-hidden">
         <div className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-base font-bold text-foreground">
@@ -470,7 +470,7 @@ export default function AdminSupabasePage() {
                 filteredTables.map((table) => {
                   const hasDeadTuples = table.dead_rows > 10;
                   return (
-                    <tr key={`${table.schema_name}.${table.table_name}`} className="hover:bg-subtle/40">
+                    <tr key={`${table.schema_name}.${table.table_name}`} className="hover:bg-background transition-colors">
                       <td className="px-4 py-3">
                         <div className="flex items-center gap-2">
                           <span

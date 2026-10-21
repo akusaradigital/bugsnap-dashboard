@@ -21,7 +21,7 @@ import { ConnectDriveModal } from "./ConnectDriveModal";
 import { Icon } from "@/lib/iconify";
 
 function SettingsContent() {
-  const { t } = useT();
+  const { t, locale, setLocale } = useT();
   const { showToast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -857,29 +857,27 @@ function SettingsContent() {
               }}
               className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-muted hover:text-foreground hover:bg-border/30 rounded-lg transition-colors text-left"
             >
-              <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-              Back to app
+              <Icon icon="lucide:chevron-left" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+              {t("settings.backToApp")}
             </button>
           </div>
 
           <div className="space-y-1">
-            <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-wider text-muted">Workspace</p>
-            {navItem("general","General",<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>)}
-            {navItem("members","Members",<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/></svg>)}
-            {navItem("billing","Billing",<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"/></svg>)}
+            <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-wider text-muted">{t("settings.groupWorkspace")}</p>
+            {navItem("general", t(TAB_TITLES.general.title), <Icon icon="lucide:settings" className="w-4 h-4 shrink-0" aria-hidden="true" />)}
+            {navItem("members", t(TAB_TITLES.members.title), <Icon icon="lucide:users" className="w-4 h-4 shrink-0" aria-hidden="true" />)}
+            {navItem("billing", t(TAB_TITLES.billing.title), <Icon icon="lucide:credit-card" className="w-4 h-4 shrink-0" aria-hidden="true" />)}
           </div>
 
           <div className="space-y-1">
-            <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-wider text-muted">Apps & Tools</p>
-            {navItem("integrations","Integrations",<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>)}
+            <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-wider text-muted">{t("settings.groupApps")}</p>
+            {navItem("integrations", t(TAB_TITLES.integrations.title), <Icon icon="lucide:link" className="w-4 h-4 shrink-0" aria-hidden="true" />)}
           </div>
 
           <div className="space-y-1">
-            <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-wider text-muted">Account</p>
-            {navItem("account","Account",<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>)}
-            {navItem("notifications","Notifications",<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>)}
+            <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-wider text-muted">{t("settings.groupAccount")}</p>
+            {navItem("account", t(TAB_TITLES.account.title), <Icon icon="lucide:user" className="w-4 h-4 shrink-0" aria-hidden="true" />)}
+            {navItem("notifications", t(TAB_TITLES.notifications.title), <Icon icon="lucide:bell" className="w-4 h-4 shrink-0" aria-hidden="true" />)}
           </div>
         </div>
       </aside>
@@ -900,41 +898,39 @@ function SettingsContent() {
               }}
               className="flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-foreground transition-colors"
             >
-              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2.5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
-              </svg>
-              <span>Back to app</span>
+              <Icon icon="lucide:chevron-left" className="w-4 h-4 shrink-0" aria-hidden="true" />
+              <span>{t("settings.backToApp")}</span>
             </button>
             <div className="flex items-center gap-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/logo-day.svg" alt="BugSnap" className="w-5 h-5 object-contain dark:hidden" />
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/logo-dark.svg" alt="BugSnap" className="w-5 h-5 object-contain hidden dark:block" />
-              <span className="text-xs font-bold text-foreground">Settings</span>
+              <span className="text-xs font-bold text-foreground">{t("nav.settings")}</span>
             </div>
           </div>
 
           {/* Horizontal scrollable tab pills */}
           <div className="overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden flex items-center gap-1.5 px-3 py-2.5">
             {[
-              { id: "general", label: "General" },
-              { id: "members", label: "Members" },
-              { id: "billing", label: "Billing" },
-              { id: "integrations", label: "Integrations" },
-              { id: "account", label: "Account" },
-              { id: "notifications", label: "Notifications" },
-            ].map((t) => (
+              { id: "general" },
+              { id: "members" },
+              { id: "billing" },
+              { id: "integrations" },
+              { id: "account" },
+              { id: "notifications" },
+            ].map((tabItem) => (
               <button
-                key={t.id}
+                key={tabItem.id}
                 type="button"
-                onClick={() => setTab(t.id as Tab)}
+                onClick={() => setTab(tabItem.id as Tab)}
                 className={`shrink-0 px-3.5 py-2 min-h-[38px] text-xs rounded-lg font-medium transition-all touch-manipulation flex items-center ${
-                  activeTab === t.id
+                  activeTab === tabItem.id
                     ? "bg-[#89BD49] text-white font-semibold shadow-xs shadow-[#89BD49]/25"
                     : "text-muted hover:text-foreground hover:bg-subtle"
                 }`}
               >
-                {t.label}
+                {t(TAB_TITLES[tabItem.id as Tab].title)}
               </button>
             ))}
           </div>
@@ -1012,13 +1008,13 @@ function SettingsContent() {
                     onBlur={() => setEditingWsName(false)}
                     onKeyDown={(e) => e.key === "Enter" && setEditingWsName(false)}
                     placeholder="My Workspace"
-                    className="flex-1 text-sm font-medium rounded-lg border border-border px-3.5 py-2.5 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 bg-background text-foreground transition-colors shadow-sm"
+                    className="flex-1 min-w-0 text-sm font-medium rounded-lg border border-border px-3.5 py-2.5 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 bg-background text-foreground transition-colors shadow-sm"
                   />
                 ) : (
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-foreground truncate">{workspaceName || "My Workspace"}</p>
                     <p className="text-xs text-muted mt-0.5">This is the name of your workspace.</p>
-                    <div className="flex items-center gap-2 mt-1.5">
+                    <div className="flex flex-wrap items-center gap-2 mt-1.5">
                       <label className="text-[11px] font-medium text-[#6B9A35] dark:text-[#A8D666] hover:underline cursor-pointer">
                         Upload icon
                         <input
@@ -1296,17 +1292,12 @@ function SettingsContent() {
               >
                 {saving ? (
                   <>
-                    <svg className="w-4 h-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
+                    <Icon icon="lucide:loader-2" className="w-4 h-4 animate-spin text-white shrink-0" aria-hidden="true" />
                     <span>Saving…</span>
                   </>
                 ) : saved ? (
                   <>
-                    <svg className="w-4 h-4 text-white" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
+                    <Icon icon="lucide:check" className="w-4 h-4 text-white shrink-0" aria-hidden="true" />
                     <span>Saved</span>
                   </>
                 ) : (
@@ -1327,7 +1318,7 @@ function SettingsContent() {
                 <h2 className="text-lg font-bold tracking-tight text-foreground">Invite member</h2>
                 <p className="text-[15px] text-muted mt-3">If they don&apos;t have an account yet, we&apos;ll send them a join link + extension download.</p>
               </div>
-              <div className="flex flex-col sm:grid sm:grid-cols-[minmax(0,1fr)_180px_96px] gap-3">
+              <div className="flex flex-col sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(140px,180px)_auto] gap-3">
                 <input type="email" value={inviteEmail} onChange={e=>setInviteEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleInvite()}
                   disabled={seatLimit(userPlan) !== null && members.length >= (seatLimit(userPlan) ?? 0)}
                   placeholder="Enter email address"
@@ -1336,9 +1327,7 @@ function SettingsContent() {
                   <button type="button" onClick={() => setInviteRoleMenuOpen(o => !o)}
                     className="h-12 w-full flex items-center justify-between text-[15px] rounded-lg border border-border px-4 bg-subtle hover:bg-border/30 transition-colors">
                     {inviteRole === "creator" ? "Creator" : "Viewer"}
-                    <svg className={`w-4 h-4 text-muted transition-transform ${inviteRoleMenuOpen ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
+                    <Icon icon="lucide:chevron-down" className={`w-4 h-4 text-muted shrink-0 transition-transform ${inviteRoleMenuOpen ? "rotate-180" : ""}`} aria-hidden="true" />
                   </button>
                   {inviteRoleMenuOpen && (
                     <>
@@ -1355,9 +1344,7 @@ function SettingsContent() {
                               <span className="block text-xs text-muted">{opt.hint}</span>
                             </span>
                             {inviteRole === opt.value && (
-                              <svg className="w-4 h-4 text-[#6B9A35] dark:text-[#A8D666] shrink-0 mt-0.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                              </svg>
+                              <Icon icon="lucide:check" className="w-4 h-4 text-[#6B9A35] dark:text-[#A8D666] shrink-0 mt-0.5" aria-hidden="true" />
                             )}
                           </button>
                         ))}
@@ -1369,10 +1356,7 @@ function SettingsContent() {
                   className="h-12 px-6 rounded-lg bg-[#89BD49] text-white text-[15px] font-semibold hover:bg-[#6B9A35] shadow-xs shadow-[#89BD49]/25 disabled:opacity-50 min-w-[110px] flex items-center justify-center gap-2">
                   {inviting ? (
                     <>
-                      <svg className="w-4 h-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                      </svg>
+                      <Icon icon="lucide:loader-2" className="w-4 h-4 animate-spin text-white shrink-0" aria-hidden="true" />
                       <span>Sending…</span>
                     </>
                   ) : (
@@ -1453,10 +1437,7 @@ function SettingsContent() {
                               >
                                 {isRemoving ? (
                                   <>
-                                    <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
-                                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                    </svg>
+                                    <Icon icon="lucide:loader-2" className="w-3 h-3 animate-spin text-red-600 dark:text-red-400 shrink-0" aria-hidden="true" />
                                     <span>Removing…</span>
                                   </>
                                 ) : (
@@ -1564,9 +1545,7 @@ function SettingsContent() {
                 className="shrink-0 px-4 py-2 rounded-lg border border-border hover:bg-subtle text-foreground text-xs font-semibold transition-colors flex items-center gap-1.5"
               >
                 <span>{t("settings.openPortal")}</span>
-                <svg className="w-3.5 h-3.5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-                </svg>
+                <Icon icon="lucide:external-link" className="w-3.5 h-3.5 text-muted shrink-0" aria-hidden="true" />
               </button>
             </div>
 
@@ -1610,13 +1589,13 @@ function SettingsContent() {
 
             {/* Drive */}
             <div className="rounded-xl border border-border bg-subtle p-4 space-y-3 shadow-xs">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <h2 className="text-sm font-semibold text-foreground flex flex-wrap items-center gap-2">
                     Google Drive
                     {!driveLoading && <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border ${driveStatus === "connected" ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/40" : driveStatus === "reconnect_required" ? "text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/40" : "text-muted bg-background border-border"}`}>{driveStatus === "connected" ? t("settings.connected") : driveStatus === "reconnect_required" ? t("settings.reconnectRequired") : t("settings.notConnected")}</span>}
                   </h2>
-                  <p className="text-xs text-muted mt-0.5">{driveLoading ? "Checking..." : driveStatus === "connected" ? `Dashboard actions using ${driveEmail || "connected account"}` : driveStatus === "reconnect_required" ? "Reconnect Drive for server-side actions." : "Connect for server-side Drive actions."}</p>
+                  <p className="text-xs text-muted mt-0.5 break-all">{driveLoading ? "Checking..." : driveStatus === "connected" ? `Dashboard actions using ${driveEmail || "connected account"}` : driveStatus === "reconnect_required" ? "Reconnect Drive for server-side actions." : "Connect for server-side Drive actions."}</p>
                   {!driveLoading && driveStatus === "connected" && driveQuota?.usedBytes != null && driveQuota?.totalBytes != null && driveQuota.totalBytes > 0 && (() => {
                     const pct = Math.max(0, Math.min(100, (driveQuota.usedBytes / driveQuota.totalBytes) * 100));
                     const barColor = pct >= 90 ? "bg-red-500" : pct >= 75 ? "bg-amber-500" : "bg-[#89BD49]";
@@ -1635,9 +1614,9 @@ function SettingsContent() {
                   <p className="text-[11px] text-muted">Extension connection is managed separately.</p>
                 </div>
                 {driveStatus === "connected" ? (
-                  <button type="button" onClick={disconnectDrive} disabled={driveActionLoading} className="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline disabled:opacity-50">{driveActionLoading ? "Disconnecting…" : "Disconnect"}</button>
+                  <button type="button" onClick={disconnectDrive} disabled={driveActionLoading} className="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline disabled:opacity-50 shrink-0 self-start sm:self-center">{driveActionLoading ? "Disconnecting…" : "Disconnect"}</button>
                 ) : (
-                  <button type="button" onClick={() => setConnectDriveModalOpen(true)} disabled={driveLoading || driveActionLoading} className="text-xs font-semibold text-[#6B9A35] dark:text-[#A8D666] hover:underline disabled:opacity-50">{driveStatus === "reconnect_required" ? "Reconnect" : "Connect"}</button>
+                  <button type="button" onClick={() => setConnectDriveModalOpen(true)} disabled={driveLoading || driveActionLoading} className="text-xs font-semibold text-[#6B9A35] dark:text-[#A8D666] hover:underline disabled:opacity-50 shrink-0 self-start sm:self-center">{driveStatus === "reconnect_required" ? "Reconnect" : "Connect"}</button>
                 )}
               </div>
               {driveSuccess && <p className="text-xs text-emerald-600 dark:text-emerald-400">{driveSuccess}</p>}
@@ -1718,8 +1697,8 @@ function SettingsContent() {
                   <p className="text-[11px] text-amber-800/80 dark:text-amber-300/80">
                     This key will never be shown again. Copy it now to authenticate requests with <code className="font-mono bg-black/10 dark:bg-black/40 px-1 py-0.5 rounded">Authorization: Bearer bugsnap_...</code>
                   </p>
-                  <div className="flex items-center gap-2 pt-1">
-                    <code className="flex-1 px-3 py-1.5 bg-black/10 dark:bg-black/40 rounded text-xs font-mono select-all overflow-x-auto">
+                  <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 pt-1">
+                    <code className="flex-1 min-w-0 px-3 py-1.5 bg-black/10 dark:bg-black/40 rounded text-xs font-mono select-all overflow-x-auto break-all">
                       {revealedBugsnapKey.rawKey}
                     </code>
                     <button
@@ -1728,14 +1707,14 @@ function SettingsContent() {
                         navigator.clipboard.writeText(revealedBugsnapKey.rawKey);
                         showToast("API key copied!", "success");
                       }}
-                      className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded text-xs font-medium"
+                      className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded text-xs font-medium shrink-0"
                     >
                       Copy
                     </button>
                     <button
                       type="button"
                       onClick={() => setRevealedBugsnapKey(null)}
-                      className="px-3 py-1.5 bg-border hover:bg-border/80 text-foreground rounded text-xs"
+                      className="px-3 py-1.5 bg-border hover:bg-border/80 text-foreground rounded text-xs shrink-0"
                     >
                       Dismiss
                     </button>
@@ -1749,7 +1728,7 @@ function SettingsContent() {
                   placeholder="Key name (e.g. SnapTest AI Integration)"
                   value={newKeyName}
                   onChange={(e) => setNewKeyName(e.target.value)}
-                  className="flex-1 text-xs rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 bg-background"
+                  className="flex-1 min-w-0 text-xs rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 bg-background"
                 />
                 <button
                   type="submit"
@@ -1758,10 +1737,7 @@ function SettingsContent() {
                 >
                   {creatingKey ? (
                     <>
-                      <svg className="w-3.5 h-3.5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                      </svg>
+                      <Icon icon="lucide:loader-2" className="w-3.5 h-3.5 animate-spin text-white shrink-0" aria-hidden="true" />
                       <span>Generating…</span>
                     </>
                   ) : (
@@ -1892,9 +1868,7 @@ function SettingsContent() {
                     className="w-full flex items-center justify-between text-sm rounded-lg border border-border px-3 py-2 bg-background text-left"
                   >
                     <span className={jobRole ? "text-foreground" : "text-muted"}>{jobRole || t("settings.selectRole")}</span>
-                    <svg className={`w-3.5 h-3.5 text-muted transition-transform ${roleMenuOpen ? "rotate-180" : ""}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-                    </svg>
+                    <Icon icon="lucide:chevron-down" className={`w-3.5 h-3.5 text-muted shrink-0 transition-transform ${roleMenuOpen ? "rotate-180" : ""}`} aria-hidden="true" />
                   </button>
                   {roleMenuOpen && (
                     <>
@@ -1909,9 +1883,7 @@ function SettingsContent() {
                           >
                             <span>{opt}</span>
                             {jobRole === opt && (
-                              <svg className="w-3.5 h-3.5 shrink-0 text-[#6B9A35] dark:text-[#A8D666]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M20 6L9 17l-5-5" />
-                              </svg>
+                              <Icon icon="lucide:check" className="w-3.5 h-3.5 shrink-0 text-[#6B9A35] dark:text-[#A8D666]" aria-hidden="true" />
                             )}
                           </button>
                         ))}
@@ -1921,7 +1893,7 @@ function SettingsContent() {
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">Email</label>
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">{t("settings.email")}</label>
                 <input type="email" value={userEmail} disabled
                   className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none bg-background text-muted cursor-not-allowed" />
               </div>
@@ -1931,9 +1903,9 @@ function SettingsContent() {
                 <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-2">{t("settings.appearance")}</label>
                 <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                   {([
-                    { id: "light", label: t("settings.themeLight"), icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="4" /><path strokeLinecap="round" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" /></svg> },
-                    { id: "dark", label: t("settings.themeDark"), icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" /></svg> },
-                    { id: "system", label: t("settings.themeSystem"), icon: <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2"><rect x="2" y="3" width="20" height="14" rx="2" /><path strokeLinecap="round" d="M8 21h8m-4-4v4" /></svg> },
+                    { id: "light", label: t("settings.themeLight"), icon: <Icon icon="lucide:sun" className="w-4 h-4 shrink-0" aria-hidden="true" /> },
+                    { id: "dark", label: t("settings.themeDark"), icon: <Icon icon="lucide:moon" className="w-4 h-4 shrink-0" aria-hidden="true" /> },
+                    { id: "system", label: t("settings.themeSystem"), icon: <Icon icon="lucide:monitor" className="w-4 h-4 shrink-0" aria-hidden="true" /> },
                   ] as { id: Theme; label: string; icon: React.ReactNode }[]).map((opt) => (
                     <button
                       key={opt.id}
@@ -1957,6 +1929,33 @@ function SettingsContent() {
                   ))}
                 </div>
                 <p className="text-[11px] text-muted mt-2">{t("settings.appearanceHint")}</p>
+              </div>
+
+              {/* Language preference */}
+              <div className="pt-2 border-t border-border/60">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-2">{t("settings.language")}</label>
+                <div className="grid grid-cols-2 gap-1.5 sm:gap-2">
+                  {[
+                    { id: "en", label: t("settings.langEn"), flag: "🇺🇸" },
+                    { id: "id", label: t("settings.langId"), flag: "🇮🇩" },
+                  ].map((opt) => (
+                    <button
+                      key={opt.id}
+                      type="button"
+                      onClick={() => setLocale(opt.id as "en" | "id")}
+                      aria-pressed={locale === opt.id}
+                      className={`flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 sm:py-3 text-[11px] sm:text-xs font-semibold transition-colors ${
+                        locale === opt.id
+                          ? "border-[#89BD49] bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] shadow-xs"
+                          : "border-border bg-subtle text-muted hover:text-foreground hover:bg-border/30"
+                      }`}
+                    >
+                      <span className="text-base select-none">{opt.flag}</span>
+                      <span>{opt.label}</span>
+                    </button>
+                  ))}
+                </div>
+                <p className="text-[11px] text-muted mt-2">{t("settings.languageHint")}</p>
               </div>
 
               <div>
@@ -1988,17 +1987,12 @@ function SettingsContent() {
               >
                 {profileSaving ? (
                   <>
-                    <svg className="w-4 h-4 animate-spin text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                    </svg>
+                    <Icon icon="lucide:loader-2" className="w-4 h-4 animate-spin text-white shrink-0" aria-hidden="true" />
                     <span>{t("settings.saving")}</span>
                   </>
                 ) : profileSaved ? (
                   <>
-                    <svg className="w-4 h-4 text-white" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                    </svg>
+                    <Icon icon="lucide:check" className="w-4 h-4 text-white shrink-0" aria-hidden="true" />
                     <span>{t("settings.profileSaved")}</span>
                   </>
                 ) : (
@@ -2012,9 +2006,7 @@ function SettingsContent() {
               <div className="px-5 py-3.5 border-b border-red-100 dark:border-red-900/30 bg-red-50/50 dark:bg-red-950/20 flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div className="w-7 h-7 rounded-lg bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
-                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
+                    <Icon icon="lucide:alert-triangle" className="w-4 h-4 shrink-0" aria-hidden="true" />
                   </div>
                   <div>
                     <h2 className="text-sm font-bold text-red-700 dark:text-red-400 leading-none">{t("settings.dangerZone")}</h2>
@@ -2039,9 +2031,7 @@ function SettingsContent() {
                   disabled={accountDeleting}
                   className="shrink-0 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-red-600 hover:bg-red-700 text-white shadow-xs transition-all active:scale-[0.98] disabled:opacity-50"
                 >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                  </svg>
+                  <Icon icon="lucide:trash-2" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                   {t("settings.deleteAccountBtn")}
                 </button>
               </div>
@@ -2066,9 +2056,7 @@ function SettingsContent() {
                     )}
                     {notifSyncStatus === "synced" && (
                       <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/50">
-                        <svg className="w-3 h-3 text-emerald-600 dark:text-emerald-400" viewBox="0 0 20 20" fill="currentColor">
-                          <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                        </svg>
+                        <Icon icon="lucide:check" className="w-3 h-3 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
                         {t("notif.synced")}
                       </span>
                     )}
@@ -2092,9 +2080,7 @@ function SettingsContent() {
                     title: t("notif.commentTitle"),
                     description: t("notif.commentDesc"),
                     icon: (
-                      <svg className="w-4 h-4 text-[#6B9A35] dark:text-[#A8D666]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
-                      </svg>
+                      <Icon icon="lucide:message-square" className="w-4 h-4 text-[#6B9A35] dark:text-[#A8D666] shrink-0" aria-hidden="true" />
                     ),
                   },
                   {
@@ -2102,9 +2088,7 @@ function SettingsContent() {
                     title: t("notif.mentionTitle"),
                     description: t("notif.mentionDesc"),
                     icon: (
-                      <svg className="w-4 h-4 text-[#6B9A35] dark:text-[#A8D666]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
-                      </svg>
+                      <Icon icon="lucide:at-sign" className="w-4 h-4 text-[#6B9A35] dark:text-[#A8D666] shrink-0" aria-hidden="true" />
                     ),
                   },
                   {
@@ -2112,9 +2096,7 @@ function SettingsContent() {
                     title: t("notif.digestTitle"),
                     description: t("notif.digestDesc"),
                     icon: (
-                      <svg className="w-4 h-4 text-[#6B9A35] dark:text-[#A8D666]" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                      </svg>
+                      <Icon icon="lucide:bar-chart-2" className="w-4 h-4 text-[#6B9A35] dark:text-[#A8D666] shrink-0" aria-hidden="true" />
                     ),
                   },
                 ]).map((item) => {
@@ -2168,9 +2150,7 @@ function SettingsContent() {
               {/* Footer info note */}
               <div className="px-5 py-3.5 bg-background border-t border-border flex items-center justify-between text-[11px] text-muted">
                 <span className="flex items-center gap-1.5">
-                  <svg className="w-3.5 h-3.5 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
+                  <Icon icon="lucide:info" className="w-3.5 h-3.5 text-muted shrink-0" aria-hidden="true" />
                   {t("notif.footerNotice")}
                 </span>
                 <span className="hidden sm:inline text-[11px] text-muted font-mono">
@@ -2204,7 +2184,7 @@ function SettingsContent() {
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
             <button className="absolute inset-0 bg-black/40 backdrop-blur-xs" aria-label="Close" onClick={() => !intModalSaving && setActiveModalInt(null)} />
-            <div className="relative w-full max-w-md rounded-xl border border-border bg-background p-6 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
+            <div className="relative w-[min(28rem,calc(100vw-2rem))] rounded-xl border border-border bg-background p-4 sm:p-6 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto">
               <div className="flex items-center gap-3">
                 <div className="shrink-0 w-10 h-10 rounded-lg border border-border bg-background flex items-center justify-center p-2">
                   {activeDef?.iconSrc && (
@@ -2297,7 +2277,7 @@ function SettingsContent() {
                 )}
               </div>
 
-              <div className="flex items-center justify-between gap-3 pt-4 border-t border-border">
+              <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-3 pt-4 border-t border-border">
                 {isConnected ? (
                   <button
                     type="button"
@@ -2325,10 +2305,7 @@ function SettingsContent() {
                   >
                     {intModalSaving ? (
                       <>
-                        <svg className="w-3.5 h-3.5 animate-spin text-white" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                        </svg>
+                        <Icon icon="lucide:loader-2" className="w-3.5 h-3.5 animate-spin text-white shrink-0" aria-hidden="true" />
                         <span>Saving…</span>
                       </>
                     ) : (

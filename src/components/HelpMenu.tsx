@@ -349,7 +349,7 @@ export default function HelpMenu({ className = "" }: HelpMenuProps) {
 
             {/* Mobile Inline Collapsible Submenu */}
             {submenuOpen && (
-              <div className="sm:hidden pl-4 pr-2 py-1 space-y-0.5 bg-slate-50/70 dark:bg-zinc-850/60 border-t border-slate-100 dark:border-zinc-800">
+              <div className="sm:hidden pl-4 pr-2 py-1 space-y-0.5 bg-slate-50/70 dark:bg-zinc-800/60 border-t border-slate-100 dark:border-zinc-800">
                 <a
                   href={CHROME_STORE_URL}
                   target="_blank"

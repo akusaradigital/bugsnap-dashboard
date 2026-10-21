@@ -33,6 +33,56 @@ import {
 const CHROME_WEB_STORE_URL =
   "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
 
+const EXPIRY_OPTIONS = [
+  { value: "never", labelKey: "cap.never" },
+  { value: "24h", labelKey: "cap.hours24" },
+  { value: "7d", labelKey: "cap.days7" },
+  { value: "30d", labelKey: "cap.days30" },
+] as const;
+
+interface MoveFolderEntry {
+  id: string;
+  name: string;
+  color?: string | null;
+  parent_id?: string | null;
+  depth: number;
+}
+
+function buildFolderHierarchy(
+  rows: Array<{ id: string; name: string; color?: string | null; parent_id?: string | null }>,
+): MoveFolderEntry[] {
+  const result: MoveFolderEntry[] = [];
+  const childrenMap = new Map<
+    string,
+    Array<{ id: string; name: string; color?: string | null; parent_id?: string | null }>
+  >();
+  const idSet = new Set(rows.map((r) => r.id));
+  const roots: typeof rows = [];
+
+  for (const f of rows) {
+    if (f.parent_id && idSet.has(f.parent_id)) {
+      const list = childrenMap.get(f.parent_id) || [];
+      list.push(f);
+      childrenMap.set(f.parent_id, list);
+    } else {
+      roots.push(f);
+    }
+  }
+
+  function traverse(list: typeof rows, depth: number) {
+    for (const item of list) {
+      result.push({ ...item, depth });
+      const children = childrenMap.get(item.id);
+      if (children && children.length > 0) {
+        traverse(children, depth + 1);
+      }
+    }
+  }
+
+  traverse(roots, 0);
+  return result;
+}
+
 function getSavedViewMode(): "grid" | "list" {
   if (typeof window === "undefined") return "grid";
   try {
@@ -179,6 +229,8 @@ function CapturesContent() {
     Array<{ id: string; name: string }>
   >([]);
   const [moveFolders, setMoveFolders] = useState<string[]>([]);
+  const [moveFolderEntries, setMoveFolderEntries] = useState<MoveFolderEntry[]>([]);
+  const [moveFolderColors, setMoveFolderColors] = useState<Record<string, string>>({});
   const [isCreatingMoveFolder, setIsCreatingMoveFolder] = useState(false);
   const [newMoveFolderName, setNewMoveFolderName] = useState("");
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -1056,20 +1108,27 @@ function CapturesContent() {
     if (initialWorkspaceId) {
       const { data: folderRows, error: folderError } = await supabase
         .from("workspace_folders")
-        .select("name")
+        .select("id, name, color, parent_id")
         .eq("workspace_id", initialWorkspaceId)
         .order("name", { ascending: true });
       if (folderError) {
         setUploadError(folderError.message);
         return;
       }
-      const folderList = ((folderRows ?? []) as Array<{ name: string }>).map(
-        (f) => f.name,
-      );
-      setMoveFolders(folderList);
+      const rawRows = (folderRows ?? []) as Array<{ id: string; name: string; color?: string | null; parent_id?: string | null }>;
+      const hierarchical = buildFolderHierarchy(rawRows);
+      const colorMap: Record<string, string> = {};
+      for (const f of rawRows) {
+        if (f.color) colorMap[f.name] = f.color;
+      }
+      setMoveFolderColors(colorMap);
+      setMoveFolderEntries(hierarchical);
+      setMoveFolders(hierarchical.map((f) => f.name));
       setMoveTargetFolderName("");
     } else {
+      setMoveFolderEntries([]);
       setMoveFolders([]);
+      setMoveFolderColors({});
       setMoveTargetFolderName("");
     }
     setMoveToOpen(true);
@@ -1081,23 +1140,28 @@ function CapturesContent() {
     setNewMoveFolderName("");
     const { data: folderRows, error: folderError } = await supabase
       .from("workspace_folders")
-      .select("name")
+      .select("id, name, color, parent_id")
       .eq("workspace_id", workspaceId)
       .order("name", { ascending: true });
     if (folderError) {
       setUploadError(folderError.message);
       return;
     }
-    const folderList = ((folderRows ?? []) as Array<{ name: string }>).map(
-      (f) => f.name,
-    );
-    setMoveFolders(folderList);
+    const rawRows = (folderRows ?? []) as Array<{ id: string; name: string; color?: string | null; parent_id?: string | null }>;
+    const hierarchical = buildFolderHierarchy(rawRows);
+    const colorMap: Record<string, string> = {};
+    for (const f of rawRows) {
+      if (f.color) colorMap[f.name] = f.color;
+    }
+    setMoveFolderColors(colorMap);
+    setMoveFolderEntries(hierarchical);
+    setMoveFolders(hierarchical.map((f) => f.name));
     setMoveTargetFolderName("");
   }
 
-  // Bulk tag / status. One update for the whole selection - RLS decides which
+  // Bulk tag / status / expiry. One update for the whole selection - RLS decides which
   // rows it may touch, same as the single-card edit path.
-  const [bulkField, setBulkField] = useState<"tag" | "status" | null>(null);
+  const [bulkField, setBulkField] = useState<"tag" | "status" | "expiry" | null>(null);
   const [bulkSaving, setBulkSaving] = useState(false);
 
   useEffect(() => {
@@ -1110,15 +1174,31 @@ function CapturesContent() {
     document.addEventListener("mousedown", handleBulkOutside);
     return () => document.removeEventListener("mousedown", handleBulkOutside);
   }, [bulkField]);
-  async function applyBulkField(field: "tag" | "status", value: string) {
+
+  async function applyBulkField(field: "tag" | "status" | "expiry", value: string) {
     if (bulkSaving || selectedIds.size === 0) return;
     setBulkSaving(true);
     const ids = Array.from(selectedIds);
-    // .select() so RLS-skipped rows are visible: an update that touches nothing
-    // returns no error, and without this the UI would claim rows it never changed.
+    let updatePayload: Record<string, string | null> = {};
+    if (field === "expiry") {
+      let expiresAt: string | null = null;
+      if (value === "24h") {
+        expiresAt = new Date(Date.now() + 24 * 3600 * 1000).toISOString();
+      } else if (value === "7d") {
+        expiresAt = new Date(Date.now() + 7 * 86400 * 1000).toISOString();
+      } else if (value === "30d") {
+        expiresAt = new Date(Date.now() + 30 * 86400 * 1000).toISOString();
+      } else if (value === "never") {
+        expiresAt = null;
+      }
+      updatePayload = { expires_at: expiresAt };
+    } else {
+      updatePayload = { [field]: value };
+    }
+
     const { data, error } = await supabase
       .from("captures")
-      .update({ [field]: value })
+      .update(updatePayload)
       .in("id", ids)
       .select("id");
     setBulkSaving(false);
@@ -1131,7 +1211,7 @@ function CapturesContent() {
       ((data ?? []) as Array<{ id: string }>).map((r) => r.id),
     );
     setCaptures((prev) =>
-      prev.map((c) => (updated.has(c.id) ? { ...c, [field]: value } : c)),
+      prev.map((c) => (updated.has(c.id) ? { ...c, ...updatePayload } : c)),
     );
     clearSelection();
     showToast(t("cap.bulkUpdated", { count: updated.size }), "success");
@@ -1347,7 +1427,7 @@ function CapturesContent() {
             if (files.length > 0) void uploadSelectedFiles(files);
           }}
         >
-          <div className="bg-white dark:bg-zinc-900 border border-border p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 max-w-md text-center pointer-events-none transform transition-transform">
+          <div className="bg-white dark:bg-zinc-900 border border-border p-5 sm:p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 max-w-md text-center pointer-events-none transform transition-transform">
             <div className="w-16 h-16 rounded-2xl bg-[#89BD49]/10 dark:bg-[#89BD49]/20 border border-[#89BD49]/30 dark:border-[#89BD49]/40 flex items-center justify-center text-[#6B9A35] dark:text-[#A8D666] shadow-inner">
               <Icon
                 icon="lucide:upload-cloud"
@@ -1886,7 +1966,7 @@ function CapturesContent() {
                               className="w-3.5 h-3.5 text-[#89BD49] animate-spin shrink-0"
                             />
                           ) : (
-                            <span className="w-2 h-2 rounded-full bg-muted-foreground/30 ml-0.5 mr-1 shrink-0" />
+                            <span className="w-2 h-2 rounded-full bg-muted/30 ml-0.5 mr-1 shrink-0" />
                           )}
                           <span className="truncate font-medium text-foreground/90 max-w-[170px] sm:max-w-[210px]">
                             {taskItem.name}
@@ -2050,7 +2130,7 @@ function CapturesContent() {
             <button
               type="button"
               onClick={() => setSelectedIds(new Set(allMissingDriveIds))}
-              className="rounded-lg border border-amber-300 dark:border-amber-800/60 bg-white dark:bg-subtle text-amber-800 dark:text-amber-200 font-medium px-3 py-1.5 hover:bg-amber-100/50 transition-colors cursor-pointer whitespace-nowrap"
+              className="rounded-lg border border-amber-300 dark:border-amber-800/60 bg-white dark:bg-subtle text-amber-800 dark:text-amber-200 font-medium px-3 py-1.5 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 transition-colors cursor-pointer whitespace-nowrap"
             >
               {t("cap.selectAll")}
             </button>
@@ -2058,7 +2138,7 @@ function CapturesContent() {
               type="button"
               onClick={() => scanMissingDrive(true)}
               disabled={scanningDrive}
-              className="rounded-lg border border-amber-300 dark:border-amber-800/60 bg-white dark:bg-subtle text-amber-800 dark:text-amber-200 font-medium px-2.5 py-1.5 hover:bg-amber-100/50 transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1.5 disabled:opacity-50"
+              className="rounded-lg border border-amber-300 dark:border-amber-800/60 bg-white dark:bg-subtle text-amber-800 dark:text-amber-200 font-medium px-2.5 py-1.5 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 transition-colors cursor-pointer whitespace-nowrap flex items-center gap-1.5 disabled:opacity-50"
               title={t("cap.scanMissing")}
             >
               <Icon
@@ -2955,7 +3035,11 @@ function CapturesContent() {
                     </button>
 
                     {/* Available folders in target workspace */}
-                    {moveFolders.map((folder) => {
+                    {(moveFolderEntries.length > 0
+                      ? moveFolderEntries
+                      : moveFolders.map((f) => ({ id: f, name: f, depth: 0 }))
+                    ).map((folderEntry) => {
+                      const folder = folderEntry.name;
                       const isCurrent = filteredCaptures.some(
                         (c) =>
                           selectedIds.has(c.id) &&
@@ -2965,17 +3049,29 @@ function CapturesContent() {
                       const isSelected = moveTargetFolderName === folder;
                       return (
                         <button
-                          key={folder}
+                          key={folderEntry.id || folder}
                           type="button"
                           onClick={() => setMoveTargetFolderName(folder)}
+                          style={{ paddingLeft: `${14 + folderEntry.depth * 14}px` }}
                           className={`w-full flex items-center justify-between rounded-xl border px-3.5 py-2.5 text-left transition-all ${
                             isSelected
                               ? "border-[#89BD49] bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] ring-1 ring-[#89BD49]"
                               : "border-border bg-slate-50/50 dark:bg-background/50 hover:bg-slate-100 dark:hover:bg-background text-foreground"
                           }`}
                         >
-                          <span className="flex items-center gap-2.5 min-w-0 pr-2">
-                            <Icon icon="lucide:folder" className="w-4 h-4 shrink-0 text-muted" />
+                          <span className="flex items-center gap-2 min-w-0 pr-2">
+                            {folderEntry.depth > 0 && (
+                              <Icon icon="lucide:corner-down-right" className="w-3.5 h-3.5 text-muted/60 shrink-0" />
+                            )}
+                            <Icon
+                              icon={moveFolderColors[folder] ? "custom:folder-filled" : "lucide:folder"}
+                              className={`w-4 h-4 shrink-0 ${moveFolderColors[folder] ? "" : "text-muted"}`}
+                              style={
+                                moveFolderColors[folder]
+                                  ? { color: moveFolderColors[folder] }
+                                  : undefined
+                              }
+                            />
                             <span className="text-sm font-medium truncate">
                               {folder}
                             </span>
@@ -2999,6 +3095,9 @@ function CapturesContent() {
                             if (!moveFolders.includes(trimmed)) {
                               setMoveFolders((prev) =>
                                 [...prev, trimmed].sort(),
+                              );
+                              setMoveFolderEntries((prev) =>
+                                [...prev, { id: `new-${trimmed}`, name: trimmed, depth: 0 }].sort((a, b) => a.name.localeCompare(b.name)),
                               );
                             }
                             setMoveTargetFolderName(trimmed);
@@ -3348,8 +3447,8 @@ function CapturesContent() {
               <span>{t("cap.bulkMove")}</span>
             </button>
 
-            {/* Tag / Status */}
-            {(["tag", "status"] as const).map((field) => (
+            {/* Tag / Status / Expiry */}
+            {(["tag", "status", "expiry"] as const).map((field) => (
               <div key={field} className="relative">
                 <button
                   type="button"
@@ -3359,24 +3458,48 @@ function CapturesContent() {
                   disabled={moving || deleting || bulkSaving}
                   className="h-8 min-h-[36px] sm:min-h-0 px-2.5 rounded-xl border border-border bg-subtle hover:bg-background hover:border-[#89BD49]/40 dark:hover:border-[#89BD49]/50 text-xs font-semibold text-foreground hover:text-[#6B9A35] dark:hover:text-[#A8D666] disabled:opacity-40 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs touch-manipulation"
                 >
+                  {field === "expiry" && (
+                    <Icon icon="lucide:clock" className="w-3.5 h-3.5 text-muted shrink-0" />
+                  )}
                   <span>
-                    {field === "tag" ? t("cap.bulkTag") : t("cap.bulkStatus")}
+                    {field === "tag"
+                      ? t("cap.bulkTag")
+                      : field === "status"
+                      ? t("cap.bulkStatus")
+                      : t("cap.bulkExpiry")}
                   </span>
                 </button>
                 {bulkField === field && (
-                  <div className={`absolute bottom-full mb-1.5 ${field === "status" ? "right-0 sm:left-0" : "left-0"} z-50 min-w-[9rem] bg-white dark:bg-zinc-900 border border-border rounded-lg shadow-lg overflow-hidden`}>
-                    {(field === "tag" ? TAG_OPTIONS : STATUS_OPTIONS).map(
-                      (opt) => (
-                        <button
-                          key={opt}
-                          type="button"
-                          onClick={() => void applyBulkField(field, opt)}
-                          className="w-full text-left px-3 py-2 text-xs text-foreground hover:bg-subtle transition-colors cursor-pointer touch-manipulation"
-                        >
-                          {opt}
-                        </button>
-                      ),
-                    )}
+                  <div
+                    className={`absolute bottom-full mb-1.5 ${
+                      field === "status" || field === "expiry"
+                        ? "right-0 sm:left-0"
+                        : "left-0"
+                    } z-50 min-w-[9rem] bg-white dark:bg-zinc-900 border border-border rounded-lg shadow-lg overflow-hidden`}
+                  >
+                    {field === "expiry"
+                      ? EXPIRY_OPTIONS.map((opt) => (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => void applyBulkField("expiry", opt.value)}
+                            className="w-full text-left px-3 py-2 text-xs text-foreground hover:bg-subtle transition-colors cursor-pointer touch-manipulation"
+                          >
+                            {t(opt.labelKey)}
+                          </button>
+                        ))
+                      : (field === "tag" ? TAG_OPTIONS : STATUS_OPTIONS).map(
+                          (opt) => (
+                            <button
+                              key={opt}
+                              type="button"
+                              onClick={() => void applyBulkField(field, opt)}
+                              className="w-full text-left px-3 py-2 text-xs text-foreground hover:bg-subtle transition-colors cursor-pointer touch-manipulation"
+                            >
+                              {opt}
+                            </button>
+                          ),
+                        )}
                   </div>
                 )}
               </div>
