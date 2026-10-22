@@ -917,135 +917,116 @@ function CapturesContent() {
       );
       setCurrentUpload(initialTasks[i]);
 
+      const setTaskProgress = (progress: number, status: UploadTask["status"]) => {
+        setUploadTasks((prev) =>
+          prev.map((t, idx) => (idx === i ? { ...t, progress, status } : t)),
+        );
+        setCurrentUpload((prev) => (prev ? { ...prev, progress, status } : null));
+      };
+      const setTaskError = (error: string) => {
+        setUploadTasks((prev) =>
+          prev.map((t, idx) => (idx === i ? { ...t, status: "error", error } : t)),
+        );
+        setCurrentUpload((prev) => (prev ? { ...prev, status: "error", error } : null));
+      };
+
       try {
-        await new Promise<void>((resolve, reject) => {
-          const form = new FormData();
-          form.append("file", file);
-          form.append("title", title);
-          form.append("type", isVideo ? "video" : "screenshot");
-          form.append("workspaceId", workspaceParam);
-          if (folderParam) {
-            form.append("folderName", folderParam);
-          }
-          if (projectFilter) {
-            form.append("projectId", projectFilter);
-          }
-
-          const xhr = new XMLHttpRequest();
-          let syncTimer: ReturnType<typeof setInterval> | null = null;
-
-          xhr.upload.onprogress = (event) => {
-            if (event.lengthComputable) {
-              const pct = Math.max(
-                5,
-                Math.min(75, Math.round((event.loaded / event.total) * 75)),
-              );
-              setUploadTasks((prev) =>
-                prev.map((t, idx) =>
-                  idx === i ? { ...t, progress: pct, status: "uploading" } : t,
-                ),
-              );
-              setCurrentUpload((prev) =>
-                prev ? { ...prev, progress: pct, status: "uploading" } : null,
-              );
-            }
-          };
-
-          xhr.upload.onload = () => {
-            setUploadTasks((prev) =>
-              prev.map((t, idx) =>
-                idx === i ? { ...t, progress: 80, status: "syncing" } : t,
-              ),
-            );
-            setCurrentUpload((prev) =>
-              prev ? { ...prev, progress: 80, status: "syncing" } : null,
-            );
-            let currentPct = 80;
-            syncTimer = setInterval(() => {
-              if (currentPct < 96) {
-                currentPct += 2;
-                setUploadTasks((prev) =>
-                  prev.map((t, idx) =>
-                    idx === i
-                      ? { ...t, progress: currentPct, status: "syncing" }
-                      : t,
-                  ),
-                );
-                setCurrentUpload((prev) =>
-                  prev
-                    ? { ...prev, progress: currentPct, status: "syncing" }
-                    : null,
-                );
-              }
-            }, 250);
-          };
-
-          xhr.onload = () => {
-            if (syncTimer) clearInterval(syncTimer);
-            if (xhr.status >= 200 && xhr.status < 300) {
-              let res: { capture?: Capture; error?: string } = {};
-              try {
-                res = JSON.parse(xhr.responseText);
-              } catch {}
-
-              if (res.capture) {
-                setCaptures((prev) => {
-                  if (prev.some((c) => c.id === res.capture!.id)) return prev;
-                  return [res.capture!, ...prev];
-                });
-              }
-
-              completedCount++;
-              setUploadTasks((prev) =>
-                prev.map((t, idx) =>
-                  idx === i ? { ...t, progress: 100, status: "completed" } : t,
-                ),
-              );
-              setCurrentUpload((prev) =>
-                prev ? { ...prev, progress: 100, status: "completed" } : null,
-              );
-              resolve();
-            } else {
-              let errorMsg = t("cap.uploadFailed");
-              try {
-                const res = JSON.parse(xhr.responseText);
-                if (res.error) errorMsg = res.error;
-              } catch {}
-              failedCount++;
-              setUploadTasks((prev) =>
-                prev.map((t, idx) =>
-                  idx === i ? { ...t, status: "error", error: errorMsg } : t,
-                ),
-              );
-              setCurrentUpload((prev) =>
-                prev ? { ...prev, status: "error", error: errorMsg } : null,
-              );
-              reject(new Error(errorMsg));
-            }
-          };
-
-          xhr.onerror = () => {
-            if (syncTimer) clearInterval(syncTimer);
-            failedCount++;
-            const netErr = t("cap.networkErrorUpload");
-            setUploadTasks((prev) =>
-              prev.map((t, idx) =>
-                idx === i ? { ...t, status: "error", error: netErr } : t,
-              ),
-            );
-            setCurrentUpload((prev) =>
-              prev ? { ...prev, status: "error", error: netErr } : null,
-            );
-            reject(new Error(netErr));
-          };
-
-          xhr.open("POST", "/api/captures/upload");
-          if (token) {
-            xhr.setRequestHeader("Authorization", `Bearer ${token}`);
-          }
-          xhr.send(form);
+        // Step 1: ask the server to open a Drive resumable-upload session.
+        // This request carries only metadata, never the file bytes, so it's
+        // well under Vercel's 4.5MB serverless body limit even for a 100MB video.
+        const initRes = await fetch("/api/captures/upload/init", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({
+            title,
+            type: isVideo ? "video" : "screenshot",
+            mimeType: file.type,
+            size: file.size,
+            workspaceId: workspaceParam,
+            folderName: folderParam || undefined,
+            projectId: projectFilter || undefined,
+          }),
         });
+        const initJson = (await initRes.json().catch(() => ({}))) as {
+          uploadUrl?: string;
+          workspaceId?: string;
+          folderName?: string | null;
+          error?: string;
+        };
+        if (!initRes.ok || !initJson.uploadUrl) {
+          throw new Error(initJson.error || t("cap.uploadFailed"));
+        }
+
+        // Step 2: PUT the actual bytes straight to Google Drive's session URL.
+        // The dashboard's own server never sees this body - Drive accepts it directly.
+        const driveResult = await new Promise<{ id: string; webViewLink?: string }>(
+          (resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+            xhr.upload.onprogress = (event) => {
+              if (event.lengthComputable) {
+                const pct = Math.max(5, Math.min(96, Math.round((event.loaded / event.total) * 96)));
+                setTaskProgress(pct, "uploading");
+              }
+            };
+            xhr.onload = () => {
+              if (xhr.status >= 200 && xhr.status < 300) {
+                try {
+                  resolve(JSON.parse(xhr.responseText));
+                } catch {
+                  reject(new Error(t("cap.uploadFailed")));
+                }
+              } else {
+                reject(new Error(`${t("cap.uploadFailed")} (${xhr.status})`));
+              }
+            };
+            xhr.onerror = () => reject(new Error(t("cap.networkErrorUpload")));
+            xhr.open("PUT", initJson.uploadUrl as string);
+            xhr.send(file);
+          },
+        );
+
+        setTaskProgress(97, "syncing");
+
+        // Step 3: finalize - share the Drive file and write the captures row.
+        // Another small metadata-only request.
+        const finalizeRes = await fetch("/api/captures/upload/finalize", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({
+            fileId: driveResult.id,
+            webViewLink: driveResult.webViewLink,
+            title,
+            type: isVideo ? "video" : "screenshot",
+            workspaceId: initJson.workspaceId || workspaceParam,
+            folderName: initJson.folderName,
+            projectId: projectFilter || undefined,
+          }),
+        });
+        const finalizeJson = (await finalizeRes.json().catch(() => ({}))) as {
+          capture?: Capture;
+          error?: string;
+        };
+        if (!finalizeRes.ok) {
+          throw new Error(finalizeJson.error || t("cap.uploadFailed"));
+        }
+
+        if (finalizeJson.capture) {
+          setCaptures((prev) => {
+            if (prev.some((c) => c.id === finalizeJson.capture!.id)) return prev;
+            return [finalizeJson.capture!, ...prev];
+          });
+        }
+        completedCount++;
+        setTaskProgress(100, "completed");
       } catch (err) {
+        failedCount++;
+        setTaskError(err instanceof Error ? err.message : t("cap.uploadFailed"));
         console.warn("Upload failed for item:", file.name, err);
       }
     }

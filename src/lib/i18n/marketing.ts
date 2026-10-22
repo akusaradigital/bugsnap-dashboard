@@ -22,15 +22,15 @@ export const marketingEn: Dict = {
   "landing.noCard":
     "Every recording is saved directly to your own Google Drive. No credit card, no setup, no friction.",
   "landing.authFailed": "Authentication failed. Please try again.",
-  "landing.pill1Title": "Automated DevTools",
+  "landing.pill1Title": "DevTools & SPA Health",
   "landing.pill1Desc":
-    "Console errors & network 4xx/5xx captured with zero setup.",
-  "landing.pill2Title": "100% Data Ownership",
+    "Console errors, network headers, memory leaks & DOM bloat captured with zero setup.",
+  "landing.pill2Title": "Zero Server Storage",
   "landing.pill2Desc":
-    "Saved directly to your Google Drive. No server lock-in.",
-  "landing.pill3Title": "Instant 1-Click Sharing",
+    "Saved directly to your own Google Drive. 100% data sovereignty & zero vendor lock-in.",
+  "landing.pill3Title": "Playwright & AI Ready",
   "landing.pill3Desc":
-    "Teammates view recordings & inspect logs without installing anything.",
+    "1-click export to executable @playwright/test scripts and native MCP server for AI.",
   "landing.f1Title": "Capture Screen, Audio & Clicks in Seconds",
   "landing.f1Body":
     "Record whole screens, individual apps, or Chrome tabs in crisp HD with voice narration. Use hotkeys (Ctrl+Shift+S / Ctrl+Shift+F), crop, add arrows, or blur sensitive data before sharing.",
@@ -113,9 +113,18 @@ export const marketingEn: Dict = {
     "Does BugSnap support custom webhooks and team notifications?",
   "landing.faq18a":
     "Yes. You can configure custom webhooks to dispatch automated notifications to your Slack or Discord channels whenever a new bug capture or team comment is submitted.",
+  "landing.faq19q": "Can BugSnap convert bug captures into automated Playwright regression tests?",
+  "landing.faq19a":
+    "Yes! BugSnap analyzes captured user action breadcrumbs (clicks, inputs, navigations) and automatically generates reproducible @playwright/test code ready to add directly to your CI/CD regression suite.",
+  "landing.faq20q": "How does BugSnap detect SPA memory leaks and DOM bloat?",
+  "landing.faq20a":
+    "BugSnap actively tracks JS Heap memory growth and total DOM nodes across client-side route transitions. If elements accumulate past 1,500 nodes or JS Heap climbs past 40MB without releasing, an instant SPA Health Warning is flagged in the report.",
+  "landing.faq21q": "Can AI agents like Claude Code, Cursor, or Hermes inspect BugSnap captures?",
+  "landing.faq21a":
+    "Yes. BugSnap provides a native Model Context Protocol (MCP) server. Your AI assistant can directly read capture telemetry, inspect failing network requests and console errors, and propose code fixes automatically.",
   "landing.cta2": "Ready to Never Ask 'Can You Reproduce It?' Again?",
   "landing.footDesc":
-    "The direct way to capture screen recordings, network errors, and console logs, then share bug reports your team can act on instantly.",
+    "Developer-first bug reporting with Zero Server Storage. Capture screen recordings, DevTools telemetry, and auto-generate Playwright regression tests directly into your Google Drive.",
   "landing.product": "Product",
   "landing.screenRecorder": "Screen Recorder",
   "landing.devTools": "DevTools Integration",
@@ -123,6 +132,10 @@ export const marketingEn: Dict = {
   "landing.security": "Security Guard",
   "landing.resources": "Resources",
   "landing.docs": "Documentation",
+  "landing.mcpDocs": "MCP Server for AI",
+  "landing.status": "System Status",
+  "landing.allOperational": "All systems operational",
+  "landing.zeroServerStorage": "Zero Server Storage",
   "landing.chromeExt": "Chrome Extension",
   "landing.help": "Help Center",
   "landing.apiStatus": "API Status",
@@ -130,8 +143,16 @@ export const marketingEn: Dict = {
   "landing.about": "About Us",
   "landing.privacy": "Privacy Policy",
   "landing.terms": "Terms of Service",
+  "landing.legal": "Legal & Compliance",
+  "landing.refundPolicy": "Refund & Cancellation",
+  "landing.consumerProtection": "Consumer Protection",
+  "landing.consumerComplaints": "Consumer Complaints",
+  "landing.consumerProtectionNotice": "Built with GDPR-aligned privacy and global consumer protection standards. Zero Server Storage ensures complete media privacy.",
+  "landing.complaintContact": "Consumer Complaints SLA < 2 Days: support@akusaradigital.com",
+  "landing.operatedBy": "BugSnap is operated by Akusara Digital.",
+  "landing.compare": "Visual Compare",
   "landing.contact": "Contact",
-  "landing.copyright": "© {year} BugSnap. All rights reserved.",
+  "landing.copyright": "© {year} BugSnap by Akusara Digital. All rights reserved.",
   "landing.builtOn":
     "Built on your Google Drive. Your data stays yours, always.",
   "landing.ecosystemEyebrow": "Akusara Suite",
@@ -248,9 +269,10 @@ export const marketingEn: Dict = {
     "Install the BugSnap extension and start capturing screen recordings, audio, and DevTools logs in seconds, saved directly to your own Google Drive, free, no credit card required.",
   "features.ctaButton": "Add to Chrome - Free",
   "features.catAll": "All Capabilities",
+  "features.catTelemetry": "DevTools & SPA Health",
   "features.catCapture": "Screen & Audio",
-  "features.catDevTools": "DevTools & Logs",
-  "features.catStorage": "Drive & Privacy",
+  "features.catSecurity": "Zero Server Storage",
+  "features.catExport": "Playwright & AI MCP",
   "features.devLogsTitle": "Automated DevLogs Captured",
   "features.devLogsError":
     "POST /api/v1/auth 500 Internal Server Error (142ms)",
@@ -344,9 +366,9 @@ export const marketingEn: Dict = {
   "pricing.tierFreeCta": "Install Extension Free",
   "pricing.fFree1": "5 new captures per week",
   "pricing.fFree2": "Unlimited screen & tab recordings (HD)",
-  "pricing.fFree3": "Automated console & network log capture",
-  "pricing.fFree4": "Stored in your own Google Drive (full ownership)",
-  "pricing.fFree5": "Public share links & basic view analytics",
+  "pricing.fFree3": "Automated console, network headers & SPA health detector",
+  "pricing.fFree4": "Stored in your own Google Drive (Zero Server Storage)",
+  "pricing.fFree5": "Auto Playwright test export & Jira/GitHub sync",
   "pricing.fFree6": "Up to 5 team members",
   "pricing.tierPro": "Pro",
   "pricing.tierProTagline": "For teams that deliver and resolve efficiently.",
@@ -669,21 +691,21 @@ export const marketingEn: Dict = {
   "site.features.f1.title": "Crisp Screen & Audio Recording",
   "site.features.f1.desc":
     "Record full screens, individual app windows, or Chrome tabs with microphone narration and click ripples. Hotkeys Ctrl+Shift+S / Ctrl+Shift+F fire instantly.",
-  "site.features.f2.title": "Automated DevTools Telemetry",
+  "site.features.f2.title": "Deep DevTools & Network Inspector",
   "site.features.f2.desc":
-    "Console errors, unhandled exceptions, and network waterfalls captured in real time. Redacts auth tokens and passwords before storage.",
-  "site.features.f3.title": "Visual On-Screen Annotations",
+    "Full request/response headers, size, protocol, cURL replay, and HAR export. Console errors and warnings with sourcemap stack traces.",
+  "site.features.f3.title": "Visual Markup & Split Compare Slider",
   "site.features.f3.desc":
-    "Draw callouts, arrows, step numbers, and pixelate sensitive customer data right on your recording or screenshot.",
-  "site.features.f4.title": "100% Google Drive Storage",
+    "Vector arrows, text callouts, blur tools, and smart crop element snapping. Interactive split-screen Before/After slider to catch visual regressions.",
+  "site.features.f4.title": "Zero Server Storage (Google Drive)",
   "site.features.f4.desc":
-    "All captures are stored in your own Google Drive account under drive.file scope. No third-party servers holding your proprietary code.",
-  "site.features.f5.title": "Interactive Player & Inspector",
+    "All captures stream straight to your own Google Drive account under drive.file scope. Zero SaaS storage markups and 100% data sovereignty.",
+  "site.features.f5.title": "SPA Health & Memory Leak Detector",
   "site.features.f5.desc":
-    "Recipients can view the video, inspect time-aligned console errors, and copy curl commands for failed network requests directly.",
-  "site.features.f6.title": "One-Click Issue Tracker Export",
+    "Live telemetry tracking JS Heap memory spikes and DOM node growth across route transitions. Detects unmounted component leaks automatically.",
+  "site.features.f6.title": "Auto Playwright Tests & AI MCP Server",
   "site.features.f6.desc":
-    "Generate formatted bug reports for Jira, Linear, GitHub Issues, Asana, GitLab, and Slack with attached logs.",
+    "Turn user action breadcrumbs into executable @playwright/test scripts. Connect AI assistants (Claude Code, Cursor) via native Model Context Protocol.",
 
   "site.bugsnap.heroTag1": "Zero 3rd-Party Storage",
   "site.bugsnap.heroTag2": "100% Private Google Drive",
@@ -832,15 +854,15 @@ export const marketingEn: Dict = {
   "solutions.qa.point1":
     "1-click recording with hotkeys (Ctrl+Shift+S / Ctrl+Shift+F)",
   "solutions.qa.point2":
-    "Automatic capture of console errors and failed network calls",
+    "Automatic capture of console errors, network headers, and SPA memory bloat",
   "solutions.qa.point3":
-    "Reduces time spent writing step-by-step reproduction instructions",
+    "Auto-generates runnable Playwright regression tests from user actions",
   "solutions.dev.point1":
     "Full unhandled JS exceptions with complete stack traces",
   "solutions.dev.point2":
-    "Exact HTTP status codes, request bodies, and headers",
+    "Exact HTTP status codes, request bodies, and headers (cURL & HAR ready)",
   "solutions.dev.point3":
-    "Copy curl commands directly to reproduce in terminal",
+    "Native MCP server lets AI agents (Claude Code, Cursor) fix bugs directly",
   "solutions.pm.point1": "On-screen callouts, arrows, and visual markers",
   "solutions.pm.point2":
     "Interactive web links that open directly in Linear and Jira",
@@ -1085,15 +1107,15 @@ export const marketingId: Dict = {
   "landing.noCard":
     "Setiap rekaman tersimpan langsung ke Google Drive milik Anda sendiri. Tanpa kartu kredit, tanpa setup, tanpa kerumitan.",
   "landing.authFailed": "Autentikasi gagal. Silakan coba lagi.",
-  "landing.pill1Title": "DevTools Otomatis",
+  "landing.pill1Title": "DevTools & Kesehatan SPA",
   "landing.pill1Desc":
-    "Error console & jaringan 4xx/5xx tertangkap tanpa konfigurasi.",
-  "landing.pill2Title": "100% Kepemilikan Data",
+    "Error console, header jaringan, kebocoran memori & pembengkakan DOM tertangkap otomatis.",
+  "landing.pill2Title": "Zero Server Storage",
   "landing.pill2Desc":
-    "Tersimpan langsung ke Google Drive Anda. Bebas lock-in vendor.",
-  "landing.pill3Title": "Berbagi Sekali Klik",
+    "Tersimpan langsung ke Google Drive Anda. Kedaulatan data 100% & bebas lock-in vendor.",
+  "landing.pill3Title": "Siap Playwright & AI",
   "landing.pill3Desc":
-    "Rekan tim dapat memutar video & memeriksa log tanpa perlu instal aplikasi.",
+    "Ekspor 1-klik ke skrip otomatis @playwright/test dan integrasi server MCP untuk AI.",
   "landing.f1Title": "Rekam Layar, Audio & Klik dalam Hitungan Detik",
   "landing.f1Body":
     "Rekam seluruh layar, aplikasi, atau tab Chrome dalam resolusi HD dengan narasi suara. Gunakan tombol pintas (Ctrl+Shift+S / Ctrl+Shift+F), potong, beri panah penjelas, atau buramkan data sensitif sebelum dibagikan.",
@@ -1179,10 +1201,19 @@ export const marketingId: Dict = {
     "Apakah BugSnap mendukung webhook kustom dan notifikasi tim?",
   "landing.faq18a":
     "Ya. Anda dapat mengonfigurasi webhook kustom untuk mengirimkan notifikasi otomatis ke channel Slack atau Discord setiap kali ada laporan bug baru atau komentar tim yang ditambahkan.",
+  "landing.faq19q": "Bisakah BugSnap mengubah rekaman bug menjadi tes regresi Playwright otomatis?",
+  "landing.faq19a":
+    "Bisa! BugSnap menganalisis jejak aksi interaksi pengguna (klik, input form, navigasi) dan secara otomatis menghasilkan kode @playwright/test yang siap dimasukkan ke pipeline CI/CD Anda.",
+  "landing.faq20q": "Bagaimana cara BugSnap mendeteksi kebocoran memori SPA dan pembengkakan DOM?",
+  "landing.faq20a":
+    "BugSnap memantau pertumbuhan memori JS Heap dan akumulasi node DOM pada setiap navigasi SPA. Jika elemen menembus ambang 1.500 nodes atau JS Heap melonjak >40MB tanpa dilepaskan, peringatan kartu kesehatan SPA langsung terlampir di laporan.",
+  "landing.faq21q": "Apakah agen AI seperti Claude Code, Cursor, atau Hermes bisa membaca laporan BugSnap?",
+  "landing.faq21a":
+    "Bisa. BugSnap menyediakan server Model Context Protocol (MCP) bawaan. Asisten AI Anda dapat membaca telemetri capture secara langsung, memeriksa error jaringan atau console, dan merekomendasikan perbaikan kode secara otomatis.",
   "landing.cta2":
     "Siap Mengakhiri Pertanyaan 'Bisa Tolong Direproduksi?' Selamanya?",
   "landing.footDesc":
-    "Cara langsung untuk merekam layar, menangkap error jaringan dan log console, lalu membagikan laporan bug yang siap ditindaklanjuti tim Anda.",
+    "Platform pelaporan bug ramah developer dengan Zero Server Storage. Rekam video, tangkap telemetri DevTools, dan generate tes Playwright otomatis langsung ke Google Drive perusahaan Anda.",
   "landing.product": "Produk",
   "landing.screenRecorder": "Perekam Layar",
   "landing.devTools": "Integrasi DevTools",
@@ -1190,6 +1221,10 @@ export const marketingId: Dict = {
   "landing.security": "Pengaman",
   "landing.resources": "Sumber Daya",
   "landing.docs": "Dokumentasi",
+  "landing.mcpDocs": "Server MCP untuk AI",
+  "landing.status": "Status Sistem",
+  "landing.allOperational": "Semua sistem normal",
+  "landing.zeroServerStorage": "Zero Server Storage",
   "landing.chromeExt": "Ekstensi Chrome",
   "landing.help": "Pusat Bantuan",
   "landing.apiStatus": "Status API",
@@ -1197,8 +1232,16 @@ export const marketingId: Dict = {
   "landing.about": "Tentang Kami",
   "landing.privacy": "Kebijakan Privasi",
   "landing.terms": "Ketentuan Layanan",
+  "landing.legal": "Legal & Kepatuhan",
+  "landing.refundPolicy": "Kebijakan Pengembalian Dana",
+  "landing.consumerProtection": "Perlindungan Konsumen",
+  "landing.consumerComplaints": "Layanan Pengaduan Konsumen",
+  "landing.consumerProtectionNotice": "Dibangun dengan standar privasi global (GDPR) & perlindungan konsumen internasional. Media tersimpan langsung di Google Drive Anda (Zero Server Storage).",
+  "landing.complaintContact": "Layanan Pengaduan Konsumen SLA < 2 Hari: support@akusaradigital.com",
+  "landing.operatedBy": "BugSnap dikelola oleh Akusara Digital.",
+  "landing.compare": "Bandingkan Visual",
   "landing.contact": "Kontak",
-  "landing.copyright": "© {year} BugSnap. Semua hak dilindungi.",
+  "landing.copyright": "© {year} BugSnap by Akusara Digital. Semua hak dilindungi.",
   "landing.builtOn":
     "Dibangun di atas Google Drive Anda. Data Anda tetap milik Anda, selamanya.",
   "landing.ecosystemEyebrow": "Rangkaian Akusara",
@@ -1319,9 +1362,10 @@ export const marketingId: Dict = {
     "Pasang ekstensi BugSnap dan mulai rekam layar, audio, dan log DevTools dalam hitungan detik, tersimpan langsung ke Google Drive Anda sendiri, gratis, tanpa kartu kredit.",
   "features.ctaButton": "Tambah ke Chrome - Gratis",
   "features.catAll": "Semua Fitur",
+  "features.catTelemetry": "DevTools & Kesehatan SPA",
   "features.catCapture": "Layar & Audio",
-  "features.catDevTools": "DevTools & Log",
-  "features.catStorage": "Drive & Privasi",
+  "features.catSecurity": "Tanpa Penyimpanan Server",
+  "features.catExport": "Playwright & AI MCP",
   "features.devLogsTitle": "DevLogs Otomatis Ditangkap",
   "features.devLogsError":
     "POST /api/v1/auth 500 Internal Server Error (142ms)",
@@ -1415,9 +1459,9 @@ export const marketingId: Dict = {
   "pricing.tierFreeCta": "Pasang Ekstensi Gratis",
   "pricing.fFree1": "5 tangkapan baru per minggu",
   "pricing.fFree2": "Rekaman layar & tab tanpa batas (HD)",
-  "pricing.fFree3": "Penangkapan log konsol & jaringan otomatis",
-  "pricing.fFree4": "Tersimpan di Google Drive Anda (kepemilikan penuh)",
-  "pricing.fFree5": "Tautan berbagi publik & analitik tampilan",
+  "pricing.fFree3": "Log konsol, header jaringan & deteksi kebocoran memori SPA",
+  "pricing.fFree4": "Tersimpan di Google Drive Anda (Zero Server Storage)",
+  "pricing.fFree5": "Ekspor tes Playwright otomatis & sinkronisasi Jira/GitHub",
   "pricing.fFree6": "Hingga 5 anggota tim",
   "pricing.tierPro": "Pro",
   "pricing.tierProTagline":
@@ -1742,21 +1786,21 @@ export const marketingId: Dict = {
   "site.features.f1.title": "Rekaman Layar & Audio Resolusi Tinggi",
   "site.features.f1.desc":
     "Rekam seluruh layar, jendela aplikasi, atau tab Chrome dengan narasi mikrofon dan efek klik. Tombol pintas Ctrl+Shift+S / Ctrl+Shift+F bekerja seketika.",
-  "site.features.f2.title": "Telemetri DevTools Otomatis",
+  "site.features.f2.title": "Telemetri DevTools & Inspektor Jaringan Mendalam",
   "site.features.f2.desc":
-    "Error console, exception tak tertangani, dan waterfall jaringan tertangkap seketika. Token autentikasi dan password disaring sebelum disimpan.",
-  "site.features.f3.title": "Anotasi Visual Langsung di Layar",
+    "Waterfall jaringan lengkap dengan header request/respons, ukuran, protokol, salin cURL, dan ekspor HAR 1.2. Semua level console dengan stack trace sourcemap.",
+  "site.features.f3.title": "Anotasi Visual & Slider Pembanding Split-Screen",
   "site.features.f3.desc":
-    "Gambar panah, kotak penjelas, nomor langkah, dan buramkan data pribadi pengguna langsung di tangkapan layar atau rekaman.",
-  "site.features.f4.title": "Penyimpanan 100% Google Drive",
+    "Panah vektor, kotak, penyamaran privasi, dan smart crop. Dilengkapi slider pembanding Before/After untuk memverifikasi regresi tampilan secara visual.",
+  "site.features.f4.title": "Zero Server Storage (Google Drive)",
   "site.features.f4.desc":
-    "Semua tangkapan tersimpan di akun Google Drive Anda dengan cakupan drive.file. Tidak ada server pihak ketiga yang menyimpan kode internal Anda.",
-  "site.features.f5.title": "Pemutar & Inspektor Interaktif",
+    "Semua tangkapan tersimpan langsung di akun Google Drive Anda dengan cakupan drive.file. Bebas biaya storage SaaS dan kedaulatan data 100%.",
+  "site.features.f5.title": "Deteksi Kebocoran Memori & Pembengkakan DOM",
   "site.features.f5.desc":
-    "Penerima dapat menonton video, memeriksa error console yang sinkron dengan waktu, dan menyalin perintah curl untuk request yang gagal.",
-  "site.features.f6.title": "Ekspor Sekali Klik ke Issue Tracker",
+    "Pantau lonjakan memori JS Heap dan pertumbuhan elemen DOM pada navigasi SPA. Tangkap kebocoran unmounted component sebelum berdampak ke pengguna.",
+  "site.features.f6.title": "Generator Tes Playwright Otomatis & Server AI MCP",
   "site.features.f6.desc":
-    "Hasilkan laporan bug terformat untuk Jira, Linear, GitHub Issues, Asana, GitLab, dan Slack lengkap dengan log pendukung.",
+    "Ubah jejak interaksi pengguna menjadi skrip uji otomatis @playwright/test. Sambungkan asisten coding AI (Claude Code, Cursor) via Model Context Protocol.",
 
   "site.bugsnap.heroTag1": "Nol Biaya Server Pihak Ketiga",
   "site.bugsnap.heroTag2": "100% Google Drive Pribadi",
@@ -1905,15 +1949,15 @@ export const marketingId: Dict = {
   "solutions.qa.point1":
     "Perekaman 1 klik dengan tombol pintas (Ctrl+Shift+S / Ctrl+Shift+F)",
   "solutions.qa.point2":
-    "Perekaman otomatis log error console dan kegagalan jaringan",
+    "Perekaman otomatis log error console, header jaringan, dan kebocoran memori SPA",
   "solutions.qa.point3":
-    "Memangkas waktu menulis instruksi langkah reproduksi manual",
+    "Otomatis menghasilkan skrip uji regresi Playwright dari interaksi pengguna",
   "solutions.dev.point1":
     "Eksepsi JavaScript tak tertangani dengan stack trace lengkap",
   "solutions.dev.point2":
-    "Kode status HTTP, payload request, dan header yang presisi",
+    "Kode status HTTP, payload request, dan header lengkap (siap cURL & HAR)",
   "solutions.dev.point3":
-    "Salin perintah curl langsung untuk reproduksi instan di terminal",
+    "Server MCP bawaan untuk perbaikan bug langsung via agen AI (Claude Code, Cursor)",
   "solutions.pm.point1": "Callout, panah, dan penanda visual langsung di layar",
   "solutions.pm.point2":
     "Tautan web interaktif yang terbuka langsung di Linear dan Jira",

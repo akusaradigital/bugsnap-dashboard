@@ -151,6 +151,33 @@ export function HowItWorksContent() {
         </div>
       ),
     },
+    {
+      number: "06",
+      badge: "Automate & AI Fix",
+      title: "Generate Playwright Tests & Fix with AI",
+      roleText: "Close the QA-to-Code loop automatically",
+      desc: "BugSnap converts user action breadcrumbs into executable @playwright/test code. Connect your AI coding assistant (Claude Code, Cursor, Windsurf) via our native Model Context Protocol (MCP) server to diagnose root causes and propose fixes instantly.",
+      metrics: "@playwright/test · MCP Server for AI",
+      preview: (
+        <div className="rounded-xl border border-site-border bg-site-surface-2 p-4 text-xs font-mono shadow-xs space-y-3">
+          <div className="flex items-center justify-between pb-2 border-b border-site-border-subtle font-sans">
+            <span className="text-[11px] font-semibold text-site-text">Playwright + AI MCP</span>
+            <span className="text-[10px] text-[#6B9A35] dark:text-[#A8D666] font-bold bg-[#89BD49]/10 px-2 py-0.5 rounded">CI Ready</span>
+          </div>
+          <pre className="p-2.5 rounded bg-site-surface border border-site-border text-[10px] text-site-text overflow-x-auto leading-relaxed">
+{`test('checkout error', async ({ page }) => {
+  await page.goto('/checkout');
+  await page.getByRole('button', { name: 'Pay' }).click();
+  await expect(page.locator('.toast-error')).toBeVisible();
+});`}
+          </pre>
+          <div className="flex items-center justify-between text-[10px] text-site-text-2 pt-1 border-t border-site-border-subtle">
+            <span>MCP endpoint: /api/mcp</span>
+            <span className="text-site-accent font-semibold">Claude Code / Cursor synced</span>
+          </div>
+        </div>
+      ),
+    },
   ];
 
   return (

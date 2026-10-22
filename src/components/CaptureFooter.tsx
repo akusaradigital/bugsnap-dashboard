@@ -117,8 +117,22 @@ export default function CaptureFooter({ className = "" }: { className?: string }
           </div>
 
           {/* Copyright on the Left: balances the 4 columns on the right */}
-          <div className="hidden lg:block text-[11px] sm:text-xs text-slate-400 dark:text-zinc-500 pt-1">
-            {t("footer.copyright", { year: new Date().getFullYear() })}
+          <div className="hidden lg:flex flex-col gap-1 text-[11px] text-slate-400 dark:text-zinc-500 pt-1">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span>{t("footer.copyright", { year: new Date().getFullYear() })}</span>
+              <span>•</span>
+              <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span>Zero Server Storage</span>
+              </span>
+            </div>
+            <div className="text-[10px] text-slate-500 dark:text-zinc-400 flex items-center gap-2">
+              <span>GDPR &amp; Global Privacy Standards</span>
+              <span>•</span>
+              <Link href="/contact#complaint" className="text-accent hover:underline">
+                {t("footer.consumerComplaints")}
+              </Link>
+            </div>
           </div>
         </div>
 
@@ -160,6 +174,14 @@ export default function CaptureFooter({ className = "" }: { className?: string }
                 {t("footer.features")}
               </Link>
               <Link
+                href="/extension"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] sm:text-xs text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white transition-colors py-0.5"
+              >
+                {t("footer.extension")}
+              </Link>
+              <Link
                 href="/how-it-works"
                 target="_blank"
                 rel="noopener noreferrer"
@@ -175,6 +197,14 @@ export default function CaptureFooter({ className = "" }: { className?: string }
               >
                 {t("footer.pricing")}
               </Link>
+              <Link
+                href="/compare"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] sm:text-xs text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white transition-colors py-0.5"
+              >
+                {t("footer.compare")}
+              </Link>
             </div>
 
             {/* Resources */}
@@ -187,6 +217,23 @@ export default function CaptureFooter({ className = "" }: { className?: string }
                 className="text-[11px] sm:text-xs text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white transition-colors py-0.5"
               >
                 {t("footer.documentation")}
+              </Link>
+              <Link
+                href="/docs/mcp"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] sm:text-xs text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white transition-colors py-0.5 flex items-center gap-1"
+              >
+                <span>{t("footer.mcp")}</span>
+                <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666]">AI</span>
+              </Link>
+              <Link
+                href="/blog"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] sm:text-xs text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white transition-colors py-0.5"
+              >
+                {t("footer.blog")}
               </Link>
               <Link
                 href="/help"
@@ -206,7 +253,52 @@ export default function CaptureFooter({ className = "" }: { className?: string }
               </Link>
             </div>
 
-            {/* Company */}
+            {/* Legal & Compliance (Perlindungan Konsumen) */}
+            <div className="flex flex-col gap-1.5 sm:gap-2 text-left min-w-0">
+              <span className="text-[11px] sm:text-xs font-bold text-slate-900 dark:text-zinc-200 tracking-tight">{t("footer.legal")}</span>
+              <Link
+                href="/terms"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] sm:text-xs text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white transition-colors py-0.5"
+              >
+                {t("footer.terms")}
+              </Link>
+              <Link
+                href="/privacy"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] sm:text-xs text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white transition-colors py-0.5"
+              >
+                {t("footer.privacy")}
+              </Link>
+              <Link
+                href="/terms#refund"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] sm:text-xs text-accent hover:underline transition-colors py-0.5 font-medium"
+              >
+                {t("footer.refundPolicy")}
+              </Link>
+              <Link
+                href="/terms#consumer-protection"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] sm:text-xs text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white transition-colors py-0.5"
+              >
+                {t("footer.consumerProtection")}
+              </Link>
+              <Link
+                href="/security"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] sm:text-xs text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white transition-colors py-0.5"
+              >
+                {t("footer.security")}
+              </Link>
+            </div>
+
+            {/* Company & Support */}
             <div className="flex flex-col gap-1.5 sm:gap-2 text-left min-w-0">
               <span className="text-[11px] sm:text-xs font-bold text-slate-900 dark:text-zinc-200 tracking-tight">{t("footer.company")}</span>
               <Link
@@ -226,40 +318,29 @@ export default function CaptureFooter({ className = "" }: { className?: string }
                 {t("footer.support")}
               </Link>
               <Link
-                href="/security"
+                href="/contact#complaint"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-[11px] sm:text-xs text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white transition-colors py-0.5"
+                className="text-[11px] sm:text-xs text-emerald-600 dark:text-emerald-400 hover:underline transition-colors py-0.5 font-medium"
               >
-                {t("footer.security")}
-              </Link>
-            </div>
-
-            {/* Legal */}
-            <div className="flex flex-col gap-1.5 sm:gap-2 text-left min-w-0">
-              <span className="text-[11px] sm:text-xs font-bold text-slate-900 dark:text-zinc-200 tracking-tight">{t("footer.legal")}</span>
-              <Link
-                href="/privacy"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[11px] sm:text-xs text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white transition-colors py-0.5"
-              >
-                {t("footer.privacy")}
-              </Link>
-              <Link
-                href="/terms"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[11px] sm:text-xs text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white transition-colors py-0.5"
-              >
-                {t("footer.terms")}
+                {t("footer.consumerComplaints")}
               </Link>
             </div>
           </div>
 
           {/* Mobile Bottom Bar / Copyright: Only shown on mobile view */}
-          <div className="lg:hidden pt-3 sm:pt-3.5 border-t border-slate-200/60 dark:border-zinc-800/60 flex items-center justify-between text-[11px] sm:text-xs text-slate-400 dark:text-zinc-500">
+          <div className="lg:hidden pt-3 sm:pt-3.5 border-t border-slate-200/60 dark:border-zinc-800/60 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 text-[11px] text-slate-400 dark:text-zinc-500">
             <span>{t("footer.copyright", { year: new Date().getFullYear() })}</span>
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                <span>Zero Server Storage</span>
+              </span>
+              <span>•</span>
+              <Link href="/contact#complaint" className="text-accent hover:underline">
+                {t("footer.consumerComplaints")}
+              </Link>
+            </div>
           </div>
         </div>
       </div>

@@ -341,6 +341,13 @@ export const adminEn: Dict = {
   "admin.aiTokenLimitUnlimited": "Leave empty for standard unlimited default",
   "admin.vipOverrideSaved": "VIP settings saved successfully",
   "admin.vipOverrideFailed": "Failed to save VIP settings",
+  "admin.navSetup": "Website Setup & Config",
+  "admin.setup.title": "Website Setup & Platform Configuration",
+  "admin.setup.subtitle": "Centralized platform configuration, environment health checklist, and live integration callbacks.",
+  "admin.setup.tabChecklist": "Setup Checklist",
+  "admin.setup.tabCustomizer": "Website Settings",
+  "admin.setup.tabCallbacks": "OAuth & Webhooks",
+  "admin.setup.tabEnv": ".env.local Generator",
 };
 
 export const adminId: Dict = {
@@ -684,4 +691,11 @@ export const adminId: Dict = {
   "admin.aiTokenLimitUnlimited": "Kosongkan untuk default tak terbatas",
   "admin.vipOverrideSaved": "Pengaturan VIP berhasil disimpan",
   "admin.vipOverrideFailed": "Gagal menyimpan pengaturan VIP",
+  "admin.navSetup": "Setup & Konfigurasi Web",
+  "admin.setup.title": "Setup Website & Konfigurasi Platform",
+  "admin.setup.subtitle": "Konfigurasi platform terpusat, checklist kesiapan environment, dan callback integrasi real-time.",
+  "admin.setup.tabChecklist": "Checklist Setup",
+  "admin.setup.tabCustomizer": "Pengaturan Website",
+  "admin.setup.tabCallbacks": "OAuth & Webhook",
+  "admin.setup.tabEnv": "Generator .env.local",
 };

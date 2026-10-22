@@ -400,11 +400,22 @@ function UpgradeContent() {
       </main>
 
       {/* Footer info */}
-      <footer className="w-full text-center text-xs text-site-text-2 py-4">
-        Looking for our Enterprise plan?{" "}
-        <Link href="/contact" className="text-accent font-semibold hover:underline">
-          Contact sales →
-        </Link>
+      <footer className="w-full text-center text-xs text-site-text-2 py-6 px-4 border-t border-site-border space-y-2">
+        <div>
+          Looking for our Enterprise plan?{" "}
+          <Link href="/contact" className="text-accent font-semibold hover:underline">
+            Contact sales →
+          </Link>
+        </div>
+        <div className="flex flex-wrap items-center justify-center gap-3 text-[11px] text-site-text-2">
+          <span>14-Day Money-Back Guarantee</span>
+          <span>•</span>
+          <Link href="/terms#refund" className="hover:text-site-text hover:underline">Refund Policy</Link>
+          <span>•</span>
+          <Link href="/terms#consumer-protection" className="hover:text-site-text hover:underline">Consumer Protection</Link>
+          <span>•</span>
+          <Link href="/contact#complaint" className="hover:text-site-text hover:underline text-emerald-600 dark:text-emerald-400 font-medium">Layanan Pengaduan Konsumen</Link>
+        </div>
       </footer>
     </div>
   );

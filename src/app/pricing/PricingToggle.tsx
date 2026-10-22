@@ -129,6 +129,24 @@ export function PricingToggle() {
           org: true,
         },
         {
+          name: "SPA Memory Leak & DOM Bloat Detector",
+          free: true,
+          pro: true,
+          org: true,
+        },
+        {
+          name: "Auto Playwright Test Generator",
+          free: true,
+          pro: true,
+          org: true,
+        },
+        {
+          name: "Model Context Protocol (MCP) Server for AI",
+          free: true,
+          pro: true,
+          org: true,
+        },
+        {
           name: "cURL & HAR Dev Exporter",
           free: false,
           pro: true,

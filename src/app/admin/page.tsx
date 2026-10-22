@@ -425,6 +425,15 @@ export default function AdminOverviewPage() {
                 : t("admin.statusPending")}
             </span>
           </div>
+
+          {/* Quick Setup Center */}
+          <Link
+            href="/admin/setup"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-accent/10 hover:bg-accent/20 text-accent font-semibold transition-colors ml-auto shrink-0"
+          >
+            <Icon icon="lucide:sliders" className="w-3.5 h-3.5" />
+            <span>Setup &amp; Config</span>
+          </Link>
         </div>
       </div>
 

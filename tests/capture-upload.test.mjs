@@ -8,9 +8,22 @@ after(async () => {
   await cleanupTestData();
 });
 
-test("capture upload route rejects anonymous requests", async (t) => {
+test("capture upload init route rejects anonymous requests", async (t) => {
   try {
-    const res = await fetch(`${API}/api/captures/upload`, { method: "POST" });
+    const res = await fetch(`${API}/api/captures/upload/init`, { method: "POST" });
+    assert.equal(res.status, 401);
+  } catch (err) {
+    if (err?.cause?.code === "ECONNREFUSED" || err?.code === "ECONNREFUSED") {
+      t.skip(`Skipping smoke test: server not running at ${API}`);
+      return;
+    }
+    throw err;
+  }
+});
+
+test("capture upload finalize route rejects anonymous requests", async (t) => {
+  try {
+    const res = await fetch(`${API}/api/captures/upload/finalize`, { method: "POST" });
     assert.equal(res.status, 401);
   } catch (err) {
     if (err?.cause?.code === "ECONNREFUSED" || err?.code === "ECONNREFUSED") {

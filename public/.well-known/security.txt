@@ -1,0 +1,6 @@
+Contact: mailto:support@akusaradigital.com
+Expires: 2027-12-31T23:59:59.000Z
+Preferred-Languages: en, id
+Canonical: https://bugsnap.akusaraproject.my.id/.well-known/security.txt
+Policy: https://bugsnap.akusaraproject.my.id/security
+Acknowledgments: https://bugsnap.akusaraproject.my.id/security

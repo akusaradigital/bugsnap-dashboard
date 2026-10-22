@@ -121,6 +121,14 @@ export const ADMIN_NAV_ROUTES: AdminNavRoute[] = [
     keywords: ["security", "audit", "logs", "keamanan", "access"],
     hub: "system",
   },
+  {
+    id: "setup",
+    href: "/admin/setup",
+    icon: "lucide:sliders",
+    titleKey: "admin.navSetup",
+    keywords: ["setup", "config", "settings", "pengaturan", "konfigurasi", "env", "wizard", "environment", "checklist"],
+    hub: "system",
+  },
 ];
 
 export const ADMIN_NAV_HUBS: Record<

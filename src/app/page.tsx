@@ -9,7 +9,8 @@ import { HeroRecorderPreview } from "@/components/site/HeroRecorderPreview";
 import {
   DevToolsCard,
   GoogleDriveProofCard,
-  ExportTicketCard,
+  SpaHealthCard,
+  PlaywrightExportCard,
 } from "@/components/site/ProductMockups";
 import {
   IconArrowDown,
@@ -262,6 +263,24 @@ export default function LandingPage() {
       id: 18,
       q: "landing.faq18q",
       a: "landing.faq18a",
+      category: "integrations" as const,
+    },
+    {
+      id: 19,
+      q: "landing.faq19q",
+      a: "landing.faq19a",
+      category: "devtools" as const,
+    },
+    {
+      id: 20,
+      q: "landing.faq20q",
+      a: "landing.faq20a",
+      category: "devtools" as const,
+    },
+    {
+      id: 21,
+      q: "landing.faq21q",
+      a: "landing.faq21a",
       category: "integrations" as const,
     },
   ];
@@ -870,57 +889,8 @@ export default function LandingPage() {
                         {t("site.features.f5.desc")}
                       </p>
                     </div>
-                    {/* Share dialog mini */}
                     <div className="flex-1 flex flex-col justify-start">
-                      <div className="rounded-lg border border-site-border bg-site-surface-2 overflow-hidden text-[10px]">
-                        <div className="flex items-center gap-2 px-3 py-2 bg-site-surface border-b border-site-border">
-                          <span className="w-1.5 h-1.5 rounded-full bg-accent" />
-                          <span className="font-semibold text-site-text text-[11px]">
-                            Share Bug Report
-                          </span>
-                          <span className="ml-auto text-[9px] text-emerald-600 dark:text-emerald-400 font-semibold">
-                            ● Live
-                          </span>
-                        </div>
-                        <div className="p-3 space-y-2.5">
-                          {/* Link */}
-                          <div className="flex items-center gap-1.5 rounded border border-site-border bg-site-surface px-2 py-1.5 min-w-0">
-                            <span className="font-mono text-site-text-2 truncate flex-1 text-[9px] min-w-0">
-                              bugsnap.akusaraproject.my.id/v/8f921a
-                            </span>
-                            <span className="shrink-0 text-accent font-semibold text-[9px] cursor-pointer">
-                              Copy
-                            </span>
-                          </div>
-                          {/* Viewers */}
-                          <div className="flex items-center gap-2">
-                            <div className="flex -space-x-1.5">
-                              {[
-                                "bg-violet-400",
-                                "bg-blue-400",
-                                "bg-emerald-400",
-                              ].map((c, i) => (
-                                <div
-                                  key={i}
-                                  className={`w-5 h-5 rounded-full border-2 border-site-surface-2 ${c}`}
-                                />
-                              ))}
-                            </div>
-                            <span className="text-site-text-2">
-                              3 viewers · Expires in 7d
-                            </span>
-                          </div>
-                          {/* Protect */}
-                          <div className="flex items-center justify-between pt-1 border-t border-site-border">
-                            <span className="text-site-text-2">
-                              Password protect
-                            </span>
-                            <div className="w-7 h-3.5 rounded-full bg-accent/30 flex items-center px-0.5">
-                              <div className="w-2.5 h-2.5 rounded-full bg-accent" />
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                      <SpaHealthCard />
                     </div>
                   </div>
                 </Reveal>
@@ -937,7 +907,7 @@ export default function LandingPage() {
                       </p>
                     </div>
                     <div className="flex-1 flex flex-col justify-start">
-                      <ExportTicketCard />
+                      <PlaywrightExportCard />
                     </div>
                   </div>
                 </Reveal>

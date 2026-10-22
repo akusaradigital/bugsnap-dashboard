@@ -152,11 +152,63 @@ export function ContactContent() {
                     </Link>
                     <span className="text-site-text-2 leading-relaxed">{t("help.subtitle")}</span>
                   </li>
+                  <li className="flex flex-col gap-0.5 border-t border-site-border-subtle pt-3">
+                    <Link href="/terms#refund" className="font-semibold text-accent hover:underline">
+                      Refund &amp; Cancellation Policy
+                    </Link>
+                    <span className="text-site-text-2 leading-relaxed">14-day statutory money-back guarantee and 1-click self-serve cancellation.</span>
+                  </li>
                 </ul>
               </div>
             </Reveal>
           </div>
         </div>
+
+        {/* Consumer Protection & Dispute Handling (Layanan Pengaduan Konsumen) */}
+        <Reveal delay={0.24}>
+          <div id="complaint" className="scroll-mt-24 rounded-2xl border border-site-border bg-site-surface p-6 sm:p-8 space-y-5 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-site-border-subtle pb-4">
+              <div className="space-y-1">
+                <span className="text-[11px] font-bold uppercase tracking-widest text-site-accent">
+                  Support &amp; Consumer Satisfaction
+                </span>
+                <h2 className="text-lg sm:text-xl font-bold text-site-text">
+                  Customer Support &amp; Dispute Resolution Channel
+                </h2>
+              </div>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold font-mono bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 self-start sm:self-auto">
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                <span>Global Support Standards</span>
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs text-site-text-2 leading-relaxed">
+              <div className="space-y-2 rounded-xl bg-site-surface-2 p-4 border border-site-border-subtle">
+                <h3 className="font-bold text-sm text-site-text">1. Dedicated Customer Support &amp; Inquiries</h3>
+                <p>
+                  In accordance with global consumer protection standards and fair digital practices, we provide dedicated channels to resolve questions, billing inquiries, feedback, or refund requests promptly:
+                </p>
+                <div className="space-y-1 pt-1 font-sans text-xs">
+                  <div><strong>Support &amp; Resolution Email:</strong> <a href="mailto:support@akusaradigital.com" className="text-accent underline font-semibold">support@akusaradigital.com</a></div>
+                  <div><strong>Response SLA:</strong> Within 2 business days (typically under 24 hours).</div>
+                  <div><strong>Operating Entity:</strong> Akusara Digital</div>
+                </div>
+              </div>
+
+              <div className="space-y-2 rounded-xl bg-site-surface-2 p-4 border border-site-border-subtle">
+                <h3 className="font-bold text-sm text-site-text">2. Fair Resolution &amp; 14-Day Refund Guarantee</h3>
+                <p>
+                  We are committed to fair customer treatment worldwide. If you encounter any issue or are dissatisfied with BugSnap Pro:
+                </p>
+                <div className="space-y-1.5 pt-1 text-xs">
+                  <div><strong>14-Day Money-Back Guarantee:</strong> 100% full refund upon request within 14 days of purchase.</div>
+                  <div><strong>Self-Serve Cancellation:</strong> 1-click subscription management anytime in your billing portal.</div>
+                  <div><strong>Good-Faith Resolution:</strong> All inquiries are reviewed directly by our core engineering team.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </Reveal>
       </div>
     </StaticShell>
   );

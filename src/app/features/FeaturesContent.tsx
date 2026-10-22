@@ -4,7 +4,7 @@ import { useState } from "react";
 import { StaticShell } from "@/components/StaticShell";
 import { useT } from "@/components/I18nProvider";
 import { PillTabs } from "@/components/site/PillTabs";
-import { IconCheck, IconTerminal2, IconShieldCheck, IconFolder } from "@/components/site/TablerIcons";
+import { IconCheck, IconTerminal2, IconShieldCheck } from "@/components/site/TablerIcons";
 import { Reveal } from "@/components/site/motion";
 import { Icon } from "@/lib/iconify";
 
@@ -18,11 +18,11 @@ export function FeaturesContent() {
   const [activeCategory, setActiveCategory] = useState<FeatureCategory>("all");
 
   const categories = [
-    { id: "all" as const, label: t("features.catAll") || "All Specs", badge: "Overview" },
-    { id: "telemetry" as const, label: "DevTools Telemetry", badge: "Engine" },
-    { id: "capture" as const, label: "60 FPS Recording", badge: "Studio" },
-    { id: "security" as const, label: "Privacy & Masking", badge: "Client-Side" },
-    { id: "export" as const, label: "Issue Formatter", badge: "Integrations" },
+    { id: "all" as const, label: t("features.catAll"), badge: "Overview" },
+    { id: "telemetry" as const, label: t("features.catTelemetry"), badge: "Telemetry" },
+    { id: "capture" as const, label: t("features.catCapture"), badge: "Studio" },
+    { id: "security" as const, label: t("features.catSecurity"), badge: "Privacy" },
+    { id: "export" as const, label: t("features.catExport"), badge: "Automation" },
   ];
 
   const showTelemetry = activeCategory === "all" || activeCategory === "telemetry";
@@ -249,61 +249,124 @@ export function FeaturesContent() {
             </Reveal>
           )}
 
-          {/* Spec 4: Issue Tracker & Export Matrix */}
+          {/* Spec 5: SPA Health & Memory Leak Detector */}
+          {showTelemetry && (
+            <Reveal delay={0.2}>
+              <div className="rounded-2xl border border-site-border bg-site-surface p-6 sm:p-8 shadow-sm">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                  <div className="lg:col-span-6 min-w-0 space-y-4">
+                    <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-amber-500 px-2.5 py-1 rounded-md bg-amber-500/10 border border-amber-500/20">
+                      <Icon icon="lucide:activity" className="w-3 h-3 text-amber-500" aria-hidden="true" />
+                      <span>SPA Diagnostics</span>
+                    </span>
+                    <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-site-text">
+                      SPA Memory Leak & DOM Bloat Detector
+                    </h2>
+                    <p className="text-sm text-site-text-2 leading-relaxed">
+                      Single Page Applications (React, Vue, Next.js) easily leak unmounted DOM nodes and retained closures. BugSnap continuously profiles heap allocation and element retention across client-side route transitions.
+                    </p>
+                    <ul className="space-y-2 text-xs sm:text-sm text-site-text pt-1">
+                      <li className="flex items-start gap-2">
+                        <IconCheck size={16} className="text-site-accent mt-0.5 shrink-0" aria-hidden="true" />
+                        <span><strong>DOM Bloat Guard:</strong> Automatic warnings when total elements exceed the 1,500 node benchmark or explode past 3,000 elements.</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <IconCheck size={16} className="text-site-accent mt-0.5 shrink-0" aria-hidden="true" />
+                        <span><strong>JS Heap Tracking:</strong> Records initial, peak, and delta heap memory in MB to pinpoint dangling timers and detached subtrees.</span>
+                      </li>
+                      <li className="flex items-start gap-2">
+                        <IconCheck size={16} className="text-site-accent mt-0.5 shrink-0" aria-hidden="true" />
+                        <span><strong>SPA Health Card:</strong> Evaluates route change health automatically and displays warnings in both the extension editor and web DevTools.</span>
+                      </li>
+                    </ul>
+                  </div>
+
+                  <div className="lg:col-span-6 min-w-0">
+                    <div className="rounded-xl border border-site-border bg-site-surface-2 p-4 text-xs font-mono shadow-xs space-y-3">
+                      <div className="flex items-center justify-between pb-2 border-b border-site-border-subtle font-sans">
+                        <span className="font-semibold text-xs text-site-text">Telemetry: PerformanceLog.metrics</span>
+                        <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded">
+                          Alert Thresholds
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2.5 text-[11px] font-sans">
+                        <div className="p-3 rounded-lg bg-site-surface border border-site-border space-y-1">
+                          <span className="text-site-text-2 text-[10px] uppercase font-bold">DOM Retention</span>
+                          <div className="text-base font-extrabold font-mono text-site-text">1,840 nodes</div>
+                          <span className="text-[10px] text-amber-500 font-semibold">+115% growth on /checkout</span>
+                        </div>
+                        <div className="p-3 rounded-lg bg-site-surface border border-site-border space-y-1">
+                          <span className="text-site-text-2 text-[10px] uppercase font-bold">JS Heap Delta</span>
+                          <div className="text-base font-extrabold font-mono text-amber-500">+48 MB</div>
+                          <span className="text-[10px] text-site-text-2">Unreleased closures</span>
+                        </div>
+                      </div>
+                      <div className="p-2.5 rounded bg-amber-500/5 border border-amber-500/20 text-[10px] text-amber-600 dark:text-amber-400 font-sans">
+                        <strong>Health Notice:</strong> Detached DOM nodes retained after route change. Flagged in DevTools Issues tab.
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Reveal>
+          )}
+
+          {/* Spec 6: Automated Playwright Tests & AI MCP Server */}
           {showExport && (
-            <Reveal delay={0.18}>
+            <Reveal delay={0.22}>
               <div className="rounded-2xl border border-site-border bg-site-surface p-6 sm:p-8 shadow-sm">
                 <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
                   <div className="lg:col-span-6 min-w-0 order-2 lg:order-1">
                     <div className="rounded-xl border border-site-border bg-site-surface-2 p-4 text-xs font-mono shadow-xs space-y-3">
                       <div className="flex items-center justify-between pb-2 border-b border-site-border-subtle font-sans">
-                        <span className="font-semibold text-xs text-site-text">1-Click Clipboard Output</span>
-                        <span className="text-[10px] text-site-accent font-bold bg-site-accent/10 px-2 py-0.5 rounded">Markdown</span>
+                        <span className="font-semibold text-xs text-site-text">Auto-Generated @playwright/test</span>
+                        <span className="text-[10px] text-[#6B9A35] dark:text-[#A8D666] font-bold bg-[#89BD49]/10 px-2 py-0.5 rounded">
+                          Playwright Ready
+                        </span>
                       </div>
-                      <pre className="text-[10px] text-site-text-2 p-3 rounded bg-site-surface border border-site-border-subtle leading-relaxed overflow-x-auto">
-{`## [Bug] HTTP 500 on Checkout Submission
-**Severity:** High (P1) · **Environment:** Production
+                      <pre className="text-[10px] text-site-text p-3 rounded bg-site-surface border border-site-border-subtle leading-relaxed overflow-x-auto">
+{`import { test, expect } from '@playwright/test';
 
-### Steps to Reproduce:
-1. Navigate to app.acme.corp/checkout
-2. Fill credit card test credentials
-3. Click [Pay $2,400.00] button
-> Error: Uncaught TypeError: checkoutSessionId is undefined
+test('reproduce checkout failure', async ({ page }) => {
+  await page.goto('https://app.acme.corp/checkout');
+  await page.getByRole('button', { name: 'Apply Coupon' }).click();
+  await page.locator('#coupon-code').fill('DISCOUNT50');
+  await page.getByRole('button', { name: 'Pay' }).click();
 
-### Telemetry:
-- Console: 1 Exception at flow.ts:148
-- Network: POST /api/v1/charge (500 Internal Error)
-- Specs: Chrome 129.0 / macOS Sequoia (DPR 2.0)
-
-### Artifacts:
-- Watch Recording: https://bugsnap.akusara.../v/8cd0c35b`}
+  // Expect network failure toast
+  await expect(page.locator('.toast-error')).toBeVisible();
+});`}
                       </pre>
+                      <div className="flex items-center justify-between text-[10px] font-sans text-site-text-2 pt-1 border-t border-site-border-subtle">
+                        <span>Native MCP Endpoint: /api/mcp</span>
+                        <span className="text-site-accent font-semibold">Claude Code &amp; Cursor AI</span>
+                      </div>
                     </div>
                   </div>
 
                   <div className="lg:col-span-6 min-w-0 order-1 lg:order-2 space-y-4">
                     <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider text-site-accent px-2.5 py-1 rounded-md bg-site-accent/10 border border-site-accent/20">
-                      <IconFolder size={13} aria-hidden="true" />
-                      <span>Issue Integrations</span>
+                      <Icon icon="lucide:bot" className="w-3 h-3 text-site-accent" aria-hidden="true" />
+                      <span>Automation &amp; AI</span>
                     </span>
                     <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-site-text">
-                      Markdown Issue Formatter & cURL Exporter
+                      Playwright Regression Tests &amp; AI MCP Server
                     </h2>
                     <p className="text-sm text-site-text-2 leading-relaxed">
-                      Eliminate the friction of writing bug reports by hand. BugSnap generates structured markdown templates formatted specifically for Linear, Jira, GitHub Issues, and Slack.
+                      Close the loop between QA and engineering. BugSnap analyzes user action breadcrumbs to synthesize reproducible Playwright scripts, and provides a native Model Context Protocol (MCP) server so AI coding assistants can diagnose bugs directly.
                     </p>
                     <ul className="space-y-2 text-xs sm:text-sm text-site-text pt-1">
                       <li className="flex items-center gap-2">
                         <IconCheck size={16} className="text-site-accent shrink-0" aria-hidden="true" />
-                        <span>Ready-to-paste Jira, Linear, and GitHub bug report templates.</span>
+                        <span>Instant Playwright scripts generated from real user clicks and form interactions.</span>
                       </li>
                       <li className="flex items-center gap-2">
                         <IconCheck size={16} className="text-site-accent shrink-0" aria-hidden="true" />
-                        <span>Instant copyable cURL commands to reproduce failed network endpoints in terminal.</span>
+                        <span>Native Model Context Protocol (MCP) server integration for Claude Code, Cursor, and Windsurf.</span>
                       </li>
                       <li className="flex items-center gap-2">
                         <IconCheck size={16} className="text-site-accent shrink-0" aria-hidden="true" />
-                        <span>Password protection and configurable link expiration for shared captures.</span>
+                        <span>Interactive Before/After split-screen compare slider to verify UI bug fixes.</span>
                       </li>
                     </ul>
                   </div>

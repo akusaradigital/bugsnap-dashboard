@@ -285,7 +285,10 @@ export function UpgradeModal({
                   )}
                 </button>
                 <p className="text-[11px] text-neutral-600 dark:text-neutral-400 text-center mt-2">
-                  Taxes (VAT / PPN) calculated automatically at checkout.
+                  14-Day Money-Back Guarantee · Cancel anytime with 1-click in Settings.
+                </p>
+                <p className="text-[10px] text-neutral-500 dark:text-neutral-500 text-center mt-0.5">
+                  Taxes (VAT / PPN) calculated automatically by Paddle at checkout.
                 </p>
 
                 {/* Trust & Security Badges (Feature 4) */}

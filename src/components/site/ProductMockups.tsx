@@ -328,3 +328,61 @@ export function ExportTicketCard() {
     </div>
   );
 }
+
+export function SpaHealthCard() {
+  return (
+    <div className="rounded-xl border border-site-border bg-site-surface p-4 font-mono text-xs shadow-xs text-site-text">
+      <div className="flex flex-wrap items-center justify-between gap-1 pb-3 border-b border-site-border-subtle font-sans">
+        <div className="flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full bg-amber-500 shrink-0" />
+          <span className="font-semibold text-xs">SPA Health & Memory Alert</span>
+        </div>
+        <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold bg-amber-500/10 px-2 py-0.5 rounded">
+          Anomaly Detected
+        </span>
+      </div>
+      <div className="mt-3 space-y-2 text-[11px]">
+        <div className="grid grid-cols-2 gap-2 text-[10px]">
+          <div className="p-2 rounded bg-site-surface-2 border border-site-border-subtle">
+            <span className="text-site-text-2">DOM Elements</span>
+            <div className="font-bold text-site-text text-xs mt-0.5">1,840 nodes <span className="text-amber-500">(+115%)</span></div>
+            <span className="text-[9px] text-site-text-2">Benchmark: &le; 1,500</span>
+          </div>
+          <div className="p-2 rounded bg-site-surface-2 border border-site-border-subtle">
+            <span className="text-site-text-2">JS Heap Delta</span>
+            <div className="font-bold text-amber-500 text-xs mt-0.5">+48 MB</div>
+            <span className="text-[9px] text-site-text-2">Unreleased closures</span>
+          </div>
+        </div>
+        <div className="text-amber-600 dark:text-amber-400 bg-amber-500/5 p-2 rounded border border-amber-500/20 text-[10px] font-sans">
+          <strong>Warning:</strong> Detached DOM nodes retained after route transition from <code>/checkout</code> to <code>/order</code>.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export function PlaywrightExportCard() {
+  return (
+    <div className="rounded-xl border border-site-border bg-site-surface p-4 font-mono text-xs shadow-xs text-site-text">
+      <div className="flex flex-wrap items-center justify-between gap-1 pb-2 border-b border-site-border-subtle font-sans">
+        <div className="flex items-center gap-2">
+          <span className="h-2 w-2 rounded-full bg-[#89BD49] shrink-0" />
+          <span className="font-semibold text-xs">Auto Playwright Generator</span>
+        </div>
+        <span className="text-[10px] text-[#6B9A35] dark:text-[#A8D666] font-bold bg-[#89BD49]/10 px-2 py-0.5 rounded">
+          @playwright/test
+        </span>
+      </div>
+      <pre className="mt-2.5 p-2.5 rounded bg-site-surface-2 text-[10px] text-site-text leading-relaxed overflow-x-auto">
+{`test('reproduce checkout button failure', async ({ page }) => {
+  await page.goto('/checkout');
+  await page.getByRole('button', { name: 'Apply Promo' }).click();
+  await page.locator('#coupon').fill('DISCOUNT50');
+  await page.getByRole('button', { name: 'Pay' }).click();
+  await expect(page.locator('.toast-error')).toBeVisible();
+});`}
+      </pre>
+    </div>
+  );
+}

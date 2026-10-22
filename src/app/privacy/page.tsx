@@ -110,7 +110,24 @@ const sections: LegalSection[] = [
     ),
   },
   {
-    title: "6. Limited Use Disclosure",
+    title: "6. Data Subject Rights & Global Privacy Protections (GDPR & International Standards)",
+    content: (
+      <div className="space-y-2 text-site-text-2">
+        <p>
+          In accordance with recognized global privacy frameworks, including the European Union General Data Protection Regulation (GDPR) and international data protection principles, users possess comprehensive rights regarding their personal data:
+        </p>
+        <ul className="list-disc pl-5 space-y-1.5 text-xs">
+          <li><strong>Right of Access &amp; Portability:</strong> You have the right to request confirmation and export any personal metadata we hold about you.</li>
+          <li><strong>Right to Rectification:</strong> You may update or correct inaccurate profile information anytime via your account settings.</li>
+          <li><strong>Right to Erasure (&quot;Right to be Forgotten&quot;):</strong> You have the right to request permanent deletion of your user account, workspace records, and associated metadata.</li>
+          <li><strong>Right to Withdraw Consent:</strong> You may revoke Google OAuth permissions at any time via your Google Account Security settings, immediately terminating our access.</li>
+          <li><strong>Inquiries &amp; Complaints:</strong> You may submit privacy questions or requests regarding data handling to our team at <a href="mailto:support@akusaradigital.com" className="text-accent underline">support@akusaradigital.com</a>.</li>
+        </ul>
+      </div>
+    ),
+  },
+  {
+    title: "7. Limited Use Disclosure",
     content: (
       <p className="text-site-text-2">
         BugSnap&apos;s use and transfer to any other app of information received from Google APIs will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy#additional_requirements_for_specific_api_scopes" target="_blank" rel="noopener noreferrer" className="text-accent underline">Google API Services User Data Policy</a>, including the Limited Use requirements.
@@ -118,14 +135,17 @@ const sections: LegalSection[] = [
     ),
   },
   {
-    title: "7. Contact Us",
+    title: "8. Contact Us & Privacy Inquiries",
     content: (
       <>
         <p className="text-site-text-2">
-          If you have any questions or privacy inquiries regarding BugSnap, please contact us at:
+          If you have any questions, privacy inquiries, or feedback regarding BugSnap, please contact us at:
         </p>
         <p className="font-medium text-accent">
           <a href="mailto:support@akusaradigital.com" className="underline">support@akusaradigital.com</a> · <a href="https://akusaradigital.com" target="_blank" rel="noopener noreferrer" className="underline">akusaradigital.com</a>
+        </p>
+        <p className="text-xs text-site-text-2 pt-1">
+          Support &amp; Inquiries SLA: Response within 2 business days.
         </p>
       </>
     ),

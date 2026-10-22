@@ -164,8 +164,14 @@ export default function NotFound() {
       </main>
 
       {/* Minimal Footer */}
-      <footer className="relative z-10 border-t border-site-border py-4 text-center text-xs text-site-text-2 bg-site-surface px-4">
-        {t("notFound.footer")}
+      <footer className="relative z-10 border-t border-site-border py-4 text-center text-xs text-site-text-2 bg-site-surface px-4 flex flex-wrap items-center justify-center gap-3">
+        <span>© {new Date().getFullYear()} BugSnap by Akusara Digital</span>
+        <span>•</span>
+        <Link href="/terms" className="hover:text-site-text hover:underline">Terms</Link>
+        <span>•</span>
+        <Link href="/privacy" className="hover:text-site-text hover:underline">Privacy</Link>
+        <span>•</span>
+        <Link href="/contact#complaint" className="hover:text-site-text hover:underline text-emerald-600 dark:text-emerald-400">Pengaduan Konsumen</Link>
       </footer>
     </div>
   );

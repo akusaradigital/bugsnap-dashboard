@@ -28,8 +28,8 @@ export function AboutContent() {
       icon: "lucide:heart-handshake",
     },
     {
-      title: "Global Standards, Indonesian Craftsmanship",
-      desc: "Engineered by Akusara Digital in Indonesia, BugSnap is built for distributed engineering teams worldwide who value speed, precision, and respectful software architecture.",
+      title: "Global Standards, Thoughtful Craftsmanship",
+      desc: "Engineered by Akusara Digital, BugSnap is built for distributed engineering teams worldwide who value speed, precision, and respectful software architecture.",
       icon: "lucide:globe",
     },
   ];
@@ -134,6 +134,45 @@ export function AboutContent() {
             ))}
           </div>
         </div>
+
+        {/* Compliance & Regulatory Transparency */}
+        <Reveal delay={0.24}>
+          <div className="rounded-2xl border border-site-border bg-site-surface-2 p-6 sm:p-8 space-y-4 shadow-xs">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-site-border-subtle pb-3">
+              <div>
+                <span className="text-[11px] font-bold uppercase tracking-wider text-site-accent">
+                  Compliance &amp; Governance
+                </span>
+                <h3 className="font-extrabold text-lg text-site-text">
+                  Regulatory &amp; Legal Disclosures
+                </h3>
+              </div>
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-mono font-bold self-start sm:self-auto">
+                Statutory Compliance
+              </span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-site-text-2 leading-relaxed">
+              <div className="p-3.5 rounded-xl bg-site-surface border border-site-border-subtle space-y-1">
+                <div className="font-bold text-site-text">Consumer Protection</div>
+                <p>
+                  Built with global consumer protection standards. Transparent pricing, 14-day refund guarantee, and responsive customer support.
+                </p>
+              </div>
+              <div className="p-3.5 rounded-xl bg-site-surface border border-site-border-subtle space-y-1">
+                <div className="font-bold text-site-text">Data Privacy (GDPR Aligned)</div>
+                <p>
+                  Aligned with GDPR and global privacy standards. Media files stream directly to your Google Drive (Zero Server Storage). Self-serve data erasure.
+                </p>
+              </div>
+              <div className="p-3.5 rounded-xl bg-site-surface border border-site-border-subtle space-y-1">
+                <div className="font-bold text-site-text">Security &amp; Responsible Disclosure</div>
+                <p>
+                  Engineered with end-to-end security standards. Standardized vulnerability disclosure policy via <strong>RFC 9116 security.txt</strong>.
+                </p>
+              </div>
+            </div>
+          </div>
+        </Reveal>
 
         {/* Akusara Digital Company Banner */}
         <Reveal delay={0.28}>

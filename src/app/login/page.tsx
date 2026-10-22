@@ -286,7 +286,7 @@ export default function LoginPage() {
 
       <footer className="relative z-10 w-full border-t border-site-border bg-site-surface/80 backdrop-blur-md py-4 px-4 sm:px-6">
         <div className="mx-auto max-w-5xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-site-text-2">
-          <p>© {new Date().getFullYear()} BugSnap. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} BugSnap by Akusara Digital. All rights reserved.</p>
           <div className="flex flex-wrap items-center justify-center gap-4">
             <Link
               href="/privacy"
@@ -299,6 +299,18 @@ export default function LoginPage() {
               className="hover:text-site-text transition-colors"
             >
               {t("login.terms")}
+            </Link>
+            <Link
+              href="/terms#refund"
+              className="hover:text-site-text transition-colors"
+            >
+              Refund Policy
+            </Link>
+            <Link
+              href="/contact#complaint"
+              className="hover:text-site-text transition-colors text-emerald-600 dark:text-emerald-400 font-medium"
+            >
+              Pengaduan Konsumen
             </Link>
             <Link
               href="/help"
