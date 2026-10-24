@@ -209,16 +209,16 @@ test('reproduce checkout button failure', async ({ page }) => {
 """.strip()
     },
     {
-        "slug": "replacing-loom-and-jam-zero-server-storage",
-        "title": "Why Engineering Teams Are Moving Beyond Loom and Jam.dev to BYO Storage",
-        "titleId": "Mengapa Tim Engineering Beralih dari Loom dan Jam.dev ke Model BYO Storage",
+        "slug": "zero-server-storage-bring-your-own-drive",
+        "title": "Why Engineering Teams Are Moving to BYO Storage for Bug Reporting",
+        "titleId": "Mengapa Tim Engineering Beralih ke Model BYO Storage untuk Pelaporan Bug",
         "description": "Enterprise security teams reject third-party video storage. Compare the trade-offs between multi-tenant cloud storage and direct Google Drive ownership.",
         "descriptionId": "Tim keamanan perusahaan menghindari penyimpanan video di server pihak ketiga. Pelajari perbandingan antara storage multi-tenant dan kepemilikan Google Drive mandiri.",
         "category": "Security & Architecture",
         "readTime": "5 min read",
         "tags": ["enterprise", "security", "google-drive", "developer-tools"],
         "content": """
-<p>Over the past three years, visual bug reporting tools like Loom and Jam.dev surged in popularity. Recording a quick video or capturing a browser tab is infinitely faster than writing manual reproduction steps.</p>
+<p>Over the past three years, visual bug reporting tools gained widespread adoption. Recording a quick video or capturing a browser tab is infinitely faster than writing manual reproduction steps.</p>
 
 <p>However, as software companies scale toward <strong>SOC 2 Type II, ISO 27001, and HIPAA compliance</strong>, an uncomfortable realization emerges: <em>Every customer screen recording, staging dashboard capture, and internal QA video is permanently stored on a third-party startup's cloud servers.</em></p>
 
@@ -234,7 +234,7 @@ test('reproduce checkout button failure', async ({ page }) => {
 <p>BugSnap's servers never receive, process, or store raw video chunks. Your organization maintains 100% data sovereignty, full audit logging in Google Workspace Admin Console, and instant access revocation.</p>
 """.strip(),
         "contentId": """
-<p>Dalam beberapa tahun terakhir, alat pelaporan bug visual seperti Loom dan Jam.dev sangat populer karena memudahkan tester merekam masalah tanpa menulis langkah reproduksi panjang.</p>
+<p>Dalam beberapa tahun terakhir, alat pelaporan bug visual semakin populer karena memudahkan tester merekam masalah tanpa menulis langkah reproduksi panjang.</p>
 
 <p>Namun, saat perusahaan berkembang memenuhi standar kepatuhan <strong>SOC 2, ISO 27001, atau HIPAA</strong>, tim sekuriti mulai khawatir: seluruh rekaman layar staging dan data sensitif tersimpan di server cloud milik pihak ketiga.</p>
 

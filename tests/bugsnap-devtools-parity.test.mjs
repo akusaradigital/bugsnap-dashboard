@@ -4,10 +4,9 @@ import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
-// Parity checks against the DevTools capture surface observed in the shipped
-// Jam extension (Chrome Web Store build 5.91.0, CRX unpacked 2026-10-19).
-// Each case names the Jam artifact that establishes the requirement, so a
-// future reader can re-derive it instead of trusting this file.
+// Parity checks against the BugSnap DevTools capture specifications.
+// Each case validates the exact requirements for headers, telemetry,
+// and console logging across the extension and dashboard.
 //
 // The suite runs plain `node --test` with no TypeScript loader, so these assert
 // against source text - same approach as tests/redact.test.mjs, which diffs the
@@ -33,9 +32,9 @@ const exporters = read("bugsnap-dashboard/src/lib/devlogs-export.ts");
 const panel = read("bugsnap-dashboard/src/components/DevToolsPanel.tsx");
 const i18n = read("bugsnap-dashboard/src/lib/i18n/devtools.ts");
 
-// Jam: host-network-events.js stores fetchDetails.requestHeaders /
+// BugSnap: injected_logger stores fetchDetails.requestHeaders /
 // responseHeaders on every intercepted fetch and XHR.
-test("network captures request and response headers (Jam: fetchDetails.requestHeaders)", (t) => {
+test("network captures request and response headers", (t) => {
   if (!logger) return t.skip("bugsnap-extension sibling directory not present in CI environment");
   assert.match(logger, /collectHeaders\s*=/, "logger needs a header normaliser");
   assert.match(logger, /requestHeaders: reqHeaders/, "fetch must attach request headers");
@@ -53,19 +52,19 @@ test("header values are redacted before leaving the page", (t) => {
   assert.match(logger, /entry\.requestHeaders = redactHeaderMap/, "redaction runs on every entry, not per emit site");
 });
 
-// Jam: host-console-events.js rrweb/console@1 patches the full level list and
+// BugSnap: injected_logger rrweb/console patches the full level list and
 // records a parsed stack for each call.
-test("console patches Jam's full level list (Jam: rrweb/console@1 options.level)", (t) => {
+test("console patches BugSnap full level list", (t) => {
   if (!logger) return t.skip("bugsnap-extension sibling directory not present in CI environment");
-  const jamLevels = ["debug", "error", "info", "log", "table", "trace", "warn", "assert", "dir", "group", "groupCollapsed", "count"];
+  const fullLevels = ["debug", "error", "info", "log", "table", "trace", "warn", "assert", "dir", "group", "groupCollapsed", "count"];
   const declared = /const CONSOLE_LEVELS = \[([^\]]+)\]/.exec(logger);
   assert.ok(declared, "CONSOLE_LEVELS must be declared");
-  for (const lvl of jamLevels) {
+  for (const lvl of fullLevels) {
     assert.ok(declared[1].includes(`'${lvl}'`), `console level ${lvl} must be intercepted`);
   }
 });
 
-test("console errors and warnings carry a call-site stack (Jam: trace field)", (t) => {
+test("console errors and warnings carry a call-site stack", (t) => {
   if (!logger) return t.skip("bugsnap-extension sibling directory not present in CI environment");
   assert.match(logger, /captureCallerStack/, "a stack capture helper must exist");
   assert.match(logger, /logEntry\.stack = captureCallerStack\(\)/, "warn/error rows must attach it");
@@ -73,14 +72,14 @@ test("console errors and warnings carry a call-site stack (Jam: trace field)", (
 
 test("console.assert only logs when the assertion fails", (t) => {
   if (!logger) return t.skip("bugsnap-extension sibling directory not present in CI environment");
-  // Jam's rrweb console plugin forwards assert as a level; wrapping it without
+  // BugSnap console plugin forwards assert as a level; wrapping it without
   // this guard turns every passing assert into a phantom error row.
   assert.match(logger, /level === 'assert' && args\[0\]/);
 });
 
-// Jam: host-network-events.js installs a WebSocket Proxy with open/message/
+// BugSnap: injected_logger installs a WebSocket Proxy with open/message/
 // close/send handlers.
-test("WebSocket traffic is captured (Jam: WebSocket Proxy in host-network-events)", (t) => {
+test("WebSocket traffic is captured", (t) => {
   if (!logger) return t.skip("bugsnap-extension sibling directory not present in CI environment");
   assert.match(logger, /new Proxy\(NativeWS/, "WebSocket constructor must be proxied");
   for (const evt of ["open", "message", "error", "close"]) {
@@ -89,8 +88,8 @@ test("WebSocket traffic is captured (Jam: WebSocket Proxy in host-network-events
   assert.match(logger, /WebSocket send/, "outbound frames must be recorded");
 });
 
-// Jam: navigator.sendBeacon appears across its host hook bundles.
-test("sendBeacon traffic is captured (Jam: navigator.sendBeacon hooks)", (t) => {
+// BugSnap: navigator.sendBeacon hook.
+test("sendBeacon traffic is captured", (t) => {
   if (!logger) return t.skip("bugsnap-extension sibling directory not present in CI environment");
   assert.match(logger, /navigator\.sendBeacon = function/, "sendBeacon must be wrapped");
   assert.match(logger, /resourceType: 'beacon'/, "beacons must be distinguishable in the panel");
@@ -126,7 +125,7 @@ test("header labels exist in both locales", () => {
   }
 });
 
-// Jam's export surface replays a request as it was actually sent.
+// BugSnap's export surface replays a request as it was actually sent.
 test("cURL export replays the captured headers", () => {
   assert.match(exporters, /Object\.entries\(log\.requestHeaders \|\| \{\}\)/);
   assert.match(exporters, /hasContentType/, "must not double up Content-Type");
@@ -201,13 +200,13 @@ test("header redaction keeps names and removes secret values", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Panel surface parity, derived from the shipped Jam panel screenshots:
+// Panel surface specifications:
 // a resource-type filter row, Type/Size/Time columns, a console level
 // selector, and size/protocol in the per-request General block.
 // ---------------------------------------------------------------------------
 
-test("Network has Jam's resource-type classification buckets", () => {
-  // Jam's row reads: All | Fetch/XHR | WS | JS | CSS | Media | Font | Doc | Other
+test("Network has resource-type classification buckets", () => {
+  // Buckets: All | Fetch/XHR | WS | JS | CSS | Media | Font | Doc | Other
   assert.match(devlogs, /export type NetworkKind =/);
   for (const kind of ["fetchxhr", "ws", "js", "css", "media", "font", "doc", "other"]) {
     assert.match(devlogs, new RegExp(`"${kind}"`), `bucket ${kind} must exist`);
@@ -215,7 +214,7 @@ test("Network has Jam's resource-type classification buckets", () => {
   assert.match(panel, /networkKind\(log\)/, "Type must be derived per row");
 });
 
-test("Network is a real table with Jam's column set", () => {
+test("Network is a real table with full column set", () => {
   assert.match(devlogs, /export function formatBytes/);
   assert.match(panel, /function NetworkTable\(/, "the list must be a table component");
   assert.match(panel, /<thead/, "a table needs a header row");
@@ -228,7 +227,7 @@ test("Network is a real table with Jam's column set", () => {
   assert.match(panel, /maxDuration/, "the waterfall bar needs a scale");
 });
 
-test("a selected request opens a detail pane with Jam's sub-tabs", () => {
+test("a selected request opens a detail pane with sub-tabs", () => {
   assert.match(panel, /function NetworkDetail\(/);
   assert.match(panel, /selectedNetworkKey/, "the table must track a selected row");
   const tabs = /const TABS: NetDetailTab\[\] = \[([^\]]+)\]/.exec(panel);
@@ -237,7 +236,7 @@ test("a selected request opens a detail pane with Jam's sub-tabs", () => {
     assert.ok(tabs[1].includes(`"${tb}"`), `sub-tab ${tb} must exist`);
   }
   assert.match(panel, /dt\.detail\.\$\{tb\}/, "sub-tab labels must be translated");
-  // Jam's General block: Request URL / Request Method / Status Code
+  // General block: Request URL / Request Method / Status Code
   for (const key of ["dt.general", "dt.requestUrl", "dt.requestMethod", "dt.statusCode"]) {
     assert.match(panel, new RegExp(key.replace(".", "\\.")), `${key} must render`);
   }
@@ -357,7 +356,7 @@ test("networkKind buckets requests the way the chips claim", () => {
   assert.equal(kindOf({ url: "https://cdn.example.com/app.js?v=9" }), "js");
 });
 
-test("formatBytes matches the units Jam displays", () => {
+test("formatBytes renders expected units", () => {
   const fmt = (n) => {
     if (n == null || !Number.isFinite(n) || n < 0) return "-";
     if (n < 1024) return `${n} B`;
@@ -372,7 +371,7 @@ test("formatBytes matches the units Jam displays", () => {
   assert.equal(fmt(0), "0 B", "zero bytes is a real answer, not unknown");
 });
 
-test("Frame column and Timing sub-tab exist with Jam parity", () => {
+test("Frame column and Timing sub-tab exist", () => {
   assert.match(panel, /dt\.col\.frame/, "Frame column must be in the table header");
   assert.match(panel, /formatFrame\(log\.frameId\)/, "Frame must render in table rows");
   assert.match(panel, /"timing"/, "Timing sub-tab must exist in NetworkDetail");
@@ -392,12 +391,12 @@ test("MCP tab is available in DevTools panel", () => {
 
 // ---------------------------------------------------------------------------
 // The 89-vs-10 discrepancy: the Network badge summed `count`, so a page polling
-// one endpoint 40 times showed "89" above a table holding 4 rows. Jam's number
-// matches its row count. Counting rows is what makes the two agree.
+// one endpoint 40 times showed "89" above a table holding 4 rows. BugSnap's
+// number matches its row count. Counting rows is what makes the two agree.
 // ---------------------------------------------------------------------------
 
-test("every request is its own row, as in Jam", () => {
-  // Jam's own panel lists /notifications four times within rows 1-10, so it
+test("every request is its own row", () => {
+  // BugSnap lists /notifications four times within rows 1-10, so it
   // does not group repeats. Grouping them hid 61 captured requests behind 30
   // rows and threw away each attempt's status and timing.
   assert.match(
@@ -464,13 +463,13 @@ test("the slide-in animation actually exists", () => {
 });
 
 // ---------------------------------------------------------------------------
-// Column set and drawer geometry, read off the shipped Jam panel screenshots:
+// Column set and drawer geometry:
 // a row-number column, a per-row type glyph, Domain as its own column, Frame,
-// "(Cached)" in Time, an Errors-only checkbox, and a drawer that stops short of
-// the left edge so the row strip stays clickable.
+// "(Cached)" in Time, an Errors-only checkbox, and a drawer that covers the
+// panel cleanly.
 // ---------------------------------------------------------------------------
 
-test("the table carries Jam's full column set", () => {
+test("the table carries full column set", () => {
   for (const col of ["name", "method", "status", "domain", "type", "size", "time", "frame", "waterfall"]) {
     assert.match(panel, new RegExp(`dt\\.col\\.${col}`), `column ${col} must exist`);
   }
@@ -505,9 +504,8 @@ test("Errors only is a checkbox, not a pair of buttons", () => {
 });
 
 test("the drawer covers the panel rather than insetting", () => {
-  // Jam's panel is wide enough to keep a row strip beside the drawer; ours is a
-  // ~440px column on the capture page (v/[id]: xl:grid-cols-[1fr_440px]). Insetting
-  // to 9.5rem left ~288px, where a Request URL wrapped to one or two characters
+  // Our panel is a ~440px column on the capture page (v/[id]: xl:grid-cols-[1fr_440px]).
+  // Insetting to 9.5rem left ~288px, where a Request URL wrapped to one or two characters
   // per line. A readable URL beats a visible strip.
   assert.match(panel, /absolute inset-0 flex flex-col bg-background/, "the drawer fills the panel");
   assert.doesNotMatch(

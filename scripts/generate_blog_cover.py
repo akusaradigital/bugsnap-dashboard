@@ -19,7 +19,7 @@ CURATED_TOPIC_IMAGES = {
     # 4. Flaky bugs & timeline causality (Data visualization / terminal performance dashboard)
     "flaky-frontend-bugs-causality-timeline": "https://images.unsplash.com/photo-1666875753105-c63a6f3bdc86",
     # 5. Zero-Storage vs SaaS Silos (Global cloud network / data sovereignty)
-    "replacing-loom-and-jam-zero-server-storage": "https://images.unsplash.com/photo-1451187580459-43490279c0fa",
+    "zero-server-storage-bring-your-own-drive": "https://images.unsplash.com/photo-1451187580459-43490279c0fa",
     # 6. CORS & Preflight Telemetry (Cyber matrix / network debugging)
     "debugging-cross-origin-cors-and-preflight-failures": "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5",
     # 7. Interaction to Next Paint / INP (High-speed rendering / core web vitals)

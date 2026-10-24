@@ -309,7 +309,7 @@ function NetworkDetail({
 
   return (
     <div className="flex flex-col flex-1 min-h-0 overflow-hidden border-t border-border bg-background">
-      {/* Sub-tabs + Copy cURL, the row Jam puts at the top of its detail pane */}
+      {/* Sub-tabs + Copy cURL, the row at the top of the detail pane */}
       <div className="flex items-center gap-1 px-2 py-1.5 border-b border-border/60 shrink-0 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {TABS.map((tb) => (
           <button
@@ -355,7 +355,7 @@ function NetworkDetail({
 
         {tab === "headers" && (
           <>
-            {/* General: the first block Jam shows, same field order */}
+            {/* General: top detail block with standard field order */}
             <div className="rounded-lg border border-border overflow-hidden">
               <div className="px-2.5 py-1.5 bg-subtle border-b border-border/60 text-[10px] font-semibold uppercase tracking-wider text-muted">
                 {t("dt.general") || "General"}
@@ -521,7 +521,7 @@ function NetworkDetail({
   );
 }
 
-/** Jam's Network view: a scrollable table, and a detail pane for the selected
+/** BugSnap Network view: a scrollable table, and a detail pane for the selected
  *  row. Selecting a row splits the area rather than pushing rows down, so the
  *  surrounding requests stay visible while one is being read. */
 function NetworkTable({
@@ -587,7 +587,7 @@ function NetworkTable({
         <table className="w-full min-w-0 md:min-w-[46rem] border-collapse text-[11px]">
           <thead className="sticky top-0 z-10 bg-subtle">
             <tr className="text-left text-[10px] font-semibold uppercase tracking-wider text-muted">
-              {/* Row number: Jam numbers its rows, and it is the only stable way to
+              {/* Row number: numbers rows consecutively as the stable way to
                   refer to one request among repeated polls of the same endpoint. */}
               <th scope="col" className="hidden sm:table-cell px-1.5 py-1.5 font-semibold border-b border-border w-9 text-right tabular-nums">#</th>
               <th scope="col" className="px-2 py-1.5 font-semibold border-b border-border min-w-0">{t("dt.col.name") || "Name"}</th>
@@ -1347,8 +1347,7 @@ ${stack}` : body);
     return counts;
   }, [allActionLogs]);
 
-  // One row per captured request, in capture order - what Jam shows: its own
-  // panel lists /notifications four times within rows 1-10. Grouping repeats
+  // One row per captured request, in capture order. Grouping repeats
   // into one row with a count chip discards each attempt's own status and
   // timing, which is what you read when a retry succeeded and the first did
   // not. Same-millisecond double-reports from the two capture sources are
@@ -1788,7 +1787,7 @@ ${stack}` : body);
               </div>
             )}
             {/* A two-state toggle rendered as two buttons read as two filters;
-                Jam uses one checkbox, which is what the control actually is. */}
+                BugSnap uses one checkbox, which is what the control actually is. */}
             {activeTab === "Console" && consoleErrors.length > 0 && (
               <div className="flex items-center gap-1.5 pt-0.5">
                 <label className="flex items-center gap-1.5 text-[10px] font-medium text-muted hover:text-foreground cursor-pointer select-none">
