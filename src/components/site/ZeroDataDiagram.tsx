@@ -1,24 +1,27 @@
 "use client";
 
 import React from "react";
-import { IconCheck } from "./TablerIcons";
+import { useT } from "@/components/I18nProvider";
+import { Icon } from "@/lib/iconify";
 
 export interface ZeroDataDiagramProps {
   className?: string;
 }
 
 export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
+  const { t } = useT();
+
   return (
-    <div className={`w-full max-w-2xl mx-auto ${className}`}>
+    <div className={`w-full max-w-4xl mx-auto font-site ${className}`}>
       {/* Embedded CSS animations for flowing data lines */}
       <style>{`
         @keyframes zeroDataDashH {
           from { stroke-dashoffset: 0; }
-          to { stroke-dashoffset: -16; }
+          to { stroke-dashoffset: -20; }
         }
         @keyframes zeroDataDashV {
           from { stroke-dashoffset: 0; }
-          to { stroke-dashoffset: -14; }
+          to { stroke-dashoffset: -18; }
         }
         .animate-flow-dash-h {
           animation: zeroDataDashH 1.2s linear infinite;
@@ -28,124 +31,58 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
         }
       `}</style>
 
-      {/* Outer Card Container */}
-      <div className="rounded-2xl border border-site-border bg-site-surface/60 p-5 md:p-7 backdrop-blur-sm shadow-sm">
-        {/* Header Title */}
-        <div className="text-center mb-6">
-          <h3 className="text-site-text font-semibold text-base md:text-lg">
-            Direct-to-Drive Data Flow
-          </h3>
-          <p className="text-muted text-xs md:text-sm mt-0.5">
-            Your screen captures never touch BugSnap servers
-          </p>
-        </div>
-
-        {/* Desktop layout: 3 horizontal nodes */}
+      {/* Main Diagram Card Container */}
+      <div className="rounded-3xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-8 lg:p-10 shadow-sm">
+        {/* DESKTOP LAYOUT (>= md) */}
         <div className="hidden md:block">
-          {/* Row of 3 Nodes + Interstitial Connectors */}
-          <div className="flex items-stretch justify-between gap-2 relative">
+          <div className="flex items-stretch justify-between gap-3 lg:gap-4 relative">
             {/* NODE 1 - Your Browser */}
-            <div className="flex-1 rounded-xl border border-site-border bg-site-surface p-4 text-center flex flex-col items-center justify-between min-h-[160px] shadow-sm transition-transform hover:-translate-y-0.5 min-w-0">
-              <div className="w-full flex items-center justify-between text-[10px] text-muted font-mono mb-2">
-                <span className="flex items-center gap-1">
+            <div className="flex-1 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-5 text-center flex flex-col items-center justify-between min-h-[190px] shadow-2xs min-w-0">
+              <div className="w-full flex items-center justify-between mb-3">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-100/80 dark:bg-red-950/50 text-red-600 dark:text-red-400 text-[10px] font-mono font-bold">
                   <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
                   REC
                 </span>
-                <span>CLIENT</span>
+                <span className="text-[10px] font-mono font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase">
+                  {t("site.trust.browserBadge")}
+                </span>
               </div>
 
-              {/* Browser Window SVG */}
-              <div className="my-auto py-1">
-                <svg
-                  width="44"
-                  height="36"
-                  viewBox="0 0 44 36"
-                  fill="none"
-                  className="mx-auto"
-                  aria-hidden="true"
-                >
-                  <rect
-                    x="2"
-                    y="2"
-                    width="40"
-                    height="32"
-                    rx="5"
-                    strokeWidth="1.75"
-                    className="stroke-site-border"
-                    fill="currentColor"
-                    fillOpacity="0.03"
-                  />
-                  <line
-                    x1="2"
-                    y1="10"
-                    x2="42"
-                    y2="10"
-                    strokeWidth="1.25"
-                    className="stroke-site-border"
-                  />
-                  <circle cx="7" cy="6" r="1.5" className="fill-red-400" />
-                  <circle cx="12" cy="6" r="1.5" className="fill-yellow-400" />
-                  <circle cx="17" cy="6" r="1.5" className="fill-green-400" />
-                  <rect
-                    x="22"
-                    y="4.5"
-                    width="16"
-                    height="3"
-                    rx="1.5"
-                    className="fill-site-border-subtle"
-                  />
-                  <rect
-                    x="6"
-                    y="14"
-                    width="32"
-                    height="16"
-                    rx="3"
-                    strokeWidth="1"
-                    strokeDasharray="2 2"
-                    className="stroke-site-border-subtle"
-                    fill="none"
-                  />
-                  <line
-                    x1="10"
-                    y1="19"
-                    x2="24"
-                    y2="19"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    className="stroke-site-text-2"
-                  />
-                  <line
-                    x1="10"
-                    y1="24"
-                    x2="18"
-                    y2="24"
-                    strokeWidth="1.5"
-                    strokeLinecap="round"
-                    className="stroke-muted"
-                  />
-                </svg>
+              {/* Browser Illustration */}
+              <div className="my-auto py-2">
+                <div className="w-14 h-11 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 shadow-2xs flex flex-col overflow-hidden mx-auto">
+                  <div className="h-3.5 bg-slate-100 dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 flex items-center px-1.5 gap-1">
+                    <span className="w-1 h-1 rounded-full bg-red-400" />
+                    <span className="w-1 h-1 rounded-full bg-amber-400" />
+                    <span className="w-1 h-1 rounded-full bg-emerald-400" />
+                  </div>
+                  <div className="p-1.5 flex flex-col gap-1">
+                    <div className="w-6 h-1 bg-slate-200 dark:bg-slate-700 rounded-full" />
+                    <div className="w-9 h-1 bg-slate-100 dark:bg-slate-800 rounded-full" />
+                  </div>
+                </div>
               </div>
 
               <div>
-                <div className="text-site-text font-semibold text-sm">
-                  Your Browser
-                </div>
-                <div className="text-muted text-xs mt-0.5 leading-snug">
-                  Bug captured locally
-                </div>
+                <h4 className="text-sm font-bold text-slate-950 dark:text-white">
+                  {t("site.trust.browserTitle")}
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-snug">
+                  {t("site.trust.browserDesc")}
+                </p>
               </div>
             </div>
 
-            {/* ARROW 1→2 (Direct OAuth Connector) */}
-            <div className="w-20 lg:w-24 flex-shrink-0 flex flex-col items-center justify-center px-1">
-              <div className="px-2 py-0.5 rounded-md bg-accent/10 border border-accent/20 text-accent font-medium text-[10px] tracking-tight whitespace-nowrap mb-1 flex items-center gap-1 shadow-2xs">
-                <span className="w-1.5 h-1.5 rounded-full bg-accent animate-ping" />
-                <span>Direct OAuth</span>
+            {/* CONNECTOR 1 -> 2 (Direct Upload via OAuth) */}
+            <div className="w-28 lg:w-36 flex-shrink-0 flex flex-col items-center justify-center px-1">
+              <div className="px-2.5 py-1 rounded-full bg-[#EBF7E3] dark:bg-emerald-950/60 border border-[#CFE6BF] dark:border-emerald-800/60 text-[#3D7A24] dark:text-emerald-400 font-bold text-[10px] whitespace-nowrap mb-1.5 flex items-center gap-1.5 shadow-2xs">
+                <span className="w-1.5 h-1.5 rounded-full bg-[#3D7A24] dark:bg-emerald-400 animate-ping" />
+                <span>{t("site.trust.flow1Badge")}</span>
               </div>
               <svg
                 width="100%"
                 height="22"
-                viewBox="0 0 88 22"
+                viewBox="0 0 110 22"
                 fill="none"
                 className="overflow-visible"
                 aria-hidden="true"
@@ -154,172 +91,109 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
                 <line
                   x1="0"
                   y1="11"
-                  x2="80"
+                  x2="100"
                   y2="11"
                   stroke="currentColor"
                   strokeWidth="2"
-                  className="text-site-border-subtle"
+                  className="text-slate-200 dark:text-slate-800"
                 />
                 {/* Animated green dashed line */}
                 <line
                   x1="0"
                   y1="11"
-                  x2="80"
+                  x2="100"
                   y2="11"
-                  stroke="currentColor"
-                  strokeWidth="2"
+                  stroke="#3D7A24"
+                  strokeWidth="2.5"
                   strokeDasharray="6 4"
-                  className="text-accent animate-flow-dash-h"
+                  className="animate-flow-dash-h"
                 />
                 {/* Arrowhead */}
-                <polygon points="76,6 86,11 76,16" fill="currentColor" className="text-accent" />
+                <polygon points="98,6 108,11 98,16" fill="#3D7A24" />
                 {/* Moving dot */}
-                <circle cy="11" r="3.5" fill="currentColor" className="text-accent">
+                <circle cy="11" r="3.5" fill="#3D7A24">
                   <animate
                     attributeName="cx"
                     from="0"
-                    to="80"
-                    dur="1.8s"
+                    to="100"
+                    dur="1.5s"
                     repeatCount="indefinite"
                   />
                 </circle>
               </svg>
-              <span className="text-[9px] text-accent/80 font-mono tracking-tight mt-0.5">
-                Video + Logs
+              <span className="text-[10px] text-[#3D7A24] dark:text-[#72C048] font-mono font-semibold tracking-tight mt-1 text-center">
+                {t("site.trust.flow1Sub")}
               </span>
             </div>
 
-            {/* NODE 2 - Google Drive (Hero Node) */}
-            <div className="flex-1 rounded-xl border-2 border-accent/40 bg-accent/5 p-4 text-center flex flex-col items-center justify-between min-h-[160px] shadow-sm relative overflow-hidden transition-transform hover:-translate-y-0.5 min-w-0">
-              <div className="w-full flex items-center justify-between text-[10px] text-accent font-mono mb-2">
-                <span className="px-1.5 py-0.2 rounded bg-accent/15 border border-accent/20">
-                  PRIMARY
+            {/* NODE 2 - Your Google Drive (Hero Node) */}
+            <div className="flex-1 rounded-2xl border-2 border-[#89BD49] dark:border-emerald-700 bg-[#F4FBF0] dark:bg-emerald-950/25 p-5 text-center flex flex-col items-center justify-between min-h-[190px] shadow-sm relative overflow-hidden min-w-0">
+              <div className="w-full flex items-center justify-between mb-3">
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#EBF7E3] dark:bg-emerald-900/40 text-[#3D7A24] dark:text-emerald-300 border border-[#CFE6BF] dark:border-emerald-800/60 text-[10px] font-mono font-bold">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#3D7A24] dark:bg-emerald-400" />
+                  100% PRIVATE
                 </span>
-                <span>SECURE</span>
+                <span className="text-[10px] font-mono font-bold tracking-wider text-[#3D7A24] dark:text-emerald-400 uppercase">
+                  {t("site.trust.driveBadge")}
+                </span>
               </div>
 
-              {/* Google Drive Logo (Accurate 3-Parallelogram Geometry) */}
-              <div className="my-auto py-1">
-                <svg
-                  width="42"
-                  height="36"
-                  viewBox="0 0 86 75"
-                  fill="none"
-                  className="mx-auto drop-shadow-sm"
-                  aria-label="Google Drive Logo"
-                >
-                  {/* Left Green */}
-                  <path
-                    d="M28.6 0L0 49.5l14.3 24.8L42.9 24.8z"
-                    fill="#34A853"
-                  />
-                  {/* Top-Right Yellow */}
-                  <path d="M57.1 0H28.6l28.5 49.5h28.6z" fill="#FBBC04" />
-                  {/* Bottom Blue */}
-                  <path d="M85.7 49.5H28.6l-14.3 24.8h57.1z" fill="#4285F4" />
-                </svg>
+              {/* Google Drive Logo */}
+              <div className="my-auto py-2">
+                <Icon icon="logos:google-drive" className="w-12 h-12 mx-auto drop-shadow-xs" aria-hidden="true" />
               </div>
 
               <div>
-                <div className="text-site-text font-semibold text-sm">
-                  Your Google Drive
-                </div>
-                <div className="text-muted text-xs mt-0.5 leading-snug">
-                  Files stored here - not BugSnap servers
-                </div>
+                <h4 className="text-sm font-bold text-slate-950 dark:text-white">
+                  {t("site.trust.driveTitle")}
+                </h4>
+                <p className="text-xs text-slate-600 dark:text-slate-300 mt-1 leading-snug">
+                  {t("site.trust.driveDesc")}
+                </p>
               </div>
             </div>
 
-            {/* Zero Connection Visual Divider */}
-            <div className="w-12 lg:w-16 flex-shrink-0 flex flex-col items-center justify-center text-center px-1">
-              <div className="w-6 h-6 rounded-full border border-dashed border-site-border flex items-center justify-center text-muted/70">
-                <svg
-                  width="12"
-                  height="12"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.5"
-                  strokeLinecap="round"
-                  aria-hidden="true"
-                >
-                  <circle cx="12" cy="12" r="9" />
-                  <line x1="5.7" y1="5.7" x2="18.3" y2="18.3" />
-                </svg>
+            {/* ZERO CONNECTION DIVIDER */}
+            <div className="w-16 lg:w-20 flex-shrink-0 flex flex-col items-center justify-center text-center px-1">
+              <div className="w-7 h-7 rounded-full border border-dashed border-slate-300 dark:border-slate-700 flex items-center justify-center text-slate-400 dark:text-slate-500 mb-1">
+                <Icon icon="lucide:ban" className="w-3.5 h-3.5" aria-hidden="true" />
               </div>
-              <span className="text-[9px] font-mono uppercase tracking-wider text-muted/80 mt-1 whitespace-nowrap">
-                Zero Link
+              <span className="text-[10px] font-mono uppercase tracking-wider text-slate-400 dark:text-slate-500 font-semibold">
+                NO FILES
               </span>
             </div>
 
-            {/* NODE 3 - BugSnap Server */}
-            <div className="flex-1 rounded-xl border border-site-border bg-site-surface-2 p-4 text-center opacity-70 flex flex-col items-center justify-between min-h-[160px] shadow-sm transition-opacity hover:opacity-90 min-w-0">
-              <div className="w-full flex items-center justify-between text-[10px] text-muted font-mono mb-2">
-                <span>METADATA</span>
-                <span>0 BYTES</span>
+            {/* NODE 3 - BugSnap Cloud */}
+            <div className="flex-1 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-5 text-center flex flex-col items-center justify-between min-h-[190px] shadow-2xs opacity-80 min-w-0">
+              <div className="w-full flex items-center justify-between mb-3">
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-200/70 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-[10px] font-mono font-bold">
+                  0 BYTES
+                </span>
+                <span className="text-[10px] font-mono font-bold tracking-wider text-slate-400 dark:text-slate-500 uppercase">
+                  {t("site.trust.serverBadge")}
+                </span>
               </div>
 
-              {/* Database / Server Cylinder SVG */}
-              <div className="my-auto py-1">
-                <svg
-                  width="40"
-                  height="36"
-                  viewBox="0 0 36 36"
-                  fill="none"
-                  stroke="currentColor"
-                  className="mx-auto text-site-text-2"
-                  aria-hidden="true"
-                >
-                  <ellipse
-                    cx="18"
-                    cy="8"
-                    rx="12"
-                    ry="4.5"
-                    strokeWidth="1.75"
-                    className="stroke-site-border"
-                    fill="currentColor"
-                    fillOpacity="0.06"
-                  />
-                  <path
-                    d="M6 8v7c0 2.5 5.4 4.5 12 4.5s12-2 12-4.5V8"
-                    strokeWidth="1.75"
-                    className="stroke-site-border"
-                  />
-                  <path
-                    d="M6 15v7c0 2.5 5.4 4.5 12 4.5s12-2 12-4.5v-7"
-                    strokeWidth="1.75"
-                    className="stroke-site-border"
-                  />
-                  <circle cx="23" cy="19.5" r="1.2" className="fill-accent" />
-                  <circle
-                    cx="26"
-                    cy="19.5"
-                    r="1.2"
-                    className="fill-site-border"
-                  />
-                  <circle cx="23" cy="12.5" r="1.2" className="fill-accent" />
-                  <circle
-                    cx="26"
-                    cy="12.5"
-                    r="1.2"
-                    className="fill-site-border"
-                  />
-                </svg>
+              {/* Cloud / Database Server Icon */}
+              <div className="my-auto py-2">
+                <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400 mx-auto">
+                  <Icon icon="lucide:server" className="w-6 h-6" aria-hidden="true" />
+                </div>
               </div>
 
               <div>
-                <div className="text-site-text font-semibold text-sm">
-                  BugSnap Server
-                </div>
-                <div className="text-muted text-xs mt-0.5 leading-snug">
-                  Stores: title, tags, share links - zero bytes of your files
-                </div>
+                <h4 className="text-sm font-bold text-slate-950 dark:text-white">
+                  {t("site.trust.serverTitle")}
+                </h4>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 leading-snug">
+                  {t("site.trust.serverDesc")}
+                </p>
               </div>
             </div>
           </div>
 
-          {/* ARROW 1→3 (Secondary, Below) - Dotted path from Browser to BugSnap Server */}
-          <div className="relative mt-2 h-14">
+          {/* SECONDARY FLOW: Browser -> BugSnap Cloud (Curved Underneath) */}
+          <div className="relative mt-3 h-14">
             <svg
               className="w-full h-full overflow-visible"
               viewBox="0 0 600 50"
@@ -327,179 +201,146 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
               fill="none"
               aria-hidden="true"
             >
-              {/* Path curving down from Node 1, sweeping under Node 2, and up into Node 3 */}
               <path
-                d="M 85 0 v 18 q 0 16 16 16 h 398 q 16 0 16 -16 v -10"
+                d="M 90 0 v 18 q 0 16 16 16 h 388 q 16 0 16 -16 v -12"
                 stroke="currentColor"
                 strokeWidth="1.5"
                 strokeDasharray="4 4"
-                className="text-site-border"
+                className="text-slate-300 dark:text-slate-700"
               />
-              {/* Arrowhead pointing up into BugSnap Server */}
               <polygon
-                points="511,10 515,2 519,10"
+                points="506,8 510,0 514,8"
                 fill="currentColor"
-                className="text-site-border"
+                className="text-slate-400 dark:text-slate-600"
               />
             </svg>
-
-            {/* Centered Label along the curved path */}
             <div className="absolute inset-x-0 bottom-1 flex justify-center pointer-events-none">
-              <span className="px-2 py-0.5 rounded-md bg-site-surface border border-site-border-subtle text-muted text-[11px] font-medium shadow-2xs">
-                Metadata only <span className="opacity-75">(no file data)</span>
+              <span className="px-3 py-0.5 rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 text-[11px] font-medium shadow-2xs">
+                {t("site.trust.flow2Badge")}:{" "}
+                <span className="text-slate-400 dark:text-slate-500">
+                  {t("site.trust.flow2Sub")}
+                </span>
               </span>
             </div>
           </div>
         </div>
 
-        {/* Mobile layout: vertically stacked nodes */}
-        <div className="md:hidden flex flex-col items-stretch space-y-2">
-          {/* NODE 1 - Your Browser */}
-          <div className="rounded-xl border border-site-border bg-site-surface p-4 text-center shadow-sm">
-            <div className="flex items-center justify-center gap-1.5 text-xs text-muted mb-2 font-mono">
+        {/* MOBILE LAYOUT (< md) */}
+        <div className="md:hidden flex flex-col items-stretch space-y-3">
+          {/* NODE 1 - Browser */}
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-4 text-center">
+            <div className="flex items-center justify-center gap-1.5 text-xs text-red-600 dark:text-red-400 mb-2 font-mono font-bold">
               <span className="w-1.5 h-1.5 rounded-full bg-red-500 animate-pulse" />
-              <span>RECORDING LOCALLY</span>
+              <span>{t("site.trust.browserBadge")}</span>
             </div>
-            <div className="text-site-text font-semibold text-sm">
-              Your Browser
-            </div>
-            <div className="text-muted text-xs mt-0.5">
-              Bug captured locally
-            </div>
+            <h4 className="text-sm font-bold text-slate-950 dark:text-white">
+              {t("site.trust.browserTitle")}
+            </h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              {t("site.trust.browserDesc")}
+            </p>
           </div>
 
-          {/* ARROW 1→2 (Vertical Direct OAuth) */}
+          {/* ARROW 1 -> 2 (Vertical Direct OAuth) */}
           <div className="flex flex-col items-center py-1">
-            <div className="flex items-center gap-1 px-2 py-0.5 rounded-md bg-accent/10 border border-accent/20 text-accent font-medium text-[11px] mb-1 shadow-2xs">
-              <span className="w-1.5 h-1.5 rounded-full bg-accent animate-ping" />
-              <span>Direct OAuth</span>
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#EBF7E3] dark:bg-emerald-950/60 border border-[#CFE6BF] dark:border-emerald-800/60 text-[#3D7A24] dark:text-emerald-400 font-bold text-[11px] mb-1">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#3D7A24] dark:bg-emerald-400 animate-ping" />
+              <span>{t("site.trust.flow1Badge")}</span>
             </div>
-            <svg
-              width="20"
-              height="34"
-              viewBox="0 0 20 34"
-              fill="none"
-              aria-hidden="true"
-            >
+            <svg width="20" height="34" viewBox="0 0 20 34" fill="none" aria-hidden="true">
               <line
                 x1="10"
                 y1="0"
                 x2="10"
                 y2="26"
-                stroke="currentColor"
-                strokeWidth="2"
+                stroke="#3D7A24"
+                strokeWidth="2.5"
                 strokeDasharray="4 3"
-                className="text-accent animate-flow-dash-v"
+                className="animate-flow-dash-v"
               />
-              <polygon points="6,24 10,32 14,24" fill="currentColor" className="text-accent" />
-              <circle cx="10" r="3" fill="currentColor" className="text-accent">
-                <animate
-                  attributeName="cy"
-                  from="0"
-                  to="26"
-                  dur="1.5s"
-                  repeatCount="indefinite"
-                />
-              </circle>
+              <polygon points="6,24 10,32 14,24" fill="#3D7A24" />
             </svg>
-            <span className="text-[10px] text-accent/80 font-mono mt-0.5">
-              Video & DevLogs
+            <span className="text-[10px] text-[#3D7A24] dark:text-[#72C048] font-mono font-semibold mt-0.5">
+              {t("site.trust.flow1Sub")}
             </span>
           </div>
 
-          {/* NODE 2 - Google Drive (Hero Node) */}
-          <div className="rounded-xl border-2 border-accent/40 bg-accent/5 p-4 text-center shadow-sm relative">
-            <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-accent/15 text-accent text-[10px] font-mono mb-2">
-              <span>CUSTOMER STORAGE</span>
+          {/* NODE 2 - Google Drive */}
+          <div className="rounded-2xl border-2 border-[#89BD49] dark:border-emerald-700 bg-[#F4FBF0] dark:bg-emerald-950/25 p-5 text-center relative">
+            <div className="flex items-center justify-center mb-2">
+              <Icon icon="logos:google-drive" className="w-10 h-10" aria-hidden="true" />
             </div>
-            <div className="text-site-text font-semibold text-sm">
-              Your Google Drive
+            <div className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-[#EBF7E3] dark:bg-emerald-900/40 text-[#3D7A24] dark:text-emerald-300 text-[10px] font-mono font-bold mb-2">
+              <span>{t("site.trust.driveBadge")}</span>
             </div>
-            <div className="text-muted text-xs mt-0.5">
-              Files stored here - not BugSnap servers
-            </div>
+            <h4 className="text-sm font-bold text-slate-950 dark:text-white">
+              {t("site.trust.driveTitle")}
+            </h4>
+            <p className="text-xs text-slate-600 dark:text-slate-300 mt-1">
+              {t("site.trust.driveDesc")}
+            </p>
           </div>
 
-          {/* ARROW 1→3 (Vertical Metadata Only) */}
+          {/* ARROW 1 -> 3 (Vertical Metadata Only) */}
           <div className="flex flex-col items-center py-1">
-            <div className="px-2 py-0.5 rounded-md bg-site-surface-2 border border-site-border-subtle text-muted text-[10px] font-medium mb-1">
-              Metadata only (no file data)
+            <div className="px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 text-[10px] font-medium mb-1">
+              {t("site.trust.flow2Badge")}
             </div>
-            <svg
-              width="20"
-              height="30"
-              viewBox="0 0 20 30"
-              fill="none"
-              aria-hidden="true"
-            >
+            <svg width="20" height="28" viewBox="0 0 20 28" fill="none" aria-hidden="true">
               <line
                 x1="10"
                 y1="0"
                 x2="10"
-                y2="22"
+                y2="20"
                 stroke="currentColor"
                 strokeWidth="1.5"
                 strokeDasharray="3 3"
-                className="text-site-border"
+                className="text-slate-300 dark:text-slate-700"
               />
-              <polygon
-                points="6,20 10,28 14,20"
-                fill="currentColor"
-                className="text-site-border"
-              />
+              <polygon points="6,18 10,26 14,18" fill="currentColor" className="text-slate-400 dark:text-slate-600" />
             </svg>
           </div>
 
-          {/* NODE 3 - BugSnap Server */}
-          <div className="rounded-xl border border-site-border bg-site-surface-2 p-4 text-center opacity-70 shadow-sm">
-            <div className="text-[10px] text-muted font-mono mb-1">
-              ZERO BYTES OF YOUR FILES
+          {/* NODE 3 - BugSnap Cloud */}
+          <div className="rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-800/40 p-4 text-center opacity-80">
+            <div className="text-[10px] text-slate-400 dark:text-slate-500 font-mono font-bold mb-1">
+              {t("site.trust.serverBadge")}
             </div>
-            <div className="text-site-text font-semibold text-sm">
-              BugSnap Server
-            </div>
-            <div className="text-muted text-xs mt-0.5">
-              Stores: title, tags, share links - zero bytes of your files
-            </div>
+            <h4 className="text-sm font-bold text-slate-950 dark:text-white">
+              {t("site.trust.serverTitle")}
+            </h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+              {t("site.trust.serverDesc")}
+            </p>
           </div>
         </div>
 
-        {/* Legend */}
-        <div className="mt-6 pt-5 border-t border-site-border/60 grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs text-site-text-2">
-          <div className="flex items-start gap-2">
-            <IconCheck
-              size={16}
-              strokeWidth={2.5}
-              className="text-accent flex-shrink-0 mt-0.5"
-            />
-            <span className="leading-tight">
-              Your recordings:{" "}
-              <strong className="text-site-text">Google Drive only</strong>
+        {/* BOTTOM TRUST CHECKMARKS */}
+        <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800/80 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          <div className="flex items-start gap-2.5">
+            <div className="w-5 h-5 rounded-full bg-[#EBF7E3] dark:bg-emerald-950/60 text-[#3D7A24] dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+              <Icon icon="lucide:check" className="w-3.5 h-3.5 stroke-[3]" aria-hidden="true" />
+            </div>
+            <span className="text-slate-700 dark:text-slate-300 leading-snug">
+              {t("site.trust.pill1")}
             </span>
           </div>
-          <div className="flex items-start gap-2">
-            <IconCheck
-              size={16}
-              strokeWidth={2.5}
-              className="text-accent flex-shrink-0 mt-0.5"
-            />
-            <span className="leading-tight">
-              BugSnap stores:{" "}
-              <strong className="text-site-text">
-                metadata, links, workspace info
-              </strong>
+
+          <div className="flex items-start gap-2.5">
+            <div className="w-5 h-5 rounded-full bg-[#EBF7E3] dark:bg-emerald-950/60 text-[#3D7A24] dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+              <Icon icon="lucide:check" className="w-3.5 h-3.5 stroke-[3]" aria-hidden="true" />
+            </div>
+            <span className="text-slate-700 dark:text-slate-300 leading-snug">
+              {t("site.trust.pill2")}
             </span>
           </div>
-          <div className="flex items-start gap-2">
-            <IconCheck
-              size={16}
-              strokeWidth={2.5}
-              className="text-accent flex-shrink-0 mt-0.5"
-            />
-            <span className="leading-tight">
-              Your data is{" "}
-              <strong className="text-site-text">never processed</strong> on
-              BugSnap infrastructure
+
+          <div className="flex items-start gap-2.5">
+            <div className="w-5 h-5 rounded-full bg-[#EBF7E3] dark:bg-emerald-950/60 text-[#3D7A24] dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+              <Icon icon="lucide:check" className="w-3.5 h-3.5 stroke-[3]" aria-hidden="true" />
+            </div>
+            <span className="text-slate-700 dark:text-slate-300 leading-snug">
+              {t("site.trust.pill3")}
             </span>
           </div>
         </div>

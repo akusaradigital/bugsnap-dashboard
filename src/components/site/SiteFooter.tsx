@@ -1,6 +1,8 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
 import { Icon } from "@/lib/iconify";
 import { Reveal } from "./motion/Reveal";
@@ -11,6 +13,21 @@ const CHROME_STORE_URL =
 
 export function SiteFooter() {
   const { t } = useT();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setIsLoggedIn(!!data.session?.user);
+    }).catch(() => {});
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsLoggedIn(!!session?.user);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   return (
     <footer className="border-t border-site-border bg-site-surface-2 text-site-text font-site transition-colors">
@@ -60,17 +77,6 @@ export function SiteFooter() {
                 <span>{t("landing.zeroServerStorage")}</span>
               </div>
             </div>
-
-            {/* Operator & Consumer Complaint Notice */}
-            <div className="pt-2 text-[11px] text-site-text-2 space-y-1 border-t border-site-border-subtle/70">
-              <div className="flex items-center gap-1.5 font-medium text-site-text">
-                <Icon icon="lucide:shield-check" className="w-3.5 h-3.5 text-[#6B9A35] dark:text-[#A8D666] shrink-0" aria-hidden="true" />
-                <span>{t("landing.operatedBy")}</span>
-              </div>
-              <p className="text-[10px] text-site-text-2">
-                {t("landing.complaintContact")}
-              </p>
-            </div>
           </Reveal>
 
           {/* Links Grid: 4 columns across lg:col-span-8 */}
@@ -85,8 +91,9 @@ export function SiteFooter() {
                 <li><Link href="/solutions" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("site.nav.solutions")}</Link></li>
                 <li><Link href="/extension" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("site.nav.extension")}</Link></li>
                 <li><Link href="/how-it-works" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("site.nav.howItWorks")}</Link></li>
-                <li><Link href="/compare" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("landing.compare")}</Link></li>
-                <li><Link href="/pricing" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("site.nav.pricing")}</Link></li>
+                <li><Link href={isLoggedIn ? "/compare" : "/visual-compare"} className="hover:text-site-text transition-colors block py-0.5 truncate">{t("landing.compare")}</Link></li>
+                {/* Payment UI temporarily commented out until ready: */}
+                {/* <li><Link href="/pricing" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("site.nav.pricing")}</Link></li> */}
               </ul>
             </Reveal>
 
@@ -109,7 +116,7 @@ export function SiteFooter() {
               </ul>
             </Reveal>
 
-            {/* 3. Legal & Consumer Protection */}
+            {/* 3. Legal & Compliance */}
             <Reveal delay={0.2} className="space-y-3 min-w-0">
               <h5 className="text-xs font-bold text-site-text uppercase tracking-wider truncate">
                 {t("landing.legal")}
@@ -117,8 +124,6 @@ export function SiteFooter() {
               <ul className="space-y-2 text-xs text-site-text-2">
                 <li><Link href="/terms" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("landing.terms")}</Link></li>
                 <li><Link href="/privacy" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("landing.privacy")}</Link></li>
-                <li><Link href="/terms#refund" className="hover:text-site-text transition-colors block py-0.5 truncate text-site-accent font-medium">{t("landing.refundPolicy")}</Link></li>
-                <li><Link href="/terms#consumer-protection" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("landing.consumerProtection")}</Link></li>
                 <li><Link href="/security" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("landing.security")}</Link></li>
               </ul>
             </Reveal>
@@ -131,7 +136,6 @@ export function SiteFooter() {
               <ul className="space-y-2 text-xs text-site-text-2">
                 <li><Link href="/about" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("landing.about")}</Link></li>
                 <li><Link href="/contact" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("landing.contact")}</Link></li>
-                <li><Link href="/contact#complaint" className="hover:text-site-text transition-colors block py-0.5 truncate text-emerald-600 dark:text-emerald-400 font-medium">{t("landing.consumerComplaints")}</Link></li>
                 <li>
                   <a
                     href="https://akusaradigital.com"
@@ -168,13 +172,6 @@ export function SiteFooter() {
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
               </span>
               <span>{t("landing.allOperational")}</span>
-            </Link>
-            <span className="text-site-border">•</span>
-            <Link
-              href="/contact#complaint"
-              className="text-[11px] text-site-accent hover:underline font-medium"
-            >
-              {t("landing.consumerComplaints")}
             </Link>
           </div>
         </div>

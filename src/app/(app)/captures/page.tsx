@@ -105,8 +105,11 @@ export default function CapturesList() {
   return (
     <Suspense
       fallback={
-        <div className="p-12 text-center text-sm text-muted">
-          {t("cap.loading")}
+        <div className="p-12 flex items-center justify-center min-h-[300px]" role="status" aria-label={t("cap.loading")}>
+          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-xl bg-subtle border border-border text-xs text-muted shadow-xs">
+            <Icon icon="lucide:loader-2" className="w-4 h-4 animate-spin text-[#6B9A35] dark:text-[#A8D666] shrink-0" aria-hidden="true" />
+            <span className="font-medium">{t("cap.loading")}</span>
+          </div>
         </div>
       }
     >
@@ -2136,19 +2139,25 @@ function CapturesContent() {
 
       {/* Grid */}
       {loading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {[1, 2, 3, 4, 5, 6].map((i) => (
-            <div
-              key={i}
-              className="rounded-xl border border-border bg-white dark:bg-subtle overflow-hidden animate-pulse shadow-sm"
-            >
-              <div className="aspect-[16/10] bg-slate-200 dark:bg-background" />
-              <div className="p-4 flex justify-between">
-                <div className="w-1/2 h-4 bg-slate-200 dark:bg-border rounded" />
-                <div className="w-16 h-4 bg-slate-200 dark:bg-border rounded" />
+        <div className="space-y-3" role="status" aria-label={t("cap.loading")}>
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#89BD49]/10 border border-[#89BD49]/20 text-xs text-[#46741A] dark:text-[#A8D666] font-medium">
+            <Icon icon="lucide:loader-2" className="w-3.5 h-3.5 animate-spin shrink-0" aria-hidden="true" />
+            <span>{t("cap.loading")}</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div
+                key={i}
+                className="rounded-xl border border-border bg-white dark:bg-subtle overflow-hidden animate-pulse shadow-sm"
+              >
+                <div className="aspect-[16/10] bg-slate-200 dark:bg-background" />
+                <div className="p-4 flex justify-between">
+                  <div className="w-1/2 h-4 bg-slate-200 dark:bg-border rounded" />
+                  <div className="w-16 h-4 bg-slate-200 dark:bg-border rounded" />
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       ) : filteredCaptures.length === 0 ? (
         activeFilterCount > 0 ? (
@@ -2206,9 +2215,9 @@ function CapturesContent() {
                   href={CHROME_WEB_STORE_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] text-white text-xs font-semibold shadow-xs shadow-[#89BD49]/25 transition-all w-full"
+                  className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg bg-[#89BD49] hover:bg-[#78a83f] text-slate-900 text-xs font-bold shadow-xs shadow-[#89BD49]/25 transition-all w-full"
                 >
-                  <Icon icon="logos:chrome" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                  <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
                   <span>{t("cap.install")}</span>
                 </a>
               </div>
@@ -3073,14 +3082,22 @@ function CapturesContent() {
                           e.preventDefault();
                           const trimmed = newMoveFolderName.trim();
                           if (trimmed) {
-                            if (!moveFolders.includes(trimmed)) {
-                              setMoveFolders((prev) =>
-                                [...prev, trimmed].sort(),
-                              );
-                              setMoveFolderEntries((prev) =>
-                                [...prev, { id: `new-${trimmed}`, name: trimmed, depth: 0 }].sort((a, b) => a.name.localeCompare(b.name)),
-                              );
+                            const existing = moveFolders.find(
+                              (f) => f.trim().toLowerCase() === trimmed.toLowerCase(),
+                            );
+                            if (existing) {
+                              setMoveTargetFolderName(existing);
+                              setNewMoveFolderName("");
+                              setIsCreatingMoveFolder(false);
+                              showToast(t("layout.errFolderExists"), "info");
+                              return;
                             }
+                            setMoveFolders((prev) =>
+                              [...prev, trimmed].sort(),
+                            );
+                            setMoveFolderEntries((prev) =>
+                              [...prev, { id: `new-${trimmed}`, name: trimmed, depth: 0 }].sort((a, b) => a.name.localeCompare(b.name)),
+                            );
                             setMoveTargetFolderName(trimmed);
                             setNewMoveFolderName("");
                             setIsCreatingMoveFolder(false);

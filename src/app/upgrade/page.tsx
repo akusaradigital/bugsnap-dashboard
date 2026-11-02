@@ -27,6 +27,11 @@ function UpgradeContent() {
   const [showPromoInput, setShowPromoInput] = useState(false);
 
   useEffect(() => {
+    // Payment UI is temporarily disabled until ready; redirect to dashboard
+    router.replace("/dashboard");
+  }, [router]);
+
+  useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
       const u = data.session?.user;
       if (!u?.email) return;

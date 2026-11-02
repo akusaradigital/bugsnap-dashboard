@@ -117,6 +117,7 @@ export const commonEn: Dict = {
   "layout.seatLimit":
     "Free workspaces are limited to 5 members. Upgrade to Pro for unlimited seats.",
   "layout.errCreateFolder": "Could not create folder. Maybe it already exists?",
+  "layout.errFolderExists": "A folder with this name already exists.",
   "layout.errRenameFolder": "Could not rename folder. Check connection.",
   "layout.errReorderFolder": "Could not save folder order. Check connection.",
   "layout.errInvite": "Could not send invite. Please try again.",
@@ -154,11 +155,22 @@ export const commonEn: Dict = {
   "common.error": "Error",
   "common.close": "Close",
   "common.submit": "Submit",
+  "login.title": "Log in to continue",
+  "login.subtitle":
+    "Capture screen recordings with full DevTools context, saved directly to your own Google Drive.",
   "login.welcomeTitle": "Welcome to BugSnap",
   "login.welcomeSubtitle":
     "Capture screen recordings with full DevTools context, saved directly to your own Google Drive.",
   "login.continueGoogle": "Continue with Google",
   "login.connecting": "Connecting to Google...",
+  "login.termsAgreement": "By continuing, you agree to our",
+  "login.termsLink": "Terms of Service",
+  "login.and": "and",
+  "login.privacyLink": "Privacy Policy",
+  "login.extensionConnectedTitle": "You're all set!",
+  "login.extensionConnectedSubtitle":
+    "Extension connected successfully. You can return to BugSnap extension or open dashboard.",
+  "login.openDashboard": "Open Dashboard",
   "login.secureNote":
     "Sign in with Google to get started. Your captures are stored directly in your own Google Drive: your data stays yours.",
   "login.backToHome": "Back to Home",
@@ -309,6 +321,7 @@ export const commonId: Dict = {
   "layout.seatLimit":
     "Workspace gratis dibatasi 5 anggota. Upgrade ke Pro untuk kursi tanpa batas.",
   "layout.errCreateFolder": "Tidak dapat membuat folder. Mungkin sudah ada?",
+  "layout.errFolderExists": "Folder dengan nama ini sudah ada.",
   "layout.errRenameFolder":
     "Tidak dapat mengubah nama folder. Periksa koneksi.",
   "layout.errReorderFolder":
@@ -350,11 +363,22 @@ export const commonId: Dict = {
   "common.error": "Kesalahan",
   "common.close": "Tutup",
   "common.submit": "Kirim",
+  "login.title": "Masuk untuk melanjutkan",
+  "login.subtitle":
+    "Rekam layar dengan konteks lengkap DevTools, tersimpan langsung di Google Drive pribadi Anda.",
   "login.welcomeTitle": "Selamat Datang di BugSnap",
   "login.welcomeSubtitle":
     "Rekam layar dengan konteks lengkap DevTools, tersimpan langsung di Google Drive pribadi Anda.",
   "login.continueGoogle": "Lanjutkan dengan Google",
   "login.connecting": "Menghubungkan ke Google...",
+  "login.termsAgreement": "Dengan melanjutkan, Anda menyetujui",
+  "login.termsLink": "Ketentuan Layanan",
+  "login.and": "dan",
+  "login.privacyLink": "Kebijakan Privasi",
+  "login.extensionConnectedTitle": "Semua sudah siap!",
+  "login.extensionConnectedSubtitle":
+    "Ekstensi berhasil terhubung. Anda dapat kembali ke ekstensi BugSnap atau membuka dashboard.",
+  "login.openDashboard": "Buka Dashboard",
   "login.secureNote":
     "Masuk dengan Google untuk memulai. Tangkapan Anda tersimpan langsung di Google Drive pribadi Anda: data sepenuhnya milik Anda.",
   "login.backToHome": "Kembali ke Beranda",

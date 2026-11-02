@@ -92,7 +92,8 @@ test("dashboard folders CRUD: folder management and renaming rules", () => {
   function createFolder(name) {
     const trimmed = name.trim();
     if (!trimmed) throw new Error("Folder name cannot be empty");
-    if (folders.includes(trimmed)) throw new Error("Folder already exists");
+    const isDuplicate = folders.some((f) => f.toLowerCase() === trimmed.toLowerCase());
+    if (isDuplicate) throw new Error("Folder already exists");
     folders = [...folders, trimmed].sort();
     return folders;
   }
@@ -100,16 +101,29 @@ test("dashboard folders CRUD: folder management and renaming rules", () => {
   createFolder("Landing Page");
   assert.deepEqual(folders, ["Auth", "Billing", "Landing Page", "Mobile"]);
 
+  // Duplicate create throws (case-insensitive)
+  assert.throws(() => createFolder("Landing Page"), /Folder already exists/);
+  assert.throws(() => createFolder("landing page"), /Folder already exists/);
+  assert.throws(() => createFolder("AUTH"), /Folder already exists/);
+
   // 2. Rename folder
   function renameFolder(oldName, newName) {
     const trimmed = newName.trim();
-    if (!trimmed || oldName === trimmed) return folders;
+    if (!trimmed || oldName.toLowerCase() === trimmed.toLowerCase()) return folders;
+    const isDuplicate = folders.some(
+      (f) => f.toLowerCase() === trimmed.toLowerCase() && f.toLowerCase() !== oldName.toLowerCase()
+    );
+    if (isDuplicate) throw new Error("Folder already exists");
     folders = folders.map((f) => (f === oldName ? trimmed : f)).sort();
     return folders;
   }
 
   renameFolder("Auth", "Authentication");
   assert.deepEqual(folders, ["Authentication", "Billing", "Landing Page", "Mobile"]);
+
+  // Duplicate rename throws (case-insensitive)
+  assert.throws(() => renameFolder("Billing", "Authentication"), /Folder already exists/);
+  assert.throws(() => renameFolder("Billing", "authentication"), /Folder already exists/);
 
   // 3. Delete folder
   function deleteFolder(name) {

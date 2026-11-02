@@ -59,14 +59,15 @@ export function SiteNavbar() {
     { href: "/solutions", label: t("site.nav.solutions") },
     { href: "/how-it-works", label: t("site.nav.howItWorks") },
     { href: "/extension", label: t("site.nav.extension") },
-    { href: "/pricing", label: t("site.nav.pricing") },
+    // Payment UI temporarily commented out until ready:
+    // { href: "/pricing", label: t("site.nav.pricing") },
     { href: "/docs", label: t("site.nav.docs") },
     { href: "/blog", label: t("site.nav.blog") },
   ];
 
   return (
     <header
-      className={`relative sm:sticky top-0 z-50 border-b border-site-border text-site-text font-site bg-site-surface transition-shadow duration-300 ${
+      className={`relative sm:sticky top-0 z-50 border-b border-slate-200/60 dark:border-slate-800/60 text-site-text font-site bg-white/80 dark:bg-slate-950/80 backdrop-blur-md transition-shadow duration-300 ${
         scrolled ? "shadow-sm shadow-black/5" : ""
       }`}
     >
@@ -76,7 +77,7 @@ export function SiteNavbar() {
       >
         Skip to main content
       </a>
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
         {/* Brand */}
         <Link href="/" className="flex items-center gap-2 group shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -84,34 +85,36 @@ export function SiteNavbar() {
             src="/logo-day.svg"
             alt=""
             aria-hidden="true"
-            width={24}
-            height={24}
-            className="w-6 h-6 object-contain transition-transform group-hover:scale-105 dark:hidden"
+            width={26}
+            height={26}
+            className="w-6.5 h-6.5 object-contain transition-transform group-hover:scale-105 dark:hidden"
           />
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/logo-dark.svg"
             alt=""
             aria-hidden="true"
-            width={24}
-            height={24}
-            className="w-6 h-6 object-contain transition-transform group-hover:scale-105 hidden dark:block"
+            width={26}
+            height={26}
+            className="w-6.5 h-6.5 object-contain transition-transform group-hover:scale-105 hidden dark:block"
           />
-          <span className="text-sm font-bold tracking-tight text-site-text">BugSnap</span>
+          <span className="text-base font-bold tracking-tight text-slate-900 dark:text-white">BugSnap</span>
         </Link>
 
         {/* Desktop Navigation */}
-        <nav className="hidden lg:flex items-center gap-1 text-xs font-medium text-site-text-2">
+        <nav className="hidden lg:flex items-center gap-1.5 text-sm font-medium text-slate-600 dark:text-slate-300">
           {navLinks.map((link) => {
-            const isActive = pathname === link.href;
+            const isActive =
+              pathname === link.href ||
+              (link.href !== "/" && pathname.startsWith(link.href + "/"));
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`px-3 py-1.5 rounded-md transition-colors ${
+                className={`px-3 py-1.5 rounded-lg transition-colors ${
                   isActive
-                    ? "text-site-text bg-site-surface-2 font-semibold"
-                    : "hover:text-site-text hover:bg-site-surface-2/60"
+                    ? "text-[#46741A] dark:text-[#A8D666] font-semibold bg-[#89BD49]/15 dark:bg-[#89BD49]/20"
+                    : "hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/50 dark:hover:bg-slate-800/40"
                 }`}
               >
                 {link.label}
@@ -126,26 +129,26 @@ export function SiteNavbar() {
           {isLoggedIn ? (
             <Link
               href="/dashboard"
-              className="inline-flex items-center gap-1.5 px-3 py-2 min-h-[40px] sm:min-h-0 sm:py-1.5 rounded-lg bg-accent text-slate-900 text-xs font-semibold hover:bg-accent-hover text-slate-900 hover:text-slate-900 transition-all shadow-2xs"
+              className="inline-flex items-center gap-1.5 px-4 py-2 min-h-[40px] sm:min-h-0 rounded-full bg-accent text-slate-900 text-xs sm:text-sm font-semibold hover:bg-accent-hover transition-all shadow-xs"
             >
-              <IconHome size={14} className="shrink-0" />
+              <IconHome size={15} className="shrink-0" />
               <span>{t("site.nav.dashboard")}</span>
             </Link>
           ) : (
             <Link
               href="/login"
-              className="hidden sm:inline-flex items-center gap-2 px-3 py-1.5 rounded-lg border border-site-border bg-site-surface hover:bg-site-surface-2 text-xs font-semibold text-site-text transition-all"
+              className="hidden sm:inline-flex items-center gap-2 px-4 py-2 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-100 shadow-2xs transition-all"
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/icons/google.svg"
                 alt=""
                 aria-hidden="true"
-                width={14}
-                height={14}
-                className="w-3.5 h-3.5 shrink-0"
+                width={16}
+                height={16}
+                className="w-4 h-4 shrink-0"
               />
-              <span>Login with Google</span>
+              <span>{t("site.nav.loginGoogle")}</span>
             </Link>
           )}
 
@@ -165,19 +168,24 @@ export function SiteNavbar() {
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
         <div className="lg:hidden border-t border-site-border bg-site-surface px-4 py-3 space-y-1 animate-in fade-in slide-in-from-top-2">
-          {navLinks.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className={`flex items-center min-h-[44px] px-3 py-2.5 rounded-md text-sm font-medium transition-colors ${
-                pathname === link.href
-                  ? "text-site-text bg-site-surface-2 font-semibold"
-                  : "text-site-text-2 hover:text-site-text hover:bg-site-surface-2/60"
-              }`}
-            >
-              {link.label}
-            </Link>
-          ))}
+          {navLinks.map((link) => {
+            const isActive =
+              pathname === link.href ||
+              (link.href !== "/" && pathname.startsWith(link.href + "/"));
+            return (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`flex items-center min-h-[44px] px-3 py-2.5 rounded-md text-sm font-medium transition-colors border ${
+                  isActive
+                    ? "text-[#46741A] dark:text-[#A8D666] bg-[#89BD49]/15 dark:bg-[#89BD49]/20 border-[#89BD49]/30 dark:border-[#89BD49]/40 font-semibold"
+                    : "border-transparent text-site-text-2 hover:text-site-text hover:bg-site-surface-2/60"
+                }`}
+              >
+                {link.label}
+              </Link>
+            );
+          })}
           {isLoggedIn ? (
             <div className="pt-2 border-t border-site-border-subtle mt-2">
               <Link
@@ -203,7 +211,7 @@ export function SiteNavbar() {
                   height={16}
                   className="w-4 h-4 shrink-0"
                 />
-                <span>Login with Google</span>
+                <span>{t("site.nav.loginGoogle")}</span>
               </Link>
             </div>
           )}

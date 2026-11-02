@@ -1325,9 +1325,28 @@ function SingleViewContent() {
       {status !== "ready" && (
         <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 my-auto">
           {status === "loading" && (
-            <div className="w-full max-w-5xl flex flex-col gap-6 animate-pulse">
-              <div className="h-[clamp(16rem,40vh,28rem)] sm:h-[clamp(28rem,72vh,60rem)] bg-subtle/80 rounded-3xl border border-border/70 backdrop-blur-md" />
-              <div className="h-36 bg-subtle/80 rounded-2xl border border-border/70 backdrop-blur-md" />
+            <div className="w-full max-w-5xl flex flex-col gap-6" role="status" aria-label={t("v.loadingCapture")}>
+              <div className="relative h-[clamp(18rem,44vh,30rem)] sm:h-[clamp(28rem,72vh,60rem)] bg-subtle/80 rounded-3xl border border-border/70 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#89BD49]/5 to-transparent animate-pulse pointer-events-none" />
+                <div className="relative z-10 flex flex-col items-center gap-3">
+                  <div className="w-12 h-12 rounded-2xl bg-[#89BD49]/15 border border-[#89BD49]/30 flex items-center justify-center shadow-sm">
+                    <Icon
+                      icon="lucide:loader-2"
+                      className="w-6 h-6 text-[#6B9A35] dark:text-[#A8D666] animate-spin"
+                      aria-hidden="true"
+                    />
+                  </div>
+                  <div>
+                    <h3 className="text-sm sm:text-base font-bold text-foreground">
+                      {t("v.loadingCapture")}
+                    </h3>
+                    <p className="text-xs text-muted mt-1 max-w-xs">
+                      {t("v.loadingCaptureHint")}
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="h-36 bg-subtle/80 rounded-2xl border border-border/70 backdrop-blur-md animate-pulse" />
             </div>
           )}
 

@@ -249,30 +249,160 @@ test('reproduce checkout button failure', async ({ page }) => {
         "description": "CORS errors are among the most misunderstood bugs in web apps. Learn how to inspect preflight OPTIONS requests, missing headers, and origin drift.",
         "descriptionId": "Error CORS sering kali disalahpahami oleh tim penguji. Pelajari cara memeriksa request preflight OPTIONS, header yang hilang, dan ketidaksesuaian origin.",
         "category": "Debugging & DevTools",
-        "readTime": "5 min read",
-        "tags": ["cors", "network", "api", "qa-guide"],
+        "readTime": "8 min read",
+        "tags": ["cors", "network", "api", "qa-guide", "debugging"],
         "content": """
-<p>Every QA engineer has seen the dreaded red console banner: <em>"Access to fetch at '...' from origin '...' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."</em></p>
+<p>Every QA engineer and web developer has encountered the dreaded red browser console banner: <em>"Access to fetch at 'https://api.example.com/data' from origin 'https://app.example.com' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."</em></p>
 
-<p>When this happens, junior testers often report: <em>"The backend API is down."</em> Developers respond: <em>"It works in Postman!"</em> Both are technically correct, but the team wastes an hour arguing because standard screenshots fail to capture HTTP preflight exchange telemetry.</p>
+<p>When this happens during a testing sprint, it almost universally triggers unproductive friction between teams. A junior tester reports: <em>"The backend API is completely down."</em> A backend developer tests the endpoint in Postman or cURL, sees a <code>200 OK</code> response, and snaps back: <em>"The API works perfectly, it must be a front-end bug."</em></p>
 
-<h2>Understanding the HTTP OPTIONS Preflight</h2>
-<p>Before a browser sends a non-simple request (such as a <code>POST</code> with <code>Content-Type: application/json</code> or custom Authorization headers), it fires an automatic <strong>OPTIONS preflight request</strong>. If the server does not explicitly return the allowed origins and methods on that preliminary flight, the browser forcibly aborts the real request before it ever leaves the client.</p>
+<p>Both are technically correct in their narrow context, but an hour of engineering velocity is wasted because standard screenshots fail to capture the invisible HTTP preflight exchange that occurred before the real request ever fired.</p>
 
-<h2>How to Capture Complete Preflight Telemetry</h2>
+<h2>Same-Origin Policy (SOP) vs. CORS: The Core Mental Model</h2>
+<p>Browsers enforce the <strong>Same-Origin Policy (SOP)</strong> to protect users from malicious scripts on one website reading private data from another authenticated website. An origin is defined by the exact combination of <strong>Scheme (Protocol) + Hostname + Port</strong>. If any of these three elements differ between the frontend and the backend API, the request is cross-origin.</p>
+
+<p>Cross-Origin Resource Sharing (CORS) is the explicit opt-in mechanism by which a server instructs the client browser: <em>"I trust requests originating from this specific domain, and you are permitted to share the response with client-side JavaScript."</em></p>
+
+<h2>Simple Requests vs. Preflight OPTIONS Exchanges</h2>
+<p>Not every cross-origin request triggers a preflight. The browser classifies requests into two distinct categories:</p>
+
+<ul>
+  <li><strong>Simple Requests:</strong> Requests using standard methods (<code>GET</code>, <code>HEAD</code>, or simple <code>POST</code>) with basic standard headers (such as <code>text/plain</code> or <code>multipart/form-data</code>). These requests are dispatched immediately without prior negotiation.</li>
+  <li><strong>Preflighted Requests:</strong> Any request that uses modern API patterns, such as sending <code>Content-Type: application/json</code>, custom authentication headers (e.g. <code>Authorization: Bearer ...</code>), or mutating HTTP verbs like <code>PUT</code>, <code>DELETE</code>, or <code>PATCH</code>.</li>
+</ul>
+
+<p>Before dispatching a preflighted request, the browser automatically sends an invisible <strong>HTTP OPTIONS preflight request</strong> to probe server permissions. If the server does not return the exact expected CORS headers with a successful HTTP <code>200</code> or <code>204 No Content</code> status code, the browser deliberately terminates the connection and refuses to expose the response.</p>
+
+<h2>The 4 Most Common CORS Failure Archetypes</h2>
+
+<h3>1. Missing or Misconfigured Access-Control-Allow-Origin</h3>
+<p>The most common failure occurs when the server returns a static origin or fails to reflect the exact origin header sent by the client. Remember: if your API requires credentials (cookies or authorization headers), setting <code>Access-Control-Allow-Origin: *</code> is explicitly forbidden by browser specifications.</p>
+
+<h3>2. Missing Custom Headers in Access-Control-Allow-Headers</h3>
+<p>If your frontend client sends custom telemetry headers (e.g., <code>X-Request-Id</code>, <code>X-Client-Version</code>, or <code>Authorization</code>), the server's preflight response must explicitly whitelist them in the <code>Access-Control-Allow-Headers</code> header.</p>
+
+<h3>3. HTTP 301/302 Redirects on Preflight Requests</h3>
+<p>If your backend infrastructure enforces HTTPS redirects or trailing slash normalization (e.g., redirecting <code>/api/users</code> to <code>/api/users/</code>), many reverse proxies strip CORS headers during the 301/302 redirect. Modern browsers treat redirects on OPTIONS requests as fatal CORS failures.</p>
+
+<h3>4. Reverse Proxy or Gateway Dropping HTTP 204 Responses</h3>
+<p>In Kubernetes, Nginx, or AWS API Gateway environments, unconfigured route catchers often return <code>403 Forbidden</code> or <code>405 Method Not Allowed</code> when an <code>OPTIONS</code> request arrives, preventing the client from ever proceeding to the actual payload call.</p>
+
+<h2>Production-Ready Server Configuration Example (Node.js / Express)</h2>
+<p>Here is an enterprise-grade CORS configuration in Express that properly handles preflights, dynamic origin whitelisting, and credentialed requests:</p>
+
+<pre><code>import cors from 'cors';
+import express from 'express';
+
+const app = express();
+
+const ALLOWED_ORIGINS = [
+  'https://app.example.com',
+  'https://staging.example.com',
+];
+
+app.use(cors({
+  origin: (origin, callback) =&gt; {
+    // Allow non-browser requests (Postman, curl, server-to-server)
+    if (!origin) return callback(null, true);
+    
+    if (ALLOWED_ORIGINS.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Blocked by CORS policy whitelist'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id'],
+  maxAge: 86400, // Cache preflight response for 24 hours
+}));
+
+// Explicitly handle preflight options wildcard
+app.options('*', cors());</code></pre>
+
+<h2>How BugSnap Triages CORS Failures in 30 Seconds</h2>
+<p>Instead of forcing developers to guess whether the issue was a proxy redirect, an unwhitelisted header, or a missing origin, <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> records the complete two-way HTTP handshake:</p>
+
 <ol>
-  <li><strong>Check Request Headers:</strong> Ensure the client origin matches the server's allowed domain whitelist.</li>
-  <li><strong>Inspect Preflight Status:</strong> Did the server return <code>204 No Content</code> or fail with <code>403 Forbidden</code>?</li>
-  <li><strong>Use Automated DevTools Recording:</strong> Rather than forcing developers to recreate identical origins, <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> records complete request and response headers, allowing developers to see missing CORS headers instantly.</li>
+  <li><strong>Side-by-Side OPTIONS Telemetry:</strong> In the BugSnap Network tab, both the preliminary <code>OPTIONS</code> call and the subsequent fetch attempt are displayed in chronologically grouped pairs.</li>
+  <li><strong>Full Header Inspection:</strong> Developers can inspect the exact client request headers and server response headers with a single click, immediately spotting omitted CORS attributes.</li>
+  <li><strong>1-Click cURL Replay:</strong> BugSnap generates an exact reproduction command with origin and authorization headers included, allowing backend developers to test the exact browser condition in terminal.</li>
 </ol>
 """.strip(),
         "contentId": """
-<p>Pesan error CORS di console browser sering memicu perdebatan antara QA dan developer. Tester mengira backend down, sedangkan developer merasa API normal karena bisa dipanggil lewat Postman.</p>
+<p>Setiap QA engineer dan web developer pasti pernah melihat pesan merah legendaris di konsol browser: <em>"Access to fetch at 'https://api.example.com/data' from origin 'https://app.example.com' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource."</em></p>
 
-<h2>Mengapa Terjadi Error Preflight?</h2>
-<p>Sebelum mengirim request yang membawa header otorisasi, browser secara otomatis mengirim request <code>OPTIONS</code>. Jika server tidak mengembalikan header izin yang sesuai, browser langsung membatalkan request utama.</p>
+<p>Ketika masalah ini muncul di tengah sprint pengujian, biasanya terjadi perdebatan klasik antar-tim. Tester junior melapor: <em>"API backend down total."</em> Developer backend mencoba endpoint tersebut di Postman atau terminal cURL, melihat status <code>200 OK</code>, lalu membalas: <em>"API lancar jaya kok di Postman, ini pasti bug front-end."</em></p>
 
-<p>Dengan alat telemetri seperti <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a>, header request dan status respons preflight otomatis tercatat lengkap di tiket bug sehingga akar masalah bisa diidentifikasi dalam hitungan detik.</p>
+<p>Keduanya benar dalam sudut pandang masing-masing, namun jam kerja tim terbuang sia-sia karena screenshot biasa tidak mampu memperlihatkan pertukaran request HTTP preflight yang terjadi sebelum request utama dieksekusi.</p>
+
+<h2>Same-Origin Policy (SOP) vs. CORS: Fondasi Keamanan Browser</h2>
+<p>Browser menerapkan <strong>Same-Origin Policy (SOP)</strong> untuk melindungi pengguna dari skrip jahat di satu website yang mencoba mencuri data dari website lain yang sedang login. Sebuah origin didefinisikan oleh kombinasi persis antara <strong>Protokol + Domain + Port</strong>. Jika salah satu dari ketiga elemen ini berbeda antara web frontend dan server backend, request tersebut masuk kategori cross-origin.</p>
+
+<p>Cross-Origin Resource Sharing (CORS) adalah mekanisme izin resmi di mana server memberi tahu browser client: <em>"Saya mempercayai request dari domain ini, dan Anda diizinkan membagikan respons data ini ke JavaScript sisi client."</em></p>
+
+<h2>Request Sederhana (Simple) vs. Request Preflight (OPTIONS)</h2>
+<p>Tidak semua request cross-origin memicu preflight. Browser membedakan request ke dalam dua kategori:</p>
+
+<ul>
+  <li><strong>Simple Request:</strong> Request dengan metode standar (<code>GET</code>, <code>HEAD</code>, atau <code>POST</code> biasa) dengan header dasar seperti <code>text/plain</code>. Request ini langsung dikirim tanpa negosiasi awal.</li>
+  <li><strong>Preflighted Request:</strong> Request modern yang mengirim header <code>Content-Type: application/json</code>, token otorisasi (<code>Authorization: Bearer ...</code>), atau metode seperti <code>PUT</code>, <code>DELETE</code>, atau <code>PATCH</code>.</li>
+</ul>
+
+<p>Sebelum mengirim request preflighted, browser secara otomatis mengirim <strong>request HTTP OPTIONS preflight</strong> untuk mengecek izin server. Jika server tidak mengembalikan header CORS yang cocok dengan status HTTP <code>200</code> atau <code>204 No Content</code>, browser akan langsung membatalkan koneksi demi keamanan.</p>
+
+<h2>4 Penyebab Utama Kegagalan CORS</h2>
+
+<h3>1. Header Access-Control-Allow-Origin Tidak Cocok</h3>
+<p>Server mengembalikan origin yang kaku atau lupa mencantumkan domain frontend staging. Ingat: jika request membawa cookie atau header kredensial, penggunaan tanda bintang <code>Access-Control-Allow-Origin: *</code> dilarang keras oleh standar keamanan browser.</p>
+
+<h3>2. Header Custom Belum Masuk Whitelist</h3>
+<p>Jika frontend mengirim header khusus (seperti <code>X-Request-Id</code> atau <code>Authorization</code>), server wajib mencantumkannya secara eksplisit pada header <code>Access-Control-Allow-Headers</code>.</p>
+
+<h3>3. Redirect HTTP 301/302 pada Request Preflight</h3>
+<p>Jika server backend mengarahkan URL HTTP ke HTTPS atau memaksakan trailing slash (misal dari <code>/api/users</code> ke <code>/api/users/</code>), banyak proxy yang membuang header CORS saat redirect. Browser modern menganggap redirect pada OPTIONS sebagai kegagalan CORS fatal.</p>
+
+<h3>4. Reverse Proxy Memblokir Method OPTIONS</h3>
+<p>Pada konfigurasi Nginx atau API Gateway tertentu, route catcher yang salah konfigurasi sering merespons <code>403 Forbidden</code> atau <code>405 Method Not Allowed</code> saat menerima request <code>OPTIONS</code>.</p>
+
+<h2>Contoh Konfigurasi Server yang Tepat (Express / Node.js)</h2>
+<p>Berikut contoh konfigurasi CORS tingkat produksi yang aman dan mendukung kredensial serta caching preflight:</p>
+
+<pre><code>import cors from 'cors';
+import express from 'express';
+
+const app = express();
+
+const ALLOWED_ORIGINS = [
+  'https://app.example.com',
+  'https://staging.example.com',
+];
+
+app.use(cors({
+  origin: (origin, callback) =&gt; {
+    // Izinkan pemanggilan non-browser (Postman, curl, server-to-server)
+    if (!origin) return callback(null, true);
+    
+    if (ALLOWED_ORIGINS.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Diblokir oleh whitelist CORS'));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id'],
+  maxAge: 86400, // Simpan cache preflight selama 24 jam
+}));
+
+app.options('*', cors());</code></pre>
+
+<h2>Melacak Error CORS dalam 30 Detik Bersama BugSnap</h2>
+<p>Daripada membuang waktu berdebat apakah masalahnya ada di Nginx, proxy redirect, atau header yang tertinggal, <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> merekam seluruh jejak komunikasi dua arah:</p>
+
+<ol>
+  <li><strong>Telemetri Request OPTIONS Berdampingan:</strong> Pada tab Network BugSnap, request <code>OPTIONS</code> preflight dan request data utama ditampilkan berdampingan secara kronologis.</li>
+  <li><strong>Inspeksi Header Lengkap:</strong> Developer dapat melihat header request client dan header respons server dalam satu klik untuk langsung menemukan atribut CORS yang hilang.</li>
+  <li><strong>Ekspor cURL 1-Klik:</strong> BugSnap menyediakan perintah cURL lengkap dengan header origin, memudahkan backend developer menguji kondisi browser langsung dari terminal mereka.</li>
+</ol>
 """.strip()
     },
     {
@@ -282,36 +412,165 @@ test('reproduce checkout button failure', async ({ page }) => {
         "description": "Google replaced FID with Interaction to Next Paint as a Core Web Vital. Discover how QA teams profile long tasks and main thread bottlenecks.",
         "descriptionId": "Google telah mengganti metrik FID dengan INP. Pelajari bagaimana tim QA melacak task berat dan pembekuan thread utama sebelum berdampak ke pengguna.",
         "category": "Performance & QA",
-        "readTime": "6 min read",
-        "tags": ["web-vitals", "inp", "performance", "frontend"],
+        "readTime": "9 min read",
+        "tags": ["web-vitals", "inp", "performance", "frontend", "qa-guide"],
         "content": """
-<p>In March 2024, Google officially made <strong>Interaction to Next Paint (INP)</strong> a Core Web Vital, replacing the legacy First Input Delay (FID) metric. Unlike FID, which only measured the initial delay of the very first click on page load, INP observes <em>every single interaction</em> throughout the user's entire session and reports the worst 98th-percentile latency.</p>
+<p>In March 2024, Google officially transitioned <strong>Interaction to Next Paint (INP)</strong> into a core ranking factor within the Core Web Vitals standard, permanently retiring the legacy First Input Delay (FID) metric.</p>
 
-<h2>What Causes High INP Latency?</h2>
+<p>For engineering teams, this represents a monumental paradigm shift. While FID only measured the initial delay of the very first click when a page loaded, INP monitors <em>every single user interaction</em> — clicks, taps, keypresses, and modal transitions — throughout the entire lifespan of the browser tab. It measures the total latency from user input to the exact moment the browser paints updated visual pixels on screen.</p>
+
+<h2>The 3 Phases of Every User Interaction</h2>
+<p>When an INP latency spike occurs, the bottleneck lives within one of three sequential phases:</p>
+
+<ol>
+  <li><strong>Input Delay:</strong> The time between when the physical click occurs and when the browser's main thread is finally free to start executing event callbacks. High input delay is usually caused by unrelated long tasks monopolizing the CPU.</li>
+  <li><strong>Processing Time:</strong> The duration required to execute the JavaScript event handler code (such as React state updates, sorting an array of 5,000 items, or calculating cart totals).</li>
+  <li><strong>Presentation Delay:</strong> The time required for the browser engine to perform style recalculation, layout reflow, composite layers, and paint the new frame onto the physical display.</li>
+</ol>
+
+<h2>The Official Google INP Thresholds</h2>
+<p>Google evaluates site responsiveness against strict percentile thresholds (evaluating the 75th percentile of all interactions):</p>
+
 <ul>
-  <li><strong>Long JavaScript Tasks:</strong> Execution blocks exceeding 50ms that monopolize the single-threaded V8 engine.</li>
-  <li><strong>Heavy React Re-renders:</strong> Triggering recursive component subtree reconciliation on simple keyboard inputs.</li>
-  <li><strong>Synchronous Layout Thrashing:</strong> Reading layout properties (e.g., <code>offsetHeight</code>) immediately after mutating the DOM style tree.</li>
+  <li><strong>Good (&lt;= 200 ms):</strong> The interface feels instantaneous and fluid to users.</li>
+  <li><strong>Needs Improvement (200 ms - 500 ms):</strong> Noticeable sluggishness and micro-stuttering occurs during interactions.</li>
+  <li><strong>Poor (&gt; 500 ms):</strong> Severe visual freezes where users repeatedly click buttons because the screen appears dead.</li>
 </ul>
 
-<h2>The 200 Millisecond Threshold</h2>
-<p>Google categorizes INP performance into three tiers:</p>
-<ul>
-  <li><strong>Good:</strong> Below 200 ms.</li>
-  <li><strong>Needs Improvement:</strong> Between 200 ms and 500 ms.</li>
-  <li><strong>Poor:</strong> Above 500 ms (visual freeze apparent to users).</li>
-</ul>
+<h2>The 3 Biggest Culprits Behind Poor INP</h2>
 
-<h2>How BugSnap Helps QA Track INP</h2>
-<p><a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> records real-time Web Vitals and long task execution times directly during manual testing sessions. When an input stutters, the exact millisecond duration and blocking script stack are automatically attached to the capture.</p>
+<h3>1. Long Tasks (&gt; 50ms) on the Main Thread</h3>
+<p>Because JavaScript is single-threaded, any execution block exceeding 50ms blocks the event loop. If a user clicks a dropdown while a background analytics script or a large JSON parser is busy, the user click sits frozen in the event queue.</p>
+
+<h3>2. Synchronous Layout Thrashing</h3>
+<p>Alternating between writing to the DOM and immediately reading computed layout properties (e.g., <code>element.classList.add('active'); const height = element.offsetHeight;</code>) forces the browser to recompute layout synchronously in the middle of a JavaScript execution frame.</p>
+
+<h3>3. Massive Component Re-Render Cascades in React</h3>
+<p>In unoptimized React applications, typing a single letter into a search input field can trigger full-tree re-rendering of hundreds of child components if state is lifted too high without memoization or transition scheduling.</p>
+
+<h2>Defensive Code Pattern: Chunking Tasks with Modern Web APIs</h2>
+<p>To keep the main thread responsive during heavy operations, modern frontend developers use <code>scheduler.yield()</code> or React 18's <code>startTransition</code>:</p>
+
+<pre><code>import { useState, useTransition } from 'react';
+
+export function SearchFilterList({ items }: { items: string[] }) {
+  const [query, setQuery] = useState('');
+  const [filteredItems, setFilteredItems] = useState(items);
+  const [isPending, startTransition] = useTransition();
+
+  function handleInputChange(e: React.ChangeEvent&lt;HTMLInputElement&gt;) {
+    const nextQuery = e.target.value;
+    
+    // 1. Update high-priority input state immediately for instant typing feedback
+    setQuery(nextQuery);
+
+    // 2. Defer heavy filtering calculation so main thread can yield to paint
+    startTransition(() =&gt; {
+      const results = items.filter(item =&gt; 
+        item.toLowerCase().includes(nextQuery.toLowerCase())
+      );
+      setFilteredItems(results);
+    });
+  }
+
+  return (
+    &lt;div&gt;
+      &lt;input value={query} onChange={handleInputChange} placeholder="Search..." /&gt;
+      {isPending &amp;&amp; &lt;span&gt;Filtering list...&lt;/span&gt;}
+      &lt;ul&gt;
+        {filteredItems.map(item =&gt; &lt;li key={item}&gt;{item}&lt;/li&gt;)}
+      &lt;/ul&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+<h2>How BugSnap Helps QA Catch INP Freezes Before Release</h2>
+<p>Rather than requiring developers to comb through gigabytes of Chrome DevTools Performance traces, <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> provides real-time Web Vitals instrumentation directly in exploratory QA captures:</p>
+
+<ul>
+  <li><strong>Instant INP Spike Flagging:</strong> Any interaction exceeding the 200ms benchmark is highlighted with an actionable badge in the bug recording timeline.</li>
+  <li><strong>Long Task Call-Site Correlation:</strong> BugSnap correlates the freeze with the exact JavaScript function and stack trace that monopolized the main thread.</li>
+  <li><strong>Action-Synchronized Video:</strong> Developers can watch the video playback and see the exact millisecond input delay graph side-by-side with the tester's click.</li>
+</ul>
 """.strip(),
         "contentId": """
-<p>Google resmi menjadikan <strong>Interaction to Next Paint (INP)</strong> sebagai metrik utama Core Web Vitals. Berbeda dari FID yang hanya mengukur klik pertama, INP mengukur kelancaran seluruh interaksi selama pengguna berada di halaman.</p>
+<p>Pada Maret 2024, Google secara resmi menetapkan <strong>Interaction to Next Paint (INP)</strong> sebagai metrik utama dalam standar Core Web Vitals dan memensiunkan metrik lama First Input Delay (FID).</p>
 
-<h2>Penyebab Utama Tingginya Latensi INP</h2>
-<p>Tugas JavaScript berat yang berjalan di atas 50ms, re-render React yang berlebihan, dan reflow DOM berantai adalah penyebab utama antarmuka membeku saat diklik.</p>
+<p>Bagi tim rekayasa web, ini adalah perubahan standar yang sangat besar. Jika metrik FID lama hanya mengukur kelancaran klik pertama saat halaman baru dimuat, metrik INP memantau <em>setiap interaksi pengguna</em> — klik tombol, pengetikan keyboard, dan pembukaan modal — selama tab browser dibuka. INP mengukur total latensi dari saat input dilakukan hingga frame visual baru berhasil digambar (paint) di layar.</p>
 
-<p>Melalui rekaman performa otomatis di <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a>, waktu respons UI dan indikator Web Vitals langsung tercatat sehingga performa lambat bisa terdeteksi sejak tahap pengujian internal.</p>
+<h2>3 Tahapan dalam Setiap Interaksi Pengguna</h2>
+<p>Ketika skor INP melonjak tinggi, pembekuan antarmuka terjadi di salah satu dari tiga fase berurutan:</p>
+
+<ol>
+  <li><strong>Input Delay:</strong> Waktu tunggu dari klik fisik hingga main thread browser siap mengeksekusi event handler. Keterlambatan ini biasanya disebabkan oleh tugas berat lain yang sedang memonopoli CPU.</li>
+  <li><strong>Processing Time:</strong> Waktu yang dihabiskan untuk menjalankan baris kode JavaScript (seperti kalkulasi state React atau pengurutan ribuan data).</li>
+  <li><strong>Presentation Delay:</strong> Waktu yang dibutuhkan mesin browser untuk menghitung ulang gaya (style recalculation), tata letak (layout reflow), dan menggambar piksel baru di monitor.</li>
+</ol>
+
+<h2>Batas Standar Resmi Metrik INP dari Google</h2>
+<p>Google menilai performa responsivitas web berdasarkan persentil ke-75 dari seluruh interaksi pengguna:</p>
+
+<ul>
+  <li><strong>Baik (&lt;= 200 ms):</strong> Antarmuka terasa instan, halus, dan responsif.</li>
+  <li><strong>Perlu Perbaikan (200 ms - 500 ms):</strong> Terjadi jeda mikro yang mulai dirasakan pengguna.</li>
+  <li><strong>Buruk (&gt; 500 ms):</strong> Antarmuka membeku parah, sering kali memicu pengguna mengeklik tombol berkali-kali karena dikira rusak.</li>
+</ul>
+
+<h2>3 Penyebab Terbesar Anjloknya Skor INP</h2>
+
+<h3>1. Long Tasks (&gt; 50ms) pada Main Thread</h3>
+<p>Karena JavaScript berjalan pada single-thread, fungsi apa pun yang berjalan lebih dari 50ms akan mengunci event loop. Jika pengguna mengeklik dropdown saat parsing JSON besar sedang berjalan, klik tersebut akan membeku di antrean event.</p>
+
+<h3>2. Layout Thrashing Sinkron</h3>
+<p>Kebiasaan membaca properti geometri DOM tepat setelah mengubah class styling (misal: <code>element.classList.add('open'); const w = element.offsetWidth;</code>) memaksa browser melakukan kalkulasi reflow secara paksa di tengah eksekusi kode.</p>
+
+<h3>3. Re-render React Berantai (Cascading Re-renders)</h3>
+<p>Pada aplikasi React yang belum dioptimalkan, mengetik satu huruf di form pencarian bisa memicu re-render ratusan komponen anak secara rekursif jika state diangkat terlalu tinggi tanpa memoization.</p>
+
+<h2>Pola Kode Modern: Memecah Task dengan useTransition</h2>
+<p>Gunakan fitur <code>startTransition</code> pada React 18 untuk memprioritaskan kelancaran ketikan pengguna di atas kalkulasi daftar data yang berat:</p>
+
+<pre><code>import { useState, useTransition } from 'react';
+
+export function SearchFilterList({ items }: { items: string[] }) {
+  const [query, setQuery] = useState('');
+  const [filteredItems, setFilteredItems] = useState(items);
+  const [isPending, startTransition] = useTransition();
+
+  function handleInputChange(e: React.ChangeEvent&lt;HTMLInputElement&gt;) {
+    const nextQuery = e.target.value;
+    
+    // 1. Update state input prioritas tinggi agar ketikan terasa instan
+    setQuery(nextQuery);
+
+    // 2. Tunda kalkulasi filter berat agar thread utama bisa melakukan render frame
+    startTransition(() =&gt; {
+      const results = items.filter(item =&gt; 
+        item.toLowerCase().includes(nextQuery.toLowerCase())
+      );
+      setFilteredItems(results);
+    });
+  }
+
+  return (
+    &lt;div&gt;
+      &lt;input value={query} onChange={handleInputChange} placeholder="Cari data..." /&gt;
+      {isPending &amp;&amp; &lt;span&gt;Menyaring data...&lt;/span&gt;}
+      &lt;ul&gt;
+        {filteredItems.map(item =&gt; &lt;li key={item}&gt;{item}&lt;/li&gt;)}
+      &lt;/ul&gt;
+    &lt;/div&gt;
+  );
+}</code></pre>
+
+<h2>Mendeteksi Masalah INP Lebih Awal Bersama BugSnap</h2>
+<p>Alih-alih menuntut developer membedah file tracing raksasa di tab Performance Chrome DevTools, <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> secara otomatis memonitor metrik Web Vitals selama sesi pengujian:</p>
+
+<ul>
+  <li><strong>Badge Peringatan INP Otomatis:</strong> Setiap interaksi yang melampaui batas 200ms langsung ditandai dengan badge peringatan pada timeline laporan bug.</li>
+  <li><strong>Korelasi Stack Trace Long Task:</strong> BugSnap mengaitkan momen freeze dengan baris kode JavaScript dan fungsi yang memonopoli main thread.</li>
+  <li><strong>Video yang Tersinkronisasi:</strong> Developer dapat memutar ulang video dan melihat grafik input delay tepat di detik interaksi dilakukan oleh tester.</li>
+</ul>
 """.strip()
     }
 ]

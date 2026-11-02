@@ -1323,8 +1323,8 @@ ${stack}` : body);
           .map((log, srcIdx) => ({ log, srcIdx }))
           .filter((e): e is { log: ActionLog | NavigationLog | ScreenshotLog; srcIdx: number } =>
             e.log.type === "step" || e.log.type === "navigation" || e.log.type === "screenshot")
-          .filter(({ log }) => !isDeadAction(log))
           .map(({ log, srcIdx }) => ({ ...log, srcIdx, message: cleanActionMessage(log.message), count: logCount(log) }))
+          .filter((log) => !isDeadAction(log))
       ),
     [logs]
   );
@@ -2198,7 +2198,7 @@ ${stack}` : body);
             {visibleConsoleLogs.length === 0 ? (
               summary ? (
                 <div className="p-4 space-y-3">
-                  {summary.errors === 0 && summary.warnings === 0 ? (
+                  {(!summary.errors || summary.errors <= 0) && (!summary.warnings || summary.warnings <= 0) ? (
                     <div className="py-10 flex flex-col items-center gap-2 text-center text-xs text-muted">
                       <Icon icon="lucide:check" className="w-8 h-8 text-emerald-500/70" />
                       <p className="font-medium text-emerald-700 dark:text-emerald-400">{t("dt.pageRanClean")}</p>
@@ -2209,13 +2209,13 @@ ${stack}` : body);
                       {/* Summary alert banner */}
                       <div className="flex items-center gap-2.5 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200/80 dark:border-red-800/40 px-3.5 py-2.5 shadow-sm">
                         <div className="w-7 h-7 rounded-lg bg-red-100 dark:bg-red-950/40 border border-red-200 dark:border-red-800/40 flex items-center justify-center shrink-0 text-red-600 dark:text-red-400 text-xs font-bold">
-                          {summary.errors}
+                          {summary.errors || 0}
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="text-xs font-semibold text-red-800 dark:text-red-300 leading-tight">
                             {summary.errors === 1 ? t("dt.consoleErrOne") : t("dt.consoleErr")}
                           </p>
-                          {summary.warnings > 0 && (
+                          {(summary.warnings || 0) > 0 && (
                             <p className="text-[10px] text-amber-700 dark:text-amber-400 font-medium leading-tight mt-0.5">
                               {t("dt.warnSuffix", { n: summary.warnings })}
                             </p>
@@ -2224,11 +2224,13 @@ ${stack}` : body);
                       </div>
 
                       {/* Clean error list */}
-                      <div className="space-y-2 pt-1">
-                        {(summary.topErrors || []).map((msg, i) => (
-                          <FormattedErrorMessage key={i} msg={msg} />
-                        ))}
-                      </div>
+                      {(summary.topErrors || []).length > 0 && (
+                        <div className="space-y-2 pt-1">
+                          {(summary.topErrors || []).map((msg, i) => (
+                            <FormattedErrorMessage key={i} msg={msg} />
+                          ))}
+                        </div>
+                      )}
                     </>
                   )}
                 </div>
@@ -2327,7 +2329,7 @@ ${stack}` : body);
             {networkLogs.length === 0 ? (
               summary ? (
                 <div className="p-4 space-y-3">
-                  {summary.failedRequests === 0 ? (
+                  {(!summary.failedRequests || summary.failedRequests <= 0) ? (
                     <div className="py-10 flex flex-col items-center gap-2 text-center text-xs text-muted">
                       <Icon icon="lucide:check" className="w-8 h-8 text-emerald-500/70" />
                       <p className="font-medium text-emerald-700 dark:text-emerald-400">{t("dt.noFailedRequests")}</p>
@@ -2343,20 +2345,27 @@ ${stack}` : body);
                           {summary.failedRequests === 1 ? t("dt.failedReqOne") : t("dt.failedReq")}
                         </p>
                       </div>
-                      <div className="space-y-1.5 pt-1">
-                        {(summary.failedUrls || []).map((url, i) => (
-                          <div key={i} className="pl-2.5 border-l-2 border-red-200 dark:border-red-800/40 py-0.5">
-                            <p className="text-[11px] font-mono text-red-700 dark:text-red-400 break-all leading-tight">
-                              {url}
-                            </p>
-                          </div>
-                        ))}
-                      </div>
+                      {(summary.failedUrls || []).length > 0 && (
+                        <div className="space-y-1.5 pt-1">
+                          {(summary.failedUrls || []).map((url, i) => (
+                            <div key={i} className="pl-2.5 border-l-2 border-red-200 dark:border-red-800/40 py-0.5">
+                              <p className="text-[11px] font-mono text-red-700 dark:text-red-400 break-all leading-tight">
+                                {url}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </>
                   )}
                 </div>
               ) : (
-                <div className="py-14 text-center text-xs text-muted">{t("dt.noNetworkErrors")}</div>
+                <EmptyLogState
+                  filtered={networkStatusFilter !== "all" || Boolean(logSearch)}
+                  emptyText={t("dt.noNetworkErrors")}
+                  onReset={resetLogFilters}
+                  t={t}
+                />
               )
             ) : visibleGroupedNetworkLogs.length === 0 ? (
                 <EmptyLogState

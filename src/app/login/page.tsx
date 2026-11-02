@@ -41,16 +41,26 @@ export default function LoginPage() {
   const [loadingSession, setLoadingSession] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [redirectPath, setRedirectPath] = useState("/dashboard");
+  const [isFromExtension, setIsFromExtension] = useState(false);
+  const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
     const target = getSafeRedirectPath();
     setRedirectPath(target);
 
-    // Extract any OAuth error passed in query, hash, or nested in redirectTo
+    let fromExt = false;
+    let connectedState = false;
     let hasAuthError = false;
+
     if (typeof window !== "undefined") {
       const params = new URLSearchParams(window.location.search);
       const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      fromExt = params.get("ref") === "extension";
+      connectedState = params.get("connected") === "true";
+      setIsFromExtension(fromExt);
+      setIsConnected(connectedState);
+
+      // Extract any OAuth error passed in query, hash, or nested in redirectTo
       let errDesc = params.get("error_description") || hashParams.get("error_description");
       if (!errDesc) {
         const rawRedirect = params.get("redirectTo");
@@ -70,11 +80,8 @@ export default function LoginPage() {
         hasAuthError = true;
         setError(params.get("error") || hashParams.get("error"));
       }
-    }
 
-    // Check for auto-login token from Extension or auth links
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search);
+      // Check for auto-login token from Extension or auth links
       const token = params.get("token") || params.get("provider_token");
       if (token) {
         setSigningIn(true);
@@ -104,8 +111,32 @@ export default function LoginPage() {
       .getSession()
       .then(({ data }) => {
         setLoadingSession(false);
-        // Do not auto-redirect if an auth error occurred, preventing bounce loops
-        if (data.session?.user && !hasAuthError) window.location.assign(target);
+        // If session exists and no auth error
+        if (data.session?.user && !hasAuthError) {
+          if (typeof window !== "undefined") {
+            window.postMessage(
+              {
+                source: "bugsnap-web",
+                action: "sync_session",
+                user: {
+                  id: data.session.user.id,
+                  email: data.session.user.email,
+                  name: data.session.user.user_metadata?.full_name || "",
+                  avatar: data.session.user.user_metadata?.avatar_url || "",
+                },
+              },
+              window.location.origin
+            );
+          }
+
+          if (fromExt) {
+            setIsConnected(true);
+          } else {
+            setTimeout(() => {
+              window.location.assign(target);
+            }, 50);
+          }
+        }
       })
       .catch(() => setLoadingSession(false));
   }, []);
@@ -114,7 +145,9 @@ export default function LoginPage() {
     setSigningIn(true);
     setError(null);
     try {
-      const target = redirectPath.startsWith("/") ? redirectPath : "/dashboard";
+      const target = isFromExtension
+        ? "/login?ref=extension&connected=true"
+        : (redirectPath.startsWith("/") ? redirectPath : "/dashboard");
       const redirectTo = `${window.location.origin}${target}`;
       const { error: authError } = await supabase.auth.signInWithOAuth({
         provider: "google",
@@ -137,97 +170,86 @@ export default function LoginPage() {
 
   if (loadingSession) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-site-bg">
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-[#0B0F19]">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-6 h-6 border-2 border-accent border-t-transparent rounded-full animate-spin" />
-          <span className="text-xs font-mono text-site-text-2">{t("landing.redirecting")}</span>
+          <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
+          <span className="text-xs font-mono text-slate-400">{t("landing.redirecting")}</span>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="relative min-h-screen bg-site-bg text-site-text font-site flex flex-col justify-between overflow-x-hidden">
-      {/* Subtle Ambient Background Gradients */}
-      <div className="absolute inset-0 bg-[radial-gradient(ellipse_80%_60%_at_50%_-10%,rgba(59,130,246,0.08),transparent)] pointer-events-none" />
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#8080800a_1px,transparent_1px),linear-gradient(to_bottom,#8080800a_1px,transparent_1px)] bg-[size:32px_32px] pointer-events-none" />
+    <div className="relative min-h-screen bg-white dark:bg-[#0B0F19] text-slate-900 dark:text-slate-100 flex flex-col items-center justify-center px-4 py-12 select-none">
+      {/* Subtle compact theme toggle pinned unobtrusively in top corner */}
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
+        <SiteThemeToggle compact />
+      </div>
 
-      {/* Top Bar Navigation */}
-      <header className="relative z-10 w-full border-b border-site-border bg-site-surface/80 backdrop-blur-md">
-        <div className="mx-auto max-w-5xl flex items-center justify-between px-4 sm:px-6 py-3">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/logo-day.svg"
-              alt="BugSnap"
-              className="w-7 h-7 object-contain transition-transform group-hover:scale-105 dark:hidden"
-            />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/logo-dark.svg"
-              alt="BugSnap"
-              className="w-7 h-7 object-contain transition-transform group-hover:scale-105 hidden dark:block"
-            />
-            <span className="text-base font-bold tracking-tight text-site-text">
-              BugSnap
-            </span>
-          </Link>
-
-          <div className="flex items-center gap-2 sm:gap-3">
-            <SiteThemeToggle compact />
-            <Link
-              href="/"
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-site-text-2 hover:text-site-text transition-colors px-2.5 py-1.5 min-h-[44px] rounded-lg hover:bg-site-surface-2 border border-transparent hover:border-site-border touch-manipulation"
-            >
-              <Icon icon="lucide:arrow-left" className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>{t("login.backToHome")}</span>
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      {/* Main Authentication Card */}
-      <main className="relative z-10 flex-1 flex items-center justify-center px-4 sm:px-6 py-10 sm:py-16">
-        <div className="w-full max-w-[420px] min-w-0">
-          <div className="rounded-2xl border border-site-border bg-site-surface/95 backdrop-blur-md shadow-lg shadow-black/5 p-6 sm:p-8 space-y-6">
-            {/* Brand Header */}
-            <div className="flex flex-col items-center text-center">
-              <Link
-                href="/"
-                className="group flex items-center justify-center w-14 h-14 rounded-2xl bg-site-surface-2 border border-site-border shadow-xs mb-4 p-2.5 transition-transform hover:scale-105"
-                title="BugSnap"
-              >
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/logo-day.svg"
-                  alt="BugSnap"
-                  className="w-full h-full object-contain dark:hidden"
-                />
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src="/logo-dark.svg"
-                  alt="BugSnap"
-                  className="w-full h-full object-contain hidden dark:block"
-                />
-              </Link>
-              <h1 className="text-2xl font-bold tracking-tight text-site-text">
-                {t("login.welcomeTitle")}
+      <div className="w-full max-w-[440px] flex flex-col items-center text-center">
+        {isConnected ? (
+          /* Extension Connected State */
+          <div className="w-full flex flex-col items-center text-center space-y-4 py-4">
+            <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center">
+              <Icon icon="lucide:check-circle-2" className="w-9 h-9" aria-hidden="true" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
+                {t("login.extensionConnectedTitle")}
               </h1>
-              <p className="text-xs sm:text-sm text-site-text-2 mt-1.5 leading-relaxed max-w-xs">
-                {t("login.welcomeSubtitle")}
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
+                {t("login.extensionConnectedSubtitle")}
               </p>
             </div>
+            <div className="w-full max-w-sm pt-4">
+              <Link
+                href="/dashboard"
+                className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-all shadow-xs active:scale-[0.99] touch-manipulation"
+              >
+                <span>{t("login.openDashboard")}</span>
+                <Icon icon="lucide:arrow-right" className="w-4 h-4" aria-hidden="true" />
+              </Link>
+            </div>
+          </div>
+        ) : (
+          /* Minimalist Login Screen (100% 1-to-1 Parity with Image #11) */
+          <>
+            {/* Centered Large BugSnap Logo */}
+            <Link href="/" className="inline-block transition-transform hover:scale-105" title="BugSnap">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/logo-day.svg"
+                alt="BugSnap"
+                className="w-20 h-20 sm:w-24 sm:h-24 object-contain dark:hidden"
+              />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="/logo-dark.svg"
+                alt="BugSnap"
+                className="w-20 h-20 sm:w-24 sm:h-24 object-contain hidden dark:block"
+              />
+            </Link>
+
+            {/* Title */}
+            <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-900 dark:text-white mt-6 sm:mt-7">
+              {t("login.title")}
+            </h1>
+
+            {/* Subtitle */}
+            <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 mt-2.5 max-w-sm sm:max-w-md leading-relaxed">
+              {t("login.subtitle")}
+            </p>
 
             {/* Google Single Sign-On Button */}
-            <div className="space-y-3">
+            <div className="w-full max-w-sm sm:max-w-md mt-8">
               <button
                 type="button"
                 onClick={signInWithGoogle}
                 disabled={signingIn}
-                className="w-full inline-flex items-center justify-center gap-3 px-4 py-3 min-h-[44px] rounded-xl bg-site-surface border border-site-border hover:border-site-text-2/40 hover:bg-site-surface-2 text-site-text text-sm font-semibold transition-all duration-150 shadow-xs hover:shadow active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer touch-manipulation"
+                className="w-full inline-flex items-center justify-center gap-3 px-5 py-3.5 min-h-[48px] rounded-xl bg-slate-50 dark:bg-slate-900/70 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800/80 hover:border-slate-300 dark:hover:border-slate-700 text-slate-800 dark:text-slate-100 text-sm sm:text-base font-semibold transition-all duration-150 shadow-2xs hover:shadow-xs active:scale-[0.99] disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer touch-manipulation"
               >
                 {signingIn ? (
-                  <div className="w-5 h-5 border-2 border-accent border-t-transparent rounded-full animate-spin shrink-0" />
+                  <div className="w-5 h-5 border-2 border-blue-600 border-t-transparent rounded-full animate-spin shrink-0" />
                 ) : (
                   <GoogleLogo className="w-5 h-5 shrink-0" />
                 )}
@@ -236,7 +258,7 @@ export default function LoginPage() {
 
               {error && (
                 <div
-                  className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs text-center font-medium leading-relaxed"
+                  className="mt-3 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 text-xs text-center font-medium leading-relaxed"
                   role="alert"
                 >
                   {error}
@@ -244,89 +266,21 @@ export default function LoginPage() {
               )}
             </div>
 
-            {/* Secure Note & Terms */}
-            <p className="text-[11px] text-site-text-2 text-center leading-relaxed px-1">
-              {t("login.secureNote")}
+            {/* Terms of Service & Privacy Policy Agreement Text */}
+            <p className="text-xs text-slate-400 dark:text-slate-500 mt-10 max-w-xs sm:max-w-sm leading-relaxed">
+              {t("login.termsAgreement")}{" "}
+              <Link href="/terms" className="underline hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                {t("login.termsLink")}
+              </Link>{" "}
+              {t("login.and")}{" "}
+              <Link href="/privacy" className="underline hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                {t("login.privacyLink")}
+              </Link>
+              .
             </p>
-
-            {/* Feature Trust Strip */}
-            <div className="pt-4 border-t border-site-border-subtle">
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <div className="p-2.5 rounded-xl bg-site-surface-2/70 border border-site-border-subtle flex sm:flex-col items-center justify-between sm:justify-center gap-1.5 text-center min-w-0">
-                  <div className="w-6 h-6 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
-                    <Icon icon="lucide:shield-check" className="w-3.5 h-3.5" aria-hidden="true" />
-                  </div>
-                  <span className="text-[10px] font-bold text-site-text leading-tight truncate sm:max-w-full">
-                    {t("login.badgeData")}
-                  </span>
-                </div>
-
-                <div className="p-2.5 rounded-xl bg-site-surface-2/70 border border-site-border-subtle flex sm:flex-col items-center justify-between sm:justify-center gap-1.5 text-center min-w-0">
-                  <div className="w-6 h-6 rounded-lg bg-accent/10 text-accent flex items-center justify-center shrink-0">
-                    <Icon icon="lucide:terminal" className="w-3.5 h-3.5" aria-hidden="true" />
-                  </div>
-                  <span className="text-[10px] font-bold text-site-text leading-tight truncate sm:max-w-full">
-                    {t("login.badgeDevTools")}
-                  </span>
-                </div>
-
-                <div className="p-2.5 rounded-xl bg-site-surface-2/70 border border-site-border-subtle flex sm:flex-col items-center justify-between sm:justify-center gap-1.5 text-center min-w-0">
-                  <div className="w-6 h-6 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-                    <Icon icon="lucide:hard-drive" className="w-3.5 h-3.5" aria-hidden="true" />
-                  </div>
-                  <span className="text-[10px] font-bold text-site-text leading-tight truncate sm:max-w-full">
-                    {t("login.badgeDrive")}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </main>
-
-      <footer className="relative z-10 w-full border-t border-site-border bg-site-surface/80 backdrop-blur-md py-4 px-4 sm:px-6">
-        <div className="mx-auto max-w-5xl flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-site-text-2">
-          <p>© {new Date().getFullYear()} BugSnap by Akusara Digital. All rights reserved.</p>
-          <div className="flex flex-wrap items-center justify-center gap-4">
-            <Link
-              href="/privacy"
-              className="hover:text-site-text transition-colors"
-            >
-              {t("login.privacy")}
-            </Link>
-            <Link
-              href="/terms"
-              className="hover:text-site-text transition-colors"
-            >
-              {t("login.terms")}
-            </Link>
-            <Link
-              href="/terms#refund"
-              className="hover:text-site-text transition-colors"
-            >
-              Refund Policy
-            </Link>
-            <Link
-              href="/contact#complaint"
-              className="hover:text-site-text transition-colors text-emerald-600 dark:text-emerald-400 font-medium"
-            >
-              Pengaduan Konsumen
-            </Link>
-            <Link
-              href="/help"
-              className="hover:text-site-text transition-colors"
-            >
-              {t("login.help")}
-            </Link>
-            <Link
-              href="/"
-              className="hover:text-site-text transition-colors"
-            >
-              {t("login.backToHome")}
-            </Link>
-          </div>
-        </div>
-      </footer>
+          </>
+        )}
+      </div>
     </div>
   );
 }

@@ -1,14 +1,14 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useState } from "react";
-import Link from "next/link";
+// import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
 import { useTheme, type Theme } from "@/components/ThemeProvider";
 import { hasBranding, normalizePlan, seatLimit, tierLabel, type Plan } from "@/lib/tiers";
-import { openPaddleCustomerPortal, getEffectivePlan } from "@/lib/paddle";
+import { getEffectivePlan } from "@/lib/paddle";
 import { pickAvatar, isRealAvatar, initialOf } from "@/lib/avatar";
 import { Dropdown } from "@/components/Dropdown";
 import { ShimmerLockBadge } from "@/components/ShimmerLockBadge";
@@ -29,7 +29,8 @@ function SettingsContent() {
 
   const wsParam = searchParams.get("ws") || "";
   const rawTab = searchParams.get("tab") as string | null;
-  const activeTab: Tab = rawTab === "webhooks" ? "integrations" : rawTab && ["general","members","billing","integrations","account","notifications"].includes(rawTab) ? (rawTab as Tab) : "general";
+  // Billing tab temporarily excluded while payment is not ready
+  const activeTab: Tab = rawTab === "webhooks" ? "integrations" : rawTab && ["general","members","integrations","account","notifications"].includes(rawTab) ? (rawTab as Tab) : "general";
 
   useEffect(() => {
     // no-op: referrer-based navigation handled inline in the button
@@ -56,8 +57,8 @@ function SettingsContent() {
   const [accountDeleting, setAccountDeleting] = useState(false);
   const [deleteAccountModalOpen, setDeleteAccountModalOpen] = useState(false);
   const [userPlan, setUserPlan] = useState<Plan>("free");
-  const [trialInfo, setTrialInfo] = useState<{ isTrial: boolean; trialDaysLeft: number }>({ isTrial: false, trialDaysLeft: 0 });
-  const [checkoutStatus, setCheckoutStatus] = useState<string | null>(null);
+  // const [trialInfo, setTrialInfo] = useState<{ isTrial: boolean; trialDaysLeft: number }>({ isTrial: false, trialDaysLeft: 0 });
+  // const [checkoutStatus, setCheckoutStatus] = useState<string | null>(null);
   const [userEmail, setUserEmail] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -153,9 +154,9 @@ function SettingsContent() {
         const { data: row } = await supabase.from("users").select("plan, created_at, checkout_status, avatar_url, full_name, job_role, notification_prefs").ilike("email", u.email).maybeSingle();
         if (cancelled) return;
         if (row?.plan) plan = normalizePlan(row.plan);
-        if (row?.checkout_status) setCheckoutStatus(row.checkout_status);
+        // if (row?.checkout_status) setCheckoutStatus(row.checkout_status);
         const effective = getEffectivePlan(plan, row?.created_at);
-        setTrialInfo({ isTrial: effective.isTrial, trialDaysLeft: effective.trialDaysLeft });
+        // setTrialInfo({ isTrial: effective.isTrial, trialDaysLeft: effective.trialDaysLeft });
         if (effective.isTrial && plan === "free") {
           plan = "pro";
         }
@@ -866,7 +867,8 @@ function SettingsContent() {
             <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-wider text-muted">{t("settings.groupWorkspace")}</p>
             {navItem("general", t(TAB_TITLES.general.title), <Icon icon="lucide:settings" className="w-4 h-4 shrink-0" aria-hidden="true" />)}
             {navItem("members", t(TAB_TITLES.members.title), <Icon icon="lucide:users" className="w-4 h-4 shrink-0" aria-hidden="true" />)}
-            {navItem("billing", t(TAB_TITLES.billing.title), <Icon icon="lucide:credit-card" className="w-4 h-4 shrink-0" aria-hidden="true" />)}
+            {/* Payment UI temporarily commented out until ready: */}
+            {/* {navItem("billing", t(TAB_TITLES.billing.title), <Icon icon="lucide:credit-card" className="w-4 h-4 shrink-0" aria-hidden="true" />)} */}
           </div>
 
           <div className="space-y-1">
@@ -915,7 +917,7 @@ function SettingsContent() {
             {[
               { id: "general" },
               { id: "members" },
-              { id: "billing" },
+              // { id: "billing" }, /* Payment UI temporarily commented out until ready */
               { id: "integrations" },
               { id: "account" },
               { id: "notifications" },
@@ -1456,7 +1458,8 @@ function SettingsContent() {
           </div>
         )}
 
-        {/* ── Billing ────────────────────────────────────────────────────── */}
+        {/* ── Billing (temporarily commented out until payment is ready) ── */}
+        {/*
         {activeTab === "billing" && (
           <div className="space-y-6">
             {checkoutStatus === "past_due" && (
@@ -1526,7 +1529,6 @@ function SettingsContent() {
               )}
             </div>
 
-            {/* Customer Portal Management */}
             <div className="rounded-xl border border-border bg-subtle p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-xs">
               <div>
                 <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
@@ -1580,6 +1582,7 @@ function SettingsContent() {
             </div>
           </div>
         )}
+        */}
 
         {/* ── Integrations ───────────────────────────────────────────────── */}
         {activeTab === "integrations" && (
@@ -1962,6 +1965,7 @@ function SettingsContent() {
                 <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">{t("settings.plan")}</label>
                 <div className="flex items-center gap-2">
                   <span className="text-sm font-medium text-foreground capitalize">{tierLabel(userPlan)}</span>
+                  {/* Payment / Upgrade UI temporarily commented out until ready:
                   {userPlan === "free" && (
                     <Link
                       href="/upgrade"
@@ -1970,6 +1974,7 @@ function SettingsContent() {
                       {t("settings.upgrade")}
                     </Link>
                   )}
+                  */}
                 </div>
               </div>
             </div>
@@ -2348,7 +2353,16 @@ function SettingsContent() {
 
 export default function SettingsPage() {
   return (
-    <Suspense fallback={<div className="p-8 text-sm text-muted">Loading settings…</div>}>
+    <Suspense
+      fallback={
+        <div className="p-8 sm:p-12 max-w-5xl mx-auto flex items-center justify-center min-h-[300px]" role="status" aria-label="Loading settings">
+          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-xl bg-subtle border border-border text-xs text-muted shadow-xs">
+            <Icon icon="lucide:loader-2" className="w-4 h-4 animate-spin text-[#6B9A35] dark:text-[#A8D666] shrink-0" aria-hidden="true" />
+            <span className="font-medium">Loading settings…</span>
+          </div>
+        </div>
+      }
+    >
       <SettingsContent />
     </Suspense>
   );

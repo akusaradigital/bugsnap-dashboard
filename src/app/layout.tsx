@@ -3,6 +3,7 @@ import "./globals.css";
 import { I18nProvider } from "@/components/I18nProvider";
 import { ToastProvider } from "@/components/Toast";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { ExtensionSyncBridge } from "@/components/ExtensionSyncBridge";
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://bugsnap.akusaraproject.my.id";
 
@@ -197,7 +198,10 @@ export default function RootLayout({
       <body className="antialiased">
         <I18nProvider>
           <ThemeProvider>
-            <ToastProvider>{children}</ToastProvider>
+            <ToastProvider>
+              <ExtensionSyncBridge />
+              {children}
+            </ToastProvider>
           </ThemeProvider>
         </I18nProvider>
       </body>

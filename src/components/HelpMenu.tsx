@@ -207,7 +207,7 @@ export default function HelpMenu({ className = "" }: HelpMenuProps) {
             <span className="truncate flex-1">{t("helpMenu.systemStatus")}</span>
           </Link>
 
-          {/* 7. Pricing */}
+          {/* 7. Pricing - temporarily commented out until payment is ready:
           <Link
             href="/pricing"
             role="menuitem"
@@ -221,6 +221,7 @@ export default function HelpMenu({ className = "" }: HelpMenuProps) {
             />
             <span className="truncate flex-1">{t("helpMenu.pricing")}</span>
           </Link>
+          */}
 
           {/* 8. Blog */}
           <Link

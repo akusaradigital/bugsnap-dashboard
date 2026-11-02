@@ -81,6 +81,8 @@ jobs:
 
       - name: Lighthouse CI Summary
         run: node scripts/lighthouse-ci.mjs
+        env:
+          BASE_URL: http://127.0.0.1:3000
 
       - name: Auto-tag Release
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'

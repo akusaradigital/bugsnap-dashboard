@@ -59,7 +59,16 @@ function getOsIcon(name: string): string {
 
 export default function DashboardAnalyticsPage() {
   return (
-    <Suspense fallback={<div className="p-12 text-center text-sm text-muted animate-pulse">···</div>}>
+    <Suspense
+      fallback={
+        <div className="p-8 sm:p-12 max-w-6xl mx-auto flex flex-col items-center justify-center gap-3 min-h-[300px]" role="status" aria-label="Loading dashboard">
+          <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-xl bg-subtle border border-border text-xs text-muted shadow-xs">
+            <Icon icon="lucide:loader-2" className="w-4 h-4 animate-spin text-[#6B9A35] dark:text-[#A8D666] shrink-0" aria-hidden="true" />
+            <span className="font-medium">Loading dashboard…</span>
+          </div>
+        </div>
+      }
+    >
       <DashboardContent />
     </Suspense>
   );
@@ -326,7 +335,11 @@ function DashboardContent() {
 
   if (loading) {
     return (
-      <div className="p-4 sm:p-8 max-w-6xl mx-auto space-y-6 min-w-0 w-full overflow-x-hidden">
+      <div className="p-4 sm:p-8 max-w-6xl mx-auto space-y-6 min-w-0 w-full overflow-x-hidden" role="status" aria-label={locale === "id" ? "Memuat analitik..." : "Loading analytics..."}>
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#89BD49]/10 border border-[#89BD49]/20 text-xs text-[#46741A] dark:text-[#A8D666] font-medium">
+          <Icon icon="lucide:loader-2" className="w-3.5 h-3.5 animate-spin shrink-0 text-[#6B9A35] dark:text-[#A8D666]" aria-hidden="true" />
+          <span>{locale === "id" ? "Memuat analitik..." : "Loading analytics..."}</span>
+        </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="rounded-2xl border border-border bg-subtle p-5 animate-pulse flex flex-col gap-3">

@@ -442,13 +442,16 @@ export function PricingToggle() {
                       href={tier.href}
                       target={tier.isExternal ? "_blank" : undefined}
                       rel={tier.isExternal ? "noopener noreferrer" : undefined}
-                      className={`w-full py-2.5 px-4 min-h-[44px] flex items-center justify-center rounded-xl text-xs font-bold text-center transition-all cursor-pointer shadow-xs touch-manipulation ${
+                      className={`w-full py-2.5 px-4 min-h-[44px] flex items-center justify-center gap-2 rounded-xl text-xs font-bold text-center transition-all cursor-pointer shadow-xs touch-manipulation ${
                         tier.popular
-                          ? "bg-[#89BD49] hover:bg-[#78a83f] text-white shadow-sm"
+                          ? "bg-[#89BD49] hover:bg-[#78a83f] text-slate-900 shadow-sm"
                           : "border border-site-border bg-site-surface-2 hover:bg-site-surface text-site-text"
                       }`}
                     >
-                      {tier.cta}
+                      {tier.id === "free" && (
+                        <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
+                      )}
+                      <span>{tier.cta}</span>
                     </a>
 
                     <a
@@ -634,9 +637,10 @@ export function PricingToggle() {
               href={CHROME_STORE_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-5 py-2.5 rounded-xl bg-[#89BD49] hover:bg-[#78a83f] text-white text-xs font-bold transition-all shadow-xs"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#89BD49] hover:bg-[#78a83f] text-slate-900 text-xs font-bold transition-all shadow-xs"
             >
-              {t("pricing.bottomCtaBtn")}
+              <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
+              <span>{t("pricing.bottomCtaBtn")}</span>
             </a>
             <Link
               href="/contact"

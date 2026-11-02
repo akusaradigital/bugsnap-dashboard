@@ -128,10 +128,6 @@ export default function CaptureFooter({ className = "" }: { className?: string }
             </div>
             <div className="text-[10px] text-slate-500 dark:text-zinc-400 flex items-center gap-2">
               <span>GDPR &amp; Global Privacy Standards</span>
-              <span>•</span>
-              <Link href="/contact#complaint" className="text-accent hover:underline">
-                {t("footer.consumerComplaints")}
-              </Link>
             </div>
           </div>
         </div>
@@ -189,6 +185,7 @@ export default function CaptureFooter({ className = "" }: { className?: string }
               >
                 {t("footer.howItWorks")}
               </Link>
+              {/* Payment UI temporarily commented out until ready:
               <Link
                 href="/pricing"
                 target="_blank"
@@ -197,6 +194,7 @@ export default function CaptureFooter({ className = "" }: { className?: string }
               >
                 {t("footer.pricing")}
               </Link>
+              */}
               <Link
                 href="/compare"
                 target="_blank"
@@ -253,7 +251,7 @@ export default function CaptureFooter({ className = "" }: { className?: string }
               </Link>
             </div>
 
-            {/* Legal & Compliance (Perlindungan Konsumen) */}
+            {/* Legal & Compliance */}
             <div className="flex flex-col gap-1.5 sm:gap-2 text-left min-w-0">
               <span className="text-[11px] sm:text-xs font-bold text-slate-900 dark:text-zinc-200 tracking-tight">{t("footer.legal")}</span>
               <Link
@@ -271,22 +269,6 @@ export default function CaptureFooter({ className = "" }: { className?: string }
                 className="text-[11px] sm:text-xs text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white transition-colors py-0.5"
               >
                 {t("footer.privacy")}
-              </Link>
-              <Link
-                href="/terms#refund"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[11px] sm:text-xs text-accent hover:underline transition-colors py-0.5 font-medium"
-              >
-                {t("footer.refundPolicy")}
-              </Link>
-              <Link
-                href="/terms#consumer-protection"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[11px] sm:text-xs text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white transition-colors py-0.5"
-              >
-                {t("footer.consumerProtection")}
               </Link>
               <Link
                 href="/security"
@@ -316,14 +298,6 @@ export default function CaptureFooter({ className = "" }: { className?: string }
                 className="text-[11px] sm:text-xs text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white transition-colors py-0.5"
               >
                 {t("footer.support")}
-              </Link>
-              <Link
-                href="/contact#complaint"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[11px] sm:text-xs text-emerald-600 dark:text-emerald-400 hover:underline transition-colors py-0.5 font-medium"
-              >
-                {t("footer.consumerComplaints")}
               </Link>
             </div>
           </div>

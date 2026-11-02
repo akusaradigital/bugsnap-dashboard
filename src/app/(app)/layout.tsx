@@ -143,6 +143,7 @@ export default function DashboardLayout({
   const [renameFolderModalOpen, setRenameFolderModalOpen] = useState(false);
   const [folderToRename, setFolderToRename] = useState<string | null>(null);
   const [renameFolderNameInput, setRenameFolderNameInput] = useState("");
+  const [renameFolderError, setRenameFolderError] = useState<string | null>(null);
   
   const [deleteFolderModalOpen, setDeleteFolderModalOpen] = useState(false);
   const [folderToDelete, setFolderToDelete] = useState<string | null>(null);
@@ -174,7 +175,8 @@ export default function DashboardLayout({
     user: null | { id: string; email: string; name: string; avatar: string; plan: Plan };
     suspended?: boolean;
   }>({ loading: true, user: null });
-  const [billingModalOpen, setBillingModalOpen] = useState(false);
+  // Payment / billing UI temporarily disabled:
+  // const [billingModalOpen, setBillingModalOpen] = useState(false);
   const [notifOpen, setNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState<Array<{
     comment_id: string; capture_id: string; capture_title: string;
@@ -385,6 +387,9 @@ export default function DashboardLayout({
       if (!active) return;
       if (event === "SIGNED_OUT") {
         try {
+          if (typeof window !== "undefined") {
+            window.postMessage({ source: "bugsnap-web", action: "sync_logout" }, window.location.origin);
+          }
           localStorage.removeItem("BugSnap_notif_last_seen");
           localStorage.removeItem("BugSnap_notif_read_ids");
           localStorage.removeItem("BugSnap_promo_dismissed");
@@ -755,7 +760,20 @@ export default function DashboardLayout({
   const activeMembers = members[activeWs?.id ?? ""] ?? [];
 
   const handleCreateFolder = async (name: string, parentId?: string | null) => {
-    if (!name || !activeWsId || creatingFolder) return;
+    const trimmed = name.trim();
+    if (!trimmed || !activeWsId || creatingFolder) return;
+
+    // Check duplicate folder name (case-insensitive)
+    const isDuplicate =
+      folderItems.some((f) => f.name.trim().toLowerCase() === trimmed.toLowerCase()) ||
+      folders.some((f) => f.trim().toLowerCase() === trimmed.toLowerCase());
+    if (isDuplicate) {
+      const errMsg = t("layout.errFolderExists");
+      setCreateFolderError(errMsg);
+      showToast(errMsg, "error");
+      return;
+    }
+
     setCreatingFolder(true);
     setCreateFolderError(null);
     try {
@@ -766,7 +784,7 @@ export default function DashboardLayout({
         parent_id?: string | null;
       } = {
         workspace_id: activeWsId,
-        name: name.trim(),
+        name: trimmed,
       };
       if (targetParent) {
         insertPayload.parent_id = targetParent;
@@ -777,7 +795,7 @@ export default function DashboardLayout({
         .select("id, name, is_default, sort_order, color, parent_id")
         .single();
       if (error) throw error;
-      setFolders((prev) => Array.from(new Set([...prev, name.trim()])).sort());
+      setFolders((prev) => Array.from(new Set([...prev, trimmed])).sort());
       if (data) {
         setFolderItems((prev) => [
           ...prev,
@@ -796,7 +814,7 @@ export default function DashboardLayout({
       setNewFolderName("");
       setParentFolderId(null);
       setCreateFolderModalOpen(false);
-      showToast(`Folder "${name.trim()}" created`, "success");
+      showToast(`Folder "${trimmed}" created`, "success");
     } catch (err) {
       console.warn("Failed to create folder:", err);
       setCreateFolderError("Could not create folder. Maybe it already exists?");
@@ -905,6 +923,7 @@ export default function DashboardLayout({
   const handleRenameFolder = (currentName: string) => {
     setFolderToRename(currentName);
     setRenameFolderNameInput(currentName);
+    setRenameFolderError(null);
     setRenameFolderModalOpen(true);
   };
 
@@ -913,6 +932,25 @@ export default function DashboardLayout({
     const newName = renameFolderNameInput.trim();
     if (!newName || newName === folderToRename) {
       setRenameFolderModalOpen(false);
+      return;
+    }
+
+    // Check duplicate folder name (case-insensitive, exclude current folder)
+    const isDuplicate =
+      folderItems.some(
+        (f) =>
+          f.name.trim().toLowerCase() === newName.toLowerCase() &&
+          f.name.trim().toLowerCase() !== folderToRename.trim().toLowerCase()
+      ) ||
+      folders.some(
+        (f) =>
+          f.trim().toLowerCase() === newName.toLowerCase() &&
+          f.trim().toLowerCase() !== folderToRename.trim().toLowerCase()
+      );
+    if (isDuplicate) {
+      const errMsg = t("layout.errFolderExists");
+      setRenameFolderError(errMsg);
+      showToast(errMsg, "error");
       return;
     }
 
@@ -942,7 +980,7 @@ export default function DashboardLayout({
         }
         return next;
       });
-      
+
       // Redirect if current folder was active
       const url = new URL(window.location.href);
       if (url.searchParams.get("folder") === folderToRename) {
@@ -952,7 +990,7 @@ export default function DashboardLayout({
       showToast("Folder renamed", "success");
     } catch (err) {
       console.warn("Failed to rename folder:", err);
-        showToast(t("layout.errRenameFolder"), "error");
+      showToast(t("layout.errRenameFolder"), "error");
     }
   };
 
@@ -1665,6 +1703,9 @@ export default function DashboardLayout({
                 <button
                   onClick={async () => {
                     try {
+                      if (typeof window !== "undefined") {
+                        window.postMessage({ source: "bugsnap-web", action: "sync_logout" }, window.location.origin);
+                      }
                       localStorage.removeItem("BugSnap_notif_last_seen");
                       localStorage.removeItem("BugSnap_notif_read_ids");
                       localStorage.removeItem("BugSnap_promo_dismissed");
@@ -1866,8 +1907,7 @@ export default function DashboardLayout({
         </div>
       )}
 
-      {/* Upgrade CTA - read-only; upgrades activate via the Stripe webhook
-          (checkout.session.completed → users.plan). No client-side plan flip. */}
+      {/* Upgrade CTA - temporarily commented out until payment is ready:
       {billingModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setBillingModalOpen(false)} />
@@ -1890,6 +1930,7 @@ export default function DashboardLayout({
           </div>
         </div>
       )}
+      */}
 
       {/* Create Project Modal */}
       {createProjectModalOpen && (
@@ -1998,7 +2039,10 @@ export default function DashboardLayout({
               <input
                 type="text"
                 value={newFolderName}
-                onChange={(e) => setNewFolderName(e.target.value)}
+                onChange={(e) => {
+                  setNewFolderName(e.target.value);
+                  setCreateFolderError(null);
+                }}
                 placeholder="e.g. Eyden - Quaker"
                 className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#89BD49] bg-subtle text-foreground placeholder:text-muted"
                 autoFocus
@@ -2065,7 +2109,10 @@ export default function DashboardLayout({
               <input
                 type="text"
                 value={renameFolderNameInput}
-                onChange={(e) => setRenameFolderNameInput(e.target.value)}
+                onChange={(e) => {
+                  setRenameFolderNameInput(e.target.value);
+                  setRenameFolderError(null);
+                }}
                 placeholder="e.g. Eyden - Quaker"
                 className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#89BD49] bg-subtle text-foreground placeholder:text-muted"
                 autoFocus
@@ -2075,6 +2122,9 @@ export default function DashboardLayout({
                   }
                 }}
               />
+              {renameFolderError && (
+                <p className="text-xs text-red-600 dark:text-red-400 mt-1.5">{renameFolderError}</p>
+              )}
             </div>
             <div className="flex items-center justify-end gap-3 mt-6">
               <button

@@ -44,6 +44,14 @@ export async function GET(request: Request) {
       .limit(limit);
     if (status) query = query.eq("status", status);
 
+    const searchFilter = url.searchParams.get("query")?.trim();
+    if (searchFilter) {
+      const sanitized = searchFilter.replace(/[%_,()]/g, " ").trim();
+      if (sanitized) {
+        query = query.or(`title.ilike.%${sanitized}%,description.ilike.%${sanitized}%,site_url.ilike.%${sanitized}%`);
+      }
+    }
+
     const { data, error } = await query;
     if (error) {
       return NextResponse.json({ error: error.message }, { status: 500 });

@@ -319,3 +319,49 @@ test("dedupeNetworkLogs merges dual-source webRequest + fetch observations witho
   assert.equal(deduped[1].url, "https://api.example.com/v1/user");
 });
 
+// --- summary clean-state evaluation (DevToolsPanel summary checkmarks) ---------
+test("summary clean state handles falsy, 0, undefined, null, or negative error counts", () => {
+  const isNetworkClean = (summary) => !summary.failedRequests || summary.failedRequests <= 0;
+  const isConsoleClean = (summary) =>
+    (!summary.errors || summary.errors <= 0) && (!summary.warnings || summary.warnings <= 0);
+
+  // Network tab clean conditions
+  assert.equal(isNetworkClean({ failedRequests: 0 }), true);
+  assert.equal(isNetworkClean({ failedRequests: undefined }), true);
+  assert.equal(isNetworkClean({ failedRequests: null }), true);
+  assert.equal(isNetworkClean({}), true);
+  assert.equal(isNetworkClean({ failedRequests: -1 }), true);
+  assert.equal(isNetworkClean({ failedRequests: 1 }), false);
+  assert.equal(isNetworkClean({ failedRequests: 5, failedUrls: ["/api/bad"] }), false);
+
+  // Console tab clean conditions
+  assert.equal(isConsoleClean({ errors: 0, warnings: 0 }), true);
+  assert.equal(isConsoleClean({ errors: undefined, warnings: undefined }), true);
+  assert.equal(isConsoleClean({ errors: null, warnings: 0 }), true);
+  assert.equal(isConsoleClean({}), true);
+  assert.equal(isConsoleClean({ errors: 1, warnings: 0 }), false);
+  assert.equal(isConsoleClean({ errors: 0, warnings: 2 }), false);
+});
+
+test("allActionLogs maps cleanActionMessage before isDeadAction to prune styled layout elements", () => {
+  const clean = (message) => {
+    let text = (message || "").trim();
+    if (!text) return "";
+    text = text.replace(/\s*\([^)]*[\.>:>#][^)]*\)$/, "");
+    const clickedOnMatch = text.match(/^Clicked on ([a-z0-9_-]+)\.[a-z0-9_\.:-]+/i);
+    if (clickedOnMatch) return `Clicked on ${clickedOnMatch[1]}`;
+    return text;
+  };
+  const isDead = (msg) => /^(clicked|click)(\s+on)?\s+(div|span|section|main)$/i.test(msg);
+
+  const raw = { type: "step", message: "Clicked on div.p-4.flex.gap-2.border-border" };
+
+  // Before cleaning, raw CSS class selector bypasses isDeadAction regex
+  assert.equal(isDead(raw.message), false);
+
+  // After mapping through cleanActionMessage, it correctly identifies as dead action
+  const cleaned = clean(raw.message);
+  assert.equal(cleaned, "Clicked on div");
+  assert.equal(isDead(cleaned), true);
+});
+

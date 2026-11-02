@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { useT } from "@/components/I18nProvider";
 import { SiteNavbar } from "@/components/site/SiteNavbar";
 import { SiteFooter } from "@/components/site/SiteFooter";
@@ -13,16 +14,8 @@ import {
   PlaywrightExportCard,
 } from "@/components/site/ProductMockups";
 import {
-  IconArrowDown,
-  IconChevronDown,
   IconSquare,
   IconArrowRight,
-  IconBug,
-  IconCamera,
-  IconTerminal2,
-  IconFolder,
-  IconShare,
-  IconBolt,
   IconCheck,
   IconX,
 } from "@/components/site/TablerIcons";
@@ -123,10 +116,7 @@ const CHROME_STORE_URL =
 export default function LandingPage() {
   const { t } = useT();
   const [autoLoggingIn, setAutoLoggingIn] = useState(false);
-  const [activeFaqCategory, setActiveFaqCategory] = useState<
-    "privacy" | "devtools" | "integrations"
-  >("privacy");
-  const [expandedFaqIndex, setExpandedFaqIndex] = useState<number | null>(null);
+  const [expandedFaqIndex, setExpandedFaqIndex] = useState<number | null>(1);
 
   // Preserve critical Extension token auto-login workflow
   useEffect(() => {
@@ -159,166 +149,76 @@ export default function LandingPage() {
   const faqItems = [
     {
       id: 1,
-      q: "landing.faq1q",
-      a: "landing.faq1a",
-      category: "devtools" as const,
+      q: "site.faq.q1",
+      a: "site.faq.a1",
     },
     {
       id: 2,
-      q: "landing.faq2q",
-      a: "landing.faq2a",
-      category: "privacy" as const,
-    },
-    {
-      id: 4,
-      q: "landing.faq4q",
-      a: "landing.faq4a",
-      category: "integrations" as const,
-    },
-    {
-      id: 10,
-      q: "landing.faq10q",
-      a: "landing.faq10a",
-      category: "devtools" as const,
+      q: "site.faq.q2",
+      a: "site.faq.a2",
     },
     {
       id: 3,
-      q: "landing.faq3q",
-      a: "landing.faq3a",
-      category: "privacy" as const,
+      q: "site.faq.q3",
+      a: "site.faq.a3",
     },
     {
-      id: 6,
-      q: "landing.faq6q",
-      a: "landing.faq6a",
-      category: "integrations" as const,
-    },
-    {
-      id: 11,
-      q: "landing.faq11q",
-      a: "landing.faq11a",
-      category: "devtools" as const,
+      id: 4,
+      q: "site.faq.q4",
+      a: "site.faq.a4",
     },
     {
       id: 5,
-      q: "landing.faq5q",
-      a: "landing.faq5a",
-      category: "privacy" as const,
+      q: "site.faq.q5",
+      a: "site.faq.a5",
     },
     {
-      id: 15,
-      q: "landing.faq15q",
-      a: "landing.faq15a",
-      category: "integrations" as const,
-    },
-    {
-      id: 12,
-      q: "landing.faq12q",
-      a: "landing.faq12a",
-      category: "devtools" as const,
-    },
-    {
-      id: 7,
-      q: "landing.faq7q",
-      a: "landing.faq7a",
-      category: "privacy" as const,
-    },
-    {
-      id: 16,
-      q: "landing.faq16q",
-      a: "landing.faq16a",
-      category: "integrations" as const,
-    },
-    {
-      id: 13,
-      q: "landing.faq13q",
-      a: "landing.faq13a",
-      category: "devtools" as const,
-    },
-    {
-      id: 8,
-      q: "landing.faq8q",
-      a: "landing.faq8a",
-      category: "privacy" as const,
-    },
-    {
-      id: 17,
-      q: "landing.faq17q",
-      a: "landing.faq17a",
-      category: "integrations" as const,
-    },
-    {
-      id: 14,
-      q: "landing.faq14q",
-      a: "landing.faq14a",
-      category: "devtools" as const,
-    },
-    {
-      id: 9,
-      q: "landing.faq9q",
-      a: "landing.faq9a",
-      category: "privacy" as const,
-    },
-    {
-      id: 18,
-      q: "landing.faq18q",
-      a: "landing.faq18a",
-      category: "integrations" as const,
-    },
-    {
-      id: 19,
-      q: "landing.faq19q",
-      a: "landing.faq19a",
-      category: "devtools" as const,
-    },
-    {
-      id: 20,
-      q: "landing.faq20q",
-      a: "landing.faq20a",
-      category: "devtools" as const,
-    },
-    {
-      id: 21,
-      q: "landing.faq21q",
-      a: "landing.faq21a",
-      category: "integrations" as const,
+      id: 6,
+      q: "site.faq.q6",
+      a: "site.faq.a6",
     },
   ];
 
   const steps = [
     {
-      id: "flow-record",
-      icon: IconBug,
+      num: "01",
+      icon: "lucide:video",
+      badgeColor: "bg-red-50 text-red-600 border border-red-200/60 dark:bg-red-950/40 dark:text-red-400 dark:border-red-900/40",
       title: t("site.flow.step1.title"),
       desc: t("site.flow.step1.desc"),
     },
     {
-      id: "flow-capture",
-      icon: IconCamera,
+      num: "02",
+      icon: "logos:google-drive",
+      badgeColor: "bg-emerald-50 text-emerald-600 border border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/40",
       title: t("site.flow.step2.title"),
       desc: t("site.flow.step2.desc"),
     },
     {
-      id: "flow-diagnose",
-      icon: IconTerminal2,
+      num: "03",
+      icon: "lucide:sparkles",
+      badgeColor: "bg-blue-50 text-blue-600 border border-blue-200/60 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-900/40",
       title: t("site.flow.step3.title"),
       desc: t("site.flow.step3.desc"),
     },
     {
-      id: "flow-store",
-      icon: IconFolder,
+      num: "04",
+      icon: "lucide:link-2",
+      badgeColor: "bg-amber-50 text-amber-600 border border-amber-200/60 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-900/40",
       title: t("site.flow.step4.title"),
       desc: t("site.flow.step4.desc"),
     },
     {
-      id: "flow-share",
-      icon: IconShare,
+      num: "05",
+      icon: "lucide:cpu",
+      badgeColor: "bg-purple-50 text-purple-600 border border-purple-200/60 dark:bg-purple-950/40 dark:text-purple-400 dark:border-purple-900/40",
       title: t("site.flow.step5.title"),
       desc: t("site.flow.step5.desc"),
     },
     {
-      id: "flow-resolve",
-      icon: IconBolt,
+      num: "06",
+      icon: "lucide:check-circle-2",
+      badgeColor: "bg-[#EBF7E3] text-[#3D7A24] border border-[#CFE6BF] dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/40",
       title: t("site.flow.step6.title"),
       desc: t("site.flow.step6.desc"),
     },
@@ -326,24 +226,24 @@ export default function LandingPage() {
 
   const metrics = [
     {
-      val: "100%",
-      label: "DevTools Telemetry",
-      sub: "Console errors, network 4xx/5xx, system specs",
+      val: t("site.bugsnap.metric1.val"),
+      label: t("site.bugsnap.metric1.label"),
+      sub: t("site.bugsnap.metric1.sub"),
     },
     {
-      val: "0 KB",
-      label: "3rd-Party Server Storage",
-      sub: "All files go straight to your Google Drive",
+      val: t("site.bugsnap.metric2.val"),
+      label: t("site.bugsnap.metric2.label"),
+      sub: t("site.bugsnap.metric2.sub"),
     },
     {
-      val: "< 3s",
-      label: "Click to Shareable Link",
-      sub: "Instant interactive bug report URL",
+      val: t("site.bugsnap.metric3.val"),
+      label: t("site.bugsnap.metric3.label"),
+      sub: t("site.bugsnap.metric3.sub"),
     },
     {
-      val: "8+",
-      label: "Native Issue Integrations",
-      sub: "Jira, Linear, GitHub, Slack, and more",
+      val: t("site.bugsnap.metric4.val"),
+      label: t("site.bugsnap.metric4.label"),
+      sub: t("site.bugsnap.metric4.sub"),
     },
   ];
 
@@ -385,66 +285,146 @@ export default function LandingPage() {
 
         <main id="main-content" className="flex-1">
           {/* Hero */}
-          <section className="relative pt-16 sm:pt-24 pb-0 px-4 sm:px-6 overflow-hidden">
-            {/* Ambient theme gradient */}
+          <section className="relative pt-12 sm:pt-20 pb-16 sm:pb-24 px-4 sm:px-6 overflow-hidden">
+            {/* Ambient theme gradient matching reference image */}
             <div
-              className="pointer-events-none absolute inset-0 -z-10"
-              style={{
-                background:
-                  "radial-gradient(ellipse 80% 60% at 50% -20%, var(--glow-primary), transparent 70%), radial-gradient(ellipse 60% 50% at 85% 30%, var(--glow-secondary), transparent 60%)",
-              }}
-            />
+              className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+              aria-hidden="true"
+            >
+              <div
+                className="absolute -top-32 right-0 w-[640px] h-[640px] rounded-full blur-3xl opacity-50 dark:opacity-20"
+                style={{
+                  background:
+                    "radial-gradient(circle, rgba(191, 219, 254, 0.6) 0%, rgba(186, 230, 253, 0.3) 50%, transparent 70%)",
+                }}
+              />
+              <div
+                className="absolute top-28 right-1/4 w-[520px] h-[520px] rounded-full blur-3xl opacity-45 dark:opacity-20"
+                style={{
+                  background:
+                    "radial-gradient(circle, rgba(167, 243, 208, 0.5) 0%, rgba(204, 251, 241, 0.25) 50%, transparent 70%)",
+                }}
+              />
+              <div
+                className="absolute top-1/2 right-10 w-[420px] h-[420px] rounded-full blur-3xl opacity-40 dark:opacity-15"
+                style={{
+                  background:
+                    "radial-gradient(circle, rgba(233, 213, 255, 0.45) 0%, transparent 70%)",
+                }}
+              />
+            </div>
 
             <div className="mx-auto max-w-6xl">
-              <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr] gap-10 lg:gap-14 items-center">
+              <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_1.15fr] gap-10 lg:gap-12 items-center">
                 {/* LEFT - Copy */}
-                <div className="py-4 sm:py-8">
+                <div className="py-4 sm:py-6">
                   {/* Kicker */}
                   <Reveal delay={0}>
-                    <p className="text-xs font-semibold text-site-text-2 tracking-wide uppercase mb-5">
+                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider uppercase mb-5">
                       {t("site.bugsnap.split.kicker")}
                     </p>
                   </Reveal>
 
                   {/* Headline */}
                   <Reveal delay={0.05}>
-                    <h1 className="text-3xl sm:text-5xl lg:text-[3.25rem] font-extrabold tracking-tight text-site-text leading-[1.08] text-balance mb-6">
-                      {t("site.bugsnap.split.headline")}
+                    <h1 className="text-4xl sm:text-5xl lg:text-[3.25rem] xl:text-[3.6rem] font-extrabold tracking-tight leading-[1.08] text-balance mb-6">
+                      <span className="text-slate-900 dark:text-white block">
+                        {t("site.hero.headlineDark1")}
+                      </span>
+                      <span className="text-slate-900 dark:text-white block">
+                        {t("site.hero.headlineDark2")}
+                      </span>
+                      <span className="text-[#2563EB] dark:text-[#3B82F6] block">
+                        {t("site.hero.headlineBlue1")}
+                      </span>
+                      <span className="text-[#2563EB] dark:text-[#3B82F6] block">
+                        {t("site.hero.headlineBlue2")}
+                      </span>
                     </h1>
                   </Reveal>
 
                   {/* Sub */}
                   <Reveal delay={0.1}>
-                    <p className="text-base sm:text-lg text-site-text-2 leading-relaxed mb-8 max-w-lg">
+                    <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed mb-8 max-w-lg">
                       {t("site.bugsnap.split.sub")}
                     </p>
                   </Reveal>
 
                   {/* CTAs */}
                   <Reveal delay={0.15}>
-                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 mb-6">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-6 mb-8">
                       <a
                         href={CHROME_STORE_URL}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-2 px-6 py-3 min-h-[44px] rounded-lg bg-accent hover:bg-accent-hover text-slate-900 text-sm font-semibold shadow-sm hover:shadow-md hover:scale-[1.01] active:scale-[0.99] transition-all touch-manipulation"
+                        className="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 min-h-[48px] rounded-xl bg-[#89BD49] hover:bg-[#78a83f] text-slate-900 text-sm sm:text-base font-bold shadow-sm hover:shadow hover:scale-[1.01] active:scale-[0.99] transition-all touch-manipulation"
                       >
-                        <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
+                        <Icon icon="logos:chrome" className="w-5 h-5 shrink-0" aria-hidden="true" />
                         {t("site.bugsnap.split.cta")}
                       </a>
                       <a
                         href="#how-it-works"
-                        className="inline-flex items-center justify-center gap-1.5 px-5 py-3 min-h-[44px] text-sm font-medium text-site-text-2 hover:text-site-text transition-colors touch-manipulation"
+                        className="inline-flex items-center justify-center gap-2 px-2 py-3 min-h-[44px] text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white transition-colors touch-manipulation group"
                       >
-                        {t("site.hero.ctaSecondary")}
-                        <IconArrowDown size={14} />
+                        <span>{t("site.hero.ctaSecondary")}</span>
+                        <Icon icon="lucide:arrow-right" className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                       </a>
                     </div>
                   </Reveal>
 
-                  {/* Trust line */}
+                  {/* 3 Feature Highlights in a row */}
                   <Reveal delay={0.2}>
-                    <p className="text-[11px] text-site-text-2 tracking-wide">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-100 dark:border-slate-800/80 max-w-xl">
+                      {/* Badge 1 */}
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-slate-100/90 dark:bg-slate-800 flex items-center justify-center shrink-0">
+                          <Icon icon="logos:google-drive" className="w-5 h-5 shrink-0" aria-hidden="true" />
+                        </div>
+                        <div className="text-xs leading-tight min-w-0">
+                          <div className="font-semibold text-slate-900 dark:text-white">
+                            {t("site.hero.badge1.title")}
+                          </div>
+                          <div className="text-slate-500 dark:text-slate-400">
+                            {t("site.hero.badge1.desc")}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Badge 2 */}
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center shrink-0 text-blue-600 dark:text-blue-400">
+                          <Icon icon="lucide:terminal" className="w-5 h-5 shrink-0" aria-hidden="true" />
+                        </div>
+                        <div className="text-xs leading-tight min-w-0">
+                          <div className="font-semibold text-slate-900 dark:text-white">
+                            {t("site.hero.badge2.title")}
+                          </div>
+                          <div className="text-slate-500 dark:text-slate-400">
+                            {t("site.hero.badge2.desc")}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Badge 3 */}
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center shrink-0 text-blue-600 dark:text-blue-400">
+                          <Icon icon="lucide:zap" className="w-5 h-5 shrink-0 fill-current" aria-hidden="true" />
+                        </div>
+                        <div className="text-xs leading-tight min-w-0">
+                          <div className="font-semibold text-slate-900 dark:text-white">
+                            {t("site.hero.badge3.title")}
+                          </div>
+                          <div className="text-slate-500 dark:text-slate-400">
+                            {t("site.hero.badge3.desc")}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </Reveal>
+
+                  {/* Trust line */}
+                  <Reveal delay={0.25}>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-6 font-normal">
                       {t("site.hero.meta")}
                     </p>
                   </Reveal>
@@ -458,32 +438,33 @@ export default function LandingPage() {
             </div>
           </section>
 
-          {/* Metrics */}
-          <section className="py-16 sm:py-20 px-4 sm:px-6 border-y border-site-border">
+          {/* Metrics - SaaS Metrics for Faster Bug Resolution */}
+          <section className="py-16 sm:py-20 lg:py-24 px-4 sm:px-6 border-b border-slate-100 dark:border-slate-800/80 bg-white dark:bg-slate-950 font-site">
             <div className="mx-auto max-w-6xl">
               <Reveal>
-                <div className="mb-12">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-site-accent mb-3">
+                <div className="mb-12 sm:mb-16">
+                  <p className="text-xs sm:text-[13px] font-bold uppercase tracking-wider text-[#3D7A24] dark:text-[#72C048] mb-3 sm:mb-4">
                     {t("site.bugsnap.metricsEyebrow")}
                   </p>
-                  <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-site-text max-w-2xl text-balance">
-                    {t("site.bugsnap.metricsTitle")}
+                  <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-950 dark:text-white leading-[1.15] text-balance">
+                    <span className="block">{t("site.bugsnap.metricsTitle1")}</span>
+                    <span className="block">{t("site.bugsnap.metricsTitle2")}</span>
                   </h2>
                 </div>
               </Reveal>
 
               {/* Metrics horizontal strip, dividers */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-0 lg:divide-x lg:divide-site-border">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-0 lg:divide-x lg:divide-slate-200 dark:lg:divide-slate-800">
                 {metrics.map((m, i) => (
                   <Reveal key={m.label} delay={i * 0.07}>
-                    <div className="py-2 sm:py-3 lg:px-6 flex flex-col gap-1 lg:first:pl-0">
-                      <span className="text-4xl sm:text-5xl font-extrabold tracking-tight text-site-text tabular-nums leading-none">
+                    <div className="flex flex-col min-w-0 lg:px-8 lg:first:pl-0 lg:last:pr-0">
+                      <span className="text-5xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-950 dark:text-white tabular-nums leading-none">
                         {m.val}
                       </span>
-                      <span className="text-sm font-semibold text-site-text mt-2">
+                      <span className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mt-4 sm:mt-5 tracking-tight">
                         {m.label}
                       </span>
-                      <span className="text-xs text-site-text-2 leading-snug">
+                      <span className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
                         {m.sub}
                       </span>
                     </div>
@@ -635,18 +616,18 @@ export default function LandingPage() {
             </div>
           </section>
 
-          {/* Roles */}
-          <section className="py-16 sm:py-24 px-4 sm:px-6 bg-site-surface-2 border-y border-site-border">
+          {/* Roles - Every role gets exactly what they need */}
+          <section className="py-16 sm:py-24 px-4 sm:px-6 bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800/80 font-site">
             <div className="mx-auto max-w-6xl">
               <Reveal>
-                <div className="text-center mb-12">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-site-accent mb-3">
+                <div className="text-center mb-12 sm:mb-16">
+                  <p className="text-xs sm:text-[13px] font-bold uppercase tracking-wider text-[#3D7A24] dark:text-[#72C048] mb-3">
                     {t("site.bugsnap.roleEyebrow")}
                   </p>
-                  <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-site-text text-balance">
+                  <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-950 dark:text-white leading-[1.15] text-balance">
                     {t("site.bugsnap.roleTitle")}
                   </h2>
-                  <p className="text-sm text-site-text-2 max-w-xl mx-auto mt-3">
+                  <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 max-w-2xl mx-auto mt-3">
                     {t("site.bugsnap.roleSub")}
                   </p>
                 </div>
@@ -657,47 +638,54 @@ export default function LandingPage() {
             </div>
           </section>
 
-          {/* How it works */}
+          {/* How it works - Product Workflow 6-Card Grid */}
           <section
             id="how-it-works"
-            className="border-y border-site-border bg-site-surface/50 py-16 sm:py-24 px-4 sm:px-6"
+            className="py-16 sm:py-24 px-4 sm:px-6 bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800/80 font-site"
           >
             <div className="mx-auto max-w-6xl">
               <Reveal>
-                <div className="text-center mb-12">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-site-accent mb-3">
+                <div className="text-center mb-12 sm:mb-16">
+                  <p className="text-xs sm:text-[13px] font-bold uppercase tracking-wider text-[#3D7A24] dark:text-[#72C048] mb-3">
                     {t("site.flow.badge")}
                   </p>
-                  <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-site-text text-balance">
+                  <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-950 dark:text-white leading-[1.15] text-balance">
                     {t("site.flow.title")}
                   </h2>
-                  <p className="text-sm text-site-text-2 max-w-xl mx-auto mt-3">
+                  <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 max-w-2xl mx-auto mt-4 leading-relaxed">
                     {t("site.flow.subtitle")}
                   </p>
                 </div>
               </Reveal>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                {steps.map((step, i) => {
-                  const Icon = step.icon;
-                  return (
-                    <Reveal key={step.id} delay={i * 0.07}>
-                      <div className="group relative p-6 rounded-xl border border-site-border bg-site-surface hover:border-accent/40 transition-colors duration-200 h-full flex flex-col gap-4">
-                        <div className="w-9 h-9 rounded-lg border border-site-border bg-site-surface-2 group-hover:border-accent/30 group-hover:bg-accent/10 flex items-center justify-center text-site-text-2 group-hover:text-accent transition-colors duration-200">
-                          <Icon size={18} strokeWidth={2} />
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+                {steps.map((step, i) => (
+                  <Reveal key={step.num} delay={i * 0.06}>
+                    <div className="group relative rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 shadow-xs hover:border-[#89BD49]/60 hover:shadow-md transition-all duration-200 h-full flex flex-col justify-between min-w-0">
+                      <div>
+                        {/* Top row: Number Badge + Icon */}
+                        <div className="flex items-center justify-between mb-5">
+                          <span className={`px-2.5 py-1 rounded-full text-xs font-mono font-bold ${step.badgeColor}`}>
+                            {step.num}
+                          </span>
+                          <div className="w-9 h-9 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/70 dark:border-slate-700/70 flex items-center justify-center text-slate-700 dark:text-slate-300 group-hover:scale-105 transition-transform">
+                            <Icon icon={step.icon} className="w-5 h-5 shrink-0" aria-hidden="true" />
+                          </div>
                         </div>
-                        <div>
-                          <h3 className="text-sm font-bold text-site-text mb-1.5">
-                            {step.title}
-                          </h3>
-                          <p className="text-xs text-site-text-2 leading-relaxed">
-                            {step.desc}
-                          </p>
-                        </div>
+
+                        {/* Title */}
+                        <h3 className="text-lg sm:text-xl font-bold text-slate-950 dark:text-white mb-2 tracking-tight">
+                          {step.title}
+                        </h3>
+
+                        {/* Description */}
+                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                          {step.desc}
+                        </p>
                       </div>
-                    </Reveal>
-                  );
-                })}
+                    </div>
+                  </Reveal>
+                ))}
               </div>
             </div>
           </section>
@@ -915,18 +903,18 @@ export default function LandingPage() {
             </div>
           </section>
 
-          {/* Trust */}
-          <section className="py-16 sm:py-24 px-4 sm:px-6 bg-site-surface-2 border-y border-site-border">
+          {/* Trust - Zero-Data Architecture */}
+          <section className="py-16 sm:py-24 px-4 sm:px-6 bg-slate-50/50 dark:bg-slate-900/40 border-b border-slate-100 dark:border-slate-800/80 font-site">
             <div className="mx-auto max-w-6xl">
               <Reveal>
-                <div className="text-center mb-12">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-site-accent mb-3">
+                <div className="text-center mb-12 sm:mb-16">
+                  <p className="text-xs sm:text-[13px] font-bold uppercase tracking-wider text-[#3D7A24] dark:text-[#72C048] mb-3">
                     {t("site.trust.eyebrow")}
                   </p>
-                  <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-site-text text-balance">
+                  <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-950 dark:text-white leading-[1.15] text-balance">
                     {t("site.trust.title")}
                   </h2>
-                  <p className="text-sm text-site-text-2 mt-3 max-w-xl mx-auto leading-relaxed">
+                  <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 max-w-2xl mx-auto mt-4 leading-relaxed">
                     {t("site.trust.sub")}
                   </p>
                 </div>
@@ -959,142 +947,116 @@ export default function LandingPage() {
             </div>
           </section>
 
-          {/* FAQ */}
-          <section id="faq" className="py-16 sm:py-24 px-4 sm:px-6">
+          {/* FAQ - Frequently Asked Questions */}
+          <section id="faq" className="py-16 sm:py-24 px-4 sm:px-6 bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800/80 font-site">
             <div className="mx-auto max-w-6xl">
-              <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-12 lg:gap-16">
-                {/* Left: heading + category pills (no "All") */}
+              <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-10 lg:gap-16 items-start">
+                {/* Left: sticky heading, subtitle, and docs link */}
                 <Reveal>
                   <div className="lg:sticky lg:top-24">
-                    <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-site-text mb-3 text-balance">
-                      {t("landing.faq")}
-                    </h2>
-                    <p className="text-sm text-site-text-2 leading-relaxed mb-6">
-                      {t("landing.ctaHint")}
+                    <p className="text-xs sm:text-[13px] font-bold uppercase tracking-wider text-[#3D7A24] dark:text-[#72C048] mb-3">
+                      {t("site.faq.eyebrow")}
                     </p>
-                    <div className="flex flex-wrap gap-2">
-                      {[
-                        { key: "privacy", label: t("landing.faqPrivacy") },
-                        { key: "devtools", label: t("landing.faqDevTools") },
-                        {
-                          key: "integrations",
-                          label: t("landing.faqIntegrations"),
-                        },
-                      ].map((cat) => (
-                        <button
-                          key={cat.key}
-                          type="button"
-                          onClick={() => {
-                            setActiveFaqCategory(
-                              cat.key as typeof activeFaqCategory,
-                            );
-                            setExpandedFaqIndex(null);
-                          }}
-                          className={`px-3.5 py-2 min-h-[40px] rounded-lg text-xs font-semibold transition-colors border touch-manipulation ${
-                            activeFaqCategory === cat.key
-                              ? "border-accent bg-accent text-slate-900 font-bold"
-                              : "border-site-border bg-site-surface text-site-text-2 hover:text-site-text"
-                          }`}
-                        >
-                          {cat.label}
-                        </button>
-                      ))}
-                    </div>
+                    <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-950 dark:text-white leading-[1.15] mb-4 text-balance">
+                      {t("site.faq.title")}
+                    </h2>
+                    <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 leading-relaxed mb-6">
+                      {t("site.faq.sub")}
+                    </p>
+                    <Link
+                      href="/docs"
+                      className="inline-flex items-center gap-2 text-sm font-bold text-[#3D7A24] dark:text-[#72C048] hover:underline group"
+                    >
+                      <span>{t("site.faq.docButton")}</span>
+                      <Icon icon="lucide:arrow-right" className="w-4 h-4 stroke-[2.5] transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+                    </Link>
                   </div>
                 </Reveal>
 
-                {/* Right: accordion filtered by active category */}
-                <div className="space-y-3">
-                  {faqItems
-                    .filter((faq) => faq.category === activeFaqCategory)
-                    .map((faq, idx) => {
-                      const isExpanded = expandedFaqIndex === faq.id;
-                      return (
-                        <Reveal key={faq.id} delay={Math.min(idx * 0.04, 0.2)}>
-                          <div className="rounded-xl border border-site-border bg-site-surface overflow-hidden">
-                            <button
-                              type="button"
-                              onClick={() =>
-                                setExpandedFaqIndex(isExpanded ? null : faq.id)
-                              }
-                              aria-expanded={isExpanded}
-                              aria-controls={`landing-faq-${faq.id}`}
-                              className="w-full text-left px-5 py-4 flex items-start justify-between gap-4 transition-colors hover:bg-site-surface-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1"
+                {/* Right: accordion with 6 questions */}
+                <div className="space-y-3.5">
+                  {faqItems.map((faq, idx) => {
+                    const isExpanded = expandedFaqIndex === faq.id;
+                    return (
+                      <Reveal key={faq.id} delay={Math.min(idx * 0.05, 0.25)}>
+                        <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-2xs transition-colors">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setExpandedFaqIndex(isExpanded ? null : faq.id)
+                            }
+                            aria-expanded={isExpanded}
+                            aria-controls={`landing-faq-${faq.id}`}
+                            className="w-full text-left px-5 sm:px-6 py-4 sm:py-5 flex items-start justify-between gap-4 transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                          >
+                            <span className="text-sm sm:text-base font-bold text-slate-950 dark:text-white leading-snug">
+                              {t(faq.q)}
+                            </span>
+                            <span
+                              className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-transform duration-200 mt-0.5 ${
+                                isExpanded
+                                  ? "rotate-180 text-[#3D7A24] dark:text-[#72C048] bg-[#EBF7E3] dark:bg-emerald-950/60"
+                                  : "text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800"
+                              }`}
                             >
-                              <span className="text-sm font-semibold text-site-text leading-snug">
-                                {t(faq.q)}
-                              </span>
-                              <span
-                                className={`w-5 h-5 flex items-center justify-center shrink-0 transition-transform duration-200 ${
-                                  isExpanded
-                                    ? "rotate-180 text-accent"
-                                    : "text-site-text-2"
-                                }`}
-                              >
-                                <IconChevronDown size={14} strokeWidth={2.5} />
-                              </span>
-                            </button>
-                            {isExpanded && (
-                              <div
-                                id={`landing-faq-${faq.id}`}
-                                className="px-5 pb-5 pt-3 text-xs text-site-text-2 leading-relaxed border-t border-site-border"
-                              >
-                                {t(faq.a)}
-                              </div>
-                            )}
-                          </div>
-                        </Reveal>
-                      );
-                    })}
+                              <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5 stroke-[2.5]" aria-hidden="true" />
+                            </span>
+                          </button>
+                          {isExpanded && (
+                            <div
+                              id={`landing-faq-${faq.id}`}
+                              className="px-5 sm:px-6 pb-5 pt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800/80"
+                            >
+                              {t(faq.a)}
+                            </div>
+                          )}
+                        </div>
+                      </Reveal>
+                    );
+                  })}
                 </div>
               </div>
             </div>
           </section>
 
-          {/* Final CTA */}
-          <section className="px-4 sm:px-6 pb-20 sm:pb-28">
+          {/* Final Extension CTA Banner */}
+          <section className="px-4 sm:px-6 py-16 sm:py-24 bg-white dark:bg-slate-950 font-site">
             <Reveal>
-              <div className="relative mx-auto max-w-6xl rounded-2xl sm:rounded-3xl border border-accent/25 bg-accent/5 p-6 sm:p-8 lg:p-10 overflow-hidden">
-                <div
-                  className="absolute inset-0 -z-10 pointer-events-none"
-                  aria-hidden="true"
-                  style={{
-                    background:
-                      "radial-gradient(ellipse 70% 60% at 50% 0%, rgba(137,189,73,0.12) 0%, transparent 70%)",
-                  }}
-                />
-                <div
-                  className="absolute inset-x-0 top-0 h-px bg-accent/50"
-                  aria-hidden="true"
-                />
+              <div className="relative mx-auto max-w-6xl rounded-3xl border border-[#CFE6BF] dark:border-emerald-900/50 bg-[#EBF7E3] dark:bg-emerald-950/40 p-8 sm:p-12 lg:p-16 text-center shadow-xs overflow-hidden">
+                <p className="text-xs sm:text-[13px] font-bold uppercase tracking-wider text-[#3D7A24] dark:text-[#72C048] mb-3">
+                  {t("site.cta.badge")}
+                </p>
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-950 dark:text-white leading-tight max-w-3xl mx-auto">
+                  {t("site.cta.title")}
+                </h2>
+                <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 max-w-xl mx-auto mt-4 mb-8 leading-relaxed">
+                  {t("site.cta.sub")}
+                </p>
 
-                <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6 min-w-0">
-                  <div className="space-y-1.5 text-left min-w-0 flex-1">
-                    <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold tracking-tight text-site-text leading-snug">
-                      {t("site.bugsnap.ctaTitle")}
-                    </h2>
-                    <p className="text-xs sm:text-sm text-site-text-2 leading-relaxed max-w-2xl">
-                      {t("site.bugsnap.ctaSub")}
-                    </p>
-                  </div>
-                  <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 w-full md:w-auto">
-                    <a
-                      href={CHROME_STORE_URL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 min-h-[44px] rounded-xl bg-accent hover:bg-accent-hover text-slate-900 text-xs sm:text-sm font-bold shadow-md shadow-accent/20 hover:scale-[1.02] active:scale-[0.99] transition-all touch-manipulation whitespace-nowrap"
-                    >
-                      <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
-                      {t("site.hero.ctaPrimary")}
-                    </a>
-                    <a
-                      href="/features"
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-3 min-h-[44px] rounded-xl border border-site-border bg-site-surface hover:bg-site-surface-2 text-site-text text-xs sm:text-sm font-semibold transition-colors touch-manipulation whitespace-nowrap"
-                    >
-                      {t("landing.exploreFeatures")}
-                    </a>
-                  </div>
+                {/* Centered CTA Buttons */}
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-6">
+                  <a
+                    href={CHROME_STORE_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-full bg-[#89BD49] hover:bg-[#78a83f] text-slate-900 text-sm font-bold shadow-md shadow-[#89BD49]/20 hover:scale-[1.02] active:scale-[0.99] transition-all whitespace-nowrap"
+                  >
+                    <Icon icon="logos:chrome" className="w-5 h-5 shrink-0" aria-hidden="true" />
+                    <span>{t("site.cta.primary")}</span>
+                  </a>
+                  <a
+                    href="/features"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 text-sm font-bold shadow-2xs transition-all whitespace-nowrap"
+                  >
+                    <span>{t("site.cta.demo")}</span>
+                    <Icon icon="lucide:arrow-right" className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />
+                  </a>
                 </div>
+
+                {/* Trust Line */}
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-normal">
+                  {t("site.cta.meta")}
+                </p>
               </div>
             </Reveal>
           </section>

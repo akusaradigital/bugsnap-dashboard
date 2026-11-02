@@ -502,17 +502,25 @@ export function cleanActionMessage(message?: string) {
     return `Clicked on ${clickedOnMatch[1]}`;
   }
 
+  // Format "Clicked tag#id" or "Clicked on tag#id" or "Clicked tag.class" -> "Clicked on tag"
+  const tagSelectorMatch = text.match(/^(Clicked|Click)(\s+on)?\s+([a-z0-9_-]+)[\.#][a-z0-9_\.:#-]+/i);
+  if (tagSelectorMatch) {
+    return `Clicked on ${tagSelectorMatch[3]}`;
+  }
+
   return text;
 }
 
 export function isDeadAction(log: { type: string; message?: string }) {
   if (log.type !== "step") return false;
-  const msg = (log.message || "").trim();
+  const rawMsg = (log.message || "").trim();
+  if (!rawMsg) return true;
+  const msg = cleanActionMessage(rawMsg);
   if (!msg) return true;
   return (
-    /^(clicked|click)(\s+on)?\s+(page\s+body|body|html|unknown\s+element)$/i.test(msg) ||
-    /^(clicked|click)(\s+on)?\s+(div|span|section|main|svg|path|canvas)$/i.test(msg) ||
-    /^(typed\s+in|type)(\s+on)?\s*(unknown\s+element)?$/i.test(msg)
+    /^(clicked|click)(\s+on)?\s*["']?(page\s+body|body|html|unknown\s+element)?["']?$/i.test(msg) ||
+    /^(clicked|click)(\s+on)?\s+(div|span|section|main|svg|path|canvas|figure|article|aside|header|footer|nav|p|ul|ol|li|table|thead|tbody|tr|td|th|form)([\.#:\s].*)?$/i.test(msg) ||
+    /^(typed\s+in|type)(\s+on)?\s*["']?(unknown\s+element)?["']?$/i.test(msg)
   );
 }
 

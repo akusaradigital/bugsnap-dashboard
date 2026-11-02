@@ -19,11 +19,29 @@ export async function POST(request: Request) {
 
     if (action === "create") {
       const { folder_name, workspace_id } = body;
-      if (!folder_name) return NextResponse.json({ error: "Folder name is required" }, { status: 400 });
+      const trimmed = typeof folder_name === "string" ? folder_name.trim() : "";
+      if (!trimmed) return NextResponse.json({ error: "Folder name is required" }, { status: 400 });
       const validWsId = isUuid(workspace_id) ? workspace_id.trim() : null;
+
+      // Duplicate folder validation (case-insensitive check in workspace)
+      let dupQuery = supabase
+        .from("workspace_folders")
+        .select("id, name")
+        .ilike("name", trimmed);
+      if (validWsId) {
+        dupQuery = dupQuery.eq("workspace_id", validWsId);
+      }
+      const { data: existing } = await dupQuery;
+      if (existing && existing.length > 0) {
+        return NextResponse.json(
+          { error: "A folder with this name already exists", code: "DUPLICATE_FOLDER" },
+          { status: 409 }
+        );
+      }
+
       const { data, error } = await supabase.rpc("insert_folder_by_email", {
         p_email: email,
-        p_folder_name: folder_name,
+        p_folder_name: trimmed,
         p_workspace_id: validWsId,
       });
       if (error) throw error;
@@ -35,11 +53,26 @@ export async function POST(request: Request) {
       if (!workspace_id || !old_name || !new_name) {
         return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
       }
+      const trimmedNew = typeof new_name === "string" ? new_name.trim() : "";
+      const trimmedOld = typeof old_name === "string" ? old_name.trim() : "";
+      if (trimmedNew.toLowerCase() !== trimmedOld.toLowerCase()) {
+        const { data: existing } = await supabase
+          .from("workspace_folders")
+          .select("id")
+          .eq("workspace_id", workspace_id)
+          .ilike("name", trimmedNew);
+        if (existing && existing.length > 0) {
+          return NextResponse.json(
+            { error: "A folder with this name already exists", code: "DUPLICATE_FOLDER" },
+            { status: 409 }
+          );
+        }
+      }
       const { data, error } = await supabase.rpc("rename_workspace_folder_by_email", {
         p_email: email,
         p_workspace_id: workspace_id,
-        p_old_name: old_name,
-        p_new_name: new_name,
+        p_old_name: trimmedOld,
+        p_new_name: trimmedNew,
       });
       if (error) throw error;
       return NextResponse.json({ success: true, data });

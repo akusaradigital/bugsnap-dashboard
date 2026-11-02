@@ -134,6 +134,13 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       else screenshotUrl = mediaUrl;
     }
 
+    const { data: comments } = await db
+      .from("comments")
+      .select("id, author_name, body, pin_x, pin_y, video_timestamp, created_at, resolved")
+      .eq("capture_id", id)
+      .order("created_at", { ascending: true })
+      .limit(30);
+
     return NextResponse.json(
       {
         id: cap.id,
@@ -155,6 +162,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         network_errors: networkErrors,
         user_steps: userSteps,
         ai_summary: cap.ai_summary || null,
+        comments: (comments || []).map((c) => ({
+          author: c.author_name || "Team Member",
+          body: c.body || "",
+          pin_x: typeof c.pin_x === "number" ? c.pin_x : null,
+          pin_y: typeof c.pin_y === "number" ? c.pin_y : null,
+          video_timestamp: typeof c.video_timestamp === "number" ? c.video_timestamp : null,
+          created_at: c.created_at,
+          resolved: Boolean(c.resolved),
+        })),
       },
       {
         headers: {

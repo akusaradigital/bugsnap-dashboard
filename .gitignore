@@ -41,14 +41,21 @@ next-env.d.ts
 
 # Supabase CLI generated state
 supabase/.temp/
+supabase/.rollback-*.json
 
 # Claude CLI worktrees and state
 .claude/
 
-
-# Local agent / test artifacts
+# Local agent, planning & test artifacts
 .zcode/
+anti-slop/
 test-results/
+.last-run.json
+tests/.test-results/
 playwright-report/
-
 tests/screenshots/
+
+# Python compiled cache
+__pycache__/
+*.pyc
+*.pyo

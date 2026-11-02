@@ -60,6 +60,11 @@ const browserLogos = {
     height: 256,
     body: `<path fill="#3ddc84" d="M190.5 167c-6.1 0-11.1-5-11.1-11.1s5-11.1 11.1-11.1s11.1 5 11.1 11.1s-5 11.1-11.1 11.1m-125 0c-6.1 0-11.1-5-11.1-11.1s5-11.1 11.1-11.1s11.1 5 11.1 11.1s-5 11.1-11.1 11.1m128.8-69.2l22.1-38.3c1.5-2.6.6-5.9-2-7.4c-2.6-1.5-5.9-.6-7.4 2l-22.5 39C168.3 85.9 148.8 82 128 82s-40.3 3.9-56.5 11.1L49 54.1c-1.5-2.6-4.8-3.5-7.4-2c-2.6 1.5-3.5 4.8-2 7.4l22.1 38.3C23.1 123.6-.5 163.6.5 210h255c1-46.4-22.6-86.4-60.7-112.2"/>`,
   },
+  "slack-icon": {
+    width: 256,
+    height: 256,
+    body: `<path fill="#e01e5a" d="M54.7 151.7a22.7 22.7 0 1 0-22.7 22.7h22.7zm11.3 0a22.7 22.7 0 0 0 45.4 0V95a22.7 22.7 0 0 0-45.4 0z"/><path fill="#36c5f0" d="M104.3 54.7a22.7 22.7 0 1 0 22.7-22.7v22.7zm0 11.3a22.7 22.7 0 0 0 0 45.4h56.7a22.7 22.7 0 0 0 0-45.4z"/><path fill="#2eb67d" d="M201.3 104.3a22.7 22.7 0 1 0 22.7-22.7h-22.7zm-11.3 0a22.7 22.7 0 0 0-45.4 0v56.7a22.7 22.7 0 0 0 45.4 0z"/><path fill="#ecb22e" d="M151.7 201.3a22.7 22.7 0 1 0-22.7 22.7v-22.7zm0-11.3a22.7 22.7 0 0 0 0-45.4H95a22.7 22.7 0 0 0 0 45.4z"/>`,
+  },
 };
 
 for (const [name, icon] of Object.entries(browserLogos)) {
@@ -71,6 +76,13 @@ addIcon("custom:folder-filled", {
   width: 24,
   height: 24,
   body: `<path fill="currentColor" d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>`,
+});
+
+// Ascending 3-bar chart icon matching status dashboard metric
+addIcon("custom:chart-bars", {
+  width: 24,
+  height: 24,
+  body: `<rect x="3" y="14" width="4.5" height="7" rx="1.5" fill="currentColor"/><rect x="9.75" y="9" width="4.5" height="12" rx="1.5" fill="currentColor"/><rect x="16.5" y="4" width="4.5" height="17" rx="1.5" fill="currentColor"/>`,
 });
 
 export { Icon } from "@iconify/react";

@@ -12,12 +12,18 @@ export function StaticShell({
   breadcrumb,
   subtitle,
   lastUpdated,
+  hideDivider,
+  compactHero,
+  ambientGlow,
   children,
 }: {
   title: string;
   breadcrumb?: string;
   subtitle?: string;
   lastUpdated?: string;
+  hideDivider?: boolean;
+  compactHero?: boolean;
+  ambientGlow?: boolean;
   children: ReactNode;
 }) {
   const { t } = useT();
@@ -28,12 +34,18 @@ export function StaticShell({
 
       <main id="main-content" className="flex-1">
         {/* Hero */}
-        <div className="relative overflow-hidden py-10 sm:py-16 md:py-20">
+        <div className={`relative overflow-hidden ${compactHero ? "pt-10 sm:pt-14 pb-4 sm:pb-6" : "py-10 sm:py-16 md:py-20"}`}>
+          {ambientGlow && (
+            <div className="pointer-events-none absolute inset-0 -z-0 overflow-hidden" aria-hidden="true">
+              <div className="absolute -top-32 -left-20 w-[440px] h-[340px] rounded-full bg-emerald-400/15 dark:bg-emerald-500/10 blur-[90px]" />
+              <div className="absolute -top-32 -right-20 w-[440px] h-[340px] rounded-full bg-emerald-400/15 dark:bg-emerald-500/10 blur-[90px]" />
+            </div>
+          )}
           <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 text-center">
             <Reveal delay={0}>
               {/* breadcrumb */}
               <nav
-                className="inline-flex items-center justify-center gap-1.5 text-xs text-site-text-2 mb-4 sm:mb-6 max-w-full px-2"
+                className="inline-flex items-center justify-center gap-1.5 text-xs text-site-text-2 mb-3 sm:mb-4 max-w-full px-2"
                 aria-label="Breadcrumb"
               >
                 <Link href="/" className="shrink-0 hover:text-site-text transition-colors">
@@ -49,14 +61,14 @@ export function StaticShell({
             </Reveal>
 
             <Reveal delay={0.07}>
-              <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-site-text leading-tight">
+              <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-site-text leading-tight">
                 {title}
               </h1>
             </Reveal>
 
             {subtitle && (
               <Reveal delay={0.14}>
-                <p className="mt-4 text-sm sm:text-lg text-site-text-2 max-w-2xl mx-auto leading-relaxed">
+                <p className="mt-3 text-sm sm:text-base text-site-text-2 max-w-2xl mx-auto leading-relaxed">
                   {subtitle}
                 </p>
               </Reveal>
@@ -73,10 +85,10 @@ export function StaticShell({
         </div>
 
         {/* divider line */}
-        <div className="border-t border-site-border" />
+        {!hideDivider && <div className="border-t border-site-border" />}
 
         {/* Page Content */}
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10 sm:py-16">
+        <div className={`mx-auto max-w-6xl px-4 sm:px-6 ${hideDivider ? "pt-6 pb-12 sm:pb-16" : "py-10 sm:py-16"}`}>
           {children}
         </div>
       </main>

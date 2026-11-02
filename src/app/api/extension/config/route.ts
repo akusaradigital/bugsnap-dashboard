@@ -52,6 +52,7 @@ export async function GET() {
 
   return NextResponse.json(
     {
+      canonicalOrigin: process.env.NEXT_PUBLIC_APP_URL || "https://bugsnap.akusaraproject.my.id",
       supabaseUrl: clean(process.env.NEXT_PUBLIC_SUPABASE_URL),
       supabaseAnonKey: clean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
       googleDriveClientId: clean(process.env.GOOGLE_DRIVE_CLIENT_ID),

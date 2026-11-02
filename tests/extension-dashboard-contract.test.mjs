@@ -66,3 +66,60 @@ test("expired tokens are refreshed before retrying dashboard requests", () => {
     assert.match(editor, /getValidatedGoogleToken\(true\)/);
   }
 });
+
+test("Two-way web and extension auth sync protocol contract", () => {
+  const rootLayout = read(dashboardRoot, "src", "app", "layout.tsx");
+  const syncBridge = read(dashboardRoot, "src", "components", "ExtensionSyncBridge.tsx");
+
+  // ExtensionSyncBridge in RootLayout exists
+  assert.match(rootLayout, /export default function RootLayout/);
+  assert.match(rootLayout, /<ExtensionSyncBridge\s*\/>/);
+
+  // Broadcasts sync_session / sync_logout on Supabase auth state change
+  assert.match(syncBridge, /supabase\.auth\.onAuthStateChange\(/);
+  assert.match(syncBridge, /SIGNED_OUT/);
+  assert.match(syncBridge, /action:\s*"sync_session"/);
+  assert.match(syncBridge, /action:\s*"sync_logout"/);
+
+  // Handles extension_logout with session cleanup and redirect
+  assert.match(syncBridge, /action === "extension_logout"/);
+  assert.match(syncBridge, /supabase\.auth\.signOut\(\)/);
+  assert.match(syncBridge, /window\.location\.assign\(["']\/login["']\)/);
+
+  // Origin security check: ExtensionSyncBridge only dispatches to window.location.origin (no wildcard)
+  assert.match(syncBridge, /window\.postMessage\([\s\S]*?window\.location\.origin/);
+  assert.doesNotMatch(syncBridge, /postMessage\([^,]+,\s*["']\*["']\)/);
+
+  // If extension sibling exists, verify content.js, background.js, and popup contracts
+  if (hasExtensionSibling) {
+    const content = read(extensionRoot, "content.js");
+    const popupHtml = read(extensionRoot, "popup.html");
+    const popupJs = read(extensionRoot, "popup.js");
+
+    // Two-way sync contracts in content.js and background.js
+    assert.match(content, /sync_session/);
+    assert.match(content, /sync_logout/);
+    assert.match(content, /extension_logged_out/);
+    assert.match(content, /sync_web_session/);
+    assert.match(content, /disconnect_drive/);
+
+    assert.match(background, /sync_web_session/);
+    assert.match(background, /disconnect_drive/);
+    assert.match(background, /extension_logged_out/);
+
+    // Origin security check: content.js postMessage only dispatches to BUGSNAP_WEB_ORIGIN
+    assert.match(content, /const BUGSNAP_WEB_ORIGIN\b[\s\S]*?https:\/\/bugsnap\.akusaraproject\.my\.id/);
+    assert.match(content, /window\.postMessage\([\s\S]*?BUGSNAP_WEB_ORIGIN\)/);
+    assert.match(content, /e\.origin !== BUGSNAP_WEB_ORIGIN/);
+    assert.doesNotMatch(content, /window\.postMessage\([^,]+,\s*["']\*["']\)/);
+
+    // Expired session state card elements (auth-warning, Your session has expired, btnLogin) match
+    assert.match(popupHtml, /id=["']auth-warning["']/, "extension popup must define auth-warning element");
+    assert.match(popupHtml, /Your session has expired/, "extension popup must present session expired heading");
+    assert.match(popupHtml, /id=["']btn-auth-connect["']/, "extension popup must contain auth connect button");
+    assert.match(popupJs, /btnLogin/, "extension popup.js must define btnLogin token");
+    assert.match(popupJs, /authWarningTitle:\s*"Your session has expired"/, "extension popup.js must define session expired translation");
+    assert.match(popupJs, /authWarning/, "extension popup.js must control authWarning element");
+  }
+});
+

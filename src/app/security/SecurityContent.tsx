@@ -3,13 +3,6 @@
 import Link from "next/link";
 import { StaticShell } from "@/components/StaticShell";
 import { useT } from "@/components/I18nProvider";
-import {
-  IconFolder,
-  IconLock,
-  IconShieldCheck,
-  IconDatabase,
-  IconCheck,
-} from "@/components/site/TablerIcons";
 import { Reveal } from "@/components/site/motion";
 import { Icon } from "@/lib/iconify";
 
@@ -21,32 +14,32 @@ export function SecurityContent() {
 
   const highlights = [
     {
-      icon: <IconFolder size={18} strokeWidth={2} />,
+      icon: "lucide:folder",
       title: t("security.h1Title"),
       desc: t("security.h1Desc"),
     },
     {
-      icon: <IconLock size={18} strokeWidth={2} />,
+      icon: "lucide:lock",
       title: t("security.h2Title"),
       desc: t("security.h2Desc"),
     },
     {
-      icon: <IconShieldCheck size={18} strokeWidth={2} />,
+      icon: "lucide:shield",
       title: t("security.h3Title"),
       desc: t("security.h3Desc"),
     },
     {
-      icon: <IconShieldCheck size={18} strokeWidth={2} />,
+      icon: "lucide:award",
       title: t("security.h4Title"),
       desc: t("security.h4Desc"),
     },
     {
-      icon: <IconDatabase size={18} strokeWidth={2} />,
+      icon: "lucide:database",
       title: t("security.h5Title"),
       desc: t("security.h5Desc"),
     },
     {
-      icon: <IconCheck size={18} strokeWidth={2} />,
+      icon: "lucide:check",
       title: t("security.h6Title"),
       desc: t("security.h6Desc"),
     },
@@ -56,29 +49,34 @@ export function SecurityContent() {
     <StaticShell
       title={t("security.title")}
       subtitle={t("security.subtitle")}
+      hideDivider={true}
     >
-      <div className="space-y-8 font-site">
+      <div className="space-y-8 sm:space-y-10 font-site">
         {/* Security Pillar Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {highlights.map((h, i) => (
-            <Reveal key={i} delay={i * 0.08} className="h-full">
-              <div className="group h-full rounded-xl border border-site-border bg-site-surface p-6 space-y-3 shadow-xs flex flex-col justify-between transition-all duration-200 hover:-translate-y-1 hover:border-site-border-focus hover:shadow-md">
-                <div className="space-y-3">
+            <Reveal key={i} delay={i * 0.05} className="h-full">
+              <div className="h-full rounded-2xl border border-site-border bg-site-surface p-6 sm:p-7 shadow-xs flex flex-col justify-between transition-all duration-200 hover:-translate-y-0.5 hover:border-site-border-focus hover:shadow-sm">
+                <div>
                   <div className="flex items-center justify-between">
-                    <div className="w-9 h-9 rounded-lg bg-site-surface-2 border border-site-border text-site-text flex items-center justify-center group-hover:border-accent/40 group-hover:bg-accent/5 transition-colors">
-                      {h.icon}
-                    </div>
-                    <Reveal delay={i * 0.08 + 0.05} y={4} className="inline-flex">
-                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded border border-emerald-500/20">
-                        <IconCheck size={11} strokeWidth={2.5} />
-                        {t("security.verifiedBadge")}
-                      </span>
-                    </Reveal>
+                    <Icon
+                      icon={h.icon}
+                      className="w-6 h-6 text-site-text stroke-[1.75]"
+                      aria-hidden="true"
+                    />
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2.5 py-0.5 rounded-full border border-emerald-200/60 dark:border-emerald-800/40">
+                      <Icon
+                        icon="lucide:check"
+                        className="w-3 h-3 text-emerald-600 dark:text-emerald-400 stroke-[2.5]"
+                        aria-hidden="true"
+                      />
+                      <span>{t("security.verifiedBadge")}</span>
+                    </span>
                   </div>
-                  <h3 className="font-bold text-sm text-site-text">
+                  <h3 className="font-bold text-base sm:text-[17px] text-site-text mt-5 mb-2 tracking-tight">
                     {h.title}
                   </h3>
-                  <p className="text-xs text-site-text-2 leading-relaxed">
+                  <p className="text-xs sm:text-[13px] text-site-text-2 leading-relaxed">
                     {h.desc}
                   </p>
                 </div>
@@ -87,79 +85,223 @@ export function SecurityContent() {
           ))}
         </div>
 
-        {/* Data Storage & Flow Architecture Diagram */}
-        <Reveal delay={0.2}>
-          <div className="rounded-2xl border border-site-border bg-site-surface-2 p-4 sm:p-6 shadow-sm space-y-4">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-site-border-subtle pb-3">
-              <div>
-                <span className="text-[11px] font-semibold uppercase tracking-wider text-site-accent">
-                  {t("security.architectureEyebrow") || "Architecture & Data Sovereignty"}
+        {/* Architecture & Data Sovereignty Section */}
+        <Reveal delay={0.15}>
+          <div className="rounded-2xl sm:rounded-3xl border border-site-border bg-site-surface-2 p-5 sm:p-8 space-y-6">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="space-y-1">
+                <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                  {t("security.architectureEyebrow")}
                 </span>
-                <h3 className="font-extrabold text-base sm:text-lg text-site-text mt-0.5">
+                <h2 className="text-xl sm:text-2xl font-bold text-site-text">
                   {t("security.comparisonTitle")}
-                </h3>
+                </h2>
               </div>
-              <span className="self-start sm:self-auto inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 text-xs font-bold font-mono">
-                ✓ Zero Server Retention
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/40 text-xs font-bold self-start sm:self-auto shrink-0">
+                <Icon
+                  icon="lucide:check"
+                  className="w-3.5 h-3.5 stroke-[2.5]"
+                  aria-hidden="true"
+                />
+                <span>{t("security.zeroRetention")}</span>
               </span>
             </div>
 
-            <div className="relative overflow-hidden rounded-xl border border-site-border bg-site-surface shadow-xs">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/illustrations/security-vault.svg"
-                alt="BugSnap Zero-Knowledge Enterprise Security Architecture"
-                className="w-full h-auto object-cover rounded-xl"
-                loading="lazy"
-              />
+            {/* Dark Vault Container */}
+            <div className="rounded-2xl bg-[#0f172a] border border-slate-800 p-5 sm:p-7 text-white shadow-md space-y-6">
+              {/* Header inside Vault */}
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg border border-emerald-500/30 bg-emerald-500/10 flex items-center justify-center text-emerald-400 shrink-0">
+                  <Icon
+                    icon="lucide:shield-check"
+                    className="w-4 h-4 stroke-[2]"
+                    aria-hidden="true"
+                  />
+                </div>
+                <div className="flex items-center gap-2 text-sm sm:text-base">
+                  <span className="font-bold text-white">
+                    {t("security.vaultTitle")}
+                  </span>
+                  <span className="text-slate-500 font-light">/</span>
+                  <span className="font-semibold text-emerald-400">
+                    {t("security.vaultSubtitle")}
+                  </span>
+                </div>
+              </div>
+
+              {/* 3 Stages Flow */}
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr_auto_1fr] gap-3 sm:gap-4 items-center">
+                {/* Stage 1 */}
+                <div className="h-full rounded-xl bg-[#1e293b]/70 border border-slate-700/60 p-5 sm:p-6 space-y-4">
+                  <h4 className="font-bold text-sm sm:text-base text-white">
+                    {t("security.stage1Title")}
+                  </h4>
+                  <ul className="space-y-3">
+                    <li className="flex items-center gap-2.5 text-xs sm:text-sm text-slate-200 font-medium">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+                      <span>{t("security.stage1Item1")}</span>
+                    </li>
+                    <li className="flex items-center gap-2.5 text-xs sm:text-sm text-slate-200 font-medium">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+                      <span>{t("security.stage1Item2")}</span>
+                    </li>
+                    <li className="flex items-center gap-2.5 text-xs sm:text-sm text-emerald-400 font-medium">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+                      <span>{t("security.stage1Item3")}</span>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Arrow 1 */}
+                <div className="hidden lg:flex justify-center text-slate-400 px-1">
+                  <Icon
+                    icon="lucide:arrow-right"
+                    className="w-5 h-5 text-slate-400 stroke-[1.75]"
+                    aria-hidden="true"
+                  />
+                </div>
+                <div className="flex lg:hidden justify-center text-slate-500 py-1">
+                  <Icon
+                    icon="lucide:arrow-down"
+                    className="w-4 h-4 text-slate-500 stroke-[1.75]"
+                    aria-hidden="true"
+                  />
+                </div>
+
+                {/* Stage 2 (Accent Border) */}
+                <div className="h-full rounded-xl bg-[#1e293b]/90 border-2 border-emerald-500 p-5 sm:p-6 space-y-4 shadow-sm shadow-emerald-500/10">
+                  <h4 className="font-bold text-sm sm:text-base text-emerald-400">
+                    {t("security.stage2Title")}
+                  </h4>
+                  <ul className="space-y-3">
+                    <li className="flex items-center gap-2.5 text-xs sm:text-sm text-slate-200 font-medium">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+                      <span>{t("security.stage2Item1")}</span>
+                    </li>
+                    <li className="flex items-center gap-2.5 text-xs sm:text-sm text-slate-200 font-medium">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+                      <span>{t("security.stage2Item2")}</span>
+                    </li>
+                    <li className="flex items-center gap-2.5 text-xs sm:text-sm text-slate-200 font-medium">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+                      <span>{t("security.stage2Item3")}</span>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* Arrow 2 */}
+                <div className="hidden lg:flex justify-center text-slate-400 px-1">
+                  <Icon
+                    icon="lucide:arrow-right"
+                    className="w-5 h-5 text-slate-400 stroke-[1.75]"
+                    aria-hidden="true"
+                  />
+                </div>
+                <div className="flex lg:hidden justify-center text-slate-500 py-1">
+                  <Icon
+                    icon="lucide:arrow-down"
+                    className="w-4 h-4 text-slate-500 stroke-[1.75]"
+                    aria-hidden="true"
+                  />
+                </div>
+
+                {/* Stage 3 */}
+                <div className="h-full rounded-xl bg-[#1e293b]/70 border border-slate-700/60 p-5 sm:p-6 space-y-4">
+                  <h4 className="font-bold text-sm sm:text-base text-white">
+                    {t("security.stage3Title")}
+                  </h4>
+                  <div className="flex items-center gap-3">
+                    <Icon
+                      icon="logos:google-drive"
+                      className="w-8 h-8 shrink-0"
+                      aria-hidden="true"
+                    />
+                    <div>
+                      <div className="font-bold text-sm text-white">
+                        {t("security.companyDrive")}
+                      </div>
+                      <div className="text-[11px] font-semibold text-emerald-400 font-mono">
+                        {t("security.aesEncrypted")}
+                      </div>
+                    </div>
+                  </div>
+                  <ul className="space-y-3 pt-1">
+                    <li className="flex items-center gap-2.5 text-xs sm:text-sm text-slate-200 font-medium">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+                      <span>{t("security.stage3Item1")}</span>
+                    </li>
+                    <li className="flex items-center gap-2.5 text-xs sm:text-sm text-slate-200 font-medium">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 shrink-0" />
+                      <span>{t("security.stage3Item2")}</span>
+                    </li>
+                  </ul>
+                </div>
+              </div>
             </div>
 
+            {/* Notes below Vault */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-1">
-              <p className="text-xs text-site-text-2 leading-relaxed">
-                {t("security.comparisonDesc")}
-              </p>
-              <p className="text-xs font-medium text-emerald-700 dark:text-emerald-400 leading-relaxed">
-                {t("security.deleteNote")}
-              </p>
+              <div className="flex items-start gap-2.5">
+                <Icon
+                  icon="lucide:check"
+                  className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5 stroke-[2.5]"
+                  aria-hidden="true"
+                />
+                <p className="text-xs sm:text-sm text-site-text-2 leading-relaxed">
+                  {t("security.storeMetadataNote")}
+                </p>
+              </div>
+              <div className="flex items-start gap-2.5">
+                <Icon
+                  icon="lucide:check"
+                  className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5 stroke-[2.5]"
+                  aria-hidden="true"
+                />
+                <p className="text-xs sm:text-sm text-site-text-2 leading-relaxed">
+                  {t("security.deleteNote")}
+                </p>
+              </div>
             </div>
           </div>
         </Reveal>
 
         {/* Bottom CTA Box */}
-        <Reveal delay={0.25}>
-          <div className="relative overflow-hidden rounded-2xl sm:rounded-3xl border border-site-border bg-site-surface p-6 sm:p-8 lg:p-10 shadow-lg">
-            <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6 min-w-0">
-              <div className="space-y-1.5 text-left min-w-0 flex-1">
-                <h3 className="text-xl sm:text-2xl font-extrabold text-site-text tracking-tight leading-snug">
-                  {t("security.ctaTitle")}
-                </h3>
-                <p className="text-xs sm:text-sm text-site-text-2 leading-relaxed max-w-2xl">
-                  {t("security.ctaDesc")}
-                </p>
-                <div className="pt-1">
-                  <Link href="/privacy" className="inline-flex items-center gap-1 text-xs font-medium text-site-text-2 hover:text-site-text transition-colors touch-manipulation">
-                    <span>{t("security.readPrivacy")}</span>
-                    <Icon icon="lucide:arrow-right" className="w-3 h-3" aria-hidden="true" />
-                  </Link>
-                </div>
-              </div>
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0 w-full md:w-auto">
-                <a
-                  href={CHROME_STORE_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-xl bg-accent hover:bg-accent-hover text-slate-900 text-xs sm:text-sm font-bold px-6 py-3 min-h-[44px] transition-all shadow-md shadow-accent/20 hover:scale-[1.02] active:scale-[0.99] touch-manipulation whitespace-nowrap"
-                >
-                  <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
-                  <span>{t("security.installFree")}</span>
-                </a>
-                <Link
-                  href="/pricing"
-                  className="w-full sm:w-auto inline-flex items-center justify-center rounded-xl border border-site-border bg-site-surface hover:bg-site-surface-2 text-site-text text-xs sm:text-sm font-semibold px-5 py-3 min-h-[44px] transition-colors touch-manipulation whitespace-nowrap"
-                >
-                  {t("security.seePricing")}
-                </Link>
-              </div>
+        <Reveal delay={0.2}>
+          <div className="rounded-2xl sm:rounded-3xl border border-emerald-200/80 dark:border-emerald-800/40 bg-emerald-50/50 dark:bg-emerald-950/20 p-6 sm:p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="space-y-1.5 flex-1 min-w-0">
+              <h3 className="text-xl sm:text-2xl font-extrabold text-site-text tracking-tight">
+                {t("security.ctaTitle")}
+              </h3>
+              <p className="text-xs sm:text-sm text-site-text-2 leading-relaxed max-w-xl">
+                {t("security.ctaDesc")}
+              </p>
+            </div>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+              <a
+                href={CHROME_STORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent hover:bg-accent-hover text-slate-900 text-xs sm:text-sm font-bold px-6 py-3 min-h-[44px] transition-all shadow-sm shadow-accent/20 hover:scale-[1.01] active:scale-[0.99] whitespace-nowrap touch-manipulation"
+              >
+                <Icon
+                  icon="logos:chrome"
+                  className="w-4 h-4 shrink-0"
+                  aria-hidden="true"
+                />
+                <span>{t("security.installFree")}</span>
+              </a>
+              <Link
+                href="/pricing"
+                className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-site-border bg-site-surface hover:bg-site-surface-2 text-site-text text-xs sm:text-sm font-semibold px-5 py-3 min-h-[44px] transition-colors whitespace-nowrap touch-manipulation"
+              >
+                <span>{t("security.seePricing")}</span>
+                <Icon
+                  icon="lucide:arrow-right"
+                  className="w-3.5 h-3.5"
+                  aria-hidden="true"
+                />
+              </Link>
             </div>
           </div>
         </Reveal>

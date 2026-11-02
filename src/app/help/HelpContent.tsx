@@ -4,7 +4,6 @@ import { useState } from "react";
 import Link from "next/link";
 import { StaticShell } from "@/components/StaticShell";
 import { useT } from "@/components/I18nProvider";
-import { IconChevronDown, IconHelpCircle } from "@/components/site/TablerIcons";
 import { Reveal } from "@/components/site/motion";
 import { Icon } from "@/lib/iconify";
 
@@ -25,37 +24,48 @@ export function HelpContent() {
   return (
     <StaticShell
       title={t("help.title")}
+      breadcrumb={t("help.title")}
       subtitle={t("help.subtitle")}
+      compactHero={true}
+      hideDivider={true}
     >
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8 font-site">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start font-site">
 
-        {/* FAQ Left Column - Expandable Accordion */}
-        <div className="md:col-span-2 space-y-4">
-          <h2 className="text-base font-bold text-site-text">{t("help.faqHeading")}</h2>
-          <div className="space-y-3">
+        {/* FAQ Left Column */}
+        <div className="lg:col-span-8 space-y-4">
+          <Reveal delay={0.05}>
+            <h2 className="text-xl sm:text-2xl font-bold text-site-text mb-4 sm:mb-5">
+              {t("help.faqHeading")}
+            </h2>
+          </Reveal>
+
+          <div className="space-y-4">
             {faqs.map((faq, i) => {
               const isOpen = openIndex === i;
               return (
-                <Reveal key={i} delay={i * 0.06}>
-                  <div
-                    className="rounded-xl border border-site-border bg-site-surface shadow-xs overflow-hidden transition-colors hover:border-site-border-focus"
-                  >
+                <Reveal key={i} delay={0.08 + i * 0.05}>
+                  <div className="rounded-2xl border border-site-border bg-site-surface p-5 sm:p-6 transition-colors hover:border-site-border-focus">
                     <button
                       type="button"
                       onClick={() => setOpenIndex(isOpen ? null : i)}
-                      className="w-full text-left p-4 sm:p-5 min-h-[44px] flex items-center justify-between gap-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 touch-manipulation"
+                      className="w-full text-left flex items-center justify-between gap-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 touch-manipulation group"
                       aria-expanded={isOpen}
                       aria-controls={`faq-answer-${i}`}
                       aria-label={isOpen ? t("help.closeFaq") : t("help.openFaq")}
                     >
-                      <span className="text-xs sm:text-sm font-bold text-site-text hover:text-accent transition-colors">
+                      <span className="text-base sm:text-lg font-bold text-site-text group-hover:text-accent transition-colors">
                         {faq.q}
                       </span>
-                      <span className="w-6 h-6 rounded bg-site-surface-2 border border-site-border-subtle flex items-center justify-center shrink-0 text-site-text-2">
-                        <IconChevronDown
-                          size={14}
-                          strokeWidth={2}
-                          className={`transform transition-transform duration-200 ${isOpen ? "rotate-180 text-accent" : ""}`}
+                      <span
+                        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
+                          isOpen
+                            ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+                        }`}
+                      >
+                        <Icon
+                          icon={isOpen ? "lucide:chevron-up" : "lucide:chevron-down"}
+                          className="w-4 h-4 sm:w-4.5 sm:h-4.5"
                         />
                       </span>
                     </button>
@@ -68,9 +78,9 @@ export function HelpContent() {
                       }`}
                     >
                       <div className="overflow-hidden">
-                        <div className="px-5 pb-5 pt-1 text-xs text-site-text-2 leading-relaxed border-t border-site-border-subtle">
+                        <p className="pt-3.5 sm:pt-4 text-sm text-site-text-2 leading-relaxed">
                           {faq.a}
-                        </div>
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -80,62 +90,88 @@ export function HelpContent() {
           </div>
         </div>
 
-        {/* Right Column */}
-        <div className="space-y-6">
+        {/* Right Column (Sidebar) */}
+        <div className="lg:col-span-4 space-y-4 sm:space-y-5">
+          {/* Card 1: Still need help? */}
           <Reveal delay={0.15}>
-            <div className="rounded-xl border border-site-border bg-site-surface p-4 sm:p-6 space-y-3 shadow-xs hover:-translate-y-0.5 hover:border-site-border-focus transition-all">
-              <div className="w-10 h-10 rounded-lg bg-site-surface-2 border border-site-border text-site-text flex items-center justify-center">
-                <IconHelpCircle size={20} strokeWidth={2} />
+            <div className="rounded-2xl border border-site-border bg-site-surface p-5 sm:p-6 space-y-2 transition-colors hover:border-site-border-focus">
+              <h3 className="text-base sm:text-lg font-bold text-site-text">
+                {t("help.needHelp")}
+              </h3>
+              <p className="text-xs sm:text-sm text-site-text-2 leading-relaxed">
+                {t("help.needHelpDesc")}
+              </p>
+              <div className="pt-2">
+                <a
+                  href="mailto:support@akusaradigital.com"
+                  className="flex items-center justify-center gap-2 w-full border border-site-border bg-white dark:bg-site-surface-2 hover:bg-slate-50 dark:hover:bg-slate-800 text-site-text text-sm font-semibold py-2.5 sm:py-3 rounded-xl transition-colors shadow-xs touch-manipulation"
+                >
+                  <Icon icon="lucide:mail" className="w-4 h-4 text-site-text shrink-0" />
+                  <span>{t("help.emailSupport")}</span>
+                </a>
               </div>
-              <h3 className="text-sm font-bold text-site-text">{t("help.needHelp")}</h3>
-              <p className="text-xs text-site-text-2 leading-relaxed">{t("help.needHelpDesc")}</p>
-              <a
-                href="mailto:support@akusaradigital.com"
-                className="flex items-center justify-center text-center border border-site-border bg-site-surface-2 hover:bg-site-surface text-site-text text-xs font-semibold py-2.5 min-h-[44px] rounded-lg transition-colors touch-manipulation"
-              >
-                {t("help.emailSupport")}
-              </a>
             </div>
           </Reveal>
 
+          {/* Card 2: Get started */}
           <Reveal delay={0.22}>
-            <div className="rounded-xl border border-site-border bg-site-surface p-4 sm:p-6 space-y-3 shadow-xs hover:-translate-y-0.5 hover:border-site-border-focus transition-all">
-              <h3 className="text-sm font-bold text-site-text">{t("help.getStarted")}</h3>
-              <a
-                href={CHROME_STORE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center justify-center gap-2 bg-accent hover:bg-accent-hover text-slate-900 hover:text-white text-xs font-semibold py-2.5 min-h-[44px] rounded-lg transition-colors shadow-xs touch-manipulation"
-              >
-                <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
-                <span>{t("help.installFree")}</span>
-              </a>
-              <Link
-                href="/pricing"
-                className="flex items-center justify-center text-center border border-site-border bg-site-surface hover:bg-site-surface-2 text-site-text text-xs font-semibold py-2.5 min-h-[44px] rounded-lg transition-colors touch-manipulation"
-              >
-                {t("help.seePricing")}
-              </Link>
+            <div className="rounded-2xl border border-site-border bg-site-surface p-5 sm:p-6 space-y-3 transition-colors hover:border-site-border-focus">
+              <h3 className="text-base sm:text-lg font-bold text-site-text">
+                {t("help.getStarted")}
+              </h3>
+              <div className="space-y-2.5 pt-1">
+                <a
+                  href={CHROME_STORE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 w-full bg-accent hover:bg-accent-hover text-slate-900 text-sm font-bold py-2.5 sm:py-3 rounded-xl transition-colors shadow-xs touch-manipulation"
+                >
+                  <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
+                  <span>{t("help.installFree")}</span>
+                </a>
+                <Link
+                  href="/pricing"
+                  className="flex items-center justify-center gap-2 w-full border border-site-border bg-white dark:bg-site-surface-2 hover:bg-slate-50 dark:hover:bg-slate-800 text-site-text text-sm font-semibold py-2.5 sm:py-3 rounded-xl transition-colors shadow-xs touch-manipulation"
+                >
+                  <Icon icon="lucide:tag" className="w-4 h-4 text-site-text shrink-0" />
+                  <span>{t("help.seePricing")}</span>
+                </Link>
+              </div>
             </div>
           </Reveal>
 
+          {/* Card 3: Resources */}
           <Reveal delay={0.29}>
-            <div className="rounded-xl border border-site-border bg-site-surface p-4 sm:p-6 space-y-3 shadow-xs hover:-translate-y-0.5 hover:border-site-border-focus transition-all">
-              <h3 className="text-sm font-bold text-site-text">{t("help.resources")}</h3>
-              <ul className="space-y-1 text-xs">
+            <div className="rounded-2xl border border-site-border bg-site-surface p-5 sm:p-6 space-y-3 transition-colors hover:border-site-border-focus">
+              <h3 className="text-base sm:text-lg font-bold text-site-text">
+                {t("help.resources")}
+              </h3>
+              <ul className="space-y-3 pt-1 text-sm font-semibold">
                 <li>
-                  <Link href="/docs" className="inline-block py-1.5 text-accent hover:underline touch-manipulation">
-                    {t("help.viewDocs")} →
+                  <Link
+                    href="/docs"
+                    className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 hover:underline touch-manipulation"
+                  >
+                    <span>{t("help.viewDocs")}</span>
+                    <span>→</span>
                   </Link>
                 </li>
                 <li>
-                  <Link href="/contact" className="inline-block py-1.5 text-accent hover:underline touch-manipulation">
-                    {t("help.contactForm")} →
+                  <Link
+                    href="/contact"
+                    className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 hover:underline touch-manipulation"
+                  >
+                    <span>{t("help.contactForm")}</span>
+                    <span>→</span>
                   </Link>
                 </li>
                 <li>
-                  <Link href="/status" className="inline-block py-1.5 text-accent hover:underline touch-manipulation">
-                    {t("help.systemStatus")} →
+                  <Link
+                    href="/status"
+                    className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 hover:underline touch-manipulation"
+                  >
+                    <span>{t("help.systemStatus")}</span>
+                    <span>→</span>
                   </Link>
                 </li>
               </ul>

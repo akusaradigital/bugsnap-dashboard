@@ -304,6 +304,15 @@ a:active {
   scrollbar-color: color-mix(in srgb, var(--muted) 45%, transparent) transparent;
 }
 
+/* Hide scrollbar utility */
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
 ::-webkit-scrollbar {
   width: 5px;
   height: 5px;

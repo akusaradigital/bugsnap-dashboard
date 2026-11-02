@@ -4,9 +4,9 @@ import { Reveal } from "@/components/site/motion";
 import { pageMeta } from "@/lib/pageMeta";
 
 export const metadata = pageMeta({
-  title: "Terms of Service & Consumer Protection - BugSnap",
+  title: "Terms of Service - BugSnap",
   description:
-    "Terms of service, consumer protection guarantees, refund policy, and dispute resolution for BugSnap Chrome Extension and Dashboard.",
+    "Terms of service, acceptable use policies, and privacy commitments for BugSnap Chrome Extension and Dashboard.",
   canonical: "/terms",
 });
 
@@ -269,8 +269,8 @@ const sections: LegalSection[] = [
 export default function TermsPage() {
   return (
     <StaticShell
-      title="Terms of Service & Consumer Protection"
-      subtitle="Transparent conditions, statutory consumer protection rights, and refund policies for the BugSnap platform."
+      title="Terms of Service"
+      subtitle="Conditions of use, acceptable practices, and service standards for the BugSnap platform."
       lastUpdated="October 21, 2026"
     >
       <div className="max-w-4xl space-y-8 font-site text-xs sm:text-sm text-site-text leading-relaxed">

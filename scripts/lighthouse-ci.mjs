@@ -1,7 +1,8 @@
 import { launch } from 'chrome-launcher';
 import lighthouse from 'lighthouse';
 
-const routes = ['http://127.0.0.1:3000/', 'http://127.0.0.1:3000/pricing'];
+const BASE_URL = (process.env.BASE_URL || 'http://127.0.0.1:3000').replace(/\/$/, '');
+const routes = [`${BASE_URL}/`];
 
 const chrome = await launch({ chromeFlags: ['--headless', '--no-sandbox', '--disable-gpu'] });
 try {

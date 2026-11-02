@@ -2,8 +2,8 @@ import { pageMeta } from "@/lib/pageMeta";
 import { HowItWorksContent } from "./HowItWorksContent";
 
 export const metadata = pageMeta({
-  title: "How BugSnap Works - From Click to Fix",
-  description: "Discover how BugSnap captures screen recordings, DevTools console logs, and network telemetry in 3 simple steps, saving files straight to your Google Drive.",
+  title: "How BugSnap Works",
+  description: "No complex setup. No dev tools. Just capture, record, redact, and share actionable bug reports.",
   canonical: "/how-it-works",
 });
 
