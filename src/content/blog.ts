@@ -7,6 +7,7 @@ export interface BlogPost {
   date: string;
   author: string;
   readTime: string;
+  category?: string;
   tags: string[];
   coverImage: string;
   ogImage: string;
@@ -18,17 +19,62 @@ const CHROME_STORE_URL =
   "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
 
 export const blogPosts: BlogPost[] = [
+  // ─── Article: Hunting Flaky Front-End Bugs: Why Time-Synchronized Causality Matters ───
+  {
+    slug: "flaky-frontend-bugs-causality-timeline",
+    title: "Hunting Flaky Front-End Bugs: Why Time-Synchronized Causality Matters",
+    titleId: "Menelusuri Bug Flaky Front-End: Mengapa Kronologi Kausalitas Berurutan Sangat Penting",
+    description: "Intermittent UI bugs are notoriously hard to catch. Learn how synchronizing network responses, console errors, and user actions on a single timeline reveals the root cause.",
+    descriptionId: "Bug UI yang muncul sesekali sangat sulit dilacak. Pelajari bagaimana sinkronisasi respons network, error console, dan aksi pengguna pada satu timeline mengungkap akar masalah.",
+    date: "2026-11-02",
+    author: "BugSnap Team",
+    readTime: "5 min read",
+    category: "DEBUGGING",
+    tags: ["debugging", "devtools", "qa", "frontend"],
+    coverImage: "/blog/flaky-frontend-bugs-causality-timeline.webp",
+    ogImage: "/blog/flaky-frontend-bugs-causality-timeline.webp",
+    content: `
+<p>"It worked when I tested it, but now it fails." Every developer and QA tester has experienced the frustration of flaky, intermittent front-end bugs.</p>
+
+<p>The core problem with intermittent bugs is that a single isolated artifact — a static screenshot or a lone error stack trace — lacks <strong>causality</strong>. An error displayed on screen is almost never the origin of the bug; it is the final symptom of an asynchronous chain of events that started several seconds earlier.</p>
+
+<h2>The Anatomy of an Asynchronous Failure</h2>
+<p>Consider an e-commerce checkout button that occasionally freezes:</p>
+<ol>
+  <li><strong>T-5.2s:</strong> User clicks "Standard Shipping" (User Action).</li>
+  <li><strong>T-3.8s:</strong> Background pre-flight API request returns <code>429 Too Many Requests</code> (Silent Network Failure).</li>
+  <li><strong>T-1.2s:</strong> State management store leaves <code>isCalculatingTax: true</code> without resolving.</li>
+  <li><strong>T-0.0s:</strong> User clicks "Place Order" — button disabled, no visual error feedback.</li>
+</ol>
+<p>If the tester only submits a screenshot showing a disabled button, the developer assumes the button state is broken. But with a time-synchronized timeline, the <code>429 Rate Limit</code> at T-3.8s immediately reveals the true root cause.</p>
+
+<h2>How BugSnap Establishes Causality</h2>
+<p><a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> records user steps, console logs, and network activity with microsecond-accurate relative timestamps. In the viewer, hovering or scrubbing through the recording highlights the exact API call or interaction that preceded the crash.</p>
+    `.trim(),
+    contentId: `
+<p>"Tadi dicoba bisa, sekarang kok gagal lagi?" Hampir semua developer dan QA pernah dibuat pusing oleh bug flaky yang muncul sesekali.</p>
+
+<p>Penyebab utama sulitnya memperbaiki bug intermittent adalah hilangnya <strong>hubungan kausalitas</strong> jika hanya mengandalkan screenshot statis. Tampilan error di layar biasanya hanyalah gejala akhir dari rangkaian event asinkron yang terjadi beberapa detik sebelumnya.</p>
+
+<h2>Mengapa Kausalitas Timeline Sangat Penting</h2>
+<p>Ketika tombol checkout sesekali tidak merespons, penyebab aslinya sering kali adalah request background beberapa detik sebelumnya yang terkena rate limit atau timeout, sehingga state aplikasi terkunci dalam kondisi loading.</p>
+
+<p>Dengan menyatukan rekaman video, log network, dan interaksi pengguna dalam satu sumbu waktu yang sinkron, developer dapat melihat persis request mana yang mengawali kegagalan sistem sebelum tombol ditekan.</p>
+    `.trim(),
+  },
+
   // ─── Article: Zero Storage Liability: Why BYO Google Drive Wins for Enterprise QA ───
   {
     slug: "zero-storage-liability-why-byo-google-drive-wins",
     title: "Zero Storage Liability: Why BYO Google Drive Wins for Enterprise QA",
     titleId: "Zero Storage Liability: Mengapa Google Drive Pribadi Lebih Aman untuk QA Perusahaan",
-    description: "SaaS storage locks your bug recordings into third-party silos. Discover how the Bring-Your-Own-Storage model guarantees data privacy and eliminates vendor lock-in.",
-    descriptionId: "Penyimpanan SaaS mengunci rekaman bug ke server pihak ketiga. Pelajari bagaimana model Bring-Your-Own-Storage menjamin privasi data dan mengeliminasi biaya penyimpanan berlebih.",
+    description: "Learn how bringing your own Google Drive (BYO) eliminates data storage risks, keeps sensitive information in your control, and scales reliably for enterprise QA teams.",
+    descriptionId: "Pelajari bagaimana membawa Google Drive Anda sendiri (BYO) mengeliminasi risiko penyimpanan data, menjaga informasi sensitif dalam kendali Anda, dan berskala andal untuk tim QA perusahaan.",
     date: "2026-10-26",
     author: "BugSnap Team",
     readTime: "4 min read",
-    tags: ["security", "google-drive", "enterprise", "privacy"],
+    category: "DEVOPS",
+    tags: ["security", "google-drive", "enterprise", "privacy", "devops"],
     coverImage: "/blog/zero-storage-liability-why-byo-google-drive-wins.webp",
     ogImage: "/blog/zero-storage-liability-why-byo-google-drive-wins.webp",
     content: `
@@ -66,13 +112,14 @@ export const blogPosts: BlogPost[] = [
   // ─── Article: From Bug Recording to Automated Playwright Test: Closing the QA-Dev Loop ───
   {
     slug: "from-bug-recording-to-automated-playwright-test",
-    title: "From Bug Recording to Automated Playwright Test: Closing the QA-Dev Loop",
-    titleId: "Dari Rekaman Bug ke Tes Otomatis Playwright: Mempercepat Siklus QA-Dev",
-    description: "Stop manually writing test reproductions from scratch. Learn how capturing structured user action telemetry transforms bug videos into automated Playwright scripts.",
-    descriptionId: "Hentikan penulisan skrip uji reproduksi manual dari nol. Pelajari cara mengubah rekaman aksi pengguna menjadi skrip otomatis Playwright yang siap pakai.",
+    title: "From Bug Recording to Automated Playwright Test: Closing the QA Loop",
+    titleId: "Dari Rekaman Bug ke Tes Otomatis Playwright: Mempercepat Siklus QA",
+    description: "See how a real bug report can be turned into a Playwright test in minutes, helping your team prevent the same issue from happening again.",
+    descriptionId: "Lihat bagaimana laporan bug nyata dapat diubah menjadi tes Playwright dalam hitungan menit, membantu tim Anda mencegah masalah yang sama terulang kembali.",
     date: "2026-10-19",
     author: "BugSnap Team",
     readTime: "6 min read",
+    category: "PLAYWRIGHT",
     tags: ["playwright", "test-automation", "qa", "developer-productivity"],
     coverImage: "/blog/from-bug-recording-to-automated-playwright-test.webp",
     ogImage: "/blog/from-bug-recording-to-automated-playwright-test.webp",
@@ -126,13 +173,14 @@ test('reproduce checkout button failure', async ({ page }) => {
   // ─── Article: Detecting SPA Memory Leaks & DOM Bloat in Single Page Applications ───
   {
     slug: "detecting-spa-memory-leaks-and-dom-bloat",
-    title: "Detecting SPA Memory Leaks & DOM Bloat in Single Page Applications",
-    titleId: "Mendeteksi Kebocoran Memori & Pembengkakan DOM pada Aplikasi SPA",
-    description: "Unmounted components and detached DOM nodes silently degrade web performance. Learn how to track JS heap growth and element bloat during QA testing.",
-    descriptionId: "Komponen yang di-unmount dan node DOM yang tertinggal dapat menurunkan performa web. Pelajari cara melacak kenaikan heap JS dan pembengkakan elemen saat pengujian QA.",
+    title: "Detecting SPA Memory Leaks & DOM Bloat in Single Page Apps",
+    titleId: "Mendeteksi Kebocoran Memori & DOM Bloat pada Single Page Apps",
+    description: "Learn how to identify memory leaks, excessive DOM nodes, and long-running tasks using Chrome DevTools and BugSnap telemetry.",
+    descriptionId: "Pelajari cara mengidentifikasi kebocoran memori, node DOM berlebih, dan tugas berjalan lama menggunakan Chrome DevTools dan telemetri BugSnap.",
     date: "2026-10-13",
     author: "BugSnap Team",
-    readTime: "5 min read",
+    readTime: "7 min read",
+    category: "PERFORMANCE",
     tags: ["web-performance", "spa", "memory-leaks", "devtools"],
     coverImage: "/blog/detecting-spa-memory-leaks-and-dom-bloat.webp",
     ogImage: "/blog/detecting-spa-memory-leaks-and-dom-bloat.webp",
@@ -190,15 +238,16 @@ test('reproduce checkout button failure', async ({ page }) => {
   // ─── Article 1 ───────────────────────────────────────────────────────────────
   {
     slug: "how-to-report-bugs-effectively",
-    title: "How to Write Bug Reports That Developers Actually Want to Read",
-    titleId: "Cara Menulis Bug Report yang Benar-Benar Dibaca Developer",
+    title: "How to Navigate BugSnap's Tooltips & Dashboard (A Complete Beginner's Guide)",
+    titleId: "Cara Menavigasi Tooltip & Dashboard BugSnap (Panduan Lengkap Pemula)",
     description:
-      "A good bug report cuts debugging time in half. Learn what information to include, what to skip, and how to structure reports that get fixed fast.",
+      "A step-by-step walkthrough to help you get started with BugSnap, from installation to capturing and sharing your first bug report.",
     descriptionId:
-      "Bug report yang baik memangkas waktu debugging hingga setengahnya. Pelajari informasi apa yang perlu disertakan dan cara menyusun laporan yang cepat diperbaiki.",
+      "Panduan langkah demi langkah untuk membantu Anda memulai dengan BugSnap, dari instalasi hingga merekam dan membagikan laporan bug pertama Anda.",
     date: "2026-10-01",
     author: "BugSnap Team",
     readTime: "5 min read",
+    category: "GUIDE",
     tags: ["bug-reporting", "qa", "developer-tips"],
     coverImage: "/blog/how-to-report-bugs-effectively.webp",
     ogImage: "/blog/how-to-report-bugs-effectively.webp",
@@ -286,15 +335,16 @@ test('reproduce checkout button failure', async ({ page }) => {
   // ─── Article 2 ───────────────────────────────────────────────────────────────
   {
     slug: "chrome-devtools-for-non-developers",
-    title: "Chrome DevTools for QA Testers and PMs: What You Actually Need to Know",
-    titleId: "Chrome DevTools untuk QA Tester dan PM: Yang Benar-Benar Perlu Kamu Tahu",
+    title: "Chrome DevTools for QA Testers: Key Metrics You Actually Need",
+    titleId: "Chrome DevTools untuk QA Tester: Metrik Utama yang Benar-Benar Anda Butuhkan",
     description:
-      "You don't need to be a developer to read browser errors. This guide covers the Console and Network tabs in plain language, along with how to share what you find.",
+      "Focus on the most important DevTools metrics to debug layout issues, performance problems, and network errors faster.",
     descriptionId:
-      "Kamu tidak perlu menjadi developer untuk membaca error browser. Panduan ini membahas tab Console dan Network dalam bahasa yang mudah dipahami.",
+      "Fokus pada metrik DevTools terpenting untuk men-debug masalah layout, performa, dan error network lebih cepat.",
     date: "2026-09-15",
     author: "BugSnap Team",
     readTime: "6 min read",
+    category: "CHROME",
     tags: ["devtools", "qa-testing", "chrome"],
     coverImage: "/blog/chrome-devtools-for-non-developers.webp",
     ogImage: "/opengraph-image.png",
@@ -375,15 +425,16 @@ test('reproduce checkout button failure', async ({ page }) => {
   // ─── Article 3 ───────────────────────────────────────────────────────────────
   {
     slug: "screen-recording-for-bug-reports",
-    title: "Why a 30-Second Screen Recording Beats a 5-Paragraph Bug Description",
-    titleId: "Mengapa Screen Recording 30 Detik Lebih Baik dari Deskripsi Bug 5 Paragraf",
+    title: "Why a 30-Second Screen Recording Beats a 5 Paragraph Bug Report",
+    titleId: "Mengapa Perekaman Layar 30 Detik Mengalahkan Laporan Bug 5 Paragraf",
     description:
-      "Text descriptions lose context. Screen recordings show exactly what broke, how you got there, and what you expected. Here's when and how to use them effectively.",
+      "See how visual context helps developers understand and fix issues faster, with real examples from QA teams.",
     descriptionId:
-      "Deskripsi teks kehilangan konteks. Screen recording menunjukkan persis apa yang rusak, bagaimana kamu sampai di sana, dan apa yang diharapkan.",
+      "Lihat bagaimana konteks visual membantu developer memahami dan memperbaiki masalah lebih cepat, dengan contoh nyata dari tim QA.",
     date: "2026-08-28",
     author: "BugSnap Team",
     readTime: "4 min read",
+    category: "PRODUCTIVITY",
     tags: ["screen-recording", "bug-reporting", "productivity"],
     coverImage: "/blog/screen-recording-for-bug-reports.webp",
     ogImage: "/opengraph-image.png",
@@ -466,12 +517,13 @@ test('reproduce checkout button failure', async ({ page }) => {
     title: "Who Actually Owns Your Team's Files? Why It Matters More Than You Think",
     titleId: "Siapa yang Benar-Benar Memiliki File Tim Kamu? Mengapa Ini Lebih Penting dari yang Kamu Kira",
     description:
-      "Most collaboration tools own your files on your behalf. Here's what that means for data portability, access control, and what happens when you stop paying.",
+      "Understand the real risks of storing bug reports on third-party servers and how BYO Google Drive gives you full control.",
     descriptionId:
-      "Sebagian besar alat kolaborasi menyimpan file kamu atas nama mereka. Inilah artinya untuk portabilitas data, kontrol akses, dan apa yang terjadi ketika kamu berhenti berlangganan.",
+      "Pahami risiko nyata dari menyimpan file tim di server pihak ketiga dan bagaimana BYO Google Drive memberi Anda kendali penuh.",
     date: "2026-08-10",
     author: "BugSnap Team",
     readTime: "5 min read",
+    category: "BEST PRACTICES",
     tags: ["google-drive", "data-ownership", "team-tools"],
     coverImage: "/blog/google-drive-file-ownership-for-teams.webp",
     ogImage: "/opengraph-image.png",
@@ -550,6 +602,7 @@ test('reproduce checkout button failure', async ({ page }) => {
     date: "2026-07-25",
     author: "BugSnap Team",
     readTime: "5 min read",
+    category: "PRODUCTIVITY",
     tags: ["productivity", "debugging", "team-collaboration"],
     coverImage: "/blog/reduce-back-and-forth-in-bug-fixing.webp",
     ogImage: "/opengraph-image.png",
