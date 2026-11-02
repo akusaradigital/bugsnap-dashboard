@@ -29,12 +29,9 @@ export function ExtensionSyncBridge() {
           },
           window.location.origin
         );
-      } else {
-        window.postMessage(
-          { source: "bugsnap-web", action: "sync_logout" },
-          window.location.origin
-        );
       }
+      // No session is deliberately not a logout: someone who connected Drive from the extension and never signed in
+      // here would be disconnected on every dashboard visit. Only a real SIGNED_OUT event, below, logs the extension out.
     };
 
     // Check current session on mount and broadcast
@@ -44,7 +41,7 @@ export function ExtensionSyncBridge() {
 
     // Listen to all auth state changes across the whole app
     const { data: sub } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_OUT" || !session?.user) {
+      if (event === "SIGNED_OUT") {
         window.postMessage(
           { source: "bugsnap-web", action: "sync_logout" },
           window.location.origin
