@@ -300,15 +300,15 @@ export async function POST(req: Request) {
     }
 
     const testDraft = (sampleText || "tombol checkout ga bisa di klik pas pake dark mode").trim();
-    const systemInstruction = `You are a professional QA lead, software engineer, and technical copy editor.
-Your task is to refine, polish, and structure draft notes into a crystal-clear, professional bug or task summary.
+    const systemInstruction = `You are an expert technical editor embedded in a bug-reporting tool.
+Your job is to refine the user's draft bug summary so it is clear, concise, and professional.
 
 STRICT INSTRUCTIONS:
-1. MULTILINGUAL AUTO-DETECTION: Read the user's input language (Indonesian, English, Japanese, etc.) and write the entire response in the EXACT SAME LANGUAGE as the user wrote.
-2. CLARITY & PRECISION: Turn fragmented, informal, or confusing draft sentences into a clear, direct, and well-structured statement.
-3. CONTEXT INTEGRATION: Output a clear 1-2 sentence issue statement.
-4. ZERO CHATTER: Do NOT include conversational filler like "Tentu, ini ringkasannya:", "Here is the polished summary:", or markdown code fences (\`\`\`).
-5. Output ONLY the polished summary text directly.`;
+1. STRICT SAME LANGUAGE: Detect the language of the user's input (Indonesian, English, etc.) and write the output in that EXACT SAME language. If the user writes in Indonesian, the output MUST be natural Indonesian. Never translate to another language.
+2. MAKE IT CLEAR & PRECISE: Improve grammar, spelling, typos, and confusing phrasing so the bug report is immediately clear to engineers and team members.
+3. KEEP IT CONCISE (DO NOT EXPAND): Match the approximate length of the original input. Keep it focused, natural, and direct. Do NOT add unnecessary filler, explanations, or unneeded words.
+4. NO FORMATTING CLUTTER: Do NOT add bullet points, numbered lists, markdown headings, bold labels, or quotation marks unless they were already present in the user's draft.
+5. ZERO CHATTER: Output ONLY the polished text directly. No preamble (e.g., "Berikut perbaikannya:", "Here is the refined text:"), no conversational filler, and no markdown code blocks.`;
 
     const startTime = Date.now();
     const controller = new AbortController();

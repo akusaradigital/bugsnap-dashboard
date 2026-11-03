@@ -5,6 +5,7 @@ import { useToast } from "@/components/Toast";
 import { useT } from "@/components/I18nProvider";
 import { Icon } from "@/lib/iconify";
 import { getAdminHeaders } from "@/lib/admin-cache";
+import { Dropdown } from "@/components/Dropdown";
 import type { SiteConfig } from "@/app/api/admin/setup/route";
 
 interface ServiceCheck {
@@ -527,17 +528,18 @@ CRON_SECRET=your-random-cron-secret-token`;
 
                 <div className="p-3.5 rounded-xl bg-site-surface-2 border border-site-border space-y-1.5">
                   <label className="font-semibold text-xs text-site-text block">Default Retention Window</label>
-                  <select
-                    value={formConfig.defaultRetentionDays}
-                    onChange={(e) => setFormConfig({ ...formConfig, defaultRetentionDays: Number(e.target.value) })}
-                    className="w-full px-2.5 py-1.5 text-xs rounded-lg border border-site-border bg-site-surface text-site-text"
-                  >
-                    <option value={0}>Unlimited (Keep Captures Forever)</option>
-                    <option value={30}>30 Days Storage Window</option>
-                    <option value={60}>60 Days Storage Window</option>
-                    <option value={90}>90 Days Storage Window</option>
-                    <option value={180}>180 Days Storage Window</option>
-                  </select>
+                  <Dropdown
+                    value={String(formConfig.defaultRetentionDays)}
+                    onChange={(val) => setFormConfig({ ...formConfig, defaultRetentionDays: Number(val) })}
+                    options={[
+                      { value: "0", label: "Unlimited (Keep Captures Forever)" },
+                      { value: "30", label: "30 Days Storage Window" },
+                      { value: "60", label: "60 Days Storage Window" },
+                      { value: "90", label: "90 Days Storage Window" },
+                      { value: "180", label: "180 Days Storage Window" },
+                    ]}
+                    variant="field"
+                  />
                   <span className="text-[10px] text-site-text-2 block">
                     Zero Server Storage means Google Drive files remain in the user&apos;s own account.
                   </span>

@@ -68,7 +68,7 @@ export default function AdminErrorSpikesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <div className="min-w-0">
           <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            <Icon icon="lucide:alert-triangle" className="w-6 h-6 text-rose-500 shrink-0" />
+            <Icon icon="lucide:activity" className="w-6 h-6 text-rose-500 shrink-0" />
             <span>{t("admin.errorSpikes")}</span>
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 dark:text-zinc-400 mt-1">

@@ -51,7 +51,7 @@ export const ADMIN_NAV_ROUTES: AdminNavRoute[] = [
   {
     id: "ai",
     href: "/admin/ai-analytics",
-    icon: "lucide:sparkles",
+    icon: APP_ICONS.nav.aiAnalytics,
     titleKey: "admin.hubAi",
     keywords: ["ai", "tokens", "analytics", "claude", "gpt", "biaya", "model", "polish", "provider", "endpoint"],
     hub: "ai",
@@ -92,7 +92,7 @@ export const ADMIN_NAV_ROUTES: AdminNavRoute[] = [
   {
     id: "error-spikes",
     href: "/admin/error-spikes",
-    icon: "lucide:alert-triangle",
+    icon: APP_ICONS.nav.errorSpikes,
     titleKey: "admin.navErrorSpikes",
     keywords: ["error", "spikes", "crash", "incidents", "lonjakan", "gangguan", "surges"],
     hub: "operations",
@@ -124,7 +124,7 @@ export const ADMIN_NAV_ROUTES: AdminNavRoute[] = [
   {
     id: "setup",
     href: "/admin/setup",
-    icon: "lucide:sliders",
+    icon: APP_ICONS.nav.setup,
     titleKey: "admin.navSetup",
     keywords: ["setup", "config", "settings", "pengaturan", "konfigurasi", "env", "wizard", "environment", "checklist"],
     hub: "system",
@@ -137,7 +137,7 @@ export const ADMIN_NAV_HUBS: Record<
 > = {
   overview: { titleKey: "admin.hubOverview", href: "/admin", icon: APP_ICONS.nav.dashboard },
   users: { titleKey: "admin.hubUsers", href: "/admin/users", icon: APP_ICONS.nav.users },
-  ai: { titleKey: "admin.hubAi", href: "/admin/ai-analytics", icon: "lucide:sparkles" },
+  ai: { titleKey: "admin.hubAi", href: "/admin/ai-analytics", icon: APP_ICONS.nav.aiAnalytics },
   revenue: { titleKey: "admin.hubRevenue", href: "/admin/revenue", icon: APP_ICONS.nav.revenue },
   operations: { titleKey: "admin.hubOperations", href: "/admin/support", icon: APP_ICONS.nav.support, badgeKey: "support" },
   system: { titleKey: "admin.hubSystem", href: "/admin/supabase", icon: APP_ICONS.nav.system },

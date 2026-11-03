@@ -43,14 +43,14 @@ export function AboutContent() {
       desc:
         t("about.principle1Desc") ||
         "Your internal screen recordings and reproduction videos should never be held hostage on proprietary SaaS clouds. Files remain directly in your enterprise Google Drive under your own organization's compliance boundaries.",
-      icon: "lucide:inbox",
+      icon: "lucide:hard-drive",
     },
     {
       title: t("about.principle2Title") || "Zero-Overhead Engineering",
       desc:
         t("about.principle2Desc") ||
         "Modern browser extensions shouldn't consume gigabytes of RAM or impact heavy loading scripts in your CI/CD. BugSnap is built strictly on Chrome Manifest V3, consuming under 25MB RAM and staying dormant when not recording.",
-      icon: "lucide:file-code-2",
+      icon: "lucide:cpu",
     },
     {
       title: t("about.principle3Title") || "Honest, Respectful Tooling",
@@ -217,7 +217,7 @@ export function AboutContent() {
           <div className="rounded-2xl sm:rounded-3xl border border-site-border bg-site-surface p-6 sm:p-8 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-6 min-w-0">
             <div className="flex items-center gap-4 sm:gap-5 min-w-0 flex-1">
               <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#eefcf3] dark:bg-emerald-950/40 border border-emerald-500/10 flex items-center justify-center shrink-0 text-[#16a34a] dark:text-emerald-400">
-                <Icon icon="lucide:zap" className="w-6 h-6 fill-current" aria-hidden="true" />
+                <Icon icon="lucide:zap" className="w-6 h-6" aria-hidden="true" />
               </div>
               <div className="space-y-1 min-w-0 flex-1">
                 <h3 className="text-lg sm:text-xl md:text-2xl font-extrabold text-site-text tracking-tight leading-snug">

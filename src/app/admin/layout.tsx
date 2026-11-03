@@ -384,13 +384,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 type="button"
                 disabled={signingInGoogle || loggingIn}
                 onClick={handleGoogleLogin}
-                className="w-full flex items-center justify-center gap-2.5 rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-800 dark:text-zinc-200 text-xs font-semibold py-2.5 transition-colors shadow-sm disabled:opacity-50"
+                className="w-full min-h-11 flex items-center justify-center gap-2.5 rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-800 dark:text-zinc-200 text-xs font-semibold py-2.5 transition-colors shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#6B9A35] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-900 disabled:opacity-50"
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/icons/google.svg" alt="Google" className="h-4 w-4 shrink-0" />
                 <span>{signingInGoogle ? "Menghubungkan Google..." : "Masuk dengan Google"}</span>
               </button>
-              <p className="text-[10px] text-center text-slate-400 dark:text-zinc-500">
+              <p className="text-[10px] text-center text-slate-600 dark:text-zinc-300">
                 {t("admin.superAdminOnlyDesc")}
               </p>
             </div>
@@ -406,32 +406,34 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             {/* CREDENTIALS FORM */}
             <form onSubmit={handleLogin} className="space-y-3.5">
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 mb-1">
+                <label htmlFor="admin-username" className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 mb-1">
                   Username
                 </label>
                 <input
+                  id="admin-username"
                   type="text"
                   required
                   autoComplete="username"
                   value={usernameInput}
                   onChange={(e) => setUsernameInput(e.target.value)}
                   placeholder="akusaradigital"
-                  className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2.5 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 transition-colors"
+                  className="w-full min-h-11 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2.5 outline-none focus-visible:border-[#6B9A35] focus-visible:ring-2 focus-visible:ring-[#6B9A35] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-900 transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 mb-1">
+                <label htmlFor="admin-password" className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 mb-1">
                   Password
                 </label>
                 <input
+                  id="admin-password"
                   type="password"
                   required
                   autoComplete="current-password"
                   value={passwordInput}
                   onChange={(e) => setPasswordInput(e.target.value)}
                   placeholder="••••••••••••"
-                  className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2.5 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 transition-colors"
+                  className="w-full min-h-11 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2.5 outline-none focus-visible:border-[#6B9A35] focus-visible:ring-2 focus-visible:ring-[#6B9A35] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-900 transition-colors"
                 />
               </div>
 
@@ -457,7 +459,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               <button
                 type="submit"
                 disabled={loggingIn || signingInGoogle || !usernameInput || !passwordInput}
-                className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] disabled:opacity-50 text-white text-xs font-semibold py-2.5 transition-colors shadow-xs shadow-[#89BD49]/25"
+                className="w-full min-h-11 flex items-center justify-center gap-2 rounded-lg bg-[#6B9A35] hover:bg-[#527D26] disabled:opacity-50 text-white text-xs font-semibold py-2.5 transition-colors shadow-xs focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#527D26] focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-900"
               >
                 {loggingIn ? (
                   <>

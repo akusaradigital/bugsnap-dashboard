@@ -5,6 +5,7 @@ import { useToast } from "@/components/Toast";
 import { useT } from "@/components/I18nProvider";
 import { getAdminHeaders, getAdminCache, setAdminCache } from "@/lib/admin-cache";
 import { Icon } from "@/lib/iconify";
+import { Dropdown } from "@/components/Dropdown";
 
 interface TableStat {
   schema_name: string;
@@ -204,7 +205,7 @@ export default function AdminSupabasePage() {
       </div>
 
       {/* Cluster Meta Strip */}
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4 sm:gap-4">
         <div className="rounded-xl border border-border bg-subtle p-4">
           <p className="text-xs font-medium text-muted">{t("admin.supabase.status")}</p>
           <p className="mt-1 text-sm font-semibold text-foreground">
@@ -420,29 +421,29 @@ export default function AdminSupabasePage() {
             />
 
             {/* Schema Filter */}
-            <select
+            <Dropdown
               value={schemaFilter}
-              onChange={(e) => setSchemaFilter(e.target.value)}
-              className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 focus:outline-none"
-            >
-              <option value="all">All Schemas</option>
-              {uniqueSchemas.map((s) => (
-                <option key={s} value={s}>
-                  {s}
-                </option>
-              ))}
-            </select>
+              onChange={(val) => setSchemaFilter(val)}
+              options={[
+                { value: "all", label: "All Schemas" },
+                ...uniqueSchemas.map((s) => ({ value: s, label: s })),
+              ]}
+              variant="pill"
+              className="min-w-[120px]"
+            />
 
             {/* Sort by */}
-            <select
+            <Dropdown
               value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as "size" | "live_rows" | "dead_rows")}
-              className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 focus:outline-none"
-            >
-              <option value="size">Sort: Ukuran Total</option>
-              <option value="live_rows">Sort: Baris Aktif</option>
-              <option value="dead_rows">Sort: Dead Tuples</option>
-            </select>
+              onChange={(val) => setSortBy(val as "size" | "live_rows" | "dead_rows")}
+              options={[
+                { value: "size", label: "Sort: Ukuran Total" },
+                { value: "live_rows", label: "Sort: Baris Aktif" },
+                { value: "dead_rows", label: "Sort: Dead Tuples" },
+              ]}
+              variant="pill"
+              className="min-w-[150px]"
+            />
           </div>
         </div>
 

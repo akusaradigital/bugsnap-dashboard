@@ -104,7 +104,7 @@ export default function AdminAiAnalyticsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-3 border-b border-slate-200 dark:border-zinc-800">
         <div>
           <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            <span className="flex items-center gap-2"><Icon icon="lucide:bot" className="w-4 h-4 shrink-0 text-[#89BD49]" /> {t("admin.aiTitle")}</span>
+            <span className="flex items-center gap-2"><Icon icon="lucide:bar-chart-2" className="w-4 h-4 shrink-0 text-[#89BD49]" /> {t("admin.aiTitle")}</span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
             {t("admin.aiDesc")}
@@ -184,7 +184,7 @@ export default function AdminAiAnalyticsPage() {
         <div className="p-4 border-b border-slate-200 dark:border-zinc-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div>
             <h3 className="text-xs font-bold text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-2">
-              <span className="flex items-center gap-1.5"><Icon icon="lucide:flame" className="w-3.5 h-3.5 shrink-0 text-amber-500" /> Top AI Invocations &amp; Token Usage</span>
+              <span className="flex items-center gap-1.5"><Icon icon="lucide:activity" className="w-3.5 h-3.5 shrink-0 text-amber-500" /> Top AI Invocations &amp; Token Usage</span>
               {(aiStats?.topDrivers || []).some((d) => d.is_leech) && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-300 dark:border-amber-700 animate-pulse">
                   <Icon icon="lucide:alert-triangle" className="w-3 h-3 shrink-0" />

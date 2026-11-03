@@ -23,27 +23,80 @@ interface DropdownProps {
 const TRIGGER_BASE = "flex items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 focus-visible:ring-offset-background transition-all duration-150";
 const TRIGGER_VARIANT: Record<NonNullable<DropdownProps["variant"]>, string> = {
   field: "w-full rounded-lg border border-border px-3 py-2 text-sm bg-subtle text-foreground justify-between hover:border-accent/40 hover:bg-subtle/80",
-  pill: "border border-border bg-subtle rounded-lg px-2 py-1.5 text-xs text-muted hover:text-foreground hover:border-accent/40 hover:bg-subtle/80",
+  pill: "border border-border bg-subtle rounded-lg px-2.5 py-1.5 text-xs text-muted hover:text-foreground hover:border-accent/40 hover:bg-subtle/80",
   // For a select nested inside an already-styled wrapper pill (e.g. "Tag:" label + this trigger).
   inline: "bg-transparent font-medium text-foreground hover:text-accent",
-  toolbar: "h-8 px-2.5 rounded-xl border border-border bg-subtle hover:bg-background text-xs font-semibold text-foreground transition-all shadow-xs cursor-pointer justify-between",
+  toolbar: "min-h-[38px] px-3 rounded-xl border border-border bg-background hover:bg-subtle text-xs font-semibold text-foreground transition-all shadow-xs cursor-pointer justify-between",
 };
 
 // Matches the folder "..." menu look (layout.tsx) - the house style for every custom dropdown panel.
 export function Dropdown({ value, options, onChange, variant = "field", placeholder, className, direction = "down", disabled, align = "left" }: DropdownProps) {
   const [open, setOpen] = useState(false);
   const [highlightedIndex, setHighlightedIndex] = useState(-1);
+  const [computedDirection, setComputedDirection] = useState<"down" | "up">(direction);
+  const [computedAlign, setComputedAlign] = useState<"left" | "right">(align);
+  const [panelStyle, setPanelStyle] = useState<{ maxWidth?: number; maxHeight?: number }>({});
   const ref = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const listboxId = useId();
 
+  // Smart positioning: auto-flip vertically if clipped by bottom, auto-align horizontally if clipped by right edge,
+  // and dynamically clamp maxWidth and maxHeight to guarantee 0 overflow across mobile (320px-440px), tablet, and desktop.
   useEffect(() => {
     if (!open) return;
-    const onMouseDown = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+    if (triggerRef.current) {
+      const rect = triggerRef.current.getBoundingClientRect();
+      const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+      const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+
+      let nextDir: "down" | "up" = "down";
+      let nextMaxHeight = 240;
+      if (direction === "up") {
+        nextDir = "up";
+        nextMaxHeight = Math.min(240, Math.max(120, rect.top - 12));
+      } else {
+        const spaceBelow = viewportHeight - rect.bottom;
+        const spaceAbove = rect.top;
+        if (spaceBelow < 220 && spaceAbove > spaceBelow) {
+          nextDir = "up";
+          nextMaxHeight = Math.min(240, Math.max(120, spaceAbove - 12));
+        } else {
+          nextDir = "down";
+          nextMaxHeight = Math.min(240, Math.max(120, spaceBelow - 12));
+        }
+      }
+      setComputedDirection(nextDir);
+
+      let nextAlign: "left" | "right" = "left";
+      let nextMaxWidth = 256;
+      if (align === "right") {
+        nextAlign = "right";
+        nextMaxWidth = Math.min(256, Math.max(140, rect.right - 12));
+      } else {
+        const spaceRight = viewportWidth - rect.left;
+        if (spaceRight < 240 && rect.right >= 180) {
+          nextAlign = "right";
+          nextMaxWidth = Math.min(256, Math.max(140, rect.right - 12));
+        } else {
+          nextAlign = "left";
+          nextMaxWidth = Math.min(256, Math.max(140, spaceRight - 12));
+        }
+      }
+      setComputedAlign(nextAlign);
+      setPanelStyle({ maxWidth: nextMaxWidth, maxHeight: nextMaxHeight });
+    }
+  }, [open, direction, align]);
+
+  // Touchscreen & pointer dismissal: pointerdown reacts immediately without 300ms touch delay
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
     };
-    document.addEventListener("mousedown", onMouseDown);
-    return () => document.removeEventListener("mousedown", onMouseDown);
+    document.addEventListener("pointerdown", onPointerDown);
+    return () => document.removeEventListener("pointerdown", onPointerDown);
   }, [open]);
 
   useEffect(() => {
@@ -85,7 +138,7 @@ export function Dropdown({ value, options, onChange, variant = "field", placehol
   };
 
   const selected = options.find((o) => o.value === value);
-  const isUp = direction === "up";
+  const isUp = computedDirection === "up";
 
   return (
     <div ref={ref} onKeyDown={handleKeyDown} className={`relative min-w-0 ${className || ""}`}>
@@ -108,10 +161,13 @@ export function Dropdown({ value, options, onChange, variant = "field", placehol
           id={listboxId}
           role="listbox"
           tabIndex={-1}
-          className={`absolute ${align === "right" ? "right-0" : "left-0"} min-w-full w-max max-w-[min(16rem,calc(100vw-1.5rem))] max-h-60 overflow-y-auto border border-border bg-subtle py-1 shadow-xl overflow-x-hidden ${
-            isUp
-              ? "bottom-full mb-1.5 z-50 rounded-xl text-xs"
-              : "top-full mt-1.5 z-50 rounded-lg text-sm"
+          style={panelStyle}
+          className={`absolute ${computedAlign === "right" ? "right-0" : "left-0"} min-w-full w-max max-w-[min(16rem,calc(100vw-1.5rem))] max-h-60 overflow-y-auto border border-border bg-subtle py-1 shadow-xl overflow-x-hidden [overscroll-behavior:contain] ${
+            isUp || variant === "toolbar" || variant === "pill"
+              ? "rounded-xl text-xs"
+              : "rounded-lg text-sm"
+          } ${
+            isUp ? "bottom-full mb-1.5 z-50" : "top-full mt-1.5 z-50"
           }`}
         >
           {options.map((o, idx) => {
@@ -129,13 +185,20 @@ export function Dropdown({ value, options, onChange, variant = "field", placehol
                   triggerRef.current?.focus();
                 }}
                 onMouseEnter={() => setHighlightedIndex(idx)}
-                className={`block w-full px-3 text-left transition-colors ${
-                  variant === "toolbar" ? "py-1.5 text-xs" : "py-2 text-sm"
+                className={`flex items-center justify-between gap-2 w-full px-3 text-left transition-colors ${
+                  variant === "toolbar" || variant === "pill" ? "py-2 text-xs" : "py-2 text-sm"
                 } ${
-                  isHighlighted ? "bg-border/40 text-foreground" : isSelected ? "font-medium text-foreground bg-border/20" : "text-muted hover:bg-border/30 hover:text-foreground"
+                  isHighlighted
+                    ? "bg-border/40 text-foreground"
+                    : isSelected
+                    ? "font-semibold text-foreground bg-accent/10"
+                    : "text-muted hover:bg-border/30 hover:text-foreground"
                 }`}
               >
-                {o.label}
+                <span className="truncate">{o.label}</span>
+                {isSelected && (
+                  <Icon icon="lucide:check" className="w-3.5 h-3.5 text-accent shrink-0" aria-hidden="true" />
+                )}
               </button>
             );
           })}

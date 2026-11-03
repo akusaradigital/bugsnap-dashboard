@@ -7,6 +7,7 @@ import { Icon } from "@/lib/iconify";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
 import { fetchDriveStatus } from "@/lib/google-drive-values";
+import { Dropdown } from "@/components/Dropdown";
 
 interface DayCount {
   day: number; // 1 to 31
@@ -465,36 +466,25 @@ function DashboardContent() {
           </div>
           <div className="flex flex-wrap items-center gap-2.5 sm:gap-3">
             {/* Month Selector */}
-            <div className="relative inline-flex items-center">
-              <select
-                value={selectedMonth}
-                onChange={(e) => setSelectedMonth(Number(e.target.value))}
-                className="appearance-none bg-background hover:bg-subtle border border-border rounded-xl pl-3 pr-7 py-2 min-h-[38px] text-xs font-semibold text-foreground outline-hidden cursor-pointer shadow-xs transition-colors touch-manipulation"
-              >
-                {MONTH_NAMES.map((name, idx) => (
-                  <option key={name} value={idx} className="bg-background text-foreground">
-                    {name}
-                  </option>
-                ))}
-              </select>
-              <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5 text-muted pointer-events-none absolute right-2" />
-            </div>
+            <Dropdown
+              value={String(selectedMonth)}
+              onChange={(val) => setSelectedMonth(Number(val))}
+              options={MONTH_NAMES.map((name, idx) => ({ value: String(idx), label: name }))}
+              variant="toolbar"
+              className="min-w-[125px]"
+            />
 
             {/* Year Selector */}
-            <div className="relative inline-flex items-center">
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(Number(e.target.value))}
-                className="appearance-none bg-background hover:bg-subtle border border-border rounded-xl pl-3 pr-7 py-2 min-h-[38px] text-xs font-semibold text-foreground outline-hidden cursor-pointer shadow-xs transition-colors touch-manipulation"
-              >
-                {Array.from({ length: 6 }, (_, i) => currentYear - 3 + i).map((yr) => (
-                  <option key={yr} value={yr} className="bg-background text-foreground">
-                    {yr}
-                  </option>
-                ))}
-              </select>
-              <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5 text-muted pointer-events-none absolute right-2" />
-            </div>
+            <Dropdown
+              value={String(selectedYear)}
+              onChange={(val) => setSelectedYear(Number(val))}
+              options={Array.from({ length: 6 }, (_, i) => currentYear - 3 + i).map((yr) => ({
+                value: String(yr),
+                label: String(yr),
+              }))}
+              variant="toolbar"
+              className="min-w-[85px]"
+            />
 
             <div className="flex items-center gap-1.5 text-xs text-muted font-medium bg-subtle px-2.5 py-1 rounded-lg border border-border">
               <span className="w-2.5 h-2.5 rounded-full bg-[#89BD49]" />

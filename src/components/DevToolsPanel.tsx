@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
 import { useT } from "@/components/I18nProvider";
 import { Icon } from "@/lib/iconify";
+import { Dropdown } from "@/components/Dropdown";
 import { decompressDevLogs } from "@/lib/devlogs-compression";
 import { supabase } from "@/lib/supabase";
 import { isIgnoredUrl, TRACKER_PATTERNS } from "@/lib/ignored-urls";
@@ -51,11 +52,27 @@ import {
   normalizeLevel,
   statusLabel,
 } from "@/lib/devlogs";
-import { buildCurlCommand, buildHarExport, buildMarkdownBugReport } from "@/lib/devlogs-export";
+import {
+  buildCurlCommand,
+  buildHarExport,
+  buildMarkdownBugReport,
+  buildPlaywrightTest,
+  buildGitHubActionWorkflow,
+  buildAiMcpPrompt,
+  buildClaudeCliCommand,
+} from "@/lib/devlogs-export";
 
 // Re-exported so existing importers of this module keep working.
 export { isIgnoredUrl, TRACKER_PATTERNS, normalizeDevLog, cleanStackTrace, isFirstPartyUrl };
-export { buildCurlCommand, buildHarExport, buildMarkdownBugReport };
+export {
+  buildCurlCommand,
+  buildHarExport,
+  buildMarkdownBugReport,
+  buildPlaywrightTest,
+  buildGitHubActionWorkflow,
+  buildAiMcpPrompt,
+  buildClaudeCliCommand,
+};
 export type { ConsoleLog, NetworkLog, ActionLog, NavigationLog, ScreenshotLog, PerformanceLog, StorageLog, DeviceSpecsLog, DevLog, DevLogSummary, DriveExternalLogReference, CapturedLogs };
 
 interface Props {
@@ -66,9 +83,10 @@ interface Props {
    *  through the same gated stream route, which needs proof for those now. */
   unlockPassword?: string | null;
   className?: string;
+  initialTab?: Tab;
 }
 
-const TABS = ["Info", "Console", "Network", "Actions", "MCP"] as const;
+const TABS = ["Info", "Console", "Network", "Actions", "Playwright", "MCP"] as const;
 type Tab = typeof TABS[number];
 
 // Formats error messages cleanly (e.g. converts "POST\nhttps://..." into structured method + URL badges)
@@ -797,11 +815,19 @@ function McpTabPanel({
   capture,
   consoleErrors,
   networkFailures,
+  actionLogs = [],
+  targetHost,
+  detectedOs,
+  detectedBrowser,
   t,
 }: {
   capture: CaptureMeta;
   consoleErrors: ConsoleLog[];
   networkFailures: NetworkLog[];
+  actionLogs?: (ActionLog | NavigationLog | ScreenshotLog)[];
+  targetHost?: string;
+  detectedOs?: string;
+  detectedBrowser?: string;
   t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
   const [copiedPrompt, setCopiedPrompt] = useState(false);
@@ -812,13 +838,22 @@ function McpTabPanel({
     ? `${window.location.origin}/v/${captureId}`
     : `https://bugsnap.akusaraproject.my.id/v/${captureId}`;
 
-  const promptText = `Fix this BugSnap issue: ${capture.title || "Bug Report"}
-Capture URL: ${shareUrl}
-Description: ${capture.description || "No description provided"}
-Environment: ${capture.browser || "Browser"} / ${capture.os || "OS"} / ${capture.window_size || "Screen"}
-Errors detected: ${consoleErrors.length} console error(s), ${networkFailures.length} failed network request(s).
+  const promptText = useMemo(() => {
+    return buildAiMcpPrompt({
+      capture,
+      targetHost,
+      detectedOs: detectedOs || "Web",
+      detectedBrowser: detectedBrowser || "Chrome",
+      shareUrl,
+      consoleErrors,
+      networkErrors: networkFailures,
+      actionLogs,
+    });
+  }, [capture, targetHost, detectedOs, detectedBrowser, shareUrl, consoleErrors, networkFailures, actionLogs]);
 
-Please inspect the capture details via BugSnap MCP or the link above and propose a fix.`;
+  const claudeCliCommand = useMemo(() => {
+    return buildClaudeCliCommand({ capture, shareUrl });
+  }, [capture, shareUrl]);
 
   const claudeCodeCmd = `claude mcp add --scope user -e BUGSNAP_API_KEY=YOUR_KEY --transport stdio bugsnap -- npx -y bugsnap-mcp`;
 
@@ -862,6 +897,28 @@ Please inspect the capture details via BugSnap MCP or the link above and propose
         </p>
       </div>
 
+      {/* 1-Click Claude Code CLI Execution */}
+      <div className="rounded-xl border border-border bg-subtle/80 p-4 space-y-3">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 font-semibold text-foreground text-xs">
+            <Icon icon="lucide:terminal" className="w-4 h-4 text-[#89BD49]" />
+            <span>{t("dt.mcp.claudeCliTitle") || "Claude Code CLI (1-Click Run)"}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => handleCopyCmd(claudeCliCommand, "claude-run")}
+            className="px-3 py-1.5 rounded-md text-xs font-semibold bg-[#89BD49] hover:bg-[#7BAA3F] text-white transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+          >
+            <Icon icon={copiedCmd === "claude-run" ? "lucide:check" : "lucide:copy"} className="w-3.5 h-3.5" />
+            <span>{copiedCmd === "claude-run" ? (t("dt.mcp.cliCopied") || "Command Copied!") : (t("dt.mcp.copyCli") || "Copy CLI Command")}</span>
+          </button>
+        </div>
+        <pre className="p-3 rounded-lg bg-slate-900 text-slate-100 dark:bg-slate-950 dark:text-slate-200 border border-slate-800 font-mono text-[11px] leading-relaxed whitespace-pre-wrap select-all overflow-x-auto">
+          {claudeCliCommand}
+        </pre>
+      </div>
+
+      {/* Comprehensive Prompt for Cursor / Claude / Windsurf / Hermes */}
       <div className="rounded-xl border border-border bg-subtle/80 p-4 space-y-3">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-1.5 font-semibold text-foreground text-xs">
@@ -871,7 +928,7 @@ Please inspect the capture details via BugSnap MCP or the link above and propose
           <button
             type="button"
             onClick={handleCopyPrompt}
-            className="px-3 py-1.5 rounded-md text-xs font-semibold bg-[#89BD49] hover:bg-[#7BAA3F] text-white transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+            className="px-3 py-1.5 rounded-md text-xs font-semibold bg-background hover:bg-subtle text-foreground border border-border transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
           >
             <Icon icon={copiedPrompt ? "lucide:check" : "lucide:copy"} className="w-3.5 h-3.5" />
             <span>{copiedPrompt ? (t("dt.mcp.promptCopied") || "Prompt Copied!") : (t("dt.mcp.copyPrompt") || "Copy AI Prompt")}</span>
@@ -882,6 +939,7 @@ Please inspect the capture details via BugSnap MCP or the link above and propose
         </pre>
       </div>
 
+      {/* MCP Configuration Setup */}
       <div className="rounded-xl border border-border bg-subtle/80 p-4 space-y-3">
         <div className="flex items-center gap-1.5 font-semibold text-foreground text-xs">
           <Icon icon="lucide:terminal" className="w-4 h-4 text-[#89BD49]" />
@@ -890,7 +948,7 @@ Please inspect the capture details via BugSnap MCP or the link above and propose
 
         <div className="space-y-2">
           <div className="flex items-center justify-between text-[11px] font-medium text-muted">
-            <span>Claude Code CLI</span>
+            <span>Claude Code Setup Command</span>
             <button
               type="button"
               onClick={() => handleCopyCmd(claudeCodeCmd, "claude-code")}
@@ -944,9 +1002,218 @@ Please inspect the capture details via BugSnap MCP or the link above and propose
   );
 }
 
-export default function DevToolsPanel({ capture, currentTime, onSeekToTime, unlockPassword = null, className }: Props) {
+function PlaywrightTabPanel({
+  capture,
+  targetHost,
+  actionLogs,
+  networkErrors,
+  consoleErrors,
+  t,
+}: {
+  capture: CaptureMeta;
+  targetHost?: string;
+  actionLogs: (ActionLog | NavigationLog | ScreenshotLog)[];
+  networkErrors: NetworkLog[];
+  consoleErrors: ConsoleLog[];
+  t: (key: string, vars?: Record<string, string | number>) => string;
+}) {
+  const [subTab, setSubTab] = useState<"test" | "ci">("test");
+  const [copiedCode, setCopiedCode] = useState(false);
+  const [copiedCi, setCopiedCi] = useState(false);
+
+  const captureSlug = (capture.id || "repro").slice(0, 8);
+  const testFileName = `tests/regression/bugsnap-${captureSlug}.spec.ts`;
+
+  const playwrightCode = useMemo(() => {
+    return buildPlaywrightTest({
+      capture,
+      targetHost,
+      actionLogs,
+      networkErrors,
+      consoleErrors,
+    });
+  }, [capture, targetHost, actionLogs, networkErrors, consoleErrors]);
+
+  const ciWorkflowYaml = useMemo(() => {
+    return buildGitHubActionWorkflow({
+      capture,
+      targetHost,
+      testFileName,
+    });
+  }, [capture, targetHost, testFileName]);
+
+  const handleCopyCode = () => {
+    try {
+      navigator.clipboard?.writeText(playwrightCode);
+      setCopiedCode(true);
+      setTimeout(() => setCopiedCode(false), 2000);
+    } catch {}
+  };
+
+  const handleCopyCi = () => {
+    try {
+      navigator.clipboard?.writeText(ciWorkflowYaml);
+      setCopiedCi(true);
+      setTimeout(() => setCopiedCi(false), 2000);
+    } catch {}
+  };
+
+  const handleDownloadSpec = () => {
+    try {
+      const blob = new Blob([playwrightCode], { type: "text/typescript" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `bugsnap-${captureSlug}.spec.ts`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to download spec:", err);
+    }
+  };
+
+  const handleDownloadCi = () => {
+    try {
+      const blob = new Blob([ciWorkflowYaml], { type: "text/yaml" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `bugsnap-quality-gate.yml`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Failed to download workflow:", err);
+    }
+  };
+
+  return (
+    <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-4 text-xs">
+      <div className="rounded-xl border border-border bg-[#89BD49]/10 dark:bg-[#89BD49]/15 p-4 sm:p-5 space-y-2">
+        <div className="flex items-center gap-2">
+          <span className="px-2 py-0.5 rounded bg-[#89BD49] text-white font-mono text-[10px] font-bold">PLAYWRIGHT</span>
+          <h3 className="text-sm font-bold text-foreground">
+            {t("dt.playwright.title") || "Automated Playwright Regression Test"}
+          </h3>
+        </div>
+        <p className="text-muted leading-relaxed text-[11px]">
+          {t("dt.playwright.desc") || "Synthesized from captured user actions and network error mocks. Ready to run locally or enforce in CI."}
+        </p>
+      </div>
+
+      <div className="flex items-center justify-between border-b border-border pb-2 gap-2 flex-wrap">
+        <div className="flex items-center gap-1.5 bg-subtle p-1 rounded-lg border border-border">
+          <button
+            type="button"
+            onClick={() => setSubTab("test")}
+            className={`px-3 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${
+              subTab === "test"
+                ? "bg-white dark:bg-background text-foreground shadow-2xs font-bold"
+                : "text-muted hover:text-foreground"
+            }`}
+          >
+            {t("dt.playwright.tabTest") || "Test Script (@playwright/test)"}
+          </button>
+          <button
+            type="button"
+            onClick={() => setSubTab("ci")}
+            className={`px-3 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${
+              subTab === "ci"
+                ? "bg-white dark:bg-background text-foreground shadow-2xs font-bold"
+                : "text-muted hover:text-foreground"
+            }`}
+          >
+            {t("dt.playwright.tabCi") || "GitHub Action Quality Gate"}
+          </button>
+        </div>
+
+        {subTab === "test" ? (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleDownloadSpec}
+              className="px-2.5 py-1 rounded-md text-[11px] font-semibold border border-border bg-subtle hover:bg-subtle/80 text-foreground transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <Icon icon="lucide:download" className="w-3 h-3 text-[#6B9A35] dark:text-[#A8D666]" />
+              <span>{t("dt.playwright.downloadSpec") || "Download .spec.ts"}</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleCopyCode}
+              className="px-3 py-1 rounded-md text-[11px] font-semibold bg-[#89BD49] hover:bg-[#7BAA3F] text-white transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+            >
+              <Icon icon={copiedCode ? "lucide:check" : "lucide:copy"} className="w-3 h-3" />
+              <span>{copiedCode ? (t("dt.playwright.codeCopied") || "Test Script Copied!") : (t("dt.playwright.copyCode") || "Copy Test Script")}</span>
+            </button>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleDownloadCi}
+              className="px-2.5 py-1 rounded-md text-[11px] font-semibold border border-border bg-subtle hover:bg-subtle/80 text-foreground transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <Icon icon="lucide:download" className="w-3 h-3 text-[#6B9A35] dark:text-[#A8D666]" />
+              <span>{t("dt.playwright.downloadCi") || "Download .yml"}</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleCopyCi}
+              className="px-3 py-1 rounded-md text-[11px] font-semibold bg-[#89BD49] hover:bg-[#7BAA3F] text-white transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+            >
+              <Icon icon={copiedCi ? "lucide:check" : "lucide:copy"} className="w-3 h-3" />
+              <span>{copiedCi ? (t("dt.playwright.ciCopied") || "Workflow Copied!") : (t("dt.playwright.copyCi") || "Copy Workflow YAML")}</span>
+            </button>
+          </div>
+        )}
+      </div>
+
+      {subTab === "test" ? (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-[11px] text-muted">
+            <span className="font-mono text-[10px] text-foreground">
+              {t("dt.playwright.runLocalHint") || "Run locally in terminal:"} <code className="px-1.5 py-0.5 rounded bg-subtle border border-border text-[#6B9A35] dark:text-[#A8D666]">npx playwright test {testFileName}</code>
+            </span>
+          </div>
+          <pre className="p-3 sm:p-4 rounded-xl bg-slate-900 text-slate-100 dark:bg-slate-950 dark:text-slate-200 border border-slate-800 font-mono text-[11px] leading-relaxed whitespace-pre-wrap select-all overflow-x-auto">
+            {playwrightCode}
+          </pre>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div className="p-3 rounded-lg bg-subtle/80 border border-border text-[11px] text-muted leading-relaxed">
+            <p>
+              {t("dt.playwright.ciHint") || "Save to .github/workflows/bugsnap-quality-gate.yml to auto-verify fixes in Pull Requests."}
+            </p>
+          </div>
+          <pre className="p-3 sm:p-4 rounded-xl bg-slate-900 text-slate-100 dark:bg-slate-950 dark:text-slate-200 border border-slate-800 font-mono text-[11px] leading-relaxed whitespace-pre-wrap select-all overflow-x-auto">
+            {ciWorkflowYaml}
+          </pre>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export default function DevToolsPanel({
+  capture,
+  currentTime,
+  onSeekToTime,
+  unlockPassword = null,
+  className,
+  initialTab,
+}: Props) {
   const { t } = useT();
-  const [activeTab, setActiveTab] = useState<Tab>("Info");
+  const [activeTab, setActiveTab] = useState<Tab>(initialTab || "Info");
+
+  useEffect(() => {
+    if (initialTab && TABS.includes(initialTab)) {
+      setActiveTab(initialTab);
+    }
+  }, [initialTab]);
   const [consoleErrorsOnly, setConsoleErrorsOnly] = useState(false);
   const [networkStatusFilter, setNetworkStatusFilter] = useState<"all" | "4xx" | "5xx" | "failed">("all");
   // Which request the detail pane is showing, and which of its sub-tabs.
@@ -1612,6 +1879,7 @@ ${stack}` : body);
 
   const tabName = (tab: Tab) => {
     if (tab === "MCP") return t("dt.tab.mcp") || "MCP";
+    if (tab === "Playwright") return t("dt.tab.playwright") || "Playwright & CI";
     return t(`dt.${tab.toLowerCase()}`);
   };
 
@@ -1735,7 +2003,7 @@ ${stack}` : body);
         className="flex-1 min-h-0 flex flex-col overflow-hidden"
       >
         {/* Global Search & Filters */}
-        {activeTab !== "Info" && activeTab !== "MCP" && (
+        {activeTab !== "Info" && activeTab !== "MCP" && activeTab !== "Playwright" && (
           <div className="p-3 border-b border-border bg-subtle/30 flex flex-col gap-2 shrink-0">
             <div className="relative">
               <Icon icon="lucide:search" className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted pointer-events-none" />
@@ -1766,24 +2034,20 @@ ${stack}` : body);
             {/* Quick Filter for Console */}
             {activeTab === "Console" && consoleLevelCounts.size > 1 && (
               <div className="flex items-center gap-1.5 pt-0.5">
-                <label htmlFor="dt-level" className="sr-only">
-                  {t("dt.levelFilter") || "Filter by level"}
-                </label>
-                <select
-                  id="dt-level"
+                <Dropdown
                   value={consoleLevelFilter}
-                  onChange={(e) => setConsoleLevelFilter(e.target.value as typeof consoleLevelFilter)}
-                  className="px-2 py-1 rounded-md text-[10px] font-medium bg-subtle border border-border text-foreground cursor-pointer hover:bg-subtle/80 transition-colors"
-                >
-                  <option value="all">{t("dt.allLevels") || "All levels"}</option>
-                  {(["error", "warn", "info", "log", "debug"] as const)
-                    .filter((lvl) => consoleLevelCounts.has(lvl))
-                    .map((lvl) => (
-                      <option key={lvl} value={lvl}>
-                        {`${t(`dt.lvl.${lvl}`) || lvl} (${consoleLevelCounts.get(lvl)})`}
-                      </option>
-                    ))}
-                </select>
+                  onChange={(val) => setConsoleLevelFilter(val as typeof consoleLevelFilter)}
+                  options={[
+                    { value: "all", label: t("dt.allLevels") || "All levels" },
+                    ...(["error", "warn", "info", "log", "debug"] as const)
+                      .filter((lvl) => consoleLevelCounts.has(lvl))
+                      .map((lvl) => ({
+                        value: lvl,
+                        label: `${t(`dt.lvl.${lvl}`) || lvl} (${consoleLevelCounts.get(lvl)})`,
+                      })),
+                  ]}
+                  variant="pill"
+                />
               </div>
             )}
             {/* A two-state toggle rendered as two buttons read as two filters;
@@ -2189,6 +2453,49 @@ ${stack}` : body);
               </div>
             </div>
 
+            {/* Quick Actions: Playwright Test & AI Agent */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                onClick={() => {
+                  setLogSearch("");
+                  setActiveTab("Playwright");
+                }}
+                className="p-3 rounded-xl border border-border bg-subtle/80 hover:bg-subtle hover:border-[#89BD49]/40 transition-all text-left flex flex-col justify-between gap-2 shadow-2xs group cursor-pointer"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-xs font-semibold text-foreground group-hover:text-[#6B9A35] dark:group-hover:text-[#A8D666]">
+                    <Icon icon="lucide:file-code" className="w-3.5 h-3.5 text-[#6B9A35] dark:text-[#A8D666]" />
+                    <span>Playwright &amp; CI</span>
+                  </span>
+                  <span className="text-[10px] text-muted font-mono font-bold">→</span>
+                </div>
+                <p className="text-[10px] text-muted leading-relaxed">
+                  Export reproduction test &amp; GitHub Action quality gate.
+                </p>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setLogSearch("");
+                  setActiveTab("MCP");
+                }}
+                className="p-3 rounded-xl border border-border bg-subtle/80 hover:bg-subtle hover:border-[#89BD49]/40 transition-all text-left flex flex-col justify-between gap-2 shadow-2xs group cursor-pointer"
+              >
+                <div className="flex items-center justify-between">
+                  <span className="flex items-center gap-1.5 text-xs font-semibold text-foreground group-hover:text-[#6B9A35] dark:group-hover:text-[#A8D666]">
+                    <Icon icon="lucide:bot" className="w-3.5 h-3.5 text-[#6B9A35] dark:text-[#A8D666]" />
+                    <span>AI Agent (MCP)</span>
+                  </span>
+                  <span className="text-[10px] text-muted font-mono font-bold">→</span>
+                </div>
+                <p className="text-[10px] text-muted leading-relaxed">
+                  Solve with Claude Code, Cursor, Windsurf, or Hermes.
+                </p>
+              </button>
+            </div>
+
           </div>
         )}
 
@@ -2494,12 +2801,28 @@ ${stack}` : body);
           </div>
         )}
 
+        {/* PLAYWRIGHT TAB */}
+        {activeTab === "Playwright" && (
+          <PlaywrightTabPanel
+            capture={capture}
+            targetHost={targetHost}
+            actionLogs={actionLogs}
+            networkErrors={networkErrors}
+            consoleErrors={consoleErrors}
+            t={t}
+          />
+        )}
+
         {/* MCP TAB */}
         {activeTab === "MCP" && (
           <McpTabPanel
             capture={capture}
             consoleErrors={consoleErrors}
             networkFailures={networkErrors}
+            actionLogs={actionLogs}
+            targetHost={targetHost}
+            detectedOs={detectedOs}
+            detectedBrowser={detectedBrowser}
             t={t}
           />
         )}

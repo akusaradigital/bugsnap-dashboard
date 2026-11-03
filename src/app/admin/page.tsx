@@ -6,6 +6,8 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/Toast";
 import { useT } from "@/components/I18nProvider";
 import { Icon } from "@/lib/iconify";
+import { APP_ICONS } from "@/lib/icons";
+import { Dropdown } from "@/components/Dropdown";
 import { getAdminHeaders, getAdminCache, setAdminCache } from "@/lib/admin-cache";
 
 interface DailyPoint {
@@ -269,7 +271,7 @@ export default function AdminOverviewPage() {
         <div className="rounded-xl border border-amber-200/80 dark:border-amber-900/50 bg-gradient-to-r from-amber-50/90 via-white to-amber-50/40 dark:from-amber-950/20 dark:via-zinc-900/70 dark:to-amber-950/10 p-3 shadow-2xs flex flex-wrap items-center justify-between gap-3 text-xs">
           <div className="flex items-center gap-2.5">
             <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold text-sm">
-              <Icon icon="lucide:zap" className="w-3.5 h-3.5" />
+              <Icon icon="lucide:alert-triangle" className="w-3.5 h-3.5" />
             </span>
             <div>
               <div className="flex items-center gap-2">
@@ -315,7 +317,7 @@ export default function AdminOverviewPage() {
                   : "bg-slate-100 dark:bg-zinc-800/60 text-slate-500 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-800"
               }`}
             >
-              <Icon icon="lucide:flame" className="w-3.5 h-3.5 text-amber-500" />
+              <Icon icon="lucide:users" className="w-3.5 h-3.5 text-amber-500" />
               <span>{t("admin.hotProspectsLabel")}:</span>
               <span className={`px-1.5 py-0.2 rounded font-bold text-[10px] sm:text-[11px] ${hotProspects > 0 ? "bg-amber-600 text-white" : "bg-slate-200 dark:bg-zinc-700 text-slate-700 dark:text-zinc-300"}`}>
                 {hotProspects}
@@ -710,7 +712,7 @@ export default function AdminOverviewPage() {
       <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-200 flex items-center gap-2">
-            <span className="flex items-center gap-1.5"><Icon icon="lucide:zap" className="w-4 h-4 text-amber-500" /> Master Administration Hubs</span>
+            <span className="flex items-center gap-1.5">Master Administration Hubs</span>
           </h3>
           <span className="text-[11px] text-slate-400">Privileged Super Admin Modules</span>
         </div>
@@ -719,7 +721,7 @@ export default function AdminOverviewPage() {
             href="/admin/users"
             className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#89BD49]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
           >
-            <Icon icon="lucide:users" className="w-5 h-5 text-indigo-500" />
+            <Icon icon={APP_ICONS.nav.users} className="w-5 h-5 text-indigo-500" />
             <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#6B9A35] dark:group-hover:text-[#A8D666] transition-colors">
               {t("admin.manageUsers")}
             </p>
@@ -730,7 +732,7 @@ export default function AdminOverviewPage() {
             href="/admin/workspaces"
             className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#89BD49]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
           >
-            <Icon icon="lucide:building-2" className="w-5 h-5 text-sky-500" />
+            <Icon icon={APP_ICONS.nav.workspaces} className="w-5 h-5 text-sky-500" />
             <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#6B9A35] dark:group-hover:text-[#A8D666] transition-colors">
               {t("admin.navWorkspaces")}
             </p>
@@ -741,7 +743,7 @@ export default function AdminOverviewPage() {
             href="/admin/captures"
             className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#89BD49]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
           >
-            <Icon icon="lucide:camera" className="w-5 h-5 text-emerald-500" />
+            <Icon icon={APP_ICONS.nav.captures} className="w-5 h-5 text-emerald-500" />
             <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#6B9A35] dark:group-hover:text-[#A8D666] transition-colors">
               {t("admin.navCaptures")}
             </p>
@@ -752,7 +754,7 @@ export default function AdminOverviewPage() {
             href="/admin/revenue"
             className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#89BD49]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
           >
-            <Icon icon="lucide:dollar-sign" className="w-5 h-5 text-amber-500" />
+            <Icon icon={APP_ICONS.nav.revenue} className="w-5 h-5 text-amber-500" />
             <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#6B9A35] dark:group-hover:text-[#A8D666] transition-colors">
               {t("admin.navRevenue")}
             </p>
@@ -763,7 +765,7 @@ export default function AdminOverviewPage() {
             href="/admin/ai-analytics"
             className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#89BD49]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
           >
-            <Icon icon="lucide:bot" className="w-5 h-5 text-purple-500" />
+            <Icon icon={APP_ICONS.nav.aiAnalytics} className="w-5 h-5 text-purple-500" />
             <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#6B9A35] dark:group-hover:text-[#A8D666] transition-colors">
               {t("admin.navAiAnalytics")}
             </p>
@@ -774,7 +776,7 @@ export default function AdminOverviewPage() {
             href="/admin/security-audit"
             className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#89BD49]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
           >
-            <Icon icon="lucide:shield-check" className="w-5 h-5 text-rose-500" />
+            <Icon icon={APP_ICONS.nav.securityAudit} className="w-5 h-5 text-rose-500" />
             <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#6B9A35] dark:group-hover:text-[#A8D666] transition-colors">
               {t("admin.auditTitle")}
             </p>
@@ -852,17 +854,18 @@ export default function AdminOverviewPage() {
               <label className="block text-[11px] font-medium text-slate-600 dark:text-zinc-400 mb-1">
                 {t("admin.promoTargetPlan")}
               </label>
-              <select
+              <Dropdown
                 value={promoTargetPlan}
-                onChange={(e) => setPromoTargetPlan(e.target.value)}
-                className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#89BD49]"
-              >
-                <option value="all">{t("admin.promoTargetAll")}</option>
-                <option value="free">{t("admin.promoTargetFree")}</option>
-                <option value="pro">{t("admin.promoTargetPro")}</option>
-                <option value="pro_plus">{t("admin.promoTargetProPlus")}</option>
-                <option value="enterprise">{t("admin.promoTargetEnterprise")}</option>
-              </select>
+                onChange={(val) => setPromoTargetPlan(val)}
+                options={[
+                  { value: "all", label: t("admin.promoTargetAll") },
+                  { value: "free", label: t("admin.promoTargetFree") },
+                  { value: "pro", label: t("admin.promoTargetPro") },
+                  { value: "pro_plus", label: t("admin.promoTargetProPlus") },
+                  { value: "enterprise", label: t("admin.promoTargetEnterprise") },
+                ]}
+                variant="field"
+              />
             </div>
           </div>
 

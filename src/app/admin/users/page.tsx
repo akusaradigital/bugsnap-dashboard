@@ -5,6 +5,7 @@ import { useToast } from "@/components/Toast";
 import { useT } from "@/components/I18nProvider";
 import { getAdminHeaders } from "@/lib/admin-cache";
 import { Icon } from "@/lib/iconify";
+import { Dropdown } from "@/components/Dropdown";
 
 interface UserItem {
   id: string;
@@ -329,34 +330,38 @@ export default function AdminUsersPage() {
       {/* Filter and Search Bar */}
       <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
         <div className="flex flex-wrap items-center gap-2">
-          <select
+          <Dropdown
             value={planFilter}
-            onChange={(e) => {
-              setPlanFilter(e.target.value);
+            onChange={(val) => {
+              setPlanFilter(val);
               setPage(1);
             }}
-            className="flex-1 sm:flex-none min-w-[120px] text-xs font-semibold rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 px-3 py-2 outline-none"
-          >
-            <option value="all">{t("admin.allPlans")}</option>
-            <option value="free">Free</option>
-            <option value="pro">Pro</option>
-            <option value="pro_plus">Pro Plus</option>
-            <option value="enterprise">Enterprise</option>
-          </select>
+            options={[
+              { value: "all", label: t("admin.allPlans") },
+              { value: "free", label: "Free" },
+              { value: "pro", label: "Pro" },
+              { value: "pro_plus", label: "Pro Plus" },
+              { value: "enterprise", label: "Enterprise" },
+            ]}
+            variant="pill"
+            className="flex-1 sm:flex-none min-w-[120px]"
+          />
 
-          <select
+          <Dropdown
             value={statusFilter}
-            onChange={(e) => {
-              setStatusFilter(e.target.value);
+            onChange={(val) => {
+              setStatusFilter(val);
               setPage(1);
             }}
-            className="flex-1 sm:flex-none min-w-[120px] text-xs font-semibold rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 px-3 py-2 outline-none"
-          >
-            <option value="all">{t("admin.allStatuses")}</option>
-            <option value="active">{t("admin.active")}</option>
-            <option value="suspended">{t("admin.suspended")}</option>
-            <option value="stuck">{t("admin.statusStuck")}</option>
-          </select>
+            options={[
+              { value: "all", label: t("admin.allStatuses") },
+              { value: "active", label: t("admin.active") },
+              { value: "suspended", label: t("admin.suspended") },
+              { value: "stuck", label: t("admin.statusStuck") },
+            ]}
+            variant="pill"
+            className="flex-1 sm:flex-none min-w-[120px]"
+          />
         </div>
 
         <form onSubmit={handleSearchSubmit} className="flex items-center gap-1.5 w-full sm:w-80">
@@ -492,7 +497,7 @@ export default function AdminUsersPage() {
                           type="button"
                           onClick={() => handleSendResetPassword(u)}
                           className="px-2 py-1 rounded text-xs font-semibold border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors inline-flex items-center justify-center"
-                          title={t("admin.resetPassword")}
+                          title={t("admin.resetPassword")} aria-label={t("admin.resetPassword")}
                         >
                           <Icon icon="lucide:key" className="w-3.5 h-3.5 shrink-0" />
                         </button>
@@ -500,7 +505,7 @@ export default function AdminUsersPage() {
                           type="button"
                           onClick={() => handleDeleteUser(u)}
                           className="px-2 py-1 rounded text-xs font-semibold border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors inline-flex items-center justify-center"
-                          title={t("admin.deleteAccount")}
+                          title={t("admin.deleteAccount")} aria-label={t("admin.deleteAccount")}
                         >
                           <Icon icon="lucide:trash-2" className="w-3.5 h-3.5 shrink-0" />
                         </button>
@@ -544,7 +549,7 @@ export default function AdminUsersPage() {
       {/* Plan Override Modal */}
       {planModalUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-2xl space-y-4">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 sm:p-6 shadow-2xl space-y-4">
             <h3 className="text-sm font-bold text-slate-900 dark:text-white">
               {t("admin.changePlan")} - {planModalUser.email}
             </h3>
@@ -580,18 +585,19 @@ export default function AdminUsersPage() {
                 <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 mb-1">
                   Durasi Paket (Comp / Gift / Trial)
                 </label>
-                <select
+                <Dropdown
                   value={selectedDuration}
-                  onChange={(e) => setSelectedDuration(e.target.value)}
-                  className="w-full text-xs rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2.5 text-slate-800 dark:text-zinc-200"
-                >
-                  <option value="permanent">Permanen / Langganan Rutin (Tanpa Expire)</option>
-                  <option value="7d">7 Hari (Trial / Demo)</option>
-                  <option value="30d">1 Bulan (30 Hari)</option>
-                  <option value="90d">3 Bulan (Quarterly Gift)</option>
-                  <option value="180d">6 Bulan</option>
-                  <option value="365d">1 Tahun (365 Hari)</option>
-                </select>
+                  onChange={(val) => setSelectedDuration(val)}
+                  options={[
+                    { value: "permanent", label: "Permanen / Langganan Rutin (Tanpa Expire)" },
+                    { value: "7d", label: "7 Hari (Trial / Demo)" },
+                    { value: "30d", label: "1 Bulan (30 Hari)" },
+                    { value: "90d", label: "3 Bulan (Quarterly Gift)" },
+                    { value: "180d", label: "6 Bulan" },
+                    { value: "365d", label: "1 Tahun (365 Hari)" },
+                  ]}
+                  variant="field"
+                />
               </div>
             )}
 
@@ -619,7 +625,7 @@ export default function AdminUsersPage() {
       {/* 360° User Detail Modal */}
       {selectedUser && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-2xl space-y-5">
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 sm:p-6 shadow-2xl space-y-5">
             <div className="flex items-start justify-between border-b border-slate-100 dark:border-zinc-800 pb-3">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -647,7 +653,7 @@ export default function AdminUsersPage() {
             ) : (
               <div className="space-y-4 text-xs">
                 {/* Status Pills */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5">
                   <div className="p-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950">
                     <span className="text-[10px] text-slate-500 dark:text-zinc-400 uppercase font-bold block">Status</span>
                     <span className={`font-bold ${selectedUser.suspended ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"}`}>

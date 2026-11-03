@@ -282,26 +282,20 @@ export function renderWeeklyDigestEmail({
   return { subject, html };
 }
 
-interface AdminDigestOptions {
-  appUrl: string;
-  newSignups: number;
-  newCaptures: number;
-  openTickets: number;
-  securityAlerts: number;
+export interface StatWithDelta {
+  value: number;
+  delta: number;
 }
 
-export function renderAdminDigestEmail({
-  appUrl,
-  newSignups,
-  newCaptures,
-  openTickets,
-  securityAlerts,
-}: AdminDigestOptions): { subject: string; html: string } {
-  const adminUrl = `${appUrl.replace(/\/$/, "")}/admin`;
-  const safeAdminUrl = escapeHtml(adminUrl);
-  const subject = `BugSnap Weekly Ops Summary`;
+function deltaLabel(delta: number, periodLabel: string): string {
+  if (delta === 0) return `<span style="color: #94a3b8;">no change vs ${periodLabel}</span>`;
+  const color = delta > 0 ? "#16a34a" : "#dc2626";
+  const sign = delta > 0 ? "+" : "";
+  return `<span style="color: ${color};">${sign}${delta} vs ${periodLabel}</span>`;
+}
 
-  const stat = (value: number, label: string) => `
+function adminStatCard(value: number, label: string, delta?: number, periodLabel?: string): string {
+  return `
             <div style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 6px; padding: 18px 20px;">
               <div style="font-size: 26px; font-weight: 700; color: #0f172a; line-height: 1;">
                 ${value}
@@ -309,7 +303,39 @@ export function renderAdminDigestEmail({
               <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #64748b; margin-top: 6px;">
                 ${label}
               </div>
+              ${delta !== undefined && periodLabel ? `<div style="font-size: 11px; margin-top: 6px;">${deltaLabel(delta, periodLabel)}</div>` : ""}
             </div>`;
+}
+
+interface AdminDigestOptions {
+  appUrl: string;
+  newSignups: StatWithDelta;
+  newWorkspaces: StatWithDelta;
+  newCaptures: StatWithDelta;
+  newScreenshots: StatWithDelta;
+  newRecordings: StatWithDelta;
+  newComments: StatWithDelta;
+  newViews: StatWithDelta;
+  openTickets: number;
+  securityAlerts: StatWithDelta;
+}
+
+export function renderAdminDigestEmail({
+  appUrl,
+  newSignups,
+  newWorkspaces,
+  newCaptures,
+  newScreenshots,
+  newRecordings,
+  newComments,
+  newViews,
+  openTickets,
+  securityAlerts,
+}: AdminDigestOptions): { subject: string; html: string } {
+  const adminUrl = `${appUrl.replace(/\/$/, "")}/admin`;
+  const safeAdminUrl = escapeHtml(adminUrl);
+  const subject = `BugSnap Weekly Ops Summary`;
+  const prev = "last week";
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -330,18 +356,27 @@ export function renderAdminDigestEmail({
         Past 7 days
       </h1>
       <p style="margin: 0 0 28px; font-size: 14px; line-height: 1.5; color: #64748b;">
-        Platform-wide activity summary across all workspaces.
+        Platform-wide activity summary across all workspaces, compared to the previous 7 days.
       </p>
-      <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 32px;">
+      <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 16px;">
         <tr>
-          <td width="50%" style="padding-right: 8px; padding-bottom: 16px;">${stat(newSignups, "New Signups")}</td>
-          <td width="50%" style="padding-left: 8px; padding-bottom: 16px;">${stat(newCaptures, "New Captures")}</td>
+          <td width="50%" style="padding-right: 8px; padding-bottom: 16px;">${adminStatCard(newSignups.value, "New Signups", newSignups.delta, prev)}</td>
+          <td width="50%" style="padding-left: 8px; padding-bottom: 16px;">${adminStatCard(newWorkspaces.value, "New Workspaces", newWorkspaces.delta, prev)}</td>
         </tr>
         <tr>
-          <td width="50%" style="padding-right: 8px;">${stat(openTickets, "Open Tickets")}</td>
-          <td width="50%" style="padding-left: 8px;">${stat(securityAlerts, "Security Alerts")}</td>
+          <td width="50%" style="padding-right: 8px; padding-bottom: 16px;">${adminStatCard(newCaptures.value, "New Captures", newCaptures.delta, prev)}</td>
+          <td width="50%" style="padding-left: 8px; padding-bottom: 16px;">${adminStatCard(securityAlerts.value, "Security Alerts", securityAlerts.delta, prev)}</td>
+        </tr>
+        <tr>
+          <td width="50%" style="padding-right: 8px; padding-bottom: 16px;">${adminStatCard(newScreenshots.value, "Screenshots", newScreenshots.delta, prev)}</td>
+          <td width="50%" style="padding-left: 8px; padding-bottom: 16px;">${adminStatCard(newRecordings.value, "Screen Recordings", newRecordings.delta, prev)}</td>
+        </tr>
+        <tr>
+          <td width="50%" style="padding-right: 8px;">${adminStatCard(newComments.value, "New Comments", newComments.delta, prev)}</td>
+          <td width="50%" style="padding-left: 8px;">${adminStatCard(newViews.value, "New Views", newViews.delta, prev)}</td>
         </tr>
       </table>
+      <div style="margin-bottom: 28px;">${adminStatCard(openTickets, "Open Tickets (current)")}</div>
       <table role="presentation" border="0" cellpadding="0" cellspacing="0">
         <tr>
           <td align="center" style="border-radius: 6px; background-color: #89BD49;">
@@ -354,6 +389,127 @@ export function renderAdminDigestEmail({
     </div>
     <div style="padding: 20px 32px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; font-size: 12px; line-height: 1.5; color: #64748b;">
       <p style="margin: 0;">Automated weekly report sent to BugSnap super admins.</p>
+    </div>
+  </div>
+</body>
+</html>`;
+
+  return { subject, html };
+}
+
+interface MonthlyAdminDigestOptions {
+  appUrl: string;
+  newSignups: StatWithDelta;
+  newWorkspaces: StatWithDelta;
+  newCaptures: StatWithDelta;
+  newScreenshots: StatWithDelta;
+  newRecordings: StatWithDelta;
+  newComments: StatWithDelta;
+  newViews: StatWithDelta;
+  securityAlerts: StatWithDelta;
+  topWorkspaces: { name: string; captures: number }[];
+  planDistribution: { free: number; pro: number; team: number; enterprise: number };
+}
+
+export function renderMonthlyAdminDigestEmail({
+  appUrl,
+  newSignups,
+  newWorkspaces,
+  newCaptures,
+  newScreenshots,
+  newRecordings,
+  newComments,
+  newViews,
+  securityAlerts,
+  topWorkspaces,
+  planDistribution,
+}: MonthlyAdminDigestOptions): { subject: string; html: string } {
+  const adminUrl = `${appUrl.replace(/\/$/, "")}/admin`;
+  const safeAdminUrl = escapeHtml(adminUrl);
+  const subject = `BugSnap Monthly Ops Summary`;
+  const prev = "previous 30 days";
+
+  const topWorkspacesRows = topWorkspaces.length
+    ? topWorkspaces
+        .map(
+          (w, i) => `
+          <tr>
+            <td style="padding: 8px 0; font-size: 13px; color: #64748b;">${i + 1}.</td>
+            <td style="padding: 8px 0; font-size: 13px; color: #0f172a;">${escapeHtml(w.name)}</td>
+            <td style="padding: 8px 0; font-size: 13px; color: #0f172a; text-align: right; font-weight: 600;">${w.captures}</td>
+          </tr>`
+        )
+        .join("")
+    : `<tr><td style="padding: 8px 0; font-size: 13px; color: #94a3b8;">No capture activity this month.</td></tr>`;
+
+  const planRow = (label: string, count: number) => `
+          <tr>
+            <td style="padding: 6px 0; font-size: 13px; color: #64748b;">${label}</td>
+            <td style="padding: 6px 0; font-size: 13px; color: #0f172a; text-align: right; font-weight: 600;">${count}</td>
+          </tr>`;
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>${subject}</title>
+</head>
+<body style="margin: 0; padding: 32px 16px; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #0f172a;">
+  <div style="max-width: 560px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);">
+    <div style="padding: 24px 32px; border-bottom: 1px solid #f1f5f9; background-color: #ffffff;">
+      <span style="font-size: 16px; font-weight: 700; color: #0f172a; letter-spacing: -0.02em;">BugSnap</span>
+      <span style="font-size: 13px; color: #64748b; margin-left: 8px;">·</span>
+      <span style="font-size: 13px; color: #64748b; margin-left: 8px;">Admin Ops Report</span>
+    </div>
+    <div style="padding: 32px;">
+      <h1 style="margin: 0 0 8px; font-size: 20px; font-weight: 700; color: #0f172a; line-height: 1.3;">
+        Past 30 days
+      </h1>
+      <p style="margin: 0 0 28px; font-size: 14px; line-height: 1.5; color: #64748b;">
+        Platform-wide activity summary across all workspaces, compared to the previous 30 days.
+      </p>
+      <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 28px;">
+        <tr>
+          <td width="50%" style="padding-right: 8px; padding-bottom: 16px;">${adminStatCard(newSignups.value, "New Signups", newSignups.delta, prev)}</td>
+          <td width="50%" style="padding-left: 8px; padding-bottom: 16px;">${adminStatCard(newWorkspaces.value, "New Workspaces", newWorkspaces.delta, prev)}</td>
+        </tr>
+        <tr>
+          <td width="50%" style="padding-right: 8px; padding-bottom: 16px;">${adminStatCard(newCaptures.value, "New Captures", newCaptures.delta, prev)}</td>
+          <td width="50%" style="padding-left: 8px; padding-bottom: 16px;">${adminStatCard(securityAlerts.value, "Security Alerts", securityAlerts.delta, prev)}</td>
+        </tr>
+        <tr>
+          <td width="50%" style="padding-right: 8px; padding-bottom: 16px;">${adminStatCard(newScreenshots.value, "Screenshots", newScreenshots.delta, prev)}</td>
+          <td width="50%" style="padding-left: 8px; padding-bottom: 16px;">${adminStatCard(newRecordings.value, "Screen Recordings", newRecordings.delta, prev)}</td>
+        </tr>
+        <tr>
+          <td width="50%" style="padding-right: 8px;">${adminStatCard(newComments.value, "New Comments", newComments.delta, prev)}</td>
+          <td width="50%" style="padding-left: 8px;">${adminStatCard(newViews.value, "New Views", newViews.delta, prev)}</td>
+        </tr>
+      </table>
+      <h2 style="margin: 0 0 12px; font-size: 14px; font-weight: 700; color: #0f172a;">Top 5 Workspaces (by captures)</h2>
+      <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 28px; border-top: 1px solid #f1f5f9;">
+        ${topWorkspacesRows}
+      </table>
+      <h2 style="margin: 0 0 12px; font-size: 14px; font-weight: 700; color: #0f172a;">Plan Distribution</h2>
+      <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 28px; border-top: 1px solid #f1f5f9;">
+        ${planRow("Free", planDistribution.free)}
+        ${planRow("Pro", planDistribution.pro)}
+        ${planRow("Team", planDistribution.team)}
+        ${planRow("Enterprise", planDistribution.enterprise)}
+      </table>
+      <table role="presentation" border="0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td align="center" style="border-radius: 6px; background-color: #89BD49;">
+            <a href="${safeAdminUrl}" target="_blank" rel="noopener noreferrer" style="display: inline-block; padding: 11px 22px; font-size: 14px; font-weight: 600; color: #ffffff; text-decoration: none; border-radius: 6px; background-color: #89BD49;">
+              Open admin console
+            </a>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <div style="padding: 20px 32px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; font-size: 12px; line-height: 1.5; color: #64748b;">
+      <p style="margin: 0;">Automated monthly report sent to BugSnap super admins.</p>
     </div>
   </div>
 </body>

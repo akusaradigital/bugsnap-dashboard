@@ -163,4 +163,14 @@ export const INTEGRATIONS: IntegrationDef[] = [
       { key: "model", label: "Model Name", type: "text", placeholder: "gpt-4o-mini (optional)", required: false },
     ],
   },
+  {
+    id: "gemini",
+    name: "Google Gemini",
+    desc: "Generate root cause analysis, repro steps, and fixes via Google Gemini.",
+    iconSrc: "/integrations/gemini.svg",
+    fields: [
+      { key: "apiKey", label: "Gemini API Key", type: "password", placeholder: "AIzaSy...", hint: "Generate from aistudio.google.com/app/apikey.", required: true },
+      { key: "model", label: "Model Name", type: "text", placeholder: "gemini-1.5-flash (optional)", required: false },
+    ],
+  },
 ];

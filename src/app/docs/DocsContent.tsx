@@ -7,6 +7,7 @@ import { SiteNavbar } from "@/components/site/SiteNavbar";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Reveal } from "@/components/site/motion";
 import { Icon } from "@/lib/iconify";
+import { INTEGRATIONS } from "@/lib/integrations";
 
 type BrowserId = "chrome" | "edge" | "firefox";
 
@@ -129,7 +130,7 @@ export function DocsContent() {
       desc:
         t("docs.navViewAndShareDesc") ||
         "Password protection, expiration dates, and links.",
-      href: "#drive-setup",
+      href: "#sharing",
       illustration: (
         <div className="relative w-28 h-20 flex items-center justify-center">
           <div className="absolute w-14 h-16 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg -rotate-6 transform shadow-xs" />
@@ -153,6 +154,29 @@ export function DocsContent() {
       ),
     },
     {
+      id: "integrations",
+      title: t("docs.integrationsTitle") || "Integrations & Trackers",
+      desc:
+        t("docs.navIntegrationsDesc") ||
+        "Push captures directly to GitHub, Linear, Jira, Slack, Notion, and 9+ tools.",
+      href: "#integrations",
+      illustration: (
+        <div className="relative w-28 h-20 flex items-center justify-center">
+          <div className="flex -space-x-2">
+            <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-center p-1.5 z-10">
+              <Icon icon="logos:github-icon" className="w-5 h-5 dark:invert" />
+            </div>
+            <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-center p-1.5 z-20">
+              <Icon icon="logos:slack-icon" className="w-5 h-5" />
+            </div>
+            <div className="w-8 h-8 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm flex items-center justify-center p-1.5 z-30">
+              <Icon icon="logos:jira" className="w-5 h-5" />
+            </div>
+          </div>
+        </div>
+      ),
+    },
+    {
       id: "mcp",
       title: t("docs.mcp") || "MCP for AI Agents",
       desc:
@@ -168,7 +192,7 @@ export function DocsContent() {
           </div>
           <div className="flex items-center justify-center gap-1.5 py-1">
             <div className="w-6 h-6 rounded-md bg-slate-900 border border-slate-700 flex items-center justify-center text-amber-500 font-bold text-xs shadow-xs">
-              ✱
+              <Icon icon="lucide:sparkles" className="w-3.5 h-3.5" />
             </div>
             <div className="w-6 h-6 rounded-md bg-slate-900 border border-slate-700 flex items-center justify-center text-white text-[10px] shadow-xs">
               ◇
@@ -226,9 +250,9 @@ export function DocsContent() {
 
         {/* Page Content Container */}
         <div className="mx-auto max-w-6xl px-4 sm:px-6 pb-20 sm:pb-28 space-y-12 sm:space-y-16">
-          {/* Top 5 Navigation Cards */}
+          {/* Top Navigation Cards */}
           <Reveal delay={0.1}>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 lg:gap-0 lg:divide-x lg:divide-slate-200/80 dark:lg:divide-slate-800">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 lg:gap-0 lg:divide-x lg:divide-slate-200/80 dark:lg:divide-slate-800">
               {navCards.map((card) => {
                 const content = (
                   <div className="h-full flex flex-col justify-start group">
@@ -262,6 +286,96 @@ export function DocsContent() {
                   </Link>
                 );
               })}
+            </div>
+          </Reveal>
+
+          {/* Section: Getting Started */}
+          <Reveal delay={0.12}>
+            <div
+              id="getting-started"
+              className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs p-4 sm:p-8 space-y-6 scroll-mt-24"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                    {t("docs.installHeading") || "Installation & Setup"}
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
+                    {t("docs.installDesc") || "Get BugSnap running on your preferred desktop browser in under 60 seconds."}
+                  </p>
+                </div>
+                <span className="text-xs sm:text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+                  {t("docs.quickReference") || "Step 1 of 3"}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+                {/* Chrome */}
+                <div className="rounded-xl bg-[#f8fafc] dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 p-4 sm:p-6 space-y-3">
+                  <div className="flex items-center gap-2.5">
+                    <Icon icon="logos:chrome" className="w-6 h-6" />
+                    <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                      {t("docs.installChromeTitle") || "Google Chrome & Chromium"}
+                    </h3>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    {t("docs.installChromeDesc") || "Install directly from Chrome Web Store (supports Brave, Arc, Kiwi, and Opera)."}
+                  </p>
+                  <a
+                    href="https://chromewebstore.google.com/detail/bugsnap/kddhkfbefmflgkicgeplbbepohdggcfb"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline pt-1"
+                  >
+                    <span>Chrome Web Store</span>
+                    <Icon icon="lucide:external-link" className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+
+                {/* Edge */}
+                <div className="rounded-xl bg-[#f8fafc] dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 p-4 sm:p-6 space-y-3">
+                  <div className="flex items-center gap-2.5">
+                    <Icon icon="logos:microsoft-edge" className="w-6 h-6" />
+                    <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                      {t("docs.installEdgeTitle") || "Microsoft Edge"}
+                    </h3>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    {t("docs.installEdgeDesc") || "Install verified package from Microsoft Edge Add-ons catalog."}
+                  </p>
+                  <a
+                    href="https://microsoftedge.microsoft.com/addons/detail/bugsnap/bmgekgcceplhhbmbapffldkkmjofobom"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline pt-1"
+                  >
+                    <span>Edge Add-ons</span>
+                    <Icon icon="lucide:external-link" className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+
+                {/* Firefox */}
+                <div className="rounded-xl bg-[#f8fafc] dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 p-4 sm:p-6 space-y-3">
+                  <div className="flex items-center gap-2.5">
+                    <Icon icon="logos:firefox" className="w-6 h-6" />
+                    <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                      {t("docs.installFirefoxTitle") || "Mozilla Firefox"}
+                    </h3>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    {t("docs.installFirefoxDesc") || "Install isolated package from Mozilla Add-ons (AMO)."}
+                  </p>
+                  <a
+                    href="https://addons.mozilla.org/en-US/firefox/addon/bugsnap/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline pt-1"
+                  >
+                    <span>Firefox Add-ons</span>
+                    <Icon icon="lucide:external-link" className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              </div>
             </div>
           </Reveal>
 
@@ -449,6 +563,205 @@ export function DocsContent() {
                 </div>
                 <div className="relative z-10 p-2 rounded-xl bg-white dark:bg-slate-800 shadow-md border border-slate-100 dark:border-slate-700 ml-6 mb-2">
                   <Icon icon="logos:google-drive" className="w-7 h-7" />
+                </div>
+              </div>
+            </div>
+          </Reveal>
+
+          {/* Section: Sharing & Permissions */}
+          <Reveal delay={0.25}>
+            <div
+              id="sharing"
+              className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs p-6 sm:p-8 space-y-6 scroll-mt-24"
+            >
+              <div className="space-y-2">
+                <h2 className="text-xl font-bold text-slate-900 dark:text-white">
+                  {t("docs.shareHeading") || "Sharing, Permissions & Ticket Export"}
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-2xl">
+                  {t("docs.shareDesc") || "Turn captures into actionable tickets across your team's existing issue trackers."}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+                <div className="rounded-xl bg-[#f8fafc] dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 p-4 sm:p-6 space-y-2">
+                  <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-sm">
+                    <Icon icon="lucide:link" className="w-4 h-4" />
+                    <span>{t("docs.shareLinkTitle") || "Instant Shareable Link"}</span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    {t("docs.shareLinkDesc") || "Generate public or workspace links instantly. Viewers do not need an account to review."}
+                  </p>
+                </div>
+
+                <div className="rounded-xl bg-[#f8fafc] dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 p-4 sm:p-6 space-y-2">
+                  <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-bold text-sm">
+                    <Icon icon="lucide:file-text" className="w-4 h-4" />
+                    <span>{t("docs.shareMarkdownTitle") || "1-Click Issue Export"}</span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    {t("docs.shareMarkdownDesc") || "Copy formatted Markdown ready to paste into Jira, GitHub Issues, Linear, or Slack."}
+                  </p>
+                </div>
+
+                <div className="rounded-xl bg-[#f8fafc] dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 p-4 sm:p-6 space-y-2">
+                  <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-bold text-sm">
+                    <Icon icon="lucide:lock" className="w-4 h-4" />
+                    <span>{t("docs.shareSecurityTitle") || "Password Protection & Expiry"}</span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                    {t("docs.shareSecurityDesc") || "Protect confidential captures with optional passwords and auto-expiring links."}
+                  </p>
+                </div>
+              </div>
+
+              <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800">
+                <span className="text-xs text-slate-500 dark:text-slate-400">
+                  Looking to connect issue trackers like GitHub, Linear, or Jira?
+                </span>
+                <Link
+                  href="/docs/integrations"
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
+                >
+                  <span>Explore Integrations & Setup Guides →</span>
+                </Link>
+              </div>
+            </div>
+          </Reveal>
+
+          {/* Section: Integrations & Issue Trackers */}
+          <Reveal delay={0.28}>
+            <div
+              id="integrations"
+              className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xs p-4 sm:p-8 space-y-6 sm:space-y-8 scroll-mt-24"
+            >
+              {/* Header */}
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div className="space-y-1.5 max-w-2xl min-w-0">
+                  <div className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/60 w-fit">
+                    <Icon icon="lucide:plug" className="w-3.5 h-3.5" />
+                    <span>{t("docs.howWeTest") || "Universal Credential Probe"}</span>
+                  </div>
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
+                    {t("docs.integrationsHeading") || "Third-Party Integrations & Issue Trackers"}
+                  </h2>
+                  <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed break-words">
+                    {t("docs.integrationsSectionDesc") ||
+                      "BugSnap connects with your team's existing developer toolchain. Send bug captures, video replays, console stack traces, and network logs directly with 1 click."}
+                  </p>
+                </div>
+                <Link
+                  href="/docs/integrations"
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-90 transition-opacity whitespace-nowrap shrink-0 shadow-xs"
+                >
+                  <Icon icon="lucide:book-open" className="w-4 h-4" />
+                  <span>{t("docs.viewAllIntegrationsBtn") || "Full Setup Guides →"}</span>
+                </Link>
+              </div>
+
+              {/* 3-Step Dispatch Workflow */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+                <div className="rounded-xl bg-[#f8fafc] dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 space-y-2">
+                  <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-bold text-xs sm:text-sm">
+                    <span className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-[10px] font-extrabold">1</span>
+                    <span>{t("docs.flowStep1Title") || "Capture & Diagnose"}</span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed break-words">
+                    {t("docs.flowStep1Desc") || "BugSnap records HD video, screenshots, console errors, and 4xx/5xx network failures in the background."}
+                  </p>
+                </div>
+
+                <div className="rounded-xl bg-[#f8fafc] dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 space-y-2">
+                  <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-bold text-xs sm:text-sm">
+                    <span className="w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center text-[10px] font-extrabold">2</span>
+                    <span>{t("docs.flowStep2Title") || "Zero-Storage Redaction"}</span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed break-words">
+                    {t("docs.flowStep2Desc") || "Tokens, auth cookies, and sensitive PII are scrubbed client-side before dispatching to external APIs."}
+                  </p>
+                </div>
+
+                <div className="rounded-xl bg-[#f8fafc] dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 space-y-2">
+                  <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-xs sm:text-sm">
+                    <span className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center text-[10px] font-extrabold">3</span>
+                    <span>{t("docs.flowStep3Title") || "1-Click Direct Push"}</span>
+                  </div>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed break-words">
+                    {t("docs.flowStep3Desc") || "Push formatted issues, rich cards, or notification embeds to any configured workspace tool."}
+                  </p>
+                </div>
+              </div>
+
+              {/* Supported Tools Grid */}
+              <div className="space-y-3 sm:space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
+                  <h3 className="font-bold text-sm text-slate-900 dark:text-white">
+                    {t("docs.supportedToolsTitle") || "Supported Platforms & Tools"}
+                  </h3>
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
+                    {t("docs.supportedToolsDesc") || "Click any tool to view token requirements and setup tutorial"}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-2.5 sm:gap-3">
+                  {INTEGRATIONS.map((tool) => (
+                    <Link
+                      key={tool.id}
+                      href={`/docs/integrations#${tool.id}`}
+                      className="group rounded-xl bg-[#f8fafc] dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 hover:border-emerald-500/50 dark:hover:border-emerald-400/50 hover:bg-white dark:hover:bg-slate-800 p-3 flex flex-col items-center justify-between text-center transition-all duration-150 shadow-2xs hover:shadow-xs min-w-0"
+                    >
+                      <div className="w-9 h-9 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-700/60 flex items-center justify-center p-2 mb-2 group-hover:scale-105 transition-transform shrink-0">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={tool.iconSrc}
+                          alt={tool.name}
+                          className="w-5 h-5 object-contain"
+                          onError={(e) => { (e.currentTarget as HTMLImageElement).src = "/icons/link.svg"; }}
+                        />
+                      </div>
+                      <div className="font-semibold text-xs text-slate-800 dark:text-slate-200 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 truncate w-full">
+                        {tool.name}
+                      </div>
+                      <span className="text-[10px] text-slate-400 dark:text-slate-500 mt-1 uppercase tracking-wider font-mono">
+                        {tool.id === "github" || tool.id === "linear" || tool.id === "jira" || tool.id === "gitlab" || tool.id === "azure"
+                          ? "Tracker"
+                          : tool.id === "slack" || tool.id === "webhook"
+                          ? "Alert"
+                          : tool.id === "notion" || tool.id === "clickup" || tool.id === "asana"
+                          ? "Docs"
+                          : "AI & QA"}
+                      </span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              {/* Universal Credential Probe Callout Box */}
+              <div className="rounded-xl bg-gradient-to-r from-emerald-500/10 via-blue-500/10 to-transparent border border-emerald-500/20 dark:border-emerald-500/30 p-4 sm:p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="space-y-1 max-w-2xl min-w-0">
+                  <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-xs sm:text-sm">
+                    <Icon icon="lucide:shield-check" className="w-4 h-4 shrink-0" />
+                    <span>{t("docs.probeTitle") || "Pre-flight Verification Engine Built-In"}</span>
+                  </div>
+                  <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed break-words">
+                    {t("docs.probeDesc") ||
+                      "Every integration in BugSnap features a non-mutating 'Test Connection' probe. It validates your tokens, project keys, and database permissions using read-only API calls — without spamming your issue trackers with fake test tickets or consuming chat prompt quotas."}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
+                  <Link
+                    href="/settings"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-colors shadow-2xs"
+                  >
+                    <Icon icon="lucide:settings" className="w-3.5 h-3.5" />
+                    <span>{t("docs.openSettings") || "Test in Settings →"}</span>
+                  </Link>
+                  <Link
+                    href="/docs/integrations"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors shadow-2xs"
+                  >
+                    <span>{t("docs.directSetupGuide") || "Setup Guides →"}</span>
+                  </Link>
                 </div>
               </div>
             </div>

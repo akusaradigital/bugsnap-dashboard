@@ -408,7 +408,7 @@ export default function LandingPage() {
                       {/* Badge 3 */}
                       <div className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center shrink-0 text-blue-600 dark:text-blue-400">
-                          <Icon icon="lucide:zap" className="w-5 h-5 shrink-0 fill-current" aria-hidden="true" />
+                          <Icon icon="lucide:zap" className="w-5 h-5 shrink-0" aria-hidden="true" />
                         </div>
                         <div className="text-xs leading-tight min-w-0">
                           <div className="font-semibold text-slate-900 dark:text-white">

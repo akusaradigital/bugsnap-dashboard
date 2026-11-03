@@ -185,6 +185,10 @@ export const settingsEn: Dict = {
   "settings.autoEscalate": "Auto-escalate recurring errors",
   "settings.autoEscalateDesc": "Automatically send a webhook alert when the same error is reported by multiple people past a threshold.",
   "settings.autoEscalateNoWebhook": "Requires a webhook URL to be configured first.",
+  "settings.testConnection": "Test Connection",
+  "settings.pullData": "Pull Live Data",
+  "settings.pulling": "Pulling...",
+  "settings.pullEmpty": "No recent records found in this destination.",
 };
 
 export const settingsId: Dict = {
@@ -372,4 +376,8 @@ export const settingsId: Dict = {
   "settings.autoEscalate": "Eskalasi otomatis error berulang",
   "settings.autoEscalateDesc": "Kirim peringatan webhook secara otomatis saat error yang sama dilaporkan oleh beberapa orang melampaui ambang batas.",
   "settings.autoEscalateNoWebhook": "Membutuhkan URL webhook yang dikonfigurasi terlebih dahulu.",
+  "settings.testConnection": "Uji Koneksi",
+  "settings.pullData": "Tarik Data Langsung",
+  "settings.pulling": "Menarik Data...",
+  "settings.pullEmpty": "Tidak ada data terbaru yang ditemukan pada layanan ini.",
 };

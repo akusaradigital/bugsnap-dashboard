@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/Toast";
+import { useT } from "@/components/I18nProvider";
 import { getAdminHeaders } from "@/lib/admin-cache";
 import { Icon } from "@/lib/iconify";
 
@@ -79,6 +80,7 @@ const SAMPLE_NOTES = [
 ];
 
 export function AdminAiConfigCard() {
+  const { t } = useT();
   const { showToast } = useToast();
 
   const [loading, setLoading] = useState(true);
@@ -351,12 +353,13 @@ export function AdminAiConfigCard() {
                 </span>
               )}
             </h3>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-[#89BD49]/10 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/20">
-              Extension ✨ AI Polish
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-[#89BD49]/10 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/20 inline-flex items-center gap-1">
+              <Icon icon="lucide:sparkles" className="w-3 h-3" />
+              <span>Extension AI Polish</span>
             </span>
           </div>
           <p className="text-xs text-slate-500 dark:text-zinc-400">
-            Konfigurasi model AI untuk fitur ✨ AI Polish di extension Chrome. Ubah model &amp; endpoint kapan saja tanpa perlu redeploy.
+            Konfigurasi model AI untuk fitur AI Polish di extension Chrome. Ubah model &amp; endpoint kapan saja tanpa perlu redeploy.
           </p>
         </div>
 
@@ -494,7 +497,8 @@ export function AdminAiConfigCard() {
                 onClick={handleTogglePassword}
                 disabled={revealingKey}
                 className="absolute right-2.5 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 cursor-pointer disabled:opacity-50 z-10"
-                title={showPassword ? "Sembunyikan" : "Tampilkan"}
+                title={showPassword ? t("admin.hideApiKey") : t("admin.showApiKey")}
+                aria-label={showPassword ? t("admin.hideApiKey") : t("admin.showApiKey")}
               >
                 {revealingKey ? (
                   <span className="w-3.5 h-3.5 border-2 border-slate-400 border-t-transparent rounded-full animate-spin inline-block" />
@@ -545,8 +549,9 @@ export function AdminAiConfigCard() {
                 <div className="font-bold flex items-center justify-between flex-wrap gap-2">
                   <span>{pingResult.ok ? "Ping Berhasil Terhubung!" : "Ping Gagal / Error"}</span>
                   {pingResult.latencyMs !== undefined && (
-                    <span className="font-mono text-[10px] font-semibold opacity-80 px-2 py-0.5 rounded bg-white/70 dark:bg-black/30">
-                      ⚡ Latensi: {pingResult.latencyMs}ms
+                    <span className="font-mono text-[10px] font-semibold opacity-80 px-2 py-0.5 rounded bg-white/70 dark:bg-black/30 inline-flex items-center gap-1">
+                      <Icon icon="lucide:zap" className="w-3 h-3" />
+                      <span>Latensi: {pingResult.latencyMs}ms</span>
                     </span>
                   )}
                 </div>
@@ -584,7 +589,7 @@ export function AdminAiConfigCard() {
               }`}
             >
               <Icon icon="lucide:flask-conical" className="w-3.5 h-3.5" />
-              <span>{playgroundOpen ? "Tutup Playground" : "🧪 Playground Test Polish"}</span>
+              <span>{playgroundOpen ? "Tutup Playground" : "Playground Test Polish"}</span>
               <Icon
                 icon={playgroundOpen ? "lucide:chevron-up" : "lucide:chevron-down"}
                 className="w-3 h-3 text-slate-400"
@@ -721,8 +726,9 @@ export function AdminAiConfigCard() {
                     <span>{polishResult.ok ? "Hasil AI Polish:" : "Gagal Memproses"}</span>
                   </div>
                   {polishResult.latencyMs !== undefined && (
-                    <span className="font-mono text-[10px] font-semibold text-slate-500 dark:text-zinc-400">
-                      ⚡ {polishResult.latencyMs}ms
+                    <span className="font-mono text-[10px] font-semibold text-slate-500 dark:text-zinc-400 inline-flex items-center gap-1">
+                      <Icon icon="lucide:zap" className="w-3 h-3" />
+                      <span>{polishResult.latencyMs}ms</span>
                     </span>
                   )}
                 </div>

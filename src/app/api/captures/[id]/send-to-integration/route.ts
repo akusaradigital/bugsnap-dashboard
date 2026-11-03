@@ -67,7 +67,7 @@ async function recordIntegrationDelivery(
     } else {
       entry.fail += 1;
       entry.lastFailAt = new Date().toISOString();
-      entry.lastFailMessage = (errorMessage || "").slice(0, 300);
+      entry.lastFailMessage = redactString((errorMessage || "").slice(0, 300));
     }
     stats[service] = entry;
     await supabase
@@ -132,14 +132,19 @@ export async function POST(
     // 3. Read workspace integrations config
     const { data: wsSettings, error: wsError } = await supabase
       .from("workspace_settings")
-      .select("integrations")
+      .select("integrations, webhook_url")
       .eq("workspace_id", capture.workspace_id)
       .maybeSingle();
 
     if (wsError) throw wsError;
 
     const integrations = (wsSettings?.integrations as Record<string, Record<string, string>>) || {};
-    const config = integrations[service];
+    let config = integrations[service];
+
+    // Fallback: If webhook is requested, allow fallback to legacy workspace_settings.webhook_url
+    if (service === "webhook" && (!config || !config.url) && wsSettings?.webhook_url) {
+      config = { url: wsSettings.webhook_url };
+    }
 
     if (!config || Object.keys(config).length === 0) {
       return NextResponse.json(
@@ -172,13 +177,15 @@ export async function POST(
     try {
       switch (service) {
       case "slack": {
-        if (!config.webhookUrl) throw new Error("Slack webhook URL is missing");
-        await assertPublicUrl(config.webhookUrl);
-        const slackRes = await fetch(config.webhookUrl, {
+        const webhookUrl = (config.webhookUrl || config.url)?.trim();
+        if (!webhookUrl) throw new Error("Slack webhook URL is missing");
+        await assertPublicUrl(webhookUrl);
+        const slackRes = await fetch(webhookUrl, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            text: `🐞 *${bugTitle}*\n${capture.description || "New bug capture uploaded"}\n🔗 <${captureLink}|View Capture>`,
+            text: `*${bugTitle}*\n${capture.description || "New bug capture uploaded"}\n<${captureLink}|View Capture>`,
+            ...(config.channel?.trim() ? { channel: config.channel.trim() } : {}),
             blocks: [
               {
                 type: "section",
@@ -203,13 +210,76 @@ export async function POST(
           redirect: "manual",
           signal: AbortSignal.timeout(10000),
         });
-        if (!slackRes.ok) throw new Error(`Slack webhook error: ${slackRes.statusText}`);
+        if (!slackRes.ok) {
+          const errText = await slackRes.text().catch(() => "");
+          throw new Error(`Slack webhook error: ${errText || slackRes.statusText || slackRes.status}`);
+        }
         return NextResponse.json({ ok: true, message: "Sent to Slack channel successfully!" });
+      }
+
+      case "webhook": {
+        const webhookUrl = (config.url || (wsSettings as Record<string, unknown>)?.webhook_url as string | undefined)?.trim();
+        if (!webhookUrl) throw new Error("Webhook URL is required");
+        await assertPublicUrl(webhookUrl);
+
+        const typeLabel = capture.type === "video" ? "Video" : "Screenshot";
+        const errorLogs = Array.isArray(resolvedLogs)
+          ? resolvedLogs.filter((l) => l && typeof l === "object" && (l.type === "console" || l.level === "error" || l.status >= 400))
+          : [];
+        const errorCount = errorLogs.length;
+
+        // Multi-platform payload: text (Slack), content + embeds (Discord), event + capture (Zapier/Generic)
+        const payload = {
+          event: "capture.created",
+          text: `[BugSnap] ${typeLabel} - ${capture.title || "Captured Bug"}\n${captureLink}`,
+          content: `**[BugSnap]** ${typeLabel} - ${capture.title || "Captured Bug"}\n${capture.description ? `> ${capture.description}\n` : ""}${captureLink}`,
+          embeds: [
+            {
+              title: bugTitle,
+              url: captureLink,
+              description: (capture.description || "Bug report captured via BugSnap.").slice(0, 2048),
+              color: errorCount > 0 ? 0xef4444 : 0x89bd49,
+              fields: [
+                { name: "Platform", value: `${capture.os || "Unknown"} / ${capture.browser || "Unknown"}`, inline: true },
+                { name: "URL", value: capture.site_url || "N/A", inline: true },
+                { name: "Errors", value: String(errorCount), inline: true },
+              ],
+            },
+          ],
+          capture: {
+            id: capture.id,
+            title: capture.title,
+            description: capture.description,
+            url: captureLink,
+            type: capture.type,
+            os: capture.os,
+            browser: capture.browser,
+            site_url: capture.site_url,
+            window_size: capture.window_size,
+            dev_logs: resolvedLogs,
+          },
+        };
+
+        const whRes = await fetch(webhookUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+          redirect: "manual",
+          signal: AbortSignal.timeout(10000),
+        });
+
+        if (!whRes.ok) {
+          const errText = await whRes.text().catch(() => "");
+          throw new Error(errText ? `Webhook responded with status ${whRes.status}: ${errText.slice(0, 100)}` : `Webhook responded with status ${whRes.status}`);
+        }
+
+        return NextResponse.json({ ok: true, message: "Webhook delivered successfully!" });
       }
 
       case "github": {
         if (!config.token || !config.repo) throw new Error("GitHub token and repo are required");
-        const ghRes = await fetch(`https://api.github.com/repos/${config.repo.trim()}/issues`, {
+        const cleanRepo = config.repo.trim().replace(/^https?:\/\/github\.com\//i, "").replace(/^\/+|\/+$/g, "");
+        const ghRes = await fetch(`https://api.github.com/repos/${cleanRepo}/issues`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -222,15 +292,46 @@ export async function POST(
             body: fullDescription,
             labels: ["bug"],
           }),
+          redirect: "manual",
           signal: AbortSignal.timeout(10000),
         });
         const ghData = await ghRes.json().catch(() => ({}));
-        if (!ghRes.ok) throw new Error(ghData.message || "Failed to create GitHub issue");
+        if (!ghRes.ok) {
+          const detail = ghData.errors ? `: ${JSON.stringify(ghData.errors)}` : "";
+          throw new Error(`${ghData.message || "Failed to create GitHub issue"}${detail}`);
+        }
         return NextResponse.json({ ok: true, message: `GitHub issue created: #${ghData.number}`, url: ghData.html_url });
       }
 
       case "linear": {
         if (!config.apiKey || !config.teamId) throw new Error("Linear API key and team ID are required");
+        let resolvedTeamId = config.teamId.trim();
+
+        // If teamId is a team key (e.g. "ENG") instead of a UUID, query Linear API to resolve to team UUID
+        if (!isUuid(resolvedTeamId)) {
+          const teamQuery = `
+            query ResolveTeam($key: String!) {
+              teams(filter: { key: { eqIgnoreCase: $key } }) {
+                nodes { id key }
+              }
+            }
+          `;
+          const teamRes = await fetch("https://api.linear.app/graphql", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: config.apiKey.trim(),
+            },
+            body: JSON.stringify({ query: teamQuery, variables: { key: resolvedTeamId } }),
+            signal: AbortSignal.timeout(10000),
+          });
+          const teamData = await teamRes.json().catch(() => ({}));
+          const matchedTeam = teamData.data?.teams?.nodes?.[0];
+          if (matchedTeam?.id) {
+            resolvedTeamId = matchedTeam.id;
+          }
+        }
+
         const linearMutation = `
           mutation IssueCreate($input: IssueCreateInput!) {
             issueCreate(input: $input) {
@@ -254,7 +355,7 @@ export async function POST(
             variables: {
               input: {
                 title: bugTitle,
-                teamId: config.teamId.trim(),
+                teamId: resolvedTeamId,
                 description: fullDescription,
               },
             },
@@ -294,8 +395,12 @@ export async function POST(
           signal: AbortSignal.timeout(10000),
         });
         const jiraData = await jiraRes.json().catch(() => ({}));
-        if (!jiraRes.ok) throw new Error(JSON.stringify(jiraData.errors || jiraData.errorMessages || "Failed to create Jira issue"));
-        return NextResponse.json({ ok: true, message: `Jira issue created: ${jiraData.key}`, key: jiraData.key });
+        if (!jiraRes.ok) {
+          const errs = jiraData.errorMessages?.join(", ") || JSON.stringify(jiraData.errors || "Failed to create Jira issue");
+          throw new Error(errs);
+        }
+        const issueUrl = `${hostUrl}/browse/${jiraData.key}`;
+        return NextResponse.json({ ok: true, message: `Jira issue created: ${jiraData.key}`, key: jiraData.key, url: issueUrl });
       }
 
       case "gitlab": {
@@ -303,7 +408,8 @@ export async function POST(
         const rawUrl = (config.url || "https://gitlab.com").trim();
         const validatedHost = await assertPublicUrl(rawUrl);
         const hostUrl = validatedHost.origin.replace(/\/+$/, "");
-        const projectParam = encodeURIComponent(config.project.trim());
+        const cleanProject = config.project.trim().replace(/^https?:\/\/[^/]+\//i, "").replace(/^\/+|\/+$/g, "");
+        const projectParam = encodeURIComponent(cleanProject);
         const glRes = await fetch(`${hostUrl}/api/v4/projects/${projectParam}/issues`, {
           method: "POST",
           headers: {
@@ -319,13 +425,29 @@ export async function POST(
           signal: AbortSignal.timeout(10000),
         });
         const glData = await glRes.json().catch(() => ({}));
-        if (!glRes.ok) throw new Error(glData.message || "Failed to create GitLab issue");
+        if (!glRes.ok) {
+          const msg = typeof glData.message === "object" ? JSON.stringify(glData.message) : (glData.message || "Failed to create GitLab issue");
+          throw new Error(msg);
+        }
         return NextResponse.json({ ok: true, message: `GitLab issue created: #${glData.iid}`, url: glData.web_url });
       }
 
       case "notion": {
         if (!config.token || !config.databaseId) throw new Error("Notion integration token and database ID are required");
-        const cleanDbId = config.databaseId.trim().replace(/-/g, "");
+        const cleanDbId = config.databaseId.trim().match(/[a-f0-9]{32}|[a-f0-9-]{36}/i)?.[0].replace(/-/g, "") || config.databaseId.trim().replace(/-/g, "");
+
+        // Split fullDescription into paragraph blocks to respect Notion's 2000 char per block limit without dropping data
+        const paragraphBlocks: Array<{ object: "block"; type: "paragraph"; paragraph: { rich_text: Array<{ type: "text"; text: { content: string } }> } }> = [];
+        for (let i = 0; i < fullDescription.length && paragraphBlocks.length < 50; i += 1900) {
+          paragraphBlocks.push({
+            object: "block",
+            type: "paragraph",
+            paragraph: {
+              rich_text: [{ type: "text", text: { content: fullDescription.slice(i, i + 1900) } }],
+            },
+          });
+        }
+
         const notionRes = await fetch("https://api.notion.com/v1/pages", {
           method: "POST",
           headers: {
@@ -340,12 +462,12 @@ export async function POST(
                 title: [{ text: { content: bugTitle } }],
               },
             },
-            children: [
+            children: paragraphBlocks.length ? paragraphBlocks : [
               {
                 object: "block",
                 type: "paragraph",
                 paragraph: {
-                  rich_text: [{ type: "text", text: { content: fullDescription.slice(0, 1900) } }],
+                  rich_text: [{ type: "text", text: { content: "Bug report captured via BugSnap." } }],
                 },
               },
             ],
@@ -359,7 +481,8 @@ export async function POST(
 
       case "clickup": {
         if (!config.token || !config.listId) throw new Error("ClickUp API token and list ID are required");
-        const cuRes = await fetch(`https://api.clickup.com/api/v2/list/${config.listId.trim()}/task`, {
+        const cleanListId = config.listId.trim().replace(/.*\/li\//, "").replace(/[^0-9]/g, "") || config.listId.trim();
+        const cuRes = await fetch(`https://api.clickup.com/api/v2/list/${cleanListId}/task`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -379,6 +502,7 @@ export async function POST(
 
       case "asana": {
         if (!config.token || !config.projectId) throw new Error("Asana token and project ID are required");
+        const cleanProjectId = config.projectId.trim().replace(/^.*\/0\/(\d+).*/, "$1").replace(/[^0-9]/g, "") || config.projectId.trim();
         const asanaRes = await fetch("https://app.asana.com/api/1.0/tasks", {
           method: "POST",
           headers: {
@@ -389,14 +513,18 @@ export async function POST(
             data: {
               name: bugTitle,
               notes: fullDescription,
-              projects: [config.projectId.trim()],
+              projects: [cleanProjectId],
             },
           }),
           signal: AbortSignal.timeout(10000),
         });
         const asanaData = await asanaRes.json().catch(() => ({}));
         if (!asanaRes.ok) throw new Error(asanaData.errors?.[0]?.message || "Failed to create Asana task");
-        return NextResponse.json({ ok: true, message: "Asana task created successfully!" });
+        return NextResponse.json({
+          ok: true,
+          message: "Asana task created successfully!",
+          url: asanaData.data?.permalink_url,
+        });
       }
 
       case "azure": {
@@ -406,6 +534,7 @@ export async function POST(
         await assertPublicUrl(config.orgUrl);
         const cleanOrg = config.orgUrl.trim().replace(/\/+$/, "");
         const authHeader = `Basic ${Buffer.from(`:${config.token.trim()}`).toString("base64")}`;
+        const htmlDescription = `<p>${(capture.description || "Bug captured via BugSnap").replace(/\n/g, "<br/>")}</p>${envBlock ? `<h3>Environment</h3><p>${envParts.join("<br/>")}</p>` : ""}${logSummary ? `<h3>DevTools Summary</h3><pre>${logSummary.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</pre>` : ""}<p><a href="${captureLink}">View BugSnap Capture</a></p>`;
         const azureRes = await fetch(
           `${cleanOrg}/${encodeURIComponent(config.project.trim())}/_apis/wit/workitems/$Bug?api-version=7.0`,
           {
@@ -419,7 +548,7 @@ export async function POST(
               {
                 op: "add",
                 path: "/fields/System.Description",
-                value: `<p>${(capture.description || "Bug captured via BugSnap").replace(/\n/g, "<br/>")}</p><p><a href="${captureLink}">View BugSnap Capture</a></p>`,
+                value: htmlDescription,
               },
             ]),
             redirect: "manual",
@@ -428,7 +557,11 @@ export async function POST(
         );
         const azData = await azureRes.json().catch(() => ({}));
         if (!azureRes.ok) throw new Error(azData.message || "Failed to create Azure DevOps work item");
-        return NextResponse.json({ ok: true, message: `Azure DevOps work item #${azData.id} created!` });
+        return NextResponse.json({
+          ok: true,
+          message: `Azure DevOps work item #${azData.id} created!`,
+          url: azData._links?.html?.href,
+        });
       }
 
       case "aksora": {
@@ -458,7 +591,7 @@ export async function POST(
           signal: AbortSignal.timeout(10000),
         });
         const aksoraData = await aksoraRes.json().catch(() => ({}));
-        if (!aksoraRes.ok) throw new Error(aksoraData.error || "Failed to create task in Aksora");
+        if (!aksoraRes.ok) throw new Error(aksoraData.error || aksoraData.message || `Aksora error: ${aksoraRes.status}`);
         return NextResponse.json({ ok: true, message: "Aksora task created successfully!" });
       }
 
@@ -474,14 +607,19 @@ export async function POST(
           body: JSON.stringify({
             captureId: capture.id,
             title: capture.title,
+            description: capture.description,
+            type: capture.type,
             driveUrl: captureLink,
+            siteUrl: capture.site_url,
+            os: capture.os,
+            browser: capture.browser,
             devLogs: resolvedLogs,
           }),
           redirect: "manual",
           signal: AbortSignal.timeout(10000),
         });
         const snapData = await snapRes.json().catch(() => ({}));
-        if (!snapRes.ok) throw new Error(snapData.error || "Failed to forward capture to SnapTest");
+        if (!snapRes.ok) throw new Error(snapData.error || snapData.message || "Failed to forward capture to SnapTest");
         return NextResponse.json({ ok: true, message: "Forwarded to SnapTest AI QA Suite!" });
       }
 
@@ -510,7 +648,7 @@ ${logSummary || "Dev Logs: None"}`;
             max_tokens: 1000,
             messages: [{ role: "user", content: prompt }],
           }),
-          signal: AbortSignal.timeout(15000),
+          signal: AbortSignal.timeout(25000),
         });
         const cData = await claudeRes.json().catch(() => ({}));
         if (!claudeRes.ok) throw new Error(cData.error?.message || "Failed to generate Claude summary");
@@ -545,7 +683,7 @@ ${logSummary || "Dev Logs: None"}`;
             messages: [{ role: "user", content: prompt }],
             max_tokens: 1000,
           }),
-          signal: AbortSignal.timeout(15000),
+          signal: AbortSignal.timeout(25000),
         });
         const gData = await gptRes.json().catch(() => ({}));
         if (!gptRes.ok) throw new Error(gData.error?.message || "Failed to generate ChatGPT summary");
@@ -554,6 +692,45 @@ ${logSummary || "Dev Logs: None"}`;
           await supabase.from("captures").update({ ai_summary: summaryText }).eq("id", capture.id);
         }
         return NextResponse.json({ ok: true, message: "AI summary generated via ChatGPT!", summary: summaryText });
+      }
+
+      case "gemini": {
+        if (!config.apiKey) throw new Error("Google Gemini API Key is required");
+        const model = config.model?.trim() || "gemini-1.5-flash";
+        const prompt = `You are a senior QA engineer. Analyze this bug report and dev logs. Provide:
+1. Steps to Reproduce
+2. Root Cause Analysis
+3. Recommended Fix
+
+Bug: ${capture.title}
+Description: ${capture.description || "N/A"}
+Environment: ${envParts.join(", ")}
+${logSummary || "Dev Logs: None"}`;
+
+        const geminiRes = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent?key=${encodeURIComponent(config.apiKey.trim())}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [{ text: prompt }],
+                },
+              ],
+            }),
+            signal: AbortSignal.timeout(25000),
+          }
+        );
+        const gemData = await geminiRes.json().catch(() => ({}));
+        if (!geminiRes.ok) throw new Error(gemData.error?.message || "Failed to generate Google Gemini summary");
+        const summaryText = gemData.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (summaryText) {
+          await supabase.from("captures").update({ ai_summary: summaryText }).eq("id", capture.id);
+        }
+        return NextResponse.json({ ok: true, message: "AI summary generated via Google Gemini!", summary: summaryText });
       }
 
       default:
@@ -567,9 +744,10 @@ ${logSummary || "Dev Logs: None"}`;
       await recordIntegrationDelivery(supabase, service, dispatchOk, dispatchErrMsg);
     }
   } catch (err: unknown) {
-    console.error("[Send to Integration Error]:", err);
+    const rawMsg = err instanceof Error ? err.message : "Failed to send to integration";
+    console.error("[Send to Integration Error]:", redactString(rawMsg));
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : "Failed to send to integration" },
+      { error: redactString(rawMsg) },
       { status: 500 }
     );
   }

@@ -344,6 +344,7 @@ function CompareContent() {
                     : "text-muted hover:text-foreground"
                 }`}
                 title={t("compare.splitMode")}
+                aria-label={t("compare.splitMode")}
               >
                 <Icon icon="lucide:split" className="w-3.5 h-3.5 shrink-0" />
                 <span className="hidden sm:inline">{t("compare.splitMode")}</span>
@@ -358,6 +359,7 @@ function CompareContent() {
                     : "text-muted hover:text-foreground"
                 }`}
                 title={t("compare.sideBySideMode")}
+                aria-label={t("compare.sideBySideMode")}
               >
                 <Icon icon="lucide:columns-2" className="w-3.5 h-3.5 shrink-0" />
                 <span className="hidden sm:inline">{t("compare.sideBySideMode")}</span>
@@ -372,6 +374,7 @@ function CompareContent() {
                     : "text-muted hover:text-foreground"
                 }`}
                 title={t("compare.diffMode")}
+                aria-label={t("compare.diffMode")}
               >
                 <Icon icon="lucide:layers" className="w-3.5 h-3.5 shrink-0" />
                 <span className="hidden sm:inline">{t("compare.diffMode")}</span>
@@ -417,6 +420,7 @@ function CompareContent() {
                   }}
                   className="text-xs text-muted hover:text-red-500 transition-colors"
                   title={t("compare.clear")}
+                  aria-label={t("compare.clear")}
                 >
                   <Icon icon="lucide:x" className="w-3.5 h-3.5 shrink-0" />
                 </button>
@@ -444,6 +448,7 @@ function CompareContent() {
                   onClick={() => handleTriggerUpload("left")}
                   className="p-1 min-w-[36px] min-h-[36px] sm:min-w-0 sm:min-h-0 rounded-lg border border-border bg-subtle hover:bg-background text-muted hover:text-foreground transition-colors cursor-pointer touch-manipulation flex items-center justify-center"
                   title={t("compare.uploadImage")}
+                  aria-label={t("compare.uploadImage")}
                 >
                   <Icon icon="lucide:upload" className="w-3.5 h-3.5 shrink-0" />
                 </button>
@@ -471,6 +476,7 @@ function CompareContent() {
                   }}
                   className="text-xs text-muted hover:text-red-500 transition-colors"
                   title={t("compare.clear")}
+                  aria-label={t("compare.clear")}
                 >
                   <Icon icon="lucide:x" className="w-3.5 h-3.5 shrink-0" />
                 </button>
@@ -498,6 +504,7 @@ function CompareContent() {
                   onClick={() => handleTriggerUpload("right")}
                   className="p-1 min-w-[36px] min-h-[36px] sm:min-w-0 sm:min-h-0 rounded-lg border border-border bg-subtle hover:bg-background text-muted hover:text-foreground transition-colors cursor-pointer touch-manipulation flex items-center justify-center"
                   title={t("compare.uploadImage")}
+                  aria-label={t("compare.uploadImage")}
                 >
                   <Icon icon="lucide:upload" className="w-3.5 h-3.5 shrink-0" />
                 </button>

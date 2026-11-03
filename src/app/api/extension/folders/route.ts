@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createServiceClient } from "@/lib/supabase-server";
 import { verifiedGoogleEmail } from "@/lib/google-token";
+import { sanitizeErrorMessage } from "@/lib/redact";
 
 export const runtime = "nodejs";
 
@@ -18,25 +19,24 @@ export async function POST(request: Request) {
       typeof val === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(val.trim());
 
     if (action === "create") {
-      const { folder_name, workspace_id } = body;
+      const { folder_name, workspace_id, parent_id } = body;
       const trimmed = typeof folder_name === "string" ? folder_name.trim() : "";
       if (!trimmed) return NextResponse.json({ error: "Folder name is required" }, { status: 400 });
       const validWsId = isUuid(workspace_id) ? workspace_id.trim() : null;
 
-      // Duplicate folder validation (case-insensitive check in workspace)
-      let dupQuery = supabase
-        .from("workspace_folders")
-        .select("id, name")
-        .ilike("name", trimmed);
+      // Duplicate folder validation (scoped to workspace only)
       if (validWsId) {
-        dupQuery = dupQuery.eq("workspace_id", validWsId);
-      }
-      const { data: existing } = await dupQuery;
-      if (existing && existing.length > 0) {
-        return NextResponse.json(
-          { error: "A folder with this name already exists", code: "DUPLICATE_FOLDER" },
-          { status: 409 }
-        );
+        const { data: existing } = await supabase
+          .from("workspace_folders")
+          .select("id, name")
+          .eq("workspace_id", validWsId)
+          .ilike("name", trimmed);
+        if (existing && existing.length > 0) {
+          return NextResponse.json(
+            { error: "A folder with this name already exists", code: "DUPLICATE_FOLDER" },
+            { status: 409 }
+          );
+        }
       }
 
       const { data, error } = await supabase.rpc("insert_folder_by_email", {
@@ -45,21 +45,42 @@ export async function POST(request: Request) {
         p_workspace_id: validWsId,
       });
       if (error) throw error;
-      return NextResponse.json(data?.[0] || data || {});
+      const created = (Array.isArray(data) ? data[0] : data) as { id?: string } | undefined;
+      if (created?.id && isUuid(parent_id) && validWsId) {
+        // Ensure parent folder belongs to the same workspace
+        const { data: parentFolder } = await supabase
+          .from("workspace_folders")
+          .select("id")
+          .eq("id", parent_id.trim())
+          .eq("workspace_id", validWsId)
+          .single();
+        if (parentFolder) {
+          await supabase
+            .from("workspace_folders")
+            .update({ parent_id: parent_id.trim() })
+            .eq("id", created.id)
+            .eq("workspace_id", validWsId);
+        }
+      }
+      return NextResponse.json(created || {});
     }
 
     if (action === "rename") {
       const { workspace_id, old_name, new_name } = body;
-      if (!workspace_id || !old_name || !new_name) {
-        return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
+      if (!isUuid(workspace_id) || typeof old_name !== "string" || typeof new_name !== "string") {
+        return NextResponse.json({ error: "Missing or invalid parameters" }, { status: 400 });
       }
-      const trimmedNew = typeof new_name === "string" ? new_name.trim() : "";
-      const trimmedOld = typeof old_name === "string" ? old_name.trim() : "";
+      const trimmedNew = new_name.trim();
+      const trimmedOld = old_name.trim();
+      if (!trimmedNew || !trimmedOld) {
+        return NextResponse.json({ error: "Folder names cannot be empty" }, { status: 400 });
+      }
+      const validWs = workspace_id.trim();
       if (trimmedNew.toLowerCase() !== trimmedOld.toLowerCase()) {
         const { data: existing } = await supabase
           .from("workspace_folders")
           .select("id")
-          .eq("workspace_id", workspace_id)
+          .eq("workspace_id", validWs)
           .ilike("name", trimmedNew);
         if (existing && existing.length > 0) {
           return NextResponse.json(
@@ -70,7 +91,7 @@ export async function POST(request: Request) {
       }
       const { data, error } = await supabase.rpc("rename_workspace_folder_by_email", {
         p_email: email,
-        p_workspace_id: workspace_id,
+        p_workspace_id: validWs,
         p_old_name: trimmedOld,
         p_new_name: trimmedNew,
       });
@@ -80,16 +101,34 @@ export async function POST(request: Request) {
 
     if (action === "delete") {
       const { workspace_id, folder_name } = body;
-      if (!workspace_id || !folder_name) {
-        return NextResponse.json({ error: "Missing required parameters" }, { status: 400 });
+      if (!isUuid(workspace_id) || typeof folder_name !== "string" || !folder_name.trim()) {
+        return NextResponse.json({ error: "Missing or invalid parameters" }, { status: 400 });
       }
       const { data, error } = await supabase.rpc("delete_workspace_folder_by_email", {
         p_email: email,
-        p_workspace_id: workspace_id,
-        p_folder_name: folder_name,
+        p_workspace_id: workspace_id.trim(),
+        p_folder_name: folder_name.trim(),
       });
       if (error) throw error;
       return NextResponse.json({ success: true, data });
+    }
+
+    if (action === "set_color") {
+      const { workspace_id, folder_name, color } = body;
+      if (!isUuid(workspace_id) || typeof folder_name !== "string" || !folder_name.trim()) {
+        return NextResponse.json({ error: "workspace_id and folder_name are required" }, { status: 400 });
+      }
+      const validColor = typeof color === "string" && /^#[0-9a-f]{6}$/i.test(color.trim())
+        ? color.trim().toLowerCase()
+        : null;
+      const { data, error } = await supabase.rpc("set_workspace_folder_color_by_email", {
+        p_email: email,
+        p_workspace_id: workspace_id.trim(),
+        p_folder_name: folder_name.trim(),
+        p_color: validColor,
+      });
+      if (error) throw error;
+      return NextResponse.json({ success: true, color: validColor, data });
     }
 
     if (action === "link") {
@@ -123,6 +162,9 @@ export async function POST(request: Request) {
     if (error) throw error;
     return NextResponse.json(data || []);
   } catch (err) {
-    return NextResponse.json({ error: err instanceof Error ? err.message : "Folder operation failed" }, { status: 401 });
+    const rawMsg = err instanceof Error ? err.message : "Folder operation failed";
+    const message = sanitizeErrorMessage(rawMsg);
+    const status = /token|auth|unauthorized/i.test(rawMsg) ? 401 : 400;
+    return NextResponse.json({ error: message }, { status });
   }
 }

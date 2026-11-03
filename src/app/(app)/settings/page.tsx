@@ -1,7 +1,7 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useState } from "react";
-// import Link from "next/link";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
@@ -106,10 +106,20 @@ function SettingsContent() {
   const [activeModalInt, setActiveModalInt] = useState<string | null>(null);
   const [intModalForm, setIntModalForm] = useState<Record<string, string>>({});
   const [intModalSaving, setIntModalSaving] = useState(false);
+  const [showSecretField, setShowSecretField] = useState<Record<string, boolean>>({});
 
-  // Webhook test state
+  // Webhook test & Pull live data state
   const [testingWebhook, setTestingWebhook] = useState(false);
   const [webhookTestResult, setWebhookTestResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [pullingData, setPullingData] = useState(false);
+  const [pullResult, setPullResult] = useState<{
+    ok: boolean;
+    serviceName?: string;
+    source?: string;
+    itemCount?: number;
+    items?: Array<{ id: string; title: string; status?: string; url?: string; extra?: string }>;
+    msg?: string;
+  } | null>(null);
 
   // BugSnap API Keys state
   const [apiKeys, setApiKeys] = useState<Array<{ id: string; name: string; prefix: string; createdAt: string; lastUsedAt: string | null }>>([]);
@@ -1418,17 +1428,17 @@ function SettingsContent() {
                           ) : (
                             <div className="flex items-center gap-2">
                               {/* Role Selector */}
-                              <div className="relative">
-                                <select
-                                  value={m.role === "viewer" ? "viewer" : "creator"}
-                                  disabled={isUpdating || isRemoving}
-                                  onChange={(e) => handleUpdateMemberRole(m.user_id, e.target.value as "creator" | "viewer")}
-                                  className="text-xs font-semibold rounded-lg border border-border bg-background px-2.5 py-1.5 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 text-foreground cursor-pointer disabled:opacity-50 transition-colors shadow-2xs"
-                                >
-                                  <option value="creator">Creator</option>
-                                  <option value="viewer">Viewer</option>
-                                </select>
-                              </div>
+                              <Dropdown
+                                value={m.role === "viewer" ? "viewer" : "creator"}
+                                disabled={isUpdating || isRemoving}
+                                onChange={(val) => handleUpdateMemberRole(m.user_id, val as "creator" | "viewer")}
+                                options={[
+                                  { value: "creator", label: "Creator" },
+                                  { value: "viewer", label: "Viewer" },
+                                ]}
+                                variant="pill"
+                                className="w-28"
+                              />
 
                               {/* Remove Button */}
                               <button
@@ -1587,8 +1597,18 @@ function SettingsContent() {
         {/* ── Integrations ───────────────────────────────────────────────── */}
         {activeTab === "integrations" && (
           <div className="space-y-6">
-            <input type="text" placeholder="Search integrations…" value={intSearch} onChange={e=>setIntSearch(e.target.value)}
-              className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 bg-subtle text-foreground" />
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <input type="text" placeholder="Search integrations…" value={intSearch} onChange={e=>setIntSearch(e.target.value)}
+                className="w-full sm:max-w-md text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 bg-subtle text-foreground" />
+              <Link
+                href="/docs/integrations"
+                target="_blank"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#6B9A35] dark:text-[#A8D666] hover:underline shrink-0"
+              >
+                <Icon icon="lucide:book-open" className="w-4 h-4 shrink-0" />
+                <span>Integration Guides & Tutorials →</span>
+              </Link>
+            </div>
 
             {/* Drive */}
             <div className="rounded-xl border border-border bg-subtle p-4 space-y-3 shadow-xs">
@@ -1664,6 +1684,8 @@ function SettingsContent() {
                       onClick={() => {
                         setActiveModalInt(int.id);
                         setWebhookTestResult(null);
+                        setPullResult(null);
+                        setShowSecretField({});
                         const initialForm: Record<string, string> = {};
                         int.fields.forEach(f => {
                           initialForm[f.key] = config?.[f.key] || (f.key === "url" && int.id === "webhook" ? webhookUrl : f.key === "url" && int.id === "gitlab" ? "https://gitlab.com" : f.key === "url" && int.id === "snaptest" ? "http://localhost:3000" : "");
@@ -2202,11 +2224,23 @@ function SettingsContent() {
                     />
                   )}
                 </div>
-                <div>
-                  <h2 className="text-base font-bold text-foreground">
-                    {activeDef?.name || "Integration"}
-                  </h2>
-                  <p className="text-xs text-muted">{activeDef?.desc || "Configure workspace credentials"}</p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <h2 className="text-base font-bold text-foreground truncate">
+                      {activeDef?.name || "Integration"}
+                    </h2>
+                    {activeModalInt && (
+                      <Link
+                        href={`/docs/integrations#${activeModalInt}`}
+                        target="_blank"
+                        className="text-[11px] font-semibold text-[#6B9A35] dark:text-[#A8D666] hover:underline inline-flex items-center gap-1 shrink-0"
+                      >
+                        <span>Setup Guide</span>
+                        <Icon icon="lucide:external-link" className="w-3 h-3" />
+                      </Link>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted leading-snug mt-0.5">{activeDef?.desc || "Configure workspace credentials"}</p>
                 </div>
               </div>
 
@@ -2216,16 +2250,31 @@ function SettingsContent() {
                     <label className="block text-xs font-semibold text-foreground mb-1">
                       {f.label} {!f.required && <span className="text-muted font-normal">(Optional)</span>}
                     </label>
-                    <input
-                      type={f.type || "text"}
-                      placeholder={f.placeholder}
-                      value={intModalForm[f.key] || ""}
-                      onChange={(e) => {
-                        setIntModalForm(prev => ({ ...prev, [f.key]: e.target.value }));
-                        if (activeModalInt === "webhook") setWebhookTestResult(null);
-                      }}
-                      className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 bg-background font-mono text-xs text-foreground"
-                    />
+                    <div className="relative">
+                      <input
+                        type={f.type === "password" ? (showSecretField[f.key] ? "text" : "password") : (f.type || "text")}
+                        placeholder={f.placeholder}
+                        value={intModalForm[f.key] || ""}
+                        onChange={(e) => {
+                          setIntModalForm(prev => ({ ...prev, [f.key]: e.target.value }));
+                          setWebhookTestResult(null);
+                        }}
+                        className={`w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 bg-background font-mono text-xs text-foreground ${
+                          f.type === "password" ? "pr-9" : ""
+                        }`}
+                      />
+                      {f.type === "password" && (
+                        <button
+                          type="button"
+                          onClick={() => setShowSecretField(prev => ({ ...prev, [f.key]: !prev[f.key] }))}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted hover:text-foreground p-1 transition-colors"
+                          title={showSecretField[f.key] ? "Hide secret" : "Show secret"}
+                          aria-label={showSecretField[f.key] ? "Hide secret" : "Show secret"}
+                        >
+                          <Icon icon={showSecretField[f.key] ? "lucide:eye-off" : "lucide:eye"} className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
                     {f.hint && (
                       <p className="text-[11px] text-muted mt-1 leading-normal">
                         {f.hint}
@@ -2234,48 +2283,162 @@ function SettingsContent() {
                   </div>
                 ))}
 
-                {(activeModalInt === "webhook" || activeModalInt === "slack") && (
-                  <div className="pt-2 border-t border-border space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-muted">Test webhook delivery</span>
-                      <button
-                        type="button"
-                        disabled={!(intModalForm.url?.trim() || intModalForm.webhookUrl?.trim()) || testingWebhook}
-                        onClick={async () => {
-                          setTestingWebhook(true);
-                          setWebhookTestResult(null);
-                          try {
-                            const { data: { session } } = await supabase.auth.getSession();
-                            const targetUrl = (intModalForm.url || intModalForm.webhookUrl)?.trim();
-                            const res = await fetch("/api/webhooks/test", {
-                              method: "POST",
-                              headers: {
-                                "Content-Type": "application/json",
-                                ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
-                              },
-                              body: JSON.stringify({ url: targetUrl }),
-                            });
-                            const json = await res.json().catch(() => ({}));
-                            if (res.ok) {
-                              setWebhookTestResult({ ok: true, msg: "Test payload delivered successfully! Check your channel." });
-                            } else {
-                              setWebhookTestResult({ ok: false, msg: json.error || "Failed to deliver test payload" });
-                            }
-                          } catch (err) {
-                            setWebhookTestResult({ ok: false, msg: err instanceof Error ? err.message : "Network error" });
-                          } finally {
-                            setTestingWebhook(false);
+                {activeDef && (
+                  <div className="pt-2 border-t border-border space-y-3">
+                    <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2">
+                      <span className="text-xs text-muted">Verify credentials or test live synchronization</span>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          disabled={
+                            testingWebhook ||
+                            pullingData ||
+                            !activeDef.fields
+                              .filter(f => f.required)
+                              .every(f => typeof intModalForm[f.key] === "string" && intModalForm[f.key].trim().length > 0)
                           }
-                        }}
-                        className="rounded-lg border border-border bg-subtle px-3 py-1.5 text-xs font-semibold text-foreground hover:bg-subtle/80 hover:border-accent/40 disabled:opacity-50 transition-all shrink-0"
-                      >
-                        {testingWebhook ? "Testing…" : "Send Test"}
-                      </button>
+                          onClick={async () => {
+                            setTestingWebhook(true);
+                            setWebhookTestResult(null);
+                            try {
+                              const { data: { session } } = await supabase.auth.getSession();
+                              const res = await fetch("/api/integrations/test", {
+                                method: "POST",
+                                headers: {
+                                  "Content-Type": "application/json",
+                                  ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+                                },
+                                body: JSON.stringify({
+                                  service: activeModalInt,
+                                  config: intModalForm,
+                                }),
+                              });
+                              const json = await res.json().catch(() => ({}));
+                              if (res.ok) {
+                                setWebhookTestResult({ ok: true, msg: json.message || "Connection verified successfully!" });
+                              } else {
+                                setWebhookTestResult({ ok: false, msg: json.error || "Connection test failed" });
+                              }
+                            } catch (err) {
+                              setWebhookTestResult({ ok: false, msg: err instanceof Error ? err.message : "Network error" });
+                            } finally {
+                              setTestingWebhook(false);
+                            }
+                          }}
+                          className="rounded-lg border border-border bg-subtle px-2.5 py-1.5 text-xs font-semibold text-foreground hover:bg-subtle/80 hover:border-accent/40 disabled:opacity-50 transition-all shrink-0 inline-flex items-center gap-1.5"
+                        >
+                          {testingWebhook && <Icon icon="lucide:loader-2" className="w-3 h-3 animate-spin shrink-0" />}
+                          <span>{testingWebhook ? "Testing…" : (t("settings.testConnection") || "Test Connection")}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          disabled={
+                            pullingData ||
+                            testingWebhook ||
+                            !activeDef.fields
+                              .filter(f => f.required)
+                              .every(f => typeof intModalForm[f.key] === "string" && intModalForm[f.key].trim().length > 0)
+                          }
+                          onClick={async () => {
+                            setPullingData(true);
+                            setPullResult(null);
+                            try {
+                              const { data: { session } } = await supabase.auth.getSession();
+                              const res = await fetch("/api/integrations/pull", {
+                                method: "POST",
+                                headers: {
+                                  "Content-Type": "application/json",
+                                  ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+                                },
+                                body: JSON.stringify({
+                                  service: activeModalInt,
+                                  config: intModalForm,
+                                }),
+                              });
+                              const json = await res.json().catch(() => ({}));
+                              if (res.ok && json.ok) {
+                                setPullResult({
+                                  ok: true,
+                                  serviceName: json.serviceName,
+                                  source: json.source,
+                                  itemCount: json.itemCount,
+                                  items: json.items || [],
+                                });
+                              } else {
+                                setPullResult({ ok: false, msg: json.error || "Failed to pull live data" });
+                              }
+                            } catch (err) {
+                              setPullResult({ ok: false, msg: err instanceof Error ? err.message : "Network error" });
+                            } finally {
+                              setPullingData(false);
+                            }
+                          }}
+                          className="rounded-lg border border-emerald-500/30 bg-emerald-50/50 dark:bg-emerald-950/20 px-2.5 py-1.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400 hover:bg-emerald-100/50 dark:hover:bg-emerald-950/40 disabled:opacity-50 transition-all shrink-0 inline-flex items-center gap-1.5"
+                        >
+                          {pullingData ? (
+                            <Icon icon="lucide:loader-2" className="w-3 h-3 animate-spin shrink-0" />
+                          ) : (
+                            <Icon icon="lucide:download" className="w-3 h-3 shrink-0" />
+                          )}
+                          <span>{pullingData ? (t("settings.pulling") || "Pulling…") : (t("settings.pullData") || "Pull Live Data")}</span>
+                        </button>
+                      </div>
                     </div>
+
                     {webhookTestResult && (
-                      <div className={`p-2.5 rounded-lg text-xs font-medium border flex items-center gap-1.5 ${webhookTestResult.ok ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40" : "bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/40"}`}>
-                        <Icon icon={webhookTestResult.ok ? "lucide:check" : "lucide:x"} className="w-3.5 h-3.5 shrink-0" />
+                      <div className={`p-2.5 rounded-lg text-xs font-medium border flex items-start gap-2 break-all ${webhookTestResult.ok ? "bg-emerald-50 dark:bg-emerald-950/20 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/40" : "bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/40"}`}>
+                        <Icon icon={webhookTestResult.ok ? "lucide:check-circle" : "lucide:alert-circle"} className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                         <span>{webhookTestResult.msg}</span>
+                      </div>
+                    )}
+
+                    {pullResult && (
+                      <div className={`p-3 rounded-xl text-xs border space-y-2 ${pullResult.ok ? "bg-slate-50 dark:bg-slate-800/60 border-slate-200 dark:border-slate-700" : "bg-red-50 dark:bg-red-950/20 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800/40"}`}>
+                        {pullResult.ok ? (
+                          <>
+                            <div className="flex items-center justify-between gap-2 border-b border-border/50 pb-1.5">
+                              <span className="font-semibold text-foreground flex items-center gap-1.5">
+                                <Icon icon="lucide:check-circle" className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                                <span>{pullResult.serviceName} ({pullResult.source})</span>
+                              </span>
+                              <span className="text-[11px] text-muted">{pullResult.itemCount || 0} record(s) pulled</span>
+                            </div>
+                            {pullResult.items && pullResult.items.length > 0 ? (
+                              <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                                {pullResult.items.map((item) => (
+                                  <div key={item.id} className="p-1.5 rounded-md bg-white dark:bg-slate-900 border border-border/60 flex items-center justify-between gap-2">
+                                    <div className="min-w-0 flex-1 truncate">
+                                      <span className="font-medium text-foreground">{item.title}</span>
+                                      {item.extra && <span className="text-[10px] text-muted ml-2">({item.extra})</span>}
+                                    </div>
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                      {item.status && (
+                                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-subtle text-muted">
+                                          {item.status}
+                                        </span>
+                                      )}
+                                      {item.url && (
+                                        <a href={item.url} target="_blank" rel="noopener noreferrer" className="text-muted hover:text-foreground">
+                                          <Icon icon="lucide:external-link" className="w-3 h-3" />
+                                        </a>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-[11px] text-muted italic">
+                                {t("settings.pullEmpty") || "No recent records found in this destination."}
+                              </p>
+                            )}
+                          </>
+                        ) : (
+                          <div className="flex items-start gap-2 break-all">
+                            <Icon icon="lucide:alert-circle" className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                            <span>{pullResult.msg}</span>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>

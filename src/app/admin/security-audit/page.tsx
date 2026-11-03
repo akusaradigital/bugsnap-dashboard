@@ -6,6 +6,7 @@ import { useT } from "@/components/I18nProvider";
 import { SecurityEvent } from "@/lib/security-audit";
 import { getAdminHeaders, getAdminCache, setAdminCache } from "@/lib/admin-cache";
 import { Icon } from "@/lib/iconify";
+import { Dropdown } from "@/components/Dropdown";
 
 interface AuditStats {
   total: number;
@@ -254,21 +255,23 @@ export default function AdminSecurityAuditPage() {
       {/* Filter and Search Bar */}
       <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between min-w-0">
         <div className="flex items-center gap-2 min-w-0">
-          <select
+          <Dropdown
             value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value)}
-            className="w-full sm:w-auto text-xs font-semibold rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 px-3 py-2 outline-none"
-          >
-            <option value="all">All Event Types</option>
-            <option value="admin_action">Admin Actions</option>
-            <option value="admin_password_change">Admin Password Change</option>
-            <option value="rate_limit">Rate Limit</option>
-            <option value="honeypot_trap">Honeypot Bot Trap</option>
-            <option value="spam_email">Disposable Email Block</option>
-            <option value="turnstile_fail">Turnstile Fail</option>
-            <option value="admin_login_success">Admin Login Success</option>
-            <option value="admin_login_failed">Admin Login Failed</option>
-          </select>
+            onChange={(val) => setTypeFilter(val)}
+            options={[
+              { value: "all", label: "All Event Types" },
+              { value: "admin_action", label: "Admin Actions" },
+              { value: "admin_password_change", label: "Admin Password Change" },
+              { value: "rate_limit", label: "Rate Limit" },
+              { value: "honeypot_trap", label: "Honeypot Bot Trap" },
+              { value: "spam_email", label: "Disposable Email Block" },
+              { value: "turnstile_fail", label: "Turnstile Fail" },
+              { value: "admin_login_success", label: "Admin Login Success" },
+              { value: "admin_login_failed", label: "Admin Login Failed" },
+            ]}
+            variant="pill"
+            className="w-full sm:w-auto min-w-[160px]"
+          />
         </div>
 
         <div className="w-full sm:w-64 min-w-0">

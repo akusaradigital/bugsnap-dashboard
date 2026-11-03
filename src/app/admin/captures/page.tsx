@@ -5,6 +5,7 @@ import { useToast } from "@/components/Toast";
 import { useT } from "@/components/I18nProvider";
 import { getAdminHeaders } from "@/lib/admin-cache";
 import { Icon } from "@/lib/iconify";
+import { Dropdown } from "@/components/Dropdown";
 
 interface CaptureItem {
   id: string;
@@ -152,31 +153,35 @@ export default function AdminCapturesPage() {
       {/* Filters & Search */}
       <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
         <div className="flex flex-wrap items-center gap-2">
-          <select
+          <Dropdown
             value={typeFilter}
-            onChange={(e) => {
-              setTypeFilter(e.target.value);
+            onChange={(val) => {
+              setTypeFilter(val);
               setPage(1);
             }}
-            className="text-xs font-semibold rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 px-3 py-2 outline-none"
-          >
-            <option value="all">{t("admin.allFormats")}</option>
-            <option value="video">{t("admin.formatVideo")}</option>
-            <option value="screenshot">{t("admin.formatScreenshot")}</option>
-          </select>
+            options={[
+              { value: "all", label: t("admin.allFormats") },
+              { value: "video", label: t("admin.formatVideo") },
+              { value: "screenshot", label: t("admin.formatScreenshot") },
+            ]}
+            variant="pill"
+            className="min-w-[130px]"
+          />
 
-          <select
+          <Dropdown
             value={visibilityFilter}
-            onChange={(e) => {
-              setVisibilityFilter(e.target.value);
+            onChange={(val) => {
+              setVisibilityFilter(val);
               setPage(1);
             }}
-            className="text-xs font-semibold rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 px-3 py-2 outline-none"
-          >
-            <option value="all">{t("admin.allAccess")}</option>
-            <option value="public">{t("admin.accessPublic")}</option>
-            <option value="private">{t("admin.accessPrivate")}</option>
-          </select>
+            options={[
+              { value: "all", label: t("admin.allAccess") },
+              { value: "public", label: t("admin.accessPublic") },
+              { value: "private", label: t("admin.accessPrivate") },
+            ]}
+            variant="pill"
+            className="min-w-[130px]"
+          />
         </div>
 
         <form onSubmit={handleSearchSubmit} className="flex items-center gap-1.5 w-full sm:w-80">

@@ -139,3 +139,154 @@ test("settings profile: resilient user lookup by id and fallback email", () => {
   );
 });
 
+// 6. Test Linear team key and UUID resolution
+test("settings integrations: Linear team resolution accepts both keys and UUIDs", () => {
+  const teams = [
+    { id: "e1a2b3c4-5678-90ab-cdef-1234567890ab", key: "ENG", name: "Engineering" },
+    { id: "f2b3c4d5-6789-01bc-def0-2345678901bc", key: "QA", name: "Quality Assurance" },
+  ];
+
+  function resolveLinearTeam(input, availableTeams) {
+    const raw = String(input || "").trim();
+    const match = availableTeams.find(
+      (t) => t.id.toLowerCase() === raw.toLowerCase() || t.key.toLowerCase() === raw.toLowerCase()
+    );
+    return match ? match.id : null;
+  }
+
+  // Resolve by uppercase key
+  assert.equal(resolveLinearTeam("ENG", teams), "e1a2b3c4-5678-90ab-cdef-1234567890ab");
+  // Resolve by lowercase key
+  assert.equal(resolveLinearTeam("qa", teams), "f2b3c4d5-6789-01bc-def0-2345678901bc");
+  // Resolve by UUID
+  assert.equal(resolveLinearTeam("e1a2b3c4-5678-90ab-cdef-1234567890ab", teams), "e1a2b3c4-5678-90ab-cdef-1234567890ab");
+  // Non-existent key
+  assert.equal(resolveLinearTeam("MARKETING", teams), null);
+});
+
+// 7. Test Notion paragraph block chunking (2,000 char limit protection)
+test("settings integrations: Notion block chunker splits text over 2000 chars into multiple blocks", () => {
+  function chunkNotionText(text, maxChars = 2000) {
+    const blocks = [];
+    let remaining = String(text || "").trim();
+    while (remaining.length > 0 && blocks.length < 50) {
+      const chunk = remaining.slice(0, maxChars);
+      remaining = remaining.slice(maxChars);
+      blocks.push({
+        object: "block",
+        type: "paragraph",
+        paragraph: {
+          rich_text: [{ type: "text", text: { content: chunk } }],
+        },
+      });
+    }
+    return blocks;
+  }
+
+  const shortText = "Simple bug description";
+  const shortBlocks = chunkNotionText(shortText);
+  assert.equal(shortBlocks.length, 1);
+  assert.equal(shortBlocks[0].paragraph.rich_text[0].text.content, shortText);
+
+  const longText = "X".repeat(4500);
+  const longBlocks = chunkNotionText(longText);
+  assert.equal(longBlocks.length, 3);
+  assert.equal(longBlocks[0].paragraph.rich_text[0].text.content.length, 2000);
+  assert.equal(longBlocks[1].paragraph.rich_text[0].text.content.length, 2000);
+  assert.equal(longBlocks[2].paragraph.rich_text[0].text.content.length, 500);
+});
+
+// 8. Test repo sanitization for GitHub / GitLab / Azure
+test("settings integrations: repo and project sanitization cleans full URLs and slashes", () => {
+  function sanitizeRepo(raw) {
+    let repo = String(raw || "").trim();
+    repo = repo.replace(/^https?:\/\/github\.com\//i, "");
+    repo = repo.replace(/^https?:\/\/gitlab\.com\//i, "");
+    repo = repo.replace(/^\/+|\/+$/g, "");
+    return repo;
+  }
+
+  assert.equal(sanitizeRepo("https://github.com/my-org/frontend-app/"), "my-org/frontend-app");
+  assert.equal(sanitizeRepo("https://gitlab.com/qa-group/runner/"), "qa-group/runner");
+  assert.equal(sanitizeRepo("  my-org/backend-service  "), "my-org/backend-service");
+});
+
+// 9. Test Google Gemini integration catalogue and payload formatting
+test("settings integrations: Gemini integration configuration and prompt construction", () => {
+  function formatGeminiPayload(capture, envParts, logSummary, model = "gemini-1.5-flash") {
+    const prompt = `You are a senior QA engineer. Analyze this bug report and dev logs. Provide:\n1. Steps to Reproduce\n2. Root Cause Analysis\n3. Recommended Fix\n\nBug: ${capture.title}\nDescription: ${capture.description || "N/A"}\nEnvironment: ${envParts.join(", ")}\n${logSummary || "Dev Logs: None"}`;
+    return {
+      model,
+      endpoint: `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+      body: {
+        contents: [
+          {
+            parts: [{ text: prompt }],
+          },
+        ],
+      },
+    };
+  }
+
+  const payload = formatGeminiPayload(
+    { title: "Checkout Crash", description: "Button unclickable" },
+    ["Windows 11", "Chrome 132"],
+    "Dev Logs: TypeError"
+  );
+
+  assert.equal(payload.model, "gemini-1.5-flash");
+  assert.equal(payload.endpoint.includes("gemini-1.5-flash"), true);
+  assert.equal(payload.body.contents[0].parts[0].text.includes("Checkout Crash"), true);
+  assert.equal(payload.body.contents[0].parts[0].text.includes("Windows 11"), true);
+});
+
+// 10. Test bidirectional pull data parser and normalization
+test("settings integrations: pull response normalizer extracts structured items", () => {
+  function normalizePullItems(service, rawData) {
+    if (service === "gemini") {
+      const models = (rawData.models || [])
+        .filter((m) => m.supportedGenerationMethods?.includes("generateContent"))
+        .map((m) => ({
+          id: m.name.replace(/^models\//, ""),
+          title: m.displayName || m.name,
+          status: "Available",
+        }));
+      return { ok: true, count: models.length, items: models };
+    }
+    if (service === "github") {
+      const items = (rawData || []).map((iss) => ({
+        id: String(iss.number),
+        title: `#${iss.number} ${iss.title}`,
+        status: iss.state,
+      }));
+      return { ok: true, count: items.length, items };
+    }
+    return { ok: false, count: 0, items: [] };
+  }
+
+  const geminiSample = {
+    models: [
+      { name: "models/gemini-1.5-flash", displayName: "Gemini 1.5 Flash", supportedGenerationMethods: ["generateContent"] },
+      { name: "models/gemini-1.5-pro", displayName: "Gemini 1.5 Pro", supportedGenerationMethods: ["generateContent"] },
+      { name: "models/text-embedding-004", displayName: "Text Embedding", supportedGenerationMethods: ["embedContent"] },
+    ],
+  };
+
+  const parsedGemini = normalizePullItems("gemini", geminiSample);
+  assert.equal(parsedGemini.ok, true);
+  assert.equal(parsedGemini.count, 2); // Excludes embedContent
+  assert.equal(parsedGemini.items[0].id, "gemini-1.5-flash");
+  assert.equal(parsedGemini.items[0].title, "Gemini 1.5 Flash");
+
+  const githubSample = [
+    { number: 101, title: "Auth token leak", state: "open" },
+    { number: 102, title: "Fix CSS flex", state: "closed" },
+  ];
+  const parsedGithub = normalizePullItems("github", githubSample);
+  assert.equal(parsedGithub.ok, true);
+  assert.equal(parsedGithub.count, 2);
+  assert.equal(parsedGithub.items[0].title, "#101 Auth token leak");
+});
+
+
+

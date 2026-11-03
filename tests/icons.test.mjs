@@ -17,24 +17,13 @@ describe("Icon Collection Integrity", () => {
           walk(p);
         } else if (/\.(ts|tsx)$/.test(f)) {
           const content = fs.readFileSync(p, "utf8");
-          for (const m of content.matchAll(/lucide:([a-zA-Z0-9_-]+)/g)) {
-            used.add(m[1]);
-          }
+          for (const m of content.matchAll(/lucide:([a-zA-Z0-9_-]+)/g)) used.add(m[1]);
         }
       }
     }
 
     walk(path.resolve("src"));
-
-    const missing = [];
-    for (const icon of used) {
-      const hasIcon = Boolean(subset.icons && subset.icons[icon]);
-      const hasAlias = Boolean(subset.aliases && subset.aliases[icon]);
-      if (!hasIcon && !hasAlias) {
-        missing.push(icon);
-      }
-    }
-
+    const missing = [...used].filter((icon) => !subset.icons?.[icon] && !subset.aliases?.[icon]);
     assert.deepEqual(
       missing,
       [],
@@ -42,17 +31,29 @@ describe("Icon Collection Integrity", () => {
     );
   });
 
+  it("keeps admin quick-access icons aligned with their navigation routes", () => {
+    const nav = fs.readFileSync(path.resolve("src/app/admin/adminNav.ts"), "utf8");
+    const overview = fs.readFileSync(path.resolve("src/app/admin/page.tsx"), "utf8");
+    const quickAccess = overview.slice(overview.indexOf("{/* MASTER ADMIN HUBS QUICK ACCESS */}"));
+    const blocks = [...quickAccess.matchAll(/<Link\s+href="(\/admin(?:\/[^\"]*)?)"([\s\S]*?)<\/Link>/g)];
+    assert(blocks.length > 0, "Expected admin quick-access links");
+
+    for (const [, href, block] of blocks) {
+      const iconExpression = block.match(/<Icon\s+icon=\{([^}]+)\}/)?.[1];
+      assert(iconExpression, `Quick-access link '${href}' must use the shared icon registry`);
+      const routeBlock = nav.split("export const ADMIN_NAV_HUBS")[0];
+      const route = routeBlock.match(new RegExp(`href: "${href.replace(/[.*+?^${}()|[\\]\\\\]/g, "\\\\$&")}",\\s*icon: ([^,]+)`));
+      assert(route, `Admin quick-access href '${href}' must exist in ADMIN_NAV_ROUTES`);
+      assert.equal(iconExpression.trim(), route[1].trim(), `Quick-access icon for '${href}' must match ADMIN_NAV_ROUTES`);
+    }
+  });
+
   it("ensures APP_ICONS registry icons exist in offline bundle", () => {
     const iconsTs = fs.readFileSync(path.resolve("src/lib/icons.ts"), "utf8");
-    const icons = [];
-    for (const m of iconsTs.matchAll(/lucide:([a-zA-Z0-9_-]+)/g)) {
-      icons.push(m[1]);
-    }
+    const icons = [...iconsTs.matchAll(/lucide:([a-zA-Z0-9_-]+)/g)].map((match) => match[1]);
     assert(icons.length > 0, "APP_ICONS should contain icons");
     for (const icon of icons) {
-      const hasIcon = Boolean(subset.icons && subset.icons[icon]);
-      const hasAlias = Boolean(subset.aliases && subset.aliases[icon]);
-      assert(hasIcon || hasAlias, `Icon '${icon}' from APP_ICONS missing in offline bundle`);
+      assert(subset.icons?.[icon] || subset.aliases?.[icon], `Icon '${icon}' from APP_ICONS missing in offline bundle`);
     }
   });
 });

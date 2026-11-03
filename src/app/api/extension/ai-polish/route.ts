@@ -18,6 +18,23 @@ const SETTINGS_KEY = "ai_polish_config";
 const POLISH_RATE_LIMIT = 30; // 30 calls
 const POLISH_RATE_WINDOW_S = 60; // per minute
 
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type, Authorization",
+};
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: corsHeaders });
+}
+
+function jsonResponse(data: unknown, init?: { status?: number }) {
+  return NextResponse.json(data, {
+    status: init?.status ?? 200,
+    headers: corsHeaders,
+  });
+}
+
 interface AiPolishConfig {
   provider: string;
   endpointUrl: string;
@@ -33,7 +50,7 @@ export async function POST(req: Request) {
     // Basic IP rate limiting
     const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "anonymous-ip";
     if (await isRateLimited(`ai-polish:${ip}`, POLISH_RATE_LIMIT, POLISH_RATE_WINDOW_S)) {
-      return NextResponse.json(
+      return jsonResponse(
         { ok: false, error: "Too many AI polish requests. Please wait a moment." },
         { status: 429 }
       );
@@ -43,12 +60,13 @@ export async function POST(req: Request) {
     try {
       body = await req.json();
     } catch {
-      return NextResponse.json({ ok: false, error: "Invalid JSON body" }, { status: 400 });
+      return jsonResponse({ ok: false, error: "Invalid JSON body" }, { status: 400 });
     }
 
-    const { text, title, siteUrl, devLogs, endpointUrl: customEndpointUrl, apiKey: customApiKey, model: customModel, workspaceId, ownerEmail } = (body as {
+    const { text, title, isDefaultTitle, siteUrl, devLogs, endpointUrl: customEndpointUrl, apiKey: customApiKey, model: customModel, workspaceId, ownerEmail } = (body as {
       text?: string;
       title?: string;
+      isDefaultTitle?: boolean;
       siteUrl?: string;
       devLogs?: Array<{ type?: string; message?: string; level?: string; status?: number; url?: string }>;
       endpointUrl?: string;
@@ -64,7 +82,7 @@ export async function POST(req: Request) {
 
     // If text is totally empty and no title/url, require at least something
     if (!rawText && !sanitizedTitle && !sanitizedUrl) {
-      return NextResponse.json(
+      return jsonResponse(
         { ok: false, error: "Please enter some text or notes to polish." },
         { status: 400 }
       );
@@ -117,7 +135,7 @@ export async function POST(req: Request) {
     }
 
     if (!endpointUrl || !apiKey || !model) {
-      return NextResponse.json(
+      return jsonResponse(
         {
           ok: false,
           error: "AI Provider is not configured. Please set Endpoint and API Key in Admin Dashboard (/admin/ai-analytics).",
@@ -132,7 +150,7 @@ export async function POST(req: Request) {
     try {
       await assertPublicUrl(endpointUrl);
     } catch (ssrfErr) {
-      return NextResponse.json(
+      return jsonResponse(
         { ok: false, error: (ssrfErr as Error)?.message || "Blocked private or unroutable endpoint URL" },
         { status: 400 }
       );
@@ -151,19 +169,35 @@ export async function POST(req: Request) {
       }
     }
 
-    // 2. Build Multilingual Polish Prompt
-    const systemInstruction = `You are a language clarity editor embedded in a bug-reporting tool.
+    // 2. Build Multilingual Polish Prompt (Auto-generates title if title is default)
+    const shouldGenerateTitle = Boolean(isDefaultTitle);
+
+    const systemInstruction = shouldGenerateTitle
+      ? `You are an expert technical editor embedded in a bug-reporting tool.
+Your job is to refine the user's draft bug summary AND provide a concise, descriptive bug title.
 
 STRICT INSTRUCTIONS:
-1. SAME LANGUAGE: Detect the user's input language (Indonesian, English, etc.) and respond in that exact same language. Never translate.
-2. FIX ONLY: Correct grammar, spelling, and word choice so the sentence is clear and natural. Do NOT add bullet points, headings, labels, or any formatting that was not in the original.
-3. PRESERVE LENGTH & INTENT: Keep roughly the same length and the user's original meaning. Do not expand, summarize, or restructure into a different format.
-4. CONTEXT (optional): If a page URL or error clue is provided, you may weave it in only if it genuinely helps clarity — never fabricate details.
-5. ZERO CHATTER: Output ONLY the corrected text. No preamble, no explanation, no markdown fences.`;
+1. STRICT SAME LANGUAGE: Detect the language of the user's input (Indonesian, English, etc.) and write both title and summary in that EXACT SAME language. If the user writes in Indonesian, the output MUST be natural Indonesian. Never translate to another language.
+2. MAKE IT CLEAR & PRECISE: Improve grammar, spelling, typos, and confusing phrasing so the bug report is immediately clear to engineers and team members.
+3. CONCISE TITLE: The title must be 4 to 8 words summarizing the exact issue (e.g. "[Checkout] Tombol Bayar tidak merespons" or "[Navbar] Menu dropdown tertutup otomatis"). Do not include timestamps.
+4. KEEP SUMMARY CONCISE: Match the approximate length of the original input. Keep it focused, natural, and direct. Do not add unnecessary filler.
+5. FORMAT (EXACTLY AS SHOWN):
+TITLE: <1 line short descriptive title>
+SUMMARY: <refined summary text>
+6. ZERO CHATTER: Output ONLY the requested format directly. No preamble, no conversational filler, and no markdown code blocks.`
+      : `You are an expert technical editor embedded in a bug-reporting tool.
+Your job is to refine the user's draft bug summary so it is clear, concise, and professional.
+
+STRICT INSTRUCTIONS:
+1. STRICT SAME LANGUAGE: Detect the language of the user's input (Indonesian, English, etc.) and write the output in that EXACT SAME language. If the user writes in Indonesian, the output MUST be natural Indonesian. Never translate to another language.
+2. MAKE IT CLEAR & PRECISE: Improve grammar, spelling, typos, and confusing phrasing so the bug report is immediately clear to engineers and team members.
+3. KEEP IT CONCISE (DO NOT EXPAND): Match the approximate length of the original input. Keep it focused, natural, and direct. Do NOT add unnecessary filler, explanations, or unneeded words.
+4. NO FORMATTING CLUTTER: Do NOT add bullet points, numbered lists, markdown headings, bold labels, or quotation marks unless they were already present in the user's draft.
+5. ZERO CHATTER: Output ONLY the polished text directly. No preamble (e.g., "Berikut perbaikannya:", "Here is the refined text:"), no conversational filler, and no markdown code blocks.`;
 
     const userContent = rawText
-      ? `Fix the language of this text (grammar, clarity, natural phrasing — keep the same format and length):\n"${sanitizePromptData(rawText, 800)}"${sanitizedUrl ? `\n\nPage context: ${sanitizedUrl}` : ""}${errorClue ? `\nError clue: ${sanitizePromptData(errorClue, 200)}` : ""}`
-      : `Write a short, clear bug report sentence based on this context:\n- Page: ${sanitizedUrl || "Unknown"}\n- Title: ${sanitizedTitle || "Untitled"}${errorClue ? `\n- Error: ${sanitizePromptData(errorClue, 200)}` : ""}`;
+      ? `Make this bug report note clearer and concise in the EXACT SAME LANGUAGE (keep roughly the same length, fix grammar and awkward phrasing):\n"${sanitizePromptData(rawText, 800)}"${sanitizedUrl ? `\n\nPage: ${sanitizedUrl}` : ""}${errorClue ? `\nError clue: ${sanitizePromptData(errorClue, 200)}` : ""}`
+      : `Write a single, short, clear bug report sentence based on this context:\n- Page: ${sanitizedUrl || "Unknown"}\n- Title: ${sanitizedTitle || "Untitled"}${errorClue ? `\n- Error: ${sanitizePromptData(errorClue, 200)}` : ""}`;
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout for reasoning models & tunnel proxies
@@ -213,22 +247,36 @@ STRICT INSTRUCTIONS:
         const errText = await aiRes.text().catch(() => "");
         console.warn(`[AI Polish] Provider responded with status ${aiRes.status}:`, errText.slice(0, 200));
         await logUsage({ success: false, errorMessage: `HTTP ${aiRes.status}: ${errText}` });
-        return NextResponse.json(
+        return jsonResponse(
           { ok: false, error: `AI provider error (HTTP ${aiRes.status}). Check settings in Admin.` },
           { status: 502 }
         );
       }
 
-      const rawText = await aiRes.text().catch(() => "");
-      let polished = parseLlmContent(rawText);
-      const usage = parseLlmUsage(rawText);
+      const rawResponseText = await aiRes.text().catch(() => "");
+      let polished = parseLlmContent(rawResponseText);
+      const usage = parseLlmUsage(rawResponseText);
+
+      let suggestedTitle: string | null = null;
+      if (shouldGenerateTitle && polished) {
+        const titleMatch = polished.match(/TITLE:\s*([^\n\r]+)/i);
+        const summaryMatch = polished.match(/SUMMARY:\s*([\s\S]+)/i);
+        if (titleMatch) {
+          suggestedTitle = titleMatch[1].trim().replace(/^["'`]|["'`]$/g, "");
+        }
+        if (summaryMatch) {
+          polished = summaryMatch[1].trim();
+        } else if (titleMatch) {
+          polished = polished.replace(/TITLE:\s*[^\n\r]+/i, "").trim();
+        }
+      }
 
       // Clean any accidental markdown quotes or prefixes
       polished = polished.replace(/^["'`]|["'`]$/g, "").trim();
 
-      if (!polished) {
+      if (!polished && !suggestedTitle) {
         await logUsage({ success: false, usage: usage || undefined, errorMessage: "Empty response" });
-        return NextResponse.json(
+        return jsonResponse(
           { ok: false, error: "AI returned an empty response. Try again." },
           { status: 502 }
         );
@@ -236,9 +284,10 @@ STRICT INSTRUCTIONS:
 
       await logUsage({ success: true, usage: usage || undefined });
 
-      return NextResponse.json({
+      return jsonResponse({
         ok: true,
         polishedText: polished,
+        suggestedTitle: suggestedTitle || undefined,
         model,
       });
     } catch (fetchErr: unknown) {
@@ -254,7 +303,7 @@ STRICT INSTRUCTIONS:
   } catch (err: unknown) {
     const isTimeout = (err as Error)?.name === "AbortError";
     console.error("[AI Polish] Request failed:", err);
-    return NextResponse.json(
+    return jsonResponse(
       {
         ok: false,
         error: isTimeout

@@ -258,3 +258,91 @@ test("admin captures views count aggregation: computes views_count from capture_
   assert.equal(enriched.find((c) => c.id === "c2").views_count, 1);
   assert.equal(enriched.find((c) => c.id === "c3").views_count, 0);
 });
+
+// ---------------------------------------------------------------------------
+// 7. Integration Delivery & Third-Party Compliance Contracts
+// ---------------------------------------------------------------------------
+test("webhook payload: multi-platform compatibility (Discord, Slack, Generic)", () => {
+  function buildWebhookPayload(capture, captureLink, resolvedLogs) {
+    const typeLabel = capture.type === "video" ? "Video" : "Screenshot";
+    const errorLogs = Array.isArray(resolvedLogs)
+      ? resolvedLogs.filter((l) => l && typeof l === "object" && (l.type === "console" || l.level === "error" || l.status >= 400))
+      : [];
+    const errorCount = errorLogs.length;
+
+    return {
+      event: "capture.created",
+      text: `[BugSnap] ${typeLabel} - ${capture.title || "Captured Bug"}\n${captureLink}`,
+      content: `**[BugSnap]** ${typeLabel} - ${capture.title || "Captured Bug"}\n${capture.description ? `> ${capture.description}\n` : ""}${captureLink}`,
+      embeds: [
+        {
+          title: `[BugSnap] ${capture.title || "Captured Bug"}`,
+          url: captureLink,
+          description: (capture.description || "Bug report captured via BugSnap.").slice(0, 2048),
+          color: errorCount > 0 ? 0xef4444 : 0x89bd49,
+          fields: [
+            { name: "Platform", value: `${capture.os || "Unknown"} / ${capture.browser || "Unknown"}`, inline: true },
+            { name: "URL", value: capture.site_url || "N/A", inline: true },
+            { name: "Errors", value: String(errorCount), inline: true },
+          ],
+        },
+      ],
+      capture: {
+        id: capture.id,
+        title: capture.title,
+        description: capture.description,
+        url: captureLink,
+        type: capture.type,
+        os: capture.os,
+        browser: capture.browser,
+        site_url: capture.site_url,
+        window_size: capture.window_size,
+        dev_logs: resolvedLogs,
+      },
+    };
+  }
+
+  const sampleCapture = {
+    id: "b4507001-f2f6-4ef3-9c88-e9f056ec2360",
+    title: "Checkout 500 Error",
+    description: "User cannot submit cart",
+    type: "screenshot",
+    os: "macOS",
+    browser: "Chrome 120",
+    site_url: "https://example.com/checkout",
+    window_size: "1920x1080",
+  };
+  const logs = [{ type: "console", level: "error", message: "Failed to fetch" }];
+  const payload = buildWebhookPayload(sampleCapture, "https://bugsnap.akusaraproject.my.id/v/b4507001", logs);
+
+  // Slack compatibility: top-level text field
+  assert.ok(payload.text.includes("[BugSnap]"));
+  assert.ok(payload.text.includes("Checkout 500 Error"));
+
+  // Discord compatibility: content markdown and embeds array with color
+  assert.ok(payload.content.includes("**[BugSnap]**"));
+  assert.equal(Array.isArray(payload.embeds), true);
+  assert.equal(payload.embeds[0].color, 0xef4444);
+  assert.equal(payload.embeds[0].fields.length, 3);
+
+  // Generic / Zapier / n8n compatibility: event + structured capture object
+  assert.equal(payload.event, "capture.created");
+  assert.equal(payload.capture.id, sampleCapture.id);
+  assert.equal(payload.capture.dev_logs.length, 1);
+});
+
+test("repo and project URL sanitization: strips full URLs and slash affixes", () => {
+  function sanitizeRepo(raw) {
+    return raw.trim().replace(/^https?:\/\/github\.com\//i, "").replace(/^\/+|\/+$/g, "");
+  }
+  function sanitizeGitLabProject(raw) {
+    return raw.trim().replace(/^https?:\/\/[^/]+\//i, "").replace(/^\/+|\/+$/g, "");
+  }
+
+  assert.equal(sanitizeRepo("https://github.com/my-org/web-app/"), "my-org/web-app");
+  assert.equal(sanitizeRepo("/my-org/web-app"), "my-org/web-app");
+  assert.equal(sanitizeRepo("my-org/web-app"), "my-org/web-app");
+
+  assert.equal(sanitizeGitLabProject("https://gitlab.com/group/subgroup/repo/"), "group/subgroup/repo");
+  assert.equal(sanitizeGitLabProject("group/repo"), "group/repo");
+});

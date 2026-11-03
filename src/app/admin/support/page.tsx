@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useToast } from "@/components/Toast";
 import { getAdminHeaders, getAdminCache, setAdminCache } from "@/lib/admin-cache";
 import { Icon } from "@/lib/iconify";
+import { useT } from "@/components/I18nProvider";
+import { Dropdown } from "@/components/Dropdown";
 
 interface SupportTicket {
   id: string;
@@ -27,6 +29,7 @@ interface SupportTicket {
 
 export default function AdminSupportPage() {
   const { showToast } = useToast();
+  const { t } = useT();
   const cached = getAdminCache<{ tickets: SupportTicket[]; stats: { total: number; open: number; in_progress: number; resolved: number } }>("admin_support_data");
   const [loading, setLoading] = useState(!cached);
   const [tickets, setTickets] = useState<SupportTicket[]>(cached?.tickets || []);
@@ -166,22 +169,22 @@ export default function AdminSupportPage() {
           disabled={loading}
           className="self-start sm:self-auto px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs font-semibold text-slate-700 dark:text-zinc-300 transition-colors inline-flex items-center gap-1.5"
         >
-          {loading ? "Menyegarkan..." : (
+          {loading ? t("admin.refreshing") : (
             <>
               <Icon icon="lucide:refresh-cw" className="w-3.5 h-3.5 shrink-0" />
-              <span>Segarkan Inbox</span>
+              <span>{t("admin.supportInbox")}</span>
             </>
           )}
         </button>
       </div>
 
       {/* Stats Counter Bar */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
         {[
-          { label: "Total Tiket", value: stats.total, color: "text-slate-900 dark:text-white", border: "border-slate-200 dark:border-zinc-800" },
-          { label: "Tiket Terbuka (Open)", value: stats.open, color: "text-rose-600 dark:text-rose-400", border: "border-rose-200 dark:border-rose-900/50" },
-          { label: "Sedang Ditangani", value: stats.in_progress, color: "text-amber-600 dark:text-amber-400", border: "border-amber-200 dark:border-amber-900/50" },
-          { label: "Selesai (Resolved)", value: stats.resolved, color: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-200 dark:border-emerald-900/50" },
+          { label: t("admin.totalSupportTickets"), value: stats.total, color: "text-slate-900 dark:text-white", border: "border-slate-200 dark:border-zinc-800" },
+          { label: t("admin.openTicketsLabel"), value: stats.open, color: "text-rose-600 dark:text-rose-400", border: "border-rose-200 dark:border-rose-900/50" },
+          { label: t("admin.ticketsInProgress"), value: stats.in_progress, color: "text-amber-600 dark:text-amber-400", border: "border-amber-200 dark:border-amber-900/50" },
+          { label: t("admin.resolvedSupportTickets"), value: stats.resolved, color: "text-emerald-600 dark:text-emerald-400", border: "border-emerald-200 dark:border-emerald-900/50" },
         ].map((s) => (
           <div key={s.label} className={`rounded-xl border ${s.border} bg-white dark:bg-zinc-900 p-3.5 shadow-sm`}>
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">{s.label}</span>
@@ -193,27 +196,31 @@ export default function AdminSupportPage() {
       {/* Filter and Search Bar */}
       <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
         <div className="flex items-center gap-2 flex-wrap">
-          <select
+          <Dropdown
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="text-xs font-semibold rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 px-3 py-2 outline-none"
-          >
-            <option value="all">Semua Status</option>
-            <option value="open">Open (Terbuka)</option>
-            <option value="in_progress">In Progress (Ditangani)</option>
-            <option value="resolved">Resolved (Selesai)</option>
-          </select>
+            onChange={(val) => setStatusFilter(val)}
+            options={[
+              { value: "all", label: "Semua Status" },
+              { value: "open", label: "Open (Terbuka)" },
+              { value: "in_progress", label: "In Progress (Ditangani)" },
+              { value: "resolved", label: "Resolved (Selesai)" },
+            ]}
+            variant="pill"
+            className="min-w-[140px]"
+          />
 
-          <select
+          <Dropdown
             value={categoryFilter}
-            onChange={(e) => setCategoryFilter(e.target.value)}
-            className="text-xs font-semibold rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 px-3 py-2 outline-none"
-          >
-            <option value="all">Semua Kategori</option>
-            <option value="bug">Laporan Bug</option>
-            <option value="feature">Request Fitur</option>
-            <option value="other">Pertanyaan Umum</option>
-          </select>
+            onChange={(val) => setCategoryFilter(val)}
+            options={[
+              { value: "all", label: "Semua Kategori" },
+              { value: "bug", label: "Laporan Bug" },
+              { value: "feature", label: "Request Fitur" },
+              { value: "other", label: "Pertanyaan Umum" },
+            ]}
+            variant="pill"
+            className="min-w-[140px]"
+          />
         </div>
 
         <div className="w-full sm:w-64">

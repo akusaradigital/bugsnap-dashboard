@@ -74,7 +74,7 @@ const BROWSER_TUTORIALS: BrowserTutorial[] = [
     tipKey: "extension.shortcutsFirefoxTip",
     fallbackStep1: "Buka pengelola Add-ons di tab baru (bisa juga tekan Ctrl+Shift+A):",
     fallbackStep2:
-      "Klik ikon roda gigi (⚙️) di bagian atas halaman, lalu pilih 'Kelola Pintasan Ekstensi' (Manage Extension Shortcuts).",
+      "Klik ikon roda gigi di bagian atas halaman, lalu pilih 'Kelola Pintasan Ekstensi' (Manage Extension Shortcuts).",
     fallbackStep3:
       "Cari BugSnap, klik pada kolom input shortcut yang tersedia, lalu tekan tombol kombinasi yang kamu mau.",
     fallbackTip:

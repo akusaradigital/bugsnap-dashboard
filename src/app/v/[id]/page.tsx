@@ -66,6 +66,7 @@ const INTEGRATION_METADATA: Record<string, { name: string; iconSrc: string }> = 
   snaptest: { name: "SnapTest", iconSrc: "/integrations/snaptest.png" },
   claude: { name: "Claude AI", iconSrc: "/integrations/claude.png" },
   chatgpt: { name: "ChatGPT", iconSrc: "/integrations/chatgpt.png" },
+  gemini: { name: "Google Gemini", iconSrc: "/integrations/gemini.svg" },
   webhook: { name: "Webhook", iconSrc: "/integrations/webhook.svg" },
 };
 
@@ -377,6 +378,7 @@ function SingleViewContent() {
   const [editAllowedDomains, setEditAllowedDomains] = useState("");
   const [editAllowedIps, setEditAllowedIps] = useState("");
   const [savingEdit, setSavingEdit] = useState(false);
+  const [activeDevToolsTab, setActiveDevToolsTab] = useState<"Info" | "Console" | "Network" | "Actions" | "Playwright" | "MCP">("Info");
   const [editError, setEditError] = useState<string | null>(null);
 
   // Integrations state
@@ -1742,6 +1744,41 @@ function SingleViewContent() {
                       )}
                     </div>
                     {capture.expires_at && <p className="mt-2 text-[11px] font-medium text-muted">{getExpiryCountdown(capture.expires_at, t)}</p>}
+
+                    {/* Developer & AI Acceleration Action Bar */}
+                    <div className="mt-3.5 pt-3 border-t border-border/70 flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveDevToolsTab("MCP");
+                          const el = document.getElementById("dt-tab-MCP");
+                          el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                          el?.click();
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#89BD49]/15 hover:bg-[#89BD49]/25 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 transition-all cursor-pointer shadow-2xs hover:scale-[1.02] active:scale-[0.98]"
+                        title="Open AI Prompt & MCP Server for Claude Code, Cursor, and Windsurf"
+                      >
+                        <Icon icon="lucide:bot" className="w-3.5 h-3.5 shrink-0" />
+                        <span>Solve with AI (MCP)</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveDevToolsTab("Playwright");
+                          const el = document.getElementById("dt-tab-Playwright");
+                          el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                          el?.click();
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-subtle hover:bg-subtle/80 text-foreground border border-border transition-all cursor-pointer shadow-2xs hover:scale-[1.02] active:scale-[0.98]"
+                        title="View synthesized Playwright test script and GitHub Actions CI workflow"
+                      >
+                        <Icon icon="lucide:file-code" className="w-3.5 h-3.5 text-[#6B9A35] dark:text-[#A8D666] shrink-0" />
+                        <span>Playwright &amp; CI Gate</span>
+                      </button>
+                    </div>
                   </div>
                   <div className="border-t border-border pt-3 min-w-0">
                     <SubsystemErrorBoundary fallbackTitle="Comments unavailable" fallbackDescription="An unexpected error occurred while loading comments.">
@@ -1765,6 +1802,7 @@ function SingleViewContent() {
                       capture={capture as unknown as React.ComponentProps<typeof DevToolsPanel>["capture"]}
                       currentTime={playbackTime}
                       unlockPassword={unlockedPassword}
+                      initialTab={activeDevToolsTab}
                       onSeekToTime={(t) => setSeekTargetTime((prev) => (prev === t ? t + 0.0001 : t))}
                     />
                   </SubsystemErrorBoundary>

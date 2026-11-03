@@ -82,7 +82,7 @@ export function BlogBottomBanner() {
         {subscribed ? (
           <div className="mt-5 p-5 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-700 dark:text-emerald-300 space-y-1.5 text-center max-w-md mx-auto animate-in fade-in duration-200">
             <div className="w-9 h-9 rounded-full bg-emerald-500/20 mx-auto flex items-center justify-center text-emerald-600 dark:text-emerald-400 font-bold text-base">
-              ✓
+              <Icon icon="lucide:check" className="w-5 h-5 text-emerald-600 dark:text-emerald-400 stroke-[3]" />
             </div>
             <p className="text-sm font-bold">
               {t("blog.subSuccess") || "Thank you! You are now subscribed."}

@@ -46,7 +46,7 @@ function BrowserIllustration({ className = "w-28 h-20 shrink-0" }: { className?:
         <circle cx="28" cy="23" r="1.75" fill="#34D399" />
 
         {/* Chrome Logo Centered in Browser Window */}
-        <image href="/icons/chrome.svg" x="38" y="36" width="25" height="25" />
+        <image href="/icons/chrome.svg" x="38" y="36" width="25" height="25" preserveAspectRatio="xMidYMid meet" />
       </g>
 
       {/* Overlapping Floating BugSnap Card Badge */}

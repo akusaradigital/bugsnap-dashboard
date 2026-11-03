@@ -4,6 +4,7 @@ import { memo, useCallback, useEffect, useRef, useState } from "react";
 import { useT } from "@/components/I18nProvider";
 import { supabase } from "@/lib/supabase";
 import { Icon } from "@/lib/iconify";
+import { Dropdown } from "@/components/Dropdown";
 
 export interface ErrorMarker {
   timeSec: number;
@@ -1248,28 +1249,24 @@ function MediaViewer({
             }`}>
               {t("mv.speed")}
             </label>
-            <select
-              id={`video-playback-speed${inFs ? "-fs" : ""}`}
-              value={playbackRate}
-              onChange={(e) => {
-                const val = Number(e.target.value);
-                setPlaybackRate(val);
-                if (videoRef.current) videoRef.current.playbackRate = val;
+            <Dropdown
+              value={String(playbackRate)}
+              onChange={(val) => {
+                const num = Number(val);
+                setPlaybackRate(num);
+                if (videoRef.current) videoRef.current.playbackRate = num;
               }}
-              className={`text-xs rounded-md px-1.5 py-1 cursor-pointer focus:outline-hidden focus:ring-1 focus:ring-[#89BD49] ${
-                inFs
-                  ? "bg-white/10 text-white border border-white/20 hover:bg-white/20"
-                  : "bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 border border-zinc-200 dark:border-zinc-700"
-              }`}
-              title={t("mv.speed")}
-            >
-              <option value="0.5">0.5x</option>
-              <option value="0.75">0.75x</option>
-              <option value="1">1x</option>
-              <option value="1.25">1.25x</option>
-              <option value="1.5">1.5x</option>
-              <option value="2">2x</option>
-            </select>
+              options={[
+                { value: "0.5", label: "0.5x" },
+                { value: "0.75", label: "0.75x" },
+                { value: "1", label: "1x" },
+                { value: "1.25", label: "1.25x" },
+                { value: "1.5", label: "1.5x" },
+                { value: "2", label: "2x" },
+              ]}
+              direction="up"
+              variant="pill"
+            />
           </div>
 
           {/* Volume & Mute control */}

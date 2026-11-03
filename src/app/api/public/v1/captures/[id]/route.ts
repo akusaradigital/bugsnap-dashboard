@@ -4,9 +4,23 @@ import { createServiceClient } from "@/lib/supabase-server";
 import { isRateLimited } from "@/lib/rate-limit";
 import { isUuid, parseDriveFileId } from "@/lib/google-drive-values";
 import { decompressDevLogs } from "@/lib/devlogs-compression";
-import { normalizeDevLog, isConsoleError, isNetworkFailed, type DevLog, type DevLogSummary, type DriveExternalLogReference } from "@/lib/devlogs";
+import {
+  normalizeDevLog,
+  isConsoleError,
+  isNetworkFailed,
+  type DevLog,
+  type DevLogSummary,
+  type DriveExternalLogReference,
+  type CaptureMeta,
+  type ActionLog,
+  type NavigationLog,
+  type ScreenshotLog,
+  type ConsoleLog,
+  type NetworkLog,
+} from "@/lib/devlogs";
 import { cleanStackTrace, cleanUrlForTelemetry, sanitizePromptData } from "@/lib/redact";
 import { signDownload } from "@/lib/download-signing";
+import { buildPlaywrightTest, buildGitHubActionWorkflow, buildAiMcpPrompt } from "@/lib/devlogs-export";
 
 export const runtime = "nodejs";
 
@@ -141,6 +155,58 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       .order("created_at", { ascending: true })
       .limit(30);
 
+    const shareUrl = `${new URL(request.url).origin}/v/${cap.id}`;
+    let targetHost: string | undefined = undefined;
+    if (cap.site_url) {
+      try {
+        targetHost = new URL(cap.site_url).hostname;
+      } catch {}
+    }
+
+    const actionLogsForPlaywright: (ActionLog | NavigationLog | ScreenshotLog)[] = Array.isArray(devLogs)
+      ? (devLogs
+          .filter((l): l is Record<string, unknown> => Boolean(l) && typeof l === "object")
+          .map((l) => normalizeDevLog(l))
+          .filter((l) => l.type === "step" || l.type === "navigation" || l.type === "screenshot") as unknown as (ActionLog | NavigationLog | ScreenshotLog)[])
+      : [];
+
+    const captureMeta: CaptureMeta = {
+      id: cap.id,
+      title: cap.title,
+      description: cap.description,
+      type: cap.type,
+      drive_url: cap.drive_url || "",
+      site_url: cap.site_url,
+      created_at: cap.created_at,
+      window_size: cap.window_size,
+      os: cap.os,
+      browser: cap.browser,
+    };
+
+    const playwrightTest = buildPlaywrightTest({
+      capture: captureMeta,
+      targetHost,
+      actionLogs: actionLogsForPlaywright,
+      networkErrors: networkErrors as unknown as NetworkLog[],
+      consoleErrors: consoleErrors as unknown as ConsoleLog[],
+    });
+
+    const githubActionWorkflow = buildGitHubActionWorkflow({
+      capture: captureMeta,
+      targetHost,
+    });
+
+    const aiFixPrompt = buildAiMcpPrompt({
+      capture: captureMeta,
+      targetHost,
+      detectedOs: cap.os || "Web",
+      detectedBrowser: cap.browser || "Chrome",
+      shareUrl,
+      consoleErrors: consoleErrors as unknown as ConsoleLog[],
+      networkErrors: networkErrors as unknown as NetworkLog[],
+      actionLogs: actionLogsForPlaywright,
+    });
+
     return NextResponse.json(
       {
         id: cap.id,
@@ -161,6 +227,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         console_errors: consoleErrors,
         network_errors: networkErrors,
         user_steps: userSteps,
+        playwright_test: playwrightTest,
+        github_action_workflow: githubActionWorkflow,
+        ai_fix_prompt: aiFixPrompt,
         ai_summary: cap.ai_summary || null,
         comments: (comments || []).map((c) => ({
           author: c.author_name || "Team Member",

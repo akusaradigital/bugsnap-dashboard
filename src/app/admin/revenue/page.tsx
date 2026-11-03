@@ -311,7 +311,7 @@ export default function AdminRevenuePage() {
       </div>
 
       {/* Plan Breakdown & Growth Attribution Tiles */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-3">
         <div className="p-3.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-center">
           <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Free Plan</span>
           <p className="text-xl font-black text-slate-800 dark:text-zinc-100 mt-0.5">

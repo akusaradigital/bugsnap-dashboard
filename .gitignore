@@ -48,6 +48,7 @@ supabase/.rollback-*.json
 
 # Local agent, planning & test artifacts
 .zcode/
+/graphify-out/
 anti-slop/
 test-results/
 .last-run.json

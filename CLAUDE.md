@@ -11,7 +11,10 @@
 5. **Free tier stubs**: `tiers.ts` + `quota.ts` are intentionally unlimited - do NOT add paywalls.
 6. **i18n MANDATORY**: All UI text via `src/lib/i18n.ts` + `useT()`. Both `en` + `id` keys. No hardcoded strings.
 7. **Design**: Solid colors, Tailwind tokens, dark/light mode. No heavy gradients.
-8. **Icon Standard (Iconify)**: Use Iconify (https://iconify.design/getting-started/) for all icons for uniformity and consistency (`@iconify/react` via `<Icon icon="..." />`). Avoid mixing different icon libraries or manual inline SVGs without standardization.
+8. **Icon Standard (Iconify)**: Use Iconify (https://iconify.design/getting-started/) for all icons for uniformity and consistency (`@iconify/react` via `<Icon icon="..." />`). Avoid mixing different icon libraries or manual inline SVGs without standardization. Use `src/lib/icons.ts` as the shared registry for reusable navigation/action/status icons; keep route and shortcut icons in sync and run `tests/icons.test.mjs`. Use third-party logos only when the represented vendor is the subject, preserve the original vendored artwork in `src/lib/third-party-logos.json`, and register/render it through `src/lib/iconify.ts`. Do not add decorative imagery when existing UI communicates the content. BugSnap logo source artwork is immutable; use only the approved `public/bugsnap-*.svg` variant appropriate to the background, preserving its aspect ratio and clear space.
+   - UI/menu icons must describe the actual action, section, or data they represent; do not use browser/vendor logos as generic feature or navigation icons.
+   - Apply BugSnap theme through existing semantic/Tailwind tokens and preserve readable contrast in light and dark themes. Keep genuine third-party product logos only where that product is the subject, using the approved original artwork without recoloring or distortion.
+   - BugSnap's own logo is immutable: never redraw, recolor, reshape, crop, distort, add effects to, or otherwise modify its source artwork. Use the original approved asset proportionally with clear space. When auditing or changing other visuals, explicitly exclude the BugSnap logo from edits.
 9. **NO THIRD-PARTY BRAND/MERK NAMES (STRICT MANDATORY)**: NEVER use, mention, or reference competitor brand names (e.g. Jam, Jam.dev, Loom, GoFullPage, Marker.io, etc.) anywhere in website text, UI labels, marketing copy, code comments, filenames, test suites, or documentation. All architecture, algorithms, and features must be named purely using BugSnap's own brand and native technical terminology. Never compare BugSnap to competitors in UI or docs.
 10. **No `any` TS type**: Use proper types. `@typescript-eslint/no-explicit-any` is enforced.
 11. **DB changes apply immediately**: A migration that only exists as a file has changed nothing. Any new `supabase/migrations/*.sql` must be executed against the live project in the same turn it is written:
@@ -43,7 +46,7 @@ The script posts to the Supabase Management API using `SUPABASE_PAT` + `NEXT_PUB
 - **MINOR** `0.7.x → 0.8.0`: new user-facing feature, route, module.
 - **MAJOR** `0.x → 1.0.0`: breaking API/auth/UI change.
 
-Current version: **`0.12.0`**
+Current version: **`0.13.0`**
 
 ## 3. Architecture & Data Flow
 

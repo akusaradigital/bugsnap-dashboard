@@ -13,13 +13,14 @@ import DriveStorageMeter from "@/components/DriveStorageMeter";
 import FloatingSupport from "@/components/FloatingSupport";
 import HelpMenu from "@/components/HelpMenu";
 import { SiteThemeToggle } from "@/components/site/SiteThemeToggle";
+import { Dropdown } from "@/components/Dropdown";
 import { Icon } from "@/lib/iconify";
-import { getNavIcon } from "@/lib/icons";
+import { APP_ICONS } from "@/lib/icons";
 
 const navItems = [
-  { labelKey: "nav.dashboard", href: "/dashboard", icon: getNavIcon("dashboard") },
-  { labelKey: "nav.captures", href: "/captures", icon: getNavIcon("captures") },
-  { labelKey: "nav.compare", href: "/compare", icon: getNavIcon("compare") },
+  { labelKey: "nav.dashboard", href: "/dashboard", icon: APP_ICONS.nav.dashboard },
+  { labelKey: "nav.captures", href: "/captures", icon: APP_ICONS.nav.captures },
+  { labelKey: "nav.compare", href: "/compare", icon: APP_ICONS.nav.compare },
 ];
 
 const GOOGLE_DRIVE_FOLDER_COLORS = [
@@ -814,11 +815,11 @@ export default function DashboardLayout({
       setNewFolderName("");
       setParentFolderId(null);
       setCreateFolderModalOpen(false);
-      showToast(`Folder "${trimmed}" created`, "success");
+      showToast(t("layout.folderCreated", { name: trimmed }), "success");
     } catch (err) {
       console.warn("Failed to create folder:", err);
-      setCreateFolderError("Could not create folder. Maybe it already exists?");
-      showToast("Folder create failed", "error");
+      setCreateFolderError(t("layout.errCreateFolder"));
+      showToast(t("layout.folderCreateFailedToast"), "error");
     } finally {
       setCreatingFolder(false);
     }
@@ -841,11 +842,11 @@ export default function DashboardLayout({
       }
       setNewProjectName("");
       setCreateProjectModalOpen(false);
-      showToast(`Project "${name}" created`, "success");
+      showToast(t("layout.workspaceCreatedToast", { name }), "success");
     } catch (err) {
       console.warn("Failed to create project:", err);
-      setCreateProjectError("Could not create project. Maybe it already exists?");
-      showToast("Project create failed", "error");
+      setCreateProjectError(t("layout.createProjectSubtitle"));
+      showToast(t("layout.workspaceCreateFailedToast"), "error");
     } finally {
       setCreatingProject(false);
     }
@@ -867,11 +868,11 @@ export default function DashboardLayout({
       setProjects((prev) => prev.map((p) => p.id === projectToRename.id ? { ...p, name } : p).sort((a, b) => (a.is_default ? -1 : b.is_default ? 1 : a.name.localeCompare(b.name))));
       setProjectToRename(null);
       setRenameProjectName("");
-      showToast("Project renamed", "success");
+      showToast(t("layout.projectRenamedToast"), "success");
     } catch (err) {
       console.warn("Failed to rename project:", err);
-      setRenameProjectError("Could not rename project.");
-      showToast("Project rename failed", "error");
+      setRenameProjectError(t("layout.projectRenameFailedToast"));
+      showToast(t("layout.projectRenameFailedToast"), "error");
     } finally {
       setRenamingProject(false);
     }
@@ -885,10 +886,10 @@ export default function DashboardLayout({
       if (error) throw error;
       setProjects((prev) => prev.filter((p) => p.id !== projectToDelete.id));
       setProjectToDelete(null);
-      showToast("Project deleted", "success");
+      showToast(t("layout.projectDeletedToast"), "success");
     } catch (err) {
       console.warn("Failed to delete project:", err);
-      showToast("Project delete failed", "error");
+      showToast(t("layout.projectDeleteFailedToast"), "error");
     } finally {
       setDeletingProject(false);
     }
@@ -913,7 +914,7 @@ export default function DashboardLayout({
         p_folder_names: reordered,
       });
       if (error) throw error;
-      showToast("Order saved", "success");
+      showToast(t("layout.folderOrderSavedToast"), "success");
     } catch (err) {
       console.warn("Failed to persist folder order:", err);
       showToast(t("layout.errReorderFolder"), "error");
@@ -987,7 +988,7 @@ export default function DashboardLayout({
         router.replace(`/captures?ws=${activeWsId}&folder=${encodeURIComponent(newName)}`, { scroll: false });
       }
       setRenameFolderModalOpen(false);
-      showToast("Folder renamed", "success");
+      showToast(t("layout.folderRenamedToast"), "success");
     } catch (err) {
       console.warn("Failed to rename folder:", err);
       showToast(t("layout.errRenameFolder"), "error");
@@ -996,7 +997,7 @@ export default function DashboardLayout({
 
   const handleDeleteFolder = (folderName: string) => {
     if (defaultFolders.has(folderName)) {
-      showToast("Default folder cannot be deleted", "error");
+      showToast(t("layout.defaultFolderDeleteError"), "error");
       return;
     }
     setFolderToDelete(folderName);
@@ -1181,14 +1182,14 @@ export default function DashboardLayout({
         ...prev,
         [activeWsId]: [...(prev[activeWsId] || []), email],
       }));
-      showToast("Invite sent", "success");
+      showToast(t("layout.inviteSentToast"), "success");
     } catch (err) {
       console.warn("Failed to invite member:", err);
       setInviteError(
         (err as { message?: string })?.message ||
           t("layout.errInvite")
       );
-      showToast("Invite failed", "error");
+      showToast(t("layout.inviteFailedToast"), "error");
     } finally {
       setInviting(false);
     }
@@ -1324,7 +1325,7 @@ export default function DashboardLayout({
                     className="flex items-center gap-2 w-full px-3 py-2 text-left text-foreground hover:bg-subtle transition-colors"
                   >
                     <Icon icon="lucide:edit-2" className="w-3.5 h-3.5 text-muted shrink-0" />
-                    <span>Rename</span>
+                    <span>{t("layout.renameFolder")}</span>
                   </button>
                   <button
                     type="button"
@@ -1363,7 +1364,7 @@ export default function DashboardLayout({
                       className="flex items-center gap-2 w-full px-3 py-2 text-left text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors"
                     >
                       <Icon icon="lucide:trash-2" className="w-3.5 h-3.5 shrink-0" />
-                      <span>Delete</span>
+                      <span>{t("layout.deleteFolderTitle")}</span>
                     </button>
                   )}
                 </div>
@@ -1625,7 +1626,7 @@ export default function DashboardLayout({
                   >
                     <span className="flex items-center gap-3">
                       <Icon icon="lucide:building-2" className="w-4 h-4 text-muted shrink-0" />
-                      Switch workspace
+                      {t("layout.switchWorkspace")}
                     </span>
                     <Icon icon="lucide:chevron-right" className={`w-4 h-4 text-muted transition-transform ${workspacePickerOpen ? "rotate-90" : ""}`} />
                   </button>
@@ -1682,7 +1683,7 @@ export default function DashboardLayout({
                         className="w-full flex items-center gap-3 px-3 py-3 text-sm text-left text-foreground hover:bg-subtle transition-colors border-t border-border"
                       >
                         <Icon icon="lucide:plus" className="w-4 h-4 shrink-0" />
-                        Join or create workspace
+                        {t("layout.joinOrCreateWorkspace")}
                       </button>
                     </div>
                     </>
@@ -2059,18 +2060,15 @@ export default function DashboardLayout({
 
             <div className="mt-4">
               <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("layout.parentFolder")}</label>
-              <select
+              <Dropdown
                 value={parentFolderId || ""}
-                onChange={(e) => setParentFolderId(e.target.value ? e.target.value : null)}
-                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#89BD49] bg-subtle text-foreground"
-              >
-                <option value="">{t("layout.topLevelFolder")}</option>
-                {folderItems.map((f) => (
-                  <option key={f.id} value={f.id}>
-                    {f.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setParentFolderId(val || null)}
+                options={[
+                  { value: "", label: t("layout.topLevelFolder") },
+                  ...folderItems.map((f) => ({ value: f.id, label: f.name })),
+                ]}
+                variant="field"
+              />
             </div>
 
             <div className="flex items-center justify-end gap-3 mt-6">

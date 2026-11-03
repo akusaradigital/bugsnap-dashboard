@@ -1,0 +1,25 @@
+{
+  "testedSite": "https://en.wikipedia.org/wiki/JavaScript",
+  "timestamp": "2026-10-30T18:18:20.432Z",
+  "videoTest": {
+    "status": "PASSED",
+    "totalLogs": 15,
+    "networkErrorsCount": 1,
+    "consoleErrorsCount": 1,
+    "stepsCount": 6,
+    "uiBadge": "20",
+    "screenshot": "D:\\Akusara\\EXTENTION CHROME\\bugsnap-extension\\test\\screenshots\\wikipedia-video-devtools-evidence.png",
+    "has404Captured": true,
+    "hasConsoleErrorCaptured": true
+  },
+  "screenshotTest": {
+    "status": "PASSED",
+    "totalLogs": 10,
+    "networkErrorsCount": 1,
+    "consoleErrorsCount": 1,
+    "hasScreenshotData": true,
+    "screenshot": "D:\\Akusara\\EXTENTION CHROME\\bugsnap-extension\\test\\screenshots\\wikipedia-screenshot-devtools-evidence.png",
+    "has404Captured": true,
+    "hasConsoleErrorCaptured": true
+  }
+}
