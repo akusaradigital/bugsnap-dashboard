@@ -10,7 +10,8 @@ const CHROME_STORE_URL =
   "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
 
 export function SecurityContent() {
-  const { t } = useT();
+  const { t, locale } = useT();
+  const isId = locale === "id";
 
   const highlights = [
     {
@@ -47,7 +48,9 @@ export function SecurityContent() {
 
   return (
     <StaticShell
-      title={t("security.title")}
+      title={t("security.title") || "Security built on"}
+      titleHighlight={t("security.titleHighlight") || "trust & transparency"}
+      breadcrumb={isId ? "Keamanan" : "Security"}
       subtitle={t("security.subtitle")}
       hideDivider={true}
     >

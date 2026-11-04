@@ -89,7 +89,7 @@ export function FeaturesContent() {
 
       <main id="main-content" className="flex-1">
         {/* Hero Section */}
-        <div className="relative overflow-hidden pt-10 sm:pt-16 pb-8 sm:pb-12">
+        <div className="relative overflow-hidden pt-8 sm:pt-12 pb-8 sm:pb-10">
           <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 text-center">
             <Reveal delay={0}>
               {/* Breadcrumb */}
@@ -111,9 +111,12 @@ export function FeaturesContent() {
             </Reveal>
 
             <Reveal delay={0.07}>
-              <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15]">
-                {t("features.title") ||
-                  "The Bug Reporting Toolkit Built for High-Velocity Teams"}
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12]">
+                {t("features.title") || "The bug reporting toolkit"}
+                <br />
+                <span className="text-blue-600 dark:text-blue-500">
+                  {t("features.titleHighlight") || "built for high-velocity teams"}
+                </span>
               </h1>
             </Reveal>
 
@@ -152,7 +155,7 @@ export function FeaturesContent() {
         </div>
 
         {/* Main Capabilities Sections */}
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 pb-20 sm:pb-28 space-y-16 sm:space-y-24">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 pb-12 sm:pb-16 space-y-10 sm:space-y-12">
           {/* SECTION 1: DEVTOOLS & TELEMETRY */}
           {showSection1 && (
             <Reveal delay={0.05}>
@@ -162,7 +165,7 @@ export function FeaturesContent() {
                   <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">
                     {t("features.s1Eyebrow") || "DEVTOOLS & TELEMETRY"}
                   </span>
-                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">
+                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
                     {t("features.s1Title") ||
                       "Automated Console & Network Telemetry"}
                   </h2>
@@ -474,7 +477,7 @@ export function FeaturesContent() {
                   <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">
                     {t("features.s2Eyebrow") || "VISUAL STUDIO"}
                   </span>
-                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">
+                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
                     {t("features.s2Title") ||
                       "High-Definition Visual Studio & Annotations"}
                   </h2>
@@ -525,7 +528,7 @@ export function FeaturesContent() {
                   <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">
                     {t("features.s3Eyebrow") || "PRIVACY & DATA CONTROL"}
                   </span>
-                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">
+                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
                     {t("features.s3Title") ||
                       "Client-Side Redaction & Zero Server Retention"}
                   </h2>
@@ -923,7 +926,7 @@ export function FeaturesContent() {
                   <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">
                     {t("features.s4Eyebrow") || "PERFORMANCE & DIAGNOSTICS"}
                   </span>
-                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">
+                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
                     {t("features.s4Title") ||
                       "SPA Memory Leak & DOM Bloat Detector"}
                   </h2>
@@ -974,7 +977,7 @@ export function FeaturesContent() {
                   <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">
                     {t("features.s5Eyebrow") || "AUTOMATION & AI INTEGRATION"}
                   </span>
-                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">
+                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
                     {t("features.s5Title") ||
                       "Playwright Regression Tests & AI MCP Server"}
                   </h2>

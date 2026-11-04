@@ -9,6 +9,8 @@ import { Reveal } from "@/components/site/motion/Reveal";
 
 export function StaticShell({
   title,
+  titleHighlight,
+  titleHighlightClass = "text-blue-600 dark:text-blue-500",
   breadcrumb,
   subtitle,
   lastUpdated,
@@ -17,7 +19,10 @@ export function StaticShell({
   ambientGlow,
   children,
 }: {
-  title: string;
+  title: string | ReactNode;
+  /** Words appended after title in accent color */
+  titleHighlight?: string;
+  titleHighlightClass?: string;
   breadcrumb?: string;
   subtitle?: string;
   lastUpdated?: string;
@@ -34,7 +39,7 @@ export function StaticShell({
 
       <main id="main-content" className="flex-1">
         {/* Hero */}
-        <div className={`relative overflow-hidden ${compactHero ? "pt-10 sm:pt-14 pb-4 sm:pb-6" : "py-10 sm:py-16 md:py-20"}`}>
+        <div className={`relative overflow-hidden ${compactHero ? "pt-8 sm:pt-10 pb-4 sm:pb-6" : "py-8 sm:py-12 md:py-16"}`}>
           {ambientGlow && (
             <div className="pointer-events-none absolute inset-0 -z-0 overflow-hidden" aria-hidden="true">
               <div className="absolute -top-32 -left-20 w-[440px] h-[340px] rounded-full bg-emerald-400/15 dark:bg-emerald-500/10 blur-[90px]" />
@@ -61,8 +66,14 @@ export function StaticShell({
             </Reveal>
 
             <Reveal delay={0.07}>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-site-text leading-tight">
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12]">
                 {title}
+                {titleHighlight && (
+                  <>
+                    {" "}
+                    <span className={titleHighlightClass}>{titleHighlight}</span>
+                  </>
+                )}
               </h1>
             </Reveal>
 
@@ -88,7 +99,7 @@ export function StaticShell({
         {!hideDivider && <div className="border-t border-site-border" />}
 
         {/* Page Content */}
-        <div className={`mx-auto max-w-6xl px-4 sm:px-6 ${hideDivider ? "pt-6 pb-12 sm:pb-16" : "py-10 sm:py-16"}`}>
+        <div className={`mx-auto max-w-6xl px-4 sm:px-6 ${hideDivider ? "pt-6 pb-10 sm:pb-12" : "py-8 sm:py-12"}`}>
           {children}
         </div>
       </main>

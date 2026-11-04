@@ -9,7 +9,8 @@ const CHROME_STORE_URL =
   "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
 
 export function AboutContent() {
-  const { t } = useT();
+  const { t, locale } = useT();
+  const isId = locale === "id";
 
   const milestones = [
     {
@@ -29,8 +30,8 @@ export function AboutContent() {
         t("about.stat3Detail") || "Sensitive tokens & passwords excluded in RAM",
     },
     {
-      metric: t("about.stat4Value") || "30s",
-      label: t("about.stat4Label") || "Average time to reproduce an issue",
+      metric: t("about.stat4Value") || "1-Click",
+      label: t("about.stat4Label") || "Full reproduction capture",
       detail:
         t("about.stat4Detail") || "Full stack trace, network & URL included",
     },
@@ -72,7 +73,9 @@ export function AboutContent() {
 
   return (
     <StaticShell
-      title={t("about.title") || "About BugSnap"}
+      title={t("about.title") || "About the team"}
+      titleHighlight={t("about.titleHighlight") || "behind BugSnap"}
+      breadcrumb={isId ? "Tentang Kami" : "About"}
       subtitle={
         t("about.subtitle") ||
         "Built by Akusara Digital to make bug reporting clear and direct for developers, QA, and product teams."
@@ -89,7 +92,7 @@ export function AboutContent() {
               <span className="inline-block text-xs font-bold uppercase tracking-wider text-[#16a34a] dark:text-emerald-400 px-3 py-1 rounded-full bg-[#eefcf3] dark:bg-emerald-950/40">
                 {t("about.originTag") || "OUR ORIGIN"}
               </span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-site-text">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
                 {t("about.headline") ||
                   "From Click to Fix: Eliminating Friction in Bug Reports"}
               </h2>
@@ -139,7 +142,7 @@ export function AboutContent() {
             <span className="text-xs font-bold uppercase tracking-widest text-[#16a34a] dark:text-emerald-400">
               {t("about.principlesTag") || "CORE PRINCIPLES"}
             </span>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-site-text tracking-tight mt-1">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug mt-1">
               {t("about.principlesTitle") || "How We Build Software"}
             </h2>
             <p className="text-xs sm:text-sm text-site-text-2 max-w-xl mx-auto">
@@ -205,7 +208,7 @@ export function AboutContent() {
                 </div>
                 <p>
                   {t("about.complianceCol3Desc") ||
-                    "Engineered with real-world security standards. Standardized vulnerability disclosure policy via via RFC 9116 security.txt."}
+                    "Engineered with real-world security standards. Standardized vulnerability disclosure policy via RFC 9116 security.txt."}
                 </p>
               </div>
             </div>
@@ -221,7 +224,7 @@ export function AboutContent() {
               </div>
               <div className="space-y-1 min-w-0 flex-1">
                 <h3 className="text-lg sm:text-xl md:text-2xl font-extrabold text-site-text tracking-tight leading-snug">
-                  {t("about.ctaTitle") || "Join hundreds of engineers building bug-free apps"}
+                  {t("about.ctaTitle") || "Start capturing and resolving bugs with BugSnap"}
                 </h3>
                 <p className="text-xs sm:text-sm text-site-text-2 leading-relaxed">
                   {t("about.ctaSubtitle") ||

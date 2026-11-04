@@ -308,7 +308,7 @@ export default function HelpMenu({ className = "" }: HelpMenuProps) {
                   className="flex items-center justify-between gap-2.5 px-3 py-2 text-slate-700 dark:text-zinc-200 hover:text-foreground hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
                 >
                   <div className="flex items-center gap-2.5 min-w-0">
-                    <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
+                    <Icon icon="logos:chrome-web-store" className="w-4 h-4 shrink-0" aria-hidden="true" />
                     <span className="truncate font-medium">{t("helpMenu.installChrome")}</span>
                   </div>
                   <span className="text-[10px] text-muted shrink-0">Store</span>
@@ -316,7 +316,7 @@ export default function HelpMenu({ className = "" }: HelpMenuProps) {
 
                 {/* Edge */}
                 <Link
-                  href="/extension#edge"
+                  href="/extension/edge"
                   role="menuitem"
                   onClick={closeAll}
                   className="flex items-center justify-between gap-2.5 px-3 py-2 text-slate-700 dark:text-zinc-200 hover:text-foreground hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
@@ -325,14 +325,14 @@ export default function HelpMenu({ className = "" }: HelpMenuProps) {
                     <Icon icon="logos:microsoft-edge" className="w-4 h-4 shrink-0" aria-hidden="true" />
                     <span className="truncate font-medium">{t("helpMenu.installEdge")}</span>
                   </div>
-                  <span className="text-[9px] px-1.5 py-0.5 rounded font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0">
-                    {t("helpMenu.comingSoon")}
+                  <span className="text-[9px] px-1.5 py-0.5 rounded font-medium bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 shrink-0">
+                    Edge
                   </span>
                 </Link>
 
                 {/* Firefox */}
                 <Link
-                  href="/extension#firefox"
+                  href="/extension/firefox"
                   role="menuitem"
                   onClick={closeAll}
                   className="flex items-center justify-between gap-2.5 px-3 py-2 text-slate-700 dark:text-zinc-200 hover:text-foreground hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
@@ -359,14 +359,14 @@ export default function HelpMenu({ className = "" }: HelpMenuProps) {
                   className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-zinc-200 hover:bg-slate-200/60 dark:hover:bg-zinc-800 text-[11px]"
                 >
                   <div className="flex items-center gap-2 min-w-0">
-                    <Icon icon="logos:chrome" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                    <Icon icon="logos:chrome-web-store" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                     <span className="truncate">{t("helpMenu.installChrome")}</span>
                   </div>
                   <span className="text-[9px] text-muted">Store</span>
                 </a>
 
                 <Link
-                  href="/extension#edge"
+                  href="/extension/edge"
                   onClick={closeAll}
                   className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-zinc-200 hover:bg-slate-200/60 dark:hover:bg-zinc-800 text-[11px]"
                 >
@@ -374,13 +374,13 @@ export default function HelpMenu({ className = "" }: HelpMenuProps) {
                     <Icon icon="logos:microsoft-edge" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                     <span className="truncate">{t("helpMenu.installEdge")}</span>
                   </div>
-                  <span className="text-[9px] px-1 py-0.2 rounded font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                    {t("helpMenu.comingSoon")}
+                  <span className="text-[9px] px-1 py-0.2 rounded font-medium bg-sky-500/10 text-sky-600 dark:text-sky-400">
+                    Edge
                   </span>
                 </Link>
 
                 <Link
-                  href="/extension#firefox"
+                  href="/extension/firefox"
                   onClick={closeAll}
                   className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-zinc-200 hover:bg-slate-200/60 dark:hover:bg-zinc-800 text-[11px]"
                 >

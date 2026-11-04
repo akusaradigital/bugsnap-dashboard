@@ -36,17 +36,22 @@ The script posts to the Supabase Management API using `SUPABASE_PAT` + `NEXT_PUB
     - Modal/card padding: use `p-4 sm:p-6` or `p-4 sm:p-8` (avoid static `p-8` or `p-10`).
     - Media player video controls: adapt with `flex-wrap sm:flex-nowrap`, preserving scrubber track width with `min-w-[120px]`.
 13. **Real Website Testing Standard (MANDATORY)**: For all E2E, Playwright, and browser automation tests, you MUST use REAL production websites from the public internet that match the specific technical characteristics of the test case. Arbitrary mock injections or lazily reusing a single URL (e.g. Wikipedia only) across different test cases is strictly forbidden. Examples: CSP blocking (`https://github.com`), infinite scroll (`https://infinite-scroll.com/demo/full-page/`), Shadow DOM (`https://shoelace.style`), sticky header/nav overlay (`https://vuejs.org`).
+14. **Changelog Generation (`CHANGELOG.md`) on Release (MANDATORY on git push to main)**: Whenever the user explicitly instructs `git push` to `main` (release/deploy time), ALWAYS generate and update release entries in `CHANGELOG.md` (both workspace root `../CHANGELOG.md` and `bugsnap-dashboard/CHANGELOG.md`, kept strictly synchronized).
+    - Document concrete changes across all three projects (`[bugsnap-dashboard]`, `[bugsnap-extension]`, and `[bugsnap-mcp]`) under `### YYYY-MM-DD (vX.Y.Z)`.
+    - Categorize items with `**feat**:`, `**fix**:`, `**perf**:`, `**docs**:`, `**chore**:`.
+    - This powers the Super Admin Changelog viewer (`/admin/changelog`).
 
 ## 2. Versioning (SemVer - ONLY on git push to main)
 
 - **Do NOT bump version on routine edits or local commits**: Never bump the version on routine small bugfixes or local commits to keep version numbers from unnecessarily inflating.
 - **Bump ONLY when pushing to `main`**: Bump `package.json` + `package-lock.json` (top-level + `packages[""].version`) ONLY when the user explicitly instructs `git push` to `main` for production deployment.
+- **Release Sequence on git push to main**: bump version -> generate/update `CHANGELOG.md` for all 3 projects -> gate (`npm run typecheck && npm test && npm run build`) -> `/graphify --update` -> commit -> `git push origin main`.
 
 - **PATCH** `0.7.0 → 0.7.1`: bugfix, hotfix, copy, asset, dependency.
 - **MINOR** `0.7.x → 0.8.0`: new user-facing feature, route, module.
 - **MAJOR** `0.x → 1.0.0`: breaking API/auth/UI change.
 
-Current version: **`0.13.0`**
+Current version: **`0.14.0`**
 
 ## 3. Architecture & Data Flow
 

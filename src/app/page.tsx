@@ -285,28 +285,28 @@ export default function LandingPage() {
 
         <main id="main-content" className="flex-1">
           {/* Hero */}
-          <section className="relative pt-12 sm:pt-20 pb-16 sm:pb-24 px-4 sm:px-6 overflow-hidden">
+          <section className="relative pt-6 sm:pt-10 pb-12 sm:pb-16 px-4 sm:px-6 overflow-hidden">
             {/* Ambient theme gradient matching reference image */}
             <div
               className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
               aria-hidden="true"
             >
               <div
-                className="absolute -top-32 right-0 w-[640px] h-[640px] rounded-full blur-3xl opacity-50 dark:opacity-20"
+                className="pointer-events-none absolute -top-32 right-0 w-[640px] h-[640px] rounded-full blur-3xl opacity-50 dark:opacity-20"
                 style={{
                   background:
                     "radial-gradient(circle, rgba(191, 219, 254, 0.6) 0%, rgba(186, 230, 253, 0.3) 50%, transparent 70%)",
                 }}
               />
               <div
-                className="absolute top-28 right-1/4 w-[520px] h-[520px] rounded-full blur-3xl opacity-45 dark:opacity-20"
+                className="pointer-events-none absolute top-28 right-1/4 w-[520px] h-[520px] rounded-full blur-3xl opacity-45 dark:opacity-20"
                 style={{
                   background:
                     "radial-gradient(circle, rgba(167, 243, 208, 0.5) 0%, rgba(204, 251, 241, 0.25) 50%, transparent 70%)",
                 }}
               />
               <div
-                className="absolute top-1/2 right-10 w-[420px] h-[420px] rounded-full blur-3xl opacity-40 dark:opacity-15"
+                className="pointer-events-none absolute top-1/2 right-10 w-[420px] h-[420px] rounded-full blur-3xl opacity-40 dark:opacity-15"
                 style={{
                   background:
                     "radial-gradient(circle, rgba(233, 213, 255, 0.45) 0%, transparent 70%)",
@@ -439,14 +439,14 @@ export default function LandingPage() {
           </section>
 
           {/* Metrics - SaaS Metrics for Faster Bug Resolution */}
-          <section className="py-16 sm:py-20 lg:py-24 px-4 sm:px-6 border-b border-slate-100 dark:border-slate-800/80 bg-white dark:bg-slate-950 font-site">
+          <section className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 border-b border-slate-100 dark:border-slate-800/80 bg-white dark:bg-slate-950 font-site">
             <div className="mx-auto max-w-6xl">
               <Reveal>
-                <div className="mb-12 sm:mb-16">
+                <div className="mb-10 sm:mb-12 max-w-4xl">
                   <p className="text-xs sm:text-[13px] font-bold uppercase tracking-wider text-[#3D7A24] dark:text-[#72C048] mb-3 sm:mb-4">
                     {t("site.bugsnap.metricsEyebrow")}
                   </p>
-                  <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-950 dark:text-white leading-[1.15] text-balance">
+                  <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] text-balance">
                     <span className="block">{t("site.bugsnap.metricsTitle1")}</span>
                     <span className="block">{t("site.bugsnap.metricsTitle2")}</span>
                   </h2>
@@ -475,14 +475,14 @@ export default function LandingPage() {
           </section>
 
           {/* Demo */}
-          <section className="py-16 sm:py-24 px-4 sm:px-6 bg-slate-950">
+          <section className="py-12 sm:py-16 px-4 sm:px-6 bg-slate-950">
             <div className="mx-auto max-w-6xl">
               <Reveal>
-                <div className="text-center mb-10">
+                <div className="mx-auto mb-8 sm:mb-10 max-w-3xl text-center">
                   <p className="text-xs font-semibold uppercase tracking-widest text-site-accent mb-3">
                     {t("site.bugsnap.demoEyebrow")}
                   </p>
-                  <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-white max-w-3xl mx-auto text-balance">
+                  <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-white leading-[1.15] max-w-3xl mx-auto text-balance">
                     {t("site.bugsnap.demoTitle")}
                   </h2>
                   <p className="text-sm text-slate-400 mt-3 max-w-xl mx-auto leading-relaxed">
@@ -497,14 +497,14 @@ export default function LandingPage() {
           </section>
 
           {/* Live viewer */}
-          <section className="py-16 sm:py-24 px-4 sm:px-6 border-b border-site-border">
+          <section className="py-12 sm:py-16 px-4 sm:px-6 border-b border-site-border">
             <div className="mx-auto max-w-6xl">
               <Reveal>
                 <div className="text-center mb-12">
                   <p className="text-xs font-semibold uppercase tracking-widest text-site-accent mb-3">
                     {t("site.viewer.eyebrow")}
                   </p>
-                  <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-site-text max-w-3xl mx-auto text-balance">
+                  <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] max-w-3xl mx-auto text-balance">
                     {t("site.viewer.title")}
                   </h2>
                   <p className="text-sm text-site-text-2 mt-3 max-w-xl mx-auto leading-relaxed">
@@ -519,14 +519,14 @@ export default function LandingPage() {
           </section>
 
           {/* Comparison */}
-          <section className="py-16 sm:py-24 px-4 sm:px-6">
+          <section className="py-12 sm:py-16 px-4 sm:px-6">
             <div className="mx-auto max-w-5xl">
               <Reveal>
                 <div className="mb-12">
                   <p className="text-xs font-semibold uppercase tracking-widest text-site-accent mb-3">
                     {t("site.bugsnap.compareEyebrow")}
                   </p>
-                  <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-site-text max-w-2xl text-balance">
+                  <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] max-w-2xl text-balance">
                     {t("site.bugsnap.compareTitle")}
                   </h2>
                 </div>
@@ -595,14 +595,14 @@ export default function LandingPage() {
           </section>
 
           {/* Before / After */}
-          <section className="py-16 sm:py-24 px-4 sm:px-6 bg-site-surface-2 border-b border-site-border">
+          <section className="py-12 sm:py-16 px-4 sm:px-6 bg-site-surface-2 border-b border-site-border">
             <div className="mx-auto max-w-6xl">
               <Reveal>
                 <div className="text-center mb-12">
                   <p className="text-xs font-semibold uppercase tracking-widest text-site-accent mb-3">
                     {t("site.before.eyebrow")}
                   </p>
-                  <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-site-text text-balance">
+                  <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] text-balance">
                     {t("site.before.title")}
                   </h2>
                   <p className="text-sm text-site-text-2 mt-3 max-w-xl mx-auto">
@@ -617,14 +617,14 @@ export default function LandingPage() {
           </section>
 
           {/* Roles - Every role gets exactly what they need */}
-          <section className="py-16 sm:py-24 px-4 sm:px-6 bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800/80 font-site">
+          <section className="py-12 sm:py-16 px-4 sm:px-6 bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800/80 font-site">
             <div className="mx-auto max-w-6xl">
               <Reveal>
                 <div className="text-center mb-12 sm:mb-16">
                   <p className="text-xs sm:text-[13px] font-bold uppercase tracking-wider text-[#3D7A24] dark:text-[#72C048] mb-3">
                     {t("site.bugsnap.roleEyebrow")}
                   </p>
-                  <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-950 dark:text-white leading-[1.15] text-balance">
+                  <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] text-balance">
                     {t("site.bugsnap.roleTitle")}
                   </h2>
                   <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 max-w-2xl mx-auto mt-3">
@@ -641,7 +641,7 @@ export default function LandingPage() {
           {/* How it works - Product Workflow 6-Card Grid */}
           <section
             id="how-it-works"
-            className="py-16 sm:py-24 px-4 sm:px-6 bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800/80 font-site"
+            className="py-12 sm:py-16 px-4 sm:px-6 bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800/80 font-site"
           >
             <div className="mx-auto max-w-6xl">
               <Reveal>
@@ -649,7 +649,7 @@ export default function LandingPage() {
                   <p className="text-xs sm:text-[13px] font-bold uppercase tracking-wider text-[#3D7A24] dark:text-[#72C048] mb-3">
                     {t("site.flow.badge")}
                   </p>
-                  <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-950 dark:text-white leading-[1.15] text-balance">
+                  <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] text-balance">
                     {t("site.flow.title")}
                   </h2>
                   <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 max-w-2xl mx-auto mt-4 leading-relaxed">
@@ -691,14 +691,14 @@ export default function LandingPage() {
           </section>
 
           {/* Features */}
-          <section id="features" className="py-16 sm:py-24 px-4 sm:px-6">
+          <section id="features" className="py-12 sm:py-16 px-4 sm:px-6">
             <div className="mx-auto max-w-6xl">
               <Reveal>
                 <div className="text-center mb-12">
                   <p className="text-xs font-semibold uppercase tracking-widest text-site-accent mb-3">
                     {t("site.features.sectionBadge")}
                   </p>
-                  <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-site-text text-balance">
+                  <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] text-balance">
                     {t("site.features.sectionTitle")}
                   </h2>
                   <p className="text-sm text-site-text-2 max-w-xl mx-auto mt-3">
@@ -904,14 +904,14 @@ export default function LandingPage() {
           </section>
 
           {/* Trust - Zero-Data Architecture */}
-          <section className="py-16 sm:py-24 px-4 sm:px-6 bg-slate-50/50 dark:bg-slate-900/40 border-b border-slate-100 dark:border-slate-800/80 font-site">
+          <section className="py-12 sm:py-16 px-4 sm:px-6 bg-slate-50/50 dark:bg-slate-900/40 border-b border-slate-100 dark:border-slate-800/80 font-site">
             <div className="mx-auto max-w-6xl">
               <Reveal>
                 <div className="text-center mb-12 sm:mb-16">
                   <p className="text-xs sm:text-[13px] font-bold uppercase tracking-wider text-[#3D7A24] dark:text-[#72C048] mb-3">
                     {t("site.trust.eyebrow")}
                   </p>
-                  <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-950 dark:text-white leading-[1.15] text-balance">
+                  <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] text-balance">
                     {t("site.trust.title")}
                   </h2>
                   <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 max-w-2xl mx-auto mt-4 leading-relaxed">
@@ -933,7 +933,7 @@ export default function LandingPage() {
                   <p className="text-xs font-semibold uppercase tracking-widest text-site-accent mb-3">
                     {t("site.bugsnap.integrationsEyebrow")}
                   </p>
-                  <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-site-text mb-3 text-balance">
+                  <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] mb-3 text-balance">
                     {t("site.bugsnap.integrationsTitle")}
                   </h2>
                   <p className="text-sm text-site-text-2 leading-relaxed">
@@ -948,7 +948,7 @@ export default function LandingPage() {
           </section>
 
           {/* FAQ - Frequently Asked Questions */}
-          <section id="faq" className="py-16 sm:py-24 px-4 sm:px-6 bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800/80 font-site">
+          <section id="faq" className="py-12 sm:py-16 px-4 sm:px-6 bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800/80 font-site">
             <div className="mx-auto max-w-6xl">
               <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-10 lg:gap-16 items-start">
                 {/* Left: sticky heading, subtitle, and docs link */}
@@ -957,7 +957,7 @@ export default function LandingPage() {
                     <p className="text-xs sm:text-[13px] font-bold uppercase tracking-wider text-[#3D7A24] dark:text-[#72C048] mb-3">
                       {t("site.faq.eyebrow")}
                     </p>
-                    <h2 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-slate-950 dark:text-white leading-[1.15] mb-4 text-balance">
+                    <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] mb-4 text-balance">
                       {t("site.faq.title")}
                     </h2>
                     <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 leading-relaxed mb-6">
@@ -1020,13 +1020,13 @@ export default function LandingPage() {
           </section>
 
           {/* Final Extension CTA Banner */}
-          <section className="px-4 sm:px-6 py-16 sm:py-24 bg-white dark:bg-slate-950 font-site">
+          <section className="px-4 sm:px-6 py-12 sm:py-16 bg-white dark:bg-slate-950 font-site">
             <Reveal>
               <div className="relative mx-auto max-w-6xl rounded-3xl border border-[#CFE6BF] dark:border-emerald-900/50 bg-[#EBF7E3] dark:bg-emerald-950/40 p-8 sm:p-12 lg:p-16 text-center shadow-xs overflow-hidden">
                 <p className="text-xs sm:text-[13px] font-bold uppercase tracking-wider text-[#3D7A24] dark:text-[#72C048] mb-3">
                   {t("site.cta.badge")}
                 </p>
-                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-950 dark:text-white leading-tight max-w-3xl mx-auto">
+                <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] max-w-3xl mx-auto text-balance">
                   {t("site.cta.title")}
                 </h2>
                 <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 max-w-xl mx-auto mt-4 mb-8 leading-relaxed">

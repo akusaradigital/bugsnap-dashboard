@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { StaticShell } from "@/components/StaticShell";
 import { useT } from "@/components/I18nProvider";
@@ -7,8 +8,84 @@ import { Reveal } from "@/components/site/motion";
 import { Icon } from "@/lib/iconify";
 import { CHROME_STORE_URL } from "@/lib/constants";
 
+interface HealthResponse {
+  status: "healthy" | "degraded" | "unhealthy";
+  database: string;
+  latencyMs: number;
+}
+
 export function StatusContent() {
-  const { t } = useT();
+  const { t, locale } = useT();
+  const isId = locale === "id";
+
+  // shortcut: single /api/health ping covers Supabase only, not Drive/AI/webhook/extension individually; upgrade when per-service probes exist
+  const [health, setHealth] = useState<HealthResponse | null>(null);
+  const [checkedAt, setCheckedAt] = useState<Date | null>(null);
+  const [healthError, setHealthError] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/api/health")
+      .then((res) => res.json())
+      .then((data: HealthResponse) => {
+        if (cancelled) return;
+        setHealth(data);
+        setCheckedAt(new Date());
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setHealthError(true);
+        setCheckedAt(new Date());
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const bannerStyle =
+    healthError || health?.status === "unhealthy"
+      ? {
+          border: "border-red-200 dark:border-red-800/40",
+          bg: "bg-red-50 dark:bg-red-950/20",
+          dot: "bg-red-500",
+          icon: "lucide:x",
+          title: t("status.unhealthyTitle"),
+          desc: t("status.unhealthyDesc"),
+        }
+      : health?.status === "degraded"
+      ? {
+          border: "border-amber-200 dark:border-amber-800/40",
+          bg: "bg-amber-50 dark:bg-amber-950/20",
+          dot: "bg-amber-500",
+          icon: "lucide:alert-triangle",
+          title: t("status.degradedTitle"),
+          desc: t("status.degradedDesc"),
+        }
+      : health?.status === "healthy"
+      ? {
+          border: "border-[#bbf7d0] dark:border-emerald-800/40",
+          bg: "bg-[#f0fdf4] dark:bg-emerald-950/20",
+          dot: "bg-[#22c55e]",
+          icon: "lucide:check",
+          title: t("status.allOperational"),
+          desc: t("status.allServicesRunning"),
+        }
+      : {
+          border: "border-slate-200 dark:border-site-border",
+          bg: "bg-white dark:bg-site-surface",
+          dot: "bg-slate-400",
+          icon: "lucide:loader-2",
+          title: t("status.checkingStatus"),
+          desc: "",
+        };
+
+  const dbConnected = health?.database === "connected";
+  const dbStatusLabel = !checkedAt
+    ? t("status.checkingStatus")
+    : dbConnected
+    ? t("status.operational")
+    : t("status.legendOutage");
+  const dbStatusDotClass = !checkedAt ? "bg-slate-400" : dbConnected ? "bg-[#22c55e]" : "bg-[#ef4444]";
 
   const services = [
     {
@@ -21,7 +98,8 @@ export function StatusContent() {
     {
       key: "api",
       name: t("status.svc.api"),
-      status: t("status.operational"),
+      status: dbStatusLabel,
+      statusDotClass: dbStatusDotClass,
       icon: "lucide:database",
       iconClass: "text-slate-600 dark:text-slate-400",
     },
@@ -57,7 +135,9 @@ export function StatusContent() {
 
   return (
     <StaticShell
-      title={t("status.title")}
+      title={t("status.title") || "System status &"}
+      titleHighlight={t("status.titleHighlight") || "service health"}
+      breadcrumb={isId ? "Status Sistem" : "Status"}
       subtitle={t("status.subtitle")}
       hideDivider
       compactHero
@@ -68,40 +148,40 @@ export function StatusContent() {
         {/* Top 3 KPI / Stat Cards */}
         <Reveal delay={0.05}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
-            {/* Card 1: All Systems Operational */}
-            <div className="rounded-2xl border border-[#bbf7d0] dark:border-emerald-800/40 bg-[#f0fdf4] dark:bg-emerald-950/20 p-5 sm:p-6 flex items-center gap-4 shadow-xs">
-              <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-[#22c55e] flex items-center justify-center shrink-0 text-white shadow-xs">
-                <Icon icon="lucide:check" className="w-6 h-6 stroke-[3]" aria-hidden="true" />
+            {/* Card 1: Live System Status */}
+            <div className={`rounded-2xl border ${bannerStyle.border} ${bannerStyle.bg} p-5 sm:p-6 flex items-center gap-4 shadow-xs`}>
+              <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full ${bannerStyle.dot} flex items-center justify-center shrink-0 text-white shadow-xs`}>
+                <Icon icon={bannerStyle.icon} className="w-6 h-6 stroke-[3]" aria-hidden="true" />
               </div>
               <div className="min-w-0">
                 <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight">
-                  {t("status.allOperational")}
+                  {bannerStyle.title}
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 mt-1 leading-snug">
-                  {t("status.allServicesRunning")}
+                  {bannerStyle.desc || t("status.allServicesRunning")}
                 </p>
               </div>
             </div>
 
-            {/* Card 2: 99.98% Uptime */}
+            {/* Card 2: Real Database & API Latency */}
             <div className="rounded-2xl border border-slate-200 dark:border-site-border bg-white dark:bg-site-surface p-5 sm:p-6 flex items-center gap-4 shadow-xs">
-              <Icon icon="custom:chart-bars" className="w-7 h-7 sm:w-8 sm:h-8 text-[#22c55e] shrink-0" aria-hidden="true" />
+              <Icon icon="lucide:activity" className="w-7 h-7 sm:w-8 sm:h-8 text-[#22c55e] shrink-0" aria-hidden="true" />
               <div className="min-w-0">
                 <div className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-none font-mono">
-                  {t("status.uptimeValue")}
+                  {health?.latencyMs !== undefined ? `${health.latencyMs}ms` : "-- ms"}
                 </div>
                 <p className="text-xs sm:text-sm text-slate-500 dark:text-site-text-2 mt-1.5 leading-snug">
-                  {t("status.overallUptime")}
+                  {t("status.latencyLabel")}
                 </p>
               </div>
             </div>
 
-            {/* Card 3: < 1 min Last Checked */}
+            {/* Card 3: Last Checked Telemetry */}
             <div className="rounded-2xl border border-slate-200 dark:border-site-border bg-white dark:bg-site-surface p-5 sm:p-6 flex items-center gap-4 shadow-xs">
               <Icon icon="lucide:clock" className="w-7 h-7 sm:w-8 sm:h-8 text-slate-600 dark:text-slate-400 shrink-0 stroke-[1.75]" aria-hidden="true" />
               <div className="min-w-0">
                 <div className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-none">
-                  {t("status.lastChecked")}
+                  {checkedAt ? t("status.checkedJustNow") : t("status.checkingStatus")}
                 </div>
                 <p className="text-xs sm:text-sm text-slate-500 dark:text-site-text-2 mt-1.5 leading-snug">
                   {t("status.lastCheckedJustNow")}
@@ -151,42 +231,15 @@ export function StatusContent() {
                         {svc.name}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[#f0fdf4] dark:bg-emerald-950/30 border border-emerald-100/60 dark:border-emerald-900/30 shrink-0">
-                      <span className="w-2 h-2 rounded-full bg-[#22c55e]" />
-                      <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                    <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50 dark:bg-site-surface-2 border border-site-border shrink-0">
+                      <span className={`w-2 h-2 rounded-full ${svc.statusDotClass || "bg-[#22c55e]"}`} />
+                      <span className="text-xs font-semibold text-site-text">
                         {svc.status}
                       </span>
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
-          </div>
-        </Reveal>
-
-        {/* Uptime History Bar Card */}
-        <Reveal delay={0.15}>
-          <div className="rounded-2xl border border-slate-200 dark:border-site-border bg-white dark:bg-site-surface p-5 sm:p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between text-xs sm:text-sm">
-              <span className="font-medium text-slate-600 dark:text-slate-300">
-                {t("status.uptimeHistory")}
-              </span>
-              <span className="text-base sm:text-lg font-bold text-slate-900 dark:text-white font-mono">
-                {t("status.uptimeValue")}
-              </span>
-            </div>
-            <div className="flex gap-1 sm:gap-1.5 h-6 sm:h-7 items-stretch">
-              {Array.from({ length: 40 }).map((_, i) => (
-                <div
-                  key={i}
-                  className="flex-1 rounded-xs sm:rounded-sm bg-[#10b981] hover:bg-[#059669] transition-colors cursor-pointer"
-                  title={`Day ${i + 1}: 100% Operational`}
-                />
-              ))}
-            </div>
-            <div className="flex justify-between text-xs text-slate-400 dark:text-site-text-2 font-medium">
-              <span>{t("status.daysAgo")}</span>
-              <span>{t("status.today")}</span>
             </div>
           </div>
         </Reveal>
@@ -218,10 +271,10 @@ export function StatusContent() {
                 <span>{t("status.installFree")}</span>
               </a>
               <Link
-                href="/pricing"
+                href="/docs"
                 className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-white dark:bg-site-surface hover:bg-slate-50 dark:hover:bg-site-surface-2 border border-slate-200 dark:border-site-border text-slate-800 dark:text-slate-200 text-xs sm:text-sm font-semibold px-5 py-3 min-h-[44px] transition-all shadow-xs hover:border-slate-300 whitespace-nowrap"
               >
-                <span>{t("status.viewPricing")}</span>
+                <span>{t("status.viewDocs")}</span>
                 <Icon icon="lucide:arrow-right" className="w-4 h-4" aria-hidden="true" />
               </Link>
             </div>

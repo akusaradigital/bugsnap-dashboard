@@ -66,7 +66,7 @@ export async function maybeAlertAdminOfSpike(
   }
 
   const domain = process.env.NEXT_PUBLIC_APP_URL || "https://bugsnap.akusaraproject.my.id";
-  const captureLink = stats.sampleCaptureId ? `${domain}/c/${stats.sampleCaptureId}` : domain;
+  const captureLink = stats.sampleCaptureId ? `${domain}/v/${stats.sampleCaptureId}` : domain;
   const site = siteUrl || stats.sampleSiteUrl || "unknown";
 
   const message = `🚨 [BugSnap Incident Alert] Cross-Tenant Error Spike Detected!\n` +

@@ -25,9 +25,9 @@ export function SolutionsContent() {
     <div className="min-h-screen text-slate-800 dark:text-slate-100 font-site flex flex-col bg-[#fcfdfe] dark:bg-[#0b0f17]">
       <SiteNavbar />
 
-      <main id="main-content" className="flex-1 pb-20 sm:pb-28">
+      <main id="main-content" className="flex-1 pb-12 sm:pb-16">
         {/* Hero Section */}
-        <div className="pt-10 sm:pt-16 pb-12 sm:pb-20 text-center max-w-4xl mx-auto px-4 sm:px-6">
+        <div className="pt-8 sm:pt-12 pb-8 sm:pb-12 text-center max-w-4xl mx-auto px-4 sm:px-6">
           <Reveal delay={0}>
             {/* Breadcrumb */}
             <nav
@@ -51,11 +51,10 @@ export function SolutionsContent() {
 
           <Reveal delay={0.06}>
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12]">
-              Clarity for every role
+              {t("solutions.title") || "Clarity for every role"}
               <br />
-              in the{" "}
               <span className="text-blue-600 dark:text-blue-500">
-                debugging loop
+                {t("solutions.titleHighlight") || "in the debugging loop"}
               </span>
             </h1>
           </Reveal>
@@ -69,7 +68,7 @@ export function SolutionsContent() {
         </div>
 
         {/* 4 Alternating Solutions Sections */}
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-20 sm:space-y-28">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 space-y-12 sm:space-y-16">
           {/* Section 1: Quality Assurance */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center">
             {/* Left: Text */}

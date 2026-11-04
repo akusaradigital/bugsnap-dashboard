@@ -1,9 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState, useRef, useCallback, useEffect } from "react";
-import { supabase } from "@/lib/supabase";
+import { useState, useRef, useCallback } from "react";
 import { useT } from "@/components/I18nProvider";
 import { SiteNavbar } from "@/components/site/SiteNavbar";
 import { SiteFooter } from "@/components/site/SiteFooter";
@@ -253,7 +251,6 @@ function DiffOverlayDemo() {
 
 export function VisualCompareContent() {
   const { t } = useT();
-  const router = useRouter();
   const [activeMode, setActiveMode] = useState<CompareMode>("split");
 
   const features = [
@@ -295,15 +292,6 @@ export function VisualCompareContent() {
     },
   ];
 
-  // If already logged in, redirect straight to the compare tool (no docs/landing page)
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      if (data.session?.user) {
-        router.replace("/compare");
-      }
-    }).catch(() => {});
-  }, [router]);
-
   const modes: { id: CompareMode; icon: string; label: string }[] = [
     { id: "split", icon: "tabler:arrows-split-2", label: t("compare.splitMode") || "Split Slider" },
     { id: "side",  icon: "tabler:layout-columns",  label: t("compare.sideBySideMode") || "Side by Side" },
@@ -314,13 +302,13 @@ export function VisualCompareContent() {
     <div className="min-h-screen text-slate-800 dark:text-slate-100 font-site flex flex-col bg-[#fcfdfe] dark:bg-[#07090d]">
       <SiteNavbar />
 
-      <main id="main-content" className="flex-1 pb-16 sm:pb-24">
+      <main id="main-content" className="flex-1 pb-12 sm:pb-16">
 
         {/* ── Hero Section (Max-w-6xl for wide impact) ────────────────────── */}
-        <section className="pt-10 sm:pt-16 pb-8 sm:pb-12 text-center max-w-5xl mx-auto px-4 sm:px-6">
+        <section className="pt-8 sm:pt-12 pb-8 sm:pb-10 text-center max-w-5xl mx-auto px-4 sm:px-6">
           <Reveal delay={0}>
             <nav
-              className="inline-flex items-center justify-center gap-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 mb-5"
+              className="inline-flex items-center justify-center gap-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 mb-6"
               aria-label="Breadcrumb"
             >
               <Link href="/" className="hover:text-slate-900 dark:hover:text-white transition-colors">
@@ -333,14 +321,7 @@ export function VisualCompareContent() {
             </nav>
           </Reveal>
 
-          <Reveal delay={0.05}>
-            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-[#89BD49]/10 text-[#46741A] dark:text-[#A8D666] text-xs font-bold mb-4 border border-[#89BD49]/25 shadow-2xs">
-              <Icon icon="tabler:layout-columns" width={14} />
-              <span>{t("vc.eyebrow") || "Visual Compare"}</span>
-            </div>
-          </Reveal>
-
-          <Reveal delay={0.1}>
+          <Reveal delay={0.06}>
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12] mb-4 text-balance">
               {t("vc.heroTitle") || "See every fix."}{" "}
               <span className="text-[#46741A] dark:text-[#A8D666]">
@@ -420,7 +401,7 @@ export function VisualCompareContent() {
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-16 sm:mb-24">
           <Reveal delay={0}>
             <div className="text-center mb-10">
-              <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 dark:text-white mb-2">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug mb-2">
                 {t("vc.modesTitle") || "Three ways to compare. One click to switch."}
               </h2>
               <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-xl mx-auto">
@@ -465,7 +446,7 @@ export function VisualCompareContent() {
                     <Icon icon="tabler:sparkles" width={14} />
                     <span>Included in BugSnap Free</span>
                   </div>
-                  <h2 className="text-2xl sm:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
                     {t("vc.ctaTitle") || "Start comparing screenshots"}
                   </h2>
                   <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed max-w-xl">

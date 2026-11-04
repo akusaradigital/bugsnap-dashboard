@@ -126,7 +126,8 @@ export function BlogListContent() {
 
   return (
     <StaticShell
-      title={t("blog.title") || "Blog"}
+      title={t("blog.heroTitlePrefix") || "Engineering insights &"}
+      titleHighlight={t("blog.heroTitleHighlight") || "debugging guides"}
       breadcrumb={t("blog.title") || "Blog"}
       subtitle={
         t("blog.subtitle") ||

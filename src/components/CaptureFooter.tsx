@@ -196,7 +196,7 @@ export default function CaptureFooter({ className = "" }: { className?: string }
               </Link>
               */}
               <Link
-                href="/compare"
+                href="/visual-compare"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-[11px] sm:text-xs text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white transition-colors py-0.5"

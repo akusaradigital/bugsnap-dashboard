@@ -16,7 +16,7 @@ interface HeadingItem {
 
 const PROSE_CLASSES = [
   // Headings
-  "[&_h2]:scroll-mt-28 [&_h2]:text-xl [&_h2]:sm:text-2xl [&_h2]:font-bold [&_h2]:text-slate-900 dark:[&_h2]:text-white [&_h2]:mt-10 [&_h2]:mb-4 [&_h2]:tracking-tight",
+  "[&_h2]:scroll-mt-28 [&_h2]:text-2xl [&_h2]:sm:text-3xl [&_h2]:font-extrabold [&_h2]:text-slate-900 dark:[&_h2]:text-white [&_h2]:mt-12 [&_h2]:mb-4 [&_h2]:tracking-tight",
   "[&_h3]:scroll-mt-28 [&_h3]:text-lg [&_h3]:font-semibold [&_h3]:text-slate-900 dark:[&_h3]:text-white [&_h3]:mt-6 [&_h3]:mb-3",
   // Paragraphs
   "[&_p]:text-slate-600 dark:[&_p]:text-slate-300 [&_p]:leading-relaxed [&_p]:mb-5 [&_p]:text-sm [&_p]:sm:text-base",
@@ -27,6 +27,8 @@ const PROSE_CLASSES = [
   // Inline Code & Pre blocks
   "[&_code]:bg-slate-100 dark:[&_code]:bg-slate-800 [&_code]:text-slate-900 dark:[&_code]:text-slate-200 [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:rounded-md [&_code]:text-xs [&_code]:sm:text-sm [&_code]:font-mono [&_code]:border [&_code]:border-slate-200 dark:[&_code]:border-slate-700",
   "[&_pre]:bg-slate-900 dark:[&_pre]:bg-slate-950 [&_pre]:text-slate-100 [&_pre]:border [&_pre]:border-slate-800 [&_pre]:rounded-xl [&_pre]:p-4 [&_pre]:overflow-x-auto [&_pre]:font-mono [&_pre]:text-xs [&_pre]:sm:text-sm [&_pre]:my-6",
+  // Tables & Content Overflow Containment
+  "[&_table]:block [&_table]:w-full [&_table]:overflow-x-auto [&_table]:my-6 [&_table]:max-w-full",
   // Typography accents
   "[&_strong]:text-slate-900 dark:[&_strong]:text-white [&_strong]:font-bold",
   "[&_em]:italic [&_em]:text-slate-700 dark:[&_em]:text-slate-200",
@@ -137,6 +139,12 @@ export function BlogPostContent({ slug }: { slug: string }) {
         items.push({ id: headingId, text: cleanText });
         return `<h2 id="${headingId}"${attrs}>${rawHeadingText}</h2>`;
       }
+    );
+
+    // Responsive table wrapper to guarantee no viewport blowout on small mobile screens
+    html = html.replace(
+      /<table([\s\S]*?)<\/table>/gi,
+      (match) => `<div class="overflow-x-auto my-6 max-w-full">${match}</div>`
     );
 
     return { processedHtml: html, headings: items };
@@ -319,7 +327,7 @@ export function BlogPostContent({ slug }: { slug: string }) {
               </div>
 
               {/* Main Article Title */}
-              <h1 className="text-2xl sm:text-4xl lg:text-[42px] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] mb-4">
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] mb-4">
                 {title}
               </h1>
 

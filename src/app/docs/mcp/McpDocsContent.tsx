@@ -67,10 +67,10 @@ export function McpDocsContent() {
 
       <main id="main-content" className="flex-1 relative z-10">
         {/* Hero Section */}
-        <div className="pt-8 sm:pt-12 pb-8 sm:pb-12 text-center">
+        <div className="pt-6 sm:pt-10 pb-6 sm:pb-10 text-center">
           <div className="mx-auto max-w-4xl px-4 sm:px-6">
             <Reveal delay={0}>
-              {/* Breadcrumb with 3D isometric green cubes and Docs badge */}
+              {/* Breadcrumb */}
               <nav
                 className="inline-flex items-center justify-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-5 max-w-full px-2"
                 aria-label="Breadcrumb"
@@ -87,39 +87,11 @@ export function McpDocsContent() {
                 <span className="text-slate-700 dark:text-slate-300 font-medium">
                   {t("docs.mcp")}
                 </span>
-
-                {/* 3D isometric green stacked cubes icon */}
-                <svg
-                  className="w-5 h-5 shrink-0 inline-block text-emerald-500 ml-0.5"
-                  viewBox="0 0 32 32"
-                  fill="none"
-                  aria-hidden="true"
-                >
-                  {/* Top cube */}
-                  <path d="M16 3 L22 6.5 L16 10 L10 6.5 Z" fill="#dcfce7" stroke="#16a34a" strokeWidth="1.5" strokeLinejoin="round" />
-                  <path d="M10 6.5 L16 10 L16 15 L10 11.5 Z" fill="#bbf7d0" stroke="#16a34a" strokeWidth="1.5" strokeLinejoin="round" />
-                  <path d="M16 10 L22 6.5 L22 11.5 L16 15 Z" fill="#86efac" stroke="#16a34a" strokeWidth="1.5" strokeLinejoin="round" />
-
-                  {/* Bottom-left cube */}
-                  <path d="M10 13.5 L16 17 L10 20.5 L4 17 Z" fill="#dcfce7" stroke="#16a34a" strokeWidth="1.5" strokeLinejoin="round" />
-                  <path d="M4 17 L10 20.5 L10 25.5 L4 22 Z" fill="#bbf7d0" stroke="#16a34a" strokeWidth="1.5" strokeLinejoin="round" />
-                  <path d="M10 20.5 L16 17 L16 22 L10 25.5 Z" fill="#86efac" stroke="#16a34a" strokeWidth="1.5" strokeLinejoin="round" />
-
-                  {/* Bottom-right cube */}
-                  <path d="M22 13.5 L28 17 L22 20.5 L16 17 Z" fill="#dcfce7" stroke="#16a34a" strokeWidth="1.5" strokeLinejoin="round" />
-                  <path d="M16 17 L22 20.5 L22 25.5 L16 22 Z" fill="#bbf7d0" stroke="#16a34a" strokeWidth="1.5" strokeLinejoin="round" />
-                  <path d="M22 20.5 L28 17 L28 22 L22 25.5 Z" fill="#86efac" stroke="#16a34a" strokeWidth="1.5" strokeLinejoin="round" />
-                </svg>
-
-                {/* Docs badge */}
-                <span className="font-bold text-[11px] text-slate-800 dark:text-slate-200 tracking-tight">
-                  Docs
-                </span>
               </nav>
             </Reveal>
 
             <Reveal delay={0.06}>
-              <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-tight">
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12]">
                 MCP for AI{" "}
                 <span className="relative inline-block whitespace-nowrap">
                   Agents
@@ -151,7 +123,7 @@ export function McpDocsContent() {
         </div>
 
         {/* Content stack */}
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 pb-20 space-y-10 sm:space-y-12">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6 pb-12 sm:pb-16 space-y-8 sm:space-y-10">
           {/* Top Highlight Card: MCP for AI Agents */}
           <Reveal delay={0.16}>
             <div className="rounded-2xl sm:rounded-3xl border border-emerald-200/90 dark:border-emerald-800/40 bg-[#f6fcf8] dark:bg-emerald-950/20 p-6 sm:p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 shadow-2xs relative overflow-hidden">

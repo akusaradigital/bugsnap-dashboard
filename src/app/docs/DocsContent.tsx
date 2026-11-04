@@ -212,7 +212,7 @@ export function DocsContent() {
 
       <main id="main-content" className="flex-1">
         {/* Hero Section */}
-        <div className="relative overflow-hidden pt-10 sm:pt-16 pb-12 sm:pb-16">
+        <div className="relative overflow-hidden pt-8 sm:pt-12 pb-8 sm:pb-12">
           <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 text-center">
             <Reveal delay={0}>
               {/* Breadcrumb */}
@@ -228,14 +228,18 @@ export function DocsContent() {
                 </Link>
                 <span className="text-slate-300 dark:text-slate-600">›</span>
                 <span className="text-slate-700 dark:text-slate-300 font-medium">
-                  {t("docs.title") || "BugSnap Documentation"}
+                  {t("site.nav.docs") || "Docs"}
                 </span>
               </nav>
             </Reveal>
 
             <Reveal delay={0.07}>
-              <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15]">
-                {t("docs.title") || "BugSnap Documentation"}
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12]">
+                {t("docs.title") || "Guides, references &"}
+                <br />
+                <span className="text-blue-600 dark:text-blue-500">
+                  {t("docs.titleHighlight") || "developer docs"}
+                </span>
               </h1>
             </Reveal>
 
@@ -249,7 +253,7 @@ export function DocsContent() {
         </div>
 
         {/* Page Content Container */}
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 pb-20 sm:pb-28 space-y-12 sm:space-y-16">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 pb-12 sm:pb-16 space-y-8 sm:space-y-10">
           {/* Top Navigation Cards */}
           <Reveal delay={0.1}>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 lg:gap-0 lg:divide-x lg:divide-slate-200/80 dark:lg:divide-slate-800">

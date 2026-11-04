@@ -62,12 +62,12 @@ export function WelcomeContent() {
     <div className="min-h-screen text-site-text font-site flex flex-col bg-site-surface">
       <SiteNavbar />
 
-      <main id="main-content" className="flex-1 py-10 sm:py-16">
+      <main id="main-content" className="flex-1 py-8 sm:py-12">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 space-y-12 sm:space-y-16">
           {/* Breadcrumb & Hero */}
           <div className="text-center space-y-4 max-w-3xl mx-auto">
             <nav
-              className="inline-flex items-center justify-center gap-1.5 text-xs text-site-text-2 mb-2"
+              className="inline-flex items-center justify-center gap-1.5 text-xs text-site-text-2 mb-6"
               aria-label="Breadcrumb"
             >
               <Link href="/" className="hover:text-site-text transition-colors">
@@ -79,12 +79,7 @@ export function WelcomeContent() {
               </span>
             </nav>
 
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-semibold">
-              <Icon icon="lucide:sparkles" className="w-3.5 h-3.5" aria-hidden="true" />
-              <span>{t("welcome.heroBadge") || "Extension Installed & Ready"}</span>
-            </div>
-
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-site-text leading-tight">
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12]">
               {t("welcome.title") || "Welcome to BugSnap"}
             </h1>
 
@@ -358,7 +353,7 @@ export function WelcomeContent() {
                 </h4>
                 <p className="text-xs text-site-text-2 leading-relaxed">
                   {t("welcome.previewSystemDesc") ||
-                    "OS, screen resolution, viewport, browser version, and GPU memory."}
+                    "OS, screen resolution, viewport, browser version, and connection type."}
                 </p>
               </div>
             </div>

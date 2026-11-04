@@ -1,40 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
 import { Icon } from "@/lib/iconify";
+import { CHROME_STORE_URL, FIREFOX_STORE_URL, EDGE_STORE_URL } from "@/lib/constants";
 import { Reveal } from "./motion/Reveal";
 import { CookieConsentBanner } from "./CookieConsentBanner";
-
-const CHROME_STORE_URL =
-  "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
+import { BackToTop } from "./BackToTop";
 
 export function SiteFooter() {
   const { t } = useT();
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setIsLoggedIn(!!data.session?.user);
-    }).catch(() => {});
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsLoggedIn(!!session?.user);
-    });
-
-    return () => subscription.unsubscribe();
-  }, []);
 
   return (
     <footer className="border-t border-site-border bg-site-surface-2 text-site-text font-site transition-colors">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 mb-10">
           {/* Brand & Consumer Trust Column (lg:col-span-4) */}
-          <Reveal delay={0} className="lg:col-span-4 space-y-3.5">
+          <Reveal delay={0} className="lg:col-span-4 space-y-3.5 min-w-0">
             <div className="flex items-center gap-2">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
@@ -55,27 +37,34 @@ export function SiteFooter() {
                 className="w-6 h-6 object-contain hidden dark:block"
               />
               <span className="text-sm font-bold tracking-tight text-site-text">BugSnap</span>
-              <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 font-mono">
-                v0.11.0
-              </span>
             </div>
             <p className="text-xs text-site-text-2 leading-relaxed">
               {t("landing.footDesc")}
             </p>
-            <div className="flex flex-wrap items-center gap-2 pt-1">
+            <div className="flex flex-col gap-2 pt-1 min-w-0">
               <a
                 href={CHROME_STORE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-site-border bg-site-surface text-xs text-site-text-2 hover:text-site-text hover:border-site-border-subtle transition-colors shadow-2xs"
+                className="inline-flex items-center gap-2 text-xs text-site-text-2 hover:text-site-text transition-colors w-fit max-w-full"
               >
-                <Icon icon="logos:chrome" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                <span>Chrome Web Store (v1.0.65)</span>
+                <Icon icon="logos:chrome-web-store" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                <span className="truncate">{t("landing.chromeWebStore")}</span>
               </a>
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-emerald-500/20 bg-emerald-500/5 text-xs text-emerald-700 dark:text-emerald-400">
-                <Icon icon="logos:google-drive" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                <span>{t("landing.zeroServerStorage")}</span>
-              </div>
+              <Link
+                href={FIREFOX_STORE_URL}
+                className="inline-flex items-center gap-2 text-xs text-site-text-2 hover:text-site-text transition-colors w-fit max-w-full"
+              >
+                <Icon icon="logos:firefox" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                <span className="truncate">{t("landing.firefoxAddons")}</span>
+              </Link>
+              <Link
+                href={EDGE_STORE_URL}
+                className="inline-flex items-center gap-2 text-xs text-site-text-2 hover:text-site-text transition-colors w-fit max-w-full"
+              >
+                <Icon icon="logos:microsoft-edge" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                <span className="truncate">{t("landing.edgeAddons")}</span>
+              </Link>
             </div>
           </Reveal>
 
@@ -91,7 +80,7 @@ export function SiteFooter() {
                 <li><Link href="/solutions" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("site.nav.solutions")}</Link></li>
                 <li><Link href="/extension" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("site.nav.extension")}</Link></li>
                 <li><Link href="/how-it-works" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("site.nav.howItWorks")}</Link></li>
-                <li><Link href={isLoggedIn ? "/compare" : "/visual-compare"} className="hover:text-site-text transition-colors block py-0.5 truncate">{t("landing.compare")}</Link></li>
+                <li><Link href="/visual-compare" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("landing.compare")}</Link></li>
                 {/* Payment UI temporarily commented out until ready: */}
                 {/* <li><Link href="/pricing" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("site.nav.pricing")}</Link></li> */}
               </ul>
@@ -153,7 +142,7 @@ export function SiteFooter() {
 
         {/* Bottom Bar: Legal Disclaimer & Consumer Protection Guarantee */}
         <div className="pt-6 border-t border-site-border flex flex-col md:flex-row items-start md:items-center justify-between gap-4 text-xs text-site-text-2">
-          <div className="space-y-1 max-w-2xl">
+          <div className="space-y-1 max-w-2xl min-w-0">
             <p className="font-semibold text-site-text">
               {t("landing.copyright", { year: new Date().getFullYear() })}
             </p>
@@ -177,6 +166,7 @@ export function SiteFooter() {
         </div>
       </div>
       <CookieConsentBanner />
+      <BackToTop />
     </footer>
   );
 }

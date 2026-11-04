@@ -71,34 +71,21 @@ export function SiteNavbar() {
         scrolled ? "shadow-sm shadow-black/5" : ""
       }`}
     >
-      <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] px-4 py-2 bg-accent text-slate-900 rounded-lg text-xs font-bold shadow-lg"
-      >
-        Skip to main content
-      </a>
       <div className="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
         {/* Brand */}
-        <Link href="/" className="flex items-center gap-2 group shrink-0">
+        <Link href="/" className="flex min-w-0 items-center gap-2 group shrink-0" aria-label="BugSnap. From Click to Fix.">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/logo-day.svg"
-            alt=""
-            aria-hidden="true"
-            width={26}
-            height={26}
-            className="w-6.5 h-6.5 object-contain transition-transform group-hover:scale-105 dark:hidden"
+            src="/bugsnap-icon-day.svg"
+            alt="BugSnap"
+            width={32}
+            height={32}
+            className="h-8 w-8 shrink-0 object-contain"
           />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/logo-dark.svg"
-            alt=""
-            aria-hidden="true"
-            width={26}
-            height={26}
-            className="w-6.5 h-6.5 object-contain transition-transform group-hover:scale-105 hidden dark:block"
-          />
-          <span className="text-base font-bold tracking-tight text-slate-900 dark:text-white">BugSnap</span>
+          <span className="flex min-w-0 flex-col justify-center leading-tight">
+            <span className="text-base font-bold tracking-tight text-slate-900 dark:text-white">BugSnap</span>
+            <span className="max-w-[180px] truncate text-[10px] font-medium tracking-[0.12em] text-slate-600 dark:text-slate-300 sm:max-w-[220px]">From Click to Fix.</span>
+          </span>
         </Link>
 
         {/* Desktop Navigation */}

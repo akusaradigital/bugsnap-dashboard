@@ -132,13 +132,13 @@ export function ExtensionContent() {
     <div className="min-h-screen text-site-text font-site flex flex-col bg-site-surface">
       <SiteNavbar />
 
-      <main id="main-content" className="flex-1 py-10 sm:py-16">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 space-y-16 sm:space-y-20 md:space-y-24">
+      <main id="main-content" className="flex-1 py-8 sm:py-12">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 space-y-12 sm:space-y-16 md:space-y-16">
           {/* Breadcrumb & Hero */}
           <div className="text-center space-y-4 max-w-3xl mx-auto">
             {/* Breadcrumb */}
             <nav
-              className="inline-flex items-center justify-center gap-1.5 text-xs text-site-text-2 mb-2"
+              className="inline-flex items-center justify-center gap-1.5 text-xs text-site-text-2 mb-4 sm:mb-5"
               aria-label="Breadcrumb"
             >
               <Link href="/" className="hover:text-site-text transition-colors">
@@ -148,16 +148,17 @@ export function ExtensionContent() {
                 &gt;
               </span>
               <span className="text-site-text font-medium">
-                {t("extension.title") || "BugSnap Chrome Extension"}
-              </span>
-              <span className="text-site-text-2/60" aria-hidden="true">
-                &gt;
+                {t("site.nav.extension") || "Extension"}
               </span>
             </nav>
 
             {/* Title */}
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight text-site-text leading-tight">
-              {t("extension.title") || "BugSnap Chrome Extension"}
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12]">
+              {t("extension.title") || "Capture & debug bugs"}
+              <br />
+              <span className="text-blue-600 dark:text-blue-500">
+                {t("extension.titleHighlight") || "directly in your browser"}
+              </span>
             </h1>
 
             {/* Subtitle */}
@@ -216,7 +217,7 @@ export function ExtensionContent() {
                 <span className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-[#46741A] dark:text-[#A8D666]">
                   {t("extension.shortcutsEyebrow") || "CUSTOMIZABLE BROWSER SHORTCUTS"}
                 </span>
-                <h2 className="text-xl sm:text-2xl md:text-[26px] font-extrabold text-site-text leading-snug tracking-tight">
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white leading-snug tracking-tight">
                   {t("extension.shortcutsHeading") ||
                     "Set your own shortcuts in your browser. Record screens or take instant screenshots from any tab."}
                 </h2>
@@ -606,7 +607,7 @@ export function ExtensionContent() {
               <span className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-[#46741A] dark:text-[#A8D666]">
                 {t("extension.permissionsEyebrow") || "SECURITY & PRIVACY"}
               </span>
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-site-text tracking-tight">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
                 {t("extension.permissionsTitle") || "Transparent Chrome Permissions"}
               </h2>
               <p className="text-xs sm:text-sm text-site-text-2">
@@ -711,7 +712,7 @@ export function ExtensionContent() {
               <span className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-[#46741A] dark:text-[#A8D666]">
                 {t("extension.sectionCompatibility") || "COMPATIBILITY"}
               </span>
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-site-text tracking-tight">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
                 {t("extension.browsersTitle") || "Supported Browsers"}
               </h2>
               <p className="text-xs sm:text-sm text-site-text-2">
@@ -723,7 +724,7 @@ export function ExtensionContent() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8 pt-2">
               {/* Google Chrome */}
               <div className="flex items-center gap-4">
-                <Icon icon="logos:chrome" className="w-10 h-10 shrink-0" aria-hidden="true" />
+                <Icon icon="logos:chrome-web-store" className="w-10 h-10 shrink-0" aria-hidden="true" />
                 <div className="min-w-0">
                   <h3 className="text-sm sm:text-base font-bold text-site-text">Google Chrome</h3>
                   <p className="text-xs text-site-text-2">
@@ -747,17 +748,15 @@ export function ExtensionContent() {
                 <div className="min-w-0">
                   <h3 className="text-sm sm:text-base font-bold text-site-text">Mozilla Firefox</h3>
                   <p className="text-xs text-site-text-2">
-                    {t("extension.fullSupport") || "Full support with all features"}
+                    {t("storeProgress.firefoxStatus") || "Under AMO Review"}
                   </p>
-                  <a
-                    href={CHROME_STORE_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <Link
+                    href="/extension/firefox"
                     className="inline-flex items-center gap-1 text-xs font-semibold text-[#46741A] dark:text-[#A8D666] hover:underline mt-1"
                   >
-                    <span>{t("extension.addToFirefox") || "Add to Firefox"}</span>
+                    <span>{t("extension.addToFirefox") || "View Status"}</span>
                     <span aria-hidden="true">&rarr;</span>
-                  </a>
+                  </Link>
                 </div>
               </div>
 
@@ -767,17 +766,15 @@ export function ExtensionContent() {
                 <div className="min-w-0">
                   <h3 className="text-sm sm:text-base font-bold text-site-text">Microsoft Edge</h3>
                   <p className="text-xs text-site-text-2">
-                    {t("extension.fullSupport") || "Full support with all features"}
+                    {t("storeProgress.edgeStatus") || "Works on Edge Today"}
                   </p>
-                  <a
-                    href={CHROME_STORE_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <Link
+                    href="/extension/edge"
                     className="inline-flex items-center gap-1 text-xs font-semibold text-[#46741A] dark:text-[#A8D666] hover:underline mt-1"
                   >
-                    <span>{t("extension.addToEdge") || "Add to Edge"}</span>
+                    <span>{t("extension.addToEdge") || "Install for Edge"}</span>
                     <span aria-hidden="true">&rarr;</span>
-                  </a>
+                  </Link>
                 </div>
               </div>
             </div>
@@ -789,7 +786,7 @@ export function ExtensionContent() {
               <span className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-[#46741A] dark:text-[#A8D666]">
                 {t("extension.faqEyebrow") || "FREQUENTLY ASKED QUESTIONS"}
               </span>
-              <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-site-text tracking-tight">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
                 {t("extension.faqTitle") || "Frequently Asked Questions"}
               </h2>
             </div>
@@ -859,7 +856,7 @@ export function ExtensionContent() {
               <span className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-[#46741A] dark:text-[#A8D666]">
                 {t("extension.ctaEyebrow") || "READY TO GET STARTED?"}
               </span>
-              <h2 className="text-xl sm:text-2xl md:text-[26px] font-extrabold text-site-text tracking-tight">
+              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
                 {t("extension.ctaTitle") || "Start capturing bugs with DevTools telemetry"}
               </h2>
               <p className="text-xs sm:text-sm text-site-text-2">

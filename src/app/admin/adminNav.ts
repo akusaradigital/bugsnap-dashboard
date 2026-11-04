@@ -129,6 +129,14 @@ export const ADMIN_NAV_ROUTES: AdminNavRoute[] = [
     keywords: ["setup", "config", "settings", "pengaturan", "konfigurasi", "env", "wizard", "environment", "checklist"],
     hub: "system",
   },
+  {
+    id: "changelog",
+    href: "/admin/changelog",
+    icon: APP_ICONS.nav.changelog,
+    titleKey: "admin.navChangelog",
+    keywords: ["changelog", "release", "history", "perubahan", "catatan", "updates", "versi", "dashboard", "extension", "mcp"],
+    hub: "system",
+  },
 ];
 
 export const ADMIN_NAV_HUBS: Record<

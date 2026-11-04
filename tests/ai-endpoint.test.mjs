@@ -1,6 +1,20 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { normalizeEndpointUrl, parseLlmContent } from "../src/lib/ai-endpoint.ts";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import path from "node:path";
+import vm from "node:vm";
+import ts from "typescript";
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+const src = readFileSync(path.resolve(here, "../src/lib/ai-endpoint.ts"), "utf8");
+const transpiled = ts.transpileModule(src, {
+  compilerOptions: { module: ts.ModuleKind.CommonJS },
+}).outputText;
+
+const ctx = { exports: {} };
+vm.runInNewContext(transpiled, ctx);
+const { normalizeEndpointUrl, parseLlmContent } = ctx.exports;
 
 test("normalizeEndpointUrl: appends /chat/completions to base /v1 endpoint", () => {
   assert.equal(

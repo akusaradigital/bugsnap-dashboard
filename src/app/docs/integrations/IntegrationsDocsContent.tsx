@@ -43,7 +43,7 @@ const INTEGRATION_DETAILS: Record<string, IntegrationDetail> = {
     samplePayload: `## [BugSnap Bug Report] #142 - Checkout button unresponsive
 **Environment:** Windows 11 · Chrome 132.0.0 · 1920x1080
 **Source URL:** https://app.example.com/checkout
-**Direct Capture Link:** https://bugsnap.akusaraproject.my.id/c/cap_9a8f2
+**Direct Capture Link:** https://bugsnap.akusaraproject.my.id/v/cap_9a8f2
 
 ### Console Diagnostics (2 Errors)
 - [Uncaught TypeError] Cannot read properties of undefined (reading 'calculateTaxes') at checkout.js:142
@@ -143,7 +143,7 @@ const INTEGRATION_DETAILS: Record<string, IntegrationDetail> = {
     ],
     samplePayload: `{
   "title": "[BugSnap] Checkout button unresponsive",
-  "description": "Bug report captured via BugSnap.\\n\\n### Environment\\n- OS: Windows 11 · Chrome 132.0.0\\n- URL: https://app.example.com/checkout\\n\\n### Console Diagnostics (2 Errors)\\n- [Uncaught TypeError] Cannot read properties of undefined at checkout.js:142\\n- [Network 500] POST https://api.example.com/v1/charge\\n\\n[View BugSnap Capture](https://bugsnap.akusaraproject.my.id/c/cap_9a8f2)",
+  "description": "Bug report captured via BugSnap.\\n\\n### Environment\\n- OS: Windows 11 · Chrome 132.0.0\\n- URL: https://app.example.com/checkout\\n\\n### Console Diagnostics (2 Errors)\\n- [Uncaught TypeError] Cannot read properties of undefined at checkout.js:142\\n- [Network 500] POST https://api.example.com/v1/charge\\n\\n[View BugSnap Capture](https://bugsnap.akusaraproject.my.id/v/cap_9a8f2)",
   "labels": "bug"
 }`,
     troubleshooting: [
@@ -217,7 +217,7 @@ const INTEGRATION_DETAILS: Record<string, IntegrationDetail> = {
     ],
     samplePayload: `{
   "name": "[BugSnap] Checkout button unresponsive",
-  "description": "Bug report captured via BugSnap.\\n\\n### Environment\\n- OS: Windows 11 · Chrome 132.0.0\\n- URL: https://app.example.com/checkout\\n\\n### Console Errors\\n- [error] Uncaught TypeError in checkout.js:142\\n\\n[View BugSnap Capture](https://bugsnap.akusaraproject.my.id/c/cap_9a8f2)",
+  "description": "Bug report captured via BugSnap.\\n\\n### Environment\\n- OS: Windows 11 · Chrome 132.0.0\\n- URL: https://app.example.com/checkout\\n\\n### Console Errors\\n- [error] Uncaught TypeError in checkout.js:142\\n\\n[View BugSnap Capture](https://bugsnap.akusaraproject.my.id/v/cap_9a8f2)",
   "priority": 2
 }`,
     troubleshooting: [
@@ -249,7 +249,7 @@ const INTEGRATION_DETAILS: Record<string, IntegrationDetail> = {
     samplePayload: `{
   "data": {
     "name": "[BugSnap] Checkout button unresponsive",
-    "notes": "Bug report captured via BugSnap.\\n\\nEnvironment: Windows 11 · Chrome 132.0.0\\nSource URL: https://app.example.com/checkout\\nDirect Capture Link: https://bugsnap.akusaraproject.my.id/c/cap_9a8f2\\n\\nDevTools: 2 console errors detected.",
+    "notes": "Bug report captured via BugSnap.\\n\\nEnvironment: Windows 11 · Chrome 132.0.0\\nSource URL: https://app.example.com/checkout\\nDirect Capture Link: https://bugsnap.akusaraproject.my.id/v/cap_9a8f2\\n\\nDevTools: 2 console errors detected.",
     "projects": ["1234567890"]
   }
 }`,
@@ -284,7 +284,7 @@ const INTEGRATION_DETAILS: Record<string, IntegrationDetail> = {
   {
     "op": "add",
     "path": "/fields/System.Description",
-    "value": "<p>Bug captured via BugSnap</p><h3>Environment</h3><p>OS: Windows 11<br/>Browser: Chrome 132.0.0</p><p><a href=\\"https://bugsnap.akusaraproject.my.id/c/cap_9a8f2\\">View BugSnap Capture</a></p>"
+    "value": "<p>Bug captured via BugSnap</p><h3>Environment</h3><p>OS: Windows 11<br/>Browser: Chrome 132.0.0</p><p><a href=\\"https://bugsnap.akusaraproject.my.id/v/cap_9a8f2\\">View BugSnap Capture</a></p>"
   }
 ]`,
     troubleshooting: [
@@ -318,7 +318,7 @@ const INTEGRATION_DETAILS: Record<string, IntegrationDetail> = {
   "blocks": [
     {
       "type": "section",
-      "text": { "type": "mrkdwn", "text": "*[BugSnap]* Screenshot - *Checkout button unresponsive*\\n<https://bugsnap.akusaraproject.my.id/c/cap_123|View Capture & DevTools Diagnostics>" }
+      "text": { "type": "mrkdwn", "text": "*[BugSnap]* Screenshot - *Checkout button unresponsive*\\n<https://bugsnap.akusaraproject.my.id/v/cap_123|View Capture & DevTools Diagnostics>" }
     }
   ]
 }`,
@@ -350,7 +350,7 @@ const INTEGRATION_DETAILS: Record<string, IntegrationDetail> = {
   "embeds": [
     {
       "title": "Checkout button unresponsive",
-      "url": "https://bugsnap.akusaraproject.my.id/c/cap_123",
+      "url": "https://bugsnap.akusaraproject.my.id/v/cap_123",
       "color": 15680580,
       "fields": [
         { "name": "Platform", "value": "Windows / Chrome", "inline": true },
@@ -397,7 +397,7 @@ const INTEGRATION_DETAILS: Record<string, IntegrationDetail> = {
     "priority": "P1",
     "description": "Bug report captured via BugSnap with full DevTools telemetry.",
     "acceptanceCriteria": "Verify bug reported in BugSnap capture is resolved.",
-    "evidence": "https://bugsnap.akusaraproject.my.id/c/cap_9a8f2"
+    "evidence": "https://bugsnap.akusaraproject.my.id/v/cap_9a8f2"
   }
 }`,
     troubleshooting: [
@@ -426,7 +426,7 @@ const INTEGRATION_DETAILS: Record<string, IntegrationDetail> = {
   "title": "Checkout button unresponsive",
   "description": "User clicks checkout button but total taxes fail to calculate.",
   "type": "video",
-  "driveUrl": "https://bugsnap.akusaraproject.my.id/c/cap_9a8f2",
+  "driveUrl": "https://bugsnap.akusaraproject.my.id/v/cap_9a8f2",
   "siteUrl": "https://app.example.com/checkout",
   "os": "Windows 11",
   "browser": "Chrome 132.0.0",
@@ -622,18 +622,18 @@ export function IntegrationsDocsContent() {
                   &gt;
                 </span>
                 <span className="text-slate-700 dark:text-slate-300 font-medium">
-                  {t("docs.integrationsTitle") || "Integrations"}
-                </span>
-
-                <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-300/60 dark:border-emerald-700/60">
-                  Setup Guides
+                  {t("docs.navIntegrations") || "Integrations"}
                 </span>
               </nav>
             </Reveal>
 
             <Reveal delay={0.07}>
-              <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15]">
-                {t("docs.integrationsTitle") || "Integration Guides & Setup Tutorials"}
+              <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12]">
+                {t("docs.integrationsTitle") || "Integration guides &"}
+                <br />
+                <span className="text-blue-600 dark:text-blue-500">
+                  {t("docs.integrationsTitleHighlight") || "setup tutorials"}
+                </span>
               </h1>
             </Reveal>
 
@@ -667,7 +667,7 @@ export function IntegrationsDocsContent() {
         </div>
 
         {/* Content Container */}
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 pb-20 sm:pb-28 space-y-10 sm:space-y-12">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 pb-12 sm:pb-16 space-y-8 sm:space-y-10">
           {/* Universal Credential Probe Notice Card */}
           <Reveal delay={0.1}>
             <div

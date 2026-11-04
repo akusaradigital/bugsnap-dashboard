@@ -343,7 +343,7 @@ export function PricingToggle() {
   };
 
   return (
-    <div className="space-y-20 font-site">
+    <div className="space-y-12 sm:space-y-16 font-site">
       {/* 1. Header & Billing Switcher */}
       <div className="text-center">
         {/* Segmented Billing Switch Container */}
@@ -495,7 +495,7 @@ export function PricingToggle() {
       <div id="feature-matrix" className="pt-8">
         <Reveal delay={0.2}>
           <div className="text-center max-w-2xl mx-auto mb-10">
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-site-text tracking-tight">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
               {t("pricing.compareTitle")}
             </h2>
             <p className="text-xs sm:text-sm text-site-text-2 mt-2">
@@ -574,7 +574,7 @@ export function PricingToggle() {
       <div className="max-w-3xl mx-auto pt-4">
         <Reveal delay={0.35}>
           <div className="text-center mb-8">
-            <h2 className="text-2xl font-extrabold text-site-text tracking-tight">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
               {t("pricing.faqTitle")}
             </h2>
             <p className="text-xs text-site-text-2 mt-1.5">

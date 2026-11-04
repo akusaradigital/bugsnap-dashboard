@@ -13,6 +13,7 @@ addCollection(lucideData as any);
 // by Iconify at render time, retaining defs, gradients, transforms, and path data.
 const logos = {
   chrome: thirdPartyLogos.chrome,
+  "chrome-web-store": (thirdPartyLogos as Record<string, string>)["chrome-web-store"],
   "microsoft-edge": thirdPartyLogos["microsoft-edge"],
   firefox: thirdPartyLogos.firefox,
   "google-drive": thirdPartyLogos["google-drive"],
@@ -48,5 +49,26 @@ addIcon("custom:chart-bars", {
   height: 24,
   body: `<rect x="3" y="14" width="4.5" height="7" rx="1.5" fill="currentColor"/><rect x="9.75" y="9" width="4.5" height="12" rx="1.5" fill="currentColor"/><rect x="16.5" y="4" width="4.5" height="17" rx="1.5" fill="currentColor"/>`,
 });
+
+// Offline Tabler compatibility aliases mapped from Lucide icons
+const tablerAliases: Record<string, string> = {
+  check: "check",
+  "arrow-left": "arrow-left",
+  "external-link": "external-link",
+  "info-circle": "info",
+  "shield-check": "shield-check",
+  "device-mobile": "smartphone",
+};
+
+for (const [tablerName, lucideName] of Object.entries(tablerAliases)) {
+  const iconData = (lucideData as { icons?: Record<string, { body: string }> }).icons?.[lucideName];
+  if (iconData) {
+    addIcon(`tabler:${tablerName}`, {
+      width: 24,
+      height: 24,
+      body: iconData.body,
+    });
+  }
+}
 
 export { Icon } from "@iconify/react";

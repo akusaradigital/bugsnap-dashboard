@@ -24,6 +24,7 @@ export const APP_ICONS = {
     errorSpikes: "lucide:alert-triangle",
     setup: "lucide:sliders",
     home: "lucide:house",
+    changelog: "lucide:file-text",
   },
   // Actions & Controls
   action: {

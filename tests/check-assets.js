@@ -37,5 +37,6 @@ console.log("Checked assets (" + checked.size + "):", Array.from(checked).sort()
 if (missing.size === 0) {
   console.log("SUCCESS: 0 missing assets found!");
 } else {
-  console.log("MISSING ASSETS (" + missing.size + "):", Array.from(missing));
+  console.error("MISSING ASSETS (" + missing.size + "):", Array.from(missing));
+  process.exit(1);
 }

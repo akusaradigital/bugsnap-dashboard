@@ -195,7 +195,7 @@ export default function AdminErrorSpikesPage() {
                       <td className="py-3 px-4 max-w-[260px] truncate text-slate-500 dark:text-zinc-400">
                         {spike.sampleCaptureId ? (
                           <a
-                            href={`/c/${spike.sampleCaptureId}`}
+                            href={`/v/${spike.sampleCaptureId}`}
                             target="_blank"
                             rel="noreferrer"
                             className="text-[#89BD49] hover:underline flex items-center gap-1 truncate"

@@ -19,7 +19,7 @@ export function HowItWorksContent() {
 
       <main id="main-content" className="flex-1">
         {/* Breadcrumb & Hero */}
-        <section className="pt-8 sm:pt-14 pb-12 sm:pb-20 text-center px-4 sm:px-6 max-w-4xl mx-auto">
+        <section className="pt-8 sm:pt-12 pb-8 sm:pb-12 text-center px-4 sm:px-6 max-w-4xl mx-auto">
           <Reveal delay={0}>
             <nav
               className="inline-flex items-center justify-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-4 sm:mb-6"
@@ -41,8 +41,12 @@ export function HowItWorksContent() {
           </Reveal>
 
           <Reveal delay={0.06}>
-            <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-tight">
-              {t("howItWorks.title") || "How BugSnap Works"}
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12]">
+              {t("howItWorks.title") || "From instant capture"}
+              <br />
+              <span className="text-blue-600 dark:text-blue-500">
+                {t("howItWorks.titleHighlight") || "to the root-cause fix"}
+              </span>
             </h1>
           </Reveal>
 
@@ -55,7 +59,7 @@ export function HowItWorksContent() {
         </section>
 
         {/* Steps Container */}
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 space-y-20 sm:space-y-28 lg:space-y-36 pb-20 sm:pb-32">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 space-y-12 sm:space-y-16 lg:space-y-20 pb-12 sm:pb-16">
           {/* STEP 01 */}
           <Reveal delay={0.05}>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
@@ -70,7 +74,7 @@ export function HowItWorksContent() {
                     {t("howItWorks.cat01")}
                   </span>
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
                   {t("howItWorks.title01")}
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
@@ -283,7 +287,7 @@ export function HowItWorksContent() {
                     {t("howItWorks.cat02")}
                   </span>
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
                   {t("howItWorks.title02")}
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
@@ -336,7 +340,7 @@ export function HowItWorksContent() {
                     {t("howItWorks.cat03")}
                   </span>
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
                   {t("howItWorks.title03")}
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
@@ -588,7 +592,7 @@ export function HowItWorksContent() {
                     {t("howItWorks.cat04")}
                   </span>
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
                   {t("howItWorks.title04")}
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
@@ -641,7 +645,7 @@ export function HowItWorksContent() {
                     {t("howItWorks.cat05")}
                   </span>
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
                   {t("howItWorks.title05")}
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
@@ -932,7 +936,7 @@ export function HowItWorksContent() {
                     {t("howItWorks.cat06")}
                   </span>
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
                   {t("howItWorks.title06")}
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
@@ -978,7 +982,7 @@ export function HowItWorksContent() {
                 <div className="text-[11px] font-bold text-[#6B9A35] dark:text-[#A8D666] tracking-wider uppercase">
                   {t("howItWorks.ctaEyebrow")}
                 </div>
-                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
                   {t("howItWorks.ctaTitle")}
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">

@@ -11,7 +11,8 @@ const CHROME_STORE_URL =
   "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
 
 export function HelpContent() {
-  const { t } = useT();
+  const { t, locale } = useT();
+  const isId = locale === "id";
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   const faqs = [
@@ -23,8 +24,9 @@ export function HelpContent() {
 
   return (
     <StaticShell
-      title={t("help.title")}
-      breadcrumb={t("help.title")}
+      title={t("help.title") || "Help center &"}
+      titleHighlight={t("help.titleHighlight") || "frequently asked questions"}
+      breadcrumb={isId ? "Pusat Bantuan" : "Help"}
       subtitle={t("help.subtitle")}
       compactHero={true}
       hideDivider={true}

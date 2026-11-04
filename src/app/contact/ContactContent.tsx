@@ -17,9 +17,9 @@ export function ContactContent() {
     <div className="min-h-screen text-slate-800 dark:text-slate-100 font-site flex flex-col bg-[#fcfdfe] dark:bg-[#0b0f17]">
       <SiteNavbar />
 
-      <main id="main-content" className="flex-1 pb-16 sm:pb-24">
+      <main id="main-content" className="flex-1 pb-12 sm:pb-16">
         {/* Header Section */}
-        <div className="pt-8 sm:pt-14 pb-8 sm:pb-12 text-center max-w-4xl mx-auto px-4 sm:px-6">
+        <div className="pt-6 sm:pt-10 pb-6 sm:pb-10 text-center max-w-4xl mx-auto px-4 sm:px-6">
           <Reveal delay={0}>
             {/* Breadcrumb */}
             <nav
@@ -42,8 +42,12 @@ export function ContactContent() {
           </Reveal>
 
           <Reveal delay={0.06}>
-            <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white">
-              {t("contact.title") || "Contact Us"}
+            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12]">
+              {t("contact.heroTitlePrefix") || "We are here to"}
+              <br />
+              <span className="text-blue-600 dark:text-blue-500">
+                {t("contact.heroTitleHighlight") || "help your team"}
+              </span>
             </h1>
           </Reveal>
 
