@@ -65,7 +65,7 @@ export function BlogBottomBanner() {
         </div>
 
         <div>
-          <span className="inline-block px-2.5 py-0.5 rounded-full text-[10px] font-extrabold tracking-wider uppercase bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300 border border-emerald-200/50">
+          <span className="text-xs font-bold tracking-wider uppercase text-[#5ca338] dark:text-emerald-400">
             {t("blog.stayUpdated") || "STAY UPDATED"}
           </span>
         </div>
@@ -92,7 +92,7 @@ export function BlogBottomBanner() {
             </p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="pt-2 max-w-md mx-auto space-y-2">
+          <form onSubmit={handleSubmit} className="pt-2 max-w-lg mx-auto space-y-2 w-full min-w-0">
             {/* Honeypot field for bot suppression */}
             <input
               type="text"
@@ -105,7 +105,7 @@ export function BlogBottomBanner() {
               aria-hidden="true"
             />
 
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5">
+            <div className="flex flex-col sm:flex-row items-stretch gap-2.5 w-full min-w-0">
               <div className="relative flex-1 min-w-0">
                 <Icon
                   icon="lucide:mail"
@@ -122,20 +122,20 @@ export function BlogBottomBanner() {
                   }}
                   placeholder={t("blog.subEmailPlaceholder") || "Enter your email"}
                   required
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-slate-200 dark:border-site-border bg-white dark:bg-site-surface text-xs sm:text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:border-[#68a63c] transition-colors shadow-2xs"
+                  className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 dark:border-site-border bg-white dark:bg-site-surface text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:border-[#68a63c] transition-colors shadow-2xs"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={loading}
-                className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#68a63c] hover:bg-[#5ca338] text-white font-bold text-xs sm:text-sm shadow-xs transition-colors touch-manipulation cursor-pointer disabled:opacity-60 shrink-0"
+                className="h-11 px-5 sm:px-6 rounded-xl bg-[#68a63c] hover:bg-[#5ca338] text-white font-bold text-sm shadow-xs transition-colors touch-manipulation cursor-pointer disabled:opacity-60 inline-flex items-center justify-center gap-2 shrink-0 sm:w-auto"
               >
                 <Icon icon="lucide:bell" className="w-4 h-4 shrink-0" aria-hidden="true" />
                 <span>
                   {loading
                     ? "..."
-                    : (t("blog.promoButton") || "Subscribe to Our Newsletter")}
+                    : (t("blog.promoButton") || "Subscribe")}
                 </span>
               </button>
             </div>

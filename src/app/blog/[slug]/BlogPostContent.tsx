@@ -48,14 +48,6 @@ export function BlogPostContent({ slug }: { slug: string }) {
   const title = (isId && post?.titleId) || post?.title || "";
   const rawContent = (isId && post?.contentId) || post?.content || "";
 
-  // Category determination
-  const category = useMemo(() => {
-    if (slug === "zero-storage-liability-why-byo-google-drive-wins") {
-      return "DEVOPS";
-    }
-    return (post?.tags?.[0] || "DEVOPS").toUpperCase();
-  }, [slug, post]);
-
   // Dynamically extract h2 headings and enhance special content blocks to match Image #1
   const { processedHtml, headings } = useMemo(() => {
     if (!rawContent) return { processedHtml: "", headings: [] };
@@ -318,13 +310,6 @@ export function BlogPostContent({ slug }: { slug: string }) {
                   {title}
                 </span>
               </nav>
-
-              {/* Category Pill Tag */}
-              <div className="mb-3">
-                <span className="inline-block px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-200/60 dark:border-emerald-800/40">
-                  {category}
-                </span>
-              </div>
 
               {/* Main Article Title */}
               <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] mb-4">

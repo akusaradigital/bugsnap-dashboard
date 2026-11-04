@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [bugsnap-dashboard]
 
+### 2026-11-04 (v0.14.1)
+- **fix**: Clean blog card UI by removing decorative sparkle icon clutter from blog articles
+- **fix**: Remove hardcoded English strings and align marketing i18n dictionaries
+- **perf**: Verify mobile 360px-440px viewport containment on public capture view with zero horizontal overflow
+- **chore**: Authenticated real browser E2E verification across dashboard and extension
+
 ### 2026-11-04 (v0.14.0)
 - **feat**: Admin Changelog viewer reading directly from repository markdown with project & date filters
 - **feat**: Dual-view mode (colored cards and raw GitHub markdown) with copy-to-clipboard support
@@ -34,6 +40,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 ---
 
 ## [bugsnap-extension]
+
+### 2026-11-04 (v1.0.73)
+- **fix**: Enforce tabular-nums and fixed 52px width on floating recording timer pill to prevent layout jitter
+- **fix**: Prevent temporal dead zone ReferenceErrors in annotation editor initialization
+- **fix**: Native browser permission prompts for camera and microphone in extension settings
+- **feat**: Real browser E2E test suites for production websites (GitHub CSP, Vue.js, Shoelace, Infinite Scroll, Wikipedia)
+- **feat**: Authenticated persistent browser E2E test suite verifying two-way session synchronization
 
 ### 2026-11-04 (v1.0.72)
 - **feat**: Mozilla Firefox AMO packaging compliance with zero validation warnings

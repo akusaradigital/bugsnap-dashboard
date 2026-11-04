@@ -21,49 +21,6 @@ function formatBlogDate(dateStr: string, isId: boolean): string {
   }
 }
 
-function getCategoryBadgeStyle(cat?: string): string {
-  switch (cat?.toUpperCase()) {
-    case "DEVOPS":
-    case "PLAYWRIGHT":
-      return "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300 border border-emerald-200/50";
-    case "PERFORMANCE":
-      return "bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-200/50";
-    case "GUIDE":
-      return "bg-blue-100 text-blue-800 dark:bg-blue-950/70 dark:text-blue-300 border border-blue-200/50";
-    case "CHROME":
-      return "bg-teal-100 text-teal-800 dark:bg-teal-950/70 dark:text-teal-300 border border-teal-200/50";
-    case "PRODUCTIVITY":
-      return "bg-purple-100 text-purple-800 dark:bg-purple-950/70 dark:text-purple-300 border border-purple-200/50";
-    case "BEST PRACTICES":
-    case "BEST PRACTICE":
-      return "bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-200/50";
-    default:
-      return "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300 border border-slate-200/50";
-  }
-}
-
-function getCategoryIcon(cat?: string): string {
-  switch (cat?.toUpperCase()) {
-    case "DEVOPS":
-      return "lucide:sparkles";
-    case "PLAYWRIGHT":
-      return "lucide:terminal";
-    case "PERFORMANCE":
-      return "lucide:activity";
-    case "GUIDE":
-      return "lucide:compass";
-    case "CHROME":
-      return "lucide:chrome";
-    case "PRODUCTIVITY":
-      return "lucide:clock";
-    case "BEST PRACTICES":
-    case "BEST PRACTICE":
-      return "lucide:shield-check";
-    default:
-      return "lucide:sparkles";
-  }
-}
-
 function getPaginationItems(current: number, total: number): (number | string)[] {
   if (total <= 5) {
     return Array.from({ length: total }, (_, i) => i + 1);
@@ -179,12 +136,9 @@ export function BlogListContent() {
 
                 {/* Footer: Author & Read Time */}
                 <div className="pt-4 sm:pt-6 mt-6 border-t border-slate-100 dark:border-site-border-subtle flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                  <div className="flex items-center gap-1.5 font-medium truncate">
-                    <Icon icon="lucide:sparkles" className="w-3.5 h-3.5 text-slate-400 shrink-0" aria-hidden="true" />
-                    <span className="truncate">
-                      {isId ? `Oleh ${featuredPost.author}` : `By ${featuredPost.author}`}
-                    </span>
-                  </div>
+                  <span className="font-medium truncate">
+                    {isId ? `Oleh ${featuredPost.author}` : `By ${featuredPost.author}`}
+                  </span>
 
                   <div className="flex items-center gap-1.5 font-medium shrink-0">
                     <span>{formatBlogDate(featuredPost.date, isId)}</span>
@@ -233,31 +187,11 @@ export function BlogListContent() {
                     }}
                     className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
                   />
-                  {/* Top-Left Category Overlay Badge on Image */}
-                  <div className="absolute top-3 left-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-900/80 backdrop-blur-xs text-white text-[11px] font-bold uppercase tracking-wider">
-                    <Icon
-                      icon={getCategoryIcon(post.category)}
-                      className="w-3.5 h-3.5 text-white shrink-0"
-                      aria-hidden="true"
-                    />
-                    <span>{post.category || "ARTICLE"}</span>
-                  </div>
                 </Link>
 
                 {/* Body Content */}
                 <div className="p-5 sm:p-6 flex-1 flex flex-col justify-between gap-4 min-w-0 w-full">
                   <div className="space-y-2.5 min-w-0">
-                    {/* Category Tag in Body */}
-                    <div>
-                      <span
-                        className={`inline-block px-2 py-0.5 rounded text-[10px] font-extrabold tracking-wider uppercase ${getCategoryBadgeStyle(
-                          post.category
-                        )}`}
-                      >
-                        {post.category || "ARTICLE"}
-                      </span>
-                    </div>
-
                     <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white line-clamp-2 leading-snug break-words group-hover:text-[#5ca338] dark:group-hover:text-emerald-400 transition-colors">
                       <Link href={`/blog/${post.slug}`}>{title}</Link>
                     </h3>
@@ -269,12 +203,9 @@ export function BlogListContent() {
 
                   {/* Footer: Author & Read Time */}
                   <div className="pt-4 border-t border-slate-100 dark:border-site-border-subtle flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                    <div className="flex items-center gap-1.5 font-medium truncate">
-                      <Icon icon="lucide:sparkles" className="w-3.5 h-3.5 text-slate-400 shrink-0" aria-hidden="true" />
-                      <span className="truncate">
-                        {isId ? `Oleh ${post.author}` : `By ${post.author}`}
-                      </span>
-                    </div>
+                    <span className="font-medium truncate">
+                      {isId ? `Oleh ${post.author}` : `By ${post.author}`}
+                    </span>
 
                     <div className="flex items-center gap-1.5 font-medium shrink-0">
                       <span>{formatBlogDate(post.date, isId)}</span>
