@@ -48,9 +48,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 ## [bugsnap-extension]
 
 ### 2026-11-09 (v1.0.74)
-- **feat**: Add modular real-browser upload-link coverage and organize test support utilities
+- **feat**: Smooth, fast visual upload progress animation from the first real percentage toward 99%, reserving 100% strictly for confirmed Google Drive success
+- **feat**: Add modular real-browser upload-link coverage and organize test support utilities under `test/support/`
 - **fix**: Retain successful and failed request telemetry with redacted request metadata
-- **fix**: Detect Brave from runtime capability data while preserving browser-specific packaging
+- **fix**: Centralize Brave/Chromium-family and extension-store host detection in the shared `storage-keys.js` registry instead of duplicated inline lists, preserving browser-specific packaging
+- **fix**: Remove unused `capture-full`/`capture-visible` keyboard shortcut bindings and dead notification icon assets
 - **docs**: Refresh extension testing, authentication, and release guidance
 
 ### 2026-11-04 (v1.0.73)

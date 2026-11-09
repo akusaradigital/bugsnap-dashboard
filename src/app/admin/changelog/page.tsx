@@ -12,7 +12,6 @@ interface ProjectMeta {
   id: "dashboard" | "extension" | "mcp";
   label: string;
   repo: string;
-  version: string;
   icon: string;
 }
 
@@ -23,10 +22,15 @@ interface ChangelogApiResponse {
   dates: string[];
 }
 
+// Static display metadata only (label/icon never change). Version is NOT
+// hardcoded here - it goes stale every release otherwise (it did: this used
+// to read v0.14.0/v1.0.72/v0.3.1 long after those shipped). The API derives
+// the current version straight from each project's latest CHANGELOG.md entry
+// (see data.projects), so this view is accurate as long as the changelog is.
 const PROJECTS: ProjectMeta[] = [
-  { id: "dashboard", label: "Dashboard", repo: "bugsnap-dashboard", version: "v0.14.0", icon: "lucide:layout-dashboard" },
-  { id: "extension", label: "Extension", repo: "bugsnap-extension", version: "v1.0.72", icon: "lucide:puzzle" },
-  { id: "mcp", label: "MCP Server", repo: "bugsnap-mcp", version: "v0.3.1", icon: "lucide:bot" },
+  { id: "dashboard", label: "Dashboard", repo: "bugsnap-dashboard", icon: "lucide:layout-dashboard" },
+  { id: "extension", label: "Extension", repo: "bugsnap-extension", icon: "lucide:puzzle" },
+  { id: "mcp", label: "MCP Server", repo: "bugsnap-mcp", icon: "lucide:bot" },
 ];
 
 export default function AdminChangelogPage() {
@@ -269,6 +273,7 @@ export default function AdminChangelogPage() {
               {/* Individual Projects */}
               {PROJECTS.map((proj) => {
                 const isActive = selectedProject === proj.id;
+                const liveVersion = data?.projects.find((p) => p.id === proj.id)?.version || "";
                 return (
                   <button
                     key={proj.id}
@@ -285,7 +290,7 @@ export default function AdminChangelogPage() {
                       <div className="min-w-0 truncate">
                         <span className="truncate block font-bold">{proj.label}</span>
                         <span className="text-[10px] text-slate-400 font-mono block leading-none mt-0.5">
-                          {proj.version}
+                          {liveVersion}
                         </span>
                       </div>
                     </div>

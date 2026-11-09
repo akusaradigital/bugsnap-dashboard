@@ -40,13 +40,19 @@ export async function GET(req: Request) {
     const releases = parseChangelog(raw);
     const dates = Array.from(new Set(releases.map((r) => r.date).filter(Boolean)));
 
+    // Derive each project's current version from its own latest changelog entry
+    // instead of hardcoding it here - releases are already ordered newest-first
+    // per project section, so the first match per project is the latest.
+    const latestVersion = (project: "dashboard" | "extension" | "mcp") =>
+      releases.find((r) => r.project === project)?.version || "";
+
     return NextResponse.json({
       raw,
       releases,
       projects: [
-        { id: "dashboard", label: "Dashboard", repo: "bugsnap-dashboard", version: "v0.14.0" },
-        { id: "extension", label: "Extension", repo: "bugsnap-extension", version: "v1.0.72" },
-        { id: "mcp", label: "MCP Server", repo: "bugsnap-mcp", version: "v0.3.1" },
+        { id: "dashboard", label: "Dashboard", repo: "bugsnap-dashboard", version: latestVersion("dashboard") },
+        { id: "extension", label: "Extension", repo: "bugsnap-extension", version: latestVersion("extension") },
+        { id: "mcp", label: "MCP Server", repo: "bugsnap-mcp", version: latestVersion("mcp") },
       ],
       dates,
     });
