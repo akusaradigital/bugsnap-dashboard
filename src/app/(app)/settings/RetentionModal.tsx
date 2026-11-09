@@ -49,7 +49,7 @@ export function RetentionModal({
                 onClose();
               }, 800);
             }}
-            className="w-full py-2.5 px-4 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] text-white font-bold text-xs shadow-xs shadow-[#89BD49]/25 transition-all flex items-center justify-center gap-2 active:scale-98 cursor-pointer"
+            className="w-full py-2.5 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-xs shadow-xs shadow-red-600/25 transition-all flex items-center justify-center gap-2 active:scale-98 cursor-pointer"
           >
             {copiedCode ? (
               <span className="inline-flex items-center gap-1.5">

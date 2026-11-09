@@ -220,7 +220,7 @@ export default function AdminSystemPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-3 border-b border-slate-200 dark:border-zinc-800">
         <div>
           <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            <span className="flex items-center gap-2"><Icon icon="lucide:hard-drive" className="w-4 h-4 shrink-0 text-[#6B9A35] dark:text-[#A8D666]" /> Sistem & Integrasi Diagnostics</span>
+            <span className="flex items-center gap-2"><Icon icon="lucide:hard-drive" className="w-4 h-4 shrink-0 text-[#B91C1C] dark:text-[#F87171]" /> Sistem & Integrasi Diagnostics</span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
             Pusat pemantauan konektivitas API eksternal, pembersihan storage orphan Google Drive, dan audit integritas skema database.
@@ -282,7 +282,7 @@ export default function AdminSystemPage() {
               >
                 <div>
                   <div className="flex items-center justify-between">
-                    <span className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-[#6B9A35] dark:text-[#A8D666]">
+                    <span className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-zinc-800 flex items-center justify-center text-[#B91C1C] dark:text-[#F87171]">
                       <Icon icon={iconKey} className="w-4 h-4 shrink-0" />
                     </span>
                     <span
@@ -331,13 +331,13 @@ export default function AdminSystemPage() {
                 placeholder="Target User UUID (opsional jika login dengan akun admin)"
                 value={targetUserIdInput}
                 onChange={(e) => setTargetUserIdInput(e.target.value)}
-                className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200 flex-1 font-mono placeholder:font-sans placeholder:text-slate-400 focus:outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 min-w-0"
+                className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200 flex-1 font-mono placeholder:font-sans placeholder:text-slate-400 focus:outline-none focus:border-[#DC2626] focus:ring-1 focus:ring-[#DC2626]/20 min-w-0"
               />
               <button
                 type="button"
                 onClick={handleScanDrive}
                 disabled={scanningDrive || cleaningDrive}
-                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-xs shadow-[#89BD49]/25 disabled:opacity-50 transition-colors cursor-pointer shrink-0 inline-flex items-center justify-center gap-1.5"
+                className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#DC2626] hover:bg-[#B91C1C] text-white shadow-xs shadow-[#DC2626]/25 disabled:opacity-50 transition-colors cursor-pointer shrink-0 inline-flex items-center justify-center gap-1.5"
               >
                 {scanningDrive ? "Memindai..." : (
                   <>
@@ -358,7 +358,7 @@ export default function AdminSystemPage() {
               <div className="mt-4 space-y-3">
                 {orphanData.targetUserId && (
                   <div className="text-[11px] text-slate-500 dark:text-zinc-400 font-mono break-all">
-                    Target User ID: <span className="text-[#6B9A35] dark:text-[#A8D666] font-bold">{orphanData.targetUserId}</span>
+                    Target User ID: <span className="text-[#B91C1C] dark:text-[#F87171] font-bold">{orphanData.targetUserId}</span>
                   </div>
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center">
@@ -428,7 +428,7 @@ export default function AdminSystemPage() {
                 type="button"
                 onClick={loadAudit}
                 disabled={loadingAudit}
-                className="text-xs text-[#6B9A35] hover:text-[#557A2B] dark:text-[#A8D666] dark:hover:text-[#C2E688] hover:underline font-semibold cursor-pointer inline-flex items-center gap-1"
+                className="text-xs text-[#B91C1C] hover:text-[#991B1B] dark:text-[#F87171] dark:hover:text-[#FCA5A5] hover:underline font-semibold cursor-pointer inline-flex items-center gap-1"
               >
                 {loadingAudit ? "Memeriksa..." : (
                   <>
@@ -487,7 +487,7 @@ export default function AdminSystemPage() {
                   onClick={() => setRetentionDays(opt.days)}
                   className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-colors cursor-pointer ${
                     active
-                      ? "bg-[#89BD49] text-white shadow-xs"
+                      ? "bg-[#DC2626] text-white shadow-xs"
                       : "bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700"
                   }`}
                 >
@@ -563,7 +563,7 @@ export default function AdminSystemPage() {
             type="button"
             onClick={checkDriveHealth}
             disabled={checkingDriveHealth}
-            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-xs shadow-[#89BD49]/25 disabled:opacity-50 transition-colors cursor-pointer shrink-0 inline-flex items-center gap-1.5"
+            className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#DC2626] hover:bg-[#B91C1C] text-white shadow-xs shadow-[#DC2626]/25 disabled:opacity-50 transition-colors cursor-pointer shrink-0 inline-flex items-center gap-1.5"
           >
             {checkingDriveHealth ? "Memeriksa..." : (
               <>

@@ -20,7 +20,7 @@ export interface AuthUserRow {
 }
 
 /**
- * Resolve the Bearer-token user server-side (service role → auth.getUser) and
+ * Resolve the Bearer-token user server-side (service role  auth.getUser) and
  * fetch their `public.users` row (plan, suspended). Returns null when the token
  * is missing/invalid. Used by gated API routes so plan checks happen on the
  * server, never trust the client.

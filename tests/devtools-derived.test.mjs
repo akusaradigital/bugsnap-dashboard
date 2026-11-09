@@ -365,3 +365,45 @@ test("allActionLogs maps cleanActionMessage before isDeadAction to prune styled 
   assert.equal(isDead(cleaned), true);
 });
 
+// --- networkLocation & resource name derivation ------------------------------
+test("networkLocation parses relative paths and extracts clean resource names", () => {
+  const networkLocation = (value) => {
+    if (!value) return { domain: "-", path: "" };
+    try {
+      const isRelative = value.startsWith("/") || !/^https?:\/\//i.test(value);
+      const url = new URL(value, "https://local.capture");
+      return {
+        domain: isRelative ? "" : url.hostname,
+        path: `${url.pathname}${url.search}` || "/",
+      };
+    } catch {
+      return { domain: value || "-", path: "" };
+    }
+  };
+
+  const getName = (url) => {
+    const { domain, path } = networkLocation(url);
+    return (path && path !== "/" ? path.split("?")[0].split("/").filter(Boolean).pop() : "") || domain || (url || "-");
+  };
+
+  // Relative API call with query string: must extract "itinerary", NOT full query string
+  assert.equal(getName("/api/ai/itinerary?userId=1d184f06-56cf-4c80-a60c-13564f23a363&session=xyz"), "itinerary");
+
+  // Relative path without query
+  assert.equal(getName("/api/v1/photos"), "photos");
+
+  // Full URL
+  assert.equal(getName("https://travelindonesia.cn/photos"), "photos");
+  assert.equal(getName("https://travelindonesia.cn/cn/zh-cn/itinerary?des=123"), "itinerary");
+
+  // Root URL
+  assert.equal(getName("https://travelindonesia.cn/"), "travelindonesia.cn");
+
+  // Root relative
+  assert.equal(getName("/"), "/");
+
+  // Undefined
+  assert.equal(getName(undefined), "-");
+});
+
+

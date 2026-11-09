@@ -199,7 +199,7 @@ export function HotkeyCommandBar() {
       <div className="mx-3 sm:mx-4 mb-3 sm:mb-4 p-3.5 sm:p-4 rounded-xl border border-site-border bg-site-surface-2/80 space-y-2.5 min-w-0">
         <div className="flex items-center justify-between gap-2 min-w-0 flex-wrap">
           <div className="flex items-center gap-2 min-w-0 text-xs font-bold text-site-text">
-            <Icon icon="lucide:settings" className="w-3.5 h-3.5 text-[#6B9A35] dark:text-[#A8D666] shrink-0" aria-hidden="true" />
+            <Icon icon="lucide:settings" className="w-3.5 h-3.5 text-red-700 dark:text-red-300 shrink-0" aria-hidden="true" />
             <span className="truncate">{t("site.hotkeys.setupTitle")}</span>
           </div>
 

@@ -8,6 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [bugsnap-dashboard]
 
+### 2026-11-09 (v0.14.2)
+- **feat**: Capture-driven DevTools MCP actions for fixes, summaries, E2E tests, and setup guidance
+- **fix**: Preserve real network telemetry and report Brave runtime identity instead of a Chromium fallback
+- **fix**: Remove misleading report and AI action surfaces from the capture view
+- **docs**: Update real-browser testing and modular validation guidance
+
 ### 2026-11-04 (v0.14.1)
 - **fix**: Clean blog card UI by removing decorative sparkle icon clutter from blog articles
 - **fix**: Remove hardcoded English strings and align marketing i18n dictionaries
@@ -41,6 +47,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [bugsnap-extension]
 
+### 2026-11-09 (v1.0.74)
+- **feat**: Add modular real-browser upload-link coverage and organize test support utilities
+- **fix**: Retain successful and failed request telemetry with redacted request metadata
+- **fix**: Detect Brave from runtime capability data while preserving browser-specific packaging
+- **docs**: Refresh extension testing, authentication, and release guidance
+
 ### 2026-11-04 (v1.0.73)
 - **fix**: Enforce tabular-nums and fixed 52px width on floating recording timer pill to prevent layout jitter
 - **fix**: Prevent temporal dead zone ReferenceErrors in annotation editor initialization
@@ -72,6 +84,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 ---
 
 ## [bugsnap-mcp]
+
+### 2026-11-09 (v0.3.2)
+- **feat**: Expose capture-derived Playwright, fix, summary, and workflow context through the MCP detail payload
+- **fix**: Preserve real browser and telemetry metadata in generated agent prompts
+- **docs**: Synchronize MCP usage and release guidance with the current BugSnap workflow
 
 ### 2026-11-04 (v0.3.1)
 - **feat**: Synthesized Playwright test generation from recorded bug captures

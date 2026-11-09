@@ -153,7 +153,6 @@ export const commonEn: Dict = {
   "helpMenu.blog": "Blog",
   "helpMenu.install": "Install BugSnap",
   "helpMenu.installChrome": "Google Chrome",
-  "helpMenu.installEdge": "Microsoft Edge",
   "helpMenu.installFirefox": "Mozilla Firefox",
   "helpMenu.comingSoon": "Coming Soon",
   "helpMenu.helpAndResources": "Help & Resources",
@@ -172,10 +171,10 @@ export const commonEn: Dict = {
   "common.submit": "Submit",
   "login.title": "Log in to continue",
   "login.subtitle":
-    "Capture screen recordings with full DevTools context, saved directly to your own Google Drive.",
+    "Take screenshots or record your screen with full DevTools context, saved directly to your own Google Drive.",
   "login.welcomeTitle": "Welcome to BugSnap",
   "login.welcomeSubtitle":
-    "Capture screen recordings with full DevTools context, saved directly to your own Google Drive.",
+    "Take screenshots or record your screen with full DevTools context, saved directly to your own Google Drive.",
   "login.continueGoogle": "Continue with Google",
   "login.connecting": "Connecting to Google...",
   "login.termsAgreement": "By continuing, you agree to our",
@@ -381,7 +380,6 @@ export const commonId: Dict = {
   "helpMenu.blog": "Blog",
   "helpMenu.install": "Pasang BugSnap",
   "helpMenu.installChrome": "Google Chrome",
-  "helpMenu.installEdge": "Microsoft Edge",
   "helpMenu.installFirefox": "Mozilla Firefox",
   "helpMenu.comingSoon": "Segera Hadir",
   "helpMenu.helpAndResources": "Bantuan & Sumber Daya",
@@ -400,10 +398,10 @@ export const commonId: Dict = {
   "common.submit": "Kirim",
   "login.title": "Masuk untuk melanjutkan",
   "login.subtitle":
-    "Rekam layar dengan konteks lengkap DevTools, tersimpan langsung di Google Drive pribadi Anda.",
+    "Ambil screenshot atau rekam layar dengan konteks lengkap DevTools, tersimpan langsung di Google Drive pribadi Anda.",
   "login.welcomeTitle": "Selamat Datang di BugSnap",
   "login.welcomeSubtitle":
-    "Rekam layar dengan konteks lengkap DevTools, tersimpan langsung di Google Drive pribadi Anda.",
+    "Ambil screenshot atau rekam layar dengan konteks lengkap DevTools, tersimpan langsung di Google Drive pribadi Anda.",
   "login.continueGoogle": "Lanjutkan dengan Google",
   "login.connecting": "Menghubungkan ke Google...",
   "login.termsAgreement": "Dengan melanjutkan, Anda menyetujui",

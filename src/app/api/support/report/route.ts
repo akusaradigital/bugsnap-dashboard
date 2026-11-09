@@ -147,7 +147,7 @@ export async function POST(req: Request) {
 
     const categoryLabels: Record<string, { label: string; badge: string; color: string }> = {
       bug: { label: "Laporan Bug (Bug Report)", badge: "🐛 BUG", color: "#dc2626" },
-      feature: { label: "Request Fitur Baru (New Feature)", badge: "💡 FITUR", color: "#6B9A35" },
+      feature: { label: "Request Fitur Baru (New Feature)", badge: "💡 FITUR", color: "#B91C1C" },
       other: { label: "Pertanyaan / Lain-lain (General)", badge: "💬 SUPPORT", color: "#2563eb" },
     };
 
@@ -195,7 +195,7 @@ export async function POST(req: Request) {
           </div>
 
           <div style="margin-top: 24px; text-align: center;">
-            <a href="mailto:${encodeURIComponent(userEmail)}?subject=Re: ${encodeURIComponent(finalSubject)}" style="display: inline-block; background: #89BD49; color: #ffffff; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 600;">
+            <a href="mailto:${encodeURIComponent(userEmail)}?subject=Re: ${encodeURIComponent(finalSubject)}" style="display: inline-block; background: #DC2626; color: #ffffff; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 600;">
               Balas ke ${escapeHtml(userEmail)}
             </a>
           </div>

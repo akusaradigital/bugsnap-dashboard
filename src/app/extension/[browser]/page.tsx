@@ -6,7 +6,7 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 import { BrowserProgressContent } from "./BrowserProgressContent";
 
 export function generateStaticParams() {
-  return [{ browser: "firefox" }, { browser: "edge" }];
+  return [{ browser: "firefox" }];
 }
 
 interface PageProps {
@@ -18,19 +18,9 @@ interface PageProps {
 export function generateMetadata({ params }: PageProps): Metadata {
   if (params.browser === "firefox") {
     return pageMeta({
-      title: "BugSnap for Mozilla Firefox - In Review",
-      description:
-        "BugSnap for Mozilla Firefox is currently under review on Mozilla Add-ons (AMO). Capture bugs with automated DevTools logs stored directly in Google Drive.",
+      title: "BugSnap for Firefox",
+      description: "Install BugSnap from the official Mozilla Add-ons listing.",
       canonical: "/extension/firefox",
-    });
-  }
-
-  if (params.browser === "edge") {
-    return pageMeta({
-      title: "BugSnap for Microsoft Edge - In Preparation",
-      description:
-        "BugSnap works on Microsoft Edge today via Chrome Web Store, with native Microsoft Edge Add-ons catalog release in preparation.",
-      canonical: "/extension/edge",
     });
   }
 
@@ -38,7 +28,7 @@ export function generateMetadata({ params }: PageProps): Metadata {
 }
 
 export default function BrowserProgressPage({ params }: PageProps) {
-  if (params.browser !== "firefox" && params.browser !== "edge") {
+  if (params.browser !== "firefox") {
     notFound();
   }
 
@@ -46,7 +36,7 @@ export default function BrowserProgressPage({ params }: PageProps) {
     <div className="min-h-screen bg-site-bg text-site-text flex flex-col font-site">
       <SiteHeader />
       <main className="flex-1 pt-10 sm:pt-14">
-        <BrowserProgressContent browser={params.browser} />
+        <BrowserProgressContent browser="firefox" />
       </main>
       <SiteFooter />
     </div>

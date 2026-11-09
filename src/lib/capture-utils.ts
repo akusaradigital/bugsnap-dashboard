@@ -48,7 +48,7 @@ export function timeAgo(iso: string, t: (k: string, vars?: Record<string, string
   if (h < 24) return t("time.hrAgo", { n: h });
   const d = Math.floor(h / 24);
   if (d < 7) return t("time.dayAgo", { n: d });
-  // Older than a week → compact date, same as before.
+  // Older than a week  compact date, same as before.
   return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
 
@@ -61,7 +61,7 @@ export function formatDuration(sec: number | null | undefined): string {
 
 export function getAvatarColor(seed: string | null | undefined): string {
   const colors = [
-    "bg-[#89BD49]",
+    "bg-red-600",
     "bg-emerald-600",
     "bg-rose-600",
     "bg-amber-600",

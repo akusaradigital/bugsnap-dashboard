@@ -5,6 +5,7 @@ import { StaticShell } from "@/components/StaticShell";
 import { useT } from "@/components/I18nProvider";
 import { Reveal } from "@/components/site/motion";
 import { Icon } from "@/lib/iconify";
+import { FIREFOX_STORE_URL } from "@/lib/constants";
 
 const CHROME_STORE_URL =
   "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
@@ -156,21 +157,6 @@ export function SecurityContent() {
                   </ul>
                 </div>
 
-                {/* Arrow 1 */}
-                <div className="hidden lg:flex justify-center text-slate-400 px-1">
-                  <Icon
-                    icon="lucide:arrow-right"
-                    className="w-5 h-5 text-slate-400 stroke-[1.75]"
-                    aria-hidden="true"
-                  />
-                </div>
-                <div className="flex lg:hidden justify-center text-slate-500 py-1">
-                  <Icon
-                    icon="lucide:arrow-down"
-                    className="w-4 h-4 text-slate-500 stroke-[1.75]"
-                    aria-hidden="true"
-                  />
-                </div>
 
                 {/* Stage 2 (Accent Border) */}
                 <div className="h-full rounded-xl bg-[#1e293b]/90 border-2 border-emerald-500 p-5 sm:p-6 space-y-4 shadow-sm shadow-emerald-500/10">
@@ -193,21 +179,6 @@ export function SecurityContent() {
                   </ul>
                 </div>
 
-                {/* Arrow 2 */}
-                <div className="hidden lg:flex justify-center text-slate-400 px-1">
-                  <Icon
-                    icon="lucide:arrow-right"
-                    className="w-5 h-5 text-slate-400 stroke-[1.75]"
-                    aria-hidden="true"
-                  />
-                </div>
-                <div className="flex lg:hidden justify-center text-slate-500 py-1">
-                  <Icon
-                    icon="lucide:arrow-down"
-                    className="w-4 h-4 text-slate-500 stroke-[1.75]"
-                    aria-hidden="true"
-                  />
-                </div>
 
                 {/* Stage 3 */}
                 <div className="h-full rounded-xl bg-[#1e293b]/70 border border-slate-700/60 p-5 sm:p-6 space-y-4">
@@ -271,7 +242,7 @@ export function SecurityContent() {
 
         {/* Bottom CTA Box */}
         <Reveal delay={0.2}>
-          <div className="rounded-2xl sm:rounded-3xl border border-emerald-200/80 dark:border-emerald-800/40 bg-emerald-50/50 dark:bg-emerald-950/20 p-6 sm:p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+          <div className="rounded-2xl sm:rounded-3xl border border-blue-100 dark:border-blue-900/40 bg-[#f0f6ff] dark:bg-blue-950/25 p-6 sm:p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div className="space-y-1.5 flex-1 min-w-0">
               <h3 className="text-xl sm:text-2xl font-extrabold text-site-text tracking-tight">
                 {t("security.ctaTitle")}
@@ -285,7 +256,7 @@ export function SecurityContent() {
                 href={CHROME_STORE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-accent hover:bg-accent-hover text-slate-900 text-xs sm:text-sm font-bold px-6 py-3 min-h-[44px] transition-all shadow-sm shadow-accent/20 hover:scale-[1.01] active:scale-[0.99] whitespace-nowrap touch-manipulation"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-sm font-bold px-6 py-3 min-h-[44px] transition-all shadow-sm shadow-accent/20 hover:scale-[1.01] active:scale-[0.99] whitespace-nowrap touch-manipulation"
               >
                 <Icon
                   icon="logos:chrome"
@@ -294,16 +265,20 @@ export function SecurityContent() {
                 />
                 <span>{t("security.installFree")}</span>
               </a>
+              <a
+                href={FIREFOX_STORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-sm font-bold px-6 py-3 min-h-[44px] transition-all shadow-sm shadow-accent/20 hover:scale-[1.01] active:scale-[0.99] whitespace-nowrap touch-manipulation"
+              >
+                <Icon icon="logos:firefox" className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span>{t("extension.addToFirefox")}</span>
+              </a>
               <Link
                 href="/pricing"
                 className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-site-border bg-site-surface hover:bg-site-surface-2 text-site-text text-xs sm:text-sm font-semibold px-5 py-3 min-h-[44px] transition-colors whitespace-nowrap touch-manipulation"
               >
                 <span>{t("security.seePricing")}</span>
-                <Icon
-                  icon="lucide:arrow-right"
-                  className="w-3.5 h-3.5"
-                  aria-hidden="true"
-                />
               </Link>
             </div>
           </div>

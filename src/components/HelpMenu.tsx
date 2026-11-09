@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { Icon } from "@/lib/iconify";
 import { useT } from "@/components/I18nProvider";
-import { CHROME_STORE_URL } from "@/lib/constants";
+import { CHROME_STORE_URL, FIREFOX_STORE_URL } from "@/lib/constants";
 
 interface HelpMenuProps {
   className?: string;
@@ -101,9 +101,9 @@ export default function HelpMenu({ className = "" }: HelpMenuProps) {
         aria-label={t("helpMenu.helpAndResources")}
         aria-expanded={isOpen}
         aria-haspopup="menu"
-        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-[#89BD49]/30 ${
+        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-[#DC2626]/30 ${
           isOpen
-            ? "border-[#89BD49] bg-[#89BD49]/10 text-[#6B9A35] dark:text-[#A8D666]"
+            ? "border-[#DC2626] bg-[#DC2626]/10 text-[#B91C1C] dark:text-[#F87171]"
             : "border-border bg-white dark:bg-zinc-900 text-muted hover:text-foreground hover:bg-subtle hover:border-border/80"
         }`}
       >
@@ -270,13 +270,7 @@ export default function HelpMenu({ className = "" }: HelpMenuProps) {
                 />
                 <span className="truncate">{t("helpMenu.install")}</span>
               </div>
-              <Icon
-                icon="lucide:chevron-right"
-                className={`w-3.5 h-3.5 shrink-0 text-slate-400 dark:text-zinc-500 transition-transform ${
-                  submenuOpen ? "rotate-90 sm:rotate-0" : ""
-                }`}
-                aria-hidden="true"
-              />
+              
             </button>
 
             {/* Invisible bridge over the 6px gap to prevent premature pointer leave */}
@@ -314,25 +308,11 @@ export default function HelpMenu({ className = "" }: HelpMenuProps) {
                   <span className="text-[10px] text-muted shrink-0">Store</span>
                 </a>
 
-                {/* Edge */}
-                <Link
-                  href="/extension/edge"
-                  role="menuitem"
-                  onClick={closeAll}
-                  className="flex items-center justify-between gap-2.5 px-3 py-2 text-slate-700 dark:text-zinc-200 hover:text-foreground hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
-                >
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <Icon icon="logos:microsoft-edge" className="w-4 h-4 shrink-0" aria-hidden="true" />
-                    <span className="truncate font-medium">{t("helpMenu.installEdge")}</span>
-                  </div>
-                  <span className="text-[9px] px-1.5 py-0.5 rounded font-medium bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/20 shrink-0">
-                    Edge
-                  </span>
-                </Link>
-
                 {/* Firefox */}
-                <Link
-                  href="/extension/firefox"
+                <a
+                  href={FIREFOX_STORE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   role="menuitem"
                   onClick={closeAll}
                   className="flex items-center justify-between gap-2.5 px-3 py-2 text-slate-700 dark:text-zinc-200 hover:text-foreground hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
@@ -341,10 +321,8 @@ export default function HelpMenu({ className = "" }: HelpMenuProps) {
                     <Icon icon="logos:firefox" className="w-4 h-4 shrink-0" aria-hidden="true" />
                     <span className="truncate font-medium">{t("helpMenu.installFirefox")}</span>
                   </div>
-                  <span className="text-[9px] px-1.5 py-0.5 rounded font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20 shrink-0">
-                    {t("helpMenu.comingSoon")}
-                  </span>
-                </Link>
+                  <span className="text-[10px] text-muted shrink-0">Store</span>
+                </a>
               </div>
             )}
 
@@ -365,22 +343,10 @@ export default function HelpMenu({ className = "" }: HelpMenuProps) {
                   <span className="text-[9px] text-muted">Store</span>
                 </a>
 
-                <Link
-                  href="/extension/edge"
-                  onClick={closeAll}
-                  className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-zinc-200 hover:bg-slate-200/60 dark:hover:bg-zinc-800 text-[11px]"
-                >
-                  <div className="flex items-center gap-2 min-w-0">
-                    <Icon icon="logos:microsoft-edge" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                    <span className="truncate">{t("helpMenu.installEdge")}</span>
-                  </div>
-                  <span className="text-[9px] px-1 py-0.2 rounded font-medium bg-sky-500/10 text-sky-600 dark:text-sky-400">
-                    Edge
-                  </span>
-                </Link>
-
-                <Link
-                  href="/extension/firefox"
+                <a
+                  href={FIREFOX_STORE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   onClick={closeAll}
                   className="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-slate-700 dark:text-zinc-200 hover:bg-slate-200/60 dark:hover:bg-zinc-800 text-[11px]"
                 >
@@ -388,10 +354,8 @@ export default function HelpMenu({ className = "" }: HelpMenuProps) {
                     <Icon icon="logos:firefox" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                     <span className="truncate">{t("helpMenu.installFirefox")}</span>
                   </div>
-                  <span className="text-[9px] px-1 py-0.2 rounded font-medium bg-amber-500/10 text-amber-600 dark:text-amber-400">
-                    {t("helpMenu.comingSoon")}
-                  </span>
-                </Link>
+                  <span className="text-[9px] text-muted">Store</span>
+                </a>
               </div>
             )}
           </div>

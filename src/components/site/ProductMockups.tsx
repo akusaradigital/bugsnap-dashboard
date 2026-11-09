@@ -70,14 +70,14 @@ export function HeroProductShowcase() {
 
             {/* Targeted Bug Element */}
             <div className="relative">
-              <div className="rounded-lg border-2 border-red-500 bg-red-500/5 p-3 flex items-center justify-between">
+              <div className="min-w-0 rounded-lg border-2 border-red-500 bg-red-500/5 p-3 flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-red-500" />
                   <span className="text-xs font-semibold text-red-600 dark:text-red-400">
                     Pay $2,400.00
                   </span>
                 </div>
-                <span className="text-[10px] font-mono text-red-600 dark:text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded">
+                <span className="shrink-0 text-[10px] font-mono text-red-600 dark:text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded">
                   HTTP 500 on click
                 </span>
               </div>
@@ -367,10 +367,10 @@ export function PlaywrightExportCard() {
     <div className="rounded-xl border border-site-border bg-site-surface p-4 font-mono text-xs shadow-xs text-site-text">
       <div className="flex flex-wrap items-center justify-between gap-1 pb-2 border-b border-site-border-subtle font-sans">
         <div className="flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full bg-[#89BD49] shrink-0" />
+          <span className="h-2 w-2 rounded-full bg-[#DC2626] shrink-0" />
           <span className="font-semibold text-xs">Auto Playwright Generator</span>
         </div>
-        <span className="text-[10px] text-[#6B9A35] dark:text-[#A8D666] font-bold bg-[#89BD49]/10 px-2 py-0.5 rounded">
+        <span className="text-[10px] text-[#B91C1C] dark:text-[#F87171] font-bold bg-[#DC2626]/10 px-2 py-0.5 rounded">
           @playwright/test
         </span>
       </div>

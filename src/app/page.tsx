@@ -15,13 +15,13 @@ import {
 } from "@/components/site/ProductMockups";
 import {
   IconSquare,
-  IconArrowRight,
   IconCheck,
   IconX,
 } from "@/components/site/TablerIcons";
 import { Reveal } from "@/components/site/motion";
 import { SiteBackground } from "@/components/site/SiteBackground";
 import { Icon } from "@/lib/iconify";
+import { FIREFOX_STORE_URL } from "@/lib/constants";
 
 const ProductVideoDemo = dynamic(
   () =>
@@ -183,13 +183,17 @@ export default function LandingPage() {
     {
       num: "01",
       icon: "lucide:video",
-      badgeColor: "bg-red-50 text-red-600 border border-red-200/60 dark:bg-red-950/40 dark:text-red-400 dark:border-red-900/40",
+      iconColor: "text-rose-500 dark:text-rose-400",
+      iconSurface: "bg-rose-50 dark:bg-rose-950/35 border-rose-200/70 dark:border-rose-900/50",
+      badgeColor: "bg-emerald-50 text-emerald-700 border border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/40",
       title: t("site.flow.step1.title"),
       desc: t("site.flow.step1.desc"),
     },
     {
       num: "02",
       icon: "logos:google-drive",
+      iconColor: "text-emerald-600 dark:text-emerald-400",
+      iconSurface: "bg-emerald-50 dark:bg-emerald-950/35 border-emerald-200/70 dark:border-emerald-900/50",
       badgeColor: "bg-emerald-50 text-emerald-600 border border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/40",
       title: t("site.flow.step2.title"),
       desc: t("site.flow.step2.desc"),
@@ -197,6 +201,8 @@ export default function LandingPage() {
     {
       num: "03",
       icon: "lucide:sparkles",
+      iconColor: "text-sky-500 dark:text-sky-400",
+      iconSurface: "bg-sky-50 dark:bg-sky-950/35 border-sky-200/70 dark:border-sky-900/50",
       badgeColor: "bg-blue-50 text-blue-600 border border-blue-200/60 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-900/40",
       title: t("site.flow.step3.title"),
       desc: t("site.flow.step3.desc"),
@@ -204,6 +210,8 @@ export default function LandingPage() {
     {
       num: "04",
       icon: "lucide:link-2",
+      iconColor: "text-amber-500 dark:text-amber-400",
+      iconSurface: "bg-amber-50 dark:bg-amber-950/35 border-amber-200/70 dark:border-amber-900/50",
       badgeColor: "bg-amber-50 text-amber-600 border border-amber-200/60 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-900/40",
       title: t("site.flow.step4.title"),
       desc: t("site.flow.step4.desc"),
@@ -211,13 +219,17 @@ export default function LandingPage() {
     {
       num: "05",
       icon: "lucide:cpu",
+      iconColor: "text-violet-500 dark:text-violet-400",
+      iconSurface: "bg-violet-50 dark:bg-violet-950/35 border-violet-200/70 dark:border-violet-900/50",
       badgeColor: "bg-purple-50 text-purple-600 border border-purple-200/60 dark:bg-purple-950/40 dark:text-purple-400 dark:border-purple-900/40",
       title: t("site.flow.step5.title"),
       desc: t("site.flow.step5.desc"),
     },
     {
       num: "06",
-      icon: "lucide:check-circle-2",
+      icon: "lucide:check",
+      iconColor: "text-lime-600 dark:text-lime-400",
+      iconSurface: "bg-lime-50 dark:bg-lime-950/35 border-lime-200/70 dark:border-lime-900/50",
       badgeColor: "bg-[#EBF7E3] text-[#3D7A24] border border-[#CFE6BF] dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/40",
       title: t("site.flow.step6.title"),
       desc: t("site.flow.step6.desc"),
@@ -357,7 +369,7 @@ export default function LandingPage() {
                         href={CHROME_STORE_URL}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 min-h-[48px] rounded-xl bg-[#89BD49] hover:bg-[#78a83f] text-slate-900 text-sm sm:text-base font-bold shadow-sm hover:shadow hover:scale-[1.01] active:scale-[0.99] transition-all touch-manipulation"
+                        className="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 min-h-[48px] rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm sm:text-base font-bold shadow-sm hover:shadow hover:scale-[1.01] active:scale-[0.99] transition-all touch-manipulation"
                       >
                         <Icon icon="logos:chrome" className="w-5 h-5 shrink-0" aria-hidden="true" />
                         {t("site.bugsnap.split.cta")}
@@ -367,7 +379,6 @@ export default function LandingPage() {
                         className="inline-flex items-center justify-center gap-2 px-2 py-3 min-h-[44px] text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white transition-colors touch-manipulation group"
                       >
                         <span>{t("site.hero.ctaSecondary")}</span>
-                        <Icon icon="lucide:arrow-right" className="w-4 h-4 transition-transform group-hover:translate-x-0.5" />
                       </a>
                     </div>
                   </Reveal>
@@ -661,15 +672,15 @@ export default function LandingPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
                 {steps.map((step, i) => (
                   <Reveal key={step.num} delay={i * 0.06}>
-                    <div className="group relative rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 shadow-xs hover:border-[#89BD49]/60 hover:shadow-md transition-all duration-200 h-full flex flex-col justify-between min-w-0">
+                    <div className="group relative rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 shadow-xs hover:border-[#2563EB]/60 hover:shadow-md transition-all duration-200 h-full flex flex-col justify-between min-w-0">
                       <div>
                         {/* Top row: Number Badge + Icon */}
                         <div className="flex items-center justify-between mb-5">
                           <span className={`px-2.5 py-1 rounded-full text-xs font-mono font-bold ${step.badgeColor}`}>
                             {step.num}
                           </span>
-                          <div className="w-9 h-9 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200/70 dark:border-slate-700/70 flex items-center justify-center text-slate-700 dark:text-slate-300 group-hover:scale-105 transition-transform">
-                            <Icon icon={step.icon} className="w-5 h-5 shrink-0" aria-hidden="true" />
+                          <div className={`w-9 h-9 rounded-xl border flex items-center justify-center ${step.iconSurface} group-hover:scale-105 transition-transform`}>
+                            <Icon icon={step.icon} className={`w-5 h-5 shrink-0 ${step.iconColor}`} aria-hidden="true" />
                           </div>
                         </div>
 
@@ -707,11 +718,11 @@ export default function LandingPage() {
                 </div>
               </Reveal>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-stretch">
                 {/* Feature 1 */}
                 <Reveal delay={0}>
                   <div className="group p-6 rounded-xl border border-site-border bg-site-surface hover:border-accent/40 hover:-translate-y-0.5 transition-all duration-200 h-full flex flex-col gap-4">
-                    <div className="space-y-1.5 sm:min-h-[96px]">
+                    <div className="space-y-1.5 min-h-[132px] sm:min-h-[120px]">
                       <h3 className="text-sm font-bold text-site-text group-hover:text-accent transition-colors">
                         {t("site.features.f1.title")}
                       </h3>
@@ -720,8 +731,8 @@ export default function LandingPage() {
                       </p>
                     </div>
                     {/* Recording visual */}
-                    <div className="flex-1 flex flex-col justify-start">
-                      <div className="rounded-lg border border-site-border bg-site-surface-2 overflow-hidden">
+                    <div className="flex-1 flex flex-col justify-start min-h-0">
+                      <div className="rounded-lg border border-site-border bg-site-surface-2 overflow-hidden min-h-[190px]">
                         {/* Capture bar */}
                         <div className="flex items-center justify-between px-3 py-2 border-b border-site-border bg-site-surface">
                           <div className="flex items-center gap-1.5">
@@ -782,7 +793,7 @@ export default function LandingPage() {
                 {/* Feature 2 */}
                 <Reveal delay={0.07}>
                   <div className="group p-6 rounded-xl border border-site-border bg-site-surface hover:border-accent/40 hover:-translate-y-0.5 transition-all duration-200 h-full flex flex-col gap-4">
-                    <div className="space-y-1.5 sm:min-h-[96px]">
+                    <div className="space-y-1.5 min-h-[132px] sm:min-h-[120px]">
                       <h3 className="text-sm font-bold text-site-text group-hover:text-accent transition-colors">
                         {t("site.features.f2.title")}
                       </h3>
@@ -799,7 +810,7 @@ export default function LandingPage() {
                 {/* Feature 3 */}
                 <Reveal delay={0.14}>
                   <div className="group p-6 rounded-xl border border-site-border bg-site-surface hover:border-accent/40 hover:-translate-y-0.5 transition-all duration-200 h-full flex flex-col gap-4">
-                    <div className="space-y-1.5 sm:min-h-[96px]">
+                    <div className="space-y-1.5 min-h-[132px] sm:min-h-[120px]">
                       <h3 className="text-sm font-bold text-site-text group-hover:text-accent transition-colors">
                         {t("site.features.f3.title")}
                       </h3>
@@ -808,19 +819,19 @@ export default function LandingPage() {
                       </p>
                     </div>
                     {/* Visual annotation canvas */}
-                    <div className="flex-1 flex flex-col justify-start">
-                      <div className="rounded-lg border border-site-border bg-site-surface-2 overflow-hidden">
+                    <div className="flex-1 flex flex-col justify-start min-h-0">
+                      <div className="rounded-lg border border-site-border bg-site-surface-2 overflow-hidden min-h-[190px]">
                         {/* Mini canvas preview */}
                         <div className="relative p-3 bg-site-surface border-b border-site-border">
-                          <div className="rounded border-2 border-red-500 bg-red-500/5 p-2.5 flex items-center justify-between">
+                          <div className="min-w-0 rounded border-2 border-red-500 bg-red-500/5 p-2.5 flex flex-wrap items-center justify-between gap-2">
                             <span className="text-[10px] font-semibold text-red-600 dark:text-red-400">
                               Pay $2,400.00
                             </span>
-                            <span className="text-[9px] font-mono text-red-600 dark:text-red-400 bg-red-500/10 px-1 py-0.5 rounded">
+                            <span className="shrink-0 text-[9px] font-mono text-red-600 dark:text-red-400 bg-red-500/10 px-1 py-0.5 rounded">
                               HTTP 500
                             </span>
                           </div>
-                          <div className="absolute -top-1.5 right-4 bg-site-text text-site-surface text-[9px] font-medium px-1.5 py-0.5 rounded shadow flex items-center gap-1">
+                          <div className="absolute -top-1.5 right-4 max-w-[calc(100%-2rem)] truncate bg-site-text text-site-surface text-[9px] font-medium px-1.5 py-0.5 rounded shadow flex items-center gap-1">
                             <span className="w-1.5 h-1.5 rounded-full bg-accent" />
                             <span>Arrow #1</span>
                           </div>
@@ -832,7 +843,6 @@ export default function LandingPage() {
                             <span>Box</span>
                           </span>
                           <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px]">
-                            <IconArrowRight size={11} strokeWidth={2} />
                             <span>Arrow</span>
                           </span>
                           <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-semibold">
@@ -852,7 +862,7 @@ export default function LandingPage() {
                 {/* Feature 4 */}
                 <Reveal delay={0.21}>
                   <div className="group p-6 rounded-xl border border-site-border bg-site-surface hover:border-accent/40 hover:-translate-y-0.5 transition-all duration-200 h-full flex flex-col gap-4">
-                    <div className="space-y-1.5 sm:min-h-[96px]">
+                    <div className="space-y-1.5 min-h-[132px] sm:min-h-[120px]">
                       <h3 className="text-sm font-bold text-site-text group-hover:text-accent transition-colors">
                         {t("site.features.f4.title")}
                       </h3>
@@ -869,7 +879,7 @@ export default function LandingPage() {
                 {/* Feature 5 */}
                 <Reveal delay={0.28}>
                   <div className="group p-6 rounded-xl border border-site-border bg-site-surface hover:border-accent/40 hover:-translate-y-0.5 transition-all duration-200 h-full flex flex-col gap-4">
-                    <div className="space-y-1.5 sm:min-h-[96px]">
+                    <div className="space-y-1.5 min-h-[132px] sm:min-h-[120px]">
                       <h3 className="text-sm font-bold text-site-text group-hover:text-accent transition-colors">
                         {t("site.features.f5.title")}
                       </h3>
@@ -886,7 +896,7 @@ export default function LandingPage() {
                 {/* Feature 6 */}
                 <Reveal delay={0.35}>
                   <div className="group p-6 rounded-xl border border-site-border bg-site-surface hover:border-accent/40 hover:-translate-y-0.5 transition-all duration-200 h-full flex flex-col gap-4">
-                    <div className="space-y-1.5 sm:min-h-[96px]">
+                    <div className="space-y-1.5 min-h-[132px] sm:min-h-[120px]">
                       <h3 className="text-sm font-bold text-site-text group-hover:text-accent transition-colors">
                         {t("site.features.f6.title")}
                       </h3>
@@ -968,7 +978,6 @@ export default function LandingPage() {
                       className="inline-flex items-center gap-2 text-sm font-bold text-[#3D7A24] dark:text-[#72C048] hover:underline group"
                     >
                       <span>{t("site.faq.docButton")}</span>
-                      <Icon icon="lucide:arrow-right" className="w-4 h-4 stroke-[2.5] transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
                     </Link>
                   </div>
                 </Reveal>
@@ -999,7 +1008,11 @@ export default function LandingPage() {
                                   : "text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800"
                               }`}
                             >
-                              <Icon icon="lucide:chevron-down" className="w-3.5 h-3.5 stroke-[2.5]" aria-hidden="true" />
+                              <Icon
+                                icon="lucide:chevron-down"
+                                className="w-4 h-4 brightness-0"
+                                aria-hidden="true"
+                              />
                             </span>
                           </button>
                           {isExpanded && (
@@ -1039,17 +1052,19 @@ export default function LandingPage() {
                     href={CHROME_STORE_URL}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-full bg-[#89BD49] hover:bg-[#78a83f] text-slate-900 text-sm font-bold shadow-md shadow-[#89BD49]/20 hover:scale-[1.02] active:scale-[0.99] transition-all whitespace-nowrap"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold shadow-md shadow-[#2563EB]/20 hover:scale-[1.02] active:scale-[0.99] transition-all whitespace-nowrap"
                   >
                     <Icon icon="logos:chrome" className="w-5 h-5 shrink-0" aria-hidden="true" />
-                    <span>{t("site.cta.primary")}</span>
+                    <span>{t("extension.addToChrome") || "Add to Chrome"}</span>
                   </a>
                   <a
-                    href="/features"
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-800 text-sm font-bold shadow-2xs transition-all whitespace-nowrap"
+                    href={FIREFOX_STORE_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold shadow-md shadow-[#89BD49]/20 hover:scale-[1.02] active:scale-[0.99] transition-all whitespace-nowrap"
                   >
-                    <span>{t("site.cta.demo")}</span>
-                    <Icon icon="lucide:arrow-right" className="w-4 h-4 stroke-[2.5]" aria-hidden="true" />
+                    <Icon icon="logos:firefox" className="w-5 h-5 shrink-0" aria-hidden="true" />
+                    <span>{t("extension.addToFirefox")}</span>
                   </a>
                 </div>
 

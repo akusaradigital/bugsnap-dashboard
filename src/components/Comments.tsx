@@ -6,7 +6,7 @@ import { useT } from "@/components/I18nProvider";
 import { Icon } from "@/lib/iconify";
 
 // Turnstile anti-bot config - widget + managed siteverify Worker (Spin).
-// Keep long threads from stretching the page; older items stay one click away.
+// Keep long threads from stretching the page; older items stay easy to reach.
 const COLLAPSE_AFTER = 5;
 const REPLIES_COLLAPSE_AFTER = 3;
 
@@ -63,7 +63,7 @@ interface CommentsProps {
 }
 
 const AVATAR_COLORS = [
-  "bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666]",
+  "bg-[#DC2626]/15 text-[#B91C1C] dark:text-[#F87171]",
   "bg-emerald-100 text-emerald-700",
   "bg-amber-100 text-amber-700",
   "bg-rose-100 text-rose-700",
@@ -596,7 +596,7 @@ function Comments({
     <div className="space-y-3 min-w-0">
       <div className="flex items-center justify-between min-w-0">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="flex h-5 w-5 items-center justify-center rounded-md bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666]">
+          <div className="flex h-5 w-5 items-center justify-center rounded-md bg-[#DC2626]/15 text-[#B91C1C] dark:text-[#F87171]">
             <Icon icon="lucide:message-square" className="h-3 w-3" />
           </div>
           <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">
@@ -647,7 +647,7 @@ function Comments({
                 <button
                   type="button"
                   onClick={() => setShowAllComments(true)}
-                  className="w-full rounded-lg border border-dashed border-border/70 py-2 text-[11px] font-semibold text-muted hover:text-[#6B9A35] hover:border-[#89BD49]/40 transition-colors"
+                  className="w-full rounded-lg border border-dashed border-border/70 py-2 text-[11px] font-semibold text-muted hover:text-[#B91C1C] hover:border-[#DC2626]/40 transition-colors"
                 >
                   {t("cm.showPrevious", { count: hiddenCount })}
                 </button>
@@ -684,7 +684,7 @@ function Comments({
                         data-comment-id={c.id}
                         className={`rounded-xl border bg-white dark:bg-zinc-900 p-3.5 shadow-xs transition-all ${
                           highlightId === c.id
-                            ? "border-[#89BD49] ring-2 ring-[#89BD49]/20"
+                            ? "border-[#DC2626] ring-2 ring-[#DC2626]/20"
                             : "border-border/70 hover:border-border"
                         }`}
                       >
@@ -694,7 +694,7 @@ function Comments({
                               {name}
                             </span>
                             {isCurrentUser && (
-                              <span className="rounded-md bg-[#89BD49]/10 px-2 py-0.5 text-[9px] font-semibold text-[#6B9A35] border border-[#89BD49]/20 dark:bg-[#89BD49]/15 dark:border-[#89BD49]/30 dark:text-[#A8D666]">
+                              <span className="rounded-md bg-[#DC2626]/10 px-2 py-0.5 text-[9px] font-semibold text-[#B91C1C] border border-[#DC2626]/20 dark:bg-[#DC2626]/15 dark:border-[#DC2626]/30 dark:text-[#F87171]">
                                 You
                               </span>
                             )}
@@ -705,7 +705,7 @@ function Comments({
                                 title={t("cm.jumpTo", {
                                   time: formatTimestamp(ts),
                                 })}
-                                className="inline-flex items-center gap-1 rounded-md bg-[#89BD49]/10 px-1.5 py-0.5 text-[10px] font-mono font-semibold text-[#6B9A35] border border-[#89BD49]/20 hover:bg-[#89BD49]/20 dark:bg-[#89BD49]/15 dark:text-[#A8D666] transition-colors cursor-pointer"
+                                className="inline-flex items-center gap-1 rounded-md bg-[#DC2626]/10 px-1.5 py-0.5 text-[10px] font-mono font-semibold text-[#B91C1C] border border-[#DC2626]/20 hover:bg-[#DC2626]/20 dark:bg-[#DC2626]/15 dark:text-[#F87171] transition-colors cursor-pointer"
                               >
                                 <Icon icon="lucide:clock" className="h-2.5 w-2.5 shrink-0" />
                                 <span>@ {formatTimestamp(ts)}</span>
@@ -733,7 +733,7 @@ function Comments({
                             onClick={() =>
                               setReplyingTo(replyingTo === c.id ? null : c.id)
                             }
-                            className="inline-flex items-center gap-1 text-[11px] font-medium text-muted hover:text-[#6B9A35] transition-colors"
+                            className="inline-flex items-center gap-1 text-[11px] font-medium text-muted hover:text-[#B91C1C] transition-colors"
                           >
                             <Icon icon="lucide:reply" className="h-3 w-3 shrink-0" />
                             <span>{t("cm.reply") || "Reply"}</span>
@@ -743,7 +743,7 @@ function Comments({
 
                       {/* Reply Composer */}
                       {replyingTo === c.id && (
-                        <div className="mt-2.5 flex flex-wrap items-center gap-2 pl-2 sm:pl-3 border-l-2 border-[#89BD49]/50 min-w-0">
+                        <div className="mt-2.5 flex flex-wrap items-center gap-2 pl-2 sm:pl-3 border-l-2 border-[#DC2626]/50 min-w-0">
                           <input
                             value={replyBody}
                             onChange={(e) => setReplyBody(e.target.value)}
@@ -756,7 +756,7 @@ function Comments({
                             placeholder={
                               t("cm.replyTo", { name }) || `Reply to ${name}...`
                             }
-                            className="w-full sm:flex-1 text-xs rounded-lg border border-border px-3 py-2 outline-none focus:border-[#89BD49] bg-white dark:bg-zinc-900 shadow-xs min-w-0"
+                            className="w-full sm:flex-1 text-xs rounded-lg border border-border px-3 py-2 outline-none focus:border-[#DC2626] bg-white dark:bg-zinc-900 shadow-xs min-w-0"
                             autoFocus
                           />
                           <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
@@ -790,7 +790,7 @@ function Comments({
                               onClick={() =>
                                 setExpandedReplies((prev) => [...prev, c.id])
                               }
-                              className="text-[11px] font-semibold text-muted hover:text-[#6B9A35] transition-colors"
+                              className="text-[11px] font-semibold text-muted hover:text-[#B91C1C] transition-colors"
                             >
                               {t("cm.showReplies", { count: hiddenReplies })}
                             </button>
@@ -819,7 +819,7 @@ function Comments({
                                   data-comment-id={r.id}
                                   className={`flex-1 min-w-0 rounded-lg border bg-subtle/30 dark:bg-zinc-900/40 p-2.5 transition-all ${
                                     highlightId === r.id
-                                      ? "border-[#89BD49] ring-2 ring-[#89BD49]/20"
+                                      ? "border-[#DC2626] ring-2 ring-[#DC2626]/20"
                                       : "border-border/50"
                                   }`}
                                 >
@@ -829,7 +829,7 @@ function Comments({
                                         {rName}
                                       </span>
                                       {isReplyUser && (
-                                        <span className="rounded-md bg-[#89BD49]/10 px-1.5 py-0.5 text-[8px] font-semibold text-[#6B9A35] border border-[#89BD49]/20 dark:bg-[#89BD49]/15 dark:border-[#89BD49]/30 dark:text-[#A8D666]">
+                                        <span className="rounded-md bg-[#DC2626]/10 px-1.5 py-0.5 text-[8px] font-semibold text-[#B91C1C] border border-[#DC2626]/20 dark:bg-[#DC2626]/15 dark:border-[#DC2626]/30 dark:text-[#F87171]">
                                           You
                                         </span>
                                       )}
@@ -864,7 +864,7 @@ function Comments({
           {effAuthorName ? effAuthorName.charAt(0).toUpperCase() : <Icon icon="lucide:user" className="h-3.5 w-3.5" />}
         </div>
 
-        <div className="flex-1 min-w-0 rounded-xl border border-border bg-white dark:bg-zinc-900 shadow-xs transition-all focus-within:border-[#89BD49] focus-within:ring-2 focus-within:ring-[#89BD49]/15 overflow-hidden">
+        <div className="flex-1 min-w-0 rounded-xl border border-border bg-white dark:bg-zinc-900 shadow-xs transition-all focus-within:border-[#DC2626] focus-within:ring-2 focus-within:ring-[#DC2626]/15 overflow-hidden">
           <textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
@@ -890,7 +890,7 @@ function Comments({
                   onClick={() => setTimestampOn(!timestampOn)}
                   className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-[10px] font-medium transition-colors ${
                     timestampOn
-                      ? "bg-[#89BD49]/15 text-[#6B9A35] dark:bg-[#89BD49]/20 dark:text-[#A8D666] font-mono font-semibold border border-[#89BD49]/30"
+                      ? "bg-[#DC2626]/15 text-[#B91C1C] dark:bg-[#DC2626]/20 dark:text-[#F87171] font-mono font-semibold border border-[#DC2626]/30"
                       : "text-muted hover:bg-subtle hover:text-foreground border border-transparent"
                   }`}
                   title={

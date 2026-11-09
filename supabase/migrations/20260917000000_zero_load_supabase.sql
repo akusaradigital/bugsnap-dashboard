@@ -4,8 +4,8 @@
 --
 -- 1. Add view_count column to captures (increment-in-place)
 -- 2. Backfill view_count from capture_views
--- 3. Rewrite record_view  → increment captures.view_count + insert row (dual-write)
--- 4. Rewrite get_view_count → read captures.view_count (O(1), no scan)
+-- 3. Rewrite record_view   increment captures.view_count + insert row (dual-write)
+-- 4. Rewrite get_view_count  read captures.view_count (O(1), no scan)
 -- 5. Purge raw-array dev_logs (convert to count-only pointer)
 -- 6. Retention cron helpers: prune capture_views > 90 days, audit_logs > 30 days
 -- =====================================================================

@@ -723,7 +723,7 @@ export default function DashboardLayout({
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
-          <div className="h-7 w-7 rounded-full border-2 border-[#89BD49] border-t-transparent animate-spin" aria-hidden="true" />
+          <div className="h-7 w-7 rounded-full border-2 border-[#DC2626] border-t-transparent animate-spin" aria-hidden="true" />
           <p className="text-sm text-muted">{t("layout.loading")}</p>
         </div>
       </div>
@@ -1236,9 +1236,9 @@ export default function DashboardLayout({
           style={{ paddingLeft: `${4 + depth * 14}px` }}
           className={`relative w-full flex items-center justify-between gap-1 pr-1 rounded-lg border-l-2 group/folder transition-colors ${
             isActiveFolder
-              ? "border-[#89BD49] bg-[#89BD49]/10 dark:bg-[#89BD49]/15 font-semibold"
+              ? "border-[#DC2626] bg-[#DC2626]/10 dark:bg-[#DC2626]/15 font-semibold"
               : "border-transparent hover:bg-subtle"
-          } ${dragOverFolder === folder && draggedFolder && draggedFolder !== folder ? "ring-2 ring-[#89BD49]" : ""} ${
+          } ${dragOverFolder === folder && draggedFolder && draggedFolder !== folder ? "ring-2 ring-[#DC2626]" : ""} ${
             draggedFolder === folder ? "opacity-40" : ""
           }`}
         >
@@ -1250,10 +1250,7 @@ export default function DashboardLayout({
                 className="w-4 h-4 shrink-0 flex items-center justify-center text-muted hover:text-foreground mr-0.5 rounded transition-transform"
                 aria-label={isExpanded ? "Collapse folder" : "Expand folder"}
               >
-                <Icon
-                  icon="lucide:chevron-right"
-                  className={`w-3 h-3 transition-transform ${isExpanded ? "rotate-90" : ""}`}
-                />
+                
               </button>
             ) : depth > 0 ? (
               <span className="w-4 shrink-0 flex items-center justify-center text-muted/50 mr-0.5">
@@ -1269,7 +1266,7 @@ export default function DashboardLayout({
               }}
               className={`flex-1 flex items-center gap-2 px-1.5 py-2 text-xs truncate ${
                 isActiveFolder
-                  ? "text-[#6B9A35] dark:text-[#A8D666] font-semibold"
+                  ? "text-red-700 dark:text-red-400 font-semibold"
                   : "text-muted hover:text-foreground"
               }`}
             >
@@ -1386,7 +1383,7 @@ export default function DashboardLayout({
     <div className="h-screen bg-background flex flex-col overflow-hidden">
       <a
         href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] px-3 py-1.5 bg-[#89BD49] text-slate-900 rounded-lg text-xs font-bold shadow-lg"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-bold shadow-lg"
       >
         {t("layout.skipToContent") || "Skip to main content"}
       </a>
@@ -1396,7 +1393,7 @@ export default function DashboardLayout({
           return null;
         }
         return (
-          <div className="shrink-0 bg-[#89BD49] text-white px-4 py-2.5 flex items-center justify-between gap-4">
+          <div className="shrink-0 bg-red-600 text-white px-4 py-2.5 flex items-center justify-between gap-4">
             <div className="flex-1 min-w-0 text-sm font-medium leading-snug text-center">
               {promoBanner.message}
             </div>
@@ -1502,7 +1499,7 @@ export default function DashboardLayout({
               {notifications.length > 0 && (
                 <button
                   onClick={handleClearNotifications}
-                  className="text-[10px] font-semibold text-[#6B9A35] dark:text-[#A8D666] hover:underline"
+                  className="text-[10px] font-semibold text-red-700 dark:text-red-400 hover:underline"
                 >
                   {t("layout.clearAll")}
                 </button>
@@ -1518,7 +1515,7 @@ export default function DashboardLayout({
                       className={`px-3 py-2 text-xs rounded-lg transition-colors cursor-pointer ${
                         isRead
                           ? "text-muted hover:bg-subtle"
-                          : "text-foreground bg-[#89BD49]/10 dark:bg-[#89BD49]/15 hover:bg-[#89BD49]/20 font-medium"
+                          : "text-foreground bg-red-50 dark:bg-red-950/25 hover:bg-red-100 dark:hover:bg-red-950/40 font-medium"
                       }`}
                       onClick={() => {
                         markRead(n.capture_id);
@@ -1565,12 +1562,12 @@ export default function DashboardLayout({
                 className="w-6 h-6 rounded-md object-cover shrink-0 bg-subtle border border-border"
               />
             ) : (
-              <span className="w-6 h-6 rounded-md bg-[#89BD49] text-white text-[11px] font-semibold flex items-center justify-center shrink-0">
+              <span className="w-6 h-6 rounded-md bg-[#DC2626] text-white text-[11px] font-semibold flex items-center justify-center shrink-0">
                 {initialOf(activeWs?.name)}
               </span>
             )}
             <span className="flex-1 truncate">{activeWs?.name || "Workspace"}</span>
-            <Icon icon="lucide:chevron-down" className={`w-3.5 h-3.5 text-muted transition-transform ${wsOpen ? "rotate-180" : ""}`} />
+            
           </button>
 
           {wsOpen && (
@@ -1587,7 +1584,7 @@ export default function DashboardLayout({
                       className="w-10 h-10 rounded-xl object-cover shrink-0 bg-subtle border border-border"
                     />
                   ) : (
-                    <span className="w-10 h-10 rounded-xl bg-[#89BD49]/15 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] text-lg font-semibold flex items-center justify-center shrink-0">
+                    <span className="w-10 h-10 rounded-xl bg-[#DC2626]/15 dark:bg-[#DC2626]/20 text-red-700 dark:text-red-400 text-lg font-semibold flex items-center justify-center shrink-0">
                       {initialOf(activeWs?.name)}
                     </span>
                   )}
@@ -1628,7 +1625,7 @@ export default function DashboardLayout({
                       <Icon icon="lucide:building-2" className="w-4 h-4 text-muted shrink-0" />
                       {t("layout.switchWorkspace")}
                     </span>
-                    <Icon icon="lucide:chevron-right" className={`w-4 h-4 text-muted transition-transform ${workspacePickerOpen ? "rotate-90" : ""}`} />
+                    
                   </button>
                   {workspacePickerOpen && (
                     <>
@@ -1747,7 +1744,7 @@ export default function DashboardLayout({
                   }}
                   className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg border-l-2 transition-colors ${
                     active
-                      ? "bg-[#89BD49]/10 dark:bg-[#89BD49]/15 border-[#89BD49] text-[#6B9A35] dark:text-[#A8D666]"
+                      ? "bg-red-50 dark:bg-red-950/25 border-red-600 text-red-700 dark:text-red-400"
                       : "border-transparent text-muted hover:text-foreground hover:bg-subtle"
                   }`}
                 >
@@ -1772,7 +1769,7 @@ export default function DashboardLayout({
                     setParentFolderId(null);
                     setCreateFolderModalOpen(true);
                   }}
-                  className="text-[10px] font-bold text-[#6B9A35] dark:text-[#A8D666] hover:underline"
+                  className="text-[10px] font-bold text-red-700 dark:text-red-400 hover:underline"
                 >
                   {t("layout.create")}
                 </button>
@@ -1791,7 +1788,7 @@ export default function DashboardLayout({
                         setParentFolderId(null);
                         setCreateFolderModalOpen(true);
                       }}
-                      className="text-[10px] font-semibold text-[#6B9A35] dark:text-[#A8D666] hover:underline mt-1"
+                      className="text-[10px] font-semibold text-red-700 dark:text-red-400 hover:underline mt-1"
                     >
                       {t("layout.createFolder")}
                     </button>
@@ -1831,7 +1828,7 @@ export default function DashboardLayout({
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   placeholder="colleague@example.com"
-                  className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#89BD49] bg-subtle text-foreground placeholder:text-muted"
+                  className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#DC2626] bg-subtle text-foreground placeholder:text-muted"
                   autoFocus
                 />
               </div>
@@ -1874,7 +1871,7 @@ export default function DashboardLayout({
                 value={newWsName}
                 onChange={(e) => setNewWsName(e.target.value)}
                 placeholder="e.g. QA Team"
-                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#89BD49] bg-subtle text-foreground placeholder:text-muted"
+                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#DC2626] bg-subtle text-foreground placeholder:text-muted"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && newWsName.trim()) {
@@ -1921,7 +1918,7 @@ export default function DashboardLayout({
             <Link
               href="/pricing"
               onClick={() => setBillingModalOpen(false)}
-              className="block w-full rounded-lg bg-[#89BD49] text-white text-sm font-semibold px-6 py-3 hover:bg-[#6B9A35] transition-colors shadow-sm shadow-[#89BD49]/25"
+              className="block w-full rounded-lg bg-[#DC2626] text-white text-sm font-semibold px-6 py-3 hover:bg-[#B91C1C] transition-colors shadow-sm shadow-[#DC2626]/25"
             >
               {t("layout.upgradeToPro")}
             </Link>
@@ -1947,7 +1944,7 @@ export default function DashboardLayout({
                 value={newProjectName}
                 onChange={(e) => setNewProjectName(e.target.value)}
                 placeholder={t("layout.projectNamePlaceholder")}
-                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#89BD49] bg-subtle text-foreground placeholder:text-muted"
+                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#DC2626] bg-subtle text-foreground placeholder:text-muted"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && newProjectName.trim()) {
@@ -1991,7 +1988,7 @@ export default function DashboardLayout({
                 type="text"
                 value={renameProjectName}
                 onChange={(e) => setRenameProjectName(e.target.value)}
-                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#89BD49] bg-subtle text-foreground placeholder:text-muted"
+                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#DC2626] bg-subtle text-foreground placeholder:text-muted"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && renameProjectName.trim()) submitRenameProject();
@@ -2018,7 +2015,7 @@ export default function DashboardLayout({
             <p className="text-xs text-muted leading-relaxed mb-6">{t("layout.deleteProjectConfirm", { name: projectToDelete.name })}</p>
             <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
               <button onClick={() => setProjectToDelete(null)} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors">{t("common.cancel")}</button>
-              <button onClick={submitDeleteProject} disabled={deletingProject} className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 disabled:opacity-50 transition-colors">
+              <button onClick={submitDeleteProject} disabled={deletingProject} className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors">
                 {deletingProject ? t("layout.deleting") : t("common.delete")}
               </button>
             </div>
@@ -2045,7 +2042,7 @@ export default function DashboardLayout({
                   setCreateFolderError(null);
                 }}
                 placeholder="e.g. Eyden - Quaker"
-                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#89BD49] bg-subtle text-foreground placeholder:text-muted"
+                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#DC2626] bg-subtle text-foreground placeholder:text-muted"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && newFolderName.trim()) {
@@ -2112,7 +2109,7 @@ export default function DashboardLayout({
                   setRenameFolderError(null);
                 }}
                 placeholder="e.g. Eyden - Quaker"
-                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#89BD49] bg-subtle text-foreground placeholder:text-muted"
+                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#DC2626] bg-subtle text-foreground placeholder:text-muted"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && renameFolderNameInput.trim()) {
@@ -2166,7 +2163,7 @@ export default function DashboardLayout({
               <button
                 onClick={submitDeleteFolder}
                 disabled={deletingFolder}
-                className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 disabled:opacity-50 transition-colors"
+                className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors"
               >
                 {deletingFolder ? t("layout.deleting") : t("layout.deleteFolderTitle")}
               </button>

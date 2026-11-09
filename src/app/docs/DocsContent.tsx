@@ -8,18 +8,17 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 import { Reveal } from "@/components/site/motion";
 import { Icon } from "@/lib/iconify";
 import { INTEGRATIONS } from "@/lib/integrations";
+import { FIREFOX_STORE_URL } from "@/lib/constants";
 
-type BrowserId = "chrome" | "edge" | "firefox";
+type BrowserId = "chrome" | "firefox";
 
 const SHORTCUT_BROWSERS: { id: BrowserId; name: string; icon: string; url: string }[] = [
   { id: "chrome", name: "Chrome", icon: "logos:chrome", url: "chrome://extensions/shortcuts" },
-  { id: "edge", name: "Edge", icon: "logos:microsoft-edge", url: "edge://extensions/shortcuts" },
   { id: "firefox", name: "Firefox", icon: "logos:firefox", url: "about:addons" },
 ];
 
 function detectBrowser(): BrowserId {
   const ua = navigator.userAgent;
-  if (/Edg\//.test(ua)) return "edge";
   if (/Firefox\//.test(ua)) return "firefox";
   return "chrome";
 }
@@ -51,7 +50,10 @@ export function DocsContent() {
       }
     };
     window.addEventListener("message", onMsg);
-    window.postMessage({ source: "bugsnap-web", action: "open_shortcuts" }, window.location.origin);
+    window.postMessage(
+      { source: "bugsnap-web", action: "open_shortcuts", browser: browser },
+      window.location.origin,
+    );
     setTimeout(() => {
       window.removeEventListener("message", onMsg);
       if (!opened) {
@@ -226,7 +228,7 @@ export function DocsContent() {
                 >
                   {t("landing.home") || "Home"}
                 </Link>
-                <span className="text-slate-300 dark:text-slate-600">›</span>
+                <span className="text-slate-300 dark:text-slate-600" aria-hidden="true">/</span>
                 <span className="text-slate-700 dark:text-slate-300 font-medium">
                   {t("site.nav.docs") || "Docs"}
                 </span>
@@ -313,7 +315,7 @@ export function DocsContent() {
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                 {/* Chrome */}
                 <div className="rounded-xl bg-[#f8fafc] dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 p-4 sm:p-6 space-y-3">
                   <div className="flex items-center gap-2.5">
@@ -336,28 +338,6 @@ export function DocsContent() {
                   </a>
                 </div>
 
-                {/* Edge */}
-                <div className="rounded-xl bg-[#f8fafc] dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 p-4 sm:p-6 space-y-3">
-                  <div className="flex items-center gap-2.5">
-                    <Icon icon="logos:microsoft-edge" className="w-6 h-6" />
-                    <h3 className="font-bold text-sm text-slate-900 dark:text-white">
-                      {t("docs.installEdgeTitle") || "Microsoft Edge"}
-                    </h3>
-                  </div>
-                  <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                    {t("docs.installEdgeDesc") || "Install verified package from Microsoft Edge Add-ons catalog."}
-                  </p>
-                  <a
-                    href="https://microsoftedge.microsoft.com/addons/detail/bugsnap/bmgekgcceplhhbmbapffldkkmjofobom"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline pt-1"
-                  >
-                    <span>Edge Add-ons</span>
-                    <Icon icon="lucide:external-link" className="w-3.5 h-3.5" />
-                  </a>
-                </div>
-
                 {/* Firefox */}
                 <div className="rounded-xl bg-[#f8fafc] dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 p-4 sm:p-6 space-y-3">
                   <div className="flex items-center gap-2.5">
@@ -370,7 +350,7 @@ export function DocsContent() {
                     {t("docs.installFirefoxDesc") || "Install isolated package from Mozilla Add-ons (AMO)."}
                   </p>
                   <a
-                    href="https://addons.mozilla.org/en-US/firefox/addon/bugsnap/"
+                    href={FIREFOX_STORE_URL}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline pt-1"
@@ -425,7 +405,7 @@ export function DocsContent() {
                     </div>
                     <div className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
                       {t("docs.shortcutRecordingDesc") ||
-                        "Record screen, tab, or window with microphone audio."}
+                        "Take screenshots or record a screen, tab, or window with microphone audio."}
                     </div>
                   </div>
                   <div className="border border-slate-200/90 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg text-xs font-mono font-semibold text-slate-800 dark:text-slate-200 shadow-2xs whitespace-nowrap shrink-0">
@@ -502,7 +482,7 @@ export function DocsContent() {
                 <button
                   type="button"
                   onClick={openShortcuts}
-                  className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-white bg-slate-900 dark:text-slate-900 dark:bg-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity"
+                  className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-white bg-blue-600 dark:bg-blue-500 px-4 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
                 >
                   <Icon icon="lucide:settings" width={14} />
                   {t("docs.shortcutsOpenBtn")}
@@ -535,7 +515,7 @@ export function DocsContent() {
                     href="/help"
                     className="hover:underline inline-flex items-center gap-1"
                   >
-                    {t("docs.viewHelpFaqs") || "View Help Center FAQs →"}
+                    {t("docs.viewHelpFaqs") || "View Help Center FAQs "}
                   </Link>
                   <span className="text-slate-400 font-bold" aria-hidden="true">
                     ·
@@ -544,7 +524,7 @@ export function DocsContent() {
                     href="/contact"
                     className="hover:underline inline-flex items-center gap-1"
                   >
-                    {t("docs.contactSupport") || "Contact Technical Support →"}
+                    {t("docs.contactSupport") || "Contact Technical Support "}
                   </Link>
                 </div>
               </div>
@@ -601,7 +581,7 @@ export function DocsContent() {
                 <div className="rounded-xl bg-[#f8fafc] dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 p-4 sm:p-6 space-y-2">
                   <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-bold text-sm">
                     <Icon icon="lucide:file-text" className="w-4 h-4" />
-                    <span>{t("docs.shareMarkdownTitle") || "1-Click Issue Export"}</span>
+                    <span>{t("docs.shareMarkdownTitle") || "Export Issue"}</span>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                     {t("docs.shareMarkdownDesc") || "Copy formatted Markdown ready to paste into Jira, GitHub Issues, Linear, or Slack."}
@@ -627,7 +607,7 @@ export function DocsContent() {
                   href="/docs/integrations"
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
                 >
-                  <span>Explore Integrations & Setup Guides →</span>
+                  <span>Explore Integrations & Setup Guides </span>
                 </Link>
               </div>
             </div>
@@ -651,15 +631,15 @@ export function DocsContent() {
                   </h2>
                   <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed break-words">
                     {t("docs.integrationsSectionDesc") ||
-                      "BugSnap connects with your team's existing developer toolchain. Send bug captures, video replays, console stack traces, and network logs directly with 1 click."}
+                      "BugSnap connects with your team's existing developer toolchain. Send captures, video replays, console stack traces, and network logs to the tools your team already uses."}
                   </p>
                 </div>
                 <Link
                   href="/docs/integrations"
-                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-xl bg-slate-900 dark:bg-white text-white dark:text-slate-900 hover:opacity-90 transition-opacity whitespace-nowrap shrink-0 shadow-xs"
+                  className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-xl bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors whitespace-nowrap shrink-0 shadow-xs"
                 >
-                  <Icon icon="lucide:book-open" className="w-4 h-4" />
-                  <span>{t("docs.viewAllIntegrationsBtn") || "Full Setup Guides →"}</span>
+                  <Icon icon="lucide:book-open" className="w-4 h-4 brightness-0 invert" />
+                  <span>{t("docs.viewAllIntegrationsBtn") || "Full Setup Guides "}</span>
                 </Link>
               </div>
 
@@ -688,7 +668,7 @@ export function DocsContent() {
                 <div className="rounded-xl bg-[#f8fafc] dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 space-y-2">
                   <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-xs sm:text-sm">
                     <span className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center text-[10px] font-extrabold">3</span>
-                    <span>{t("docs.flowStep3Title") || "1-Click Direct Push"}</span>
+                    <span>{t("docs.flowStep3Title") || "Send to Connected Tools"}</span>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed break-words">
                     {t("docs.flowStep3Desc") || "Push formatted issues, rich cards, or notification embeds to any configured workspace tool."}
@@ -755,16 +735,16 @@ export function DocsContent() {
                 <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
                   <Link
                     href="/settings"
-                    className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition-colors shadow-2xs"
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors shadow-2xs"
                   >
-                    <Icon icon="lucide:settings" className="w-3.5 h-3.5" />
-                    <span>{t("docs.openSettings") || "Test in Settings →"}</span>
+                    <Icon icon="lucide:settings" className="w-3.5 h-3.5 brightness-0 invert" />
+                    <span>{t("docs.openSettings") || "Test in Settings "}</span>
                   </Link>
                   <Link
                     href="/docs/integrations"
                     className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors shadow-2xs"
                   >
-                    <span>{t("docs.directSetupGuide") || "Setup Guides →"}</span>
+                    <span>{t("docs.directSetupGuide") || "Setup Guides "}</span>
                   </Link>
                 </div>
               </div>

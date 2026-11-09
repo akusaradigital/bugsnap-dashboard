@@ -121,7 +121,7 @@ export default function EditModal({ capture, onClose, onSaved }: EditModalProps)
   }
 
   const inputClasses =
-    "w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 bg-subtle text-foreground placeholder:text-muted";
+    "w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600/20 bg-subtle text-foreground placeholder:text-muted";
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
@@ -246,7 +246,7 @@ export default function EditModal({ capture, onClose, onSaved }: EditModalProps)
                     type="checkbox"
                     checked={burnAfterRead}
                     onChange={(e) => setBurnAfterRead(e.target.checked)}
-                    className="w-4 h-4 rounded border-border text-[#89BD49] focus:ring-[#89BD49]/20"
+                    className="w-4 h-4 rounded border-border text-red-600 focus:ring-red-600/20"
                   />
                   <div>
                     <p className="font-medium">{t("cap.burnAfterRead")}</p>
@@ -301,7 +301,7 @@ export default function EditModal({ capture, onClose, onSaved }: EditModalProps)
           <button
             onClick={handleSave}
             disabled={saving}
-            className="flex-1 sm:flex-initial rounded-lg bg-[#89BD49] px-4 py-2 text-sm font-semibold text-slate-900 hover:bg-[#6B9A35] hover:text-white disabled:opacity-60 shadow-xs shadow-[#89BD49]/25 transition-colors text-center"
+            className="flex-1 sm:flex-initial rounded-lg bg-[#89BD49] px-4 py-2 text-sm font-semibold text-white hover:bg-[#6B9A35] disabled:opacity-60 shadow-xs shadow-[#89BD49]/25 transition-colors text-center"
           >
             {saving ? t("settings.saving") : t("cap.saveChanges")}
           </button>

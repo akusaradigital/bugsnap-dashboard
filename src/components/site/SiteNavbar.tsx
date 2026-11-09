@@ -66,8 +66,10 @@ export function SiteNavbar() {
   ];
 
   return (
-    <header
-      className={`relative sm:sticky top-0 z-50 border-b border-slate-200/60 dark:border-slate-800/60 text-site-text font-site bg-white/80 dark:bg-slate-950/80 backdrop-blur-md transition-shadow duration-300 ${
+    <>
+      <div className="h-16" aria-hidden="true" />
+      <header
+      className={`fixed inset-x-0 top-0 z-50 border-b border-slate-200/60 dark:border-slate-800/60 text-site-text font-site bg-white/90 dark:bg-slate-950/90 backdrop-blur-md transition-shadow duration-300 ${
         scrolled ? "shadow-sm shadow-black/5" : ""
       }`}
     >
@@ -100,7 +102,7 @@ export function SiteNavbar() {
                 href={link.href}
                 className={`px-3 py-1.5 rounded-lg transition-colors ${
                   isActive
-                    ? "text-[#46741A] dark:text-[#A8D666] font-semibold bg-[#89BD49]/15 dark:bg-[#89BD49]/20"
+                    ? "text-[#B91C1C] dark:text-[#F87171] font-semibold bg-[#DC2626]/15 dark:bg-[#DC2626]/20"
                     : "hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/50 dark:hover:bg-slate-800/40"
                 }`}
               >
@@ -165,7 +167,7 @@ export function SiteNavbar() {
                 href={link.href}
                 className={`flex items-center min-h-[44px] px-3 py-2.5 rounded-md text-sm font-medium transition-colors border ${
                   isActive
-                    ? "text-[#46741A] dark:text-[#A8D666] bg-[#89BD49]/15 dark:bg-[#89BD49]/20 border-[#89BD49]/30 dark:border-[#89BD49]/40 font-semibold"
+                    ? "text-[#B91C1C] dark:text-[#F87171] bg-[#DC2626]/15 dark:bg-[#DC2626]/20 border-[#DC2626]/30 dark:border-[#DC2626]/40 font-semibold"
                     : "border-transparent text-site-text-2 hover:text-site-text hover:bg-site-surface-2/60"
                 }`}
               >
@@ -204,6 +206,7 @@ export function SiteNavbar() {
           )}
         </div>
       )}
-    </header>
+      </header>
+    </>
   );
 }

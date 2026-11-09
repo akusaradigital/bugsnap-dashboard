@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { createServiceClient } from "@/lib/supabase-server";
-import { driveThumbUrl } from "@/lib/capture-utils";
 
 interface LayoutProps {
   children: React.ReactNode;
   params: { id: string };
 }
+
+const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://bugsnap.akusaraproject.my.id";
+const fullDayLogo = `${siteUrl}/bugsnap-full-day.png`;
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const { id } = params;
@@ -38,8 +40,6 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
     const captureTitle = row.title?.trim() || "Bug Report";
     const typeLabel = row.type === "video" ? "Video recording" : "Annotated screenshot";
     const description = `${typeLabel} bug report shared via BugSnap.`;
-    const thumb = driveThumbUrl(row.drive_url, 1200) || "/opengraph-image.png";
-
     return {
       title: captureTitle,
       description,
@@ -49,18 +49,18 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
         type: "website",
         images: [
           {
-            url: thumb,
+            url: fullDayLogo,
             width: 1200,
-            height: 630,
-            alt: captureTitle,
+            height: 1200,
+            alt: "BugSnap - From Click to Fix",
           },
         ],
       },
       twitter: {
-        card: "summary_large_image",
+        card: "summary",
         title: `BugSnap | ${captureTitle}`,
         description,
-        images: [thumb],
+        images: [fullDayLogo],
       },
     };
   } catch {

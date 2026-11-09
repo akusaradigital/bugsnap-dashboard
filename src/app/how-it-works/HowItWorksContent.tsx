@@ -6,6 +6,7 @@ import { SiteNavbar } from "@/components/site/SiteNavbar";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Reveal } from "@/components/site/motion";
 import { Icon } from "@/lib/iconify";
+import { FIREFOX_STORE_URL } from "@/lib/constants";
 
 const CHROME_STORE_URL =
   "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
@@ -31,8 +32,8 @@ export function HowItWorksContent() {
               >
                 {t("landing.home") || "Home"}
               </Link>
-              <span className="text-slate-300 dark:text-slate-600 font-normal select-none">
-                ›
+              <span className="text-slate-300 dark:text-slate-600 font-normal select-none" aria-hidden="true">
+                /
               </span>
               <span className="font-semibold text-slate-800 dark:text-slate-200">
                 {t("howItWorks.breadcrumb") || "How BugSnap Works"}
@@ -198,7 +199,7 @@ export function HowItWorksContent() {
                   {/* Start Recording */}
                   <div className="border border-slate-100 dark:border-slate-800 rounded-xl p-2.5 flex items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-800/30">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-red-500/10 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-[#89BD49]/10 text-[#5B8C2A] dark:text-[#A8D666] flex items-center justify-center shrink-0">
                         <Icon icon="lucide:video" className="w-4 h-4" />
                       </div>
                       <div className="min-w-0">
@@ -989,15 +990,24 @@ export function HowItWorksContent() {
                   {t("howItWorks.ctaDesc")}
                 </p>
               </div>
-              <div className="shrink-0">
+              <div className="shrink-0 flex flex-wrap items-center gap-3">
                 <a
                   href={CHROME_STORE_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl font-bold text-sm bg-[#89BD49] hover:bg-[#7ba941] text-slate-900 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.99] whitespace-nowrap"
+                  className="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl font-bold text-sm bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-sm transition-all hover:scale-[1.02] active:scale-[0.99] whitespace-nowrap"
                 >
                   <Icon icon="logos:chrome" className="w-5 h-5 shrink-0" />
-                  <span>{t("howItWorks.ctaBtn")}</span>
+                  <span>{t("extension.addToChrome") || "Add to Chrome"}</span>
+                </a>
+                <a
+                  href={FIREFOX_STORE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl font-bold text-sm bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-sm transition-all hover:scale-[1.02] active:scale-[0.99] whitespace-nowrap"
+                >
+                  <Icon icon="logos:firefox" className="w-5 h-5 shrink-0" />
+                  <span>{t("extension.addToFirefox")}</span>
                 </a>
               </div>
             </div>

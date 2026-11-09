@@ -10,8 +10,8 @@ export function HeroRecorderPreview() {
     <div className="relative w-full max-w-lg lg:max-w-xl mx-auto pt-8 sm:pt-12 pb-8 sm:pb-12">
       {/* 1. TOP-LEFT CALLOUT: Console errors auto-captured */}
       <div className="hidden sm:flex items-center gap-2.5 absolute -top-1 sm:top-2 -left-2 sm:-left-8 z-20">
-        <div className="w-10 h-10 rounded-2xl bg-[#FEE2E2] dark:bg-red-950/60 border border-red-200/60 dark:border-red-900/40 flex items-center justify-center shrink-0 shadow-sm">
-          <div className="w-5 h-5 rounded-full bg-[#EF4444] text-white flex items-center justify-center">
+        <div className="w-10 h-10 rounded-2xl bg-blue-100 dark:bg-blue-950/60 border border-blue-200/60 dark:border-blue-900/40 flex items-center justify-center shrink-0 shadow-sm">
+          <div className="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center">
             <Icon icon="lucide:x" className="w-3 h-3 stroke-[3]" aria-hidden="true" />
           </div>
         </div>
@@ -78,7 +78,7 @@ export function HeroRecorderPreview() {
         <div className="flex items-center justify-between px-3.5 sm:px-4 py-2.5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/70 dark:bg-slate-900/90 gap-2">
           {/* 3 window dots */}
           <div className="flex items-center gap-1.5 shrink-0">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#EF4444]" />
+            <span className="w-2.5 h-2.5 rounded-full bg-blue-500" />
             <span className="w-2.5 h-2.5 rounded-full bg-[#F59E0B]" />
             <span className="w-2.5 h-2.5 rounded-full bg-[#10B981]" />
           </div>

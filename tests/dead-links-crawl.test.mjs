@@ -401,7 +401,8 @@ describe("Zero-Broken-Link Quality Gate: Critical UI Surface Contracts", () => {
 
     // Check store URLs in SiteFooter
     assert(content.includes("FIREFOX_STORE_URL"), "SiteFooter must reference FIREFOX_STORE_URL");
-    assert(content.includes("EDGE_STORE_URL"), "SiteFooter must reference EDGE_STORE_URL");
+    // Microsoft Edge is intentionally hidden from UI until the feature is ready across all pages.
+    assert(!content.includes("EDGE_STORE_URL"), "SiteFooter must not reference removed EDGE_STORE_URL");
     assert(content.includes("CHROME_STORE_URL"), "SiteFooter must reference CHROME_STORE_URL");
   });
 
@@ -423,8 +424,8 @@ describe("Zero-Broken-Link Quality Gate: Critical UI Surface Contracts", () => {
       }
     }
 
-    assert(content.includes("/extension/edge"), "HelpMenu must route Edge to /extension/edge");
-    assert(content.includes("/extension/firefox"), "HelpMenu must route Firefox to /extension/firefox");
+    assert(!content.includes("/extension/edge"), "HelpMenu must not route Edge after Edge support removal");
+    assert(content.includes("FIREFOX_STORE_URL"), "HelpMenu must route Firefox to the live Mozilla Add-ons listing via FIREFOX_STORE_URL");
     assert(content.includes("CHROME_STORE_URL"), "HelpMenu must route Chrome to CHROME_STORE_URL");
   });
 

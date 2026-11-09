@@ -22,13 +22,13 @@
   --site-border-subtle: #F1F5F9;
   --site-border-focus: #CBD5E1;
   --site-success: #15803D;
-  --site-warning: #D97706;
+  --site-warning: #B45309;
   --site-danger: #DC2626;
 
   /* Ambient Glow & Gradient Tokens (Light Mode) */
-  --glow-primary: rgba(137, 189, 73, 0.35);
+  --glow-primary: rgba(220, 38, 38, 0.35);
   --glow-secondary: rgba(14, 165, 233, 0.22);
-  --glow-accent: rgba(137, 189, 73, 0.45);
+  --glow-accent: rgba(220, 38, 38, 0.45);
 }
 
 /* Dark mode overrides - toggled via .dark class on <html> by ThemeProvider.
@@ -58,9 +58,9 @@
   --site-danger: #F87171;
 
   /* Ambient Glow & Gradient Tokens (Dark Mode) */
-  --glow-primary: rgba(168, 214, 102, 0.32);
+  --glow-primary: rgba(248, 113, 113, 0.32);
   --glow-secondary: rgba(56, 189, 248, 0.2);
-  --glow-accent: rgba(168, 214, 102, 0.45);
+  --glow-accent: rgba(248, 113, 113, 0.45);
 }
 
 * {
@@ -361,3 +361,23 @@ nav,
 .dark [role="button"]:hover svg {
   color: #ffffff;
 }
+
+/* Light-theme status text uses darker semantic shades to keep normal text at WCAG AA. */
+:root:not(.dark) .text-amber-600,
+:root:not(.dark) .hover\:text-amber-600:hover { color: #B45309 !important; }
+:root:not(.dark) .text-orange-600,
+:root:not(.dark) .hover\:text-orange-600:hover { color: #C2410C !important; }
+:root:not(.dark) .text-emerald-600,
+:root:not(.dark) .hover\:text-emerald-600:hover { color: #047857 !important; }
+:root:not(.dark) .text-cyan-600,
+:root:not(.dark) .hover\:text-cyan-600:hover { color: #0E7490 !important; }
+:root:not(.dark) .text-sky-600,
+:root:not(.dark) .hover\:text-sky-600:hover { color: #0369A1 !important; }
+:root:not(.dark) .text-lime-600,
+:root:not(.dark) .hover\:text-lime-600:hover { color: #4D7C0F !important; }
+:root:not(.dark) .text-green-600,
+:root:not(.dark) .hover\:text-green-600:hover { color: #15803D !important; }
+:root:not(.dark) .text-teal-600,
+:root:not(.dark) .hover\:text-teal-600:hover { color: #0F766E !important; }
+:root:not(.dark) .text-yellow-600,
+:root:not(.dark) .hover\:text-yellow-600:hover { color: #A16207 !important; }

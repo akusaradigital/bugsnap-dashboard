@@ -343,37 +343,46 @@ export function renderAdminDigestEmail({
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${subject}</title>
+  <style>
+    @media only screen and (max-width: 600px) {
+      .admin-email-shell { width: 100% !important; }
+      .admin-email-content { padding: 24px 16px !important; }
+      .admin-email-header, .admin-email-footer { padding-left: 16px !important; padding-right: 16px !important; }
+      .admin-stat-cell { display: block !important; width: 100% !important; padding: 0 0 12px !important; }
+      .admin-stat-cell:last-child { padding-bottom: 0 !important; }
+    }
+  </style>
 </head>
 <body style="margin: 0; padding: 32px 16px; background-color: #f8fafc; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #0f172a;">
-  <div style="max-width: 560px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);">
-    <div style="padding: 24px 32px; border-bottom: 1px solid #f1f5f9; background-color: #ffffff;">
+  <div class="admin-email-shell" style="width: 100%; max-width: 560px; margin: 0 auto; background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);">
+    <div class="admin-email-header" style="padding: 24px 32px; border-bottom: 1px solid #f1f5f9; background-color: #ffffff;">
       <span style="font-size: 16px; font-weight: 700; color: #0f172a; letter-spacing: -0.02em;">BugSnap</span>
       <span style="font-size: 13px; color: #64748b; margin-left: 8px;">·</span>
       <span style="font-size: 13px; color: #64748b; margin-left: 8px;">Admin Ops Report</span>
     </div>
-    <div style="padding: 32px;">
+    <div class="admin-email-content" style="padding: 32px;">
       <h1 style="margin: 0 0 8px; font-size: 20px; font-weight: 700; color: #0f172a; line-height: 1.3;">
         Past 7 days
       </h1>
       <p style="margin: 0 0 28px; font-size: 14px; line-height: 1.5; color: #64748b;">
         Platform-wide activity summary across all workspaces, compared to the previous 7 days.
       </p>
-      <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 16px;">
+      <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 16px; table-layout: fixed;">
         <tr>
-          <td width="50%" style="padding-right: 8px; padding-bottom: 16px;">${adminStatCard(newSignups.value, "New Signups", newSignups.delta, prev)}</td>
-          <td width="50%" style="padding-left: 8px; padding-bottom: 16px;">${adminStatCard(newWorkspaces.value, "New Workspaces", newWorkspaces.delta, prev)}</td>
+          <td class="admin-stat-cell" width="50%" style="padding-right: 8px; padding-bottom: 16px; vertical-align: top;">${adminStatCard(newSignups.value, "New Signups", newSignups.delta, prev)}</td>
+          <td class="admin-stat-cell" width="50%" style="padding-left: 8px; padding-bottom: 16px; vertical-align: top;">${adminStatCard(newWorkspaces.value, "New Workspaces", newWorkspaces.delta, prev)}</td>
         </tr>
         <tr>
-          <td width="50%" style="padding-right: 8px; padding-bottom: 16px;">${adminStatCard(newCaptures.value, "New Captures", newCaptures.delta, prev)}</td>
-          <td width="50%" style="padding-left: 8px; padding-bottom: 16px;">${adminStatCard(securityAlerts.value, "Security Alerts", securityAlerts.delta, prev)}</td>
+          <td class="admin-stat-cell" width="50%" style="padding-right: 8px; padding-bottom: 16px; vertical-align: top;">${adminStatCard(newCaptures.value, "New Captures", newCaptures.delta, prev)}</td>
+          <td class="admin-stat-cell" width="50%" style="padding-left: 8px; padding-bottom: 16px; vertical-align: top;">${adminStatCard(securityAlerts.value, "Security Alerts", securityAlerts.delta, prev)}</td>
         </tr>
         <tr>
-          <td width="50%" style="padding-right: 8px; padding-bottom: 16px;">${adminStatCard(newScreenshots.value, "Screenshots", newScreenshots.delta, prev)}</td>
-          <td width="50%" style="padding-left: 8px; padding-bottom: 16px;">${adminStatCard(newRecordings.value, "Screen Recordings", newRecordings.delta, prev)}</td>
+          <td class="admin-stat-cell" width="50%" style="padding-right: 8px; padding-bottom: 16px; vertical-align: top;">${adminStatCard(newScreenshots.value, "Screenshots", newScreenshots.delta, prev)}</td>
+          <td class="admin-stat-cell" width="50%" style="padding-left: 8px; padding-bottom: 16px; vertical-align: top;">${adminStatCard(newRecordings.value, "Screen Recordings", newRecordings.delta, prev)}</td>
         </tr>
         <tr>
-          <td width="50%" style="padding-right: 8px;">${adminStatCard(newComments.value, "New Comments", newComments.delta, prev)}</td>
-          <td width="50%" style="padding-left: 8px;">${adminStatCard(newViews.value, "New Views", newViews.delta, prev)}</td>
+          <td class="admin-stat-cell" width="50%" style="padding-right: 8px; vertical-align: top;">${adminStatCard(newComments.value, "New Comments", newComments.delta, prev)}</td>
+          <td class="admin-stat-cell" width="50%" style="padding-left: 8px; vertical-align: top;">${adminStatCard(newViews.value, "New Views", newViews.delta, prev)}</td>
         </tr>
       </table>
       <div style="margin-bottom: 28px;">${adminStatCard(openTickets, "Open Tickets (current)")}</div>
@@ -387,7 +396,7 @@ export function renderAdminDigestEmail({
         </tr>
       </table>
     </div>
-    <div style="padding: 20px 32px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; font-size: 12px; line-height: 1.5; color: #64748b;">
+    <div class="admin-email-footer" style="padding: 20px 32px; background-color: #f8fafc; border-top: 1px solid #f1f5f9; font-size: 12px; line-height: 1.5; color: #64748b;">
       <p style="margin: 0;">Automated weekly report sent to BugSnap super admins.</p>
     </div>
   </div>

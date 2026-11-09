@@ -362,7 +362,7 @@ export function networkKindIcon(kind: NetworkKind): string {
     case "font": return "lucide:type";
     case "doc": return "lucide:file-text";
     case "other": return "lucide:file";
-    default: return "lucide:arrow-left-right";
+    default: return "lucide:file";
   }
 }
 
@@ -406,9 +406,14 @@ export function getTimingBreakdown(log: NetworkLog): TimingBreakdown | null {
 }
 
 export function networkLocation(value?: string) {
+  if (!value) return { domain: "-", path: "" };
   try {
-    const url = new URL(value || "");
-    return { domain: url.hostname, path: `${url.pathname}${url.search}` || "/" };
+    const isRelative = value.startsWith("/") || !/^https?:\/\//i.test(value);
+    const url = new URL(value, "https://local.capture");
+    return {
+      domain: isRelative ? "" : url.hostname,
+      path: `${url.pathname}${url.search}` || "/",
+    };
   } catch {
     return { domain: value || "-", path: "" };
   }

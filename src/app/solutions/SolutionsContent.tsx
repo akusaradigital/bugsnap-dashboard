@@ -7,6 +7,7 @@ import { SiteNavbar } from "@/components/site/SiteNavbar";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Reveal } from "@/components/site/motion";
 import { Icon } from "@/lib/iconify";
+import { FIREFOX_STORE_URL } from "@/lib/constants";
 
 const CHROME_STORE_URL =
   "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
@@ -40,8 +41,8 @@ export function SolutionsContent() {
               >
                 {t("landing.home") || "Home"}
               </Link>
-              <span className="text-slate-400 dark:text-slate-600 font-normal">
-                ›
+              <span className="text-slate-400 dark:text-slate-600 font-normal" aria-hidden="true">
+                /
               </span>
               <span className="text-slate-900 dark:text-white font-medium">
                 {t("site.nav.solutions") || "Solutions"}
@@ -92,7 +93,7 @@ export function SolutionsContent() {
                   />
                   <span>
                     {t("solutions.qa.point1") ||
-                      "1-click recording with hotkeys (Ctrl+Shift+S)"}
+                      "Record with hotkeys (Ctrl+Shift+F)"}
                   </span>
                 </li>
                 <li className="flex items-start gap-2.5">
@@ -207,10 +208,7 @@ export function SolutionsContent() {
                     </div>
                     <div className="flex items-center gap-1.5 shrink-0 text-xs text-slate-400 dark:text-slate-500 font-mono">
                       <span>00:00 / 00:24</span>
-                      <Icon
-                        icon="lucide:chevron-right"
-                        className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400"
-                      />
+                      
                     </div>
                   </div>
                 </div>
@@ -650,21 +648,30 @@ export function SolutionsContent() {
                 </p>
               </div>
 
-              <a
-                href={CHROME_STORE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2.5 bg-[#89BD49] hover:bg-[#78a83f] text-slate-900 text-sm font-bold px-6 py-3.5 rounded-xl shadow-md transition-all hover:scale-[1.02] active:scale-[0.99] shrink-0 touch-manipulation whitespace-nowrap"
-              >
-                <Icon
-                  icon="logos:chrome"
-                  className="w-5 h-5 shrink-0"
-                  aria-hidden="true"
-                />
-                <span>
-                  {t("solutions.ctaButton") || "Add to Chrome - Free"}
-                </span>
-              </a>
+              <div className="flex flex-wrap items-center gap-3 shrink-0 min-w-0">
+                <a
+                  href={CHROME_STORE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold px-6 py-3.5 rounded-xl shadow-md transition-all hover:scale-[1.02] active:scale-[0.99] shrink-0 touch-manipulation whitespace-nowrap"
+                >
+                  <Icon
+                    icon="logos:chrome"
+                    className="w-5 h-5 shrink-0"
+                    aria-hidden="true"
+                  />
+                  <span>{t("extension.addToChrome") || "Add to Chrome"}</span>
+                </a>
+                <a
+                  href={FIREFOX_STORE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold px-6 py-3.5 rounded-xl shadow-md transition-all hover:scale-[1.02] active:scale-[0.99] shrink-0 touch-manipulation whitespace-nowrap"
+                >
+                  <Icon icon="logos:firefox" className="w-5 h-5 shrink-0" aria-hidden="true" />
+                  <span>{t("extension.addToFirefox")}</span>
+                </a>
+              </div>
             </div>
           </Reveal>
         </div>

@@ -107,7 +107,7 @@ export default function CapturesList() {
       fallback={
         <div className="p-12 flex items-center justify-center min-h-[300px]" role="status" aria-label={t("cap.loading")}>
           <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-xl bg-subtle border border-border text-xs text-muted shadow-xs">
-            <Icon icon="lucide:loader-2" className="w-4 h-4 animate-spin text-[#6B9A35] dark:text-[#A8D666] shrink-0" aria-hidden="true" />
+            <Icon icon="lucide:loader-2" className="w-4 h-4 animate-spin text-sky-500 dark:text-sky-400 shrink-0" aria-hidden="true" />
             <span className="font-medium">{t("cap.loading")}</span>
           </div>
         </div>
@@ -1412,7 +1412,7 @@ function CapturesContent() {
           }}
         >
           <div className="bg-white dark:bg-zinc-900 border border-border p-5 sm:p-8 rounded-2xl shadow-2xl flex flex-col items-center gap-4 max-w-md text-center pointer-events-none transform transition-transform">
-            <div className="w-16 h-16 rounded-2xl bg-[#89BD49]/10 dark:bg-[#89BD49]/20 border border-[#89BD49]/30 dark:border-[#89BD49]/40 flex items-center justify-center text-[#6B9A35] dark:text-[#A8D666] shadow-inner">
+            <div className="w-16 h-16 rounded-2xl bg-sky-500/10 dark:bg-sky-500/20 border border-sky-500/30 dark:border-sky-500/40 flex items-center justify-center text-sky-600 dark:text-sky-400 shadow-inner">
               <Icon
                 icon="lucide:upload-cloud"
                 className="w-8 h-8 animate-bounce shrink-0"
@@ -1499,8 +1499,8 @@ function CapturesContent() {
                 }
                 className={`relative h-10 w-10 flex items-center justify-center rounded-lg border transition-colors shrink-0 cursor-pointer ${
                   uploading
-                    ? "border-[#89BD49]/40 bg-[#89BD49]/10 text-[#6B9A35] dark:text-[#A8D666] cursor-wait"
-                    : "border-border bg-subtle text-muted hover:text-foreground hover:border-[#89BD49]/40"
+                    ? "border-sky-500/40 bg-sky-500/10 text-sky-600 dark:text-sky-400 cursor-wait"
+                    : "border-border bg-subtle text-muted hover:text-foreground hover:border-sky-500/40"
                 }`}
               >
                 <input
@@ -1535,7 +1535,7 @@ function CapturesContent() {
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="2.5"
-                      className="text-[#89BD49]/20"
+                      className="text-sky-600 dark:text-sky-400/20"
                     />
                     <circle
                       cx="20"
@@ -1544,7 +1544,7 @@ function CapturesContent() {
                       fill="none"
                       stroke="currentColor"
                       strokeWidth="2.5"
-                      className="text-[#89BD49] transition-all duration-300"
+                      className="text-sky-600 dark:text-sky-400 transition-all duration-300"
                       strokeDasharray={`${2 * Math.PI * 17}`}
                       strokeDashoffset={`${2 * Math.PI * 17 * (1 - ringProgress / 100)}`}
                       strokeLinecap="round"
@@ -1565,18 +1565,15 @@ function CapturesContent() {
               onClick={() => setTypeMenuOpen((o) => !o)}
               className={`flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors ${
                 typeMenuOpen || showVideo || showScreenshot
-                  ? "bg-subtle border-[#89BD49]/40 text-foreground"
+                  ? "bg-subtle border-sky-500/40 text-foreground"
                   : "bg-subtle border-border text-muted hover:text-foreground hover:bg-subtle"
               }`}
             >
               <span>{t("cap.type")}</span>
               {(showVideo || showScreenshot) && (
-                <span className="w-2 h-2 rounded-full bg-[#89BD49] shrink-0" />
+                <span className="w-2 h-2 rounded-full bg-sky-500 shrink-0" />
               )}
-              <Icon
-                icon="lucide:chevron-down"
-                className={`w-3.5 h-3.5 text-muted transition-transform shrink-0 ${typeMenuOpen ? "rotate-180" : ""}`}
-              />
+              
             </button>
 
             {typeMenuOpen && (
@@ -1636,10 +1633,10 @@ function CapturesContent() {
                       />
                     )}
                   </div>
-                  <div className="w-7 h-7 rounded-md bg-[#89BD49]/15 dark:bg-[#89BD49]/20 flex items-center justify-center shrink-0">
+                  <div className="w-7 h-7 rounded-md bg-sky-500/15 dark:bg-sky-500/20 flex items-center justify-center shrink-0">
                     <Icon
                       icon="lucide:play"
-                      className="w-4 h-4 text-[#89BD49] dark:text-[#A8D666] shrink-0 fill-current"
+                      className="w-4 h-4 text-sky-600 dark:text-sky-400 shrink-0 fill-current"
                     />
                   </div>
                   <div className="flex-1">
@@ -1845,7 +1842,7 @@ function CapturesContent() {
                           ? "bg-emerald-500/15 text-emerald-500"
                           : failedCount > 0
                             ? "bg-red-500/15 text-red-500"
-                            : "bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666]"
+                            : "bg-sky-500/15 text-sky-600 dark:text-sky-400"
                       }`}
                     >
                       {allDone && failedCount === 0 ? (
@@ -1920,7 +1917,7 @@ function CapturesContent() {
                           ? "bg-emerald-500"
                           : failedCount > 0
                             ? "bg-red-500"
-                            : "bg-[#89BD49]"
+                            : "bg-sky-500"
                       }`}
                       style={{ width: `${avgProgress}%` }}
                     />
@@ -1947,7 +1944,7 @@ function CapturesContent() {
                           ) : taskItem.status === "syncing" || taskItem.status === "uploading" ? (
                             <Icon
                               icon="lucide:loader-2"
-                              className="w-3.5 h-3.5 text-[#89BD49] animate-spin shrink-0"
+                              className="w-3.5 h-3.5 text-sky-500 dark:text-sky-400 animate-spin shrink-0"
                             />
                           ) : (
                             <span className="w-2 h-2 rounded-full bg-muted/30 ml-0.5 mr-1 shrink-0" />
@@ -1962,8 +1959,8 @@ function CapturesContent() {
                               ? "text-emerald-600 dark:text-emerald-400"
                               : taskItem.status === "error"
                                 ? "text-red-500"
-                                : taskItem.status === "syncing"
-                                  ? "text-[#6B9A35] dark:text-[#A8D666]"
+                                : taskItem.status === "syncing" || taskItem.status === "uploading"
+                                  ? "text-sky-600 dark:text-sky-400"
                                   : "text-muted"
                           }`}
                         >
@@ -1996,7 +1993,7 @@ function CapturesContent() {
                           ? "bg-emerald-500/15 text-emerald-500"
                           : activeTask.status === "error"
                             ? "bg-red-500/15 text-red-500"
-                            : "bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666]"
+                            : "bg-sky-500/15 text-sky-600 dark:text-sky-400"
                       }`}
                     >
                       {activeTask.status === "completed" ? (
@@ -2059,7 +2056,7 @@ function CapturesContent() {
                           ? "bg-emerald-500"
                           : activeTask.status === "error"
                             ? "bg-red-500"
-                            : "bg-[#89BD49]"
+                            : "bg-sky-500"
                       }`}
                       style={{ width: `${activeTask.progress}%` }}
                     />
@@ -2077,7 +2074,7 @@ function CapturesContent() {
         </div>
       )}
 
-      {/* 1-Click Ghost Cleanup Banner for Missing Drive Files */}
+      {/* Ghost Cleanup Banner for Missing Drive Files */}
       {allMissingDriveIds.length > 0 && !currentUpload && uploadTasks.length === 0 && (
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/20 px-4 py-3 text-xs text-amber-900 dark:text-amber-200 shadow-sm animate-in fade-in duration-200">
           <div className="flex items-center gap-2.5 min-w-0">
@@ -2140,7 +2137,7 @@ function CapturesContent() {
       {/* Grid */}
       {loading ? (
         <div className="space-y-3" role="status" aria-label={t("cap.loading")}>
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#89BD49]/10 border border-[#89BD49]/20 text-xs text-[#46741A] dark:text-[#A8D666] font-medium">
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-sky-500/10 border border-sky-500/20 text-xs text-sky-600 dark:text-sky-400 font-medium">
             <Icon icon="lucide:loader-2" className="w-3.5 h-3.5 animate-spin shrink-0" aria-hidden="true" />
             <span>{t("cap.loading")}</span>
           </div>
@@ -2162,10 +2159,10 @@ function CapturesContent() {
       ) : filteredCaptures.length === 0 ? (
         activeFilterCount > 0 ? (
           <div className="px-4 py-14 sm:py-20 text-center rounded-xl border border-dashed border-border bg-subtle/50 flex flex-col items-center gap-3">
-            <div className="w-16 h-16 rounded-2xl bg-[#89BD49]/10 dark:bg-[#89BD49]/20 border border-[#89BD49]/30 dark:border-[#89BD49]/40 flex items-center justify-center">
+            <div className="w-16 h-16 rounded-2xl bg-sky-500/10 dark:bg-sky-500/20 border border-sky-500/30 dark:border-sky-500/40 flex items-center justify-center">
               <Icon
                 icon="lucide:video"
-                className="w-8 h-8 text-[#6B9A35] dark:text-[#A8D666] shrink-0"
+                className="w-8 h-8 text-sky-600 dark:text-sky-400 shrink-0"
               />
             </div>
             <div>
@@ -2186,7 +2183,7 @@ function CapturesContent() {
         ) : (
           <div className="rounded-2xl border border-border/80 bg-white/80 dark:bg-subtle/70 p-6 sm:p-10 text-center shadow-lg shadow-slate-200/50 dark:shadow-none backdrop-blur-sm space-y-8">
             <div className="max-w-xl mx-auto space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg border border-[#89BD49]/30 bg-[#89BD49]/10 text-[#6B9A35] dark:text-[#A8D666] text-xs font-semibold">
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg border border-sky-500/30 bg-sky-500/10 text-sky-600 dark:text-sky-400 text-xs font-semibold">
                 <span>{t("cap.quickStartTitle")}</span>
               </div>
               <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-foreground tracking-tight">
@@ -2199,9 +2196,9 @@ function CapturesContent() {
 
             {/* 3 Step Onboarding Cards */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-left">
-              <div className="rounded-xl border border-border bg-white dark:bg-subtle p-5 flex flex-col justify-between space-y-4 hover:border-[#89BD49]/40 transition-colors">
+              <div className="rounded-xl border border-border bg-white dark:bg-subtle p-5 flex flex-col justify-between space-y-4 hover:border-sky-500/40 transition-colors">
                 <div className="space-y-2.5">
-                  <div className="w-9 h-9 rounded-lg bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666] flex items-center justify-center font-bold text-sm">
+                  <div className="w-9 h-9 rounded-lg bg-sky-500/15 text-sky-600 dark:text-sky-400 flex items-center justify-center font-bold text-sm">
                     1
                   </div>
                   <h3 className="text-sm font-bold text-foreground">
@@ -2215,16 +2212,16 @@ function CapturesContent() {
                   href={CHROME_WEB_STORE_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg bg-[#89BD49] hover:bg-[#78a83f] text-slate-900 text-xs font-bold shadow-xs shadow-[#89BD49]/25 transition-all w-full"
+                  className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] text-white text-xs font-bold shadow-xs shadow-[#89BD49]/25 transition-all w-full"
                 >
                   <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
                   <span>{t("cap.install")}</span>
                 </a>
               </div>
 
-              <div className="rounded-xl border border-border bg-white dark:bg-subtle p-5 flex flex-col justify-between space-y-4 hover:border-[#89BD49]/40 transition-colors">
+              <div className="rounded-xl border border-border bg-white dark:bg-subtle p-5 flex flex-col justify-between space-y-4 hover:border-sky-500/40 transition-colors">
                 <div className="space-y-2.5">
-                  <div className="w-9 h-9 rounded-lg bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666] flex items-center justify-center font-bold text-sm">
+                  <div className="w-9 h-9 rounded-lg bg-sky-500/15 text-sky-600 dark:text-sky-400 flex items-center justify-center font-bold text-sm">
                     2
                   </div>
                   <h3 className="text-sm font-bold text-foreground">
@@ -2244,9 +2241,9 @@ function CapturesContent() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-border bg-white dark:bg-subtle p-5 flex flex-col justify-between space-y-4 hover:border-[#89BD49]/40 transition-colors">
+              <div className="rounded-xl border border-border bg-white dark:bg-subtle p-5 flex flex-col justify-between space-y-4 hover:border-sky-500/40 transition-colors">
                 <div className="space-y-2.5">
-                  <div className="w-9 h-9 rounded-lg bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666] flex items-center justify-center font-bold text-sm">
+                  <div className="w-9 h-9 rounded-lg bg-sky-500/15 text-sky-600 dark:text-sky-400 flex items-center justify-center font-bold text-sm">
                     3
                   </div>
                   <h3 className="text-sm font-bold text-foreground">
@@ -2367,7 +2364,7 @@ function CapturesContent() {
                     ) : item.type === "video" ? (
                       <Icon
                         icon="lucide:play"
-                        className="w-5 h-5 text-[#89BD49] fill-current shrink-0"
+                        className="w-5 h-5 text-sky-600 dark:text-sky-400 fill-current shrink-0"
                       />
                     ) : (
                       <Icon
@@ -2626,7 +2623,7 @@ function CapturesContent() {
                     ) : (
                       <div className="flex flex-col items-center gap-1.5">
                         {item.type === "video" ? (
-                          <div className="w-12 h-12 rounded-full bg-[#89BD49]/15 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] flex items-center justify-center group-hover:scale-110 transition-transform shadow-xs">
+                          <div className="w-12 h-12 rounded-full bg-sky-500/15 dark:bg-sky-500/20 text-sky-600 dark:text-sky-400 flex items-center justify-center group-hover:scale-110 transition-transform shadow-xs">
                             <Icon
                               icon="lucide:play"
                               className="w-6 h-6 fill-current shrink-0"
@@ -2881,7 +2878,7 @@ function CapturesContent() {
         >
           {loadingMore && hasMore && (
             <div className="flex flex-col items-center gap-2">
-              <div className="w-7 h-7 border-[3px] border-[#89BD49]/20 border-t-[#89BD49] rounded-full animate-spin" />
+              <div className="w-7 h-7 border-[3px] border-sky-500/20 border-t-sky-500 rounded-full animate-spin" />
               <span className="text-xs text-muted">{t("cap.loadingMore")}</span>
             </div>
           )}
@@ -3135,7 +3132,7 @@ function CapturesContent() {
                       <button
                         type="button"
                         onClick={() => setIsCreatingMoveFolder(true)}
-                        className="w-full flex items-center gap-2 rounded-xl border border-dashed border-border px-3.5 py-2 text-left text-xs font-semibold text-[#6B9A35] dark:text-[#A8D666] hover:bg-[#89BD49]/10 dark:hover:bg-[#89BD49]/20 transition-all cursor-pointer"
+                        className="w-full flex items-center gap-2 rounded-xl border border-dashed border-border px-3.5 py-2 text-left text-xs font-semibold text-sky-600 dark:text-sky-400 hover:bg-sky-500/10 dark:hover:bg-sky-500/20 transition-all cursor-pointer"
                       >
                         <span className="text-sm leading-none">+</span>
                         <span>{t("cap.newFolder")}</span>
@@ -3315,7 +3312,7 @@ function CapturesContent() {
               <div className="mt-3 flex items-center gap-3">
                 <button
                   onClick={() => void startDriveConnect()}
-                  className="text-sm font-semibold text-[#6B9A35] dark:text-[#A8D666] hover:underline"
+                  className="text-sm font-semibold text-sky-600 dark:text-sky-400 hover:underline"
                 >
                   {driveIssue === "reconnect_required"
                     ? t("cap.reconnectDrive")
@@ -3386,7 +3383,7 @@ function CapturesContent() {
                 onClick={() =>
                   setSelectedIds(new Set(filteredCaptures.map((c) => c.id)))
                 }
-                className="text-xs font-semibold text-[#6B9A35] dark:text-[#A8D666] hover:text-[#557A2B] dark:hover:text-[#C2E688] hover:underline transition-colors cursor-pointer whitespace-nowrap"
+                className="text-xs font-semibold text-sky-600 dark:text-sky-400 hover:text-[#991B1B] dark:hover:text-[#FCA5A5] hover:underline transition-colors cursor-pointer whitespace-nowrap"
               >
                 {t("cap.selectAllCount", { count: filteredCaptures.length })}
               </button>
@@ -3414,7 +3411,7 @@ function CapturesContent() {
                   router.push(`/compare?${qs.toString()}`);
                 }}
                 disabled={moving || deleting}
-                className="h-8 min-h-[36px] sm:min-h-0 px-2.5 rounded-xl border border-[#89BD49]/50 bg-[#89BD49]/10 hover:bg-[#89BD49]/20 text-xs font-semibold text-[#6B9A35] dark:text-[#A8D666] transition-all flex items-center gap-1.5 cursor-pointer shadow-xs touch-manipulation"
+                className="h-8 min-h-[36px] sm:min-h-0 px-2.5 rounded-xl border border-sky-500/50 bg-sky-500/10 hover:bg-sky-500/20 text-xs font-semibold text-sky-600 dark:text-sky-400 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs touch-manipulation"
                 title={t("cap.compareSelected")}
               >
                 <Icon icon="lucide:columns-2" className="w-3.5 h-3.5 shrink-0" />
@@ -3427,7 +3424,7 @@ function CapturesContent() {
               type="button"
               onClick={handleBulkCopyLinks}
               disabled={moving || deleting}
-              className="h-8 min-h-[36px] sm:min-h-0 px-2.5 rounded-xl border border-border bg-subtle hover:bg-background hover:border-[#89BD49]/40 dark:hover:border-[#89BD49]/50 text-xs font-semibold text-foreground hover:text-[#6B9A35] dark:hover:text-[#A8D666] disabled:opacity-40 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs touch-manipulation"
+              className="h-8 min-h-[36px] sm:min-h-0 px-2.5 rounded-xl border border-border bg-subtle hover:bg-background hover:border-sky-500/40 dark:hover:border-sky-500/50 text-xs font-semibold text-foreground hover:text-[#6B9A35] dark:hover:text-[#A8D666] disabled:opacity-40 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs touch-manipulation"
               title={t("cap.copyAllLinks")}
             >
               <Icon icon="lucide:link" className="w-3.5 h-3.5 text-muted shrink-0" />
@@ -3439,9 +3436,9 @@ function CapturesContent() {
               type="button"
               onClick={() => void openMoveToModal()}
               disabled={moving || deleting}
-              className="h-8 min-h-[36px] sm:min-h-0 px-2.5 rounded-xl border border-border bg-subtle hover:bg-background hover:border-[#89BD49]/40 dark:hover:border-[#89BD49]/50 text-xs font-semibold text-foreground hover:text-[#6B9A35] dark:hover:text-[#A8D666] disabled:opacity-40 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs touch-manipulation"
+              className="h-8 min-h-[36px] sm:min-h-0 px-2.5 rounded-xl border border-border bg-subtle hover:bg-background hover:border-sky-500/40 dark:hover:border-sky-500/50 text-xs font-semibold text-foreground hover:text-[#6B9A35] dark:hover:text-[#A8D666] disabled:opacity-40 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs touch-manipulation"
             >
-              <Icon icon="lucide:arrow-right-left" className="w-3.5 h-3.5 text-muted shrink-0" />
+              
               <span>{t("cap.bulkMove")}</span>
             </button>
 
@@ -3454,7 +3451,7 @@ function CapturesContent() {
                     setBulkField((f) => (f === field ? null : field))
                   }
                   disabled={moving || deleting || bulkSaving}
-                  className="h-8 min-h-[36px] sm:min-h-0 px-2.5 rounded-xl border border-border bg-subtle hover:bg-background hover:border-[#89BD49]/40 dark:hover:border-[#89BD49]/50 text-xs font-semibold text-foreground hover:text-[#6B9A35] dark:hover:text-[#A8D666] disabled:opacity-40 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs touch-manipulation"
+                  className="h-8 min-h-[36px] sm:min-h-0 px-2.5 rounded-xl border border-border bg-subtle hover:bg-background hover:border-sky-500/40 dark:hover:border-sky-500/50 text-xs font-semibold text-foreground hover:text-[#6B9A35] dark:hover:text-[#A8D666] disabled:opacity-40 transition-all flex items-center gap-1.5 cursor-pointer shadow-xs touch-manipulation"
                 >
                   {field === "expiry" && (
                     <Icon icon="lucide:clock" className="w-3.5 h-3.5 text-muted shrink-0" />

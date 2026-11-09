@@ -164,9 +164,6 @@ export function CommandPalette({
             placeholder={t("admin.commandPalettePlaceholder")}
             className="w-full text-xs sm:text-sm bg-transparent outline-none text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-zinc-500"
           />
-          <kbd className="hidden sm:inline-flex px-1.5 py-0.5 text-[10px] font-bold text-slate-400 dark:text-zinc-500 bg-slate-100 dark:bg-zinc-800 rounded border border-slate-200 dark:border-zinc-700">
-            ESC
-          </kbd>
         </div>
 
         {/* Results List */}
@@ -190,7 +187,7 @@ export function CommandPalette({
                     onMouseEnter={() => setSelectedIndex(idx)}
                     className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs transition-colors cursor-pointer text-left ${
                       isSelected
-                        ? "bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] font-semibold"
+                        ? "bg-red-600/10 dark:bg-red-400/20 text-red-700 dark:text-red-300 font-semibold"
                         : "text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800"
                     }`}
                   >

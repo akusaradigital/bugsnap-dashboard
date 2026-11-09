@@ -45,7 +45,7 @@ export const APP_ICONS = {
     sparkles: "lucide:sparkles",
     help: "lucide:help-circle",
     lock: "lucide:lock",
-    swap: "lucide:arrow-right-left",
+    swap: "lucide:repeat",
     split: "lucide:split",
     layers: "lucide:layers",
     columns: "lucide:columns-2",

@@ -112,7 +112,7 @@ const sections: LegalSection[] = [
       <div className="space-y-3 text-site-text-2 border border-site-border rounded-xl p-5 bg-site-surface shadow-xs">
         <div>
           <h3 className="font-bold text-xs uppercase tracking-wider text-site-accent mb-1">
-            A. 1-Click Self-Serve Cancellation
+            A. Self-Serve Cancellation
           </h3>
           <p className="text-xs">
             You may cancel your paid subscription at any time with zero hassle directly through your Dashboard (<span className="font-mono text-site-text">Settings &gt; Billing &gt; Manage Subscription</span>) or via the Paddle Customer Portal. Upon cancellation, your account retains full access to paid features until the conclusion of the current prepaid billing period.

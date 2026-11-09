@@ -127,7 +127,7 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
             </div>
 
             {/* NODE 2 - Your Google Drive (Hero Node) */}
-            <div className="flex-1 rounded-2xl border-2 border-[#89BD49] dark:border-emerald-700 bg-[#F4FBF0] dark:bg-emerald-950/25 p-5 text-center flex flex-col items-center justify-between min-h-[190px] shadow-sm relative overflow-hidden min-w-0">
+            <div className="flex-1 rounded-2xl border-2 border-[#DC2626] dark:border-emerald-700 bg-[#F4FBF0] dark:bg-emerald-950/25 p-5 text-center flex flex-col items-center justify-between min-h-[190px] shadow-sm relative overflow-hidden min-w-0">
               <div className="w-full flex items-center justify-between mb-3">
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#EBF7E3] dark:bg-emerald-900/40 text-[#3D7A24] dark:text-emerald-300 border border-[#CFE6BF] dark:border-emerald-800/60 text-[10px] font-mono font-bold">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#3D7A24] dark:bg-emerald-400" />
@@ -266,7 +266,7 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
           </div>
 
           {/* NODE 2 - Google Drive */}
-          <div className="rounded-2xl border-2 border-[#89BD49] dark:border-emerald-700 bg-[#F4FBF0] dark:bg-emerald-950/25 p-5 text-center relative">
+          <div className="rounded-2xl border-2 border-[#DC2626] dark:border-emerald-700 bg-[#F4FBF0] dark:bg-emerald-950/25 p-5 text-center relative">
             <div className="flex items-center justify-center mb-2">
               <Icon icon="logos:google-drive" className="w-10 h-10" aria-hidden="true" />
             </div>

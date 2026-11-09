@@ -37,7 +37,7 @@ export function CookieConsentBanner() {
     >
       <div className="rounded-2xl border border-site-border bg-site-surface p-4 shadow-xl text-xs space-y-3">
         <div className="flex items-start gap-2.5">
-          <div className="w-7 h-7 rounded-lg bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666] flex items-center justify-center shrink-0 mt-0.5">
+          <div className="w-7 h-7 rounded-lg bg-red-600/15 text-red-700 dark:text-red-300 flex items-center justify-center shrink-0 mt-0.5">
             <Icon icon="lucide:shield-check" className="w-4 h-4" />
           </div>
           <div className="space-y-1 min-w-0 flex-1">
@@ -59,7 +59,7 @@ export function CookieConsentBanner() {
           <button
             type="button"
             onClick={handleDismiss}
-            className="px-3 py-1.5 rounded-lg bg-accent hover:bg-accent-hover text-slate-900 font-bold text-[11px] transition-all shadow-2xs cursor-pointer active:scale-95"
+            className="px-3 py-1.5 rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] text-white font-bold text-[11px] transition-all shadow-2xs cursor-pointer active:scale-95"
           >
             {t("cookie.gotIt")}
           </button>

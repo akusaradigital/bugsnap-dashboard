@@ -253,7 +253,7 @@ export default function AdminChangelogPage() {
                 onClick={() => setSelectedProject("all")}
                 className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer text-left ${
                   selectedProject === "all"
-                    ? "bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30"
+                    ? "bg-red-600/15 text-red-700 dark:text-red-300 border border-red-600/30"
                     : "bg-slate-50 dark:bg-zinc-800/60 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-transparent"
                 }`}
               >
@@ -276,7 +276,7 @@ export default function AdminChangelogPage() {
                     onClick={() => setSelectedProject(proj.id)}
                     className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-semibold transition-all cursor-pointer text-left ${
                       isActive
-                        ? "bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30"
+                        ? "bg-red-600/15 text-red-700 dark:text-red-300 border border-red-600/30"
                         : "bg-slate-50 dark:bg-zinc-800/60 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-transparent"
                     }`}
                   >
@@ -354,7 +354,7 @@ export default function AdminChangelogPage() {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder={t("admin.changelog.searchPlaceholder")}
-                className="w-full pl-9 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800 text-xs text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-[#89BD49] transition-colors"
+                className="w-full pl-9 pr-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-800 text-xs text-slate-900 dark:text-white placeholder-slate-400 outline-none focus:border-red-600 transition-colors"
               />
               {searchQuery && (
                 <button
@@ -444,7 +444,7 @@ export default function AdminChangelogPage() {
 
                           {/* Version Tag */}
                           {rel.version && (
-                            <span className="px-2 py-0.5 rounded-md font-mono text-[11px] font-bold bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30">
+                            <span className="px-2 py-0.5 rounded-md font-mono text-[11px] font-bold bg-red-600/15 text-red-700 dark:text-red-300 border border-red-600/30">
                               {rel.version}
                             </span>
                           )}

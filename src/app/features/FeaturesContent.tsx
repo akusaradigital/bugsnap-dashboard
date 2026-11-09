@@ -7,6 +7,7 @@ import { SiteNavbar } from "@/components/site/SiteNavbar";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Reveal } from "@/components/site/motion";
 import { Icon } from "@/lib/iconify";
+import { FIREFOX_STORE_URL } from "@/lib/constants";
 
 const CHROME_STORE_URL =
   "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
@@ -103,7 +104,7 @@ export function FeaturesContent() {
                 >
                   {t("landing.home") || "Home"}
                 </Link>
-                <span className="text-slate-300 dark:text-slate-600">›</span>
+                <span className="text-slate-300 dark:text-slate-600" aria-hidden="true">/</span>
                 <span className="text-slate-700 dark:text-slate-300 font-medium">
                   {t("features.breadcrumb") || "Product Capabilities"}
                 </span>
@@ -189,7 +190,7 @@ export function FeaturesContent() {
                       </div>
                       <span className="text-xs sm:text-sm text-slate-700 dark:text-slate-300">
                         {t("features.s1Bullet2") ||
-                          "Works in the background — 1-click from extension, no manual steps"}
+                          "Runs in the background while you capture"}
                       </span>
                     </li>
                     <li className="flex items-start gap-3">
@@ -255,7 +256,7 @@ export function FeaturesContent() {
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="inline-flex items-center gap-1 text-[11px] font-mono text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 px-2 py-0.5 rounded cursor-pointer">
-                          JSON <Icon icon="lucide:chevron-down" className="w-3 h-3" />
+                          JSON 
                         </span>
                         <button
                           type="button"
@@ -414,7 +415,7 @@ export function FeaturesContent() {
                         {/* Mock App Screen inside Video Viewport */}
                         <div className="p-4 space-y-3">
                           <div className="flex items-center gap-2 pb-2 border-b border-slate-100 dark:border-slate-800">
-                            <span className="text-slate-400 text-xs">←</span>
+                            <span className="text-slate-400 text-xs" aria-hidden="true">/</span>
                             <span className="text-xs font-bold text-slate-900 dark:text-white">
                               Create Project
                             </span>
@@ -771,7 +772,7 @@ export function FeaturesContent() {
                     </div>
 
                     {/* 3 Metric Tiles with Sparklines */}
-                    <div className="grid grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       {/* Tile 1: JS Heap */}
                       <div className="p-3 rounded-xl border border-slate-200/80 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/40 space-y-1">
                         <span className="text-[11px] font-medium text-slate-500 dark:text-slate-400">
@@ -1119,7 +1120,7 @@ export function FeaturesContent() {
               <div className="flex flex-wrap items-center gap-3 shrink-0">
                 <Link
                   href="/docs"
-                  className="border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-semibold px-5 py-2.5 rounded-xl hover:bg-slate-50 dark:hover:bg-slate-800 text-xs sm:text-sm shadow-2xs transition-colors"
+                  className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold px-5 sm:px-6 py-2.5 rounded-xl text-xs sm:text-sm inline-flex items-center gap-2 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.99]"
                 >
                   {t("features.bannerDocsBtn") || "Read Developer Docs"}
                 </Link>
@@ -1127,12 +1128,21 @@ export function FeaturesContent() {
                   href={CHROME_STORE_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-[#89BD49] hover:bg-[#78a83f] text-slate-900 font-bold px-5 sm:px-6 py-2.5 rounded-xl text-xs sm:text-sm inline-flex items-center gap-2 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.99]"
+                  className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold px-5 sm:px-6 py-2.5 rounded-xl text-xs sm:text-sm inline-flex items-center gap-2 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.99]"
                 >
                   <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" />
                   <span>
-                    {t("features.bannerChromeBtn") || "Add to Chrome - Free"}
+                    {t("extension.addToChrome") || "Add to Chrome"}
                   </span>
+                </a>
+                <a
+                  href={FIREFOX_STORE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold px-5 sm:px-6 py-2.5 rounded-xl text-xs sm:text-sm inline-flex items-center gap-2 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.99]"
+                >
+                  <Icon icon="logos:firefox" className="w-4 h-4 shrink-0" />
+                  <span>{t("extension.addToFirefox")}</span>
                 </a>
               </div>
             </div>

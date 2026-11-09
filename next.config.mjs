@@ -31,6 +31,11 @@ const nextConfig = {
         destination: '/v/:id?embed=true',
         permanent: true,
       },
+      {
+        source: '/extension/firefox',
+        destination: 'https://addons.mozilla.org/addon/bugsnap/',
+        permanent: true,
+      },
     ];
   },
 };

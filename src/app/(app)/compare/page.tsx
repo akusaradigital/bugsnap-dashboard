@@ -315,7 +315,7 @@ function CompareContent() {
                 href={wsParam ? `/captures?ws=${wsParam}` : "/captures"}
                 className="text-muted hover:text-foreground text-xs font-medium flex items-center gap-1 transition-colors"
               >
-                <Icon icon="lucide:arrow-left" className="w-3.5 h-3.5 shrink-0" />
+                
                 <span>{t("compare.backToCaptures")}</span>
               </Link>
               <span className="text-border text-xs">/</span>
@@ -389,7 +389,7 @@ function CompareContent() {
               className="h-9 min-h-[36px] px-3 rounded-xl border border-border bg-subtle hover:bg-background text-foreground text-xs font-semibold flex items-center gap-1.5 disabled:opacity-40 transition-colors cursor-pointer shadow-xs touch-manipulation"
               title={t("compare.swap")}
             >
-              <Icon icon="lucide:arrow-right-left" className="w-3.5 h-3.5 text-muted shrink-0" />
+              
               <span>{t("compare.swap")}</span>
             </button>
           </div>
@@ -460,7 +460,7 @@ function CompareContent() {
           <div className="border border-border rounded-2xl bg-subtle p-3 sm:p-4 flex flex-col justify-between gap-3 shadow-xs min-w-0">
             <div className="flex items-center justify-between gap-2 min-w-0">
               <div className="flex items-center gap-2 min-w-0">
-                <span className="px-2 py-0.5 rounded-md bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666] font-bold text-[11px] shrink-0 uppercase tracking-wider">
+                <span className="px-2 py-0.5 rounded-md bg-[#DC2626]/15 text-[#B91C1C] dark:text-[#F87171] font-bold text-[11px] shrink-0 uppercase tracking-wider">
                   {t("compare.modified")}
                 </span>
                 <span className="font-semibold text-xs text-foreground truncate">
@@ -518,7 +518,7 @@ function CompareContent() {
           <div className="flex-1 flex flex-col items-center justify-center py-20 border border-border rounded-2xl bg-subtle/40">
             <Icon
               icon="lucide:refresh-cw"
-              className="w-6 h-6 animate-spin text-[#89BD49] mb-3"
+              className="w-6 h-6 animate-spin text-[#DC2626] mb-3"
             />
             <p className="text-xs text-muted">{t("compare.loading")}</p>
           </div>
@@ -527,7 +527,7 @@ function CompareContent() {
         {/* Empty State (when neither slot is selected) */}
         {!loadingCaptures && !hasAnySelected && (
           <div className="flex-1 flex flex-col items-center justify-center p-8 sm:p-12 border-2 border-dashed border-border rounded-3xl bg-subtle/30 text-center min-w-0">
-            <div className="w-14 h-14 rounded-2xl bg-[#89BD49]/10 text-[#6B9A35] dark:text-[#A8D666] flex items-center justify-center mb-4">
+            <div className="w-14 h-14 rounded-2xl bg-[#DC2626]/10 text-[#B91C1C] dark:text-[#F87171] flex items-center justify-center mb-4">
               <Icon icon="lucide:columns-2" className="w-7 h-7" />
             </div>
             <h2 className="text-base sm:text-lg font-bold text-foreground">
@@ -540,7 +540,7 @@ function CompareContent() {
               <button
                 type="button"
                 onClick={() => void openPickerModal(!leftSlot ? "left" : "right")}
-                className="px-4 py-2 min-h-[44px] rounded-xl bg-[#89BD49] hover:bg-[#78a83f] text-white font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer touch-manipulation"
+                className="px-4 py-2 min-h-[44px] rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer touch-manipulation"
               >
                 <Icon icon="lucide:camera" className="w-4 h-4 shrink-0" />
                 <span>{t("compare.pickCapture")}</span>
@@ -616,7 +616,7 @@ function CompareContent() {
                     className="absolute inset-y-0 w-0.5 bg-white dark:bg-zinc-200 pointer-events-none z-20 shadow-[0_0_10px_rgba(0,0,0,0.5)] flex items-center justify-center -translate-x-1/2"
                   >
                     <div className="w-8 h-8 rounded-full bg-white text-zinc-900 border border-zinc-300 dark:border-zinc-700 shadow-xl flex items-center justify-center text-xs font-bold tracking-tight select-none">
-                      ‹ ›
+                      /
                     </div>
                   </div>
 
@@ -627,7 +627,7 @@ function CompareContent() {
                     </span>
                   </div>
                   <div className="absolute top-3 right-3 z-10 pointer-events-none">
-                    <span className="px-2.5 py-1 rounded-lg bg-[#89BD49]/90 text-white backdrop-blur-xs font-semibold text-[11px] shadow-sm">
+                    <span className="px-2.5 py-1 rounded-lg bg-[#DC2626]/90 text-white backdrop-blur-xs font-semibold text-[11px] shadow-sm">
                       {t("compare.modified")}
                     </span>
                   </div>
@@ -642,7 +642,7 @@ function CompareContent() {
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div
                       className={`w-2.5 h-2.5 rounded-full shrink-0 animate-pulse ${
-                        leftSlot ? "bg-blue-500" : "bg-[#89BD49]"
+                        leftSlot ? "bg-blue-500" : "bg-[#DC2626]"
                       }`}
                     />
                     <span className="text-muted truncate">
@@ -657,7 +657,7 @@ function CompareContent() {
                     <button
                       type="button"
                       onClick={() => void openPickerModal(missingTarget)}
-                      className="px-3 py-1.5 min-h-[36px] rounded-xl bg-[#89BD49] hover:bg-[#78a83f] text-white font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer touch-manipulation"
+                      className="px-3 py-1.5 min-h-[36px] rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer touch-manipulation"
                     >
                       <Icon icon="lucide:camera" className="w-3.5 h-3.5 shrink-0" />
                       <span>{t("compare.pickCapture")}</span>
@@ -692,7 +692,7 @@ function CompareContent() {
                   <div className="absolute top-3 left-3 z-10 pointer-events-none">
                     <span
                       className={`px-2.5 py-1 rounded-lg text-white backdrop-blur-xs font-semibold text-[11px] shadow-sm ${
-                        leftSlot ? "bg-blue-600/90" : "bg-[#89BD49]/90"
+                        leftSlot ? "bg-blue-600/90" : "bg-[#DC2626]/90"
                       }`}
                     >
                       {leftSlot ? t("compare.original") : t("compare.modified")}
@@ -758,7 +758,7 @@ function CompareContent() {
                       <button
                         type="button"
                         onClick={() => void openPickerModal("left")}
-                        className="px-3 py-1.5 min-h-[36px] rounded-xl bg-[#89BD49] hover:bg-[#78a83f] text-white font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer touch-manipulation"
+                        className="px-3 py-1.5 min-h-[36px] rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer touch-manipulation"
                       >
                         <Icon icon="lucide:camera" className="w-3.5 h-3.5 shrink-0" />
                         <span>{t("compare.pickCapture")}</span>
@@ -782,7 +782,7 @@ function CompareContent() {
                       <span className="text-xs font-semibold text-white truncate">
                         {rightSlot.title}
                       </span>
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#89BD49]/20 text-[#A8D666]">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#DC2626]/20 text-[#F87171]">
                         {t("compare.modified")}
                       </span>
                     </div>
@@ -805,10 +805,10 @@ function CompareContent() {
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center p-6 sm:p-8 border-2 border-dashed border-border rounded-2xl bg-subtle/30 text-center min-h-[360px] min-w-0">
-                    <div className="w-12 h-12 rounded-2xl bg-[#89BD49]/10 text-[#6B9A35] dark:text-[#A8D666] flex items-center justify-center mb-3">
+                    <div className="w-12 h-12 rounded-2xl bg-[#DC2626]/10 text-[#B91C1C] dark:text-[#F87171] flex items-center justify-center mb-3">
                       <Icon icon="lucide:image-plus" className="w-6 h-6" />
                     </div>
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#89BD49]/20 text-[#A8D666] mb-2">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#DC2626]/20 text-[#F87171] mb-2">
                       {t("compare.modified")}
                     </span>
                     <h3 className="text-sm font-semibold text-foreground">
@@ -821,7 +821,7 @@ function CompareContent() {
                       <button
                         type="button"
                         onClick={() => void openPickerModal("right")}
-                        className="px-3 py-1.5 min-h-[36px] rounded-xl bg-[#89BD49] hover:bg-[#78a83f] text-white font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer touch-manipulation"
+                        className="px-3 py-1.5 min-h-[36px] rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer touch-manipulation"
                       >
                         <Icon icon="lucide:camera" className="w-3.5 h-3.5 shrink-0" />
                         <span>{t("compare.pickCapture")}</span>
@@ -892,7 +892,7 @@ function CompareContent() {
                   <div className="flex items-center gap-2.5 min-w-0">
                     <div
                       className={`w-2.5 h-2.5 rounded-full shrink-0 animate-pulse ${
-                        leftSlot ? "bg-blue-500" : "bg-[#89BD49]"
+                        leftSlot ? "bg-blue-500" : "bg-[#DC2626]"
                       }`}
                     />
                     <span className="text-muted truncate">
@@ -907,7 +907,7 @@ function CompareContent() {
                     <button
                       type="button"
                       onClick={() => void openPickerModal(missingTarget)}
-                      className="px-3 py-1.5 min-h-[36px] rounded-xl bg-[#89BD49] hover:bg-[#78a83f] text-white font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer touch-manipulation"
+                      className="px-3 py-1.5 min-h-[36px] rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-white font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer touch-manipulation"
                     >
                       <Icon icon="lucide:camera" className="w-3.5 h-3.5 shrink-0" />
                       <span>{t("compare.pickCapture")}</span>
@@ -942,7 +942,7 @@ function CompareContent() {
                   <div className="absolute top-3 left-3 z-10 pointer-events-none">
                     <span
                       className={`px-2.5 py-1 rounded-lg text-white backdrop-blur-xs font-semibold text-[11px] shadow-sm ${
-                        leftSlot ? "bg-blue-600/90" : "bg-[#89BD49]/90"
+                        leftSlot ? "bg-blue-600/90" : "bg-[#DC2626]/90"
                       }`}
                     >
                       {leftSlot ? t("compare.original") : t("compare.modified")}
@@ -1005,7 +1005,7 @@ function CompareContent() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder={t("compare.searchPlaceholder")}
-                  className="w-full h-9 pl-9 pr-3 rounded-xl border border-border bg-background text-foreground text-xs focus:outline-hidden focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49] transition-all"
+                  className="w-full h-9 pl-9 pr-3 rounded-xl border border-border bg-background text-foreground text-xs focus:outline-hidden focus:border-[#DC2626] focus:ring-1 focus:ring-[#DC2626] transition-all"
                 />
               </div>
             </div>
@@ -1016,7 +1016,7 @@ function CompareContent() {
                 <div className="py-12 flex flex-col items-center justify-center text-muted">
                   <Icon
                     icon="lucide:refresh-cw"
-                    className="w-5 h-5 animate-spin text-[#89BD49] mb-2"
+                    className="w-5 h-5 animate-spin text-[#DC2626] mb-2"
                   />
                   <span className="text-xs">{t("compare.loading")}</span>
                 </div>
@@ -1045,8 +1045,8 @@ function CompareContent() {
                       onClick={() => selectCaptureForSlot(c)}
                       className={`w-full p-2.5 rounded-xl border text-left flex items-center gap-3 transition-colors cursor-pointer ${
                         isCurrentLeft || isCurrentRight
-                          ? "border-[#89BD49]/60 bg-[#89BD49]/10"
-                          : "border-border hover:border-[#89BD49]/40 hover:bg-subtle"
+                          ? "border-[#DC2626]/60 bg-[#DC2626]/10"
+                          : "border-border hover:border-[#DC2626]/40 hover:bg-subtle"
                       }`}
                     >
                       {/* Thumbnail */}
@@ -1078,7 +1078,7 @@ function CompareContent() {
                             </span>
                           )}
                           {isCurrentRight && (
-                            <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] shrink-0">
+                            <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-[#DC2626]/20 text-[#B91C1C] dark:text-[#F87171] shrink-0">
                               {t("compare.modified")}
                             </span>
                           )}
@@ -1098,7 +1098,7 @@ function CompareContent() {
                         icon="lucide:check"
                         className={`w-4 h-4 shrink-0 transition-opacity ${
                           isCurrentLeft || isCurrentRight
-                            ? "text-[#89BD49] opacity-100"
+                            ? "text-[#DC2626] opacity-100"
                             : "opacity-0"
                         }`}
                       />
@@ -1120,7 +1120,7 @@ export default function ComparePage() {
         <div className="min-h-full flex items-center justify-center py-20 bg-background text-foreground">
           <Icon
             icon="lucide:refresh-cw"
-            className="w-6 h-6 animate-spin text-[#89BD49]"
+            className="w-6 h-6 animate-spin text-[#DC2626]"
           />
         </div>
       }

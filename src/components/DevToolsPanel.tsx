@@ -12,9 +12,9 @@ import {
   type CaptureMeta,
   type CapturedLogs,
   type ConsoleLog,
-  type DeviceSpecsLog,
   type DevLog,
   type DevLogSummary,
+  type DeviceSpecsLog,
   type DriveExternalLogReference,
   type NavigationLog,
   type Grouped,
@@ -55,9 +55,7 @@ import {
 import {
   buildCurlCommand,
   buildHarExport,
-  buildMarkdownBugReport,
   buildPlaywrightTest,
-  buildGitHubActionWorkflow,
   buildAiMcpPrompt,
   buildClaudeCliCommand,
 } from "@/lib/devlogs-export";
@@ -67,9 +65,7 @@ export { isIgnoredUrl, TRACKER_PATTERNS, normalizeDevLog, cleanStackTrace, isFir
 export {
   buildCurlCommand,
   buildHarExport,
-  buildMarkdownBugReport,
   buildPlaywrightTest,
-  buildGitHubActionWorkflow,
   buildAiMcpPrompt,
   buildClaudeCliCommand,
 };
@@ -86,7 +82,7 @@ interface Props {
   initialTab?: Tab;
 }
 
-const TABS = ["Info", "Console", "Network", "Actions", "Playwright", "MCP"] as const;
+const TABS = ["Info", "Console", "Network", "Actions", "MCP"] as const;
 type Tab = typeof TABS[number];
 
 // Formats error messages cleanly (e.g. converts "POST\nhttps://..." into structured method + URL badges)
@@ -138,7 +134,7 @@ function HeaderTable({
   return (
     <details className="group/h mt-1.5" open={defaultOpen}>
       <summary className="flex list-none cursor-pointer items-center gap-1 text-[10px] font-semibold uppercase tracking-wider text-muted hover:text-foreground">
-        <Icon icon="lucide:chevron-right" className="w-3 h-3 transition-transform group-open/h:rotate-90 shrink-0" />
+        
         <span>{title}</span>
         <span className="text-[9px] font-mono lowercase">({entries.length})</span>
       </summary>
@@ -196,7 +192,7 @@ function FormattedJsonBody({
         <div className="flex items-center gap-1.5 font-semibold text-muted uppercase tracking-wider">
           <span>{title || "Body"}</span>
           {isJson && (
-            <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40">
+            <span className="px-1.5 py-0.2 rounded text-[9px] font-mono font-bold bg-[#DC2626]/10 dark:bg-[#DC2626]/20 text-[#B91C1C] dark:text-[#F87171] border border-[#DC2626]/30 dark:border-[#DC2626]/40">
               JSON
             </span>
           )}
@@ -358,7 +354,7 @@ function NetworkDetail({
                 <span className="text-emerald-600 dark:text-emerald-400 font-medium">{t("dt.curlCopied") || "Copied!"}</span>
               </>
             ) : (
-              <span className="font-mono text-[9px] font-bold text-[#6B9A35] dark:text-[#A8D666]">{t("dt.copyCurl") || "Copy cURL"}</span>
+              <span className="font-mono text-[9px] font-bold text-[#B91C1C] dark:text-[#F87171]">{t("dt.copyCurl") || "Copy cURL"}</span>
             )}
           </button>
         )}
@@ -577,8 +573,7 @@ function NetworkTable({
   copiedUrl: string | null;
   t: (key: string, vars?: Record<string, string | number>) => string;
 }) {
-  // Esc closes the overlay: it covers the list, so a keyboard user needs a way
-  // back that is not the X button.
+  // Keyboard dismissal keeps focus flow usable when the overlay covers the list.
   useEffect(() => {
     if (!selectedKey) return;
     const onEsc = (e: KeyboardEvent) => {
@@ -645,9 +640,9 @@ function NetworkTable({
                   }}
                   className={`h-7 cursor-pointer border-b border-border/40 transition-colors ${
                     isSelected
-                      ? "bg-[#89BD49]/15 dark:bg-[#89BD49]/20"
+                      ? "bg-[#DC2626]/15 dark:bg-[#DC2626]/20"
                       : atPlayhead
-                      ? "bg-[#89BD49]/8 dark:bg-[#89BD49]/12"
+                      ? "bg-[#DC2626]/8 dark:bg-[#DC2626]/12"
                       : isFailed
                       ? "bg-red-50/40 dark:bg-red-950/15 hover:bg-red-50/70 dark:hover:bg-red-950/25"
                       : idx % 2 === 1
@@ -741,7 +736,7 @@ function NetworkTable({
                       return (
                         <div className="h-1.5 rounded-full bg-border/60 overflow-hidden" title={log.duration != null ? `${log.duration} ms` : undefined}>
                           <div
-                            className={`h-full rounded-full ${isFailed ? "bg-red-400" : log.duration && log.duration > 1000 ? "bg-amber-400" : "bg-[#89BD49]"}`}
+                            className={`h-full rounded-full ${isFailed ? "bg-red-400" : log.duration && log.duration > 1000 ? "bg-amber-400" : "bg-[#DC2626]"}`}
                             style={{ width: `${Math.min(100, Math.max(2, Math.round(((log.duration || 0) / maxDuration) * 100)))}%` }}
                           />
                         </div>
@@ -832,6 +827,7 @@ function McpTabPanel({
 }) {
   const [copiedPrompt, setCopiedPrompt] = useState(false);
   const [copiedCmd, setCopiedCmd] = useState<string | null>(null);
+  const [mcpAction, setMcpAction] = useState<"fix" | "summary" | "e2e" | "setup">("fix");
 
   const captureId = capture.id || (typeof window !== "undefined" ? window.location.pathname.split("/").filter(Boolean).pop() : "") || "capture-id";
   const shareUrl = typeof window !== "undefined"
@@ -843,7 +839,7 @@ function McpTabPanel({
       capture,
       targetHost,
       detectedOs: detectedOs || "Web",
-      detectedBrowser: detectedBrowser || "Chrome",
+      detectedBrowser: detectedBrowser || "Unknown",
       shareUrl,
       consoleErrors,
       networkErrors: networkFailures,
@@ -855,6 +851,24 @@ function McpTabPanel({
     return buildClaudeCliCommand({ capture, shareUrl });
   }, [capture, shareUrl]);
 
+  const e2eTest = useMemo(() => buildPlaywrightTest({
+    capture,
+    targetHost,
+    actionLogs,
+    networkErrors: networkFailures,
+    consoleErrors,
+  }), [capture, targetHost, actionLogs, networkFailures, consoleErrors]);
+
+  const summaryText = useMemo(() => {
+    const title = capture.title || t("dt.mcp.captureFallback");
+    const site = capture.site_url || targetHost || t("dt.mcp.siteFallback");
+    const actionCount = actionLogs.length;
+    const networkCount = networkFailures.length;
+    const consoleCount = consoleErrors.length;
+    return `${title}\n\n${t("dt.mcp.summarySite")}: ${site}\n${t("dt.mcp.summaryActions")}: ${actionCount}\n${t("dt.mcp.summaryNetwork")}: ${networkCount}\n${t("dt.mcp.summaryConsole")}: ${consoleCount}\n\n${capture.description || t("dt.mcp.noDescription")}`;
+  }, [capture, targetHost, actionLogs.length, networkFailures.length, consoleErrors.length, t]);
+
+  const activeOutput = mcpAction === "summary" ? summaryText : mcpAction === "e2e" ? e2eTest : promptText;
   const claudeCodeCmd = `claude mcp add --scope user -e BUGSNAP_API_KEY=YOUR_KEY --transport stdio bugsnap -- npx -y bugsnap-mcp`;
 
   const claudeDesktopConfig = `{
@@ -885,9 +899,9 @@ function McpTabPanel({
 
   return (
     <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-5 text-xs">
-      <div className="rounded-xl border border-border bg-[#89BD49]/10 dark:bg-[#89BD49]/15 p-4 sm:p-5 space-y-2">
+      <div className="rounded-xl border border-border bg-[#DC2626]/10 dark:bg-[#DC2626]/15 p-4 sm:p-5 space-y-2">
         <div className="flex items-center gap-2">
-          <span className="px-2 py-0.5 rounded bg-[#89BD49] text-white font-mono text-[10px] font-bold">MCP</span>
+          <span className="px-2 py-0.5 rounded bg-[#DC2626] text-white font-mono text-[10px] font-bold">MCP</span>
           <h3 className="text-sm font-bold text-foreground">
             {t("dt.mcp.title") || "Fix with AI Coding Agents (BugSnap MCP)"}
           </h3>
@@ -897,17 +911,56 @@ function McpTabPanel({
         </p>
       </div>
 
-      {/* 1-Click Claude Code CLI Execution */}
-      <div className="rounded-xl border border-border bg-subtle/80 p-4 space-y-3">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2" role="tablist" aria-label={t("dt.mcp.actions")}>
+        {([
+          ["fix", "lucide:wrench", t("dt.mcp.fix")],
+          ["summary", "lucide:file-text", t("dt.mcp.summary")],
+          ["e2e", "lucide:shield-check", t("dt.mcp.e2e")],
+          ["setup", "lucide:plug", t("dt.mcp.setup")],
+        ] as const).map(([id, icon, label]) => (
+          <button
+            key={id}
+            type="button"
+            role="tab"
+            aria-selected={mcpAction === id}
+            onClick={() => setMcpAction(id)}
+            className={`min-w-0 rounded-lg border px-2.5 py-2 text-[11px] font-semibold transition-colors flex items-center justify-center gap-1.5 ${mcpAction === id ? "border-[#DC2626] bg-[#DC2626]/15 text-[#B91C1C] dark:text-[#F87171]" : "border-border bg-subtle/70 text-muted hover:text-foreground"}`}
+          >
+            <Icon icon={icon} className="w-3.5 h-3.5 shrink-0" />
+            <span className="truncate">{label}</span>
+          </button>
+        ))}
+      </div>
+
+      {mcpAction !== "setup" && <div className="rounded-xl border border-border bg-subtle/80 p-4 space-y-3">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-1.5 font-semibold text-foreground text-xs min-w-0">
+            <Icon icon={mcpAction === "e2e" ? "lucide:shield-check" : mcpAction === "summary" ? "lucide:file-text" : "lucide:wrench"} className="w-4 h-4 text-[#DC2626] shrink-0" />
+            <span className="truncate">{mcpAction === "e2e" ? t("dt.mcp.e2eTitle") : mcpAction === "summary" ? t("dt.mcp.summaryTitle") : t("dt.mcp.fixTitle")}</span>
+          </div>
+          <button
+            type="button"
+            onClick={() => handleCopyCmd(activeOutput, "mcp-output")}
+            className="shrink-0 px-3 py-1.5 rounded-md text-xs font-semibold bg-[#DC2626] hover:bg-[#7BAA3F] text-white transition-colors flex items-center gap-1.5 cursor-pointer"
+          >
+            <Icon icon={copiedCmd === "mcp-output" ? "lucide:check" : "lucide:copy"} className="w-3.5 h-3.5" />
+            <span>{copiedCmd === "mcp-output" ? t("dt.mcp.copied") : t("dt.mcp.copyOutput")}</span>
+          </button>
+        </div>
+        <pre className="min-w-0 p-3 rounded-lg bg-subtle text-foreground border border-border font-mono text-[11px] leading-relaxed whitespace-pre-wrap break-all select-all overflow-x-auto">{activeOutput}</pre>
+      </div>}
+
+      {/* Claude Code CLI Execution */}
+      {mcpAction === "fix" && <div className="rounded-xl border border-border bg-subtle/80 p-4 space-y-3">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-1.5 font-semibold text-foreground text-xs">
-            <Icon icon="lucide:terminal" className="w-4 h-4 text-[#89BD49]" />
-            <span>{t("dt.mcp.claudeCliTitle") || "Claude Code CLI (1-Click Run)"}</span>
+            <Icon icon="lucide:terminal" className="w-4 h-4 text-[#DC2626]" />
+            <span>{t("dt.mcp.claudeCliTitle") || "Claude Code CLI Command"}</span>
           </div>
           <button
             type="button"
             onClick={() => handleCopyCmd(claudeCliCommand, "claude-run")}
-            className="px-3 py-1.5 rounded-md text-xs font-semibold bg-[#89BD49] hover:bg-[#7BAA3F] text-white transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+            className="px-3 py-1.5 rounded-md text-xs font-semibold bg-[#DC2626] hover:bg-[#7BAA3F] text-white transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
           >
             <Icon icon={copiedCmd === "claude-run" ? "lucide:check" : "lucide:copy"} className="w-3.5 h-3.5" />
             <span>{copiedCmd === "claude-run" ? (t("dt.mcp.cliCopied") || "Command Copied!") : (t("dt.mcp.copyCli") || "Copy CLI Command")}</span>
@@ -916,13 +969,13 @@ function McpTabPanel({
         <pre className="p-3 rounded-lg bg-slate-900 text-slate-100 dark:bg-slate-950 dark:text-slate-200 border border-slate-800 font-mono text-[11px] leading-relaxed whitespace-pre-wrap select-all overflow-x-auto">
           {claudeCliCommand}
         </pre>
-      </div>
+      </div>}
 
       {/* Comprehensive Prompt for Cursor / Claude / Windsurf / Hermes */}
-      <div className="rounded-xl border border-border bg-subtle/80 p-4 space-y-3">
+      {mcpAction === "fix" && <div className="rounded-xl border border-border bg-subtle/80 p-4 space-y-3">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-1.5 font-semibold text-foreground text-xs">
-            <Icon icon="lucide:sparkles" className="w-4 h-4 text-[#6B9A35] dark:text-[#A8D666]" />
+            <Icon icon="lucide:sparkles" className="w-4 h-4 text-[#B91C1C] dark:text-[#F87171]" />
             <span>{t("dt.mcp.promptTitle") || "Prompt for AI Assistant"}</span>
           </div>
           <button
@@ -937,12 +990,12 @@ function McpTabPanel({
         <pre className="p-3 rounded-lg bg-subtle text-foreground border border-border font-mono text-[11px] leading-relaxed whitespace-pre-wrap select-all overflow-x-auto">
           {promptText}
         </pre>
-      </div>
+      </div>}
 
       {/* MCP Configuration Setup */}
-      <div className="rounded-xl border border-border bg-subtle/80 p-4 space-y-3">
+      {mcpAction === "setup" && <div className="rounded-xl border border-border bg-subtle/80 p-4 space-y-3">
         <div className="flex items-center gap-1.5 font-semibold text-foreground text-xs">
-          <Icon icon="lucide:terminal" className="w-4 h-4 text-[#89BD49]" />
+          <Icon icon="lucide:terminal" className="w-4 h-4 text-[#DC2626]" />
           <span>{t("dt.mcp.setupTitle") || "Connect BugSnap MCP Server"}</span>
         </div>
 
@@ -952,7 +1005,7 @@ function McpTabPanel({
             <button
               type="button"
               onClick={() => handleCopyCmd(claudeCodeCmd, "claude-code")}
-              className="text-[10px] text-[#6B9A35] dark:text-[#A8D666] hover:underline flex items-center gap-1 cursor-pointer"
+              className="text-[10px] text-[#B91C1C] dark:text-[#F87171] hover:underline flex items-center gap-1 cursor-pointer"
             >
               <Icon icon={copiedCmd === "claude-code" ? "lucide:check" : "lucide:copy"} className="w-3 h-3" />
               <span>{copiedCmd === "claude-code" ? "Copied" : "Copy"}</span>
@@ -969,7 +1022,7 @@ function McpTabPanel({
             <button
               type="button"
               onClick={() => handleCopyCmd(claudeDesktopConfig, "claude-desktop")}
-              className="text-[10px] text-[#6B9A35] dark:text-[#A8D666] hover:underline flex items-center gap-1 cursor-pointer"
+              className="text-[10px] text-[#B91C1C] dark:text-[#F87171] hover:underline flex items-center gap-1 cursor-pointer"
             >
               <Icon icon={copiedCmd === "claude-desktop" ? "lucide:check" : "lucide:copy"} className="w-3 h-3" />
               <span>{copiedCmd === "claude-desktop" ? "Copied" : "Copy"}</span>
@@ -983,217 +1036,21 @@ function McpTabPanel({
         <div className="pt-2 flex flex-wrap items-center gap-4 text-[11px]">
           <span className="text-muted">
             {t("dt.mcp.apiKeyHint") || "Need an API key? Generate one in"}{" "}
-            <a href="/settings?tab=integrations#bugsnap-api-keys" className="font-semibold text-[#6B9A35] dark:text-[#A8D666] hover:underline">
-              {t("dt.mcp.settingsLink") || "Settings → BugSnap API Keys"}
+            <a href="/settings?tab=integrations#bugsnap-api-keys" className="font-semibold text-[#B91C1C] dark:text-[#F87171] hover:underline">
+              {t("dt.mcp.settingsLink") || "Settings  BugSnap API Keys"}
             </a>
           </span>
           <a
             href="/docs/mcp"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-[#6B9A35] dark:text-[#A8D666] font-semibold hover:underline flex items-center gap-1 ml-auto"
+            className="text-[#B91C1C] dark:text-[#F87171] font-semibold hover:underline flex items-center gap-1 ml-auto"
           >
             <span>{t("dt.mcp.docsLink") || "View Full MCP Tutorial"}</span>
             <Icon icon="lucide:external-link" className="w-3 h-3" />
           </a>
         </div>
-      </div>
-    </div>
-  );
-}
-
-function PlaywrightTabPanel({
-  capture,
-  targetHost,
-  actionLogs,
-  networkErrors,
-  consoleErrors,
-  t,
-}: {
-  capture: CaptureMeta;
-  targetHost?: string;
-  actionLogs: (ActionLog | NavigationLog | ScreenshotLog)[];
-  networkErrors: NetworkLog[];
-  consoleErrors: ConsoleLog[];
-  t: (key: string, vars?: Record<string, string | number>) => string;
-}) {
-  const [subTab, setSubTab] = useState<"test" | "ci">("test");
-  const [copiedCode, setCopiedCode] = useState(false);
-  const [copiedCi, setCopiedCi] = useState(false);
-
-  const captureSlug = (capture.id || "repro").slice(0, 8);
-  const testFileName = `tests/regression/bugsnap-${captureSlug}.spec.ts`;
-
-  const playwrightCode = useMemo(() => {
-    return buildPlaywrightTest({
-      capture,
-      targetHost,
-      actionLogs,
-      networkErrors,
-      consoleErrors,
-    });
-  }, [capture, targetHost, actionLogs, networkErrors, consoleErrors]);
-
-  const ciWorkflowYaml = useMemo(() => {
-    return buildGitHubActionWorkflow({
-      capture,
-      targetHost,
-      testFileName,
-    });
-  }, [capture, targetHost, testFileName]);
-
-  const handleCopyCode = () => {
-    try {
-      navigator.clipboard?.writeText(playwrightCode);
-      setCopiedCode(true);
-      setTimeout(() => setCopiedCode(false), 2000);
-    } catch {}
-  };
-
-  const handleCopyCi = () => {
-    try {
-      navigator.clipboard?.writeText(ciWorkflowYaml);
-      setCopiedCi(true);
-      setTimeout(() => setCopiedCi(false), 2000);
-    } catch {}
-  };
-
-  const handleDownloadSpec = () => {
-    try {
-      const blob = new Blob([playwrightCode], { type: "text/typescript" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `bugsnap-${captureSlug}.spec.ts`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("Failed to download spec:", err);
-    }
-  };
-
-  const handleDownloadCi = () => {
-    try {
-      const blob = new Blob([ciWorkflowYaml], { type: "text/yaml" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `bugsnap-quality-gate.yml`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("Failed to download workflow:", err);
-    }
-  };
-
-  return (
-    <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-4 text-xs">
-      <div className="rounded-xl border border-border bg-[#89BD49]/10 dark:bg-[#89BD49]/15 p-4 sm:p-5 space-y-2">
-        <div className="flex items-center gap-2">
-          <span className="px-2 py-0.5 rounded bg-[#89BD49] text-white font-mono text-[10px] font-bold">PLAYWRIGHT</span>
-          <h3 className="text-sm font-bold text-foreground">
-            {t("dt.playwright.title") || "Automated Playwright Regression Test"}
-          </h3>
-        </div>
-        <p className="text-muted leading-relaxed text-[11px]">
-          {t("dt.playwright.desc") || "Synthesized from captured user actions and network error mocks. Ready to run locally or enforce in CI."}
-        </p>
-      </div>
-
-      <div className="flex items-center justify-between border-b border-border pb-2 gap-2 flex-wrap">
-        <div className="flex items-center gap-1.5 bg-subtle p-1 rounded-lg border border-border">
-          <button
-            type="button"
-            onClick={() => setSubTab("test")}
-            className={`px-3 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${
-              subTab === "test"
-                ? "bg-white dark:bg-background text-foreground shadow-2xs font-bold"
-                : "text-muted hover:text-foreground"
-            }`}
-          >
-            {t("dt.playwright.tabTest") || "Test Script (@playwright/test)"}
-          </button>
-          <button
-            type="button"
-            onClick={() => setSubTab("ci")}
-            className={`px-3 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${
-              subTab === "ci"
-                ? "bg-white dark:bg-background text-foreground shadow-2xs font-bold"
-                : "text-muted hover:text-foreground"
-            }`}
-          >
-            {t("dt.playwright.tabCi") || "GitHub Action Quality Gate"}
-          </button>
-        </div>
-
-        {subTab === "test" ? (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleDownloadSpec}
-              className="px-2.5 py-1 rounded-md text-[11px] font-semibold border border-border bg-subtle hover:bg-subtle/80 text-foreground transition-colors flex items-center gap-1 cursor-pointer"
-            >
-              <Icon icon="lucide:download" className="w-3 h-3 text-[#6B9A35] dark:text-[#A8D666]" />
-              <span>{t("dt.playwright.downloadSpec") || "Download .spec.ts"}</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleCopyCode}
-              className="px-3 py-1 rounded-md text-[11px] font-semibold bg-[#89BD49] hover:bg-[#7BAA3F] text-white transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
-            >
-              <Icon icon={copiedCode ? "lucide:check" : "lucide:copy"} className="w-3 h-3" />
-              <span>{copiedCode ? (t("dt.playwright.codeCopied") || "Test Script Copied!") : (t("dt.playwright.copyCode") || "Copy Test Script")}</span>
-            </button>
-          </div>
-        ) : (
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleDownloadCi}
-              className="px-2.5 py-1 rounded-md text-[11px] font-semibold border border-border bg-subtle hover:bg-subtle/80 text-foreground transition-colors flex items-center gap-1 cursor-pointer"
-            >
-              <Icon icon="lucide:download" className="w-3 h-3 text-[#6B9A35] dark:text-[#A8D666]" />
-              <span>{t("dt.playwright.downloadCi") || "Download .yml"}</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleCopyCi}
-              className="px-3 py-1 rounded-md text-[11px] font-semibold bg-[#89BD49] hover:bg-[#7BAA3F] text-white transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
-            >
-              <Icon icon={copiedCi ? "lucide:check" : "lucide:copy"} className="w-3 h-3" />
-              <span>{copiedCi ? (t("dt.playwright.ciCopied") || "Workflow Copied!") : (t("dt.playwright.copyCi") || "Copy Workflow YAML")}</span>
-            </button>
-          </div>
-        )}
-      </div>
-
-      {subTab === "test" ? (
-        <div className="space-y-3">
-          <div className="flex items-center justify-between text-[11px] text-muted">
-            <span className="font-mono text-[10px] text-foreground">
-              {t("dt.playwright.runLocalHint") || "Run locally in terminal:"} <code className="px-1.5 py-0.5 rounded bg-subtle border border-border text-[#6B9A35] dark:text-[#A8D666]">npx playwright test {testFileName}</code>
-            </span>
-          </div>
-          <pre className="p-3 sm:p-4 rounded-xl bg-slate-900 text-slate-100 dark:bg-slate-950 dark:text-slate-200 border border-slate-800 font-mono text-[11px] leading-relaxed whitespace-pre-wrap select-all overflow-x-auto">
-            {playwrightCode}
-          </pre>
-        </div>
-      ) : (
-        <div className="space-y-3">
-          <div className="p-3 rounded-lg bg-subtle/80 border border-border text-[11px] text-muted leading-relaxed">
-            <p>
-              {t("dt.playwright.ciHint") || "Save to .github/workflows/bugsnap-quality-gate.yml to auto-verify fixes in Pull Requests."}
-            </p>
-          </div>
-          <pre className="p-3 sm:p-4 rounded-xl bg-slate-900 text-slate-100 dark:bg-slate-950 dark:text-slate-200 border border-slate-800 font-mono text-[11px] leading-relaxed whitespace-pre-wrap select-all overflow-x-auto">
-            {ciWorkflowYaml}
-          </pre>
-        </div>
-      )}
+      </div>}
     </div>
   );
 }
@@ -1524,10 +1381,10 @@ ${stack}` : body);
             e.stopPropagation();
             onSeekToTime(sec);
           }}
-          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-zinc-100 hover:bg-[#89BD49]/20 text-muted hover:text-[#6B9A35] dark:bg-zinc-800 dark:hover:bg-[#89BD49]/25 dark:hover:text-[#A8D666] border border-border/80 transition-colors cursor-pointer shrink-0"
+          className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-zinc-100 hover:bg-[#DC2626]/20 text-muted hover:text-[#B91C1C] dark:bg-zinc-800 dark:hover:bg-[#DC2626]/25 dark:hover:text-[#F87171] border border-border/80 transition-colors cursor-pointer shrink-0"
           title={t("dt.jumpVideoTo", { time: relTime })}
         >
-          <span className="text-[8px] text-[#6B9A35] dark:text-[#A8D666]">▶</span>
+          <span className="text-[8px] text-[#B91C1C] dark:text-[#F87171]">▶</span>
           <span>{relTime}</span>
         </button>
       );
@@ -1697,10 +1554,16 @@ ${stack}` : body);
   // and it reads as wrong on sibling subdomains (dev-fe -> dev-be is stamped 3RD).
   const partyIsMixed = firstPartyCount > 0 && thirdPartyCount > 0;
 
-  const storageLog = logs.findLast((l): l is StorageLog => l.type === "storage");
-  const storageData = storageLog?.storage;
-  const [copiedBugReport, setCopiedBugReport] = useState(false);
-
+  const deviceSpecs = logs.findLast((l) => l.type === "device_specs");
+  const specs = deviceSpecs?.type === "device_specs" ? deviceSpecs.specs : undefined;
+  const environmentRows: { icon: string; label: string; value: string | number | undefined }[] = [
+    { icon: "lucide:monitor", label: t("dt.screenResolution"), value: specs?.screenResolution },
+    { icon: "lucide:layout-dashboard", label: t("dt.viewport"), value: specs?.viewport },
+    { icon: "lucide:maximize", label: t("dt.devicePixelRatio"), value: specs?.devicePixelRatio ? `${specs.devicePixelRatio}×` : undefined },
+    { icon: "lucide:globe", label: t("dt.language"), value: specs?.language },
+    { icon: "lucide:wifi", label: t("dt.connection"), value: specs?.network },
+    { icon: "lucide:clock", label: t("dt.timezone"), value: specs?.timezone },
+  ].filter((row): row is typeof row & { value: string | number } => row.value !== undefined && row.value !== "");
   // <details> closes itself on the summary, but not on a click elsewhere. One
   // capture-phase listener flips `open` back off; no state, so no re-render.
   const eventMenuRef = useRef<HTMLDetailsElement>(null);
@@ -1759,72 +1622,10 @@ ${stack}` : body);
   const createdAt = formatDateWithTz(capture.created_at);
   const createdAtShort = formatDateWithTz(capture.created_at, false);
 
-  const legacyLogsText = JSON.stringify(capture.dev_logs || []);
-  const detectedOs = capture.os || (legacyLogsText.toLowerCase().includes("macintosh") || legacyLogsText.toLowerCase().includes("mac os") ? "macOS" : "Windows");
-  const detectedBrowser = capture.browser || "Chrome";
-
-  const handleCopyBugReport = (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    try {
-      const report = buildMarkdownBugReport({
-        capture,
-        targetHost,
-        detectedOs,
-        detectedBrowser,
-        createdAt,
-        consoleErrors,
-        networkErrors,
-        actionLogs,
-        storage: storageData,
-        findPrecedingAction,
-      });
-      navigator.clipboard.writeText(report);
-      setCopiedBugReport(true);
-      setTimeout(() => setCopiedBugReport(false), 2000);
-    } catch (err) {
-      console.error("Failed to copy bug report:", err);
-    }
-  };
-
-  const handleOpenGitHubIssue = (e?: React.MouseEvent) => {
-    if (e) e.stopPropagation();
-    try {
-      const report = buildMarkdownBugReport({
-        capture,
-        targetHost,
-        detectedOs,
-        detectedBrowser,
-        createdAt,
-        consoleErrors,
-        networkErrors,
-        actionLogs,
-        storage: storageData,
-        findPrecedingAction,
-      });
-      try {
-        navigator.clipboard.writeText(report);
-      } catch {}
-
-      const defaultTitle = `Bug: Issue detected on ${targetHost || "session"}`;
-      const repo = window.prompt(
-        t("dt.promptGithubRepo") || "Enter GitHub repository (owner/repo):",
-        ""
-      );
-
-      let issueUrl = "https://github.com/issues";
-      if (repo && repo.trim()) {
-        const cleanRepo = repo.trim().replace(/^https?:\/\/github\.com\//i, "").replace(/\/$/, "");
-        if (cleanRepo.includes("/")) {
-          const bodyParam = report.length > 4000 ? `${report.slice(0, 3950)}\n\n...(Full report copied to clipboard)` : report;
-          issueUrl = `https://github.com/${cleanRepo}/issues/new?title=${encodeURIComponent(defaultTitle)}&body=${encodeURIComponent(bodyParam)}`;
-        }
-      }
-
-      window.open(issueUrl, "_blank", "noopener,noreferrer");
-    } catch (err) {
-      console.error("Failed to open GitHub issue:", err);
-    }
-  };
+  const deviceOs = typeof specs?.os === "string" ? specs.os : "";
+  const deviceBrowser = typeof specs?.browser === "string" ? specs.browser : "";
+  const detectedOs = capture.os || deviceOs || "Unknown";
+  const detectedBrowser = capture.browser || deviceBrowser || "Unknown";
 
   const handleExportHar = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
@@ -1879,7 +1680,6 @@ ${stack}` : body);
 
   const tabName = (tab: Tab) => {
     if (tab === "MCP") return t("dt.tab.mcp") || "MCP";
-    if (tab === "Playwright") return t("dt.tab.playwright") || "Playwright & CI";
     return t(`dt.${tab.toLowerCase()}`);
   };
 
@@ -1922,7 +1722,7 @@ ${stack}` : body);
   };
 
   return (
-    <div className={`w-full rounded-xl border border-border bg-white shadow-sm dark:bg-background flex flex-col shrink-0 ${activeTab === "Network" && selectedNetworkKey ? "min-h-[34rem] " : ""}max-h-[520px] sm:max-h-[600px] xl:max-h-[calc(100vh-16rem)] overflow-hidden ${className || ""}`}>
+    <div className={`w-full rounded-xl border border-border bg-white shadow-sm dark:bg-background flex flex-col shrink-0 ${activeTab === "Network" && selectedNetworkKey ? "min-h-[34rem] " : ""}min-h-[520px] max-h-[520px] sm:max-h-[600px] xl:min-h-[calc(100vh-7rem)] xl:max-h-[calc(100vh-7rem)] overflow-hidden ${className || ""}`}>
       <div className="h-11 border-b border-border px-4 flex items-center justify-between shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-sm font-semibold text-foreground">{t("v.devTools")}</span>
@@ -1931,9 +1731,9 @@ ${stack}` : body);
           {/* <details> instead of a bare pill: the number alone never said what it
               counted. Native disclosure - no state, no outside-click handler. */}
           <details ref={eventMenuRef} className="relative group">
-            <summary className="list-none cursor-pointer flex items-center gap-1 text-[10px] font-semibold text-[#6B9A35] dark:text-[#A8D666] bg-[#89BD49]/10 dark:bg-[#89BD49]/20 px-2 py-0.5 rounded-md border border-[#89BD49]/25 dark:border-[#89BD49]/30 hover:bg-[#89BD49]/20 dark:hover:bg-[#89BD49]/30 transition-colors">
+            <summary className="list-none cursor-pointer flex items-center gap-1 text-[10px] font-semibold text-[#B91C1C] dark:text-[#F87171] bg-[#DC2626]/10 dark:bg-[#DC2626]/20 px-2 py-0.5 rounded-md border border-[#DC2626]/25 dark:border-[#DC2626]/30 hover:bg-[#DC2626]/20 dark:hover:bg-[#DC2626]/30 transition-colors">
               <span className="tabular-nums">{eventBreakdown.label}</span>
-              <Icon icon="lucide:chevron-down" className="w-2.5 h-2.5 transition-transform group-open:rotate-180" />
+              
             </summary>
             <div className="absolute right-0 top-full mt-1 z-20 w-44 rounded-lg border border-border bg-white dark:bg-background shadow-lg p-1">
               {eventBreakdown.rows.map(({ key, label, n }) => (
@@ -1976,7 +1776,7 @@ ${stack}` : body);
               tabIndex={activeTab === tab ? 0 : -1}
               className={`px-2 py-2 text-[11px] font-medium relative transition-colors whitespace-nowrap flex items-center gap-1 ${
                 activeTab === tab
-                  ? "text-[#6B9A35] dark:text-[#A8D666] font-semibold"
+                  ? "text-[#B91C1C] dark:text-[#F87171] font-semibold"
                   : "text-muted hover:text-foreground"
               }`}
             >
@@ -1984,12 +1784,12 @@ ${stack}` : body);
               {count > 0 && (
                 <span className={`px-1 py-px rounded text-[9px] font-semibold leading-none tabular-nums ${
                   activeTab === tab
-                    ? "bg-[#89BD49]/15 text-[#6B9A35] dark:bg-[#89BD49]/20 dark:text-[#A8D666]"
+                    ? "bg-[#DC2626]/15 text-[#B91C1C] dark:bg-[#DC2626]/20 dark:text-[#F87171]"
                     : "bg-subtle text-muted"
                 }`}>{count}</span>
               )}
               {activeTab === tab && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-[#89BD49]" />
+                <span className="absolute bottom-0 left-0 right-0 h-0.5 rounded-full bg-[#DC2626]" />
               )}
             </button>
           );
@@ -2003,7 +1803,7 @@ ${stack}` : body);
         className="flex-1 min-h-0 flex flex-col overflow-hidden"
       >
         {/* Global Search & Filters */}
-        {activeTab !== "Info" && activeTab !== "MCP" && activeTab !== "Playwright" && (
+        {activeTab !== "Info" && activeTab !== "MCP" && (
           <div className="p-3 border-b border-border bg-subtle/30 flex flex-col gap-2 shrink-0">
             <div className="relative">
               <Icon icon="lucide:search" className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted pointer-events-none" />
@@ -2012,7 +1812,7 @@ ${stack}` : body);
                 placeholder={t("dt.search", { tab: tabLabel(activeTab) })}
                 value={logSearch}
                 onChange={(e) => setLogSearch(e.target.value)}
-                className="w-full pl-8 pr-8 py-1.5 rounded-lg border border-border text-xs bg-subtle outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/30 shadow-sm"
+                className="w-full pl-8 pr-8 py-1.5 rounded-lg border border-border text-xs bg-subtle outline-none focus:border-[#DC2626] focus:ring-1 focus:ring-[#DC2626]/30 shadow-sm"
               />
               {logSearch && (
                 <button
@@ -2087,7 +1887,7 @@ ${stack}` : body);
                         aria-pressed={on}
                         className={`px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors cursor-pointer ${
                           on
-                            ? "bg-[#89BD49]/15 text-[#6B9A35] border border-[#89BD49]/30 dark:bg-[#89BD49]/20 dark:text-[#A8D666] dark:border-[#89BD49]/40 font-semibold"
+                            ? "bg-[#DC2626]/15 text-[#B91C1C] border border-[#DC2626]/30 dark:bg-[#DC2626]/20 dark:text-[#F87171] dark:border-[#DC2626]/40 font-semibold"
                             : "text-muted hover:text-foreground border border-transparent"
                         }`}
                       >
@@ -2193,7 +1993,7 @@ ${stack}` : body);
                     href={capture.site_url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="block text-[11px] font-mono text-[#6B9A35] dark:text-[#A8D666] hover:underline bg-subtle/60 border border-border rounded-lg px-3 py-2 break-all"
+                    className="block text-[11px] font-mono text-[#B91C1C] dark:text-[#F87171] hover:underline bg-subtle/60 border border-border rounded-lg px-3 py-2 break-all"
                   >
                     {capture.site_url}
                   </a>
@@ -2217,14 +2017,11 @@ ${stack}` : body);
                   <button
                     type="button"
                     onClick={() => setShowTzMenu((prev) => !prev)}
-                    className="flex items-center gap-1 text-[11px] sm:text-xs font-medium text-foreground hover:text-[#6B9A35] dark:hover:text-[#A8D666] px-1.5 py-0.5 rounded hover:bg-subtle/80 transition-colors group cursor-pointer"
+                    className="flex items-center gap-1 text-[11px] sm:text-xs font-medium text-foreground hover:text-[#B91C1C] dark:hover:text-[#F87171] px-1.5 py-0.5 rounded hover:bg-subtle/80 transition-colors group cursor-pointer"
                     title={`${createdAt} · ${t("dt.changeTz")}`}
                   >
                     <span className="whitespace-nowrap">{createdAtShort}</span>
-                    <Icon
-                      icon="lucide:chevron-down"
-                      className={`w-3 h-3 transition-transform ${showTzMenu ? "rotate-180" : ""}`}
-                    />
+                    
                   </button>
 
                   {showTzMenu && (
@@ -2237,7 +2034,7 @@ ${stack}` : body);
                         type="button"
                         onClick={() => { setTimeZoneMode("capture"); setShowTzMenu(false); }}
                         className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left transition-colors ${
-                          timeZoneMode === "capture" ? "bg-[#89BD49]/15 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] font-semibold" : "text-foreground hover:bg-subtle/70"
+                          timeZoneMode === "capture" ? "bg-[#DC2626]/15 dark:bg-[#DC2626]/20 text-[#B91C1C] dark:text-[#F87171] font-semibold" : "text-foreground hover:bg-subtle/70"
                         }`}
                       >
                         <div>
@@ -2253,7 +2050,7 @@ ${stack}` : body);
                         type="button"
                         onClick={() => { setTimeZoneMode("local"); setShowTzMenu(false); }}
                         className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left transition-colors ${
-                          timeZoneMode === "local" ? "bg-[#89BD49]/15 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] font-semibold" : "text-foreground hover:bg-subtle/70"
+                          timeZoneMode === "local" ? "bg-[#DC2626]/15 dark:bg-[#DC2626]/20 text-[#B91C1C] dark:text-[#F87171] font-semibold" : "text-foreground hover:bg-subtle/70"
                         }`}
                       >
                         <div>
@@ -2271,7 +2068,7 @@ ${stack}` : body);
                         type="button"
                         onClick={() => { setTimeZoneMode("utc"); setShowTzMenu(false); }}
                         className={`w-full flex items-center justify-between px-2.5 py-2 rounded-lg text-left transition-colors ${
-                          timeZoneMode === "utc" ? "bg-[#89BD49]/15 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] font-semibold" : "text-foreground hover:bg-subtle/70"
+                          timeZoneMode === "utc" ? "bg-[#DC2626]/15 dark:bg-[#DC2626]/20 text-[#B91C1C] dark:text-[#F87171] font-semibold" : "text-foreground hover:bg-subtle/70"
                         }`}
                       >
                         <div>
@@ -2310,11 +2107,6 @@ ${stack}` : body);
 
                 return [
                   {
-                    icon: <Icon icon="lucide:map-pin" className="w-3.5 h-3.5 shrink-0" />,
-                    labelKey: "dt.location",
-                    value: "Indonesia",
-                  },
-                  {
                     icon: <Icon icon={osIcon} className="w-3.5 h-3.5 shrink-0" />,
                     labelKey: "dt.os",
                     value: detectedOs,
@@ -2331,14 +2123,28 @@ ${stack}` : body);
                   },
                 ];
               })().map((row) => (
-                <div key={row.labelKey} className="flex items-center justify-between px-3 py-2 border-b border-border/60 last:border-0">
-                  <div className="flex items-center gap-2 text-muted">
+                <div key={row.labelKey} className="flex items-center justify-between gap-3 min-w-0 px-3 py-2 border-b border-border/60 last:border-0">
+                  <div className="flex items-center gap-2 text-muted shrink-0">
                     {row.icon}
                     <span className="text-xs">{t(row.labelKey)}</span>
                   </div>
-                  <span className="text-xs font-medium text-foreground">{row.value}</span>
+                  <span className="text-xs font-medium text-foreground text-right break-all min-w-0">{row.value}</span>
                 </div>
               ))}
+              {environmentRows.length > 0 && (
+                <div className="border-t border-border/60">
+                  <p className="px-3 pt-2 text-[10px] font-semibold uppercase tracking-widest text-muted">{t("dt.environment")}</p>
+                  {environmentRows.map((row) => (
+                    <div key={row.label} className="flex items-center justify-between gap-3 min-w-0 px-3 py-2 border-b border-border/60 last:border-0">
+                      <div className="flex items-center gap-2 text-muted shrink-0">
+                        <Icon icon={row.icon} className="w-3.5 h-3.5 shrink-0" />
+                        <span className="text-xs">{row.label}</span>
+                      </div>
+                      <span className="text-xs font-medium text-foreground text-right break-all min-w-0">{row.value}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
             {metrics && (
@@ -2408,94 +2214,6 @@ ${stack}` : body);
               </div>
             )}
 
-            {/* Quick Export Bug Report Card - always stacked: this card only ever
-                renders in the narrow DevTools sidebar, never a wide column, and a
-                sm: (viewport-width) breakpoint doesn't know that - it was flipping
-                to a cramped row on any desktop viewport regardless of how narrow
-                the actual sidebar was. */}
-            <div className="p-3 rounded-xl border border-[#89BD49]/30 dark:border-[#89BD49]/40 bg-[#89BD49]/10 dark:bg-[#89BD49]/15 flex flex-col gap-3 shadow-2xs">
-              <div className="min-w-0">
-                <p className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                  <Icon icon="lucide:clipboard-list" className="w-3.5 h-3.5 text-[#6B9A35] dark:text-[#A8D666] shrink-0" />
-                  <span>Markdown Bug Report</span>
-                </p>
-                <p className="text-[11px] text-muted mt-0.5">
-                  Environment, causality timeline, top errors, failed cURLs & reproduction steps.
-                </p>
-              </div>
-              <div className="flex flex-col items-stretch gap-2 shrink-0">
-                <button
-                  type="button"
-                  onClick={handleOpenGitHubIssue}
-                  className="w-full justify-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-background hover:bg-subtle text-foreground border border-border shadow-xs transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer"
-                  title={t("dt.openGithubIssue") || "Open in GitHub Issues"}
-                >
-                  <Icon icon="lucide:github" className="w-3.5 h-3.5 shrink-0" />
-                  <span>{t("dt.openGithubIssue") || "Open in GitHub Issues"}</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={handleCopyBugReport}
-                  className="w-full justify-center px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-xs shadow-[#89BD49]/25 transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer"
-                >
-                  {copiedBugReport ? (
-                    <>
-                      <Icon icon="lucide:check" className="w-3.5 h-3.5 shrink-0" />
-                      <span>{t("dt.bugReportCopied") || "Report Copied!"}</span>
-                    </>
-                  ) : (
-                    <>
-                      <Icon icon="lucide:copy" className="w-3.5 h-3.5 shrink-0" />
-                      <span>{t("dt.copyBugReport") || "Copy Bug Report"}</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-
-            {/* Quick Actions: Playwright Test & AI Agent */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-              <button
-                type="button"
-                onClick={() => {
-                  setLogSearch("");
-                  setActiveTab("Playwright");
-                }}
-                className="p-3 rounded-xl border border-border bg-subtle/80 hover:bg-subtle hover:border-[#89BD49]/40 transition-all text-left flex flex-col justify-between gap-2 shadow-2xs group cursor-pointer"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5 text-xs font-semibold text-foreground group-hover:text-[#6B9A35] dark:group-hover:text-[#A8D666]">
-                    <Icon icon="lucide:file-code" className="w-3.5 h-3.5 text-[#6B9A35] dark:text-[#A8D666]" />
-                    <span>Playwright &amp; CI</span>
-                  </span>
-                  <span className="text-[10px] text-muted font-mono font-bold">→</span>
-                </div>
-                <p className="text-[10px] text-muted leading-relaxed">
-                  Export reproduction test &amp; GitHub Action quality gate.
-                </p>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setLogSearch("");
-                  setActiveTab("MCP");
-                }}
-                className="p-3 rounded-xl border border-border bg-subtle/80 hover:bg-subtle hover:border-[#89BD49]/40 transition-all text-left flex flex-col justify-between gap-2 shadow-2xs group cursor-pointer"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="flex items-center gap-1.5 text-xs font-semibold text-foreground group-hover:text-[#6B9A35] dark:group-hover:text-[#A8D666]">
-                    <Icon icon="lucide:bot" className="w-3.5 h-3.5 text-[#6B9A35] dark:text-[#A8D666]" />
-                    <span>AI Agent (MCP)</span>
-                  </span>
-                  <span className="text-[10px] text-muted font-mono font-bold">→</span>
-                </div>
-                <p className="text-[10px] text-muted leading-relaxed">
-                  Solve with Claude Code, Cursor, Windsurf, or Hermes.
-                </p>
-              </button>
-            </div>
-
           </div>
         )}
 
@@ -2563,7 +2281,7 @@ ${stack}` : body);
                     <div
                       key={log.srcIdx}
                       className={`group p-3 text-xs transition-all ${
-                        active ? "ring-2 ring-[#89BD49] bg-[#89BD49]/10 dark:bg-[#89BD49]/20 rounded-sm" : isWarn ? "bg-amber-50/40 dark:bg-amber-950/20 hover:bg-amber-50/70 dark:hover:bg-amber-950/30" : isErr ? "bg-red-50/40 dark:bg-red-950/20 hover:bg-red-50/70 dark:hover:bg-red-950/30" : "hover:bg-subtle/50"
+                        active ? "ring-2 ring-[#DC2626] bg-[#DC2626]/10 dark:bg-[#DC2626]/20 rounded-sm" : isWarn ? "bg-amber-50/40 dark:bg-amber-950/20 hover:bg-amber-50/70 dark:hover:bg-amber-950/30" : isErr ? "bg-red-50/40 dark:bg-red-950/20 hover:bg-red-50/70 dark:hover:bg-red-950/30" : "hover:bg-subtle/50"
                       }`}
                     >
                       <div className="flex items-start gap-2.5 min-w-0">
@@ -2585,7 +2303,7 @@ ${stack}` : body);
                           {cleanStackTrace(log.stack) ? (
                             <details className="group mt-2">
                               <summary className="flex list-none cursor-pointer items-center gap-1 text-[10px] font-semibold text-muted hover:text-foreground">
-                                <Icon icon="lucide:chevron-right" className="w-3 h-3 transition-transform group-open:rotate-90" />
+                                
                                 {t("dt.stack")}
                               </summary>
                               <pre className="mt-1.5 p-2 rounded-lg bg-subtle text-foreground border border-border font-mono text-[10px] leading-relaxed whitespace-pre-wrap break-all overflow-x-auto">
@@ -2595,7 +2313,7 @@ ${stack}` : body);
                           ) : null}
                         </div>
                         {logCount(log) > 1 && (
-                          <span className="px-1.5 py-0.5 rounded-md bg-[#89BD49]/15 dark:bg-[#89BD49]/20 text-[10px] font-bold text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40 shrink-0 tabular-nums">
+                          <span className="px-1.5 py-0.5 rounded-md bg-[#DC2626]/15 dark:bg-[#DC2626]/20 text-[10px] font-bold text-[#B91C1C] dark:text-[#F87171] border border-[#DC2626]/30 dark:border-[#DC2626]/40 shrink-0 tabular-nums">
                             ×{logCount(log)}
                           </span>
                         )}
@@ -2740,7 +2458,7 @@ ${stack}` : body);
                       key={log.srcIdx}
                       className={`group flex items-start gap-2.5 p-2.5 rounded-lg border transition-all ${
                         active
-                          ? "ring-2 ring-[#89BD49] bg-[#89BD49]/10 dark:bg-[#89BD49]/20 border-[#89BD49]/30 dark:border-[#89BD49]/40 shadow-xs"
+                          ? "ring-2 ring-[#DC2626] bg-[#DC2626]/10 dark:bg-[#DC2626]/20 border-[#DC2626]/30 dark:border-[#DC2626]/40 shadow-xs"
                           : "bg-background hover:bg-subtle/50 border-border/80"
                       }`}
                     >
@@ -2749,7 +2467,7 @@ ${stack}` : body);
                           isScreenshot
                             ? "bg-rose-100 dark:bg-rose-950/40 text-rose-600 dark:text-rose-400 border border-rose-200 dark:border-rose-800/40"
                             : isClick
-                            ? "bg-[#89BD49]/20 dark:bg-[#89BD49]/25 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40"
+                            ? "bg-[#DC2626]/20 dark:bg-[#DC2626]/25 text-[#B91C1C] dark:text-[#F87171] border border-[#DC2626]/30 dark:border-[#DC2626]/40"
                             : isType
                             ? "bg-emerald-100 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40"
                             : "bg-subtle text-muted border border-border"
@@ -2773,7 +2491,7 @@ ${stack}` : body);
                                 isScreenshot
                                   ? "bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-400 border border-rose-200/80 dark:border-rose-800/40"
                                   : isClick
-                                  ? "bg-[#89BD49]/15 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40"
+                                  ? "bg-[#DC2626]/15 dark:bg-[#DC2626]/20 text-[#B91C1C] dark:text-[#F87171] border border-[#DC2626]/30 dark:border-[#DC2626]/40"
                                   : isType
                                   ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border border-emerald-200/80 dark:border-emerald-800/40"
                                   : "bg-subtle text-muted border border-border"
@@ -2782,7 +2500,7 @@ ${stack}` : body);
                               {label}
                             </span>
                             {logCount(log) > 1 && (
-                              <span className="px-1.5 py-0.5 rounded-md bg-[#89BD49]/15 dark:bg-[#89BD49]/20 text-[10px] font-bold text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40 shrink-0">
+                              <span className="px-1.5 py-0.5 rounded-md bg-[#DC2626]/15 dark:bg-[#DC2626]/20 text-[10px] font-bold text-[#B91C1C] dark:text-[#F87171] border border-[#DC2626]/30 dark:border-[#DC2626]/40 shrink-0">
                                 ×{logCount(log)}
                               </span>
                             )}
@@ -2799,18 +2517,6 @@ ${stack}` : body);
               </div>
             )}
           </div>
-        )}
-
-        {/* PLAYWRIGHT TAB */}
-        {activeTab === "Playwright" && (
-          <PlaywrightTabPanel
-            capture={capture}
-            targetHost={targetHost}
-            actionLogs={actionLogs}
-            networkErrors={networkErrors}
-            consoleErrors={consoleErrors}
-            t={t}
-          />
         )}
 
         {/* MCP TAB */}

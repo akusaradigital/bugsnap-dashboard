@@ -149,7 +149,7 @@ export default function NotFound() {
               href="/"
               className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-accent hover:bg-accent-hover text-slate-900 text-xs font-bold transition-all shadow-xs shadow-accent/25 hover:shadow-accent/40 text-center"
             >
-              <Icon icon="lucide:arrow-left" className="w-4 h-4 shrink-0" />
+              
               <span>{t("notFound.backHome")}</span>
             </Link>
             <Link

@@ -4,6 +4,7 @@ import { StaticShell } from "@/components/StaticShell";
 import { useT } from "@/components/I18nProvider";
 import { Reveal } from "@/components/site/motion";
 import { Icon } from "@/lib/iconify";
+import { FIREFOX_STORE_URL } from "@/lib/constants";
 
 const CHROME_STORE_URL =
   "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
@@ -30,7 +31,7 @@ export function AboutContent() {
         t("about.stat3Detail") || "Sensitive tokens & passwords excluded in RAM",
     },
     {
-      metric: t("about.stat4Value") || "1-Click",
+      metric: t("about.stat4Value") || "Full Context",
       label: t("about.stat4Label") || "Full reproduction capture",
       detail:
         t("about.stat4Detail") || "Full stack trace, network & URL included",
@@ -233,15 +234,24 @@ export function AboutContent() {
               </div>
             </div>
 
-            <div className="shrink-0 w-full md:w-auto">
+            <div className="shrink-0 w-full md:w-auto flex flex-wrap items-center gap-3">
               <a
                 href={CHROME_STORE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full md:w-auto inline-flex items-center justify-center gap-2.5 bg-[#89BD49] hover:bg-[#78a83f] text-slate-900 text-xs sm:text-sm font-bold px-6 py-3.5 min-h-[44px] rounded-2xl transition-all shadow-sm hover:scale-[1.02] active:scale-[0.99] touch-manipulation whitespace-nowrap"
+                className="w-full md:w-auto inline-flex items-center justify-center gap-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-sm font-bold px-6 py-3.5 min-h-[44px] rounded-2xl transition-all shadow-sm hover:scale-[1.02] active:scale-[0.99] touch-manipulation whitespace-nowrap"
               >
                 <Icon icon="logos:chrome" className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" aria-hidden="true" />
                 <span>{t("about.ctaButton") || "Add to Chrome - Free"}</span>
+              </a>
+              <a
+                href={FIREFOX_STORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full md:w-auto inline-flex items-center justify-center gap-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-sm font-bold px-6 py-3.5 min-h-[44px] rounded-2xl transition-all shadow-sm hover:scale-[1.02] active:scale-[0.99] touch-manipulation whitespace-nowrap"
+              >
+                <Icon icon="logos:firefox" className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" aria-hidden="true" />
+                <span>{t("extension.addToFirefox")}</span>
               </a>
             </div>
           </div>

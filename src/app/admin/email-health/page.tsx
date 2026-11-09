@@ -291,7 +291,7 @@ export default function AdminEmailHealthPage() {
                 value={testRecipient}
                 onChange={(e) => setTestRecipient(e.target.value)}
                 placeholder="contact.akusaraproject@gmail.com"
-                className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2.5 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20"
+                className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2.5 outline-none focus:border-[#DC2626] focus:ring-1 focus:ring-[#DC2626]/20"
               />
             </div>
 
@@ -302,7 +302,7 @@ export default function AdminEmailHealthPage() {
               <button
                 type="submit"
                 disabled={sendingProbe || !testRecipient.trim() || !data?.configured}
-                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-xs shadow-[#89BD49]/25 disabled:opacity-50 transition-colors"
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-lg bg-[#DC2626] hover:bg-[#B91C1C] text-white shadow-xs shadow-[#DC2626]/25 disabled:opacity-50 transition-colors"
               >
                 {sendingProbe ? (
                   "Mengirim Probe..."
@@ -362,7 +362,7 @@ export default function AdminEmailHealthPage() {
               value={broadcastSubject}
               onChange={(e) => setBroadcastSubject(e.target.value)}
               placeholder="Contoh: [Pembaruan] Fitur Baru BugSnap & Pemeliharaan Terjadwal"
-              className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2.5 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20"
+              className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2.5 outline-none focus:border-[#DC2626] focus:ring-1 focus:ring-[#DC2626]/20"
             />
           </div>
 
@@ -376,7 +376,7 @@ export default function AdminEmailHealthPage() {
               value={broadcastBody}
               onChange={(e) => setBroadcastBody(e.target.value)}
               placeholder="<p>Halo Pengguna BugSnap,</p><p>Kami memperbarui sistem...</p>"
-              className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2.5 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 font-mono text-[11px] leading-relaxed"
+              className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2.5 outline-none focus:border-[#DC2626] focus:ring-1 focus:ring-[#DC2626]/20 font-mono text-[11px] leading-relaxed"
             />
           </div>
 
@@ -387,7 +387,7 @@ export default function AdminEmailHealthPage() {
             <button
               type="submit"
               disabled={broadcasting || !broadcastSubject.trim() || !broadcastBody.trim()}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-xs shadow-[#89BD49]/25 disabled:opacity-50 transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-lg bg-[#DC2626] hover:bg-[#B91C1C] text-white shadow-xs shadow-[#DC2626]/25 disabled:opacity-50 transition-colors cursor-pointer"
             >
               {broadcasting ? (
                 "Mengirimkan Broadcast..."

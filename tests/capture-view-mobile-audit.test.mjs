@@ -97,13 +97,10 @@ describe("Area 3: Public Capture View (/v/[id]) Mobile 360px–440px Audit", () 
                 </div>
               </div>
 
-              <!-- Action Bar (MCP & Playwright) -->
+              <!-- Action Bar (MCP) -->
               <div class="flex flex-wrap items-center gap-2" style="margin-top: 14px; padding-top: 12px; border-top: 1px solid #e2e8f0;">
                 <button class="px-3 py-2 rounded-xl text-xs" style="background: rgba(137,189,73,0.15); border: 1px solid rgba(137,189,73,0.3); color: #6B9A35; font-weight: 600;">
                   Solve with AI (MCP)
-                </button>
-                <button class="px-3 py-2 rounded-xl text-xs border" style="background: #f8fafc; font-weight: 600;">
-                  Playwright &amp; CI Gate
                 </button>
               </div>
             </section>
@@ -117,7 +114,6 @@ describe("Area 3: Public Capture View (/v/[id]) Mobile 360px–440px Audit", () 
                 <div style="padding: 8px; font-size: 11px; white-space: nowrap; color: #64748b;">Storage</div>
                 <div style="padding: 8px; font-size: 11px; white-space: nowrap; color: #64748b;">System</div>
                 <div style="padding: 8px; font-size: 11px; white-space: nowrap; color: #64748b;">Info</div>
-                <div style="padding: 8px; font-size: 11px; white-space: nowrap; color: #64748b;">Playwright</div>
                 <div style="padding: 8px; font-size: 11px; white-space: nowrap; color: #64748b;">MCP</div>
               </div>
 

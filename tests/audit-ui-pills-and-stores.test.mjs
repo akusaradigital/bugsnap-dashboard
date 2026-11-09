@@ -58,20 +58,23 @@ describe("E2E Audit: Breadcrumb Pill Cleanup & Browser Store Parity", () => {
     );
   });
 
-  it("ensures HelpMenu links to official Chrome Web Store and internal progress routes", () => {
+  it("ensures HelpMenu links to official Chrome Web Store and live Firefox Add-ons listing", () => {
     const helpMenu = fs.readFileSync(path.join(root, "src/components/HelpMenu.tsx"), "utf8");
     assert(helpMenu.includes("logos:chrome-web-store"), "HelpMenu must render logos:chrome-web-store for Chrome Web Store");
-    assert(helpMenu.includes("/extension/firefox"), "HelpMenu must link Firefox to /extension/firefox");
-    assert(helpMenu.includes("/extension/edge"), "HelpMenu must link Edge to /extension/edge");
+    assert(helpMenu.includes("FIREFOX_STORE_URL"), "HelpMenu must link Firefox via FIREFOX_STORE_URL");
+    assert(!helpMenu.includes("/extension/edge"), "HelpMenu must not link Edge after Edge support removal");
   });
 
-  it("ensures SiteFooter links to official progress routes for Firefox and Edge via constants", () => {
+  it("ensures SiteFooter links to the live Firefox Add-ons store via constants, Edge hidden", () => {
     const footer = fs.readFileSync(path.join(root, "src/components/site/SiteFooter.tsx"), "utf8");
     assert(footer.includes("FIREFOX_STORE_URL"), "SiteFooter must use FIREFOX_STORE_URL");
-    assert(footer.includes("EDGE_STORE_URL"), "SiteFooter must use EDGE_STORE_URL");
+    // Microsoft Edge is intentionally hidden from UI until the feature is ready across all pages.
+    assert(!footer.includes("EDGE_STORE_URL"), "SiteFooter must not reference removed EDGE_STORE_URL");
     const constants = fs.readFileSync(path.join(root, "src/lib/constants.ts"), "utf8");
-    assert(constants.includes('FIREFOX_STORE_URL = "/extension/firefox"'), "FIREFOX_STORE_URL must point to /extension/firefox");
-    assert(constants.includes('EDGE_STORE_URL = "/extension/edge"'), "EDGE_STORE_URL must point to /extension/edge");
+    assert(
+      constants.includes('FIREFOX_STORE_URL = "https://addons.mozilla.org/addon/bugsnap/"'),
+      "FIREFOX_STORE_URL must point to the live Mozilla Add-ons listing now that BugSnap is published"
+    );
   });
 
   it("ensures required vector assets exist in public/", () => {
@@ -83,7 +86,7 @@ describe("E2E Audit: Breadcrumb Pill Cleanup & Browser Store Parity", () => {
     assert(cwsContent.includes("<svg"), "chrome-web-store.svg must be a valid SVG");
   });
 
-  it("ensures i18n marketingEn and marketingId have 100% key parity for storeProgress and inProgress", () => {
+  it("ensures Firefox store-progress translations exist in both locales", () => {
     const marketingPath = path.join(root, "src/lib/i18n/marketing.ts");
     const marketing = fs.readFileSync(marketingPath, "utf8");
 
@@ -91,13 +94,10 @@ describe("E2E Audit: Breadcrumb Pill Cleanup & Browser Store Parity", () => {
       "storeProgress.firefoxTitle",
       "storeProgress.firefoxDesc",
       "storeProgress.firefoxStatus",
-      "storeProgress.firefoxPlatforms",
-      "storeProgress.edgeTitle",
-      "storeProgress.edgeDesc",
-      "storeProgress.edgeStatus",
-      "storeProgress.edgeSubStatus",
-      "storeProgress.edgeTipTitle",
-      "storeProgress.edgeTip",
+      "storeProgress.firefoxSubStatus",
+      "storeProgress.firefoxTipTitle",
+      "storeProgress.firefoxTip",
+      "storeProgress.installFirefox",
       "storeProgress.specTitle",
       "storeProgress.specV3",
       "storeProgress.specDrive",

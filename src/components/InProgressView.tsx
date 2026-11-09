@@ -52,7 +52,7 @@ export function InProgressView({
           {/* Subtle Ambient Glow */}
           <div
             aria-hidden="true"
-            className="absolute inset-0 bg-[#89BD49]/20 rounded-2xl blur-xl -z-0 pointer-events-none"
+            className="absolute inset-0 bg-emerald-500/20 rounded-2xl blur-xl -z-0 pointer-events-none"
           />
         </div>
 
@@ -70,7 +70,7 @@ export function InProgressView({
         <div className="w-full max-w-lg rounded-xl border border-border bg-subtle/70 p-4 mb-8 text-left flex items-start gap-3 shadow-xs min-w-0">
           <Icon
             icon="lucide:check-circle-2"
-            className="w-5 h-5 text-[#89BD49] shrink-0 mt-0.5"
+            className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5"
             aria-hidden="true"
           />
           <div className="min-w-0 flex-1">
@@ -89,7 +89,7 @@ export function InProgressView({
             href={backHref}
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] active:scale-[0.99] text-white text-xs sm:text-sm font-semibold shadow-xs hover:shadow-md shadow-[#89BD49]/25 transition-all duration-150"
           >
-            <Icon icon="lucide:arrow-left" className="w-4 h-4 shrink-0" aria-hidden="true" />
+            
             <span className="truncate">{resolvedBackLabel}</span>
           </Link>
           <Link

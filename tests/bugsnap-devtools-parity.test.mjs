@@ -205,6 +205,17 @@ test("header redaction keeps names and removes secret values", () => {
 // selector, and size/protocol in the per-request General block.
 // ---------------------------------------------------------------------------
 
+test("Info renders captured environment values instead of fabricated location", () => {
+  for (const field of ["screenResolution", "viewport", "devicePixelRatio", "language", "network", "timezone"]) {
+    assert.match(logger || "", new RegExp(`${field}:`), `collector must record ${field}`);
+    assert.match(panel, new RegExp(`specs\\?\\.${field}`), `Info panel must display captured ${field}`);
+  }
+  assert.doesNotMatch(panel, /value:\s*"Indonesia"/, "location must not be hardcoded without capture provenance");
+  for (const key of ["dt.environment", "dt.screenResolution", "dt.viewport", "dt.devicePixelRatio", "dt.language", "dt.connection", "dt.timezone"]) {
+    assert.equal(i18n.split(`"${key}"`).length - 1, 2, `${key} must exist in English and Indonesian`);
+  }
+});
+
 test("Network has resource-type classification buckets", () => {
   // Buckets: All | Fetch/XHR | WS | JS | CSS | Media | Font | Doc | Other
   assert.match(devlogs, /export type NetworkKind =/);

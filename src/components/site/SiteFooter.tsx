@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useT } from "@/components/I18nProvider";
 import { Icon } from "@/lib/iconify";
-import { CHROME_STORE_URL, FIREFOX_STORE_URL, EDGE_STORE_URL } from "@/lib/constants";
+import { CHROME_STORE_URL, FIREFOX_STORE_URL } from "@/lib/constants";
 import { Reveal } from "./motion/Reveal";
 import { CookieConsentBanner } from "./CookieConsentBanner";
 import { BackToTop } from "./BackToTop";
@@ -51,21 +51,16 @@ export function SiteFooter() {
                 <Icon icon="logos:chrome-web-store" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                 <span className="truncate">{t("landing.chromeWebStore")}</span>
               </a>
-              <Link
+              <a
                 href={FIREFOX_STORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 text-xs text-site-text-2 hover:text-site-text transition-colors w-fit max-w-full"
               >
                 <Icon icon="logos:firefox" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                 <span className="truncate">{t("landing.firefoxAddons")}</span>
-              </Link>
-              <Link
-                href={EDGE_STORE_URL}
-                className="inline-flex items-center gap-2 text-xs text-site-text-2 hover:text-site-text transition-colors w-fit max-w-full"
-              >
-                <Icon icon="logos:microsoft-edge" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                <span className="truncate">{t("landing.edgeAddons")}</span>
-              </Link>
-            </div>
+              </a>
+                      </div>
           </Reveal>
 
           {/* Links Grid: 4 columns across lg:col-span-8 */}
@@ -96,7 +91,7 @@ export function SiteFooter() {
                 <li>
                   <Link href="/docs/mcp" className="hover:text-site-text transition-colors block py-0.5 truncate flex items-center gap-1.5">
                     <span>{t("landing.mcpDocs")}</span>
-                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666]">AI</span>
+                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-[#DC2626]/15 text-[#B91C1C] dark:text-[#F87171]">AI</span>
                   </Link>
                 </li>
                 <li><Link href="/blog" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("site.nav.blog")}</Link></li>

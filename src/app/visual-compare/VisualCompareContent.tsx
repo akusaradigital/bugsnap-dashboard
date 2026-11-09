@@ -6,6 +6,7 @@ import { useT } from "@/components/I18nProvider";
 import { SiteNavbar } from "@/components/site/SiteNavbar";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Reveal } from "@/components/site/motion";
+import { FIREFOX_STORE_URL } from "@/lib/constants";
 import { Icon } from "@/lib/iconify";
 
 const CHROME_STORE_URL =
@@ -16,15 +17,15 @@ type CompareMode = "split" | "side" | "diff";
 // ── Realistic Simulated Checkout UI ───────────────────────────────────────────
 function CheckoutUiContent({ isFixed }: { isFixed: boolean }) {
   return (
-    <div className="w-full h-full flex flex-col bg-white dark:bg-[#0c1017] text-slate-900 dark:text-slate-100 font-sans overflow-hidden select-none">
+    <div className="w-full h-full min-w-0 flex flex-col bg-white text-slate-900 font-sans overflow-hidden select-none">
       {/* Top Browser URL bar */}
-      <div className="flex items-center gap-2 px-3 py-2 bg-slate-100 dark:bg-[#151b26] border-b border-slate-200 dark:border-slate-800 text-[11px] text-slate-500 shrink-0">
+      <div className="flex items-center gap-2 px-3 py-2 bg-slate-100 border-b border-slate-200 text-[11px] text-slate-500 shrink-0">
         <div className="flex items-center gap-1.5 shrink-0">
           <div className="w-2.5 h-2.5 rounded-full bg-red-400/80" />
           <div className="w-2.5 h-2.5 rounded-full bg-amber-400/80" />
           <div className="w-2.5 h-2.5 rounded-full bg-emerald-400/80" />
         </div>
-        <div className="flex-1 max-w-sm mx-auto flex items-center justify-center gap-1.5 px-3 py-1 rounded-md bg-white dark:bg-[#0c1017] border border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400 font-mono text-[10px]">
+        <div className="flex-1 min-w-0 max-w-sm mx-auto flex items-center justify-center gap-1.5 px-3 py-1 rounded-md bg-white border border-slate-200 text-slate-600 font-mono text-[10px]">
           <Icon icon="tabler:lock" className="w-3 h-3 text-emerald-500" />
           <span className="truncate">https://app.acmecloud.io/checkout</span>
         </div>
@@ -32,50 +33,50 @@ function CheckoutUiContent({ isFixed }: { isFixed: boolean }) {
 
       {/* Status banner */}
       {!isFixed ? (
-        <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-red-50 dark:bg-red-950/50 border-b border-red-200 dark:border-red-900/60 text-red-700 dark:text-red-300 text-xs shrink-0">
+        <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-red-50 border-b border-red-200 text-red-700 text-xs shrink-0">
           <div className="flex items-center gap-2 min-w-0">
             <Icon icon="tabler:alert-triangle" className="w-4 h-4 text-red-500 shrink-0" />
             <span className="font-semibold truncate">Payment Gateway Error 504:</span>
-            <span className="truncate text-red-600 dark:text-red-400 hidden sm:inline">Transaction timed out contacting upstream payment provider.</span>
+            <span className="truncate text-red-600 hidden sm:inline">Transaction timed out contacting upstream payment provider.</span>
           </div>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-red-100 dark:bg-red-900/50 font-bold shrink-0">FAIL_UPSTREAM</span>
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-red-100 font-bold shrink-0">FAIL_UPSTREAM</span>
         </div>
       ) : (
-        <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-[#89BD49]/10 dark:bg-[#89BD49]/15 border-b border-[#89BD49]/30 text-[#46741A] dark:text-[#A8D666] text-xs shrink-0">
+        <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-[#2563EB]/10 border-b border-[#2563EB]/30 text-[#1D4ED8] text-xs shrink-0">
           <div className="flex items-center gap-2 min-w-0">
-            <Icon icon="tabler:circle-check" className="w-4 h-4 text-[#89BD49] shrink-0" />
+            <Icon icon="tabler:circle-check" className="w-4 h-4 text-[#2563EB] shrink-0" />
             <span className="font-semibold truncate">Gateway Connected:</span>
-            <span className="truncate text-slate-600 dark:text-slate-400 hidden sm:inline">All payment endpoints online · Zero latency</span>
+            <span className="truncate text-slate-600 hidden sm:inline">All payment endpoints online · Zero latency</span>
           </div>
-          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#89BD49]/20 font-bold shrink-0">200_OK</span>
+          <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#2563EB]/15 font-bold shrink-0">200_OK</span>
         </div>
       )}
 
       {/* Main Form Content */}
       <div className="flex-1 p-4 sm:p-6 overflow-hidden flex flex-col justify-between gap-4">
         <div>
-          <div className="flex items-center justify-between gap-4 mb-4 pb-3 border-b border-slate-200 dark:border-slate-800">
+          <div className="flex items-center justify-between gap-4 mb-4 pb-3 border-b border-slate-200">
             <div>
-              <h4 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">Acme Cloud Workspace</h4>
+              <h4 className="font-bold text-sm sm:text-base text-slate-900">Acme Cloud Workspace</h4>
               <p className="text-xs text-slate-500">Developer Team Plan · 10 Active Microservices</p>
             </div>
             <div className="text-right">
-              <span className="text-lg font-bold text-slate-900 dark:text-white">$49</span>
+              <span className="text-lg font-bold text-slate-900">$49</span>
               <span className="text-xs text-slate-500"> / month</span>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
             <div>
-              <label className="block text-slate-500 dark:text-slate-400 text-[11px] font-medium mb-1">Billing Email</label>
-              <div className="px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-200 font-mono text-[11px] truncate">
+              <label className="block text-slate-500 text-[11px] font-medium mb-1">Billing Email</label>
+              <div className="min-w-0 px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 font-mono text-[11px] truncate break-all">
                 qa-lead@akusaraproject.my.id
               </div>
             </div>
             <div>
-              <label className="block text-slate-500 dark:text-slate-400 text-[11px] font-medium mb-1">Card Number</label>
-              <div className="flex items-center justify-between px-3 py-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/50 text-slate-800 dark:text-slate-200 font-mono text-[11px]">
-                <span>•••• •••• •••• 4242</span>
+              <label className="block text-slate-500 text-[11px] font-medium mb-1">Card Number</label>
+              <div className="flex min-w-0 items-center justify-between gap-2 px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 font-mono text-[11px]">
+                <span className="min-w-0 truncate">•••• •••• •••• 4242</span>
                 <span className="text-[10px] font-bold text-slate-400">VISA</span>
               </div>
             </div>
@@ -83,13 +84,13 @@ function CheckoutUiContent({ isFixed }: { isFixed: boolean }) {
         </div>
 
         {/* Action Button Section */}
-        <div className="pt-2 border-t border-slate-200 dark:border-slate-800">
+        <div className="pt-2 border-t border-slate-200">
           {!isFixed ? (
             <div className="space-y-1.5">
               <button
                 type="button"
                 disabled
-                className="w-full py-2.5 sm:py-3 rounded-xl bg-slate-200 dark:bg-slate-800 text-slate-400 dark:text-slate-500 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-not-allowed border border-slate-300 dark:border-slate-700"
+                className="w-full py-2.5 sm:py-3 rounded-xl bg-slate-200 text-slate-500 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-not-allowed border border-slate-300"
               >
                 <Icon icon="tabler:loader-2" className="w-4 h-4 animate-spin" />
                 <span>Processing Payment... (Retry Failed)</span>
@@ -103,7 +104,7 @@ function CheckoutUiContent({ isFixed }: { isFixed: boolean }) {
             <div className="space-y-1.5">
               <button
                 type="button"
-                className="w-full py-2.5 sm:py-3 rounded-xl bg-[#89BD49] hover:bg-[#78a83f] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition-transform active:scale-[0.99] cursor-pointer"
+                className="w-full py-2.5 sm:py-3 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition-transform active:scale-[0.99] cursor-pointer"
               >
                 <Icon icon="tabler:shield-check" className="w-4 h-4" />
                 <span>Complete Purchase ($49.00 / mo)</span>
@@ -136,7 +137,7 @@ function SplitSliderDemo() {
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-[460px] sm:h-[540px] lg:h-[600px] rounded-2xl overflow-hidden border border-slate-300 dark:border-slate-700 cursor-ew-resize select-none bg-slate-950 shadow-2xl"
+      className="relative w-full h-[460px] sm:h-[540px] lg:h-[600px] rounded-2xl overflow-hidden border border-slate-300 cursor-ew-resize select-none bg-white shadow-2xl"
       style={{ touchAction: "none" }}
       onPointerDown={(e) => {
         dragging.current = true;
@@ -168,7 +169,7 @@ function SplitSliderDemo() {
         style={{ left: `${pct}%` }}
       >
         <div className="w-10 h-10 rounded-full bg-white text-slate-900 border border-slate-300 shadow-2xl flex items-center justify-center text-xs font-extrabold tracking-tighter">
-          ‹ ›
+          /
         </div>
       </div>
 
@@ -176,12 +177,12 @@ function SplitSliderDemo() {
       <div className="absolute top-12 left-4 z-10 pointer-events-none bg-black/75 text-blue-400 border border-blue-500/30 text-[11px] font-bold px-3 py-1 rounded-lg backdrop-blur-md shadow-sm">
         ORIGINAL (BUG)
       </div>
-      <div className="absolute top-12 right-4 z-10 pointer-events-none bg-black/75 text-[#A8D666] border border-[#89BD49]/40 text-[11px] font-bold px-3 py-1 rounded-lg backdrop-blur-md shadow-sm">
+      <div className="absolute top-12 right-4 z-10 pointer-events-none bg-black/75 text-[#93C5FD] border border-[#2563EB]/40 text-[11px] font-bold px-3 py-1 rounded-lg backdrop-blur-md shadow-sm">
         FIXED (VERIFIED)
       </div>
 
       {/* Slider percentage tooltip */}
-      <div className="absolute bottom-3 right-4 z-10 pointer-events-none text-slate-500 bg-white/80 dark:bg-black/60 px-2.5 py-0.5 rounded-md font-mono text-[11px] backdrop-blur-xs">
+      <div className="absolute bottom-3 right-4 z-10 pointer-events-none text-slate-700 bg-white/90 px-2.5 py-0.5 rounded-md font-mono text-[11px] shadow-sm">
         Split: {pct}%
       </div>
     </div>
@@ -215,7 +216,7 @@ function SideBySideDemo() {
             <span className="text-xs font-semibold truncate text-slate-200">checkout-fix-verified.png</span>
             <span className="text-[10px] text-slate-400 font-mono hidden sm:inline">1440×900</span>
           </div>
-          <span className="text-[10px] font-bold tracking-wider px-2 py-0.5 rounded bg-[#89BD49]/20 text-[#A8D666] border border-[#89BD49]/30 shrink-0">
+          <span className="text-[10px] font-bold tracking-wider px-2 py-0.5 rounded bg-[#2563EB]/20 text-[#93C5FD] border border-[#2563EB]/30 shrink-0">
             MODIFIED
           </span>
         </div>
@@ -230,20 +231,20 @@ function SideBySideDemo() {
 // ── Diff Demo (Large, immersive) ─────────────────────────────────────────────
 function DiffOverlayDemo() {
   return (
-    <div className="relative w-full h-[460px] sm:h-[540px] lg:h-[600px] rounded-2xl overflow-hidden border border-slate-800 bg-black flex items-center justify-center shadow-2xl">
+    <div className="relative w-full h-[460px] sm:h-[540px] lg:h-[600px] rounded-2xl overflow-hidden border border-slate-300 bg-white flex items-center justify-center shadow-2xl">
       {/* Base Original */}
       <div className="absolute inset-0">
         <CheckoutUiContent isFixed={false} />
       </div>
 
       {/* Inverted Diff Layer */}
-      <div className="absolute inset-0 pointer-events-none" style={{ mixBlendMode: "difference" }}>
+      <div className="absolute inset-0 pointer-events-none opacity-30" style={{ mixBlendMode: "multiply" }}>
         <CheckoutUiContent isFixed={true} />
       </div>
 
       {/* Badge */}
-      <div className="absolute top-4 left-4 z-10 bg-black/85 text-white border border-white/20 text-xs font-bold px-3 py-1.5 rounded-lg backdrop-blur-md shadow-lg">
-        <span className="text-purple-400 mr-1.5">●</span> Diff Mode: Identical pixels cancel out to black · Changes glow bright
+      <div className="absolute top-4 left-4 z-10 max-w-[calc(100%-2rem)] bg-white/95 text-slate-700 border border-slate-200 text-xs font-bold px-3 py-1.5 rounded-lg shadow-lg">
+        <span className="text-[#2563EB] mr-1.5">●</span> Diff Mode: Identical pixels cancel out · Changes stand out
       </div>
     </div>
   );
@@ -255,7 +256,7 @@ export function VisualCompareContent() {
 
   const features = [
     {
-      icon: "tabler:arrows-split-2",
+      icon: "tabler:layout-columns",
       title: t("vc.feat1Title") || "Split Slider",
       desc: t("vc.feat1Desc") || "Drag the slider across overlaid screenshots to reveal UI differences pixel by pixel.",
       badge: "Split Mode",
@@ -279,8 +280,8 @@ export function VisualCompareContent() {
       badge: "Zero Setup",
     },
     {
-      icon: "tabler:arrows-exchange",
-      title: t("vc.feat5Title") || "1-Click Swap",
+      icon: "tabler:repeat",
+      title: t("vc.feat5Title") || "Swap Before and After",
       desc: t("vc.feat5Desc") || "Flip Before and After positions instantly without having to re-upload.",
       badge: "Instant Swap",
     },
@@ -293,7 +294,7 @@ export function VisualCompareContent() {
   ];
 
   const modes: { id: CompareMode; icon: string; label: string }[] = [
-    { id: "split", icon: "tabler:arrows-split-2", label: t("compare.splitMode") || "Split Slider" },
+    { id: "split", icon: "tabler:layout-columns", label: t("compare.splitMode") || "Split Slider" },
     { id: "side",  icon: "tabler:layout-columns",  label: t("compare.sideBySideMode") || "Side by Side" },
     { id: "diff",  icon: "tabler:layers-difference", label: t("compare.diffMode") || "Diff Overlay" },
   ];
@@ -314,7 +315,7 @@ export function VisualCompareContent() {
               <Link href="/" className="hover:text-slate-900 dark:hover:text-white transition-colors">
                 {t("landing.home") || "Home"}
               </Link>
-              <span className="text-slate-400 dark:text-slate-600">›</span>
+              <span className="text-slate-400 dark:text-slate-600" aria-hidden="true">/</span>
               <span className="text-slate-900 dark:text-white font-medium">
                 {t("vc.pageTitle") || "Visual Compare"}
               </span>
@@ -324,7 +325,7 @@ export function VisualCompareContent() {
           <Reveal delay={0.06}>
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12] mb-4 text-balance">
               {t("vc.heroTitle") || "See every fix."}{" "}
-              <span className="text-[#46741A] dark:text-[#A8D666]">
+              <span className="text-[#1D4ED8] dark:text-[#93C5FD]">
                 {t("vc.heroTitleAccent") || "Pixel by pixel."}
               </span>
             </h1>
@@ -343,10 +344,10 @@ export function VisualCompareContent() {
                 href={CHROME_STORE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#89BD49] hover:bg-[#78a83f] text-slate-900 font-bold text-sm shadow-md transition-all cursor-pointer active:scale-95"
+                className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-sm shadow-md transition-all cursor-pointer active:scale-95"
               >
                 <Icon icon="logos:chrome" className="w-5 h-5 shrink-0" aria-hidden="true" />
-                <span>{t("landing.cta") || "Add to Chrome - Free"}</span>
+                <span>{t("extension.addToChrome") || "Add to Chrome"}</span>
               </Link>
               <Link
                 href="/compare"
@@ -383,7 +384,7 @@ export function VisualCompareContent() {
               </div>
 
               <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-[#89BD49] animate-pulse" />
+                <span className="w-2 h-2 rounded-full bg-[#2563EB] animate-pulse" />
                 <span>Interactive Live Preview · Try dragging or switching modes</span>
               </div>
             </div>
@@ -402,7 +403,7 @@ export function VisualCompareContent() {
           <Reveal delay={0}>
             <div className="text-center mb-10">
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug mb-2">
-                {t("vc.modesTitle") || "Three ways to compare. One click to switch."}
+                {t("vc.modesTitle") || "Three ways to compare. Switch views instantly."}
               </h2>
               <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-xl mx-auto">
                 {t("vc.allFeaturesTitle") || "Everything you need to verify fixes quickly"}
@@ -413,13 +414,13 @@ export function VisualCompareContent() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {features.map((f, i) => (
               <Reveal key={f.title} delay={i * 0.05}>
-                <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between h-full hover:border-[#89BD49]/50 transition-colors">
+                <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs flex flex-col justify-between h-full hover:border-[#2563EB]/50 transition-colors">
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-4">
-                      <div className="w-10 h-10 rounded-xl bg-[#89BD49]/10 flex items-center justify-center text-[#89BD49]">
+                      <div className="w-10 h-10 rounded-xl bg-[#2563EB]/10 flex items-center justify-center text-[#2563EB]">
                         <Icon icon={f.icon} width={20} />
                       </div>
-                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#89BD49]/15 text-[#46741A] dark:text-[#A8D666]">
+                      <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-[#2563EB]/15 text-[#1D4ED8] dark:text-[#93C5FD]">
                         {f.badge}
                       </span>
                     </div>
@@ -439,54 +440,39 @@ export function VisualCompareContent() {
         {/* Wide CTA card */}
         <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <Reveal delay={0}>
-            <div className="w-full rounded-3xl border border-[#89BD49]/30 bg-[#89BD49]/10 dark:bg-slate-900 p-4 sm:p-12 lg:p-16 shadow-xl">
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-                <div className="lg:col-span-7 space-y-4 text-left">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#89BD49]/15 text-[#46741A] dark:text-[#A8D666] text-xs font-bold">
-                    <Icon icon="tabler:sparkles" width={14} />
-                    <span>Included in BugSnap Free</span>
-                  </div>
-                  <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
-                    {t("vc.ctaTitle") || "Start comparing screenshots"}
-                  </h2>
-                  <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed max-w-xl">
-                    {t("vc.ctaDesc") ||
-                      "Install BugSnap, capture your before and after, and compare visually in seconds. Free, no credit card required."}
-                  </p>
-                  <div className="flex flex-wrap items-center gap-4 pt-2 text-xs text-slate-500 dark:text-slate-400">
-                    <div className="flex items-center gap-1.5">
-                      <Icon icon="tabler:check" className="w-4 h-4 text-[#89BD49]" />
-                      <span>Zero Server Storage</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Icon icon="tabler:check" className="w-4 h-4 text-[#89BD49]" />
-                      <span>Your Google Drive</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <Icon icon="tabler:check" className="w-4 h-4 text-[#89BD49]" />
-                      <span>Instant Share Links</span>
-                    </div>
-                  </div>
+            <div className="rounded-3xl border border-blue-100 dark:border-blue-900/40 bg-[#f0f6ff] dark:bg-blue-950/25 p-6 sm:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm">
+              <div className="space-y-1.5 max-w-xl min-w-0">
+                <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                  {t("vc.ctaEyebrow") || "READY TO COMPARE?"}
                 </div>
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                  {t("vc.ctaTitle") || "Start comparing screenshots"}
+                </h2>
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                  {t("vc.ctaDesc") ||
+                    "Install BugSnap, capture your before and after, and compare visually in seconds."}
+                </p>
+              </div>
 
-                <div className="lg:col-span-5 flex flex-col sm:flex-row lg:flex-col gap-3 justify-center">
-                  <Link
-                    href={CHROME_STORE_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full bg-[#89BD49] hover:bg-[#78a83f] text-slate-900 font-bold text-sm shadow-md transition-all cursor-pointer text-center"
-                  >
-                    <Icon icon="logos:chrome" className="w-5 h-5 shrink-0" aria-hidden="true" />
-                    <span>{t("landing.cta") || "Add to Chrome - Free"}</span>
-                  </Link>
-                  <Link
-                    href="/compare"
-                    className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-800 dark:text-slate-200 font-bold text-sm shadow-xs transition-all cursor-pointer text-center"
-                  >
-                    <Icon icon="tabler:arrow-right" width={16} />
-                    <span>{t("vc.openCompareTool") || "Open Compare Tool"}</span>
-                  </Link>
-                </div>
+              <div className="flex flex-wrap items-center gap-3 shrink-0 min-w-0">
+                <a
+                  href={CHROME_STORE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold px-6 py-3.5 rounded-xl shadow-md transition-all hover:scale-[1.02] active:scale-[0.99] shrink-0 touch-manipulation whitespace-nowrap"
+                >
+                  <Icon icon="logos:chrome" className="w-5 h-5 shrink-0" aria-hidden="true" />
+                  <span>{t("extension.addToChrome") || "Add to Chrome"}</span>
+                </a>
+                <a
+                  href={FIREFOX_STORE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold px-6 py-3.5 rounded-xl shadow-md transition-all hover:scale-[1.02] active:scale-[0.99] shrink-0 touch-manipulation whitespace-nowrap"
+                >
+                  <Icon icon="logos:firefox" className="w-5 h-5 shrink-0" aria-hidden="true" />
+                  <span>{t("extension.addToFirefox")}</span>
+                </a>
               </div>
             </div>
           </Reveal>

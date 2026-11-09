@@ -207,7 +207,6 @@ export default function LoginPage() {
                 className="w-full inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold transition-all shadow-xs active:scale-[0.99] touch-manipulation"
               >
                 <span>{t("login.openDashboard")}</span>
-                <Icon icon="lucide:arrow-right" className="w-4 h-4" aria-hidden="true" />
               </Link>
             </div>
           </div>

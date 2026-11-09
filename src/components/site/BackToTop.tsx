@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Icon } from "@/lib/iconify";
 import { useT } from "@/components/I18nProvider";
+import { Icon } from "@/lib/iconify";
 
 export function BackToTop() {
   const { t } = useT();
@@ -32,13 +32,9 @@ export function BackToTop() {
       onClick={scrollToTop}
       aria-label={t("site.backToTop") || "Back to top"}
       title={t("site.backToTop") || "Back to top"}
-      className="fixed bottom-8 right-5 sm:bottom-10 sm:right-8 z-40 inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold bg-white/95 dark:bg-slate-900/95 text-slate-700 dark:text-slate-200 hover:text-slate-950 dark:hover:text-white border border-slate-200/80 dark:border-slate-800/80 shadow-md hover:shadow-lg hover:border-[#89BD49]/60 dark:hover:border-[#89BD49]/60 backdrop-blur-md transition-all duration-200 active:scale-95 group animate-in fade-in slide-in-from-bottom-2 duration-200"
+      className="fixed bottom-8 right-5 sm:bottom-10 sm:right-8 z-40 inline-flex items-center gap-1.5 px-3 py-2 rounded-full text-xs font-semibold bg-[#2563EB] hover:bg-[#1D4ED8] text-white border border-[#2563EB] shadow-md hover:shadow-lg transition-all duration-200 active:scale-95 group animate-in fade-in slide-in-from-bottom-2 duration-200"
     >
-      <Icon
-        icon="lucide:chevron-up"
-        className="w-4 h-4 text-[#46741A] dark:text-[#A8D666] transition-transform group-hover:-translate-y-0.5"
-        aria-hidden="true"
-      />
+      <Icon icon="lucide:arrow-up" className="w-3.5 h-3.5 brightness-0 invert" aria-hidden="true" />
       <span>{t("site.backToTop") || "Back to top"}</span>
     </button>
   );

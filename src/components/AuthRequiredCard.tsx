@@ -23,7 +23,7 @@ export function AuthRequiredCard({ title }: { title?: string }) {
         </div>
 
         {/* Lock Icon */}
-        <div className="mx-auto w-16 h-16 rounded-2xl bg-[#89BD49]/10 dark:bg-[#89BD49]/15 border border-[#89BD49]/30 flex items-center justify-center text-[#6B9A35] dark:text-[#A8D666]">
+        <div className="mx-auto w-16 h-16 rounded-2xl bg-red-50 dark:bg-red-950/25 border border-red-200 dark:border-red-900/50 flex items-center justify-center text-red-600 dark:text-red-400">
           <Icon icon="lucide:lock" className="w-8 h-8 shrink-0" aria-hidden="true" />
         </div>
 
@@ -49,7 +49,7 @@ export function AuthRequiredCard({ title }: { title?: string }) {
             href={CHROME_WEB_STORE_URL}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-emerald-200 dark:border-emerald-800/40 bg-emerald-50 dark:bg-emerald-950/30 hover:bg-emerald-100 dark:hover:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 text-sm font-semibold transition-colors"
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-950/50 text-red-700 dark:text-red-400 text-sm font-semibold transition-colors"
           >
             <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
             {t("auth.downloadExtension")}

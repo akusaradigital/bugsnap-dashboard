@@ -6,6 +6,7 @@ import { SiteNavbar } from "@/components/site/SiteNavbar";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Reveal } from "@/components/site/motion";
 import { Icon } from "@/lib/iconify";
+import { FIREFOX_STORE_URL } from "@/lib/constants";
 
 const CHROME_STORE_URL =
   "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
@@ -32,8 +33,8 @@ export function ContactContent() {
               >
                 {t("landing.home") || "Home"}
               </Link>
-              <span className="text-slate-400 dark:text-slate-600 font-normal">
-                ›
+              <span className="text-slate-400 dark:text-slate-600 font-normal" aria-hidden="true">
+                /
               </span>
               <span className="text-slate-900 dark:text-white font-medium">
                 {t("contact.title") || "Contact Us"}
@@ -117,7 +118,7 @@ export function ContactContent() {
                         rel="noopener noreferrer"
                         className="text-blue-600 dark:text-blue-400 font-medium hover:underline"
                       >
-                        akusaradigital.com →
+                        akusaradigital.com 
                       </a>
                     </div>
                   </div>
@@ -189,7 +190,7 @@ export function ContactContent() {
                       href={CHROME_STORE_URL}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full py-3 px-4 rounded-xl font-bold text-sm bg-accent hover:bg-accent-hover text-slate-900 flex items-center justify-center gap-2 transition-all shadow-sm hover:scale-[1.01] active:scale-[0.99] touch-manipulation"
+                      className="w-full py-3 px-4 rounded-xl font-bold text-sm bg-[#2563EB] hover:bg-[#1D4ED8] text-white flex items-center justify-center gap-2 transition-all shadow-sm hover:scale-[1.01] active:scale-[0.99] touch-manipulation"
                     >
                       <Icon
                         icon="logos:chrome"
@@ -197,8 +198,17 @@ export function ContactContent() {
                         aria-hidden="true"
                       />
                       <span>
-                        {t("contact.installFree") || "Add to Chrome - Free"}
+                        {t("extension.addToChrome") || "Add to Chrome"}
                       </span>
+                    </a>
+                    <a
+                      href={FIREFOX_STORE_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-3 px-4 rounded-xl font-bold text-sm bg-[#2563EB] hover:bg-[#1D4ED8] text-white flex items-center justify-center gap-2 transition-all shadow-sm hover:scale-[1.01] active:scale-[0.99] touch-manipulation"
+                    >
+                      <Icon icon="logos:firefox" className="w-4 h-4 shrink-0" aria-hidden="true" />
+                      <span>{t("extension.addToFirefox")}</span>
                     </a>
                     <Link
                       href="/pricing"
@@ -278,7 +288,7 @@ export function ContactContent() {
                       </Link>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
                         {t("contact.refundDesc") ||
-                          "14-day statutory money-back guarantee and 1-click self-serve cancellation."}
+                          "14-day statutory money-back guarantee and self-serve cancellation from your account."}
                       </p>
                     </div>
                   </div>
@@ -385,7 +395,7 @@ export function ContactContent() {
                       </strong>
                       <span className="text-slate-500 dark:text-slate-400">
                         {t("contact.box2CancelDesc") ||
-                          "1-click subscription management anytime in your billing portal."}
+                          "Manage or cancel your subscription anytime in the billing portal."}
                       </span>
                     </div>
                     <div>

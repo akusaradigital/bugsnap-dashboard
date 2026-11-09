@@ -115,7 +115,7 @@ export const INTEGRATIONS: IntegrationDef[] = [
   {
     id: "clickup",
     name: "ClickUp",
-    desc: "Create ClickUp tasks from captures with one click.",
+    desc: "Create ClickUp tasks from captures.",
     iconSrc: "/integrations/clickup.png",
     fields: [
       { key: "token", label: "Personal API Token", type: "password", placeholder: "pk_...", hint: "Generate from ClickUp Settings > Apps > API Token.", required: true },

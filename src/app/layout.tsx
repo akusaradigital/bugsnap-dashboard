@@ -65,15 +65,18 @@ export const metadata: Metadata = {
     siteName: "BugSnap",
     title: "BugSnap - Free Bug Reporting Tool & Screen Recorder for Chrome",
     description:
-      "Capture bugs with console logs, network requests, and screen recordings in one click. Free Chrome extension with automatic Google Drive storage.",
-    images: [{ url: "/opengraph-image.png", width: 1200, height: 630, alt: "BugSnap - From Click to Fix" }],
+      "Capture bugs with screenshots, screen recordings, console logs, and network requests. Free browser extension with automatic Google Drive storage.",
+    images: [
+      { url: `${siteUrl}/bugsnap-full-day.png`, width: 1200, height: 1200, alt: "BugSnap - From Click to Fix" },
+      { url: `${siteUrl}/opengraph-image.png`, width: 1200, height: 630, alt: "BugSnap - From Click to Fix" },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "BugSnap - Free Bug Reporting Tool & Screen Recorder for Chrome",
     description:
-      "Capture bugs with console logs, network requests, and screen recordings in one click. Free Chrome extension with automatic Google Drive storage.",
-    images: ["/twitter-image.png"],
+      "Capture bugs with screenshots, screen recordings, console logs, and network requests. Free browser extension with automatic Google Drive storage.",
+    images: [`${siteUrl}/opengraph-image.png`],
   },
   verification: {
     google: "googlee6dec3ee74d840e8.html",
@@ -88,7 +91,7 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#89BD49" },
+    { media: "(prefers-color-scheme: light)", color: "#DC2626" },
     { media: "(prefers-color-scheme: dark)", color: "#0b0f16" },
   ],
 };
@@ -182,7 +185,7 @@ export default function RootLayout({
       <head>
         <meta
           name="theme-color"
-          content="#89BD49"
+          content="#DC2626"
           media="(prefers-color-scheme: light)"
         />
         <meta

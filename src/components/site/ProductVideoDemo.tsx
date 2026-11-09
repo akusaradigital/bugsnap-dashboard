@@ -285,7 +285,7 @@ export function ProductVideoDemo() {
                 <span className="flex items-center gap-1"><Icon icon="lucide:check" className="w-3 h-3 text-emerald-400 shrink-0" /> Interactive video</span>
                 <span className="flex items-center gap-1"><Icon icon="lucide:check" className="w-3 h-3 text-emerald-400 shrink-0" /> Console errors</span>
                 <span className="flex items-center gap-1"><Icon icon="lucide:check" className="w-3 h-3 text-emerald-400 shrink-0" /> Network HAR</span>
-                <span className="flex items-center gap-1"><Icon icon="lucide:check" className="w-3 h-3 text-emerald-400 shrink-0" /> 1-click Jira export</span>
+                <span className="flex items-center gap-1"><Icon icon="lucide:check" className="w-3 h-3 text-emerald-400 shrink-0" /> Export to Jira</span>
               </div>
             </div>
           )}

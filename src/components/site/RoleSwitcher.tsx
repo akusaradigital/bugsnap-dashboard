@@ -77,18 +77,21 @@ export function RoleSwitcher() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10 items-stretch">
         {roles.map((role) => (
           <div key={role.key} className="flex flex-col min-w-0">
-            {/* Role Kicker */}
-            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
-              {role.kicker}
-            </p>
+            {/* Keep the desktop comparison rows aligned across all roles. */}
+            <div className="lg:min-h-[132px]">
+              {/* Role Kicker */}
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">
+                {role.kicker}
+              </p>
 
-            {/* Role Headline */}
-            <h3 className="text-xl sm:text-2xl font-extrabold text-slate-950 dark:text-white tracking-tight leading-snug mb-5">
-              {role.headline}
-            </h3>
+              {/* Role Headline */}
+              <h3 className="text-xl sm:text-2xl font-extrabold text-slate-950 dark:text-white tracking-tight leading-snug mb-5">
+                {role.headline}
+              </h3>
+            </div>
 
             {/* Red / Pink Container: The Old Way */}
-            <div className="rounded-2xl bg-[#FFF5F5] dark:bg-red-950/25 border border-[#FED7D7]/70 dark:border-red-900/40 p-4 sm:p-5 mb-6">
+            <div className="lg:min-h-[132px] rounded-2xl bg-[#FFF5F5] dark:bg-red-950/25 border border-[#FED7D7]/70 dark:border-red-900/40 p-4 sm:p-5 mb-6">
               <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-bold text-xs uppercase tracking-wider mb-2">
                 <Icon icon="lucide:x" className="w-3.5 h-3.5 stroke-[3] shrink-0" aria-hidden="true" />
                 <span>{t("site.roles.oldWay")}</span>
@@ -154,7 +157,7 @@ export function RoleSwitcher() {
               </div>
               {idx < workflowSteps.length - 1 && (
                 <span className="hidden lg:block text-slate-300 dark:text-slate-700 text-lg px-2 shrink-0 select-none" aria-hidden="true">
-                  →
+                  
                 </span>
               )}
             </div>

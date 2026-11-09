@@ -148,7 +148,7 @@ export function useCartCheckout(cartId: string, shippingMethod: string) {
   <li><strong>Include Network Status Codes:</strong> Always record whether background requests returned 200, 304, 401, 429, or 500 status codes.</li>
   <li><strong>Capture Console Warnings:</strong> Non-fatal warnings often contain deprecation notices or unhandled promise rejection warnings that precede fatal crashes.</li>
   <li><strong>Inspect State Reset Logic:</strong> Verify whether navigating away and returning to the page recovers the application state or retains the error condition.</li>
-  <li><strong>Use One-Click Telemetry Tools:</strong> Avoid manually copying curl commands and console logs. Use automated tools like BugSnap to generate comprehensive diagnostic reports in a single click.</li>
+  <li><strong>Use Telemetry Tools:</strong> Avoid manually copying curl commands and console logs. Use BugSnap to generate comprehensive diagnostic reports automatically.</li>
 </ol>
     `.trim(),
     contentId: `
@@ -266,7 +266,7 @@ export function useCartCheckout(cartId: string, shippingMethod: string) {
   <li><strong>Periksa Status Kode Jaringan:</strong> Pastikan apakah ada request background yang mengembalikan status 401, 429, atau 500 sebelum error terjadi.</li>
   <li><strong>Amati Peringatan Console:</strong> Warning di console sering kali memuat petunjuk rejection promise yang mengawali crash aplikasi.</li>
   <li><strong>Uji Pemulihan State:</strong> Cek apakah berpindah halaman dan kembali lagi dapat memulihkan aplikasi atau justru membuat bug menetap.</li>
-  <li><strong>Gunakan Alat Telemetri 1-Klik:</strong> Hindari mencatat curl command dan log console secara manual. Gunakan ekstensi seperti BugSnap untuk menghasilkan laporan diagnostik lengkap dalam satu kali klik.</li>
+  <li><strong>Gunakan Alat Telemetri:</strong> Hindari mencatat curl command dan log console secara manual. Gunakan BugSnap untuk menghasilkan laporan diagnostik lengkap secara otomatis.</li>
 </ol>
     `.trim(),
   },
@@ -338,22 +338,22 @@ export function useCartCheckout(cartId: string, shippingMethod: string) {
     <tr style="border-bottom: 1px solid #1e293b;">
       <td style="padding: 0.75rem; font-weight: bold;">Storage Markup</td>
       <td style="padding: 0.75rem;">$0.15 to $0.30 per GB / month</td>
-      <td style="padding: 0.75rem; color: #89BD49; font-weight: bold;">$0.00 (Utilizes existing Google Drive)</td>
+      <td style="padding: 0.75rem; color: #DC2626; font-weight: bold;">$0.00 (Utilizes existing Google Drive)</td>
     </tr>
     <tr style="border-bottom: 1px solid #1e293b;">
       <td style="padding: 0.75rem; font-weight: bold;">Data Sovereignty</td>
       <td style="padding: 0.75rem;">Vendor holds data in multi-tenant S3</td>
-      <td style="padding: 0.75rem; color: #89BD49; font-weight: bold;">100% Owned by Your Company</td>
+      <td style="padding: 0.75rem; color: #DC2626; font-weight: bold;">100% Owned by Your Company</td>
     </tr>
     <tr style="border-bottom: 1px solid #1e293b;">
       <td style="padding: 0.75rem; font-weight: bold;">Offboarding Risk</td>
       <td style="padding: 0.75rem;">High (Exporting terabytes of video is difficult)</td>
-      <td style="padding: 0.75rem; color: #89BD49; font-weight: bold;">Zero (Files stay safely inside your Google Drive)</td>
+      <td style="padding: 0.75rem; color: #DC2626; font-weight: bold;">Zero (Files stay safely inside your Google Drive)</td>
     </tr>
     <tr style="border-bottom: 1px solid #1e293b;">
       <td style="padding: 0.75rem; font-weight: bold;">Compliance Audit</td>
       <td style="padding: 0.75rem;">Requires third-party vendor audit verification</td>
-      <td style="padding: 0.75rem; color: #89BD49; font-weight: bold;">Inherits Google Workspace SOC 2 / ISO compliance</td>
+      <td style="padding: 0.75rem; color: #DC2626; font-weight: bold;">Inherits Google Workspace SOC 2 / ISO compliance</td>
     </tr>
   </tbody>
 </table>
@@ -366,7 +366,7 @@ export function useCartCheckout(cartId: string, shippingMethod: string) {
 <ul>
   <li><strong>Google Vault eDiscovery:</strong> Historical bug videos are automatically subject to legal holds, retention rules, and compliance discovery searches alongside corporate emails and docs.</li>
   <li><strong>Automated DLP (Data Loss Prevention):</strong> Enterprise Google Drive DLP rules automatically scan uploaded captures for exposed credit card numbers, social security IDs, or secret keys and enforce automated masking.</li>
-  <li><strong>Instant 1-Click Offboarding:</strong> When a QA contractor's agreement ends or an employee leaves the company, revoking their Google Workspace account instantly removes their access to all historical bug media. No manual scrubbing of external SaaS accounts required.</li>
+  <li><strong>Workspace Offboarding:</strong> When a QA contractor's agreement ends or an employee leaves the company, revoking their Google Workspace account removes their access to historical bug media. No manual scrubbing of external SaaS accounts required.</li>
 </ul>
 
 <h2>Conclusion</h2>
@@ -425,22 +425,22 @@ export function useCartCheckout(cartId: string, shippingMethod: string) {
     <tr style="border-bottom: 1px solid #1e293b;">
       <td style="padding: 0.75rem; font-weight: bold;">Biaya Penyimpanan</td>
       <td style="padding: 0.75rem;">Biaya tambahan $0.15 - $0.30 per GB/bulan</td>
-      <td style="padding: 0.75rem; color: #89BD49; font-weight: bold;">Rp 0 (Memakai kuota Google Drive tim)</td>
+      <td style="padding: 0.75rem; color: #DC2626; font-weight: bold;">Rp 0 (Memakai kuota Google Drive tim)</td>
     </tr>
     <tr style="border-bottom: 1px solid #1e293b;">
       <td style="padding: 0.75rem; font-weight: bold;">Kedaulatan Data</td>
       <td style="padding: 0.75rem;">Tersimpan di S3 milik vendor</td>
-      <td style="padding: 0.75rem; color: #89BD49; font-weight: bold;">100% Milik Perusahaan Sendiri</td>
+      <td style="padding: 0.75rem; color: #DC2626; font-weight: bold;">100% Milik Perusahaan Sendiri</td>
     </tr>
     <tr style="border-bottom: 1px solid #1e293b;">
       <td style="padding: 0.75rem; font-weight: bold;">Risiko Lock-in Vendor</td>
       <td style="padding: 0.75rem;">Tinggi (Sulit mengekspor puluhan GB video)</td>
-      <td style="padding: 0.75rem; color: #89BD49; font-weight: bold;">Nol (File sudah ada di Drive kantor)</td>
+      <td style="padding: 0.75rem; color: #DC2626; font-weight: bold;">Nol (File sudah ada di Drive kantor)</td>
     </tr>
     <tr style="border-bottom: 1px solid #1e293b;">
       <td style="padding: 0.75rem; font-weight: bold;">Kepatuhan Audit</td>
       <td style="padding: 0.75rem;">Harus mengaudit keamanan vendor ketiga</td>
-      <td style="padding: 0.75rem; color: #89BD49; font-weight: bold;">Mewarisi standar ISO/SOC 2 Google Workspace</td>
+      <td style="padding: 0.75rem; color: #DC2626; font-weight: bold;">Mewarisi standar ISO/SOC 2 Google Workspace</td>
     </tr>
   </tbody>
 </table>
@@ -453,7 +453,7 @@ export function useCartCheckout(cartId: string, shippingMethod: string) {
 <ul>
   <li><strong>Google Vault eDiscovery:</strong> Arsip video bug otomatis tunduk pada aturan retensi hukum dan kepatuhan audit perusahaan, sejajar dengan dokumen internal lainnya.</li>
   <li><strong>DLP (Data Loss Prevention) Terpusat:</strong> Sistem proteksi Google Drive dapat secara otomatis memindai dan menyamarkan data sensitif seperti nomor rekening atau data pribadi di dalam file yang diunggah.</li>
-  <li><strong>Pencabutan Akses 1 Klik:</strong> Ketika masa kontrak tester lepas selesai atau ada karyawan yang resign, mencabut akun Google Workspace mereka secara otomatis mencabut seluruh akses mereka ke rekaman bug historis tanpa perlu menyisir akun SaaS luar.</li>
+  <li><strong>Pencabutan Akses Terpusat:</strong> Ketika masa kontrak tester lepas selesai atau ada karyawan yang resign, mencabut akun mereka secara otomatis mencabut seluruh akses ke rekaman bug historis tanpa perlu menyisir akun luar.</li>
 </ul>
 
 <h2>Kesimpulan</h2>
@@ -975,17 +975,17 @@ export function RealtimeMetricWidget({ metricId }: { metricId: string }) {
     <tr style="border-bottom: 1px solid #1e293b;">
       <td style="padding: 0.75rem; font-weight: bold;">Title</td>
       <td style="padding: 0.75rem; color: #ef4444;">Form broken</td>
-      <td style="padding: 0.75rem; color: #89BD49;">[Settings/Billing] Updating VAT ID throws 400 Bad Request without inline error</td>
+      <td style="padding: 0.75rem; color: #DC2626;">[Settings/Billing] Updating VAT ID throws 400 Bad Request without inline error</td>
     </tr>
     <tr style="border-bottom: 1px solid #1e293b;">
       <td style="padding: 0.75rem; font-weight: bold;">Telemetry</td>
       <td style="padding: 0.75rem; color: #ef4444;">None (Dev must guess)</td>
-      <td style="padding: 0.75rem; color: #89BD49;">Full cURL replay command + JSON response payload attached</td>
+      <td style="padding: 0.75rem; color: #DC2626;">Full cURL replay command + JSON response payload attached</td>
     </tr>
     <tr style="border-bottom: 1px solid #1e293b;">
       <td style="padding: 0.75rem; font-weight: bold;">Time to Triage</td>
       <td style="padding: 0.75rem; color: #ef4444;">2 to 4 days (Back-and-forth)</td>
-      <td style="padding: 0.75rem; color: #89BD49;">Under 5 minutes (Direct root cause pinpointing)</td>
+      <td style="padding: 0.75rem; color: #DC2626;">Under 5 minutes (Direct root cause pinpointing)</td>
     </tr>
   </tbody>
 </table>
@@ -1079,17 +1079,17 @@ export function RealtimeMetricWidget({ metricId }: { metricId: string }) {
     <tr style="border-bottom: 1px solid #1e293b;">
       <td style="padding: 0.75rem; font-weight: bold;">Judul</td>
       <td style="padding: 0.75rem; color: #ef4444;">Form billing error</td>
-      <td style="padding: 0.75rem; color: #89BD49;">[Settings/Billing] Update NPWP memicu 400 Bad Request tanpa validasi inline</td>
+      <td style="padding: 0.75rem; color: #DC2626;">[Settings/Billing] Update NPWP memicu 400 Bad Request tanpa validasi inline</td>
     </tr>
     <tr style="border-bottom: 1px solid #1e293b;">
       <td style="padding: 0.75rem; font-weight: bold;">Data Telemetri</td>
       <td style="padding: 0.75rem; color: #ef4444;">Tidak ada (Developer harus menebak)</td>
-      <td style="padding: 0.75rem; color: #89BD49;">Perintah cURL replay + payload respons JSON lengkap terlampir</td>
+      <td style="padding: 0.75rem; color: #DC2626;">Perintah cURL replay + payload respons JSON lengkap terlampir</td>
     </tr>
     <tr style="border-bottom: 1px solid #1e293b;">
       <td style="padding: 0.75rem; font-weight: bold;">Waktu Investigasi</td>
       <td style="padding: 0.75rem; color: #ef4444;">2 hingga 4 hari (Tanya-jawab berlarut)</td>
-      <td style="padding: 0.75rem; color: #89BD49;">Di bawah 5 menit (Langsung ke akar masalah)</td>
+      <td style="padding: 0.75rem; color: #DC2626;">Di bawah 5 menit (Langsung ke akar masalah)</td>
     </tr>
   </tbody>
 </table>
@@ -1179,7 +1179,7 @@ export function RealtimeMetricWidget({ metricId }: { metricId: string }) {
   </thead>
   <tbody>
     <tr style="border-bottom: 1px solid #1e293b;">
-      <td style="padding: 0.75rem; font-weight: bold; color: #89BD49;">200 - 204 OK</td>
+      <td style="padding: 0.75rem; font-weight: bold; color: #DC2626;">200 - 204 OK</td>
       <td style="padding: 0.75rem;">Success</td>
       <td style="padding: 0.75rem;">Request succeeded as expected.</td>
     </tr>
@@ -1287,7 +1287,7 @@ export function RealtimeMetricWidget({ metricId }: { metricId: string }) {
   </thead>
   <tbody>
     <tr style="border-bottom: 1px solid #1e293b;">
-      <td style="padding: 0.75rem; font-weight: bold; color: #89BD49;">200 - 204 OK</td>
+      <td style="padding: 0.75rem; font-weight: bold; color: #DC2626;">200 - 204 OK</td>
       <td style="padding: 0.75rem;">Berhasil</td>
       <td style="padding: 0.75rem;">Permintaan data berhasil diproses sempurna.</td>
     </tr>
@@ -1317,7 +1317,7 @@ export function RealtimeMetricWidget({ metricId }: { metricId: string }) {
 <h3>Menemukan Pesan Error Tersembunyi di Tab Response</h3>
 <p>Ketika Anda melihat baris berwarna merah dengan status <code>400</code>, <code>422</code>, atau <code>500</code>, klik baris tersebut. Pada laci detail di sebelah kanan, buka tab <strong>Response</strong>. Server backend sering kali mengembalikan rincian error yang tidak ditampilkan di layar pengguna, contohnya: <code>{"error": "SALDO_TIDAK_MENCUKUPI"}</code>. Melampirkan teks respons ini langsung mengungkap alasan pasti mengapa fitur gagal.</p>
 
-<h2>Mengekspor Bukti: Perintah cURL 1-Klik</h2>
+<h2>Mengekspor Bukti: Perintah cURL</h2>
 <p>Developer backend sangat menyukai perintah terminal reproduksi. Anda dapat mengubah request yang gagal menjadi perintah terminal cURL instan:</p>
 <ol>
   <li>Klik kanan pada baris request yang berwarna merah di tab Network.</li>
@@ -1329,7 +1329,7 @@ export function RealtimeMetricWidget({ metricId }: { metricId: string }) {
 <h2>Solusi Cepat: Otomatisasi DevTools Bersama BugSnap</h2>
 <p>Meskipun memahami DevTools adalah keahlian yang sangat berharga, membuka tab, memfilter request, mengambil screenshot, dan menyalin cURL secara manual memakan waktu 5 hingga 10 menit untuk setiap bug. Jika dalam satu sprint ada 20 tiket, tester bisa menghabiskan 3 jam hanya untuk urusan administrasi DevTools.</p>
 
-<p>Di sinilah <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> hadir untuk memangkas birokrasi tersebut. BugSnap bekerja sebagai ekstensi Chrome ringan yang secara otomatis merekam video layar sembari menangkap stack trace Console, header Network yang gagal, dan perintah cURL secara otomatis di latar belakang. Anda mendapatkan seluruh manfaat DevTools dalam sekali klik tanpa perlu repot membuka panel DevTools secara manual.</p>
+<p>Di sinilah <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> hadir untuk memangkas birokrasi tersebut. BugSnap bekerja sebagai ekstensi Chrome ringan yang secara otomatis merekam video layar sembari menangkap stack trace Console, header Network yang gagal, dan perintah cURL secara otomatis di latar belakang. Anda mendapatkan seluruh manfaat DevTools tanpa perlu repot membuka panel DevTools secara manual.</p>
     `.trim(),
   },
 
@@ -1520,22 +1520,22 @@ export function RealtimeMetricWidget({ metricId }: { metricId: string }) {
     <tr style="border-bottom: 1px solid #1e293b;">
       <td style="padding: 0.75rem; font-weight: bold;">Legal Holds &amp; eDiscovery</td>
       <td style="padding: 0.75rem; color: #ef4444;">Manual export or impossible</td>
-      <td style="padding: 0.75rem; color: #89BD49;">Native integration with Google Vault</td>
+      <td style="padding: 0.75rem; color: #DC2626;">Native integration with Google Vault</td>
     </tr>
     <tr style="border-bottom: 1px solid #1e293b;">
       <td style="padding: 0.75rem; font-weight: bold;">Automated Data Loss Prevention</td>
       <td style="padding: 0.75rem; color: #ef4444;">Vendor-dependent or missing</td>
-      <td style="padding: 0.75rem; color: #89BD49;">Automated Workspace DLP rules enforce PII redaction</td>
+      <td style="padding: 0.75rem; color: #DC2626;">Automated Workspace DLP rules enforce PII redaction</td>
     </tr>
     <tr style="border-bottom: 1px solid #1e293b;">
       <td style="padding: 0.75rem; font-weight: bold;">Employee Offboarding</td>
       <td style="padding: 0.75rem; color: #ef4444;">Must manually purge external seats</td>
-      <td style="padding: 0.75rem; color: #89BD49;">1-Click revocation in Google Admin Console</td>
+      <td style="padding: 0.75rem; color: #DC2626;">Revocation in Google Admin Console</td>
     </tr>
     <tr style="border-bottom: 1px solid #1e293b;">
       <td style="padding: 0.75rem; font-weight: bold;">Storage Cost</td>
       <td style="padding: 0.75rem; color: #ef4444;">Per-GB surcharge / retention caps</td>
-      <td style="padding: 0.75rem; color: #89BD49;">Utilizes pooled Google Workspace quota (Zero markup)</td>
+      <td style="padding: 0.75rem; color: #DC2626;">Utilizes pooled Google Workspace quota (Zero markup)</td>
     </tr>
   </tbody>
 </table>
@@ -1602,22 +1602,22 @@ export function RealtimeMetricWidget({ metricId }: { metricId: string }) {
     <tr style="border-bottom: 1px solid #1e293b;">
       <td style="padding: 0.75rem; font-weight: bold;">Legal Holds &amp; eDiscovery</td>
       <td style="padding: 0.75rem; color: #ef4444;">Ekspor manual atau tidak ada</td>
-      <td style="padding: 0.75rem; color: #89BD49;">Terintegrasi otomatis dengan Google Vault</td>
+      <td style="padding: 0.75rem; color: #DC2626;">Terintegrasi otomatis dengan Google Vault</td>
     </tr>
     <tr style="border-bottom: 1px solid #1e293b;">
       <td style="padding: 0.75rem; font-weight: bold;">Pencegahan Kebocoran Data (DLP)</td>
       <td style="padding: 0.75rem; color: #ef4444;">Bergantung pada vendor / nihil</td>
-      <td style="padding: 0.75rem; color: #89BD49;">Aturan DLP Google otomatis menyamarkan data sensitif</td>
+      <td style="padding: 0.75rem; color: #DC2626;">Aturan DLP Google otomatis menyamarkan data sensitif</td>
     </tr>
     <tr style="border-bottom: 1px solid #1e293b;">
       <td style="padding: 0.75rem; font-weight: bold;">Offboarding Karyawan</td>
       <td style="padding: 0.75rem; color: #ef4444;">Harus menghapus akun di SaaS luar</td>
-      <td style="padding: 0.75rem; color: #89BD49;">Cukup 1-klik cabut akun di Google Admin Console</td>
+      <td style="padding: 0.75rem; color: #DC2626;">Cabut akun dari Google Admin Console</td>
     </tr>
     <tr style="border-bottom: 1px solid #1e293b;">
       <td style="padding: 0.75rem; font-weight: bold;">Biaya Penyimpanan Tambahan</td>
       <td style="padding: 0.75rem; color: #ef4444;">Biaya markup per GB / batas retensi</td>
-      <td style="padding: 0.75rem; color: #89BD49;">Menggunakan kuota Google Workspace tim (Rp 0 markup)</td>
+      <td style="padding: 0.75rem; color: #DC2626;">Menggunakan kuota Google Workspace tim (Rp 0 markup)</td>
     </tr>
   </tbody>
 </table>
@@ -1712,22 +1712,22 @@ export function RealtimeMetricWidget({ metricId }: { metricId: string }) {
     <tr style="border-bottom: 1px solid #1e293b;">
       <td style="padding: 0.75rem; font-weight: bold;">Initial Ticket Creation</td>
       <td style="padding: 0.75rem;">3 minutes (Vague text + static screenshot)</td>
-      <td style="padding: 0.75rem; color: #89BD49;">30 seconds (1-click automated recording)</td>
+      <td style="padding: 0.75rem; color: #DC2626;">30 seconds (automated recording)</td>
     </tr>
     <tr style="border-bottom: 1px solid #1e293b;">
       <td style="padding: 0.75rem; font-weight: bold;">Clarification Messages</td>
       <td style="padding: 0.75rem; color: #ef4444;">4 to 6 rounds of Slack/Jira comments</td>
-      <td style="padding: 0.75rem; color: #89BD49;">Zero (All telemetry included upfront)</td>
+      <td style="padding: 0.75rem; color: #DC2626;">Zero (All telemetry included upfront)</td>
     </tr>
     <tr style="border-bottom: 1px solid #1e293b;">
       <td style="padding: 0.75rem; font-weight: bold;">Developer Reproduction Time</td>
       <td style="padding: 0.75rem; color: #ef4444;">45 to 90 minutes of manual guesswork</td>
-      <td style="padding: 0.75rem; color: #89BD49;">Under 2 minutes (Instant cURL replay)</td>
+      <td style="padding: 0.75rem; color: #DC2626;">Under 2 minutes (Instant cURL replay)</td>
     </tr>
     <tr style="border-bottom: 1px solid #1e293b;">
       <td style="padding: 0.75rem; font-weight: bold;">Total Time to Resolution</td>
       <td style="padding: 0.75rem; color: #ef4444;">2 to 5 business days</td>
-      <td style="padding: 0.75rem; color: #89BD49;">Resolved in the current sprint</td>
+      <td style="padding: 0.75rem; color: #DC2626;">Resolved in the current sprint</td>
     </tr>
   </tbody>
 </table>
@@ -1735,7 +1735,7 @@ export function RealtimeMetricWidget({ metricId }: { metricId: string }) {
 <h2>Putting It All in a Single Shareable Link</h2>
 <p>The solution to communication breakdown is not to make testing harder; it is to make context capture frictionless. This is the exact philosophy behind <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a>.</p>
 
-<p>When a QA tester presses <code>Ctrl+Shift+F</code>, BugSnap records visual screen video with optional voice narration while silently logging every network request, response header, console exception, and hardware attribute. When recording stops, BugSnap generates a single secure URL. The developer receives the video on top, synchronized network waterfalls and console logs on bottom, and a 1-click cURL export command. No clarifying questions. No Slack ping-pong. Just pure, uninterrupted engineering velocity.</p>
+<p>When a QA tester presses <code>Ctrl+Shift+F</code>, BugSnap records visual screen video with optional voice narration while silently logging every network request, response header, console exception, and hardware attribute. When recording stops, BugSnap generates a single secure URL. The developer receives the video on top, synchronized network waterfalls and console logs on bottom, and a cURL export command. No clarifying questions. No Slack ping-pong. Just pure, uninterrupted engineering velocity.</p>
     `.trim(),
     contentId: `
 <p>Dalam alur kerja pengembangan software tangkas (agile), kalimat paling mahal dalam bahasa manusia adalah: <em>"Bisa direproduksi nggak?"</em></p>
@@ -1798,22 +1798,22 @@ export function RealtimeMetricWidget({ metricId }: { metricId: string }) {
     <tr style="border-bottom: 1px solid #1e293b;">
       <td style="padding: 0.75rem; font-weight: bold;">Pembuatan Tiket Awal</td>
       <td style="padding: 0.75rem;">3 menit (Teks panjang + screenshot)</td>
-      <td style="padding: 0.75rem; color: #89BD49;">30 detik (Rekaman 1-klik otomatis)</td>
+      <td style="padding: 0.75rem; color: #DC2626;">30 detik (Rekaman otomatis)</td>
     </tr>
     <tr style="border-bottom: 1px solid #1e293b;">
       <td style="padding: 0.75rem; font-weight: bold;">Pesan Klarifikasi Lanjutan</td>
       <td style="padding: 0.75rem; color: #ef4444;">4 hingga 6 kali tanya-jawab di Slack</td>
-      <td style="padding: 0.75rem; color: #89BD49;">Nol (Seluruh telemetri lengkap sejak awal)</td>
+      <td style="padding: 0.75rem; color: #DC2626;">Nol (Seluruh telemetri lengkap sejak awal)</td>
     </tr>
     <tr style="border-bottom: 1px solid #1e293b;">
       <td style="padding: 0.75rem; font-weight: bold;">Waktu Reproduksi Developer</td>
       <td style="padding: 0.75rem; color: #ef4444;">45 hingga 90 menit mereka-reka kondisi</td>
-      <td style="padding: 0.75rem; color: #89BD49;">Di bawah 2 menit (Tinggal copy perintah cURL)</td>
+      <td style="padding: 0.75rem; color: #DC2626;">Di bawah 2 menit (Tinggal copy perintah cURL)</td>
     </tr>
     <tr style="border-bottom: 1px solid #1e293b;">
       <td style="padding: 0.75rem; font-weight: bold;">Total Waktu Penyelesaian</td>
       <td style="padding: 0.75rem; color: #ef4444;">2 hingga 5 hari kerja</td>
-      <td style="padding: 0.75rem; color: #89BD49;">Selesai dalam sprint yang sama</td>
+      <td style="padding: 0.75rem; color: #DC2626;">Selesai dalam sprint yang sama</td>
     </tr>
   </tbody>
 </table>
@@ -1821,7 +1821,7 @@ export function RealtimeMetricWidget({ metricId }: { metricId: string }) {
 <h2>Satu Tautan untuk Seluruh Kebutuhan Diagnostik</h2>
 <p>Kunci memutus lingkaran bolak-balik bukanlah menambah beban kerja tester, melainkan menyederhanakan penangkapan konteks teknis. Inilah fondasi utama yang mendasari lahirnya <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a>.</p>
 
-<p>Cukup dengan menekan pintasan <code>Ctrl+Shift+F</code>, BugSnap merekam video visual beserta narasi audio sembari merekam setiap request jaringan, header respons, error konsol JavaScript, dan spesifikasi perangkat keras pengguna. Saat perekaman dihentikan, satu URL aman langsung tercipta. Developer dapat menonton video di bagian atas, memeriksa log jaringan dan konsol yang bergerak sinkron di bagian bawah, serta mengekspor perintah cURL dalam satu klik. Tanpa pertanyaan susulan. Tanpa ping-pong chat di Slack. Murni kecepatan rekayasa software tanpa hambatan.</p>
+<p>Cukup dengan menekan pintasan <code>Ctrl+Shift+F</code>, BugSnap merekam video visual beserta narasi audio sembari merekam setiap request jaringan, header respons, error konsol JavaScript, dan spesifikasi perangkat keras pengguna. Saat perekaman dihentikan, satu URL aman langsung tercipta. Developer dapat menonton video di bagian atas, memeriksa log jaringan dan konsol yang bergerak sinkron di bagian bawah, serta mengekspor perintah cURL langsung dari laporan. Tanpa pertanyaan susulan. Tanpa ping-pong chat di Slack. Murni kecepatan rekayasa software tanpa hambatan.</p>
     `.trim(),
   },
 ];

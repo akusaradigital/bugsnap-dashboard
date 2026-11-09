@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 const SITE_URL = "https://bugsnap.akusaraproject.my.id";
-const OG_IMAGE = { url: "/opengraph-image.png", width: 1200, height: 630, alt: "BugSnap - From Click to Fix" };
+const OG_IMAGE = { url: `${SITE_URL}/bugsnap-full-day.png`, width: 1200, height: 1200, alt: "BugSnap - From Click to Fix" };
 
 /** Build page-level metadata with proper OG/Twitter cards. */
 export function pageMeta(opts: {

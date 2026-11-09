@@ -131,7 +131,7 @@ export default function AdminCapturesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-3 border-b border-slate-200 dark:border-zinc-800">
         <div>
           <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            <span className="flex items-center gap-2"><Icon icon="lucide:camera" className="w-4 h-4 shrink-0 text-[#6B9A35] dark:text-[#A8D666]" /> {t("admin.capturesTitle")}</span>
+            <span className="flex items-center gap-2"><Icon icon="lucide:camera" className="w-4 h-4 shrink-0 text-red-700 dark:text-red-300" /> {t("admin.capturesTitle")}</span>
             <span className="text-xs px-2 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 font-normal">
               {totalCount.toLocaleString()} {t("admin.captures")}
             </span>
@@ -190,11 +190,11 @@ export default function AdminCapturesPage() {
             placeholder={t("admin.searchCapturesPlaceholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full min-w-0 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 text-slate-900 dark:text-white"
+            className="w-full min-w-0 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600/20 text-slate-900 dark:text-white"
           />
           <button
             type="submit"
-            className="px-3 py-2 bg-[#89BD49] hover:bg-[#6B9A35] text-white rounded-lg text-xs font-semibold shadow-xs shadow-[#89BD49]/25 transition-colors cursor-pointer shrink-0"
+            className="px-3 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-semibold shadow-xs shadow-red-600/25 transition-colors cursor-pointer shrink-0"
           >
             {t("common.search")}
           </button>
@@ -262,7 +262,7 @@ export default function AdminCapturesPage() {
                           href={cap.site_url}
                           target="_blank"
                           rel="noreferrer"
-                          className="hover:underline hover:text-[#6B9A35] dark:hover:text-[#A8D666] truncate block font-mono text-[11px]"
+                          className="hover:underline hover:text-red-700 dark:hover:text-red-300 truncate block font-mono text-[11px]"
                         >
                           {cap.site_url}
                         </a>
@@ -302,7 +302,7 @@ export default function AdminCapturesPage() {
                           href={`/v/${cap.id}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="px-2.5 py-1 rounded text-xs font-semibold border border-[#89BD49]/30 dark:border-[#89BD49]/40 text-[#6B9A35] dark:text-[#A8D666] hover:bg-[#89BD49]/10 dark:hover:bg-[#89BD49]/20 transition-colors"
+                          className="px-2.5 py-1 rounded text-xs font-semibold border border-[#DC2626]/30 dark:border-[#DC2626]/40 text-red-700 dark:text-red-300 hover:bg-[#DC2626]/10 dark:hover:bg-[#DC2626]/20 transition-colors"
                           title={t("admin.openSharePage")}
                         >
                           {t("admin.openSharePage")}

@@ -470,15 +470,15 @@ export function buildAiMcpPrompt({
   const title = capture.title || "Bug Report";
   const desc = capture.description ? capture.description.trim() : "No description provided.";
   const siteUrl = capture.site_url || (targetHost ? `https://${targetHost}` : "Unknown");
-  const winSize = capture.window_size || "Standard";
+  const winSize = capture.window_size || "Unknown";
 
   const stepsText =
     actionLogs.length > 0
       ? actionLogs
           .slice(-8)
-          .map((act, i) => `${i + 1}. ${(act.message || ("url" in act && act.url ? `Navigate to ${act.url}` : "") || "User action").trim()}`)
+          .map((act, i) => `${i + 1}. ${(act.message || ("url" in act && act.url ? `Navigate to ${act.url}` : "") || "Recorded action").trim()}`)
           .join("\n")
-      : "1. Follow the interaction flow shown in the BugSnap recording.";
+      : "No user actions were recorded.";
 
   const netErrorsText =
     networkErrors.length > 0

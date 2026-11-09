@@ -5,7 +5,6 @@ import Link from "next/link";
 import { StaticShell } from "@/components/StaticShell";
 import { useT } from "@/components/I18nProvider";
 import { getSortedBlogPosts, type BlogPost } from "@/content/blog";
-import { Icon } from "@/lib/iconify";
 import { BlogBottomBanner } from "@/components/blog/BlogBottomBanner";
 
 function formatBlogDate(dateStr: string, isId: boolean): string {
@@ -150,7 +149,7 @@ export function BlogListContent() {
                       className="text-[#5ca338] dark:text-emerald-400 font-bold hover:underline inline-flex items-center gap-1"
                     >
                       <span>{featuredPost.readTime}</span>
-                      <span aria-hidden="true">→</span>
+                      <span aria-hidden="true"></span>
                     </Link>
                   </div>
                 </div>
@@ -217,7 +216,7 @@ export function BlogListContent() {
                         className="text-[#5ca338] dark:text-emerald-400 font-bold hover:underline inline-flex items-center gap-1"
                       >
                         <span>{post.readTime}</span>
-                        <span aria-hidden="true">→</span>
+                        <span aria-hidden="true"></span>
                       </Link>
                     </div>
                   </div>
@@ -238,7 +237,7 @@ export function BlogListContent() {
               className="w-8 h-8 rounded-lg border border-slate-200 dark:border-site-border bg-white dark:bg-site-surface hover:bg-slate-50 dark:hover:bg-site-surface-2 disabled:opacity-40 disabled:cursor-not-allowed text-xs text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors touch-manipulation cursor-pointer"
               aria-label={t("blog.pagePrev") || "Previous"}
             >
-              <Icon icon="lucide:chevron-left" className="w-4 h-4" />
+              
             </button>
 
             {/* Pages */}
@@ -279,7 +278,7 @@ export function BlogListContent() {
               className="w-8 h-8 rounded-lg border border-slate-200 dark:border-site-border bg-white dark:bg-site-surface hover:bg-slate-50 dark:hover:bg-site-surface-2 disabled:opacity-40 disabled:cursor-not-allowed text-xs text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors touch-manipulation cursor-pointer"
               aria-label={t("blog.pageNext") || "Next"}
             >
-              <Icon icon="lucide:chevron-right" className="w-4 h-4" />
+              
             </button>
           </nav>
         </div>

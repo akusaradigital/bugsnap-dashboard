@@ -126,11 +126,11 @@ export function UpgradeModal({
         </div>
 
         {/* Regional PPP Banner */}
-        <div className="mb-4 rounded-2xl border border-[#89BD49]/30 dark:border-[#89BD49]/40 bg-[#89BD49]/10 dark:bg-[#89BD49]/15 p-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
+        <div className="mb-4 rounded-2xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-950/25 p-2.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 text-xs">
           <div className="flex items-center gap-2">
-            <Icon icon="lucide:globe" className="w-3.5 h-3.5 shrink-0 text-[#6B9A35] dark:text-[#A8D666]" />
+            <Icon icon="lucide:globe" className="w-3.5 h-3.5 shrink-0 text-[#B91C1C] dark:text-[#F87171]" />
             <span className="text-neutral-700 dark:text-neutral-300">
-              <strong>Regional Pricing:</strong> Indonesian creators get 40% off with code <code className="font-mono bg-white dark:bg-neutral-800 px-1 py-0.5 rounded font-bold text-[#6B9A35] dark:text-[#A8D666]">INDO40</code>
+              <strong>Regional Pricing:</strong> Indonesian creators get 40% off with code <code className="font-mono bg-white dark:bg-neutral-800 px-1 py-0.5 rounded font-bold text-[#B91C1C] dark:text-[#F87171]">INDO40</code>
             </span>
           </div>
           <button
@@ -139,7 +139,7 @@ export function UpgradeModal({
               setPromoCode("INDO40");
               setShowPromoInput(true);
             }}
-            className="text-[#6B9A35] dark:text-[#A8D666] font-bold hover:underline shrink-0 text-left sm:text-right"
+            className="text-[#B91C1C] dark:text-[#F87171] font-bold hover:underline shrink-0 text-left sm:text-right"
           >
             Apply Code
           </button>
@@ -244,7 +244,7 @@ export function UpgradeModal({
                   <button
                     type="button"
                     onClick={() => setShowPromoInput(true)}
-                    className="text-neutral-600 dark:text-neutral-400 hover:text-[#6B9A35] dark:hover:text-[#A8D666] underline flex items-center gap-1"
+                    className="text-neutral-600 dark:text-neutral-400 hover:text-[#B91C1C] dark:hover:text-[#F87171] underline flex items-center gap-1"
                   >
                     <span>Have a promo code?</span>
                   </button>
@@ -255,7 +255,7 @@ export function UpgradeModal({
                       value={promoCode}
                       onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
                       placeholder="e.g. INDO40 / LAUNCH50"
-                      className="w-full px-2.5 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 text-xs text-foreground uppercase tracking-wide font-mono focus:outline-none focus:ring-1 focus:ring-[#89BD49]"
+                      className="w-full px-2.5 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 text-xs text-foreground uppercase tracking-wide font-mono focus:outline-none focus:ring-1 focus:ring-[#DC2626]"
                     />
                     {promoCode && (
                       <button
@@ -285,7 +285,7 @@ export function UpgradeModal({
                   )}
                 </button>
                 <p className="text-[11px] text-neutral-600 dark:text-neutral-400 text-center mt-2">
-                  14-Day Money-Back Guarantee · Cancel anytime with 1-click in Settings.
+                  14-Day Money-Back Guarantee · Cancel anytime from Settings.
                 </p>
                 <p className="text-[10px] text-neutral-500 dark:text-neutral-500 text-center mt-0.5">
                   Taxes (VAT / PPN) calculated automatically by Paddle at checkout.
@@ -337,7 +337,7 @@ export function UpgradeModal({
                     <span>200 AI bug summaries</span>
                   </li>
                   <li className="flex items-center gap-3 font-medium">
-                    <Icon icon="lucide:shield" className="w-4 h-4 text-[#6B9A35] dark:text-[#A8D666] shrink-0" />
+                    <Icon icon="lucide:shield" className="w-4 h-4 text-[#B91C1C] dark:text-[#F87171] shrink-0" />
                     <span>Access controls & Custom Branding</span>
                   </li>
                 </ul>
@@ -346,10 +346,10 @@ export function UpgradeModal({
                   <button
                     type="button"
                     onClick={() => setShowAllFeatures(!showAllFeatures)}
-                    className="text-xs text-[#6B9A35] dark:text-[#A8D666] font-semibold hover:underline flex items-center gap-1 cursor-pointer"
+                    className="text-xs text-[#B91C1C] dark:text-[#F87171] font-semibold hover:underline flex items-center gap-1 cursor-pointer"
                   >
                     <span>{showAllFeatures ? "Hide feature details" : "See all features"}</span>
-                    <Icon icon="lucide:chevron-down" className={`w-3.5 h-3.5 shrink-0 transition-transform ${showAllFeatures ? "rotate-180" : ""}`} />
+                    
                   </button>
 
                   {showAllFeatures && (
@@ -386,7 +386,7 @@ export function UpgradeModal({
         {/* Footer info */}
         <div className="mt-8 text-center text-xs text-neutral-500 dark:text-neutral-400">
           Looking for our Enterprise plan?{" "}
-          <Link href="/contact" onClick={onClose} className="text-[#6B9A35] dark:text-[#A8D666] font-semibold hover:underline">
+          <Link href="/contact" onClick={onClose} className="text-[#B91C1C] dark:text-[#F87171] font-semibold hover:underline">
             Contact sales
           </Link>
         </div>

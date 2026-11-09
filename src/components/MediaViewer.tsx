@@ -1193,7 +1193,7 @@ function MediaViewer({
                   <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 z-30 pointer-events-none transition-all duration-150 animate-in fade-in zoom-in-95">
                     <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-zinc-950/95 dark:bg-black/95 text-white text-[11px] font-semibold shadow-xl border border-white/15 whitespace-nowrap backdrop-blur-xs">
                       <span>{popupTitle}</span>
-                      <Icon icon="lucide:chevron-right" className="w-3 h-3 text-zinc-300 shrink-0" aria-hidden="true" />
+                      
                     </div>
                   </div>
                 )}
@@ -1302,7 +1302,7 @@ function MediaViewer({
               onChange={handleVolumeChange}
               onClick={(e) => e.stopPropagation()}
               aria-label="Volume"
-              className="hidden sm:inline-block w-14 sm:w-16 h-1.5 accent-[#89BD49] bg-zinc-200 dark:bg-zinc-700 rounded-lg cursor-pointer"
+              className="hidden sm:inline-block w-14 sm:w-16 h-1.5 accent-[#DC2626] bg-zinc-200 dark:bg-zinc-700 rounded-lg cursor-pointer"
             />
           </div>
 
@@ -1316,8 +1316,8 @@ function MediaViewer({
               }}
               className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors cursor-pointer focus:outline-hidden ${
                 inFs
-                  ? isPip ? "text-[#A8D666] bg-white/20" : "text-white hover:bg-white/20 hover:text-white"
-                  : isPip ? "text-[#6B9A35] dark:text-[#A8D666] bg-[#89BD49]/10 dark:bg-[#89BD49]/20" : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+                  ? isPip ? "text-[#F87171] bg-white/20" : "text-white hover:bg-white/20 hover:text-white"
+                  : isPip ? "text-[#B91C1C] dark:text-[#F87171] bg-[#DC2626]/10 dark:bg-[#DC2626]/20" : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
               }`}
               aria-label={t("mv.pip")}
               title={t("mv.pip")}
@@ -1356,7 +1356,7 @@ function MediaViewer({
                 : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
             }`}
             aria-label={isFullscreen ? t("mv.exitFullscreen") : t("mv.openFullscreen")}
-            title={isFullscreen ? `${t("mv.exitFullscreen")} (Esc)` : t("mv.openFullscreen")}
+            title={isFullscreen ? t("mv.exitFullscreen") : t("mv.openFullscreen")}
           >
             {isFullscreen ? (
               <Icon icon="lucide:minimize" className="w-4 h-4" aria-hidden="true" />
@@ -1569,7 +1569,7 @@ function MediaViewer({
                   }`}
                 >
                   <div className="flex items-center gap-2 rounded-xl bg-black/75 backdrop-blur-md px-3.5 py-1.5 text-xs text-white/90 border border-white/15 shadow-xl">
-                    <span className="h-2 w-2 rounded-full bg-[#89BD49] animate-pulse" />
+                    <span className="h-2 w-2 rounded-full bg-[#DC2626] animate-pulse" />
                     <span className="font-medium truncate max-w-xs sm:max-w-md">{title || "Video Capture"}</span>
                   </div>
 
@@ -1584,7 +1584,7 @@ function MediaViewer({
                     aria-label={t("mv.exitFullscreen")}
                   >
                     <Icon icon="lucide:minimize" className="w-3.5 h-3.5" aria-hidden="true" />
-                    <span>{t("mv.exitFullscreen")} (Esc)</span>
+                    <span>{t("mv.exitFullscreen")}</span>
                   </button>
                 </div>
               )}
@@ -1655,14 +1655,14 @@ function MediaViewer({
             <button
               type="button"
               ref={lightboxTriggerRef}
-              className="relative flex h-full w-full items-center justify-center cursor-zoom-in select-none bg-transparent border-0 p-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#89BD49] rounded-lg"
+              className="relative flex h-full w-full items-center justify-center cursor-zoom-in select-none bg-transparent border-0 p-0 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#DC2626] rounded-lg"
               onClick={() => setLightboxOpen(true)}
               aria-label={t("mv.openViewer", { name: title || "screenshot" })}
               title={t("mv.openFullscreen")}
             >
               {!imageLoaded && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                  <div className="w-6 h-6 border-2 border-[#89BD49]/30 border-t-[#89BD49] rounded-full animate-spin" />
+                  <div className="w-6 h-6 border-2 border-[#DC2626]/30 border-t-[#DC2626] rounded-full animate-spin" />
                 </div>
               )}
               {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -1781,7 +1781,7 @@ function MediaViewer({
               onClick={closeLightbox}
               className="inline-flex min-h-8 min-w-8 sm:min-h-10 sm:min-w-10 items-center justify-center rounded-lg bg-white/90 hover:bg-zinc-100 text-zinc-700 hover:text-zinc-900 border border-zinc-200 shadow-md dark:bg-zinc-900/90 dark:hover:bg-zinc-800 dark:text-white dark:border-white/10 dark:shadow-lg backdrop-blur-md focus-visible:outline focus-visible:outline-2 focus-visible:outline-zinc-900 dark:focus-visible:outline-white transition-colors cursor-pointer"
               aria-label={t("mv.closeViewer")}
-              title={`${t("mv.closeViewer")} (Esc)`}
+              title={t("mv.closeViewer")}
             >
               <Icon icon="lucide:x" className="h-5 w-5" aria-hidden="true" />
             </button>

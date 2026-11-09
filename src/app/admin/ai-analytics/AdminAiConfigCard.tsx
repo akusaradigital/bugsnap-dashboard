@@ -341,7 +341,7 @@ export function AdminAiConfigCard() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-100 dark:border-zinc-800">
         <div className="space-y-1">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="p-1.5 rounded-lg bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666]">
+            <span className="p-1.5 rounded-lg bg-red-600/15 text-red-700 dark:text-red-300">
               <Icon icon="lucide:sparkles" className="w-4 h-4" />
             </span>
             <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
@@ -353,7 +353,7 @@ export function AdminAiConfigCard() {
                 </span>
               )}
             </h3>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-[#89BD49]/10 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/20 inline-flex items-center gap-1">
+            <span className="text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-red-600/10 text-red-700 dark:text-red-300 border border-red-600/20 inline-flex items-center gap-1">
               <Icon icon="lucide:sparkles" className="w-3 h-3" />
               <span>Extension AI Polish</span>
             </span>
@@ -371,7 +371,7 @@ export function AdminAiConfigCard() {
                 enabled
                   ? pingResult?.ok
                     ? "bg-emerald-500 animate-pulse"
-                    : "bg-[#89BD49]"
+                    : "bg-red-600"
                   : "bg-slate-400"
               }`}
             />
@@ -393,7 +393,7 @@ export function AdminAiConfigCard() {
               aria-label="Toggle status aktif model AI"
               onClick={() => setEnabled(!enabled)}
               className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
-                enabled ? "bg-[#89BD49]" : "bg-slate-300 dark:bg-zinc-700"
+                enabled ? "bg-red-600" : "bg-slate-300 dark:bg-zinc-700"
               }`}
             >
               <span
@@ -422,7 +422,7 @@ export function AdminAiConfigCard() {
                   onClick={() => handlePresetChange(p.id)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                     isSelected
-                      ? "bg-[#89BD49] text-white shadow-xs"
+                      ? "bg-red-600 text-white shadow-xs"
                       : "bg-slate-50 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-700"
                   }`}
                 >
@@ -446,7 +446,7 @@ export function AdminAiConfigCard() {
               value={endpointUrl}
               onChange={(e) => setEndpointUrl(e.target.value)}
               placeholder="https://..."
-              className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-mono text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#89BD49]/30 focus:border-[#89BD49] transition-colors"
+              className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-mono text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-red-600/30 focus:border-red-600 transition-colors"
             />
           </div>
 
@@ -490,7 +490,7 @@ export function AdminAiConfigCard() {
                 }}
                 placeholder={hasStoredKey && !isChangingKey ? "•••••••• (Klik 'Ganti Key' untuk mengubah)" : "sk-..."}
                 disabled={hasStoredKey && !isChangingKey}
-                className="w-full pl-3 pr-10 py-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-mono text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#89BD49]/30 focus:border-[#89BD49] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full pl-3 pr-10 py-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-mono text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-red-600/30 focus:border-red-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               />
               <button
                 type="button"
@@ -524,7 +524,7 @@ export function AdminAiConfigCard() {
               value={model}
               onChange={(e) => setModel(e.target.value)}
               placeholder="gpt-4o-mini, qwen/qwen-2.5-72b-instruct, etc."
-              className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-mono text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#89BD49]/30 focus:border-[#89BD49] transition-colors"
+              className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-mono text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-red-600/30 focus:border-red-600 transition-colors"
             />
           </div>
         </div>
@@ -590,10 +590,7 @@ export function AdminAiConfigCard() {
             >
               <Icon icon="lucide:flask-conical" className="w-3.5 h-3.5" />
               <span>{playgroundOpen ? "Tutup Playground" : "Playground Test Polish"}</span>
-              <Icon
-                icon={playgroundOpen ? "lucide:chevron-up" : "lucide:chevron-down"}
-                className="w-3 h-3 text-slate-400"
-              />
+              
             </button>
             <span className="hidden md:inline text-[11px] text-slate-400">
               Disimpan di tabel <code className="font-mono">app_settings</code>
@@ -626,7 +623,7 @@ export function AdminAiConfigCard() {
               type="button"
               onClick={handleSave}
               disabled={saving || pinging || testingPolish}
-              className="px-4 py-2 rounded-lg bg-[#89BD49] hover:bg-[#7ba941] text-slate-900 text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
               {saving ? (
                 <>
@@ -649,7 +646,7 @@ export function AdminAiConfigCard() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div className="space-y-0.5">
                 <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                  <Icon icon="lucide:sparkles" className="w-3.5 h-3.5 text-[#89BD49]" />
+                  <Icon icon="lucide:sparkles" className="w-3.5 h-3.5 text-red-600" />
                   <span>Playground: Uji Coba Respon Polish Langsung</span>
                 </div>
                 <p className="text-[11px] text-slate-500 dark:text-zinc-400">
@@ -665,7 +662,7 @@ export function AdminAiConfigCard() {
                     key={idx}
                     type="button"
                     onClick={() => setSampleDraft(sample)}
-                    className="text-[10px] px-2 py-0.5 rounded bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 hover:border-[#89BD49] transition-colors cursor-pointer truncate max-w-[150px]"
+                    className="text-[10px] px-2 py-0.5 rounded bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 hover:border-[#DC2626] transition-colors cursor-pointer truncate max-w-[150px]"
                     title={sample}
                   >
                     Contoh {idx + 1}
@@ -681,7 +678,7 @@ export function AdminAiConfigCard() {
                 value={sampleDraft}
                 onChange={(e) => setSampleDraft(e.target.value)}
                 placeholder="Ketik catatan kasar bug di sini (misal: tombol ga bisa diklik pas mobile)..."
-                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#89BD49]/30 focus:border-[#89BD49] transition-colors"
+                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-red-600/30 focus:border-red-600 transition-colors"
               />
               <div className="flex items-center justify-between">
                 <span className="text-[10px] text-slate-400">
@@ -691,7 +688,7 @@ export function AdminAiConfigCard() {
                   type="button"
                   onClick={handleTestPolish}
                   disabled={testingPolish || !sampleDraft.trim()}
-                  className="px-3.5 py-1.5 rounded-lg bg-[#89BD49] hover:bg-[#7aa841] text-slate-900 text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  className="px-3.5 py-1.5 rounded-lg bg-[#DC2626] hover:bg-[#B91C1C] text-slate-900 text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
                   {testingPolish ? (
                     <>
@@ -713,7 +710,7 @@ export function AdminAiConfigCard() {
               <div
                 className={`p-3.5 rounded-lg border text-xs space-y-2 ${
                   polishResult.ok
-                    ? "bg-white dark:bg-zinc-900 border-[#89BD49]/40 text-slate-900 dark:text-zinc-100 shadow-xs"
+                    ? "bg-white dark:bg-zinc-900 border-[#DC2626]/40 text-slate-900 dark:text-zinc-100 shadow-xs"
                     : "bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/50 text-rose-800 dark:text-rose-300"
                 }`}
               >
@@ -721,7 +718,7 @@ export function AdminAiConfigCard() {
                   <div className="flex items-center gap-1.5 font-bold text-[11px]">
                     <Icon
                       icon={polishResult.ok ? "lucide:check" : "lucide:alert-triangle"}
-                      className={`w-3.5 h-3.5 ${polishResult.ok ? "text-[#89BD49]" : "text-rose-500"}`}
+                      className={`w-3.5 h-3.5 ${polishResult.ok ? "text-red-600" : "text-rose-500"}`}
                     />
                     <span>{polishResult.ok ? "Hasil AI Polish:" : "Gagal Memproses"}</span>
                   </div>
@@ -742,7 +739,7 @@ export function AdminAiConfigCard() {
                       <button
                         type="button"
                         onClick={handleCopyPolish}
-                        className="text-[11px] font-semibold text-[#6B9A35] dark:text-[#A8D666] hover:underline flex items-center gap-1 cursor-pointer"
+                        className="text-[11px] font-semibold text-[#B91C1C] dark:text-[#F87171] hover:underline flex items-center gap-1 cursor-pointer"
                       >
                         <Icon icon={copiedResult ? "lucide:check" : "lucide:copy"} className="w-3 h-3" />
                         <span>{copiedResult ? "Tersalin!" : "Salin Hasil"}</span>

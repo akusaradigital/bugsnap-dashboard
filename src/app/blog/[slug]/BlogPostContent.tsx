@@ -295,7 +295,7 @@ export function BlogPostContent({ slug }: { slug: string }) {
                   {t("landing.home") || "Home"}
                 </Link>
                 <span className="text-slate-300 dark:text-slate-600 shrink-0" aria-hidden="true">
-                  ›
+                  /
                 </span>
                 <Link
                   href="/blog"
@@ -304,7 +304,7 @@ export function BlogPostContent({ slug }: { slug: string }) {
                   {t("blog.title") || "Blog"}
                 </Link>
                 <span className="text-slate-300 dark:text-slate-600 shrink-0" aria-hidden="true">
-                  ›
+                  /
                 </span>
                 <span className="text-slate-500 dark:text-slate-400 truncate max-w-[140px] xs:max-w-[200px] sm:max-w-none">
                   {title}
@@ -385,7 +385,7 @@ export function BlogPostContent({ slug }: { slug: string }) {
                   href="/blog"
                   className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:underline transition-colors"
                 >
-                  {t("blog.backToBlog") || "← Back to Blog"}
+                  {t("blog.backToBlog") || "Back to Blog"}
                 </Link>
               </div>
             </article>
@@ -442,7 +442,7 @@ export function BlogPostContent({ slug }: { slug: string }) {
                       href="/blog"
                       className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
                     >
-                      {t("blog.allArticles") || "All Articles"} →
+                      {t("blog.allArticles") || "All Articles"} 
                     </Link>
                   </div>
 

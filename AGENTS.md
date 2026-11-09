@@ -15,7 +15,9 @@
    - UI/menu icons must describe the actual action, section, or data they represent; do not use browser/vendor logos as generic feature or navigation icons.
    - Apply BugSnap theme through existing semantic/Tailwind tokens and preserve readable contrast in light and dark themes. Keep genuine third-party product logos only where that product is the subject, using the approved original artwork without recoloring or distortion.
    - BugSnap's own logo is immutable: never redraw, recolor, reshape, crop, distort, add effects to, or otherwise modify its source artwork. Use the original approved asset proportionally with clear space. When auditing or changing other visuals, explicitly exclude the BugSnap logo from edits.
-9. **DB changes apply immediately**: A new `supabase/migrations/*.sql` is not done until it runs against the live project. Execute it with `node scripts/apply-migration.mjs <file.sql>` (Management API + `SUPABASE_PAT` from `.env.local`) in the same turn it is written. Snapshot what you are replacing first - `--sql "select pg_get_functiondef(...)"` - and verify afterwards. Never leave a migration written-but-unapplied.
+9. **Color system**: Use BugSnap green (`#89BD49`, hover `#6B9A35`) for primary extension/store CTAs and success/available pills; use BugSnap blue (`#2563EB` / `#3B82F6`) for dashboard navigation, settings, and neutral action buttons; reserve red/rose exclusively for destructive actions, genuine errors, recording indicators, and danger states; use amber only for warnings. Do not use red, purple, or arbitrary accent colors for generic branding, pills, or primary actions.
+10. **Broken visual assets**: Every Iconify identifier must map to an existing offline SVG in `public/icons/`; every static image path must exist; dynamic images must have an `onError` fallback. Never ship a broken-image placeholder or an error screen caused by a missing chunk/asset. After UI changes, run the asset/icon integrity tests and verify the affected route in the local browser.
+11. **DB changes apply immediately**: A new `supabase/migrations/*.sql` is not done until it runs against the live project. Execute it with `node scripts/apply-migration.mjs <file.sql>` (Management API + `SUPABASE_PAT` from `.env.local`) in the same turn it is written. Snapshot what you are replacing first - `--sql "select pg_get_functiondef(...)"` - and verify afterwards. Never leave a migration written-but-unapplied.
 10. **Mobile View 360px–440px Audit (MANDATORY on Dashboard Changes)**: For every UI, component, or page change in `bugsnap-dashboard`, you MUST verify and audit responsiveness across small mobile viewports (360px–440px, usable width ~328px with 16px horizontal gutters). Horizontal overflow/scrolling is strictly forbidden. Mandatory rules:
    - Add `min-w-0` to flex child containers to allow nested `truncate` elements to truncate properly without overflowing.
    - Responsive grids: convert desktop multi-column grids (`grid-cols-2/3/4`) to `grid-cols-1 sm:grid-cols-2/3`, and use `gap-6 sm:gap-0 sm:divide-x` instead of raw `divide-x` to prevent broken border divider lines when wrapped to new rows.
@@ -27,20 +29,23 @@
 11. **Real Website Testing Standard (MANDATORY)**: For all E2E, Playwright, and browser automation tests, you MUST use REAL production websites from the public internet that match the specific technical characteristics of the test case. Arbitrary mock injections or lazily reusing a single URL (e.g. Wikipedia only) across different test cases is strictly forbidden. Examples: CSP blocking (`https://github.com`), infinite scroll (`https://infinite-scroll.com/demo/full-page/`), Shadow DOM (`https://shoelace.style`), sticky header/nav overlay (`https://vuejs.org`).
 12. **NO THIRD-PARTY BRAND/MERK NAMES (STRICT MANDATORY)**: NEVER use, mention, or reference competitor brand names (e.g. Jam, Jam.dev, Loom, GoFullPage, Marker.io, etc.) anywhere in website text, UI labels, marketing copy, code comments, filenames, test suites, or documentation. All architecture, algorithms, and features must be named purely using BugSnap's own brand and native technical terminology. Never compare BugSnap to competitors in UI or docs.
 13. **Changelog Generation (`CHANGELOG.md`) on Release (MANDATORY on git push to main)**: Whenever the user explicitly instructs `git push` to `main` (release/deploy time), ALWAYS generate and update release entries in `CHANGELOG.md` (both workspace root `../CHANGELOG.md` and `bugsnap-dashboard/CHANGELOG.md`, kept strictly synchronized) covering all 3 projects (`[bugsnap-dashboard]`, `[bugsnap-extension]`, `[bugsnap-mcp]`). This directly feeds `/admin/changelog`.
+14. **Focused validation**: For a dashboard-only change, run the smallest affected validation first (`npm run typecheck`, targeted tests, and `npm run lint` for JSX/TSX). Do not run unrelated extension or MCP suites. Use the full dashboard gate (`npm run typecheck && npm test && npm run build`, plus `npm run lint` for JSX/TSX) for release/commit validation or explicit full validation.
+15. **Subagent-per-module**: Delegate only the affected dashboard route/component/module and provide the relevant Graphify call map before asking a subagent to inspect code.
+16. **Real browser and mobile validation**: For UI/E2E changes, use the configured real browser and real public website appropriate to the scenario. Audit 360px–440px layouts with zero horizontal overflow.
 
 ## Versioning (SemVer - ONLY on git push to main)
 
 - **Do NOT bump version on routine edits or local commits**: Never bump the version on routine small bugfixes or local commits to keep version numbers from unnecessarily inflating.
 - **Bump ONLY when pushing to `main`**: Bump `package.json` + `package-lock.json` ONLY when the user explicitly instructs `git push` to `main` for production deployment.
 - **Release Sequence on git push to main**: bump version -> generate/update `CHANGELOG.md` for all 3 projects -> gate (`npm run typecheck && npm test && npm run build`) -> `/graphify --update` -> commit -> `git push origin main`.
-- Current: **`0.14.1`**
-- PATCH `0.7.0 → 0.7.1` | MINOR `0.7.x → 0.8.0` | MAJOR `0.x → 1.0.0`
+- Current: **`0.14.2`**
+- PATCH `0.7.0  0.7.1` | MINOR `0.7.x  0.8.0` | MAJOR `0.x  1.0.0`
 
 ## Architecture
 
 - **Extension bridge**: Extension writes via `insert_capture_by_email` RPC (`SECURITY DEFINER`, bypasses RLS). Extension has no Supabase session.
 - **Admin Supabase Monitor**: `/admin/supabase` + `/api/admin/supabase-stats` (DB size, storage, pool metrics).
-- **DevTools**: `captures.dev_logs` (JSONB) → 4-tab panel + AI Clue.
+- **DevTools**: `captures.dev_logs` (JSONB)  4-tab panel + AI Clue.
 - **Network 1st/3rd-party**: Relative URLs (`/api/...`) resolve against capture origin base (`new URL(url, base)`), `www.` normalized, default 1st-party.
 - **DOM Replay**: `rrweb` recorded events played back in dashboard.
 - **`src/lib/redact.ts`**: Server-side only - never import client-side.

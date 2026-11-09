@@ -230,7 +230,7 @@ export default function AdminRevenuePage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-3 border-b border-slate-200 dark:border-zinc-800">
         <div>
           <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            <span className="flex items-center gap-2"><Icon icon="lucide:dollar-sign" className="w-4 h-4 shrink-0 text-[#6B9A35] dark:text-[#A8D666]" /> {t("admin.revenueTitle")}</span>
+            <span className="flex items-center gap-2"><Icon icon="lucide:dollar-sign" className="w-4 h-4 shrink-0 text-[#B91C1C] dark:text-[#F87171]" /> {t("admin.revenueTitle")}</span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
             {t("admin.revenueDesc")}
@@ -270,7 +270,7 @@ export default function AdminRevenuePage() {
           <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">
             {metrics?.payingCustomersCount || 0}
           </p>
-          <span className="text-[10px] text-[#6B9A35] dark:text-[#A8D666] font-semibold mt-0.5 block">
+          <span className="text-[10px] text-[#B91C1C] dark:text-[#F87171] font-semibold mt-0.5 block">
             {metrics?.conversionRate} conversion rate
           </span>
         </div>
@@ -320,8 +320,8 @@ export default function AdminRevenuePage() {
           <span className="text-[10px] text-slate-400">$0 / user</span>
         </div>
         <div className="p-3.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-center">
-          <span className="text-[10px] uppercase font-bold text-[#6B9A35] dark:text-[#A8D666] tracking-wider">Pro Tier</span>
-          <p className="text-xl font-black text-[#6B9A35] dark:text-[#A8D666] mt-0.5">
+          <span className="text-[10px] uppercase font-bold text-[#B91C1C] dark:text-[#F87171] tracking-wider">Pro Tier</span>
+          <p className="text-xl font-black text-[#B91C1C] dark:text-[#F87171] mt-0.5">
             {metrics?.planCounts?.pro || 0}
           </p>
           <span className="text-[10px] text-slate-400">$12 / mo</span>
@@ -453,7 +453,7 @@ export default function AdminRevenuePage() {
             <span
               className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
                 Object.keys(data?.abExperiments || {}).length > 0
-                  ? "bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40"
+                  ? "bg-[#DC2626]/10 dark:bg-[#DC2626]/20 text-[#B91C1C] dark:text-[#F87171] border border-[#DC2626]/30 dark:border-[#DC2626]/40"
                   : "bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300"
               }`}
             >
@@ -524,7 +524,7 @@ export default function AdminRevenuePage() {
                           </div>
                         </td>
                         <td className="py-3 px-4 whitespace-nowrap">
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#DC2626]/10 dark:bg-[#DC2626]/20 text-[#B91C1C] dark:text-[#F87171] border border-[#DC2626]/30 dark:border-[#DC2626]/40">
                             {cust.plan}
                           </span>
                         </td>
@@ -552,7 +552,7 @@ export default function AdminRevenuePage() {
                         <td className="py-3 px-4 text-right whitespace-nowrap">
                           <a
                             href="/admin/users"
-                            className="text-[11px] font-semibold text-[#6B9A35] hover:text-[#557A2B] dark:text-[#A8D666] dark:hover:text-[#C2E688] hover:underline"
+                            className="text-[11px] font-semibold text-[#B91C1C] hover:text-[#991B1B] dark:text-[#F87171] dark:hover:text-[#FCA5A5] hover:underline"
                           >
                             Manage User
                           </a>
@@ -638,7 +638,7 @@ export default function AdminRevenuePage() {
                         <td className="py-3 px-4 text-right whitespace-nowrap">
                           <a
                             href={`mailto:${lead.email}?subject=Exclusive%20BugSnap%20Pro%20Offer&body=Hi%20${encodeURIComponent(lead.full_name || "")},%20we%20noticed%20you%20were%20exploring%20${encodeURIComponent(lead.last_paywall_feature)}...`}
-                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] text-white font-semibold text-[11px] shadow-xs shadow-[#89BD49]/25 transition-colors"
+                            className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-[#DC2626] hover:bg-[#B91C1C] text-white font-semibold text-[11px] shadow-xs shadow-[#DC2626]/25 transition-colors"
                           >
                             <Icon icon="lucide:mail" className="w-3.5 h-3.5 shrink-0" />
                             <span>{t("admin.contactLead")}</span>
@@ -702,7 +702,7 @@ export default function AdminRevenuePage() {
                           </div>
                         </td>
                         <td className="py-3 px-4 whitespace-nowrap">
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#DC2626]/10 dark:bg-[#DC2626]/20 text-[#B91C1C] dark:text-[#F87171] border border-[#DC2626]/30 dark:border-[#DC2626]/40">
                             {cart.attempted_plan}
                           </span>
                         </td>
@@ -789,7 +789,7 @@ export default function AdminRevenuePage() {
                           </div>
                         </td>
                         <td className="py-3 px-4 whitespace-nowrap">
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40">
+                          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#DC2626]/10 dark:bg-[#DC2626]/20 text-[#B91C1C] dark:text-[#F87171] border border-[#DC2626]/30 dark:border-[#DC2626]/40">
                             {cust.plan}
                           </span>
                         </td>
@@ -878,7 +878,7 @@ export default function AdminRevenuePage() {
                             <span className={`px-2 py-0.5 rounded text-[11px] font-bold ${
                               varId === "control"
                                 ? "bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300"
-                                : "bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40"
+                                : "bg-[#DC2626]/10 dark:bg-[#DC2626]/20 text-[#B91C1C] dark:text-[#F87171] border border-[#DC2626]/30 dark:border-[#DC2626]/40"
                             }`}>
                               {varId}
                             </span>

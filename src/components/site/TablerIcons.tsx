@@ -11,7 +11,7 @@ export interface IconProps {
   role?: string;
   "aria-hidden"?: boolean | "true" | "false";
   "aria-label"?: string;
-  onClick?: React.MouseEventHandler<SVGElement>;
+  onClick?: React.MouseEventHandler<HTMLImageElement>;
 }
 
 function LucideBridge({
@@ -61,26 +61,6 @@ export function IconCheck(props: IconProps) {
 
 export function IconX(props: IconProps) {
   return <LucideBridge icon="lucide:x" {...props} />;
-}
-
-export function IconChevronDown(props: IconProps) {
-  return <LucideBridge icon="lucide:chevron-down" {...props} />;
-}
-
-export function IconChevronRight(props: IconProps) {
-  return <LucideBridge icon="lucide:chevron-right" {...props} />;
-}
-
-export function IconArrowRight(props: IconProps) {
-  return <LucideBridge icon="lucide:arrow-right" {...props} />;
-}
-
-export function IconArrowDown(props: IconProps) {
-  return <LucideBridge icon="lucide:arrow-down" {...props} />;
-}
-
-export function IconArrowLeft(props: IconProps) {
-  return <LucideBridge icon="lucide:arrow-left" {...props} />;
 }
 
 export function IconMenu2(props: IconProps) {

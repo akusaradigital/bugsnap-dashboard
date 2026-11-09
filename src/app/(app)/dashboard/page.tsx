@@ -64,7 +64,7 @@ export default function DashboardAnalyticsPage() {
       fallback={
         <div className="p-8 sm:p-12 max-w-6xl mx-auto flex flex-col items-center justify-center gap-3 min-h-[300px]" role="status" aria-label="Loading dashboard">
           <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-xl bg-subtle border border-border text-xs text-muted shadow-xs">
-            <Icon icon="lucide:loader-2" className="w-4 h-4 animate-spin text-[#6B9A35] dark:text-[#A8D666] shrink-0" aria-hidden="true" />
+            <Icon icon="lucide:loader-2" className="w-4 h-4 animate-spin text-[#B91C1C] dark:text-[#F87171] shrink-0" aria-hidden="true" />
             <span className="font-medium">Loading dashboard…</span>
           </div>
         </div>
@@ -337,8 +337,8 @@ function DashboardContent() {
   if (loading) {
     return (
       <div className="p-4 sm:p-8 max-w-6xl mx-auto space-y-6 min-w-0 w-full overflow-x-hidden" role="status" aria-label={locale === "id" ? "Memuat analitik..." : "Loading analytics..."}>
-        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#89BD49]/10 border border-[#89BD49]/20 text-xs text-[#46741A] dark:text-[#A8D666] font-medium">
-          <Icon icon="lucide:loader-2" className="w-3.5 h-3.5 animate-spin shrink-0 text-[#6B9A35] dark:text-[#A8D666]" aria-hidden="true" />
+        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#DC2626]/10 border border-[#DC2626]/20 text-xs text-[#B91C1C] dark:text-[#F87171] font-medium">
+          <Icon icon="lucide:loader-2" className="w-3.5 h-3.5 animate-spin shrink-0 text-[#B91C1C] dark:text-[#F87171]" aria-hidden="true" />
           <span>{locale === "id" ? "Memuat analitik..." : "Loading analytics..."}</span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -375,7 +375,7 @@ function DashboardContent() {
         </div>
         <Link
           href="/captures"
-          className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] bg-[#89BD49] hover:bg-[#6B9A35] active:scale-95 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs shadow-[#89BD49]/25 transition-all hover:shadow-md touch-manipulation"
+          className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] bg-[#DC2626] hover:bg-[#B91C1C] active:scale-95 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs shadow-[#DC2626]/25 transition-all hover:shadow-md touch-manipulation"
         >
           <Icon icon="lucide:layout-grid" className="w-4 h-4" />
           <span>{t("dash.viewAll")}</span>
@@ -393,8 +393,8 @@ function DashboardContent() {
               : null,
             subtextBadge: true,
             icon: <Icon icon="lucide:layers" className="w-5 h-5 shrink-0" />,
-            accent: "bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border-[#89BD49]/30 dark:border-[#89BD49]/40",
-            hoverAccent: "hover:border-[#89BD49] hover:shadow-xs",
+            accent: "bg-[#DC2626]/10 dark:bg-[#DC2626]/20 text-[#B91C1C] dark:text-[#F87171] border-[#DC2626]/30 dark:border-[#DC2626]/40",
+            hoverAccent: "hover:border-[#DC2626] hover:shadow-xs",
           },
           {
             labelKey: "dash.recordings",
@@ -487,7 +487,7 @@ function DashboardContent() {
             />
 
             <div className="flex items-center gap-1.5 text-xs text-muted font-medium bg-subtle px-2.5 py-1 rounded-lg border border-border">
-              <span className="w-2.5 h-2.5 rounded-full bg-[#89BD49]" />
+              <span className="w-2.5 h-2.5 rounded-full bg-[#DC2626]" />
               {t("dash.totalCaptures")}
             </div>
           </div>
@@ -524,12 +524,12 @@ function DashboardContent() {
                   <div key={d.day} className="flex-1 min-w-0 flex flex-col items-center gap-1.5 group h-full justify-end relative cursor-pointer">
                     {/* Tooltip on hover */}
                     <div className={`opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none bg-neutral-900 text-white text-[11px] font-semibold px-2.5 py-1 rounded-lg border border-neutral-700 shadow-xl mb-2 absolute bottom-full ${tooltipPos} z-30 whitespace-nowrap`}>
-                      {MONTH_NAMES[selectedMonth]} {d.day}: <span className="font-bold text-[#A8D666]">{d.count}</span>
+                      {MONTH_NAMES[selectedMonth]} {d.day}: <span className="font-bold text-[#F87171]">{d.count}</span>
                       <div className={`absolute top-full ${arrowPos} -mt-1 border-4 border-transparent border-t-neutral-900`} />
                     </div>
                     {d.count > 0 ? (
                       <div
-                        className="w-full max-w-[20px] rounded-t-md bg-[#89BD49] hover:bg-[#6B9A35] hover:scale-110 shadow-xs hover:shadow-md transition-all duration-200"
+                        className="w-full max-w-[20px] rounded-t-md bg-[#DC2626] hover:bg-[#B91C1C] hover:scale-110 shadow-xs hover:shadow-md transition-all duration-200"
                         style={{ height: `${Math.max(8, (d.count / maxDayCount) * 125)}px` }}
                       />
                     ) : (
@@ -556,10 +556,9 @@ function DashboardContent() {
           </div>
           <Link
             href="/captures"
-            className="text-xs font-semibold text-[#6B9A35] dark:text-[#A8D666] hover:underline flex items-center gap-1"
+            className="text-xs font-semibold text-[#B91C1C] dark:text-[#F87171] hover:underline flex items-center gap-1"
           >
             <span>{t("qa.triage")}</span>
-            <Icon icon="lucide:arrow-right" className="w-3.5 h-3.5 shrink-0" />
           </Link>
         </div>
 

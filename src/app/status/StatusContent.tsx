@@ -6,7 +6,7 @@ import { StaticShell } from "@/components/StaticShell";
 import { useT } from "@/components/I18nProvider";
 import { Reveal } from "@/components/site/motion";
 import { Icon } from "@/lib/iconify";
-import { CHROME_STORE_URL } from "@/lib/constants";
+import { CHROME_STORE_URL, FIREFOX_STORE_URL } from "@/lib/constants";
 
 interface HealthResponse {
   status: "healthy" | "degraded" | "unhealthy";
@@ -115,7 +115,7 @@ export function StatusContent() {
       name: t("status.svc.ai"),
       status: t("status.operational"),
       icon: "lucide:sparkles",
-      iconClass: "text-purple-500",
+      iconClass: "text-[#2563EB]",
     },
     {
       key: "webhook",
@@ -125,11 +125,18 @@ export function StatusContent() {
       customIcon: true,
     },
     {
-      key: "extension",
-      name: t("status.svc.extension"),
+      key: "chrome-extension",
+      name: t("status.svc.chromeExtension"),
       status: t("status.operational"),
-      icon: "lucide:puzzle",
-      iconClass: "text-slate-600 dark:text-slate-400",
+      icon: "logos:chrome",
+      customIcon: true,
+    },
+    {
+      key: "firefox-extension",
+      name: t("status.svc.firefoxExtension"),
+      status: t("status.operational"),
+      icon: "logos:firefox",
+      customIcon: true,
     },
   ];
 
@@ -143,7 +150,7 @@ export function StatusContent() {
       compactHero
       ambientGlow
     >
-      <div className="max-w-4xl mx-auto space-y-6 sm:space-y-8 font-site pb-6">
+      <div className="max-w-6xl mx-auto space-y-6 sm:space-y-8 font-site pb-6">
 
         {/* Top 3 KPI / Stat Cards */}
         <Reveal delay={0.05}>
@@ -191,6 +198,30 @@ export function StatusContent() {
           </div>
         </Reveal>
 
+        {/* Uptime history */}
+        <Reveal delay={0.08}>
+          <div className="rounded-2xl border border-slate-200 dark:border-site-border bg-white dark:bg-site-surface p-5 sm:p-6 shadow-xs">
+            <div className="flex flex-wrap items-start justify-between gap-4 mb-5">
+              <div>
+                <h2 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">{t("status.uptimeHistory")}</h2>
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-site-text-2 mt-1">{t("status.uptimeNote")}</p>
+              </div>
+              <div className="text-right shrink-0">
+                <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white">{t("status.uptimeValue")}</div>
+                <div className="text-xs text-slate-500 dark:text-site-text-2">{t("status.overallUptime")}</div>
+              </div>
+            </div>
+            <svg viewBox="0 0 900 150" className="w-full h-28 sm:h-36" role="img" aria-label={t("status.uptimeHistory")}>
+              <path d="M0 112 C70 106 95 118 150 94 S250 101 300 78 S400 92 450 63 S550 76 600 48 S700 57 760 34 S840 45 900 24" fill="none" stroke="#2563EB" strokeWidth="3" strokeLinecap="round" />
+              <path d="M0 112 C70 106 95 118 150 94 S250 101 300 78 S400 92 450 63 S550 76 600 48 S700 57 760 34 S840 45 900 24 L900 150 L0 150 Z" fill="#2563EB" fillOpacity="0.08" />
+              <line x1="0" y1="149" x2="900" y2="149" stroke="#cbd5e1" strokeWidth="1" />
+            </svg>
+            <div className="flex justify-between text-[11px] text-slate-500 dark:text-site-text-2 mt-1">
+              <span>{t("status.daysAgo")}</span><span>{t("status.today")}</span>
+            </div>
+          </div>
+        </Reveal>
+
         {/* Service Components Breakdown */}
         <Reveal delay={0.1}>
           <div className="space-y-3">
@@ -219,7 +250,7 @@ export function StatusContent() {
                 {services.map((svc) => (
                   <div
                     key={svc.key}
-                    className="px-5 sm:px-6 py-4 flex items-center justify-between hover:bg-slate-50/50 dark:hover:bg-site-surface-2/40 transition-colors"
+                    className="px-5 sm:px-6 py-4 flex items-center justify-between gap-6 hover:bg-slate-50/50 dark:hover:bg-site-surface-2/40 transition-colors"
                   >
                     <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
                       <Icon
@@ -227,11 +258,11 @@ export function StatusContent() {
                         className={`w-5 h-5 shrink-0 ${svc.customIcon ? "" : svc.iconClass || "text-slate-600 dark:text-slate-400"}`}
                         aria-hidden="true"
                       />
-                      <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">
+                      <span className="min-w-0 text-sm sm:text-base font-bold text-slate-900 dark:text-white truncate">
                         {svc.name}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50 dark:bg-site-surface-2 border border-site-border shrink-0">
+                    <div className="justify-self-end flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50 dark:bg-site-surface-2 border border-site-border shrink-0">
                       <span className={`w-2 h-2 rounded-full ${svc.statusDotClass || "bg-[#22c55e]"}`} />
                       <span className="text-xs font-semibold text-site-text">
                         {svc.status}
@@ -246,36 +277,44 @@ export function StatusContent() {
 
         {/* Bottom CTA Banner */}
         <Reveal delay={0.2}>
-          <div className="rounded-2xl sm:rounded-3xl border border-emerald-200/90 dark:border-emerald-800/40 bg-[#f0fdf4] dark:bg-emerald-950/20 p-6 sm:p-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 shadow-xs">
-            <div className="flex items-center gap-4 sm:gap-5 min-w-0">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center shrink-0">
-                <Icon icon="lucide:zap" className="w-6 h-6 sm:w-7 sm:h-7 text-emerald-500 fill-emerald-500" aria-hidden="true" />
+          <div className="rounded-2xl sm:rounded-3xl border border-blue-100 dark:border-blue-900/40 bg-[#f0f6ff] dark:bg-blue-950/25 p-6 sm:p-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 shadow-xs">
+            <div className="flex items-start gap-5 sm:gap-6 min-w-0">
+              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center shrink-0">
+                <Icon icon="lucide:zap" className="w-6 h-6 sm:w-7 sm:h-7 text-[#2563EB] fill-[#2563EB]" aria-hidden="true" />
               </div>
-              <div className="space-y-1 min-w-0">
-                <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">
+              <div className="space-y-2 min-w-0 pt-0.5">
+                <h3 className="text-lg sm:text-xl md:text-2xl lg:text-xl xl:text-2xl font-bold text-slate-900 dark:text-white tracking-tight lg:whitespace-nowrap">
                   {t("status.ctaTitle")}
                 </h3>
-                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
+                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed max-w-[34rem]">
                   {t("status.ctaDesc")}
                 </p>
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+            <div className="flex flex-wrap items-center gap-3 shrink-0 min-w-0">
               <a
                 href={CHROME_STORE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#89BD49] hover:bg-[#78a83f] text-slate-900 text-xs sm:text-sm font-bold px-5 sm:px-6 py-3 min-h-[44px] transition-all shadow-xs hover:shadow-md hover:scale-[1.01] active:scale-[0.99] whitespace-nowrap"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-sm font-bold px-5 sm:px-6 py-3 min-h-[44px] transition-all shadow-xs hover:shadow-md hover:scale-[1.01] active:scale-[0.99] whitespace-nowrap"
               >
                 <Icon icon="logos:chrome" className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" aria-hidden="true" />
-                <span>{t("status.installFree")}</span>
+                <span>{t("extension.addToChrome") || "Add to Chrome"}</span>
+              </a>
+              <a
+                href={FIREFOX_STORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-sm font-bold px-5 sm:px-6 py-3 min-h-[44px] transition-all shadow-xs hover:shadow-md hover:scale-[1.01] active:scale-[0.99] whitespace-nowrap"
+              >
+                <Icon icon="logos:firefox" className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" aria-hidden="true" />
+                <span>{t("extension.addToFirefox")}</span>
               </a>
               <Link
                 href="/docs"
                 className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-white dark:bg-site-surface hover:bg-slate-50 dark:hover:bg-site-surface-2 border border-slate-200 dark:border-site-border text-slate-800 dark:text-slate-200 text-xs sm:text-sm font-semibold px-5 py-3 min-h-[44px] transition-all shadow-xs hover:border-slate-300 whitespace-nowrap"
               >
                 <span>{t("status.viewDocs")}</span>
-                <Icon icon="lucide:arrow-right" className="w-4 h-4" aria-hidden="true" />
               </Link>
             </div>
           </div>

@@ -4,6 +4,7 @@ import { useState, Fragment } from "react";
 import Link from "next/link";
 import { useT } from "@/components/I18nProvider";
 import { Icon } from "@/lib/iconify";
+import { FIREFOX_STORE_URL } from "@/lib/constants";
 import { Reveal } from "@/components/site/motion";
 
 interface FeatureRow {
@@ -372,7 +373,7 @@ export function PricingToggle() {
                 }`}
               >
                 <span>{t("pricing.annualBilling")}</span>
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666]">
+                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#2563EB]/15 text-[#1D4ED8] dark:text-[#93C5FD]">
                   {t("pricing.saveBadge")}
                 </span>
               </button>
@@ -391,14 +392,14 @@ export function PricingToggle() {
               <div
                 className={`relative h-full rounded-2xl border flex flex-col justify-between transition-all duration-200 min-w-0 ${
                   tier.popular
-                    ? "border-[#89BD49] bg-site-surface ring-2 ring-[#89BD49]/20 shadow-lg dark:shadow-[#89BD49]/5"
+                    ? "border-[#2563EB] bg-site-surface ring-2 ring-[#2563EB]/20 shadow-lg dark:shadow-[#2563EB]/5"
                     : "border-site-border bg-site-surface shadow-xs hover:border-site-border-focus"
                 }`}
               >
                 {/* Popular Badge */}
                 {tier.popular && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 z-10">
-                    <span className="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-[#89BD49] text-white shadow-2xs">
+                    <span className="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-[#2563EB] text-white shadow-2xs">
                       {tier.badge}
                     </span>
                   </div>
@@ -444,7 +445,7 @@ export function PricingToggle() {
                       rel={tier.isExternal ? "noopener noreferrer" : undefined}
                       className={`w-full py-2.5 px-4 min-h-[44px] flex items-center justify-center gap-2 rounded-xl text-xs font-bold text-center transition-all cursor-pointer shadow-xs touch-manipulation ${
                         tier.popular
-                          ? "bg-[#89BD49] hover:bg-[#78a83f] text-slate-900 shadow-sm"
+                          ? "bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-sm"
                           : "border border-site-border bg-site-surface-2 hover:bg-site-surface text-site-text"
                       }`}
                     >
@@ -456,7 +457,7 @@ export function PricingToggle() {
 
                     <a
                       href="#feature-matrix"
-                      className="block text-center text-[11px] font-medium text-site-text-2 hover:text-[#6B9A35] dark:hover:text-[#A8D666] transition-colors"
+                      className="block text-center text-[11px] font-medium text-site-text-2 hover:text-[#1D4ED8] dark:hover:text-[#93C5FD] transition-colors"
                     >
                       {t("pricing.seeAllFeatures")} ↓
                     </a>
@@ -475,7 +476,7 @@ export function PricingToggle() {
                         <li key={idx} className="flex items-start gap-2.5">
                           <Icon
                             icon="lucide:check"
-                            className="w-4 h-4 text-[#89BD49] shrink-0 mt-0.5"
+                            className="w-4 h-4 text-[#2563EB] shrink-0 mt-0.5"
                           />
                           <span className="text-site-text-2 leading-relaxed">
                             {feature}
@@ -518,7 +519,7 @@ export function PricingToggle() {
                     <th className="py-4 px-4 text-xs font-bold text-site-text text-center w-1/5">
                       {t("pricing.tierFree")}
                     </th>
-                    <th className="py-4 px-4 text-xs font-bold text-[#6B9A35] dark:text-[#A8D666] text-center w-1/5">
+                    <th className="py-4 px-4 text-xs font-bold text-[#1D4ED8] dark:text-[#93C5FD] text-center w-1/5">
                       {t("pricing.tierPro")}
                     </th>
                     <th className="py-4 px-4 text-xs font-bold text-site-text text-center w-1/5">
@@ -553,7 +554,7 @@ export function PricingToggle() {
                           <td className="py-3.5 px-4 text-center">
                             {renderCellValue(row.free)}
                           </td>
-                          <td className="py-3.5 px-4 text-center bg-[#89BD49]/5">
+                          <td className="py-3.5 px-4 text-center bg-[#2563EB]/5">
                             {renderCellValue(row.pro)}
                           </td>
                           <td className="py-3.5 px-4 text-center">
@@ -602,10 +603,7 @@ export function PricingToggle() {
                     <span className="text-xs sm:text-sm font-bold text-site-text">
                       {faq.q}
                     </span>
-                    <Icon
-                      icon={isOpen ? "lucide:chevron-up" : "lucide:chevron-down"}
-                      className="w-4 h-4 text-site-text-2 shrink-0 transition-transform"
-                    />
+                    
                   </button>
 
                   {isOpen && (
@@ -637,10 +635,19 @@ export function PricingToggle() {
               href={CHROME_STORE_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#89BD49] hover:bg-[#78a83f] text-slate-900 text-xs font-bold transition-all shadow-xs"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold transition-all shadow-xs"
             >
               <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
-              <span>{t("pricing.bottomCtaBtn")}</span>
+              <span>{t("extension.addToChrome") || "Add to Chrome"}</span>
+            </a>
+            <a
+              href={FIREFOX_STORE_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold transition-all shadow-xs"
+            >
+              <Icon icon="logos:firefox" className="w-4 h-4 shrink-0" aria-hidden="true" />
+              <span>{t("extension.addToFirefox")}</span>
             </a>
             <Link
               href="/contact"

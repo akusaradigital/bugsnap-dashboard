@@ -1,74 +1,74 @@
 "use client";
 
-import { addCollection, addIcon } from "@iconify/react";
-import lucideData from "./lucide-icons.json";
-import thirdPartyLogos from "./third-party-logos.json";
+import { createElement, type CSSProperties, type ImgHTMLAttributes, type MouseEventHandler, type SyntheticEvent } from "react";
 
-// Register curated Lucide icons offline so they render synchronously without API requests
-// and without bundling the full 600KB+ icons dataset.
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-addCollection(lucideData as any);
-
-// The source SVG strings are preserved verbatim; only the outer SVG wrapper is removed
-// by Iconify at render time, retaining defs, gradients, transforms, and path data.
-const logos = {
-  chrome: thirdPartyLogos.chrome,
-  "chrome-web-store": (thirdPartyLogos as Record<string, string>)["chrome-web-store"],
-  "microsoft-edge": thirdPartyLogos["microsoft-edge"],
-  firefox: thirdPartyLogos.firefox,
-  "google-drive": thirdPartyLogos["google-drive"],
-  "cloudflare-icon": thirdPartyLogos.cloudflare,
-  safari: thirdPartyLogos.safari,
-  apple: thirdPartyLogos.apple,
-  android: thirdPartyLogos.android,
-  "slack-icon": thirdPartyLogos.slack,
-  windows: thirdPartyLogos.windows,
-  linux: thirdPartyLogos["linux-tux"],
+type StaticIconProps = Omit<ImgHTMLAttributes<HTMLImageElement>, "src" | "alt" | "width" | "height"> & {
+  icon: string;
+  width?: number | string;
+  height?: number | string;
+  color?: string;
+  "aria-hidden"?: boolean | "true" | "false";
+  onClick?: MouseEventHandler<HTMLImageElement>;
 };
 
-for (const [name, svg] of Object.entries(logos)) {
-  const viewBox = svg.match(/\bviewBox=["']([^"']+)["']/i)?.[1];
-  const body = svg.replace(/^\s*<svg\b[^>]*>/i, "").replace(/<\/svg>\s*$/i, "");
-  const numbers = viewBox?.split(/[\s,]+/).map(Number);
-  if (!numbers || numbers.length !== 4 || numbers.some((value) => !Number.isFinite(value)) || !body) {
-    throw new Error(`Invalid vendored logo SVG: ${name}`);
-  }
-  addIcon(`logos:${name}`, { width: numbers[2], height: numbers[3], body });
-}
-
-// Filled folder icon (used when a folder has a custom color — Google Drive style)
-addIcon("custom:folder-filled", {
-  width: 24,
-  height: 24,
-  body: `<path fill="currentColor" d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/>`,
-});
-
-// Ascending 3-bar chart icon matching status dashboard metric
-addIcon("custom:chart-bars", {
-  width: 24,
-  height: 24,
-  body: `<rect x="3" y="14" width="4.5" height="7" rx="1.5" fill="currentColor"/><rect x="9.75" y="9" width="4.5" height="12" rx="1.5" fill="currentColor"/><rect x="16.5" y="4" width="4.5" height="17" rx="1.5" fill="currentColor"/>`,
-});
-
-// Offline Tabler compatibility aliases mapped from Lucide icons
-const tablerAliases: Record<string, string> = {
-  check: "check",
-  "arrow-left": "arrow-left",
-  "external-link": "external-link",
-  "info-circle": "info",
-  "shield-check": "shield-check",
-  "device-mobile": "smartphone",
+const OFFLINE_ICON_PATHS: Record<string, string> = {
+  "lucide:alert-triangle": "/icons/lucide-circle-alert.svg",
+  "lucide:alert-circle": "/icons/lucide-circle-alert.svg",
+  "lucide:x-circle": "/icons/lucide-x.svg",
+  "lucide:trash-2": "/icons/trash.svg",
+  "lucide:edit-3": "/icons/edit.svg",
+  "lucide:more-vertical": "/icons/lucide-menu.svg",
+  "lucide:bar-chart-2": "/icons/lucide-pie-chart.svg",
+  "lucide:check-circle": "/icons/lucide-check.svg",
+  "lucide:chevron-down": "/icons/chevron-down.svg",
+  "lucide:arrow-up": "/icons/lucide-arrow-up.svg",
+  "logos:github-icon": "/integrations/github.png",
+  "logos:slack-icon": "/integrations/slack.png",
+  "logos:jira": "/integrations/jira.png",
+  "tabler:lock": "/icons/lucide-lock.svg",
+  "tabler:x": "/icons/lucide-x.svg",
+  "tabler:layout-columns": "/icons/lucide-columns-2.svg",
+  "tabler:layers-difference": "/icons/lucide-layers.svg",
+  "tabler:upload": "/icons/lucide-upload.svg",
+  "tabler:repeat": "/icons/lucide-refresh-cw.svg",
+  "tabler:link": "/icons/lucide-link.svg",
+  "tabler:alert-triangle": "/icons/lucide-circle-alert.svg",
+  "tabler:circle-check": "/icons/lucide-check.svg",
+  "tabler:loader-2": "/icons/lucide-loader-circle.svg",
+  "tabler:player-play": "/icons/lucide-play.svg",
+  "tabler:shield-check": "/icons/lucide-shield-check.svg",
+  "tabler:sparkles": "/icons/lucide-sparkles.svg",
+  "tabler:check": "/icons/lucide-check.svg",
 };
 
-for (const [tablerName, lucideName] of Object.entries(tablerAliases)) {
-  const iconData = (lucideData as { icons?: Record<string, { body: string }> }).icons?.[lucideName];
-  if (iconData) {
-    addIcon(`tabler:${tablerName}`, {
-      width: 24,
-      height: 24,
-      body: iconData.body,
-    });
-  }
+function iconPath(icon: string): string {
+  return OFFLINE_ICON_PATHS[icon] ?? `/icons/${icon.replace(/:/g, "-")}.svg`;
 }
 
-export { Icon } from "@iconify/react";
+export function Icon({
+  icon,
+  width,
+  height,
+  color,
+  style,
+  ...props
+}: StaticIconProps) {
+  const mergedStyle: CSSProperties = {
+    ...style,
+    color,
+    width: width ?? style?.width,
+    height: height ?? style?.height,
+  };
+
+  const handleIconError = (event: SyntheticEvent<HTMLImageElement>) => {
+    event.currentTarget.style.display = "none";
+  };
+
+  return createElement("img", {
+    src: iconPath(icon),
+    alt: "",
+    style: mergedStyle,
+    onError: handleIconError,
+    ...props,
+  });
+}

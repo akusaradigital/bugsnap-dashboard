@@ -6,6 +6,7 @@ import { StaticShell } from "@/components/StaticShell";
 import { useT } from "@/components/I18nProvider";
 import { Reveal } from "@/components/site/motion";
 import { Icon } from "@/lib/iconify";
+import { FIREFOX_STORE_URL } from "@/lib/constants";
 
 const CHROME_STORE_URL =
   "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
@@ -61,13 +62,14 @@ export function HelpContent() {
                       <span
                         className={`w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center shrink-0 transition-colors ${
                           isOpen
-                            ? "bg-emerald-50 dark:bg-emerald-950/50 text-emerald-600 dark:text-emerald-400"
-                            : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+                            ? "bg-emerald-50 dark:bg-emerald-950/50 text-slate-900 dark:text-white"
+                            : "bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-white"
                         }`}
                       >
                         <Icon
-                          icon={isOpen ? "lucide:chevron-up" : "lucide:chevron-down"}
-                          className="w-4 h-4 sm:w-4.5 sm:h-4.5"
+                          icon="lucide:chevron-down"
+                          className="w-4 h-4 text-current"
+                          aria-hidden="true"
                         />
                       </span>
                     </button>
@@ -126,10 +128,19 @@ export function HelpContent() {
                   href={CHROME_STORE_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center justify-center gap-2 w-full bg-accent hover:bg-accent-hover text-slate-900 text-sm font-bold py-2.5 sm:py-3 rounded-xl transition-colors shadow-xs touch-manipulation"
+                  className="flex items-center justify-center gap-2 w-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold py-2.5 sm:py-3 rounded-xl transition-colors shadow-xs touch-manipulation"
                 >
                   <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
                   <span>{t("help.installFree")}</span>
+                </a>
+                <a
+                  href={FIREFOX_STORE_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center justify-center gap-2 w-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold py-2.5 sm:py-3 rounded-xl transition-colors shadow-xs touch-manipulation"
+                >
+                  <Icon icon="logos:firefox" className="w-4 h-4 shrink-0" aria-hidden="true" />
+                  <span>{t("extension.addToFirefox")}</span>
                 </a>
                 <Link
                   href="/pricing"
@@ -155,7 +166,7 @@ export function HelpContent() {
                     className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 hover:underline touch-manipulation"
                   >
                     <span>{t("help.viewDocs")}</span>
-                    <span>→</span>
+                    <span></span>
                   </Link>
                 </li>
                 <li>
@@ -164,7 +175,7 @@ export function HelpContent() {
                     className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 hover:underline touch-manipulation"
                   >
                     <span>{t("help.contactForm")}</span>
-                    <span>→</span>
+                    <span></span>
                   </Link>
                 </li>
                 <li>
@@ -173,7 +184,7 @@ export function HelpContent() {
                     className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 hover:underline touch-manipulation"
                   >
                     <span>{t("help.systemStatus")}</span>
-                    <span>→</span>
+                    <span></span>
                   </Link>
                 </li>
               </ul>

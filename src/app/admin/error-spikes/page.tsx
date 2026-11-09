@@ -91,7 +91,7 @@ export default function AdminErrorSpikesPage() {
         <div className="p-4 sm:p-5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm min-w-0">
           <div className="flex items-center justify-between text-slate-500 dark:text-zinc-400 mb-2">
             <span className="text-xs font-medium uppercase tracking-wider">{t("admin.spikeFingerprint")}</span>
-            <Icon icon="lucide:fingerprint" className="w-4 h-4 text-[#89BD49]" />
+            <Icon icon="lucide:fingerprint" className="w-4 h-4 text-[#DC2626]" />
           </div>
           <div className="text-2xl font-bold text-slate-900 dark:text-white">
             {data?.distinctFingerprints ?? 0}
@@ -134,7 +134,7 @@ export default function AdminErrorSpikesPage() {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search fingerprint or site URL..."
-            className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 pl-9 pr-3 py-2 outline-none focus:border-[#89BD49] text-slate-900 dark:text-white"
+            className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 pl-9 pr-3 py-2 outline-none focus:border-[#DC2626] text-slate-900 dark:text-white"
           />
         </div>
       </div>
@@ -156,7 +156,7 @@ export default function AdminErrorSpikesPage() {
               {filtered.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="py-12 text-center text-slate-400 dark:text-zinc-500">
-                    <Icon icon="lucide:check-circle" className="w-8 h-8 mx-auto text-[#89BD49] mb-2" />
+                    <Icon icon="lucide:check-circle" className="w-8 h-8 mx-auto text-[#DC2626] mb-2" />
                     <p className="text-xs">{t("admin.noSpikes")}</p>
                   </td>
                 </tr>
@@ -198,7 +198,7 @@ export default function AdminErrorSpikesPage() {
                             href={`/v/${spike.sampleCaptureId}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-[#89BD49] hover:underline flex items-center gap-1 truncate"
+                            className="text-[#DC2626] hover:underline flex items-center gap-1 truncate"
                           >
                             <span className="truncate">{spike.sampleSiteUrl || "View capture"}</span>
                             <Icon icon="lucide:external-link" className="w-3 h-3 shrink-0" />

@@ -649,7 +649,7 @@ export function IntegrationsDocsContent() {
               <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                 <Link
                   href="/settings"
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors"
                 >
                   <Icon icon="lucide:settings" className="w-4 h-4" />
                   {t("docs.goToSettings") || "Configure in Workspace Settings"}
@@ -688,9 +688,9 @@ export function IntegrationsDocsContent() {
               </div>
               <Link
                 href="/settings"
-                className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg bg-white dark:bg-slate-900 border border-emerald-300 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-50 dark:hover:bg-slate-800 shadow-2xs transition-colors"
+                className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg bg-blue-600 dark:bg-blue-500 border border-blue-600 dark:border-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 shadow-2xs transition-colors"
               >
-                {t("docs.openSettings") || "Test in Settings →"}
+                {t("docs.openSettings") || "Test in Settings "}
               </Link>
             </div>
           </Reveal>

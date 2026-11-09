@@ -104,7 +104,7 @@ export default function AdminAiAnalyticsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-3 border-b border-slate-200 dark:border-zinc-800">
         <div>
           <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            <span className="flex items-center gap-2"><Icon icon="lucide:bar-chart-2" className="w-4 h-4 shrink-0 text-[#89BD49]" /> {t("admin.aiTitle")}</span>
+            <span className="flex items-center gap-2"><Icon icon="lucide:bar-chart-2" className="w-4 h-4 shrink-0 text-red-600" /> {t("admin.aiTitle")}</span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
             {t("admin.aiDesc")}
@@ -130,7 +130,7 @@ export default function AdminAiAnalyticsPage() {
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
             {t("admin.totalAiCalls")}
           </span>
-          <p className="text-2xl font-black text-[#6B9A35] dark:text-[#A8D666] mt-1">
+          <p className="text-2xl font-black text-red-700 dark:text-red-300 mt-1">
             {aiStats?.totalSummaries?.toLocaleString() || 0}
           </p>
           <span className="text-[10px] text-slate-400 mt-0.5 block">
@@ -261,7 +261,7 @@ export default function AdminAiAnalyticsPage() {
                     <td className="py-3 px-4 text-right whitespace-nowrap">
                       <a
                         href="/admin/users"
-                        className="px-2.5 py-1 rounded text-[11px] font-semibold bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40 hover:bg-[#89BD49]/20 transition-colors"
+                        className="px-2.5 py-1 rounded text-[11px] font-semibold bg-red-600/10 dark:bg-red-400/20 text-red-700 dark:text-red-300 border border-red-600/30 dark:border-red-400/40 hover:bg-red-600/20 transition-colors"
                       >
                         Manage User
                       </a>
@@ -419,7 +419,7 @@ export default function AdminAiAnalyticsPage() {
                           href={`/v/${item.id}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-[#6B9A35] hover:text-[#557A2B] dark:text-[#A8D666] dark:hover:text-[#C2E688] hover:underline text-[11px] font-semibold inline-flex items-center gap-1"
+                          className="text-red-700 hover:text-red-800 dark:text-red-300 dark:hover:text-red-200 hover:underline text-[11px] font-semibold inline-flex items-center gap-1"
                         >
                           <span>Open</span>
                           <Icon icon="lucide:external-link" className="w-3 h-3 shrink-0" />

@@ -200,7 +200,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       capture: captureMeta,
       targetHost,
       detectedOs: cap.os || "Web",
-      detectedBrowser: cap.browser || "Chrome",
+      detectedBrowser: cap.browser || "Unknown",
       shareUrl,
       consoleErrors: consoleErrors as unknown as ConsoleLog[],
       networkErrors: networkErrors as unknown as NetworkLog[],

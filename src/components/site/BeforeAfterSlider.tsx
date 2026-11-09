@@ -162,7 +162,7 @@ export function BeforeAfterSlider() {
               />
               <ReportRow
                 icon="lucide:globe"
-                text="Network: POST /api/payment → 500 (cURL ready)"
+                text="Network: POST /api/payment  500 (cURL ready)"
                 iconColor="text-sky-500"
               />
               <ReportRow
@@ -174,7 +174,7 @@ export function BeforeAfterSlider() {
                 icon="lucide:link"
                 text="bugsnap.akusaraproject.my.id/v/8f921a"
                 mono
-                iconColor="text-[#6B9A35] dark:text-[#A8D666]"
+                iconColor="text-red-700 dark:text-red-300"
               />
             </div>
 
@@ -185,7 +185,6 @@ export function BeforeAfterSlider() {
                 className="w-full flex items-center justify-center gap-1.5 rounded-lg bg-accent hover:bg-accent-hover text-white text-xs font-semibold py-2 transition-colors cursor-pointer"
               >
                 <span>Export to Linear</span>
-                <Icon icon="lucide:arrow-right" className="w-3.5 h-3.5 shrink-0" />
               </button>
             </div>
           </div>

@@ -315,9 +315,9 @@ export default function FloatingSupport() {
       {isOpen && (
         <div className="absolute bottom-14 sm:bottom-16 right-0 w-[calc(100vw-2rem)] sm:w-[390px] max-w-[390px] max-h-[85vh] flex flex-col rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-2xl overflow-hidden transition-all duration-200">
           {/* Header - Brand Green Accent */}
-          <div className="flex items-center justify-between border-b border-[#6B9A35] dark:border-zinc-800 bg-[#89BD49] dark:bg-zinc-900 px-5 py-4 text-white">
+          <div className="flex items-center justify-between border-b border-[#46741A] dark:border-zinc-800 bg-[#89BD49] dark:bg-zinc-900 px-5 py-4 text-white">
             <div className="flex items-center gap-2.5">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#6B9A35]/60 dark:bg-zinc-800 text-white">
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#B91C1C]/60 dark:bg-zinc-800 text-white">
                 <Icon icon="lucide:message-square" className="h-4 w-4" />
               </span>
               <div>
@@ -399,7 +399,7 @@ export default function FloatingSupport() {
                           onClick={() => setCategory(cat.id)}
                           className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all ${
                             isActive
-                              ? "bg-white dark:bg-zinc-800 text-[#6B9A35] dark:text-[#A8D666] shadow-xs"
+                              ? "bg-white dark:bg-zinc-800 text-[#B91C1C] dark:text-[#F87171] shadow-xs"
                               : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
                           }`}
                         >
@@ -430,7 +430,7 @@ export default function FloatingSupport() {
                       if (errorMessage) setErrorMessage(null);
                     }}
                     placeholder="nama@perusahaan.com"
-                    className="w-full text-xs rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-[#89BD49] transition-colors"
+                    className="w-full text-xs rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-[#DC2626] transition-colors"
                   />
                 </div>
 
@@ -444,7 +444,7 @@ export default function FloatingSupport() {
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
                     placeholder={activeCategoryMeta.subjectPlaceholder}
-                    className="w-full text-xs rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-[#89BD49] transition-colors"
+                    className="w-full text-xs rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-[#DC2626] transition-colors"
                   />
                 </div>
 
@@ -462,7 +462,7 @@ export default function FloatingSupport() {
                       if (errorMessage) setErrorMessage(null);
                     }}
                     placeholder={activeCategoryMeta.placeholder}
-                    className="w-full text-xs rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-[#89BD49] transition-colors resize-none leading-relaxed"
+                    className="w-full text-xs rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-[#DC2626] transition-colors resize-none leading-relaxed"
                   />
                 </div>
 
@@ -477,7 +477,7 @@ export default function FloatingSupport() {
                   <button
                     type="submit"
                     disabled={submitting || !email.trim() || !message.trim()}
-                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] disabled:opacity-50 text-white text-xs font-bold py-2.5 transition-colors shadow-sm"
+                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#DC2626] hover:bg-[#B91C1C] disabled:opacity-50 text-white text-xs font-bold py-2.5 transition-colors shadow-sm"
                   >
                     {submitting ? (
                       <>
@@ -495,7 +495,7 @@ export default function FloatingSupport() {
                   {t("support.urgent")}{" "}
                   <a
                     href={`mailto:support@bugsnap.akusaraproject.my.id?subject=[BugSnap%20Support]&body=${encodeURIComponent(message || "")}`}
-                    className="text-[#6B9A35] dark:text-[#A8D666] hover:underline font-medium break-all"
+                    className="text-[#B91C1C] dark:text-[#F87171] hover:underline font-medium break-all"
                   >
                     support@bugsnap.akusaraproject.my.id
                   </a>
@@ -513,13 +513,13 @@ export default function FloatingSupport() {
             setIsOpen(true);
             dismissPrompt();
           }}
-          className="absolute bottom-13 sm:bottom-14 right-0 mb-1 flex items-center gap-2.5 rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3.5 sm:px-4 py-2 sm:py-2.5 shadow-2xl animate-in fade-in slide-in-from-bottom-2 duration-300 text-xs font-semibold text-slate-800 dark:text-zinc-100 cursor-pointer hover:border-[#89BD49] dark:hover:border-[#89BD49] transition-all group max-w-[calc(100vw-2.5rem)] sm:max-w-xs z-50"
+          className="absolute bottom-13 sm:bottom-14 right-0 mb-1 flex items-center gap-2.5 rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3.5 sm:px-4 py-2 sm:py-2.5 shadow-2xl animate-in fade-in slide-in-from-bottom-2 duration-300 text-xs font-semibold text-slate-800 dark:text-zinc-100 cursor-pointer hover:border-[#DC2626] dark:hover:border-[#DC2626] transition-all group max-w-[calc(100vw-2.5rem)] sm:max-w-xs z-50"
         >
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666] text-sm">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#DC2626]/15 text-[#B91C1C] dark:text-[#F87171] text-sm">
             <Icon icon="lucide:hand" className="w-3.5 h-3.5" />
           </span>
           <div className="flex-1 min-w-0">
-            <p className="text-[12px] font-bold leading-tight group-hover:text-[#6B9A35] dark:group-hover:text-[#A8D666] transition-colors">
+            <p className="text-[12px] font-bold leading-tight group-hover:text-[#B91C1C] dark:group-hover:text-[#F87171] transition-colors">
               {t("support.helpPrompt")}
             </p>
           </div>
@@ -545,7 +545,7 @@ export default function FloatingSupport() {
         className={`relative flex items-center gap-2 px-3.5 sm:px-4 h-11 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 border border-white/20 ${
           isOpen
             ? "bg-slate-900 dark:bg-zinc-800 text-white"
-            : "bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-[#89BD49]/25"
+            : "bg-[#DC2626] hover:bg-[#B91C1C] text-white shadow-[#DC2626]/25"
         }`}
         title={isOpen ? t("support.close") : t("support.btn")}
         aria-label={t("support.btn")}

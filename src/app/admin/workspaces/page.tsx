@@ -247,7 +247,7 @@ export default function AdminWorkspacesPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-3 border-b border-slate-200 dark:border-zinc-800">
         <div>
           <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            <span className="flex items-center gap-2"><Icon icon="lucide:building-2" className="w-4 h-4 shrink-0 text-[#6B9A35] dark:text-[#A8D666]" /> {t("admin.workspacesTitle")}</span>
+            <span className="flex items-center gap-2"><Icon icon="lucide:building-2" className="w-4 h-4 shrink-0 text-red-700 dark:text-red-300" /> {t("admin.workspacesTitle")}</span>
             <span className="text-xs px-2 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 font-normal">
               {totalCount.toLocaleString()} {t("admin.workspaces")}
             </span>
@@ -274,11 +274,11 @@ export default function AdminWorkspacesPage() {
             placeholder={t("admin.searchPlaceholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full min-w-0 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 text-slate-900 dark:text-white"
+            className="w-full min-w-0 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600/20 text-slate-900 dark:text-white"
           />
           <button
             type="submit"
-            className="px-3 py-2 bg-[#89BD49] hover:bg-[#6B9A35] text-white rounded-lg text-xs font-semibold shadow-xs shadow-[#89BD49]/25 transition-colors cursor-pointer shrink-0"
+            className="px-3 py-2 bg-[#DC2626] hover:bg-[#B91C1C] text-white rounded-lg text-xs font-semibold shadow-xs shadow-[#DC2626]/25 transition-colors cursor-pointer shrink-0"
           >
             {t("common.search")}
           </button>
@@ -337,7 +337,7 @@ export default function AdminWorkspacesPage() {
                       </span>
                     </td>
                     <td className="py-3 px-4 whitespace-nowrap">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] border border-[#89BD49]/30 dark:border-[#89BD49]/40">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-[#DC2626]/10 dark:bg-[#DC2626]/20 text-red-700 dark:text-red-300 border border-[#DC2626]/30 dark:border-[#DC2626]/40">
                         <Icon icon="lucide:video" className="w-3 h-3 shrink-0" />
                         <span>{ws.capture_count}</span>
                       </span>
@@ -368,7 +368,7 @@ export default function AdminWorkspacesPage() {
                           className="px-2.5 py-1 rounded text-xs font-semibold border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors inline-flex items-center gap-1"
                           title={t("admin.transferOwner")}
                         >
-                          <Icon icon="lucide:arrow-right-left" className="w-3 h-3 shrink-0" />
+                          
                           <span>Owner</span>
                         </button>
                         <button
@@ -440,7 +440,7 @@ export default function AdminWorkspacesPage() {
                 value={newOwnerEmail}
                 onChange={(e) => setNewOwnerEmail(e.target.value)}
                 placeholder="user@example.com"
-                className="w-full text-xs rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2.5 outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 text-slate-900 dark:text-white font-mono"
+                className="w-full text-xs rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2.5 outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600/20 text-slate-900 dark:text-white font-mono"
               />
             </div>
 
@@ -455,7 +455,7 @@ export default function AdminWorkspacesPage() {
               <button
                 type="submit"
                 disabled={transferring}
-                className="px-4 py-2 rounded-xl text-xs font-semibold bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-xs shadow-[#89BD49]/25 transition-colors disabled:opacity-50"
+                className="px-4 py-2 rounded-xl text-xs font-semibold bg-red-600 hover:bg-red-700 text-white shadow-xs shadow-red-600/25 transition-colors disabled:opacity-50"
               >
                 {transferring ? t("common.loading") : t("admin.transferOwner")}
               </button>
@@ -471,7 +471,7 @@ export default function AdminWorkspacesPage() {
             <div className="flex items-start justify-between border-b border-slate-100 dark:border-zinc-800 pb-3">
               <div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                  <span className="flex items-center gap-1.5"><Icon icon="lucide:building-2" className="w-4 h-4 shrink-0 text-[#6B9A35] dark:text-[#A8D666]" /> {selectedWs.name}</span>
+                  <span className="flex items-center gap-1.5"><Icon icon="lucide:building-2" className="w-4 h-4 shrink-0 text-red-700 dark:text-red-300" /> {selectedWs.name}</span>
                   {selectedWs.is_vip && (
                     <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800">
                       <Icon icon="lucide:crown" className="w-2.5 h-2.5 shrink-0" />
@@ -533,7 +533,7 @@ export default function AdminWorkspacesPage() {
                         type="checkbox"
                         checked={vipOverride}
                         onChange={(e) => setVipOverride(e.target.checked)}
-                        className="w-4 h-4 rounded text-[#89BD49] focus:ring-[#89BD49] border-slate-300 dark:border-zinc-700 cursor-pointer"
+                        className="w-4 h-4 rounded text-red-600 focus:ring-red-600 border-slate-300 dark:border-zinc-700 cursor-pointer"
                       />
                       <span className="text-xs font-semibold text-slate-700 dark:text-zinc-300">
                         {t("admin.isVipLabel")}
@@ -551,7 +551,7 @@ export default function AdminWorkspacesPage() {
                         value={tokenLimitOverride}
                         onChange={(e) => setTokenLimitOverride(e.target.value)}
                         placeholder={t("admin.aiTokenLimitUnlimited")}
-                        className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-1.5 outline-none focus:border-[#89BD49] text-slate-900 dark:text-white"
+                        className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3 py-1.5 outline-none focus:border-[#DC2626] text-slate-900 dark:text-white"
                       />
                     </div>
                   </div>
@@ -561,7 +561,7 @@ export default function AdminWorkspacesPage() {
                       type="button"
                       disabled={savingVip}
                       onClick={handleSaveVipOverride}
-                      className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-xs disabled:opacity-50 transition-colors flex items-center gap-1.5 cursor-pointer"
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#DC2626] hover:bg-[#B91C1C] text-white shadow-xs disabled:opacity-50 transition-colors flex items-center gap-1.5 cursor-pointer"
                     >
                       <Icon icon="lucide:save" className="w-3.5 h-3.5 shrink-0" />
                       <span>{savingVip ? t("common.loading") : t("common.save")}</span>
@@ -618,7 +618,7 @@ export default function AdminWorkspacesPage() {
                             href={`/v/${cap.id}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-[11px] font-semibold text-[#6B9A35] hover:text-[#557A2B] dark:text-[#A8D666] dark:hover:text-[#C2E688] hover:underline"
+                            className="text-[11px] font-semibold text-[#B91C1C] hover:text-[#991B1B] dark:text-[#F87171] dark:hover:text-[#FCA5A5] hover:underline"
                           >
                             View
                           </a>

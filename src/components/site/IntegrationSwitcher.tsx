@@ -57,7 +57,7 @@ export function IntegrationSwitcher() {
         <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-2 px-4 py-3 border-b border-site-border bg-site-surface-2 text-xs">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span className="font-semibold text-site-text">1-Click BugSnap Output: {active.toUpperCase()}</span>
+            <span className="font-semibold text-site-text">BugSnap Output: {active.toUpperCase()}</span>
           </div>
           <button
             type="button"

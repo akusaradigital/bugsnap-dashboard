@@ -20,7 +20,7 @@ function BrowserIllustration({ className = "w-28 h-20 shrink-0" }: { className?:
       aria-hidden="true"
     >
       {/* Background Soft Glow */}
-      <ellipse cx="70" cy="52" rx="46" ry="32" fill="#89BD49" fillOpacity="0.12" />
+      <ellipse cx="70" cy="52" rx="46" ry="32" fill="#DC2626" fillOpacity="0.12" />
 
       {/* Main Browser Window */}
       <g filter="drop-shadow(0 4px 10px rgba(15, 23, 42, 0.08))">
@@ -57,26 +57,26 @@ function BrowserIllustration({ className = "w-28 h-20 shrink-0" }: { className?:
           width="42"
           height="42"
           rx="10"
-          className="fill-white dark:fill-zinc-800 stroke-[#89BD49]/30 dark:stroke-[#89BD49]/40"
+          className="fill-white dark:fill-zinc-800 stroke-[#DC2626]/30 dark:stroke-[#DC2626]/40"
           strokeWidth="1.5"
         />
         {/* BugSnap Icon on Badge */}
         <g transform="translate(98, 32) scale(0.9)">
-          <circle cx="12" cy="12" r="10.5" fill="#89BD49" fillOpacity="0.15" />
-          <circle cx="12" cy="12" r="6" stroke="#89BD49" strokeWidth="2" />
-          <circle cx="12" cy="12" r="2.5" fill="#89BD49" />
+          <circle cx="12" cy="12" r="10.5" fill="#DC2626" fillOpacity="0.15" />
+          <circle cx="12" cy="12" r="6" stroke="#DC2626" strokeWidth="2" />
+          <circle cx="12" cy="12" r="2.5" fill="#DC2626" />
           {/* Subtle Antennae */}
-          <line x1="12" y1="1" x2="12" y2="4.5" stroke="#89BD49" strokeWidth="1.8" strokeLinecap="round" />
-          <line x1="12" y1="19.5" x2="12" y2="23" stroke="#89BD49" strokeWidth="1.8" strokeLinecap="round" />
-          <line x1="1" y1="12" x2="4.5" y2="12" stroke="#89BD49" strokeWidth="1.8" strokeLinecap="round" />
-          <line x1="19.5" y1="12" x2="23" y2="12" stroke="#89BD49" strokeWidth="1.8" strokeLinecap="round" />
+          <line x1="12" y1="1" x2="12" y2="4.5" stroke="#DC2626" strokeWidth="1.8" strokeLinecap="round" />
+          <line x1="12" y1="19.5" x2="12" y2="23" stroke="#DC2626" strokeWidth="1.8" strokeLinecap="round" />
+          <line x1="1" y1="12" x2="4.5" y2="12" stroke="#DC2626" strokeWidth="1.8" strokeLinecap="round" />
+          <line x1="19.5" y1="12" x2="23" y2="12" stroke="#DC2626" strokeWidth="1.8" strokeLinecap="round" />
         </g>
       </g>
 
       {/* Dynamic Sparkle / Accent Rays (Top-Right of BugSnap Badge) */}
-      <path d="M136 18L142 14" stroke="#A8D666" strokeWidth="2" strokeLinecap="round" />
-      <path d="M141 26L147 25" stroke="#A8D666" strokeWidth="2" strokeLinecap="round" />
-      <path d="M131 10L132 4" stroke="#A8D666" strokeWidth="2" strokeLinecap="round" />
+      <path d="M136 18L142 14" stroke="#F87171" strokeWidth="2" strokeLinecap="round" />
+      <path d="M141 26L147 25" stroke="#F87171" strokeWidth="2" strokeLinecap="round" />
+      <path d="M131 10L132 4" stroke="#F87171" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }
@@ -107,11 +107,6 @@ export default function CaptureFooter({ className = "" }: { className?: string }
               >
                 <ChromeLogo className="w-3.5 h-3.5 shrink-0" />
                 <span>{t("footer.addToChrome")}</span>
-                <Icon
-                  icon="lucide:arrow-right"
-                  className="w-3.5 h-3.5 transition-transform group-hover:translate-x-0.5 shrink-0"
-                  aria-hidden="true"
-                />
               </a>
             </div>
           </div>
@@ -223,7 +218,7 @@ export default function CaptureFooter({ className = "" }: { className?: string }
                 className="text-[11px] sm:text-xs text-slate-500 hover:text-slate-900 dark:text-zinc-400 dark:hover:text-white transition-colors py-0.5 flex items-center gap-1"
               >
                 <span>{t("footer.mcp")}</span>
-                <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-[#89BD49]/15 text-[#6B9A35] dark:text-[#A8D666]">AI</span>
+                <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-[#DC2626]/15 text-red-700 dark:text-[#F87171]">AI</span>
               </Link>
               <Link
                 href="/blog"

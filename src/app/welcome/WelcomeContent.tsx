@@ -93,35 +93,35 @@ export function WelcomeContent() {
               <button
                 type="button"
                 onClick={triggerTestCapture}
-                className="inline-flex items-center justify-center gap-2.5 bg-[#89BD49] hover:bg-[#78a83f] text-slate-900 text-sm font-bold px-6 py-3 min-h-[44px] rounded-xl transition-all shadow-sm active:scale-[0.99] touch-manipulation w-full sm:w-auto cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#6B9A35] dark:focus-visible:ring-[#A8D666]"
+                className="inline-flex items-center justify-center gap-2.5 bg-[#89BD49] hover:bg-[#6B9A35] text-white text-sm font-bold px-6 py-3 min-h-[44px] rounded-xl transition-all shadow-sm active:scale-[0.99] touch-manipulation w-full sm:w-auto cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#89BD49] dark:focus-visible:ring-[#A8D666]"
               >
                 <Icon icon="lucide:scan" className="w-4 h-4 shrink-0" aria-hidden="true" />
                 <span>{t("welcome.testCaptureBtn") || "Test Instant Capture"}</span>
               </button>
               <Link
                 href="/dashboard"
-                className="inline-flex items-center justify-center gap-2 border border-site-border bg-site-surface hover:bg-site-surface-2 text-site-text text-sm font-semibold px-5 py-3 min-h-[44px] rounded-xl transition-colors touch-manipulation shadow-2xs w-full sm:w-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#6B9A35] dark:focus-visible:ring-[#A8D666]"
+                className="inline-flex items-center justify-center gap-2 border border-site-border bg-site-surface hover:bg-site-surface-2 text-site-text text-sm font-semibold px-5 py-3 min-h-[44px] rounded-xl transition-colors touch-manipulation shadow-2xs w-full sm:w-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#89BD49] dark:focus-visible:ring-[#A8D666]"
               >
-                <span>{t("welcome.goDashboard") || "Go to Dashboard →"}</span>
+                <span>{t("welcome.goDashboard") || "Go to Dashboard "}</span>
               </Link>
             </div>
 
             {/* Trust Badges */}
             <div className="pt-2 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs text-site-text-2">
               <div className="flex items-center gap-2">
-                <span className="w-4 h-4 rounded-full bg-[#46741A] dark:bg-[#70C040] text-white dark:text-slate-900 flex items-center justify-center shrink-0">
+                <span className="w-4 h-4 rounded-full bg-[#89BD49] dark:bg-[#A8D666] text-white dark:text-slate-900 flex items-center justify-center shrink-0">
                   <Icon icon="lucide:check" className="w-2.5 h-2.5 stroke-[3]" aria-hidden="true" />
                 </span>
                 <span>{t("welcome.trustFree") || "Free & Unlimited"}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-4 h-4 rounded-full bg-[#46741A] dark:bg-[#70C040] text-white dark:text-slate-900 flex items-center justify-center shrink-0">
+                <span className="w-4 h-4 rounded-full bg-[#89BD49] dark:bg-[#A8D666] text-white dark:text-slate-900 flex items-center justify-center shrink-0">
                   <Icon icon="lucide:check" className="w-2.5 h-2.5 stroke-[3]" aria-hidden="true" />
                 </span>
                 <span>{t("welcome.trustDrive") || "Direct Sync to Google Drive"}</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="w-4 h-4 rounded-full bg-[#46741A] dark:bg-[#70C040] text-white dark:text-slate-900 flex items-center justify-center shrink-0">
+                <span className="w-4 h-4 rounded-full bg-[#89BD49] dark:bg-[#A8D666] text-white dark:text-slate-900 flex items-center justify-center shrink-0">
                   <Icon icon="lucide:check" className="w-2.5 h-2.5 stroke-[3]" aria-hidden="true" />
                 </span>
                 <span>{t("welcome.trustDevtools") || "Automated DevTools Telemetry"}</span>
@@ -150,7 +150,7 @@ export function WelcomeContent() {
                 <p className="text-xs text-site-text-2 break-all mt-0.5">
                   {userEmail
                     ? t("welcome.loggedInAs", { email: userEmail })
-                    : t("welcome.connectPrompt") || "Connect your Google account to enable 1-click cloud sync"}
+                    : t("welcome.connectPrompt") || "Connect your Google account to sync captures to Drive"}
                 </p>
               </div>
             </div>
@@ -159,7 +159,7 @@ export function WelcomeContent() {
                 href="/login"
                 className="inline-flex items-center justify-center shrink-0 px-4 py-2 min-h-[40px] text-xs font-bold rounded-xl bg-emerald-500 text-slate-950 hover:bg-emerald-400 transition-colors shadow-xs"
               >
-                {t("welcome.connectBtn") || "Connect Account →"}
+                {t("welcome.connectBtn") || "Connect Account "}
               </Link>
             )}
           </div>
@@ -167,7 +167,7 @@ export function WelcomeContent() {
           {/* 3 Step Setup Grid */}
           <div className="space-y-6">
             <div className="text-center sm:text-left space-y-1">
-              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-[#46741A] dark:text-[#A8D666]">
+              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-[#5B8C2A] dark:text-[#A8D666]">
                 QUICK SETUP GUIDE
               </span>
               <h2 className="text-xl sm:text-2xl font-extrabold text-site-text tracking-tight">
@@ -210,7 +210,7 @@ export function WelcomeContent() {
                 <div className="space-y-2 pt-2 border-t border-site-border/60">
                   <div className="rounded-xl border border-site-border/70 bg-site-surface-2/60 p-2.5 text-center">
                     <span className="text-xs font-medium text-site-text-2">
-                      {t("welcome.step1Hint") || "Toolbar Icon: Always 1-click away"}
+                      {t("welcome.step1Hint") || "Toolbar icon: keep BugSnap within reach"}
                     </span>
                   </div>
                   <p className="text-[11px] text-site-text-2/80 italic">
@@ -295,7 +295,7 @@ export function WelcomeContent() {
                     href="/extension"
                     className="block text-[11px] text-emerald-600 dark:text-emerald-400 hover:underline pt-1"
                   >
-                    {t("welcome.step3CustomShortcuts") || "Want different keys? Customize shortcuts anytime in browser settings →"}
+                    {t("welcome.step3CustomShortcuts") || "Want different keys? Customize shortcuts anytime in browser settings "}
                   </Link>
                 </div>
               </div>
@@ -305,7 +305,7 @@ export function WelcomeContent() {
           {/* DevTools Telemetry Preview Section */}
           <div className="rounded-2xl border border-site-border bg-site-surface-2/40 p-5 sm:p-8 space-y-6">
             <div className="text-center max-w-2xl mx-auto space-y-2">
-              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-[#46741A] dark:text-[#A8D666]">
+              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-[#5B8C2A] dark:text-[#A8D666]">
                 AUTOMATED TELEMETRY
               </span>
               <h2 className="text-xl sm:text-2xl font-extrabold text-site-text tracking-tight">
@@ -375,7 +375,7 @@ export function WelcomeContent() {
               <button
                 type="button"
                 onClick={triggerTestCapture}
-                className="px-6 py-3 min-h-[44px] rounded-xl bg-[#89BD49] hover:bg-[#78a83f] text-slate-900 font-bold text-sm transition-all shadow-md active:scale-95 cursor-pointer touch-manipulation inline-flex items-center gap-2"
+                className="px-6 py-3 min-h-[44px] rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] text-white font-bold text-sm transition-all shadow-md active:scale-95 cursor-pointer touch-manipulation inline-flex items-center gap-2"
               >
                 <Icon icon="lucide:scan" className="w-4 h-4" aria-hidden="true" />
                 <span>{t("welcome.testCapture", { key: modKey })}</span>
@@ -384,7 +384,7 @@ export function WelcomeContent() {
                 href="/dashboard"
                 className="px-6 py-3 min-h-[44px] rounded-xl border border-site-border bg-site-surface-2 hover:bg-site-surface text-site-text font-semibold text-sm transition-colors inline-flex items-center gap-2 touch-manipulation shadow-2xs"
               >
-                <span>{t("welcome.goDashboard") || "Go to Dashboard →"}</span>
+                <span>{t("welcome.goDashboard") || "Go to Dashboard "}</span>
               </Link>
             </div>
           </div>

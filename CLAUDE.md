@@ -11,7 +11,9 @@
 5. **Free tier stubs**: `tiers.ts` + `quota.ts` are intentionally unlimited - do NOT add paywalls.
 6. **i18n MANDATORY**: All UI text via `src/lib/i18n.ts` + `useT()`. Both `en` + `id` keys. No hardcoded strings.
 7. **Design**: Solid colors, Tailwind tokens, dark/light mode. No heavy gradients.
-8. **Icon Standard (Iconify)**: Use Iconify (https://iconify.design/getting-started/) for all icons for uniformity and consistency (`@iconify/react` via `<Icon icon="..." />`). Avoid mixing different icon libraries or manual inline SVGs without standardization. Use `src/lib/icons.ts` as the shared registry for reusable navigation/action/status icons; keep route and shortcut icons in sync and run `tests/icons.test.mjs`. Use third-party logos only when the represented vendor is the subject, preserve the original vendored artwork in `src/lib/third-party-logos.json`, and register/render it through `src/lib/iconify.ts`. Do not add decorative imagery when existing UI communicates the content. BugSnap logo source artwork is immutable; use only the approved `public/bugsnap-*.svg` variant appropriate to the background, preserving its aspect ratio and clear space.
+8. **Color system**: Use BugSnap green (`#89BD49`, hover `#6B9A35`) for primary extension/store CTAs and success/available pills; use BugSnap blue (`#2563EB` / `#3B82F6`) for dashboard navigation, settings, and neutral action buttons; reserve red/rose exclusively for destructive actions, genuine errors, recording indicators, and danger states; use amber only for warnings. Do not use red, purple, or arbitrary accent colors for generic branding, pills, or primary actions.
+9. **Broken visual assets**: Every Iconify identifier must map to an existing offline SVG in `public/icons/`; every static image path must exist; dynamic images must have an `onError` fallback. Never ship a broken-image placeholder or an error screen caused by a missing chunk/asset. After UI changes, run the asset/icon integrity tests and verify the affected route in the local browser.
+10. **Icon Standard (Iconify)**: Use Iconify (https://iconify.design/getting-started/) for all icons for uniformity and consistency (`@iconify/react` via `<Icon icon="..." />`). Avoid mixing different icon libraries or manual inline SVGs without standardization. Use `src/lib/icons.ts` as the shared registry for reusable navigation/action/status icons; keep route and shortcut icons in sync and run `tests/icons.test.mjs`. Use third-party logos only when the represented vendor is the subject, preserve the original vendored artwork in `src/lib/third-party-logos.json`, and register/render it through `src/lib/iconify.ts`. Do not add decorative imagery when existing UI communicates the content. BugSnap logo source artwork is immutable; use only the approved `public/bugsnap-*.svg` variant appropriate to the background, preserving its aspect ratio and clear space.
    - UI/menu icons must describe the actual action, section, or data they represent; do not use browser/vendor logos as generic feature or navigation icons.
    - Apply BugSnap theme through existing semantic/Tailwind tokens and preserve readable contrast in light and dark themes. Keep genuine third-party product logos only where that product is the subject, using the approved original artwork without recoloring or distortion.
    - BugSnap's own logo is immutable: never redraw, recolor, reshape, crop, distort, add effects to, or otherwise modify its source artwork. Use the original approved asset proportionally with clear space. When auditing or changing other visuals, explicitly exclude the BugSnap logo from edits.
@@ -37,6 +39,9 @@ The script posts to the Supabase Management API using `SUPABASE_PAT` + `NEXT_PUB
     - Media player video controls: adapt with `flex-wrap sm:flex-nowrap`, preserving scrubber track width with `min-w-[120px]`.
 13. **Real Website Testing Standard (MANDATORY)**: For all E2E, Playwright, and browser automation tests, you MUST use REAL production websites from the public internet that match the specific technical characteristics of the test case. Arbitrary mock injections or lazily reusing a single URL (e.g. Wikipedia only) across different test cases is strictly forbidden. Examples: CSP blocking (`https://github.com`), infinite scroll (`https://infinite-scroll.com/demo/full-page/`), Shadow DOM (`https://shoelace.style`), sticky header/nav overlay (`https://vuejs.org`).
 14. **Changelog Generation (`CHANGELOG.md`) on Release (MANDATORY on git push to main)**: Whenever the user explicitly instructs `git push` to `main` (release/deploy time), ALWAYS generate and update release entries in `CHANGELOG.md` (both workspace root `../CHANGELOG.md` and `bugsnap-dashboard/CHANGELOG.md`, kept strictly synchronized).
+15. **Focused validation**: For a dashboard-only change, run the smallest affected validation first (`npm run typecheck`, targeted tests, and `npm run lint` for JSX/TSX). Do not run unrelated extension or MCP suites. Use the full dashboard gate (`npm run typecheck && npm test && npm run build`, plus `npm run lint` for JSX/TSX) for release/commit validation or explicit full validation.
+16. **Subagent-per-module**: Delegate only the affected dashboard route/component/module and provide the relevant Graphify call map before asking a subagent to inspect code.
+17. **Real browser and mobile validation**: For UI/E2E changes, use the configured real browser and real public website appropriate to the scenario. Audit 360px–440px layouts with zero horizontal overflow.
     - Document concrete changes across all three projects (`[bugsnap-dashboard]`, `[bugsnap-extension]`, and `[bugsnap-mcp]`) under `### YYYY-MM-DD (vX.Y.Z)`.
     - Categorize items with `**feat**:`, `**fix**:`, `**perf**:`, `**docs**:`, `**chore**:`.
     - This powers the Super Admin Changelog viewer (`/admin/changelog`).
@@ -47,22 +52,22 @@ The script posts to the Supabase Management API using `SUPABASE_PAT` + `NEXT_PUB
 - **Bump ONLY when pushing to `main`**: Bump `package.json` + `package-lock.json` (top-level + `packages[""].version`) ONLY when the user explicitly instructs `git push` to `main` for production deployment.
 - **Release Sequence on git push to main**: bump version -> generate/update `CHANGELOG.md` for all 3 projects -> gate (`npm run typecheck && npm test && npm run build`) -> `/graphify --update` -> commit -> `git push origin main`.
 
-- **PATCH** `0.7.0 → 0.7.1`: bugfix, hotfix, copy, asset, dependency.
-- **MINOR** `0.7.x → 0.8.0`: new user-facing feature, route, module.
-- **MAJOR** `0.x → 1.0.0`: breaking API/auth/UI change.
+- **PATCH** `0.7.0  0.7.1`: bugfix, hotfix, copy, asset, dependency.
+- **MINOR** `0.7.x  0.8.0`: new user-facing feature, route, module.
+- **MAJOR** `0.x  1.0.0`: breaking API/auth/UI change.
 
-Current version: **`0.14.1`**
+Current version: **`0.14.2`**
 
 ## 3. Architecture & Data Flow
 
 ```
-Extension → Supabase RPC insert_capture_by_email()  [SECURITY DEFINER]
-         → tables: captures, comments, workspaces, workspace_members, capture_views
+Extension  Supabase RPC insert_capture_by_email()  [SECURITY DEFINER]
+          tables: captures, comments, workspaces, workspace_members, capture_views
          ← Dashboard (Next.js, user session, RLS-scoped reads)
 ```
 
 - **Admin Supabase Monitor**: `/admin/supabase` + `/api/admin/supabase-stats` - real-time DB size, storage, connection pool metrics.
-- **DevTools**: `captures.dev_logs` (JSONB) → 4-tab panel (Console, Network, Storage, System) + AI Clue.
+- **DevTools**: `captures.dev_logs` (JSONB)  4-tab panel (Console, Network, Storage, System) + AI Clue.
 - **Network 1st/3rd-party**: Resolve relative URLs with `new URL(url, captureOrigin)`, normalize `www.`, default to 1st-party on error. See `isFirstPartyUrl` in `DevToolsPanel.tsx`.
 - **DOM Replay**: `rrweb` events stored + played back in dashboard.
 - **`src/lib/redact.ts`**: Server-side only - never import into client components.
@@ -70,8 +75,8 @@ Extension → Supabase RPC insert_capture_by_email()  [SECURITY DEFINER]
 ## 4. Domain & DNS
 
 - App: `bugsnap.akusaraproject.my.id` only (Vercel: `prj_07vmHWiKLnvJ3EacILxkznfkMIxt`).
-- `dashboard.akusaraproject.my.id` → 301 redirect only, never serves app directly.
-- Cloudflare: `CNAME → cname.vercel-dns.com` (proxied=false).
+- `dashboard.akusaraproject.my.id`  301 redirect only, never serves app directly.
+- Cloudflare: `CNAME  cname.vercel-dns.com` (proxied=false).
 
 ## 5. Security Rules
 
