@@ -38,6 +38,7 @@
 - **Do NOT bump version on routine edits or local commits**: Never bump the version on routine small bugfixes or local commits to keep version numbers from unnecessarily inflating.
 - **Bump ONLY when pushing to `main`**: Bump `package.json` + `package-lock.json` ONLY when the user explicitly instructs `git push` to `main` for production deployment.
 - **Release Sequence on git push to main**: bump version -> generate/update `CHANGELOG.md` for all 3 projects -> gate (`npm run typecheck && npm test && npm run build`) -> `/graphify --update` -> commit -> `git push origin main`.
+- **CI auto-tags every push to `main`, independent of release intent**: the CI `Auto-tag Release` step tags `v{package.json version}` on every push to `main` (not only release pushes) if that tag doesn't exist yet, without bumping the version itself. Harmless — this repo is Vercel-deployed and never gets a manual GitHub Release.
 - Current: **`0.14.2`**
 - PATCH `0.7.0  0.7.1` | MINOR `0.7.x  0.8.0` | MAJOR `0.x  1.0.0`
 
