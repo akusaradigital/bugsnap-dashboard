@@ -5,7 +5,7 @@
 
 ## 1. Critical Rules
 
-1. **Graphify, push, versioning, gates**: see `../CLAUDE.md` §1-4. This repo's gate: `npm run typecheck && npm test && npm run build` (+ `npm run lint` for JSX/TSX).
+1. **Graphify, push, versioning, gates, subagent delegation**: see `../CLAUDE.md` §1-4. This repo's gate command is in §7 below.
 2. **Tooling**: `PowerShell`/`Bash`, `Read`, `Edit`, `Write`, `Grep`, `Glob`, `Agent`. No `cat`. PowerShell 5.1 has no `&&` - use `;` or the Bash tool.
 3. **No `any` TS type** - `@typescript-eslint/no-explicit-any` is enforced.
 4. **Icon registry**: use `src/lib/icons.ts` as the shared registry for nav/action/status icons; run `tests/icons.test.mjs` after adding one. Third-party logos go through `src/lib/third-party-logos.json` + `src/lib/iconify.ts`, per `../BRAND.md`. BugSnap's own logo is immutable - exclude it from any visual audit/edit.
@@ -18,8 +18,7 @@ node scripts/apply-migration.mjs --sql "<verification query>"                   
 ```
 
    Uses `SUPABASE_PAT` + `NEXT_PUBLIC_SUPABASE_URL` from `.env.local` (Management API, no CLI/DB password needed). Save the pre-change definition to `supabase/.rollback-<object>-<date>.json`. Never leave a migration written-but-unapplied.
-6. **Focused validation**: for a dashboard-only change, run `npm run typecheck` + targeted tests + `npm run lint` (JSX/TSX) first - don't run extension/MCP suites. Use the full gate for release/commit validation.
-7. **Subagent-per-module**: delegate only the affected route/component, with the relevant Graphify call map.
+6. **Focused validation**: for a dashboard-only change, run `npm run typecheck` + targeted tests + `npm run lint` (JSX/TSX) first - don't run extension/MCP suites. Use the full gate (§7) for release/commit validation.
 
 ## 2. Versioning
 
