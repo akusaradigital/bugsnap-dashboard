@@ -1,83 +1,44 @@
 # CLAUDE.md - BugSnap Dashboard
 
 > Rules for Claude Code and AI agents on `bugsnap-dashboard` (Next.js 14, Supabase, App Router).
+> Cross-repo rules (push/release, versioning, Graphify, testing standard, verification gates, color system, i18n policy, brand) live in `../CLAUDE.md` and `../BRAND.md` - this file only holds what's specific to this repo.
 
 ## 1. Critical Rules
 
-1. **Graphify MANDATORY**: Read `../graphify-out/GRAPH_REPORT.md` before opening any file. Use latest graph data only; old snapshots in `../graphify-out/<old-date>/` are purged on update, keeping only the latest.
-2. **Tooling**: `PowerShell`/`Bash`, `Read`, `Edit`, `Write`, `Grep`, `Glob`, `Agent`. No `cat`.
-3. **No auto-push**: NEVER `git push` without explicit user instruction. Run `/graphify --update` before executing `git push`. When the user explicitly instructs `git push` to `main` (or "push ke main"), ALL THREE repositories (`bugsnap-dashboard`, `bugsnap-extension`, and `bugsnap-mcp`) must be pushed together to `origin main`.
-4. **PowerShell 5.1**: `&&` not supported - use `;` or Bash tool.
-5. **Free tier stubs**: `tiers.ts` + `quota.ts` are intentionally unlimited - do NOT add paywalls.
-6. **i18n MANDATORY**: All UI text via `src/lib/i18n.ts` + `useT()`. Both `en` + `id` keys. No hardcoded strings.
-7. **Design**: Solid colors, Tailwind tokens, dark/light mode. No heavy gradients.
-8. **Color system**: Use BugSnap green (`#89BD49`, hover `#6B9A35`) for primary extension/store CTAs and success/available pills; use BugSnap blue (`#2563EB` / `#3B82F6`) for dashboard navigation, settings, and neutral action buttons; reserve red/rose exclusively for destructive actions, genuine errors, recording indicators, and danger states; use amber only for warnings. Do not use red, purple, or arbitrary accent colors for generic branding, pills, or primary actions.
-9. **Broken visual assets**: Every Iconify identifier must map to an existing offline SVG in `public/icons/`; every static image path must exist; dynamic images must have an `onError` fallback. Never ship a broken-image placeholder or an error screen caused by a missing chunk/asset. After UI changes, run the asset/icon integrity tests and verify the affected route in the local browser.
-10. **Icon Standard (Iconify)**: Use Iconify (https://iconify.design/getting-started/) for all icons for uniformity and consistency (`@iconify/react` via `<Icon icon="..." />`). Avoid mixing different icon libraries or manual inline SVGs without standardization. Use `src/lib/icons.ts` as the shared registry for reusable navigation/action/status icons; keep route and shortcut icons in sync and run `tests/icons.test.mjs`. Use third-party logos only when the represented vendor is the subject, preserve the original vendored artwork in `src/lib/third-party-logos.json`, and register/render it through `src/lib/iconify.ts`. Do not add decorative imagery when existing UI communicates the content. BugSnap logo source artwork is immutable; use only the approved `public/bugsnap-*.svg` variant appropriate to the background, preserving its aspect ratio and clear space.
-   - UI/menu icons must describe the actual action, section, or data they represent; do not use browser/vendor logos as generic feature or navigation icons.
-   - Apply BugSnap theme through existing semantic/Tailwind tokens and preserve readable contrast in light and dark themes. Keep genuine third-party product logos only where that product is the subject, using the approved original artwork without recoloring or distortion.
-   - BugSnap's own logo is immutable: never redraw, recolor, reshape, crop, distort, add effects to, or otherwise modify its source artwork. Use the original approved asset proportionally with clear space. When auditing or changing other visuals, explicitly exclude the BugSnap logo from edits.
-9. **NO THIRD-PARTY BRAND/MERK NAMES (STRICT MANDATORY)**: NEVER use, mention, or reference competitor brand names (e.g. Jam, Jam.dev, Loom, GoFullPage, Marker.io, etc.) anywhere in website text, UI labels, marketing copy, code comments, filenames, test suites, or documentation. All architecture, algorithms, and features must be named purely using BugSnap's own brand and native technical terminology. Never compare BugSnap to competitors in UI or docs.
-10. **No `any` TS type**: Use proper types. `@typescript-eslint/no-explicit-any` is enforced.
-11. **DB changes apply immediately**: A migration that only exists as a file has changed nothing. Any new `supabase/migrations/*.sql` must be executed against the live project in the same turn it is written:
+1. **Graphify, push, versioning, gates**: see `../CLAUDE.md` §1-4. This repo's gate: `npm run typecheck && npm test && npm run build` (+ `npm run lint` for JSX/TSX).
+2. **Tooling**: `PowerShell`/`Bash`, `Read`, `Edit`, `Write`, `Grep`, `Glob`, `Agent`. No `cat`. PowerShell 5.1 has no `&&` - use `;` or the Bash tool.
+3. **No `any` TS type** - `@typescript-eslint/no-explicit-any` is enforced.
+4. **Icon registry**: use `src/lib/icons.ts` as the shared registry for nav/action/status icons; run `tests/icons.test.mjs` after adding one. Third-party logos go through `src/lib/third-party-logos.json` + `src/lib/iconify.ts`, per `../BRAND.md`. BugSnap's own logo is immutable - exclude it from any visual audit/edit.
+5. **DB changes apply immediately**:
 
 ```bash
-node scripts/apply-migration.mjs --sql "select pg_get_functiondef(p.oid) from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public' and p.proname='<fn>'"  # snapshot first
-node scripts/apply-migration.mjs supabase/migrations/<file>.sql                                                                                                              # apply
-node scripts/apply-migration.mjs --sql "<verification query>"                                                                                                               # verify
+node scripts/apply-migration.mjs --sql "<snapshot query, e.g. pg_get_functiondef>"  # snapshot first
+node scripts/apply-migration.mjs supabase/migrations/<file>.sql                    # apply
+node scripts/apply-migration.mjs --sql "<verification query>"                      # verify
 ```
 
-The script posts to the Supabase Management API using `SUPABASE_PAT` + `NEXT_PUBLIC_SUPABASE_URL` from `.env.local` (no CLI, no DB password, no linked local project). Save the pre-change definition to `supabase/.rollback-<object>-<date>.json` so there is a way back. Never leave a migration written-but-unapplied.
+   Uses `SUPABASE_PAT` + `NEXT_PUBLIC_SUPABASE_URL` from `.env.local` (Management API, no CLI/DB password needed). Save the pre-change definition to `supabase/.rollback-<object>-<date>.json`. Never leave a migration written-but-unapplied.
+6. **Focused validation**: for a dashboard-only change, run `npm run typecheck` + targeted tests + `npm run lint` (JSX/TSX) first - don't run extension/MCP suites. Use the full gate for release/commit validation.
+7. **Subagent-per-module**: delegate only the affected route/component, with the relevant Graphify call map.
 
-12. **Mobile View 360px–440px Audit (MANDATORY on Dashboard Changes)**: For every UI, component, or page change in `bugsnap-dashboard`, you MUST verify and audit responsiveness across small mobile viewports (360px–440px, usable width ~328px with 16px horizontal gutters). Horizontal overflow/scrolling is strictly forbidden. Mandatory rules:
-    - Add `min-w-0` to flex child containers to allow nested `truncate` elements to truncate properly without overflowing.
-    - Responsive grids: convert desktop multi-column grids (`grid-cols-2/3/4`) to `grid-cols-1 sm:grid-cols-2/3`, and use `gap-6 sm:gap-0 sm:divide-x` instead of raw `divide-x` to prevent broken border divider lines when wrapped to new rows.
-    - Heavy headers/filters: use `relative sm:sticky top-0` so mobile viewports are not blocked by sticky elements consuming >25% of the screen.
-    - Floating/fixed UI (toasts, batch action toolbars, modal popups, demo widgets): clamp width using `w-[min(...,calc(100vw-2rem))]` and responsive offsets `bottom-4 right-4 sm:bottom-5 sm:right-5`.
-    - Long unbroken technical strings (emails, URLs, stack traces, identifiers): always apply `break-all`.
-    - Modal/card padding: use `p-4 sm:p-6` or `p-4 sm:p-8` (avoid static `p-8` or `p-10`).
-    - Media player video controls: adapt with `flex-wrap sm:flex-nowrap`, preserving scrubber track width with `min-w-[120px]`.
-13. **Real Website Testing Standard (MANDATORY)**: For all E2E, Playwright, and browser automation tests, you MUST use REAL production websites from the public internet that match the specific technical characteristics of the test case. Arbitrary mock injections or lazily reusing a single URL (e.g. Wikipedia only) across different test cases is strictly forbidden. Examples: CSP blocking (`https://github.com`), infinite scroll (`https://infinite-scroll.com/demo/full-page/`), Shadow DOM (`https://shoelace.style`), sticky header/nav overlay (`https://vuejs.org`).
-14. **Changelog Generation (`CHANGELOG.md`) on Release (MANDATORY on git push to main)**: Whenever the user explicitly instructs `git push` to `main` (release/deploy time), ALWAYS generate and update release entries in `CHANGELOG.md` (both workspace root `../CHANGELOG.md` and `bugsnap-dashboard/CHANGELOG.md`, kept strictly synchronized).
-15. **Focused validation**: For a dashboard-only change, run the smallest affected validation first (`npm run typecheck`, targeted tests, and `npm run lint` for JSX/TSX). Do not run unrelated extension or MCP suites. Use the full dashboard gate (`npm run typecheck && npm test && npm run build`, plus `npm run lint` for JSX/TSX) for release/commit validation or explicit full validation.
-16. **Subagent-per-module**: Delegate only the affected dashboard route/component/module and provide the relevant Graphify call map before asking a subagent to inspect code.
-17. **Real browser and mobile validation**: For UI/E2E changes, use the configured real browser and real public website appropriate to the scenario. Audit 360px–440px layouts with zero horizontal overflow.
-    - Document concrete changes across all three projects (`[bugsnap-dashboard]`, `[bugsnap-extension]`, and `[bugsnap-mcp]`) under `### YYYY-MM-DD (vX.Y.Z)`.
-    - Categorize items with `**feat**:`, `**fix**:`, `**perf**:`, `**docs**:`, `**chore**:`.
-    - This powers the Super Admin Changelog viewer (`/admin/changelog`).
+## 2. Versioning
 
-## 2. Versioning (SemVer - ONLY on git push to main)
-
-- **Do NOT bump version on routine edits or local commits**: Never bump the version on routine small bugfixes or local commits to keep version numbers from unnecessarily inflating.
-- **Bump ONLY when pushing to `main`**: Bump `package.json` + `package-lock.json` (top-level + `packages[""].version`) ONLY when the user explicitly instructs `git push` to `main` for production deployment.
-- **Release Sequence on git push to main**: bump version -> generate/update `CHANGELOG.md` for all 3 projects -> gate (`npm run typecheck && npm test && npm run build`) -> `/graphify --update` -> commit -> `git push origin main`.
-- **CI no longer auto-tags on push (removed 2026-11-10)**: a CI `Auto-tag Release` step used to tag `v{package.json version}` on every push to `main`, regardless of release intent, accumulating 21 stale tags (`v0.5.0`-`v0.14.2`) with no GitHub Release/assets behind them. The step and the `contents: write` permission it required were removed from `.github/workflows/ci.yml`, and all 21 tags were deleted from origin. Tag/release this repo manually only if a human explicitly asks - it is Vercel-deployed and was never meant to carry GitHub Releases.
-
-- **PATCH** `0.7.0  0.7.1`: bugfix, hotfix, copy, asset, dependency.
-- **MINOR** `0.7.x  0.8.0`: new user-facing feature, route, module.
-- **MAJOR** `0.x  1.0.0`: breaking API/auth/UI change.
-
-Current version: **`0.14.2`**
+- Bump `package.json` + `package-lock.json` only at explicit release time (see `../CLAUDE.md` §2). Current: **`0.14.2`**.
+- PATCH `0.7.0→0.7.1` bugfix/hotfix/copy/asset/dependency · MINOR `0.7.x→0.8.0` new feature/route/module · MAJOR `0.x→1.0.0` breaking change.
+- CI does **not** auto-tag on push (removed 2026-11-10) - this repo is Vercel-deployed and was never meant to carry GitHub Releases; tag/release manually only if asked.
 
 ## 3. Architecture & Data Flow
 
-```
-Extension  Supabase RPC insert_capture_by_email()  [SECURITY DEFINER]
-          tables: captures, comments, workspaces, workspace_members, capture_views
-         ← Dashboard (Next.js, user session, RLS-scoped reads)
-```
-
-- **Admin Supabase Monitor**: `/admin/supabase` + `/api/admin/supabase-stats` - real-time DB size, storage, connection pool metrics.
-- **DevTools**: `captures.dev_logs` (JSONB)  4-tab panel (Console, Network, Storage, System) + AI Clue.
-- **Network 1st/3rd-party**: Resolve relative URLs with `new URL(url, captureOrigin)`, normalize `www.`, default to 1st-party on error. See `isFirstPartyUrl` in `DevToolsPanel.tsx`.
-- **DOM Replay**: `rrweb` events stored + played back in dashboard.
-- **`src/lib/redact.ts`**: Server-side only - never import into client components.
+See `../CLAUDE.md` §7 for the cross-repo flow. Dashboard-specific:
+- **Admin Supabase Monitor**: `/admin/supabase` + `/api/admin/supabase-stats` - DB size, storage, connection pool metrics.
+- **Network 1st/3rd-party**: `isFirstPartyUrl` in `DevToolsPanel.tsx` resolves relative URLs against `new URL(url, captureOrigin)`, normalizes `www.`, defaults to 1st-party on error.
+- `src/lib/redact.ts` is server-side only - never import into client components.
 
 ## 4. Domain & DNS
 
 - App: `bugsnap.akusaraproject.my.id` only (Vercel: `prj_07vmHWiKLnvJ3EacILxkznfkMIxt`).
-- `dashboard.akusaraproject.my.id`  301 redirect only, never serves app directly.
-- Cloudflare: `CNAME  cname.vercel-dns.com` (proxied=false).
+- `dashboard.akusaraproject.my.id` → 301 redirect only, never serves the app directly.
+- Cloudflare: `CNAME → cname.vercel-dns.com` (proxied=false).
 
 ## 5. Security Rules
 
@@ -91,8 +52,8 @@ Extension  Supabase RPC insert_capture_by_email()  [SECURITY DEFINER]
 ## 6. Image & Asset Safety
 
 - All icons/images referenced in JSX must exist in `public/`. Audit: `node tests/check-assets.js`.
-- All `<img>` rendering OAuth avatars, workspace logos, or custom branding URLs **must** have `onError` fallback to initial-letter badge or `/icon.svg`. Use states: `failedAvatars`, `failedWsAvatars`, `brandLogoFailed`, `logoPreviewError`.
-- `no-img-element` Next.js lint warnings are expected and suppressed via `// eslint-disable-next-line` for dynamic external URLs where `next/image` cannot be used.
+- All `<img>` rendering OAuth avatars, workspace logos, or custom branding URLs must have an `onError` fallback (states: `failedAvatars`, `failedWsAvatars`, `brandLogoFailed`, `logoPreviewError`).
+- `no-img-element` lint warnings are expected and suppressed via `// eslint-disable-next-line` where `next/image` can't be used for a dynamic external URL.
 
 ## 7. Build & Test Commands
 
@@ -104,61 +65,3 @@ npm run typecheck  # tsc --noEmit
 npm run dev        # Local dev (HMR auto - restart only if .env.local or next.config.mjs changes)
 node tests/check-assets.js  # Audit static asset paths in public/
 ```
-
-## 8. Brand Asset & Visual Identity Enforcement
-
-**Goal**: Ensure all image generation, visual design, illustrations, marketing content, banners, posters, thumbnails, social media assets, and other visual deliverables strictly adhere to the brand identity.
-
-### 1. Mandatory Brand Colors
-- Use official brand colors specified in brand assets as the primary reference whenever generating images.
-- All colors used must strictly adhere to the official brand color palette.
-- Do not alter, replace color hex codes, or introduce arbitrary new colors inconsistent with the brand identity.
-- Accent colors are permitted only when genuinely required for secondary elements and must remain harmonious with the brand identity.
-- Never use gradients unless explicitly permitted by brand guidelines.
-
-### 2. Logo Integrity — Strict Rule
-- Use the original logo from brand assets as the single source of truth.
-- The logo must be preserved 100% identical to its source file.
-- Modifying the logo shape, proportions, structure, color, typography, composition, or details is strictly forbidden.
-- Recreating, redrawing, modifying, stylizing, or reinterpreting the logo using AI is strictly forbidden.
-- Do not add effects, gradients, drop shadows, outlines, glows, or decorative elements to the logo.
-- Do not crop, stretch, skew, or distort the logo.
-- Ensure the logo is always clearly visible, proportional, with sufficient clear space.
-- If image generation cannot render the logo accurately, composite or overlay the original high-resolution logo onto the final generated image.
-
-### 3. Image Generation Requirements
-Whenever creating visual assets for any requirement:
-- Use brand assets as the primary visual reference.
-- Consistently apply brand colors across backgrounds, objects, graphic elements, typography, and accents.
-- Preserve the brand's visual character and identity.
-- Ensure designs appear professional, clean, modern, and aligned with brand guidelines.
-- Never generate generic designs that ignore brand identity.
-- Never use colors or visual trademarks belonging to other brands.
-
-### 4. Brand Asset Priority
-The strict hierarchy of visual references:
-1. Original brand logo.
-2. Official brand color palette.
-3. Official typography.
-4. Existing brand guidelines.
-5. Existing approved visual assets.
-
-Never make assumptions or invent a new visual identity when official references are provided.
-
-### 5. Mandatory Rules for AI Agents
-- These rules apply to all AI agents, subagents, image generation tools, design tools, and automation workflows.
-- Every agent must review and adhere to brand rules prior to executing any visual task.
-- Ensure `AGENTS.md` and `CLAUDE.md` maintain synchronized rules.
-- Never delete or override existing instructions in either file.
-- Integrate these rules as part of permanent project instructions.
-
-### 6. Final Quality Check
-Before completing any visual task, verify:
-- [ ] Colors match the official brand palette.
-- [ ] Logo uses the original file without modifications.
-- [ ] No distortion or proportional warping of the logo.
-- [ ] No visual elements conflict with brand identity.
-- [ ] Final output is consistent with approved brand visual assets.
-
-**NON-NEGOTIABLE:** Brand consistency is mandatory. No image generation or visual design task may disregard brand identity. The logo must never be altered under any circumstance.
-
