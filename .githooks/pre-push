@@ -1,0 +1,49 @@
+#!/bin/sh
+# BugSnap pre-push gate - enforces CLAUDE.md's documented
+# "Verification gate before 'done'" for bugsnap-dashboard:
+#   npm run typecheck && npm test && npm run build (+ lint)
+#
+# Runs only when pushing to `main` (that's the only branch these rules are
+# keyed on); every other branch push goes through untouched.
+#
+# This is a tracked hook (.githooks/pre-push), wired via `core.hooksPath` by
+# the "prepare" npm script, so it activates on `npm install` for anyone who
+# clones this repo - not just this machine.
+#
+# Bypass only with `git push --no-verify`, and only when you are deliberately
+# skipping this gate and know exactly why - never to silence a real failure.
+
+z40=0000000000000000000000000000000000000000
+blocked=0
+
+while read -r local_ref local_sha remote_ref remote_sha; do
+  if [ "$remote_ref" = "refs/heads/main" ] && [ "$local_sha" != "$z40" ]; then
+    blocked=1
+  fi
+done
+
+if [ "$blocked" -eq 0 ]; then
+  exit 0
+fi
+
+echo ""
+echo "================================================================"
+echo "  BugSnap pre-push gate: bugsnap-dashboard -> main"
+echo "  Running: npm run typecheck && npm run lint && npm test && npm run build"
+echo "================================================================"
+echo ""
+
+npm run typecheck && npm run lint && npm test && npm run build
+status=$?
+
+if [ "$status" -ne 0 ]; then
+  echo ""
+  echo "X Pre-push gate FAILED - push to main blocked (CLAUDE.md verification gate)."
+  echo "  Fix the failure above. Use 'git push --no-verify' only if you are"
+  echo "  deliberately bypassing this gate and know exactly why."
+  exit 1
+fi
+
+echo ""
+echo "OK Pre-push gate passed - proceeding with push to main."
+exit 0
