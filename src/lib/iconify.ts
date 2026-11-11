@@ -60,10 +60,11 @@ export function Icon({
 }: StaticIconProps) {
   const mergedStyle: CSSProperties = {
     ...style,
-    color: color ?? style?.color,
+    color: color ?? style?.color ?? "#2563eb",
     width: width ?? style?.width,
     height: height ?? style?.height,
     minWidth: style?.minWidth ?? 0,
+    filter: style?.filter ?? "brightness(0) saturate(100%) invert(35%) sepia(98%) saturate(1685%) hue-rotate(205deg) brightness(94%) contrast(94%)",
   };
 
   const handleIconError = (event: SyntheticEvent<HTMLImageElement>) => {
@@ -78,7 +79,10 @@ export function Icon({
         viewBox: "0 0 24 24",
         fill: "currentColor",
         xmlns: "http://www.w3.org/2000/svg",
-        style: mergedStyle,
+        style: {
+          ...mergedStyle,
+          filter: style?.filter,
+        },
       },
       createElement("path", {
         d: "M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z",

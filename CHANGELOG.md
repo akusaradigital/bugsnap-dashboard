@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [bugsnap-dashboard]
 
+### 2026-11-11 (v0.14.4)
+- **fix**: Bust immutable browser and CDN caches for the blue network icons with versioned asset URLs
+
 ### 2026-11-11 (v0.14.3)
 - **feat**: Normalize duplicate navigation and screenshot telemetry across DevTools, public capture API, MCP, AI summaries, and generated Playwright actions
 - **fix**: Keep screenshot captures limited to screenshot markers and preserve repeated-action counts

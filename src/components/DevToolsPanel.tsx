@@ -1672,7 +1672,7 @@ ${stack}` : body);
     networkDownlink !== null ? `${networkDownlink >= 10 ? `${Math.floor(networkDownlink)}+` : networkDownlink} Mbps` : null,
     networkRtt !== null ? `${networkRtt}ms latency` : null,
   ].filter(Boolean).join(" ");
-  const networkSignalIcon = networkType === "offline" ? "lucide:wifi-off" : "lucide:signal";
+  const networkSignalIcon = networkType === "offline" ? "lucide:wifi-off" : "lucide:wifi";
 
   const handleExportHar = (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
