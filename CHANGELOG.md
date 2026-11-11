@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [bugsnap-dashboard]
 
+### 2026-11-11 (v0.14.7)
+- **fix**: Preserve original browser and operating-system logos from gilbarbara/logos without applying the dashboard blue filter
+
 ### 2026-11-11 (v0.14.6)
 - **fix**: Remove the redundant email fallback copy from the support widget and make all category icons blue
 

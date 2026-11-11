@@ -60,6 +60,7 @@ export function Icon({
   ...props
 }: StaticIconProps) {
   const isWhiteIcon = className?.split(/\s+/).includes("invert");
+  const isBrandLogo = icon.startsWith("logos:");
   const mergedStyle: CSSProperties = {
     ...style,
     color: color ?? style?.color ?? "#2563eb",
@@ -68,9 +69,11 @@ export function Icon({
     minWidth: style?.minWidth ?? 0,
     filter:
       style?.filter ??
-      (isWhiteIcon
-        ? "brightness(0) invert(1)"
-        : "brightness(0) saturate(100%) invert(35%) sepia(98%) saturate(1685%) hue-rotate(205deg) brightness(94%) contrast(94%)"),
+      (isBrandLogo
+        ? undefined
+        : isWhiteIcon
+          ? "brightness(0) invert(1)"
+          : "brightness(0) saturate(100%) invert(35%) sepia(98%) saturate(1685%) hue-rotate(205deg) brightness(94%) contrast(94%)"),
   };
 
   const handleIconError = (event: SyntheticEvent<HTMLImageElement>) => {
