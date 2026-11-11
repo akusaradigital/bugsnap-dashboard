@@ -926,6 +926,7 @@ function SingleViewContent() {
 
   async function saveAccessMode(nextMode: "public" | "members") {
     if (!capture || accessSaving || nextMode === accessMode) return;
+    setAccessOpen(false);
     setAccessSaving(true);
     const previous = accessMode;
     setAccessMode(nextMode);
@@ -940,7 +941,6 @@ function SingleViewContent() {
       showToast(t("v.permissionDenied"), "error");
     } finally {
       setAccessSaving(false);
-      setAccessOpen(false);
     }
   }
 
@@ -1180,7 +1180,7 @@ function SingleViewContent() {
 
   return (
     <div
-      className={`min-h-screen font-sans flex flex-col selection:bg-[#DC2626] selection:text-white ${
+      className={`min-h-screen font-sans flex flex-col selection:bg-[#2563EB] selection:text-white ${
         status === "ready"
           ? "h-screen bg-white dark:bg-background overflow-y-auto lg:overflow-hidden"
           : "bg-slate-50 dark:bg-background text-slate-900 dark:text-foreground relative justify-between overflow-x-hidden"
@@ -1203,8 +1203,9 @@ function SingleViewContent() {
                 <img src="/logo-day.svg" alt="BugSnap" className="w-8 h-8 shrink-0 object-contain transition-transform duration-200 group-hover:scale-105 dark:hidden" />
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img src="/logo-dark.svg" alt="BugSnap" className="w-8 h-8 shrink-0 object-contain transition-transform duration-200 group-hover:scale-105 hidden dark:block" />
-                <div className="min-w-0">
+                <div className="min-w-0 flex flex-col justify-center gap-0.5">
                   <span className="text-sm font-bold tracking-tight text-foreground leading-none truncate block">{brand.name}</span>
+                  <span className="text-[11px] font-medium leading-none text-muted truncate block">{t("layout.screenRecorder")}</span>
                 </div>
               </>
             )}
@@ -1306,18 +1307,22 @@ function SingleViewContent() {
             </Link>
           )}
           {!isTeamMember && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               <Link
                 href="/login"
-                className="px-3 sm:px-3.5 py-1.5 min-h-[38px] flex items-center rounded-xl border border-border bg-subtle/80 hover:bg-background text-xs font-semibold text-foreground transition-all shadow-2xs hover:shadow-xs touch-manipulation"
+                aria-label={t("site.nav.loginGoogle")}
+                className="inline-flex items-center justify-center gap-1.5 rounded-full border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 px-2.5 sm:px-4 py-2 min-h-[38px] text-[11px] sm:text-sm font-semibold text-slate-800 dark:text-slate-100 shadow-2xs transition-all hover:bg-slate-50 dark:hover:bg-slate-800 touch-manipulation"
               >
-                {t("v.signIn")}
-              </Link>
-              <Link
-                href="/"
-                className="px-3 sm:px-3.5 py-1.5 min-h-[38px] flex items-center rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] text-xs font-semibold text-white transition-all shadow-xs shadow-[#DC2626]/25 active:scale-95 touch-manipulation"
-              >
-                {t("login.backToHome")}
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="/icons/google.svg"
+                  alt=""
+                  aria-hidden="true"
+                  width={16}
+                  height={16}
+                  className="h-4 w-4 shrink-0"
+                />
+                <span className="hidden min-[390px]:inline">{t("site.nav.loginGoogle")}</span>
               </Link>
             </div>
           )}
@@ -1329,12 +1334,12 @@ function SingleViewContent() {
           {status === "loading" && (
             <div className="w-full max-w-5xl flex flex-col gap-6" role="status" aria-label={t("v.loadingCapture")}>
               <div className="relative h-[clamp(18rem,44vh,30rem)] sm:h-[clamp(28rem,72vh,60rem)] bg-subtle/80 rounded-3xl border border-border/70 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#DC2626]/5 to-transparent animate-pulse pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#2563EB]/5 to-transparent animate-pulse pointer-events-none" />
                 <div className="relative z-10 flex flex-col items-center gap-3">
-                  <div className="w-12 h-12 rounded-2xl bg-[#DC2626]/15 border border-[#DC2626]/30 flex items-center justify-center shadow-sm">
+                  <div className="w-12 h-12 rounded-2xl bg-[#2563EB]/15 border border-[#2563EB]/30 flex items-center justify-center shadow-sm">
                     <Icon
                       icon="lucide:loader-2"
-                      className="w-6 h-6 text-[#B91C1C] dark:text-[#F87171] animate-spin"
+                      className="w-6 h-6 text-[#2563EB] dark:text-[#3B82F6] animate-spin"
                       aria-hidden="true"
                     />
                   </div>
@@ -1372,7 +1377,7 @@ function SingleViewContent() {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full">
                 <Link
                   href={isTeamMember ? "/captures" : "/"}
-                  className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 min-h-[44px] rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-md shadow-[#DC2626]/20 hover:shadow-lg transition-all touch-manipulation"
+                  className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 min-h-[44px] rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-md shadow-[#2563EB]/20 hover:shadow-lg transition-all touch-manipulation"
                 >
                   <span>{isTeamMember ? t("v.backToDashboard") : t("login.backToHome")}</span>
                 </Link>
@@ -1406,7 +1411,7 @@ function SingleViewContent() {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full">
                 <Link
                   href="/"
-                  className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-md shadow-[#DC2626]/20 hover:shadow-lg transition-all"
+                  className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-md shadow-[#2563EB]/20 hover:shadow-lg transition-all"
                 >
                   <span>{t("login.backToHome")}</span>
                 </Link>
@@ -1439,7 +1444,7 @@ function SingleViewContent() {
 
               <Link
                 href="/"
-                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-md shadow-[#DC2626]/20 transition-all"
+                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-md shadow-[#2563EB]/20 transition-all"
               >
                 <span>{t("login.backToHome")}</span>
               </Link>
@@ -1448,11 +1453,11 @@ function SingleViewContent() {
 
           {status === "needs_login" && (
             <div className="relative w-full max-w-md mx-auto rounded-3xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle/80 backdrop-blur-xl shadow-2xl shadow-slate-200/60 dark:shadow-none p-5 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
-              <div className="relative mx-auto mb-5 flex items-center justify-center w-16 h-16 rounded-2xl bg-[#DC2626]/10 dark:bg-[#DC2626]/20 border border-[#DC2626]/30 dark:border-[#DC2626]/40 text-[#B91C1C] dark:text-[#F87171] shadow-xs">
+              <div className="relative mx-auto mb-5 flex items-center justify-center w-16 h-16 rounded-2xl bg-[#2563EB]/10 dark:bg-[#2563EB]/20 border border-[#2563EB]/30 dark:border-[#2563EB]/40 text-[#2563EB] dark:text-[#3B82F6] shadow-xs">
                 <Icon icon="lucide:lock" className="w-8 h-8" />
               </div>
 
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase bg-[#DC2626]/10 dark:bg-[#DC2626]/20 text-[#B91C1C] dark:text-[#F87171] mb-3 border border-[#DC2626]/30 dark:border-[#DC2626]/40">
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-md text-[11px] font-bold tracking-wide uppercase bg-[#2563EB]/10 dark:bg-[#2563EB]/20 text-[#2563EB] dark:text-[#3B82F6] mb-3 border border-[#2563EB]/30 dark:border-[#2563EB]/40">
                 Members Only
               </span>
 
@@ -1466,7 +1471,7 @@ function SingleViewContent() {
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3 w-full">
                 <a
                   href="/login"
-                  className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-md shadow-[#DC2626]/20 hover:shadow-lg transition-all"
+                  className="w-full sm:w-auto flex-1 inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-md shadow-[#2563EB]/20 hover:shadow-lg transition-all"
                 >
                   <span>{t("v.signIn")}</span>
                 </a>
@@ -1499,7 +1504,7 @@ function SingleViewContent() {
 
               <Link
                 href="/"
-                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-md shadow-[#DC2626]/20 transition-all"
+                className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:scale-95 text-white text-xs sm:text-sm font-semibold shadow-md shadow-[#2563EB]/20 transition-all"
               >
                 <span>{t("login.backToHome")}</span>
               </Link>
@@ -1508,7 +1513,7 @@ function SingleViewContent() {
 
           {status === "locked" && (
             <div className="relative w-full max-w-md mx-auto rounded-3xl border border-white/80 dark:border-border bg-white/80 dark:bg-subtle/80 backdrop-blur-xl shadow-2xl shadow-slate-200/60 dark:shadow-none p-5 sm:p-10 text-center animate-in fade-in zoom-in-95 duration-200">
-              <div className="relative mx-auto mb-5 flex items-center justify-center w-16 h-16 rounded-2xl bg-[#DC2626]/10 dark:bg-[#DC2626]/20 border border-[#DC2626]/30 dark:border-[#DC2626]/40 text-[#B91C1C] dark:text-[#F87171] shadow-xs">
+              <div className="relative mx-auto mb-5 flex items-center justify-center w-16 h-16 rounded-2xl bg-[#2563EB]/10 dark:bg-[#2563EB]/20 border border-[#2563EB]/30 dark:border-[#2563EB]/40 text-[#2563EB] dark:text-[#3B82F6] shadow-xs">
                 <Icon icon="lucide:lock" className="w-8 h-8" />
               </div>
 
@@ -1531,7 +1536,7 @@ function SingleViewContent() {
                     onChange={(e) => { setPasswordInput(e.target.value); setPasswordError(false); }}
                     placeholder={t("v.passwordPlaceholder")}
                     disabled={passwordRateLimited}
-                    className={`w-full text-sm rounded-xl border px-4 py-3 outline-none bg-subtle text-foreground placeholder:text-muted transition-all disabled:opacity-50 ${passwordError || passwordRateLimited ? "border-red-500 focus:ring-2 focus:ring-red-500/20" : "border-border focus:border-[#DC2626] focus:ring-2 focus:ring-[#DC2626]/20"}`}
+                    className={`w-full text-sm rounded-xl border px-4 py-3 outline-none bg-subtle text-foreground placeholder:text-muted transition-all disabled:opacity-50 ${passwordError || passwordRateLimited ? "border-red-500 focus:ring-2 focus:ring-red-500/20" : "border-border focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20"}`}
                   />
                 </div>
                 {passwordRateLimited ? (
@@ -1546,7 +1551,7 @@ function SingleViewContent() {
                 <button
                   type="submit"
                   disabled={checkingPassword || passwordRateLimited || !passwordInput.trim()}
-                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#DC2626] hover:bg-[#B91C1C] active:scale-95 py-3 text-sm font-semibold text-white shadow-md shadow-[#DC2626]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:scale-95 py-3 text-sm font-semibold text-white shadow-md shadow-[#2563EB]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {checkingPassword ? (
                     <>
@@ -1598,7 +1603,7 @@ function SingleViewContent() {
                             type="button"
                             disabled={movingCapture}
                             onClick={() => handleMoveCapture(null)}
-                            className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50 cursor-pointer ${!capture?.folder_name ? "font-semibold text-[#B91C1C] dark:text-[#F87171] bg-[#DC2626]/10 dark:bg-[#DC2626]/20" : ""}`}
+                            className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50 cursor-pointer ${!capture?.folder_name ? "font-semibold text-[#2563EB] dark:text-[#3B82F6] bg-[#2563EB]/10 dark:bg-[#2563EB]/20" : ""}`}
                           >
                             <span>{t("v.noFolder")}</span>
                             {!capture?.folder_name && <Icon icon="lucide:check" className="w-3.5 h-3.5 shrink-0" />}
@@ -1616,7 +1621,7 @@ function SingleViewContent() {
                                 disabled={movingCapture}
                                 onClick={() => handleMoveCapture(folder)}
                                 style={{ paddingLeft: `${12 + folderEntry.depth * 10}px` }}
-                                className={`w-full flex items-center justify-between truncate rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50 cursor-pointer ${isCurrent ? "font-semibold text-[#B91C1C] dark:text-[#F87171] bg-[#DC2626]/10 dark:bg-[#DC2626]/20" : ""}`}
+                                className={`w-full flex items-center justify-between truncate rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50 cursor-pointer ${isCurrent ? "font-semibold text-[#2563EB] dark:text-[#3B82F6] bg-[#2563EB]/10 dark:bg-[#2563EB]/20" : ""}`}
                               >
                                 <span className="flex items-center gap-2 truncate min-w-0">
                                   {folderEntry.depth > 0 && (
@@ -1642,7 +1647,7 @@ function SingleViewContent() {
                               <input autoFocus value={newFolderName} onChange={(e) => setNewFolderName(e.target.value)} placeholder={t("v.folderName")} className="w-full rounded-md border border-border bg-white dark:bg-zinc-800 text-foreground px-2 py-1 text-xs outline-none" />
                             </form>
                           ) : (
-                            <button type="button" onClick={() => setNewFolderMode(true)} className="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-red-700 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 cursor-pointer border-t border-border mt-1">{t("v.newFolder")}</button>
+                            <button type="button" onClick={() => setNewFolderMode(true)} className="w-full rounded-lg px-3 py-2 text-left text-xs font-semibold text-[#2563EB] dark:text-[#3B82F6] hover:bg-blue-50 dark:hover:bg-blue-950/30 cursor-pointer border-t border-border mt-1">{t("v.newFolder")}</button>
                           )}
                         </div>
                       )}
@@ -1650,9 +1655,9 @@ function SingleViewContent() {
                     <button
                       type="button"
                       onClick={handleCopyLink}
-                      className="inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg bg-red-600 px-2.5 sm:px-3.5 py-1.5 sm:py-2 min-h-[38px] text-xs font-semibold text-white shadow-xs shadow-red-600/25 hover:bg-red-700 transition cursor-pointer touch-manipulation shrink-0"
+                      className="inline-flex items-center justify-center gap-1.5 sm:gap-2 rounded-lg bg-[#2563EB] px-2.5 sm:px-3.5 py-1.5 sm:py-2 min-h-[38px] text-xs font-semibold text-white shadow-xs shadow-[#2563EB]/25 hover:bg-[#1D4ED8] transition cursor-pointer touch-manipulation shrink-0"
                     >
-                      <Icon icon="lucide:link" className="h-4 w-4 shrink-0" />
+                      <Icon icon="lucide:link" className="h-4 w-4 shrink-0 brightness-0 invert" />
                       <span>{copied ? t("v.copied") : t("v.copyLinkBtn")}</span>
                     </button>
                   </div>
@@ -1660,7 +1665,7 @@ function SingleViewContent() {
               </div>
             )}
 
-            <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_580px] xl:items-start">
+            <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_500px] xl:items-start">
               <section className="rounded-xl border border-border bg-white p-4 sm:p-6 lg:p-7 shadow-sm dark:bg-background">
                 <SubsystemErrorBoundary fallbackTitle="Media player error" fallbackDescription="An unexpected error occurred in the media player. Click retry to reload.">
                   <MediaViewer
@@ -1685,7 +1690,7 @@ function SingleViewContent() {
                     title={isTeamMember ? "Click to edit capture details" : undefined}
                   >
                     <div className="flex items-start justify-between gap-3">
-                      <h2 className="text-lg font-bold text-foreground group-hover:text-[#B91C1C] dark:group-hover:text-[#F87171] transition-colors">
+                      <h2 className="text-lg font-bold text-foreground group-hover:text-[#2563EB] dark:group-hover:text-[#3B82F6] transition-colors">
                         {capture.title}
                       </h2>
                       {isTeamMember && (
@@ -1707,13 +1712,13 @@ function SingleViewContent() {
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center gap-1.5 rounded-md border border-[#DC2626]/30 bg-[#DC2626]/10 px-2.5 py-1 font-medium text-[#B91C1C] dark:text-[#F87171] hover:bg-[#DC2626]/20 transition-colors"
+                          className="inline-flex items-center gap-1.5 rounded-md border border-[#2563EB]/30 bg-[#2563EB]/10 px-2.5 py-1 font-medium text-[#2563EB] dark:text-[#3B82F6] hover:bg-[#2563EB]/20 transition-colors"
                         >
                           <WebsiteFavicon url={capture.site_url} className="h-3.5 w-3.5 rounded-sm object-contain shrink-0" />
                           <span>{hostnameOf(capture.site_url)}</span>
                         </a>
                       ) : capture.site_url ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-md border border-[#DC2626]/30 bg-[#DC2626]/10 px-2.5 py-1 font-medium text-[#B91C1C] dark:text-[#F87171]">
+                        <span className="inline-flex items-center gap-1.5 rounded-md border border-[#2563EB]/30 bg-[#2563EB]/10 px-2.5 py-1 font-medium text-[#2563EB] dark:text-[#3B82F6]">
                           <span>{capture.site_url}</span>
                         </span>
                       ) : null}
@@ -1777,13 +1782,13 @@ function SingleViewContent() {
                   <div>
                     <h3 className="mb-4 text-base font-bold text-foreground">{t("v.shareCapture")}</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5 text-center items-stretch">
-                      <button type="button" onClick={() => setShareType("devtools")} className={`h-full flex flex-col items-center rounded-lg border p-3 sm:p-4 text-xs font-semibold ${shareType === "devtools" ? "border-[#DC2626] text-[#B91C1C] dark:text-[#F87171]" : "border-border text-muted hover:text-foreground"}`}>
-                        <div className="mb-2 sm:mb-3 flex h-10 sm:h-12 w-16 sm:w-20 items-center justify-center rounded-md border border-[#DC2626]/30 bg-[#DC2626]/10 text-[#B91C1C] dark:text-[#F87171] text-xs sm:text-sm">▷ ▯</div>
+                      <button type="button" onClick={() => setShareType("devtools")} className={`h-full flex flex-col items-center rounded-lg border p-3 sm:p-4 text-xs font-semibold ${shareType === "devtools" ? "border-[#2563EB] text-[#2563EB] dark:text-[#3B82F6]" : "border-border text-muted hover:text-foreground"}`}>
+                        <div className="mb-2 sm:mb-3 flex h-10 sm:h-12 w-16 sm:w-20 items-center justify-center rounded-md border border-[#2563EB]/30 bg-[#2563EB]/10 text-[#2563EB] dark:text-[#3B82F6] text-xs sm:text-sm">▷ ▯</div>
                         <span>{t("v.withDevTools")}</span>
                         <p className="mt-1 text-[10px] font-normal text-muted">{t("v.withDevToolsHint")}</p>
                       </button>
-                      <button type="button" onClick={() => setShareType("content")} className={`h-full flex flex-col items-center rounded-lg border p-3 sm:p-4 text-xs font-semibold ${shareType === "content" ? "border-[#DC2626] text-[#B91C1C] dark:text-[#F87171]" : "border-border text-muted hover:text-foreground"}`}>
-                        <div className="mb-2 sm:mb-3 flex h-10 sm:h-12 w-16 sm:w-20 items-center justify-center rounded-md border border-[#DC2626]/30 bg-[#DC2626]/10 text-[#B91C1C] dark:text-[#F87171] text-xs sm:text-sm">▷</div>
+                      <button type="button" onClick={() => setShareType("content")} className={`h-full flex flex-col items-center rounded-lg border p-3 sm:p-4 text-xs font-semibold ${shareType === "content" ? "border-[#2563EB] text-[#2563EB] dark:text-[#3B82F6]" : "border-border text-muted hover:text-foreground"}`}>
+                        <div className="mb-2 sm:mb-3 flex h-10 sm:h-12 w-16 sm:w-20 items-center justify-center rounded-md border border-[#2563EB]/30 bg-[#2563EB]/10 text-[#2563EB] dark:text-[#3B82F6] text-xs sm:text-sm">▷</div>
                         <span>{t("v.contentOnly")}</span>
                         <p className="mt-1 text-[10px] font-normal text-muted">{t("v.contentOnlyHint")}</p>
                       </button>
@@ -1794,7 +1799,7 @@ function SingleViewContent() {
                         <div ref={accessMenuRef} className="relative">
                           <button type="button" onClick={() => setAccessOpen((open) => !open)} className="flex w-full items-center justify-between rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-subtle">
                             <span className="flex items-center gap-2"><Icon icon="lucide:globe" className="h-4 w-4" />{accessMode === "members" ? t("v.membersOnly") : t("v.anyoneWithLink")}</span>
-                            
+                            <Icon icon="lucide:chevron-down" className={`h-4 w-4 text-muted shrink-0 transition-transform ${accessOpen ? "rotate-180" : ""}`} />
                           </button>
                           {accessOpen && (
                             <div className="absolute left-0 right-0 top-full z-50 mt-2 rounded-xl border border-border bg-white dark:bg-zinc-900 p-1 shadow-xl">
@@ -1807,15 +1812,15 @@ function SingleViewContent() {
                     )}
                   </div>
                   <div className="mt-6 pt-2">
-                    <button type="button" onClick={handleCopyLink} className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] py-3 min-h-[44px] text-sm font-semibold text-white shadow-xs shadow-[#89BD49]/25 touch-manipulation cursor-pointer">
-                      <Icon icon="lucide:link" className="h-4 w-4" />
+                    <button type="button" onClick={handleCopyLink} className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] py-3 min-h-[44px] text-sm font-semibold text-white shadow-xs shadow-[#2563EB]/25 touch-manipulation cursor-pointer">
+                      <Icon icon="lucide:link" className="h-4 w-4 brightness-0 invert" />
                       {copied ? t("v.copiedLink") : t("v.copyLinkBtn")}
                     </button>
                     {isWorkspaceOwner && (
                       <button
                         type="button"
                         onClick={handleDeleteCapture}
-                        className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-lg border border-red-200 dark:border-red-900/60 bg-white dark:bg-red-950/20 py-2.5 min-h-[44px] text-xs font-semibold text-red-600 dark:text-red-400 shadow-sm hover:bg-red-50 dark:hover:bg-red-950/40 hover:border-red-300 dark:hover:border-red-800 transition-colors touch-manipulation cursor-pointer"
+                        className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-lg border border-rose-200 dark:border-rose-900/60 bg-white dark:bg-rose-950/20 py-2.5 min-h-[44px] text-xs font-semibold text-rose-600 dark:text-rose-400 shadow-sm hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:border-rose-300 dark:hover:border-rose-800 transition-colors touch-manipulation cursor-pointer"
                       >
                         <Icon icon="lucide:trash-2" className="h-3.5 w-3.5" />
                         {t("v.deleteCapture")}
@@ -1904,10 +1909,10 @@ function SingleViewContent() {
             </div>
             <div className="flex justify-end gap-2 mt-6 pt-4 border-t border-border">
               <button onClick={() => setEditModalOpen(false)} className="px-4 py-2 text-xs font-medium text-muted hover:text-foreground">{t("common.cancel")}</button>
-              <button onClick={handleSaveEdit} disabled={savingEdit} className="px-4 py-2 text-xs font-semibold bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-xs shadow-[#89BD49]/25 rounded-lg disabled:opacity-50 min-w-[125px] inline-flex items-center justify-center gap-1.5">
+              <button onClick={handleSaveEdit} disabled={savingEdit} className="px-4 py-2 text-xs font-semibold bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs shadow-[#2563EB]/25 rounded-lg disabled:opacity-50 min-w-[125px] inline-flex items-center justify-center gap-1.5">
                 {savingEdit ? (
                   <>
-                    <Icon icon="lucide:loader-circle" className="w-3.5 h-3.5 animate-spin text-white" />
+                    <Icon icon="lucide:loader-circle" className="w-3.5 h-3.5 animate-spin text-white brightness-0 invert" />
                     <span>{t("v.saving")}</span>
                   </>
                 ) : (
@@ -1943,7 +1948,7 @@ function SingleViewContent() {
                 <span><span className="block text-xs font-semibold text-foreground">{t("v.BugSnapOnly")}</span><span className="block text-[11px] text-muted mt-0.5">{t("v.BugSnapOnlyHint")}</span></span>
               </label>
             </fieldset>
-            {driveIssue && <div className="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-lg p-2 mb-3 flex items-center justify-between gap-3"><span>{driveIssue === "reconnect_required" ? t("cap.driveReconnectRequired") : t("v.driveNotConnected")}</span><button type="button" onClick={() => void startDriveConnect()} className="font-semibold text-[#B91C1C] dark:text-[#F87171] hover:underline">{driveIssue === "reconnect_required" ? t("cap.reconnectDrive") : t("cap.connectDrive")}</button></div>}
+            {driveIssue && <div className="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-lg p-2 mb-3 flex items-center justify-between gap-3"><span>{driveIssue === "reconnect_required" ? t("cap.driveReconnectRequired") : t("v.driveNotConnected")}</span><button type="button" onClick={() => void startDriveConnect()} className="font-semibold text-[#2563EB] dark:text-[#3B82F6] hover:underline">{driveIssue === "reconnect_required" ? t("cap.reconnectDrive") : t("cap.connectDrive")}</button></div>}
             {deleteCaptureError && <p role="alert" className="text-xs text-red-600 dark:text-red-400 mb-3">{deleteCaptureError}</p>}
             
             <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">

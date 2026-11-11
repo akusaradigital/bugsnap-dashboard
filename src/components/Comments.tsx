@@ -12,8 +12,7 @@ const REPLIES_COLLAPSE_AFTER = 3;
 
 const TURNSTILE_SITEKEY =
   process.env.NEXT_PUBLIC_TURNSTILE_SITEKEY ?? "0x4AAAAAAEKHTA3AvZpK27ig";
-const TURNSTILE_WORKER =
-  "https://turnstile-siteverify-bugsnap.akusaraproject.workers.dev";
+const TURNSTILE_VERIFY_ENDPOINT = "/api/security/turnstile";
 
 declare global {
   interface Window {
@@ -63,7 +62,7 @@ interface CommentsProps {
 }
 
 const AVATAR_COLORS = [
-  "bg-[#DC2626]/15 text-[#B91C1C] dark:text-[#F87171]",
+  "bg-[#2563EB]/15 text-[#1D4ED8] dark:text-[#3B82F6]",
   "bg-emerald-100 text-emerald-700",
   "bg-amber-100 text-amber-700",
   "bg-rose-100 text-rose-700",
@@ -226,40 +225,26 @@ function Comments({
     };
   }, [authorEmail, t]);
 
-  // Validate the Turnstile token against the managed siteverify Worker.
+  // Validate the token through our server route; the Turnstile secret never reaches the browser.
   const verifyTurnstile = useCallback(async (): Promise<boolean> => {
-    // Authenticated workspace members/users bypass Turnstile
-    if (authorEmail) {
-      return true;
-    }
-    if (!cfToken) {
-      return true; // Bypass if token wasn't required/loaded
-    }
+    if (authorEmail || !cfToken) return true;
     setCfVerifying(true);
     try {
-      const res = await fetch(TURNSTILE_WORKER, {
+      const res = await fetch(TURNSTILE_VERIFY_ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: cfToken }),
       });
-      if (!res.ok) {
-        // If worker returns 405/500/404 or backend misconfigured, don't block user from posting
-        console.warn(
-          "Turnstile worker check non-200, allowing post gracefully",
+      const data = (await res.json().catch(() => ({}))) as {
+        ok?: boolean;
+        error?: string;
+      };
+      if (!res.ok || data.ok !== true) {
+        setCfError(
+          data.error === "TURNSTILE_UNAVAILABLE"
+            ? "Anti-bot verification is temporarily unavailable. Try again."
+            : "Anti-bot check failed. Try again.",
         );
-        return true;
-      }
-      const data = await res.json();
-      if (data?.ok === false || (data?.success === false && data?.error)) {
-        console.warn("Turnstile verification check failed:", data);
-        // If it's a backend config error on the worker (like missing secret), allow gracefully
-        if (
-          typeof data?.error === "string" &&
-          data.error.includes("SECRET_KEY")
-        ) {
-          return true;
-        }
-        setCfError("Anti-bot check failed. Try again.");
         setCfToken(null);
         if (widgetIdRef.current && window.turnstile) {
           try {
@@ -272,9 +257,8 @@ function Comments({
       }
       return true;
     } catch {
-      // Network or worker down fallback: allow post so user is not blocked
-      console.warn("Turnstile siteverify unreachable, allowing post");
-      return true;
+      setCfError("Anti-bot verification is temporarily unavailable. Try again.");
+      return false;
     } finally {
       setCfVerifying(false);
     }
@@ -596,7 +580,7 @@ function Comments({
     <div className="space-y-3 min-w-0">
       <div className="flex items-center justify-between min-w-0">
         <div className="flex items-center gap-2 min-w-0">
-          <div className="flex h-5 w-5 items-center justify-center rounded-md bg-[#DC2626]/15 text-[#B91C1C] dark:text-[#F87171]">
+          <div className="flex h-5 w-5 items-center justify-center rounded-md bg-[#2563EB]/15 text-[#2563EB] dark:text-[#3B82F6]">
             <Icon icon="lucide:message-square" className="h-3 w-3" />
           </div>
           <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">
@@ -647,7 +631,7 @@ function Comments({
                 <button
                   type="button"
                   onClick={() => setShowAllComments(true)}
-                  className="w-full rounded-lg border border-dashed border-border/70 py-2 text-[11px] font-semibold text-muted hover:text-[#B91C1C] hover:border-[#DC2626]/40 transition-colors"
+                  className="w-full rounded-lg border border-dashed border-border/70 py-2 text-[11px] font-semibold text-muted hover:text-[#1D4ED8] hover:border-[#2563EB]/40 transition-colors"
                 >
                   {t("cm.showPrevious", { count: hiddenCount })}
                 </button>
@@ -684,7 +668,7 @@ function Comments({
                         data-comment-id={c.id}
                         className={`rounded-xl border bg-white dark:bg-zinc-900 p-3.5 shadow-xs transition-all ${
                           highlightId === c.id
-                            ? "border-[#DC2626] ring-2 ring-[#DC2626]/20"
+                            ? "border-[#2563EB] ring-2 ring-[#2563EB]/20"
                             : "border-border/70 hover:border-border"
                         }`}
                       >
@@ -694,7 +678,7 @@ function Comments({
                               {name}
                             </span>
                             {isCurrentUser && (
-                              <span className="rounded-md bg-[#DC2626]/10 px-2 py-0.5 text-[9px] font-semibold text-[#B91C1C] border border-[#DC2626]/20 dark:bg-[#DC2626]/15 dark:border-[#DC2626]/30 dark:text-[#F87171]">
+                              <span className="rounded-md bg-[#2563EB]/10 px-2 py-0.5 text-[9px] font-semibold text-[#1D4ED8] border border-[#2563EB]/20 dark:bg-[#2563EB]/15 dark:border-[#2563EB]/30 dark:text-[#3B82F6]">
                                 You
                               </span>
                             )}
@@ -705,7 +689,7 @@ function Comments({
                                 title={t("cm.jumpTo", {
                                   time: formatTimestamp(ts),
                                 })}
-                                className="inline-flex items-center gap-1 rounded-md bg-[#DC2626]/10 px-1.5 py-0.5 text-[10px] font-mono font-semibold text-[#B91C1C] border border-[#DC2626]/20 hover:bg-[#DC2626]/20 dark:bg-[#DC2626]/15 dark:text-[#F87171] transition-colors cursor-pointer"
+                                className="inline-flex items-center gap-1 rounded-md bg-[#2563EB]/10 px-1.5 py-0.5 text-[10px] font-mono font-semibold text-[#1D4ED8] border border-[#2563EB]/20 hover:bg-[#2563EB]/20 dark:bg-[#2563EB]/15 dark:text-[#3B82F6] transition-colors cursor-pointer"
                               >
                                 <Icon icon="lucide:clock" className="h-2.5 w-2.5 shrink-0" />
                                 <span>@ {formatTimestamp(ts)}</span>
@@ -733,7 +717,7 @@ function Comments({
                             onClick={() =>
                               setReplyingTo(replyingTo === c.id ? null : c.id)
                             }
-                            className="inline-flex items-center gap-1 text-[11px] font-medium text-muted hover:text-[#B91C1C] transition-colors"
+                            className="inline-flex items-center gap-1 text-[11px] font-medium text-muted hover:text-[#1D4ED8] transition-colors"
                           >
                             <Icon icon="lucide:reply" className="h-3 w-3 shrink-0" />
                             <span>{t("cm.reply") || "Reply"}</span>
@@ -743,7 +727,7 @@ function Comments({
 
                       {/* Reply Composer */}
                       {replyingTo === c.id && (
-                        <div className="mt-2.5 flex flex-wrap items-center gap-2 pl-2 sm:pl-3 border-l-2 border-[#DC2626]/50 min-w-0">
+                        <div className="mt-2.5 flex flex-wrap items-center gap-2 pl-2 sm:pl-3 border-l-2 border-[#2563EB]/50 min-w-0">
                           <input
                             value={replyBody}
                             onChange={(e) => setReplyBody(e.target.value)}
@@ -756,7 +740,7 @@ function Comments({
                             placeholder={
                               t("cm.replyTo", { name }) || `Reply to ${name}...`
                             }
-                            className="w-full sm:flex-1 text-xs rounded-lg border border-border px-3 py-2 outline-none focus:border-[#DC2626] bg-white dark:bg-zinc-900 shadow-xs min-w-0"
+                            className="w-full sm:flex-1 text-xs rounded-lg border border-border px-3 py-2 outline-none focus:border-[#2563EB] bg-white dark:bg-zinc-900 shadow-xs min-w-0"
                             autoFocus
                           />
                           <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
@@ -764,7 +748,7 @@ function Comments({
                               type="button"
                               onClick={() => handleReply(c.id)}
                               disabled={replying || !replyBody.trim()}
-                              className="flex-1 sm:flex-initial px-3 py-1.5 sm:py-2 rounded-lg bg-[#89BD49] text-white text-xs font-semibold hover:bg-[#6B9A35] shadow-xs shadow-[#89BD49]/25 disabled:opacity-40 transition-colors shrink-0 text-center"
+                              className="flex-1 sm:flex-initial px-3 py-1.5 sm:py-2 rounded-lg bg-[#2563EB] text-white text-xs font-semibold hover:bg-[#1D4ED8] shadow-xs shadow-[#2563EB]/25 disabled:opacity-40 transition-colors shrink-0 text-center"
                             >
                               {replying
                                 ? t("cm.posting") || "..."
@@ -790,7 +774,7 @@ function Comments({
                               onClick={() =>
                                 setExpandedReplies((prev) => [...prev, c.id])
                               }
-                              className="text-[11px] font-semibold text-muted hover:text-[#B91C1C] transition-colors"
+                              className="text-[11px] font-semibold text-muted hover:text-[#1D4ED8] transition-colors"
                             >
                               {t("cm.showReplies", { count: hiddenReplies })}
                             </button>
@@ -819,7 +803,7 @@ function Comments({
                                   data-comment-id={r.id}
                                   className={`flex-1 min-w-0 rounded-lg border bg-subtle/30 dark:bg-zinc-900/40 p-2.5 transition-all ${
                                     highlightId === r.id
-                                      ? "border-[#DC2626] ring-2 ring-[#DC2626]/20"
+                                      ? "border-[#2563EB] ring-2 ring-[#2563EB]/20"
                                       : "border-border/50"
                                   }`}
                                 >
@@ -829,7 +813,7 @@ function Comments({
                                         {rName}
                                       </span>
                                       {isReplyUser && (
-                                        <span className="rounded-md bg-[#DC2626]/10 px-1.5 py-0.5 text-[8px] font-semibold text-[#B91C1C] border border-[#DC2626]/20 dark:bg-[#DC2626]/15 dark:border-[#DC2626]/30 dark:text-[#F87171]">
+                                        <span className="rounded-md bg-[#2563EB]/10 px-1.5 py-0.5 text-[8px] font-semibold text-[#1D4ED8] border border-[#2563EB]/20 dark:bg-[#2563EB]/15 dark:border-[#2563EB]/30 dark:text-[#3B82F6]">
                                           You
                                         </span>
                                       )}
@@ -864,7 +848,7 @@ function Comments({
           {effAuthorName ? effAuthorName.charAt(0).toUpperCase() : <Icon icon="lucide:user" className="h-3.5 w-3.5" />}
         </div>
 
-        <div className="flex-1 min-w-0 rounded-xl border border-border bg-white dark:bg-zinc-900 shadow-xs transition-all focus-within:border-[#DC2626] focus-within:ring-2 focus-within:ring-[#DC2626]/15 overflow-hidden">
+        <div className="flex-1 min-w-0 rounded-xl border border-border bg-white dark:bg-zinc-900 shadow-xs transition-all focus-within:border-[#2563EB] focus-within:ring-2 focus-within:ring-[#2563EB]/15 overflow-hidden">
           <textarea
             value={body}
             onChange={(e) => setBody(e.target.value)}
@@ -890,7 +874,7 @@ function Comments({
                   onClick={() => setTimestampOn(!timestampOn)}
                   className={`inline-flex items-center gap-1.5 rounded-lg px-2 py-0.5 text-[10px] font-medium transition-colors ${
                     timestampOn
-                      ? "bg-[#DC2626]/15 text-[#B91C1C] dark:bg-[#DC2626]/20 dark:text-[#F87171] font-mono font-semibold border border-[#DC2626]/30"
+                      ? "bg-[#2563EB]/15 text-[#1D4ED8] dark:bg-[#2563EB]/20 dark:text-[#3B82F6] font-mono font-semibold border border-[#2563EB]/30"
                       : "text-muted hover:bg-subtle hover:text-foreground border border-transparent"
                   }`}
                   title={
@@ -934,17 +918,17 @@ function Comments({
                 type="button"
                 onClick={handleSubmit}
                 disabled={submitting || cfVerifying || !body.trim()}
-                className="inline-flex items-center gap-1.5 rounded-lg bg-[#89BD49] px-3 py-1 text-xs font-semibold text-white shadow-xs shadow-[#89BD49]/25 hover:bg-[#6B9A35] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+                className="inline-flex items-center gap-1.5 rounded-lg bg-[#2563EB] px-3 py-1 text-xs font-semibold text-white shadow-xs shadow-[#2563EB]/25 hover:bg-[#1D4ED8] disabled:opacity-40 disabled:cursor-not-allowed transition-all"
               >
                 {submitting || cfVerifying ? (
                   <>
-                    <Icon icon="lucide:loader-circle" className="h-3.5 w-3.5 animate-spin" />
+                    <Icon icon="lucide:loader-circle" className="h-3.5 w-3.5 animate-spin brightness-0 invert" />
                     <span>{t("cm.posting") || "Posting..."}</span>
                   </>
                 ) : (
                   <>
                     <span>{t("cm.post") || "Comment"}</span>
-                    <Icon icon="lucide:send" className="h-3 w-3 shrink-0" />
+                    <Icon icon="lucide:send" className="h-3 w-3 shrink-0 brightness-0 invert" />
                   </>
                 )}
               </button>

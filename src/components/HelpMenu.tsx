@@ -101,9 +101,9 @@ export default function HelpMenu({ className = "" }: HelpMenuProps) {
         aria-label={t("helpMenu.helpAndResources")}
         aria-expanded={isOpen}
         aria-haspopup="menu"
-        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-[#DC2626]/30 ${
+        className={`w-7 h-7 sm:w-8 sm:h-8 rounded-full border flex items-center justify-center transition-colors focus:outline-none focus:ring-2 focus:ring-[#2563EB]/30 ${
           isOpen
-            ? "border-[#DC2626] bg-[#DC2626]/10 text-[#B91C1C] dark:text-[#F87171]"
+            ? "border-[#2563EB] bg-[#2563EB]/10 text-[#2563EB] dark:text-[#3B82F6]"
             : "border-border bg-white dark:bg-zinc-900 text-muted hover:text-foreground hover:bg-subtle hover:border-border/80"
         }`}
       >

@@ -14,12 +14,16 @@ type StaticIconProps = Omit<ImgHTMLAttributes<HTMLImageElement>, "src" | "alt" |
 const OFFLINE_ICON_PATHS: Record<string, string> = {
   "lucide:alert-triangle": "/icons/lucide-circle-alert.svg",
   "lucide:alert-circle": "/icons/lucide-circle-alert.svg",
-  "lucide:x-circle": "/icons/lucide-x.svg",
+  "lucide:x-circle": "/icons/lucide-x-circle.svg",
+  "custom:x-white": "/icons/lucide-x-white.svg",
   "lucide:trash-2": "/icons/trash.svg",
   "lucide:edit-3": "/icons/edit.svg",
+  "lucide:edit-2": "/icons/edit.svg",
+  "lucide:more-horizontal": "/icons/lucide-more-horizontal.svg",
   "lucide:more-vertical": "/icons/lucide-menu.svg",
   "lucide:bar-chart-2": "/icons/lucide-pie-chart.svg",
   "lucide:check-circle": "/icons/lucide-check.svg",
+  "lucide:cookie": "/icons/lucide-cookie.svg",
   "lucide:chevron-down": "/icons/chevron-down.svg",
   "lucide:arrow-up": "/icons/lucide-arrow-up.svg",
   "logos:github-icon": "/integrations/github.png",
@@ -35,6 +39,7 @@ const OFFLINE_ICON_PATHS: Record<string, string> = {
   "tabler:alert-triangle": "/icons/lucide-circle-alert.svg",
   "tabler:circle-check": "/icons/lucide-check.svg",
   "tabler:loader-2": "/icons/lucide-loader-circle.svg",
+  "lucide:loader-2": "/icons/lucide-loader-circle.svg",
   "tabler:player-play": "/icons/lucide-play.svg",
   "tabler:shield-check": "/icons/lucide-shield-check.svg",
   "tabler:sparkles": "/icons/lucide-sparkles.svg",
@@ -55,14 +60,31 @@ export function Icon({
 }: StaticIconProps) {
   const mergedStyle: CSSProperties = {
     ...style,
-    color,
+    color: color ?? style?.color,
     width: width ?? style?.width,
     height: height ?? style?.height,
+    minWidth: style?.minWidth ?? 0,
   };
 
   const handleIconError = (event: SyntheticEvent<HTMLImageElement>) => {
     event.currentTarget.style.display = "none";
   };
+
+  if (icon === "custom:folder-filled") {
+    return createElement(
+      "svg",
+      {
+        ...props,
+        viewBox: "0 0 24 24",
+        fill: "currentColor",
+        xmlns: "http://www.w3.org/2000/svg",
+        style: mergedStyle,
+      },
+      createElement("path", {
+        d: "M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z",
+      }),
+    );
+  }
 
   return createElement("img", {
     src: iconPath(icon),

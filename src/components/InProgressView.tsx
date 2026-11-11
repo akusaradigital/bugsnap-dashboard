@@ -22,7 +22,7 @@ export function InProgressView({
   const { t } = useT();
 
   const baseTitle = t("inProgress.title");
-  const title = customTitle || (featureName ? `${featureName} — ${baseTitle}` : baseTitle);
+  const title = customTitle || (featureName ? `${featureName} -${baseTitle}` : baseTitle);
   const desc = customDesc || t("inProgress.desc");
   const resolvedBackLabel = backLabel || t("inProgress.backHome");
 

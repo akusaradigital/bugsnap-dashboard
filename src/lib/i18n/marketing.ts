@@ -177,7 +177,7 @@ export const marketingEn: Dict = {
   "landing.refundPolicy": "Refund & Cancellation",
   "landing.consumerProtection": "Consumer Protection",
   "landing.consumerComplaints": "Consumer Complaints",
-  "landing.consumerProtectionNotice": "Built with GDPR privacy standards. Zero Server Storage streams all your screenshots and screen recordings straight to your own Google Drive.",
+  "landing.consumerProtectionNotice": "Built with GDPR privacy standards.\nZero Server Storage streams all your screenshots and screen recordings straight to your own Google Drive.",
   "landing.complaintContact": "Support & Inquiries: support@akusaradigital.com",
   "landing.operatedBy": "BugSnap is built by Akusara Digital.",
   "landing.compare": "Visual Compare",
@@ -306,7 +306,7 @@ export const marketingEn: Dict = {
   "features.title": "The bug reporting toolkit",
   "features.titleHighlight": "built for high-velocity teams",
   "features.subtitle":
-    "From intelligent capture to automated debugging, BugSnap gives modern teams visibility, context, and AI-ready data — without slowing down their workflow.",
+    "From intelligent capture to automated debugging, BugSnap gives modern teams visibility, context, and AI-ready data -without slowing down their workflow.",
   "features.breadcrumb": "Product Capabilities",
   "features.tabAll": "All Capabilities",
   "features.tabOverview": "Overview",
@@ -322,7 +322,7 @@ export const marketingEn: Dict = {
   "features.s1Eyebrow": "DEVTOOLS & TELEMETRY",
   "features.s1Title": "Automated Console & Network Telemetry",
   "features.s1Desc":
-    "BugSnap automatically captures browser console logs, network requests, errors, and key runtime data so you get the full technical context of an issue — without asking users to do anything manually.",
+    "BugSnap automatically captures browser console logs, network requests, errors, and key runtime data so you get the full technical context of an issue -without asking users to do anything manually.",
   "features.s1Bullet1":
     "Captures logs, network requests, and error messages with rich metadata (URL, headers, status, etc.)",
   "features.s1Bullet2":
@@ -342,11 +342,11 @@ export const marketingEn: Dict = {
   "features.s3Eyebrow": "PRIVACY & DATA CONTROL",
   "features.s3Title": "Client-Side Redaction & Zero Server Retention",
   "features.s3Desc":
-    "Keep sensitive information safe. Redact personal data directly in your browser before it's saved, and store everything in your own Google Drive — with zero server retention.",
+    "Keep sensitive information safe. Redact personal data directly in your browser before it's saved, and store everything in your own Google Drive -with zero server retention.",
   "features.s3Bullet1":
     "Automatic and manual redaction for emails, tokens, credit cards, phone numbers, and custom patterns",
   "features.s3Bullet2":
-    "Data never stored on our servers — saved directly to your Google Drive",
+    "Data never stored on our servers -saved directly to your Google Drive",
   "features.s3Bullet3":
     "Full control over what to include or exclude",
   "features.s4Eyebrow": "PERFORMANCE & DIAGNOSTICS",
@@ -479,8 +479,9 @@ export const marketingEn: Dict = {
   "pricing.faqA4": "All past screenshots and screen recordings already in your Google Drive remain untouched and accessible forever. Your team simply transitions to Free tier workspace limits for future captures.",
   "pricing.faqQ5": "Do you offer discounts for educational or non-profit teams?",
   "pricing.faqA5": "Yes! We offer 50% discounts for verified educational institutions and registered non-profit organizations. Contact our team to apply.",
+  "pricing.bottomCtaEyebrow": "READY TO GET STARTED?",
   "pricing.bottomCtaTitle": "Ready to capture cleaner bug reports?",
-  "pricing.bottomCtaSub": "Install the free Chrome extension in 10 seconds and capture your first bug with DevTools logs today.",
+  "pricing.bottomCtaSub": "Install the free extension and capture your first bug with DevTools logs today.",
   "pricing.bottomCtaBtn": "Add to Chrome - Free",
   "pricing.customTitle": "Need a tailored solution?",
   "pricing.customDesc":
@@ -682,9 +683,10 @@ export const marketingEn: Dict = {
   "about.complianceCol3Title": "Security & Responsible Disclosure",
   "about.complianceCol3Desc":
     "Engineered with real-world security standards. Standardized vulnerability disclosure policy via RFC 9116 security.txt.",
+  "about.ctaEyebrow": "READY TO GET STARTED?",
   "about.ctaTitle": "Start capturing and resolving bugs with BugSnap",
   "about.ctaSubtitle":
-    "Install the Chrome extension in seconds and experience the fastest path from bug discovery to code commit.",
+    "Install the Chrome extension and go from bug discovery to code commit in seconds.",
   "about.ctaButton": "Add to Chrome - Free",
   "docs.title": "Guides, references &",
   "docs.titleHighlight": "developer docs",
@@ -737,7 +739,7 @@ export const marketingEn: Dict = {
   "docs.mcpSubtitle":
     "Connect BugSnap to Claude Code, Cursor, or any MCP-compatible AI agent so it can create full bug reports, including recordings, with one command.",
   "docs.mcpIntro":
-    "Use BugSnap as an MCP (Model Context Protocol) server to let your AI agent capture, analyze, and so it can create bug reports — with screen recordings, console logs, network requests, and environment info.",
+    "Use BugSnap as an MCP (Model Context Protocol) server to let your AI agent capture, analyze, and so it can create bug reports -with screen recordings, console logs, network requests, and environment info.",
   "docs.mcpStep1Title": "Generate a BugSnap API key",
   "docs.mcpStep1Desc": "Create an API key in your BugSnap account to authorize the MCP connection.",
   "docs.mcpStep1Cta": "Go to Settings  API Keys",
@@ -769,7 +771,7 @@ export const marketingEn: Dict = {
   "docs.goToSettings": "Configure in Workspace Settings",
   "docs.howWeTest": "Universal Credential Probe",
   "docs.probeTitle": "Pre-flight Verification Engine Built-In",
-  "docs.probeDesc": "Every integration in BugSnap features a non-mutating 'Test Connection' probe. It validates your tokens, project keys, and database permissions using read-only API calls — without spamming your issue trackers with fake test tickets or consuming chat prompt quotas.",
+  "docs.probeDesc": "Every integration in BugSnap features a non-mutating 'Test Connection' probe. It validates your tokens, project keys, and database permissions using read-only API calls -without spamming your issue trackers with fake test tickets or consuming chat prompt quotas.",
   "docs.openSettings": "Test in Settings ",
   "docs.catAll": "All",
   "docs.catTrackers": "Issue Trackers",
@@ -985,13 +987,20 @@ export const marketingEn: Dict = {
     "We only store: metadata needed to render the dashboard and tracking (title, type, duration, OS, browser, timestamps), plus comments/captures you explicitly delete from the dashboard. We never store your Google passwords, Drive file contents, or browsing history.",
   "security.deleteNote":
     "You can delete any capture or its metadata at any time.",
+  "security.ctaEyebrow": "READY TO GET STARTED?",
   "security.ctaTitle": "Trust BugSnap with your bug reports",
   "security.ctaDesc":
-    "Install the extension for free. Your captures stay in your own Google Drive, and paid plans add advanced team security.",
+    "Free to install. Your captures stay in your own Google Drive.",
   "security.installFree": "Add to Chrome",
   "security.seePricing": "See Pricing",
   "security.readPrivacy": "Read the full Privacy Policy",
   "security.verifiedBadge": "Verified Architecture",
+  "support.welcomeTitle": "Need help?",
+  "support.welcomeDesc": "How can we help you today?",
+  "support.onlineTitle": "We are online",
+  "support.onlineDesc": "Typically replies in a few minutes.",
+  "support.onlineLabel": "Online",
+  "support.startConversation": "Start conversation",
   "support.btn": "Customer Support",
   "support.helpPrompt": "Need help? Contact us now!",
   "support.title": "Customer Support",
@@ -1343,6 +1352,7 @@ export const marketingEn: Dict = {
   "status.uptimeHistory": "Uptime History (Last 90 Days)",
   "status.daysAgo": "90 days ago",
   "status.today": "Today",
+  "status.ctaEyebrow": "READY TO GET STARTED?",
   "status.ctaTitle": "Ready for bug reports",
   "status.ctaDesc":
     "Install BugSnap and save captures to your Google Drive.",
@@ -1583,7 +1593,7 @@ export const marketingEn: Dict = {
     "BugSnap is architected from day one so that video recordings, screenshots, and replay data stream directly from your browser to your own Google Drive. We only store encrypted metadata.",
   "site.trust.browserTitle": "Your Browser",
   "site.trust.browserBadge": "CLIENT-SIDE",
-  "site.trust.browserDesc": "Captures video, audio, console & network logs locally",
+  "site.trust.browserDesc": "Captures video, audio, console & network l-s locally",
   "site.trust.driveTitle": "Your Google Drive",
   "site.trust.driveBadge": "CUSTOMER STORAGE",
   "site.trust.driveDesc": "All videos, screenshots, and telemetry stored in your own Drive",
@@ -1948,7 +1958,7 @@ export const marketingId: Dict = {
   "landing.refundPolicy": "Kebijakan Pengembalian Dana",
   "landing.consumerProtection": "Perlindungan Konsumen",
   "landing.consumerComplaints": "Layanan Pengaduan Konsumen",
-  "landing.consumerProtectionNotice": "Privasi aman standar GDPR. Lewat Zero Server Storage, semua rekaman langsung masuk ke Google Drive kamu sendiri.",
+  "landing.consumerProtectionNotice": "Privasi aman standar GDPR.\nLewat Zero Server Storage, semua rekaman langsung masuk ke Google Drive kamu sendiri.",
   "landing.complaintContact": "Bantuan & Kontak: support@akusaradigital.com",
   "landing.operatedBy": "BugSnap dikembangkan oleh Akusara Digital.",
   "landing.compare": "Visual Compare",
@@ -2113,7 +2123,7 @@ export const marketingId: Dict = {
   "features.s2Bullet3":
     "Perekaman audio dengan dukungan mikrofon untuk konteks yang lebih baik",
   "features.s3Eyebrow": "PRIVASI & KONTROL DATA",
-  "features.s3Title": "Redaksi Sisi Klien & Nol Retensi Server",
+  "features.s3Title": "Redaksi Sisi Klien & Nol-etensi Server",
   "features.s3Desc":
     "Jaga keamanan informasi sensitif. Redaksi data pribadi langsung di browser Anda sebelum disimpan, dan simpan semuanya di Google Drive Anda sendiri — dengan nol retensi server.",
   "features.s3Bullet1":
@@ -2254,8 +2264,9 @@ export const marketingId: Dict = {
   "pricing.faqA4": "Semua rekaman dan tangkapan layar sebelumnya di Google Drive Anda tetap aman dan dapat diakses selamanya. Tim Anda hanya akan beralih ke batas kuota paket Gratis untuk tangkapan berikutnya.",
   "pricing.faqQ5": "Apakah tersedia diskon untuk pendidikan atau organisasi nirlaba?",
   "pricing.faqA5": "Ya! Kami menyediakan diskon 50% untuk institusi pendidikan terverifikasi dan organisasi nirlaba terdaftar. Hubungi tim kami untuk mengajukan.",
+  "pricing.bottomCtaEyebrow": "SIAP MEMULAI?",
   "pricing.bottomCtaTitle": "Siap menangkap laporan bug yang lebih jelas?",
-  "pricing.bottomCtaSub": "Pasang ekstensi Chrome gratis dalam 10 detik dan tangkap bug pertama Anda lengkap dengan log DevTools hari ini.",
+  "pricing.bottomCtaSub": "Pasang ekstensi gratis dan tangkap bug pertama Anda lengkap dengan log DevTools hari ini.",
   "pricing.bottomCtaBtn": "Tambah ke Chrome - Gratis",
   "pricing.customTitle": "Butuh solusi enterprise khusus?",
   "pricing.customDesc":
@@ -2465,9 +2476,10 @@ export const marketingId: Dict = {
   "about.complianceCol3Title": "Keamanan & Pengungkapan Bertanggung Jawab",
   "about.complianceCol3Desc":
     "Dibuat dengan standar keamanan dunia nyata. Kebijakan pengungkapan kerentanan terstandarisasi melalui RFC 9116 security.txt.",
+  "about.ctaEyebrow": "SIAP MEMULAI?",
   "about.ctaTitle": "Mulai merekam dan menyelesaikan bug dengan BugSnap",
   "about.ctaSubtitle":
-    "Pasang ekstensi Chrome dalam hitungan detik dan rasakan jalur tercepat dari penemuan bug hingga commit kode.",
+    "Pasang ekstensi Chrome dan dari temuan bug ke commit kode cuma hitungan detik.",
   "about.ctaButton": "Tambah ke Chrome - Gratis",
   "docs.title": "Panduan, referensi &",
   "docs.titleHighlight": "dokumentasi teknis",
@@ -2767,17 +2779,24 @@ export const marketingId: Dict = {
     "Kami hanya menyimpan: metadata yang diperlukan untuk menampilkan dashboard (judul, tipe, durasi, OS, browser, penanda waktu), serta komentar/tangkapan yang Anda kelola. Kami tidak pernah menyimpan sandi Google, isi file Drive, atau riwayat penjelajahan Anda.",
   "security.deleteNote":
     "Anda dapat menghapus tangkapan atau metadatanya kapan saja.",
+  "security.ctaEyebrow": "SIAP MEMULAI?",
   "security.ctaTitle": "Percayakan BugSnap untuk laporan bug Anda",
   "security.ctaDesc":
-    "Pasang ekstensi secara gratis. Tangkapan Anda tetap berada di Google Drive Anda sendiri, dan paket berbayar menambahkan fitur keamanan tim tingkat lanjut.",
+    "Gratis dipasang. Tangkapan Anda tetap di Google Drive Anda sendiri.",
   "security.installFree": "Tambah ke Chrome",
   "security.seePricing": "Lihat Harga",
   "security.readPrivacy": "Baca Kebijakan Privasi Lengkap",
   "security.verifiedBadge": "Arsitektur Terverifikasi",
-  "support.btn": "Customer Support",
+  "support.welcomeTitle": "Butuh bantuan?",
+  "support.welcomeDesc": "Bagaimana kami dapat membantu Anda?",
+  "support.onlineTitle": "Kami sedang online",
+  "support.onlineDesc": "Biasanya kami membalas dalam beberapa menit.",
+  "support.onlineLabel": "Online",
+  "support.startConversation": "Mulai percakapan",
+  "support.btn": "Bantuan Tim Ahli 24/7",
   "support.helpPrompt": "Butuh bantuan? Hubungi kami sekarang!",
-  "support.title": "Customer Support",
-  "support.subtitle": "Lapor bug, request fitur, atau tanya kendala teknis",
+  "support.title": "Bantuan Pelanggan",
+  "support.subtitle": "Laporkan bug, ajukan fitur, atau tanyakan kendala teknis",
   "support.hide": "Kecilkan",
   "support.unhide": "Perbesar",
   "support.close": "Tutup",
@@ -3126,6 +3145,7 @@ export const marketingId: Dict = {
   "status.uptimeHistory": "Riwayat Uptime (90 Hari Terakhir)",
   "status.daysAgo": "90 hari lalu",
   "status.today": "Hari ini",
+  "status.ctaEyebrow": "SIAP MEMULAI?",
   "status.ctaTitle": "Siap untuk laporan bug",
   "status.ctaDesc":
     "Pasang BugSnap dan simpan tangkapan ke Google Drive Anda.",

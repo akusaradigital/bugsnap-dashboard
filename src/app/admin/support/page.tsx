@@ -229,7 +229,7 @@ export default function AdminSupportPage() {
             placeholder="Cari email, subjek, isi..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#DC2626] focus:ring-1 focus:ring-[#DC2626]/20"
+            className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20"
           />
         </div>
       </div>
@@ -276,7 +276,7 @@ export default function AdminSupportPage() {
                         </span>
                       )}
                       {t.category === "feature" && (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-[#DC2626]/10 dark:bg-[#DC2626]/20 text-[#B91C1C] dark:text-[#F87171] border border-[#DC2626]/30 dark:border-[#DC2626]/40">
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 dark:bg-blue-950/20 text-[#2563EB] dark:text-[#3B82F6] border border-blue-200 dark:border-blue-900/40">
                           <Icon icon="lucide:lightbulb" className="w-3 h-3 shrink-0" />
                           <span>FITUR</span>
                         </span>
@@ -299,7 +299,7 @@ export default function AdminSupportPage() {
                     <td className="py-3 px-4 whitespace-nowrap">
                       <div className="font-medium text-slate-800 dark:text-zinc-200">{t.userEmail}</div>
                       {t.userPlan && (
-                        <span className="text-[9px] uppercase font-bold text-[#B91C1C] dark:text-[#F87171]">
+                        <span className="text-[9px] uppercase font-bold text-[#2563EB] dark:text-[#3B82F6]">
                           {t.userPlan}
                         </span>
                       )}
@@ -396,7 +396,7 @@ export default function AdminSupportPage() {
                       href={selectedTicket.pageUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[#B91C1C] hover:text-[#991B1B] dark:text-[#F87171] dark:hover:text-[#FCA5A5] underline"
+                      className="text-[#2563EB] hover:text-[#1D4ED8] dark:text-[#3B82F6] dark:hover:text-[#60A5FA] underline"
                     >
                       {selectedTicket.pageUrl}
                     </a>
@@ -420,7 +420,7 @@ export default function AdminSupportPage() {
                     onClick={() => handleStatusChange(selectedTicket.id, st)}
                     className={`px-2.5 py-1 text-xs font-semibold rounded-lg border transition-colors ${
                       selectedTicket.status === st
-                        ? "border-[#DC2626] bg-[#DC2626] text-white"
+                        ? "border-[#2563EB] bg-[#2563EB] text-white"
                         : "border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800"
                     }`}
                   >
@@ -439,10 +439,10 @@ export default function AdminSupportPage() {
                     {selectedTicket.replies.map((rep) => (
                       <div
                         key={rep.id}
-                        className="p-3 rounded-lg border border-[#DC2626]/30 dark:border-[#DC2626]/40 bg-[#DC2626]/10 dark:bg-[#DC2626]/20 text-xs"
+                        className="p-3 rounded-lg border border-blue-200 dark:border-blue-900/40 bg-blue-50 dark:bg-blue-950/20 text-xs"
                       >
                         <div className="flex items-center justify-between mb-1">
-                          <span className="font-bold text-[#B91C1C] dark:text-[#F87171]">{rep.sender}</span>
+                          <span className="font-bold text-[#2563EB] dark:text-[#3B82F6]">{rep.sender}</span>
                           <span className="text-[10px] text-slate-400">
                             {new Date(rep.created_at).toLocaleString("id-ID")}
                           </span>
@@ -465,7 +465,7 @@ export default function AdminSupportPage() {
                   value={replyMessage}
                   onChange={(e) => setReplyMessage(e.target.value)}
                   placeholder="Tuliskan respon resmi solusi atau klarifikasi bug ini..."
-                  className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-3 outline-none focus:border-[#DC2626] focus:ring-1 focus:ring-[#DC2626]/20 resize-none"
+                  className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-3 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 resize-none"
                 />
                 <div className="flex items-center justify-between">
                   <p className="text-[10px] text-slate-400">
@@ -474,14 +474,14 @@ export default function AdminSupportPage() {
                   <button
                     type="submit"
                     disabled={sendingReply || !replyMessage.trim()}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-[#DC2626] hover:bg-[#B91C1C] text-white shadow-xs shadow-[#DC2626]/25 disabled:opacity-50 transition-colors"
+                    className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs shadow-[#2563EB]/25 disabled:opacity-50 transition-colors"
                   >
                     {sendingReply ? (
                       "Mengirim via Email..."
                     ) : (
                       <>
                         <span>Kirim Balasan</span>
-                        <Icon icon="lucide:send" className="w-3 h-3 shrink-0" />
+                        <Icon icon="lucide:send" className="w-3 h-3 shrink-0 brightness-0 invert" />
                       </>
                     )}
                   </button>

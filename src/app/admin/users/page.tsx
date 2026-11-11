@@ -308,7 +308,7 @@ export default function AdminUsersPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-3 border-b border-slate-200 dark:border-zinc-800">
         <div>
           <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            <span className="flex items-center gap-2"><Icon icon="lucide:users" className="w-4 h-4 shrink-0 text-[#B91C1C] dark:text-[#F87171]" /> {t("admin.manageUsers")}</span>
+            <span className="flex items-center gap-2"><Icon icon="lucide:users" className="w-4 h-4 shrink-0 text-[#2563EB] dark:text-[#3B82F6]" /> {t("admin.manageUsers")}</span>
             <span className="text-xs px-2 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 font-normal">
               {totalCount.toLocaleString()} {t("admin.user")}
             </span>
@@ -370,11 +370,11 @@ export default function AdminUsersPage() {
             placeholder={t("admin.searchUserPlaceholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full min-w-0 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#DC2626] focus:ring-1 focus:ring-[#DC2626]/20 text-slate-900 dark:text-white"
+            className="w-full min-w-0 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 text-slate-900 dark:text-white"
           />
           <button
             type="submit"
-            className="px-3 py-2 bg-[#DC2626] hover:bg-[#B91C1C] text-white rounded-lg text-xs font-semibold shadow-xs shadow-[#DC2626]/25 transition-colors cursor-pointer shrink-0"
+            className="px-3 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-lg text-xs font-semibold shadow-xs shadow-[#2563EB]/25 transition-colors cursor-pointer shrink-0"
           >
             {t("common.search")}
           </button>
@@ -438,7 +438,7 @@ export default function AdminUsersPage() {
                             setSelectedNewPlan(u.plan || "free");
                             setSelectedDuration("permanent");
                           }}
-                          className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-[#DC2626]/10 dark:bg-[#DC2626]/20 text-[#B91C1C] dark:text-[#F87171] border border-[#DC2626]/30 dark:border-[#DC2626]/40 hover:ring-1 hover:ring-[#DC2626]/40 cursor-pointer transition-all inline-flex items-center gap-1"
+                          className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-50 dark:bg-blue-950/20 text-[#2563EB] dark:text-[#3B82F6] border border-blue-200 dark:border-blue-900/40 hover:ring-1 hover:ring-[#2563EB]/40 cursor-pointer transition-all inline-flex items-center gap-1"
                           title={t("admin.changePlan")}
                         >
                           <span>{u.plan || "free"}</span>
@@ -563,7 +563,7 @@ export default function AdminUsersPage() {
                   key={p}
                   className={`flex items-center justify-between p-3 rounded-xl border text-xs cursor-pointer transition-all ${
                     selectedNewPlan === p
-                      ? "border-[#DC2626] bg-[#DC2626]/10 dark:bg-[#DC2626]/20 font-bold text-[#B91C1C] dark:text-[#F87171]"
+                      ? "border-[#2563EB] bg-blue-50 dark:bg-blue-950/20 font-bold text-[#2563EB] dark:text-[#3B82F6]"
                       : "border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800"
                   }`}
                 >
@@ -574,7 +574,7 @@ export default function AdminUsersPage() {
                     value={p}
                     checked={selectedNewPlan === p}
                     onChange={(e) => setSelectedNewPlan(e.target.value)}
-                    className="accent-[#DC2626]"
+                    className="accent-[#2563EB]"
                   />
                 </label>
               ))}
@@ -613,7 +613,7 @@ export default function AdminUsersPage() {
                 type="button"
                 disabled={savingPlan}
                 onClick={handleSavePlan}
-                className="px-4 py-2 rounded-xl text-xs font-semibold bg-[#DC2626] hover:bg-[#B91C1C] text-white shadow-xs shadow-[#DC2626]/25 transition-colors disabled:opacity-50"
+                className="px-4 py-2 rounded-xl text-xs font-semibold bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs shadow-[#2563EB]/25 transition-colors disabled:opacity-50"
               >
                 {savingPlan ? t("common.loading") : t("admin.savePlan")}
               </button>
@@ -630,7 +630,7 @@ export default function AdminUsersPage() {
               <div>
                 <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   <span>{t("admin.userProfileTitle")}</span>
-                  <span className="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-[#DC2626]/10 dark:bg-[#DC2626]/20 text-[#B91C1C] dark:text-[#F87171] border border-[#DC2626]/30 dark:border-[#DC2626]/40">
+                  <span className="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-blue-50 dark:bg-blue-950/20 text-[#2563EB] dark:text-[#3B82F6] border border-blue-200 dark:border-blue-900/40">
                     {selectedUser.plan}
                   </span>
                 </h3>
@@ -723,7 +723,7 @@ export default function AdminUsersPage() {
                         Billing & Subscription Status
                       </span>
                       <p className="text-[11px] text-slate-500 dark:text-zinc-400">
-                        Paket: <span className="font-bold text-[#B91C1C] dark:text-[#F87171] uppercase">{selectedUser.plan}</span>
+                        Paket: <span className="font-bold text-[#2563EB] dark:text-[#3B82F6] uppercase">{selectedUser.plan}</span>
                         {selectedUser.plan_expires_at ? (
                           <span className="ml-1 text-slate-400">
                             (Expires: {new Date(selectedUser.plan_expires_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })})
@@ -737,12 +737,12 @@ export default function AdminUsersPage() {
                       type="button"
                       disabled={syncingSubscription}
                       onClick={() => handleSyncSubscription(selectedUser)}
-                      className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#DC2626] hover:bg-[#B91C1C] text-white shadow-xs shadow-[#DC2626]/25 disabled:opacity-50 transition-all flex items-center gap-1.5"
+                      className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs shadow-[#2563EB]/25 disabled:opacity-50 transition-all flex items-center gap-1.5"
                       title="Tarik status langganan live dari Stripe/Paddle"
                     >
                       {syncingSubscription ? "Syncing..." : (
                         <>
-                          <Icon icon="lucide:zap" className="w-3.5 h-3.5 shrink-0" />
+                          <Icon icon="lucide:zap" className="w-3.5 h-3.5 shrink-0 brightness-0 invert" />
                           <span>Sync from Gateway</span>
                         </>
                       )}
@@ -755,7 +755,7 @@ export default function AdminUsersPage() {
                       href={selectedUser.stripe_search_url || `https://dashboard.stripe.com/customers?query=${encodeURIComponent(selectedUser.email)}`}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-[11px] font-semibold text-[#B91C1C] hover:text-[#991B1B] dark:text-[#F87171] dark:hover:text-[#FCA5A5] hover:underline flex items-center gap-1"
+                      className="text-[11px] font-semibold text-[#2563EB] hover:text-[#1D4ED8] dark:text-[#3B82F6] dark:hover:text-[#60A5FA] hover:underline flex items-center gap-1"
                     >
                       <span>Stripe Dashboard</span>
                       <Icon icon="lucide:external-link" className="w-3 h-3 shrink-0" />
@@ -765,7 +765,7 @@ export default function AdminUsersPage() {
                       href={selectedUser.paddle_search_url || "https://vendors.paddle.com/customers"}
                       target="_blank"
                       rel="noreferrer"
-                      className="text-[11px] font-semibold text-[#B91C1C] hover:text-[#991B1B] dark:text-[#F87171] dark:hover:text-[#FCA5A5] hover:underline flex items-center gap-1"
+                      className="text-[11px] font-semibold text-[#2563EB] hover:text-[#1D4ED8] dark:text-[#3B82F6] dark:hover:text-[#60A5FA] hover:underline flex items-center gap-1"
                     >
                       <span>Paddle Dashboard</span>
                       <Icon icon="lucide:external-link" className="w-3 h-3 shrink-0" />
@@ -819,7 +819,7 @@ export default function AdminUsersPage() {
                             href={`/v/${cap.id}`}
                             target="_blank"
                             rel="noreferrer"
-                            className="text-[11px] font-semibold text-[#B91C1C] hover:text-[#991B1B] dark:text-[#F87171] dark:hover:text-[#FCA5A5] hover:underline"
+                            className="text-[11px] font-semibold text-[#2563EB] hover:text-[#1D4ED8] dark:text-[#3B82F6] dark:hover:text-[#60A5FA] hover:underline"
                           >
                             View
                           </a>

@@ -102,7 +102,7 @@ export function SiteNavbar() {
                 href={link.href}
                 className={`px-3 py-1.5 rounded-lg transition-colors ${
                   isActive
-                    ? "text-[#B91C1C] dark:text-[#F87171] font-semibold bg-[#DC2626]/15 dark:bg-[#DC2626]/20"
+                    ? "text-[#2563EB] dark:text-[#3B82F6] font-semibold bg-blue-100/80 dark:bg-blue-950/40"
                     : "hover:text-slate-900 dark:hover:text-white hover:bg-slate-100/50 dark:hover:bg-slate-800/40"
                 }`}
               >
@@ -167,7 +167,7 @@ export function SiteNavbar() {
                 href={link.href}
                 className={`flex items-center min-h-[44px] px-3 py-2.5 rounded-md text-sm font-medium transition-colors border ${
                   isActive
-                    ? "text-[#B91C1C] dark:text-[#F87171] bg-[#DC2626]/15 dark:bg-[#DC2626]/20 border-[#DC2626]/30 dark:border-[#DC2626]/40 font-semibold"
+                    ? "text-[#2563EB] dark:text-[#3B82F6] bg-blue-100/80 dark:bg-blue-950/40 border-blue-200 dark:border-blue-900/40 font-semibold"
                     : "border-transparent text-site-text-2 hover:text-site-text hover:bg-site-surface-2/60"
                 }`}
               >

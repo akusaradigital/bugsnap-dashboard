@@ -91,7 +91,7 @@ export function SiteFooter() {
                 <li>
                   <Link href="/docs/mcp" className="hover:text-site-text transition-colors block py-0.5 truncate flex items-center gap-1.5">
                     <span>{t("landing.mcpDocs")}</span>
-                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-[#DC2626]/15 text-[#B91C1C] dark:text-[#F87171]">AI</span>
+                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-blue-100 dark:bg-blue-950/40 text-[#2563EB] dark:text-[#3B82F6]">AI</span>
                   </Link>
                 </li>
                 <li><Link href="/blog" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("site.nav.blog")}</Link></li>
@@ -141,7 +141,7 @@ export function SiteFooter() {
             <p className="font-semibold text-site-text">
               {t("landing.copyright", { year: new Date().getFullYear() })}
             </p>
-            <p className="text-[11px] text-site-text-2 leading-relaxed">
+            <p className="text-[11px] text-site-text-2 leading-relaxed whitespace-pre-line">
               {t("landing.consumerProtectionNotice")}
             </p>
           </div>

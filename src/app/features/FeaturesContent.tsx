@@ -40,17 +40,8 @@ test('reproduce issue: error on project creation', async ({ page }) => {
     .toContainText('TypeError: Cannot read property');
 });`;
 
-type FilterTabId =
-  | "all"
-  | "devtools"
-  | "studio"
-  | "privacy"
-  | "spa"
-  | "automation";
-
 export function FeaturesContent() {
   const { t } = useT();
-  const [activeTab, setActiveTab] = useState<FilterTabId>("all");
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
   const copyToClipboard = (text: string, key: string) => {
@@ -58,31 +49,6 @@ export function FeaturesContent() {
     setCopiedKey(key);
     setTimeout(() => setCopiedKey(null), 2000);
   };
-
-  const tabs: { id: FilterTabId; label: string }[] = [
-    { id: "all", label: t("features.tabAll") || "All Capabilities" },
-    {
-      id: "devtools",
-      label: t("features.tabDevTools") || "DevTools & Telemetry",
-    },
-    { id: "studio", label: t("features.tabStudio") || "Screen & Studio" },
-    {
-      id: "privacy",
-      label: t("features.tabPrivacy") || "Zero Storage & Privacy",
-    },
-    { id: "spa", label: t("features.tabSpa") || "SPA Diagnostics" },
-    {
-      id: "automation",
-      label: t("features.tabAutomation") || "Playwright & AI MCP",
-    },
-  ];
-
-  // Determine section visibility based on selected tab
-  const showSection1 = activeTab === "all" || activeTab === "devtools";
-  const showSection2 = activeTab === "all" || activeTab === "studio";
-  const showSection3 = activeTab === "all" || activeTab === "privacy";
-  const showSection4 = activeTab === "all" || activeTab === "spa";
-  const showSection5 = activeTab === "all" || activeTab === "automation";
 
   return (
     <div className="min-h-screen text-site-text font-site flex flex-col bg-site-surface">
@@ -115,7 +81,7 @@ export function FeaturesContent() {
               <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12]">
                 {t("features.title") || "The bug reporting toolkit"}
                 <br />
-                <span className="text-blue-600 dark:text-blue-500">
+                <span className="text-emerald-600 dark:text-emerald-400">
                   {t("features.titleHighlight") || "built for high-velocity teams"}
                 </span>
               </h1>
@@ -124,43 +90,18 @@ export function FeaturesContent() {
             <Reveal delay={0.14}>
               <p className="mt-4 text-sm sm:text-base md:text-lg text-slate-500 dark:text-slate-400 max-w-3xl mx-auto leading-relaxed">
                 {t("features.subtitle") ||
-                  "From intelligent capture to automated debugging, BugSnap gives modern teams visibility, context, and AI-ready data — without slowing down their workflow."}
+                  "From intelligent capture to automated debugging, BugSnap gives modern teams visibility, context, and AI-ready data -without slowing down their workflow."}
               </p>
             </Reveal>
-          </div>
-        </div>
-
-        {/* Tab Filter Bar */}
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 mb-12 sm:mb-16">
-          <div className="flex items-center justify-start md:justify-center overflow-x-auto no-scrollbar [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden py-2 -mx-4 sm:mx-0 px-4 sm:px-0">
-            <div className="inline-flex items-center gap-1 sm:gap-1.5 p-1 rounded-xl bg-slate-100/90 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 shrink-0">
-              {tabs.map((tab) => {
-                const isActive = activeTab === tab.id;
-                return (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setActiveTab(tab.id)}
-                    className={`px-3 sm:px-3.5 py-1.5 rounded-lg text-xs sm:text-sm font-medium whitespace-nowrap transition-all duration-150 ${
-                      isActive
-                        ? "bg-white dark:bg-slate-900 text-slate-900 dark:text-white font-bold shadow-2xs border border-slate-200/80 dark:border-slate-700"
-                        : "text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-800/40"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                );
-              })}
-            </div>
           </div>
         </div>
 
         {/* Main Capabilities Sections */}
         <div className="mx-auto max-w-6xl px-4 sm:px-6 pb-12 sm:pb-16 space-y-10 sm:space-y-12">
           {/* SECTION 1: DEVTOOLS & TELEMETRY */}
-          {showSection1 && (
+          {(
             <Reveal delay={0.05}>
-              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
                 {/* Left: Text Content */}
                 <div className="lg:col-span-6 min-w-0 space-y-4">
                   <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">
@@ -172,7 +113,7 @@ export function FeaturesContent() {
                   </h2>
                   <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed">
                     {t("features.s1Desc") ||
-                      "BugSnap automatically captures browser console logs, network requests, errors, and key runtime data so you get the full technical context of an issue — without asking users to do anything manually."}
+                      "BugSnap automatically captures browser console logs, network requests, errors, and key runtime data so you get the full technical context of an issue -without asking users to do anything manually."}
                   </p>
                   <ul className="space-y-3 pt-2">
                     <li className="flex items-start gap-3">
@@ -333,7 +274,7 @@ export function FeaturesContent() {
           )}
 
           {/* SECTION 2: VISUAL STUDIO */}
-          {showSection2 && (
+          {(
             <Reveal delay={0.08}>
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
                 {/* Left: Visual Studio Mockup */}
@@ -379,7 +320,7 @@ export function FeaturesContent() {
                     <div className="grid grid-cols-1 sm:grid-cols-12 divide-y sm:divide-y-0 sm:divide-x divide-slate-200/80 dark:divide-slate-800">
                       {/* Events List */}
                       <div className="sm:col-span-5 p-3.5 space-y-2 bg-slate-50/30 dark:bg-slate-900/30">
-                        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block px-1">
+                        <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block px-1">
                           Events
                         </span>
                         <div className="space-y-1 text-xs">
@@ -521,7 +462,7 @@ export function FeaturesContent() {
           )}
 
           {/* SECTION 3: PRIVACY & DATA CONTROL */}
-          {showSection3 && (
+          {(
             <Reveal delay={0.1}>
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
                 {/* Left: Text Content */}
@@ -535,7 +476,7 @@ export function FeaturesContent() {
                   </h2>
                   <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed">
                     {t("features.s3Desc") ||
-                      "Keep sensitive information safe. Redact personal data directly in your browser before it's saved, and store everything in your own Google Drive — with zero server retention."}
+                      "Keep sensitive information safe. Redact personal data directly in your browser before it's saved, and store everything in your own Google Drive -with zero server retention."}
                   </p>
                   <ul className="space-y-3 pt-2">
                     <li className="flex items-start gap-3">
@@ -553,7 +494,7 @@ export function FeaturesContent() {
                       </div>
                       <span className="text-xs sm:text-sm text-slate-700 dark:text-slate-300">
                         {t("features.s3Bullet2") ||
-                          "Data never stored on our servers — saved directly to your Google Drive"}
+                          "Data never stored on our servers -saved directly to your Google Drive"}
                       </span>
                     </li>
                     <li className="flex items-start gap-3">
@@ -612,7 +553,7 @@ export function FeaturesContent() {
                             type="button"
                             tabIndex={-1}
                             aria-disabled="true"
-                            className="text-slate-400 dark:text-slate-500 cursor-default"
+                            className="text-emerald-600 dark:text-emerald-400 cursor-default"
                             aria-label="Options (illustration)"
                           >
                             <Icon icon="lucide:more-vertical" className="w-4 h-4" />
@@ -646,7 +587,7 @@ export function FeaturesContent() {
                             type="button"
                             tabIndex={-1}
                             aria-disabled="true"
-                            className="text-slate-400 dark:text-slate-500 cursor-default"
+                            className="text-emerald-600 dark:text-emerald-400 cursor-default"
                             aria-label="Options (illustration)"
                           >
                             <Icon icon="lucide:more-vertical" className="w-4 h-4" />
@@ -680,7 +621,7 @@ export function FeaturesContent() {
                             type="button"
                             tabIndex={-1}
                             aria-disabled="true"
-                            className="text-slate-400 dark:text-slate-500 cursor-default"
+                            className="text-emerald-600 dark:text-emerald-400 cursor-default"
                             aria-label="Options (illustration)"
                           >
                             <Icon icon="lucide:more-vertical" className="w-4 h-4" />
@@ -714,7 +655,7 @@ export function FeaturesContent() {
                             type="button"
                             tabIndex={-1}
                             aria-disabled="true"
-                            className="text-slate-400 dark:text-slate-500 cursor-default"
+                            className="text-emerald-600 dark:text-emerald-400 cursor-default"
                             aria-label="Options (illustration)"
                           >
                             <Icon icon="lucide:more-vertical" className="w-4 h-4" />
@@ -729,7 +670,7 @@ export function FeaturesContent() {
           )}
 
           {/* SECTION 4: PERFORMANCE & DIAGNOSTICS */}
-          {showSection4 && (
+          {(
             <Reveal delay={0.12}>
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
                 {/* Left: Performance Monitor Mockup */}
@@ -970,7 +911,7 @@ export function FeaturesContent() {
           )}
 
           {/* SECTION 5: AUTOMATION & AI INTEGRATION */}
-          {showSection5 && (
+          {(
             <Reveal delay={0.14}>
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
                 {/* Left: Text Content */}
@@ -1105,32 +1046,29 @@ export function FeaturesContent() {
 
           {/* SECTION 6: BOTTOM TELEMETRY SCHEMA BANNER */}
           <Reveal delay={0.16}>
-            <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-[#f8fafc] dark:bg-slate-900/60 p-6 sm:p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6 shadow-xs">
-              <div className="space-y-1 min-w-0 max-w-2xl">
-                <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
+            <div className="rounded-2xl sm:rounded-3xl border border-blue-100 dark:border-blue-900/40 bg-[#f0f6ff] dark:bg-blue-950/25 p-6 sm:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm min-w-0">
+              <div className="space-y-1.5 max-w-xl min-w-0">
+                <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                  {t("features.ctaEyebrow") || "READY TO GET STARTED?"}
+                </div>
+                <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                   {t("features.bannerTitle") ||
-                    "Inspect the full technical telemetry schema"}
+                    "Inspect the full telemetry schema"}
                 </h3>
-                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
                   {t("features.bannerSubtitle") ||
-                    "Explore payload structure, field definitions, and examples to integrate with your own tools."}
+                    "Explore payload structure and field definitions to integrate with your own tools."}
                 </p>
               </div>
 
-              <div className="flex flex-wrap items-center gap-3 shrink-0">
-                <Link
-                  href="/docs"
-                  className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold px-5 sm:px-6 py-2.5 rounded-xl text-xs sm:text-sm inline-flex items-center gap-2 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.99]"
-                >
-                  {t("features.bannerDocsBtn") || "Read Developer Docs"}
-                </Link>
+              <div className="flex flex-wrap items-center gap-3 shrink-0 min-w-0">
                 <a
                   href={CHROME_STORE_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold px-5 sm:px-6 py-2.5 rounded-xl text-xs sm:text-sm inline-flex items-center gap-2 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.99]"
+                  className="inline-flex items-center gap-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold px-6 py-3.5 rounded-xl shadow-md transition-all hover:scale-[1.02] active:scale-[0.99] shrink-0 touch-manipulation whitespace-nowrap"
                 >
-                  <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" />
+                  <Icon icon="logos:chrome" className="w-5 h-5 shrink-0" />
                   <span>
                     {t("extension.addToChrome") || "Add to Chrome"}
                   </span>
@@ -1139,11 +1077,17 @@ export function FeaturesContent() {
                   href={FIREFOX_STORE_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold px-5 sm:px-6 py-2.5 rounded-xl text-xs sm:text-sm inline-flex items-center gap-2 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.99]"
+                  className="inline-flex items-center gap-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold px-6 py-3.5 rounded-xl shadow-md transition-all hover:scale-[1.02] active:scale-[0.99] shrink-0 touch-manipulation whitespace-nowrap"
                 >
-                  <Icon icon="logos:firefox" className="w-4 h-4 shrink-0" />
+                  <Icon icon="logos:firefox" className="w-5 h-5 shrink-0" />
                   <span>{t("extension.addToFirefox")}</span>
                 </a>
+                <Link
+                  href="/docs"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-site-border bg-white dark:bg-site-surface hover:bg-slate-50 dark:hover:bg-site-surface-2 text-site-text text-sm font-semibold px-6 py-3.5 transition-colors shrink-0 whitespace-nowrap"
+                >
+                  {t("features.bannerDocsBtn") || "Read Developer Docs"}
+                </Link>
               </div>
             </div>
           </Reveal>

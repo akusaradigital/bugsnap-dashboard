@@ -58,7 +58,7 @@ export function DeleteAccountModal({
           >
             {deleting ? (
               <>
-                <Icon icon="lucide:loader-2" className="w-3.5 h-3.5 animate-spin text-white shrink-0" aria-hidden="true" />
+                <Icon icon="lucide:loader-2" className="w-3.5 h-3.5 animate-spin text-white shrink-0 brightness-0 invert" aria-hidden="true" />
                 <span>Deleting…</span>
               </>
             ) : (

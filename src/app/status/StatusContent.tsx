@@ -157,9 +157,6 @@ export function StatusContent() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
             {/* Card 1: Live System Status */}
             <div className={`rounded-2xl border ${bannerStyle.border} ${bannerStyle.bg} p-5 sm:p-6 flex items-center gap-4 shadow-xs`}>
-              <div className={`w-11 h-11 sm:w-12 sm:h-12 rounded-full ${bannerStyle.dot} flex items-center justify-center shrink-0 text-white shadow-xs`}>
-                <Icon icon={bannerStyle.icon} className="w-6 h-6 stroke-[3]" aria-hidden="true" />
-              </div>
               <div className="min-w-0">
                 <h2 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white leading-tight">
                   {bannerStyle.title}
@@ -172,7 +169,6 @@ export function StatusContent() {
 
             {/* Card 2: Real Database & API Latency */}
             <div className="rounded-2xl border border-slate-200 dark:border-site-border bg-white dark:bg-site-surface p-5 sm:p-6 flex items-center gap-4 shadow-xs">
-              <Icon icon="lucide:activity" className="w-7 h-7 sm:w-8 sm:h-8 text-[#22c55e] shrink-0" aria-hidden="true" />
               <div className="min-w-0">
                 <div className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-none font-mono">
                   {health?.latencyMs !== undefined ? `${health.latencyMs}ms` : "-- ms"}
@@ -185,7 +181,6 @@ export function StatusContent() {
 
             {/* Card 3: Last Checked Telemetry */}
             <div className="rounded-2xl border border-slate-200 dark:border-site-border bg-white dark:bg-site-surface p-5 sm:p-6 flex items-center gap-4 shadow-xs">
-              <Icon icon="lucide:clock" className="w-7 h-7 sm:w-8 sm:h-8 text-slate-600 dark:text-slate-400 shrink-0 stroke-[1.75]" aria-hidden="true" />
               <div className="min-w-0">
                 <div className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-none">
                   {checkedAt ? t("status.checkedJustNow") : t("status.checkingStatus")}
@@ -211,11 +206,18 @@ export function StatusContent() {
                 <div className="text-xs text-slate-500 dark:text-site-text-2">{t("status.overallUptime")}</div>
               </div>
             </div>
-            <svg viewBox="0 0 900 150" className="w-full h-28 sm:h-36" role="img" aria-label={t("status.uptimeHistory")}>
-              <path d="M0 112 C70 106 95 118 150 94 S250 101 300 78 S400 92 450 63 S550 76 600 48 S700 57 760 34 S840 45 900 24" fill="none" stroke="#2563EB" strokeWidth="3" strokeLinecap="round" />
-              <path d="M0 112 C70 106 95 118 150 94 S250 101 300 78 S400 92 450 63 S550 76 600 48 S700 57 760 34 S840 45 900 24 L900 150 L0 150 Z" fill="#2563EB" fillOpacity="0.08" />
-              <line x1="0" y1="149" x2="900" y2="149" stroke="#cbd5e1" strokeWidth="1" />
-            </svg>
+            <div className="flex items-center gap-px sm:gap-1 h-10 sm:h-12" role="img" aria-label={t("status.uptimeHistory")}>
+              {Array.from({ length: 90 }, (_, i) => {
+                const day = new Date(Date.now() - (89 - i) * 86400000);
+                return (
+                  <span
+                    key={i}
+                    title={day.toLocaleDateString(isId ? "id-ID" : "en-US", { month: "short", day: "numeric" })}
+                    className="flex-1 h-full rounded-full bg-[#22c55e] hover:opacity-70 transition-opacity"
+                  />
+                );
+              })}
+            </div>
             <div className="flex justify-between text-[11px] text-slate-500 dark:text-site-text-2 mt-1">
               <span>{t("status.daysAgo")}</span><span>{t("status.today")}</span>
             </div>
@@ -277,42 +279,40 @@ export function StatusContent() {
 
         {/* Bottom CTA Banner */}
         <Reveal delay={0.2}>
-          <div className="rounded-2xl sm:rounded-3xl border border-blue-100 dark:border-blue-900/40 bg-[#f0f6ff] dark:bg-blue-950/25 p-6 sm:p-8 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 shadow-xs">
-            <div className="flex items-start gap-5 sm:gap-6 min-w-0">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-blue-100 dark:bg-blue-900/40 flex items-center justify-center shrink-0">
-                <Icon icon="lucide:zap" className="w-6 h-6 sm:w-7 sm:h-7 text-[#2563EB] fill-[#2563EB]" aria-hidden="true" />
+          <div className="rounded-2xl sm:rounded-3xl border border-blue-100 dark:border-blue-900/40 bg-[#f0f6ff] dark:bg-blue-950/25 p-6 sm:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm min-w-0">
+            <div className="space-y-1.5 max-w-xl min-w-0">
+              <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                {t("status.ctaEyebrow") || "READY TO GET STARTED?"}
               </div>
-              <div className="space-y-2 min-w-0 pt-0.5">
-                <h3 className="text-lg sm:text-xl md:text-2xl lg:text-xl xl:text-2xl font-bold text-slate-900 dark:text-white tracking-tight lg:whitespace-nowrap">
-                  {t("status.ctaTitle")}
-                </h3>
-                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed max-w-[34rem]">
-                  {t("status.ctaDesc")}
-                </p>
-              </div>
+              <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                {t("status.ctaTitle")}
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                {t("status.ctaDesc")}
+              </p>
             </div>
             <div className="flex flex-wrap items-center gap-3 shrink-0 min-w-0">
               <a
                 href={CHROME_STORE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-sm font-bold px-5 sm:px-6 py-3 min-h-[44px] transition-all shadow-xs hover:shadow-md hover:scale-[1.01] active:scale-[0.99] whitespace-nowrap"
+                className="inline-flex items-center gap-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold px-6 py-3.5 rounded-xl shadow-md transition-all hover:scale-[1.02] active:scale-[0.99] shrink-0 touch-manipulation whitespace-nowrap"
               >
-                <Icon icon="logos:chrome" className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" aria-hidden="true" />
+                <Icon icon="logos:chrome" className="w-5 h-5 shrink-0" aria-hidden="true" />
                 <span>{t("extension.addToChrome") || "Add to Chrome"}</span>
               </a>
               <a
                 href={FIREFOX_STORE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-sm font-bold px-5 sm:px-6 py-3 min-h-[44px] transition-all shadow-xs hover:shadow-md hover:scale-[1.01] active:scale-[0.99] whitespace-nowrap"
+                className="inline-flex items-center gap-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold px-6 py-3.5 rounded-xl shadow-md transition-all hover:scale-[1.02] active:scale-[0.99] shrink-0 touch-manipulation whitespace-nowrap"
               >
-                <Icon icon="logos:firefox" className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" aria-hidden="true" />
+                <Icon icon="logos:firefox" className="w-5 h-5 shrink-0" aria-hidden="true" />
                 <span>{t("extension.addToFirefox")}</span>
               </a>
               <Link
                 href="/docs"
-                className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-white dark:bg-site-surface hover:bg-slate-50 dark:hover:bg-site-surface-2 border border-slate-200 dark:border-site-border text-slate-800 dark:text-slate-200 text-xs sm:text-sm font-semibold px-5 py-3 min-h-[44px] transition-all shadow-xs hover:border-slate-300 whitespace-nowrap"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-site-border bg-white dark:bg-site-surface hover:bg-slate-50 dark:hover:bg-site-surface-2 text-site-text text-sm font-semibold px-6 py-3.5 transition-colors shrink-0 whitespace-nowrap"
               >
                 <span>{t("status.viewDocs")}</span>
               </Link>

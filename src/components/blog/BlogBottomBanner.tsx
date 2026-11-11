@@ -131,7 +131,7 @@ export function BlogBottomBanner() {
                 disabled={loading}
                 className="h-11 px-5 sm:px-6 rounded-xl bg-[#68a63c] hover:bg-[#5ca338] text-white font-bold text-sm shadow-xs transition-colors touch-manipulation cursor-pointer disabled:opacity-60 inline-flex items-center justify-center gap-2 shrink-0 sm:w-auto"
               >
-                <Icon icon="lucide:bell" className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <Icon icon="lucide:bell" className="w-4 h-4 shrink-0 brightness-0 invert" aria-hidden="true" />
                 <span>
                   {loading
                     ? "..."

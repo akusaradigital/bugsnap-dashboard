@@ -239,7 +239,7 @@ export function DocsContent() {
               <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12]">
                 {t("docs.title") || "Guides, references &"}
                 <br />
-                <span className="text-blue-600 dark:text-blue-500">
+                <span className="text-emerald-600 dark:text-emerald-400">
                   {t("docs.titleHighlight") || "developer docs"}
                 </span>
               </h1>
@@ -374,7 +374,7 @@ export function DocsContent() {
                 <h2 className="text-xl font-bold text-slate-900 dark:text-white">
                   {t("docs.shortcuts") || "Keyboard Shortcuts"}
                 </h2>
-                <span className="text-xs sm:text-sm font-semibold text-blue-600 dark:text-blue-400">
+                <span className="text-xs sm:text-sm font-semibold text-emerald-600 dark:text-emerald-400">
                   {t("docs.quickReference") || "Quick Reference"}
                 </span>
               </div>
@@ -436,9 +436,9 @@ export function DocsContent() {
                         setBrowser(b.id);
                         setShortcutsHint(false);
                       }}
-                      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold border transition-colors ${
+                      className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs sm:text-sm font-semibold border transition-colors cursor-pointer pointer-events-auto relative z-10 ${
                         browser === b.id
-                          ? "bg-white dark:bg-slate-900 border-slate-300 dark:border-slate-600 text-slate-900 dark:text-white shadow-2xs"
+                          ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 shadow-2xs"
                           : "border-transparent text-slate-600 dark:text-slate-400 hover:bg-white/60 dark:hover:bg-slate-800/60"
                       }`}
                     >
@@ -484,7 +484,7 @@ export function DocsContent() {
                   onClick={openShortcuts}
                   className="inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-white bg-blue-600 dark:bg-blue-500 px-4 py-2 rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors"
                 >
-                  <Icon icon="lucide:settings" width={14} />
+                  <Icon icon="lucide:settings" width={14} className="text-white stroke-white" />
                   {t("docs.shortcutsOpenBtn")}
                 </button>
                 {shortcutsHint && (
@@ -729,7 +729,7 @@ export function DocsContent() {
                   </div>
                   <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed break-words">
                     {t("docs.probeDesc") ||
-                      "Every integration in BugSnap features a non-mutating 'Test Connection' probe. It validates your tokens, project keys, and database permissions using read-only API calls — without spamming your issue trackers with fake test tickets or consuming chat prompt quotas."}
+                      "Every integration in BugSnap features a non-mutating 'Test Connection' probe. It validates your tokens, project keys, and database permissions using read-only API calls -without spamming your issue trackers with fake test tickets or consuming chat prompt quotas."}
                   </p>
                 </div>
                 <div className="flex items-center gap-2.5 shrink-0 flex-wrap">

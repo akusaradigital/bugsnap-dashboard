@@ -12,7 +12,7 @@ export function HeroRecorderPreview() {
       <div className="hidden sm:flex items-center gap-2.5 absolute -top-1 sm:top-2 -left-2 sm:-left-8 z-20">
         <div className="w-10 h-10 rounded-2xl bg-blue-100 dark:bg-blue-950/60 border border-blue-200/60 dark:border-blue-900/40 flex items-center justify-center shrink-0 shadow-sm">
           <div className="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center">
-            <Icon icon="lucide:x" className="w-3 h-3 stroke-[3]" aria-hidden="true" />
+            <Icon icon="lucide:x" className="w-3 h-3 stroke-[3] brightness-0 invert" aria-hidden="true" />
           </div>
         </div>
         <div className="text-xs leading-tight font-semibold text-slate-900 dark:text-white">
@@ -107,7 +107,7 @@ export function HeroRecorderPreview() {
           <div className="relative mt-3.5 bg-[#FFF5F5] dark:bg-red-950/25 border border-[#FED7D7] dark:border-red-900/50 rounded-xl p-3 sm:p-3.5 flex items-center justify-between">
             <div className="flex items-center gap-2 min-w-0">
               <span className="w-4 h-4 rounded-full bg-red-500 text-white flex items-center justify-center shrink-0">
-                <Icon icon="lucide:x" className="w-2.5 h-2.5 stroke-[3]" />
+                <Icon icon="lucide:x" className="w-2.5 h-2.5 stroke-[3] brightness-0 invert" />
               </span>
               <span className="text-xs font-bold text-red-600 dark:text-red-400 truncate">
                 Pay $2,499.00
@@ -224,7 +224,7 @@ export function HeroRecorderPreview() {
           </div>
         </div>
         <div className="w-5 h-5 rounded-full bg-[#10B981] text-white flex items-center justify-center shrink-0">
-          <Icon icon="lucide:check" className="w-3.5 h-3.5 stroke-[3]" aria-hidden="true" />
+          <Icon icon="lucide:check" className="w-3.5 h-3.5 stroke-[3] brightness-0 invert" aria-hidden="true" />
         </div>
       </div>
 

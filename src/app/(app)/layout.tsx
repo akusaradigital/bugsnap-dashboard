@@ -723,7 +723,7 @@ export default function DashboardLayout({
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-3">
-          <div className="h-7 w-7 rounded-full border-2 border-[#DC2626] border-t-transparent animate-spin" aria-hidden="true" />
+          <div className="h-7 w-7 rounded-full border-2 border-[#2563EB] border-t-transparent animate-spin" aria-hidden="true" />
           <p className="text-sm text-muted">{t("layout.loading")}</p>
         </div>
       </div>
@@ -1234,11 +1234,11 @@ export default function DashboardLayout({
             setDragOverFolder(null);
           }}
           style={{ paddingLeft: `${4 + depth * 14}px` }}
-          className={`relative w-full flex items-center justify-between gap-1 pr-1 rounded-lg border-l-2 group/folder transition-colors ${
+          className={`relative w-full flex items-center justify-between gap-1 pr-1 rounded-lg group/folder transition-colors ${
             isActiveFolder
-              ? "border-[#DC2626] bg-[#DC2626]/10 dark:bg-[#DC2626]/15 font-semibold"
-              : "border-transparent hover:bg-subtle"
-          } ${dragOverFolder === folder && draggedFolder && draggedFolder !== folder ? "ring-2 ring-[#DC2626]" : ""} ${
+              ? "bg-blue-50 dark:bg-blue-950/15 font-semibold"
+              : "hover:bg-subtle"
+          } ${dragOverFolder === folder && draggedFolder && draggedFolder !== folder ? "ring-2 ring-[#2563EB]" : ""} ${
             draggedFolder === folder ? "opacity-40" : ""
           }`}
         >
@@ -1250,7 +1250,11 @@ export default function DashboardLayout({
                 className="w-4 h-4 shrink-0 flex items-center justify-center text-muted hover:text-foreground mr-0.5 rounded transition-transform"
                 aria-label={isExpanded ? "Collapse folder" : "Expand folder"}
               >
-                
+                <Icon
+                  icon={isExpanded ? "lucide:chevron-down" : "lucide:chevron-down"}
+                  className={`h-3.5 w-3.5 shrink-0 transition-transform ${isExpanded ? "" : "-rotate-90"}`}
+                  aria-hidden="true"
+                />
               </button>
             ) : depth > 0 ? (
               <span className="w-4 shrink-0 flex items-center justify-center text-muted/50 mr-0.5">
@@ -1266,7 +1270,7 @@ export default function DashboardLayout({
               }}
               className={`flex-1 flex items-center gap-2 px-1.5 py-2 text-xs truncate ${
                 isActiveFolder
-                  ? "text-red-700 dark:text-red-400 font-semibold"
+                  ? "text-[#2563EB] dark:text-[#3B82F6] font-semibold"
                   : "text-muted hover:text-foreground"
               }`}
             >
@@ -1294,24 +1298,24 @@ export default function DashboardLayout({
                   const rect = e.currentTarget.getBoundingClientRect();
                   const left =
                     typeof window !== "undefined"
-                      ? Math.max(8, Math.min(rect.right + 4, window.innerWidth - 150))
+                      ? Math.max(8, Math.min(rect.right + 4, window.innerWidth - 188))
                       : rect.right + 4;
                   const top =
                     typeof window !== "undefined"
-                      ? Math.min(rect.top, window.innerHeight - 150)
+                      ? Math.max(8, Math.min(rect.top, window.innerHeight - 188))
                       : rect.top;
                   setFolderMenuPos({ top, left });
                   setFolderMenuOpen((open) => (open === folder ? null : folder));
                 }}
                 aria-label={`${folder} actions`}
-                className="flex h-6 w-6 items-center justify-center rounded-md text-muted hover:bg-subtle hover:text-foreground transition-colors"
+                className="flex h-6 w-6 items-center justify-center rounded-md text-slate-900 hover:bg-slate-100 hover:text-black transition-colors"
               >
                 <Icon icon="lucide:more-horizontal" className="w-3.5 h-3.5" aria-hidden="true" />
               </button>
               {folderMenuOpen === folder && folderMenuPos && (
                 <div
                   style={{ top: folderMenuPos.top, left: folderMenuPos.left }}
-                  className="fixed z-50 w-38 overflow-hidden rounded-lg border border-border bg-subtle py-1 text-xs shadow-lg"
+                  className="fixed z-50 w-[180px] max-w-[calc(100vw-1rem)] overflow-hidden rounded-lg border border-border bg-subtle py-1 text-xs shadow-lg"
                 >
                   <button
                     type="button"
@@ -1393,7 +1397,7 @@ export default function DashboardLayout({
           return null;
         }
         return (
-          <div className="shrink-0 bg-red-600 text-white px-4 py-2.5 flex items-center justify-between gap-4">
+          <div className="shrink-0 bg-[#2563EB] text-white px-4 py-2.5 flex items-center justify-between gap-4">
             <div className="flex-1 min-w-0 text-sm font-medium leading-snug text-center">
               {promoBanner.message}
             </div>
@@ -1435,7 +1439,7 @@ export default function DashboardLayout({
         >
           <Icon icon="lucide:bell" className="w-4 h-4" />
           {newCommentCount > 0 && (
-            <span className="absolute top-1.5 right-1.5 min-w-[16px] h-[16px] px-1 rounded-md bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center">
+            <span className="absolute top-1.5 right-1.5 min-w-[16px] h-[16px] px-1 rounded-md bg-[#2563EB] text-white text-[9px] font-bold flex items-center justify-center">
               {newCommentCount}
             </span>
           )}
@@ -1480,7 +1484,7 @@ export default function DashboardLayout({
             >
               <Icon icon="lucide:bell" className="w-4 h-4" />
               {newCommentCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 rounded-md bg-rose-500 text-white text-[9px] font-bold flex items-center justify-center">
+                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 rounded-md bg-[#2563EB] text-white text-[9px] font-bold flex items-center justify-center">
                   {newCommentCount > 99 ? "99+" : newCommentCount}
                 </span>
               )}
@@ -1499,7 +1503,7 @@ export default function DashboardLayout({
               {notifications.length > 0 && (
                 <button
                   onClick={handleClearNotifications}
-                  className="text-[10px] font-semibold text-red-700 dark:text-red-400 hover:underline"
+                  className="text-[10px] font-semibold text-[#2563EB] dark:text-[#3B82F6] hover:underline"
                 >
                   {t("layout.clearAll")}
                 </button>
@@ -1515,7 +1519,7 @@ export default function DashboardLayout({
                       className={`px-3 py-2 text-xs rounded-lg transition-colors cursor-pointer ${
                         isRead
                           ? "text-muted hover:bg-subtle"
-                          : "text-foreground bg-red-50 dark:bg-red-950/25 hover:bg-red-100 dark:hover:bg-red-950/40 font-medium"
+                          : "text-foreground bg-blue-50 dark:bg-blue-950/25 hover:bg-blue-100 dark:hover:bg-blue-950/40 font-medium"
                       }`}
                       onClick={() => {
                         markRead(n.capture_id);
@@ -1562,7 +1566,7 @@ export default function DashboardLayout({
                 className="w-6 h-6 rounded-md object-cover shrink-0 bg-subtle border border-border"
               />
             ) : (
-              <span className="w-6 h-6 rounded-md bg-[#DC2626] text-white text-[11px] font-semibold flex items-center justify-center shrink-0">
+              <span className="w-6 h-6 rounded-md bg-[#2563EB] text-white text-[11px] font-semibold flex items-center justify-center shrink-0">
                 {initialOf(activeWs?.name)}
               </span>
             )}
@@ -1584,7 +1588,7 @@ export default function DashboardLayout({
                       className="w-10 h-10 rounded-xl object-cover shrink-0 bg-subtle border border-border"
                     />
                   ) : (
-                    <span className="w-10 h-10 rounded-xl bg-[#DC2626]/15 dark:bg-[#DC2626]/20 text-red-700 dark:text-red-400 text-lg font-semibold flex items-center justify-center shrink-0">
+                    <span className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/20 text-[#2563EB] dark:text-[#3B82F6] text-lg font-semibold flex items-center justify-center shrink-0">
                       {initialOf(activeWs?.name)}
                     </span>
                   )}
@@ -1742,13 +1746,13 @@ export default function DashboardLayout({
                     }
                     setSidebarOpen(false);
                   }}
-                  className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg border-l-2 transition-colors ${
+                  className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                     active
-                      ? "bg-red-50 dark:bg-red-950/25 border-red-600 text-red-700 dark:text-red-400"
-                      : "border-transparent text-muted hover:text-foreground hover:bg-subtle"
+                      ? "bg-blue-50 dark:bg-blue-950/25 text-[#2563EB] dark:text-[#3B82F6]"
+                      : "text-muted hover:text-foreground hover:bg-subtle"
                   }`}
                 >
-                  <Icon icon={item.icon} className="w-4 h-4 shrink-0" aria-hidden="true" />
+                  <Icon icon={item.icon} className="h-4 w-4 shrink-0" aria-hidden="true" />
                   {t(item.labelKey)}
                 </Link>
               );
@@ -1769,7 +1773,7 @@ export default function DashboardLayout({
                     setParentFolderId(null);
                     setCreateFolderModalOpen(true);
                   }}
-                  className="text-[10px] font-bold text-red-700 dark:text-red-400 hover:underline"
+                  className="text-[10px] font-bold text-[#2563EB] dark:text-[#3B82F6] hover:underline"
                 >
                   {t("layout.create")}
                 </button>
@@ -1788,7 +1792,7 @@ export default function DashboardLayout({
                         setParentFolderId(null);
                         setCreateFolderModalOpen(true);
                       }}
-                      className="text-[10px] font-semibold text-red-700 dark:text-red-400 hover:underline mt-1"
+                      className="text-[10px] font-semibold text-[#2563EB] dark:text-[#3B82F6] hover:underline mt-1"
                     >
                       {t("layout.createFolder")}
                     </button>
@@ -1828,7 +1832,7 @@ export default function DashboardLayout({
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   placeholder="colleague@example.com"
-                  className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#DC2626] bg-subtle text-foreground placeholder:text-muted"
+                  className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#2563EB] bg-subtle text-foreground placeholder:text-muted"
                   autoFocus
                 />
               </div>
@@ -1871,7 +1875,7 @@ export default function DashboardLayout({
                 value={newWsName}
                 onChange={(e) => setNewWsName(e.target.value)}
                 placeholder="e.g. QA Team"
-                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#DC2626] bg-subtle text-foreground placeholder:text-muted"
+                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#2563EB] bg-subtle text-foreground placeholder:text-muted"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && newWsName.trim()) {
@@ -1918,7 +1922,7 @@ export default function DashboardLayout({
             <Link
               href="/pricing"
               onClick={() => setBillingModalOpen(false)}
-              className="block w-full rounded-lg bg-[#DC2626] text-white text-sm font-semibold px-6 py-3 hover:bg-[#B91C1C] transition-colors shadow-sm shadow-[#DC2626]/25"
+              className="block w-full rounded-lg bg-[#2563EB] text-white text-sm font-semibold px-6 py-3 hover:bg-[#1D4ED8] transition-colors shadow-sm shadow-[#2563EB]/25"
             >
               {t("layout.upgradeToPro")}
             </Link>
@@ -1944,7 +1948,7 @@ export default function DashboardLayout({
                 value={newProjectName}
                 onChange={(e) => setNewProjectName(e.target.value)}
                 placeholder={t("layout.projectNamePlaceholder")}
-                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#DC2626] bg-subtle text-foreground placeholder:text-muted"
+                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#2563EB] bg-subtle text-foreground placeholder:text-muted"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && newProjectName.trim()) {
@@ -1988,7 +1992,7 @@ export default function DashboardLayout({
                 type="text"
                 value={renameProjectName}
                 onChange={(e) => setRenameProjectName(e.target.value)}
-                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#DC2626] bg-subtle text-foreground placeholder:text-muted"
+                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#2563EB] bg-subtle text-foreground placeholder:text-muted"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && renameProjectName.trim()) submitRenameProject();
@@ -2042,7 +2046,7 @@ export default function DashboardLayout({
                   setCreateFolderError(null);
                 }}
                 placeholder="e.g. Eyden - Quaker"
-                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#DC2626] bg-subtle text-foreground placeholder:text-muted"
+                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#2563EB] bg-subtle text-foreground placeholder:text-muted"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && newFolderName.trim()) {
@@ -2109,7 +2113,7 @@ export default function DashboardLayout({
                   setRenameFolderError(null);
                 }}
                 placeholder="e.g. Eyden - Quaker"
-                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#DC2626] bg-subtle text-foreground placeholder:text-muted"
+                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#2563EB] bg-subtle text-foreground placeholder:text-muted"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && renameFolderNameInput.trim()) {
@@ -2222,7 +2226,7 @@ export default function DashboardLayout({
                     style={{ backgroundColor: c.value }}
                   >
                     {isSelected && (
-                      <Icon icon="lucide:check" className="w-4 h-4 text-white drop-shadow" />
+                      <Icon icon="lucide:check" className="w-4 h-4 text-white drop-shadow brightness-0 invert" />
                     )}
                   </button>
                 );

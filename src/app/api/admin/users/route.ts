@@ -478,11 +478,11 @@ export async function PATCH(req: Request) {
         <p>Kami melihat Anda telah mendaftar di BugSnap, tetapi belum sempat mencoba capture bug pertama Anda.</p>
         <p>Dengan ekstensi BugSnap, Anda bisa mengambil screenshot atau merekam layar, lengkap dengan dev logs (Console error & Network 4xx/5xx), lalu menyimpannya langsung ke Google Drive Anda.</p>
         <div style="margin: 28px 0;">
-          <a href="${chromeStoreUrl}" style="background-color: #DC2626; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block;">
+          <a href="${chromeStoreUrl}" style="background-color: #89BD49; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; display: inline-block;">
             Pasang Ekstensi Chrome & Mulai Capture 🚀
           </a>
         </div>
-        <p style="font-size: 13px; color: #64748b;">Butuh bantuan atau panduan? Kunjungi <a href="${appUrl}/dashboard" style="color: #DC2626;">Dashboard BugSnap</a> atau balas email ini langsung.</p>
+        <p style="font-size: 13px; color: #64748b;">Butuh bantuan atau panduan? Kunjungi <a href="${appUrl}/dashboard" style="color: #2563EB;">Dashboard BugSnap</a> atau balas email ini langsung.</p>
         <hr style="border: 0; border-top: 1px solid #e2e8f0; margin: 24px 0;" />
         <p style="font-size: 12px; color: #94a3b8;">Email ini dikirim oleh tim BugSnap.</p>
       </div>`;

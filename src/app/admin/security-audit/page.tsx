@@ -161,7 +161,7 @@ export default function AdminSecurityAuditPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-3 border-b border-slate-200 dark:border-zinc-800 min-w-0">
         <div className="min-w-0">
           <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            <span className="flex items-center gap-2"><Icon icon="lucide:shield-check" className="w-4 h-4 shrink-0 text-[#B91C1C] dark:text-[#F87171]" /> {t("admin.auditTitle")}</span>
+            <span className="flex items-center gap-2"><Icon icon="lucide:shield-check" className="w-4 h-4 shrink-0 text-[#2563EB] dark:text-[#3B82F6]" /> {t("admin.auditTitle")}</span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
             {t("admin.auditDesc")}
@@ -220,7 +220,7 @@ export default function AdminSecurityAuditPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         {[
           { label: "Total Events", value: stats.total, color: "text-slate-900 dark:text-white", border: "border-slate-200 dark:border-zinc-800" },
-          { label: "Admin Actions", value: stats.admin_action, color: "text-[#B91C1C] dark:text-[#F87171]", border: "border-[#DC2626]/30 dark:border-[#DC2626]/40" },
+          { label: "Admin Actions", value: stats.admin_action, color: "text-[#2563EB] dark:text-[#3B82F6]", border: "border-blue-200 dark:border-blue-900/40" },
           { label: "Bot Honeypots", value: stats.honeypot, color: "text-rose-600 dark:text-rose-400", border: "border-rose-200 dark:border-rose-900/50" },
           { label: "Disposable Emails", value: stats.spam_email, color: "text-amber-600 dark:text-amber-400", border: "border-amber-200 dark:border-amber-900/50" },
           { label: "Turnstile Fails", value: stats.turnstile_fail, color: "text-slate-700 dark:text-slate-300", border: "border-slate-300 dark:border-zinc-700" },
@@ -280,7 +280,7 @@ export default function AdminSecurityAuditPage() {
             placeholder="Search IP, title, details..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#DC2626] focus:ring-1 focus:ring-[#DC2626]/20 text-slate-900 dark:text-white"
+            className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 text-slate-900 dark:text-white"
           />
         </div>
       </div>
@@ -317,7 +317,7 @@ export default function AdminSecurityAuditPage() {
                     <tr key={log.id} className="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
                       <td className="py-3 px-4 whitespace-nowrap">
                         {log.type === "admin_action" && (
-                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-[#DC2626]/10 dark:bg-[#DC2626]/20 text-[#B91C1C] dark:text-[#F87171] border border-[#DC2626]/30 dark:border-[#DC2626]/40">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 dark:bg-blue-950/20 text-[#2563EB] dark:text-[#3B82F6] border border-blue-200 dark:border-blue-900/40">
                             <Icon icon="lucide:zap" className="w-3 h-3 shrink-0" />
                             <span>ADMIN ACTION</span>
                           </span>

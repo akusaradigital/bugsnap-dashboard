@@ -621,37 +621,42 @@ export function PricingToggle() {
         </Reveal>
       </div>
 
-      {/* 6. Whimsical Bottom CTA Banner */}
+      {/* 6. Bottom CTA Banner */}
       <Reveal delay={0.45}>
-        <div className="rounded-2xl border border-site-border bg-site-surface-2/60 p-4 sm:p-12 text-center space-y-4 max-w-4xl mx-auto shadow-xs">
-          <h3 className="text-xl sm:text-2xl font-extrabold text-site-text tracking-tight">
-            {t("pricing.bottomCtaTitle")}
-          </h3>
-          <p className="text-xs sm:text-sm text-site-text-2 max-w-xl mx-auto leading-relaxed">
-            {t("pricing.bottomCtaSub")}
-          </p>
-          <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
+        <div className="rounded-2xl sm:rounded-3xl border border-blue-100 dark:border-blue-900/40 bg-[#f0f6ff] dark:bg-blue-950/25 p-6 sm:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm max-w-4xl mx-auto min-w-0">
+          <div className="space-y-1.5 max-w-xl min-w-0">
+            <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              {t("pricing.bottomCtaEyebrow") || "READY TO GET STARTED?"}
+            </div>
+            <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+              {t("pricing.bottomCtaTitle")}
+            </h3>
+            <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+              {t("pricing.bottomCtaSub")}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-center gap-3 shrink-0 min-w-0">
             <a
               href={CHROME_STORE_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold transition-all shadow-xs"
+              className="inline-flex items-center gap-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold px-6 py-3.5 rounded-xl shadow-md transition-all hover:scale-[1.02] active:scale-[0.99] shrink-0 touch-manipulation whitespace-nowrap"
             >
-              <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
+              <Icon icon="logos:chrome" className="w-5 h-5 shrink-0" aria-hidden="true" />
               <span>{t("extension.addToChrome") || "Add to Chrome"}</span>
             </a>
             <a
               href={FIREFOX_STORE_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold transition-all shadow-xs"
+              className="inline-flex items-center gap-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold px-6 py-3.5 rounded-xl shadow-md transition-all hover:scale-[1.02] active:scale-[0.99] shrink-0 touch-manipulation whitespace-nowrap"
             >
-              <Icon icon="logos:firefox" className="w-4 h-4 shrink-0" aria-hidden="true" />
+              <Icon icon="logos:firefox" className="w-5 h-5 shrink-0" aria-hidden="true" />
               <span>{t("extension.addToFirefox")}</span>
             </a>
             <Link
               href="/contact"
-              className="px-5 py-2.5 rounded-xl border border-site-border bg-site-surface hover:bg-site-surface-2 text-site-text text-xs font-semibold transition-all shadow-xs"
+              className="inline-flex items-center gap-1.5 rounded-xl border border-site-border bg-white dark:bg-site-surface hover:bg-slate-50 dark:hover:bg-site-surface-2 text-site-text text-sm font-semibold px-6 py-3.5 transition-colors shrink-0 whitespace-nowrap"
             >
               {t("pricing.contactSales")}
             </Link>

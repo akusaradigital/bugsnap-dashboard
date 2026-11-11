@@ -3,6 +3,7 @@ import { getAuthenticatedUser, createServiceClient } from "@/lib/supabase-server
 import { validateEmail } from "@/lib/email-validator";
 import { logSecurityEvent } from "@/lib/security-audit";
 import { isRateLimited } from "@/lib/rate-limit";
+import { verifyTurnstileToken } from "@/lib/turnstile";
 
 export const runtime = "nodejs";
 
@@ -106,48 +107,31 @@ export async function POST(req: Request) {
         );
       }
 
-      try {
-        const formData = new URLSearchParams();
-        formData.append("secret", TURNSTILE_SECRET);
-        formData.append("response", turnstileToken);
-        if (clientIp) {
-          formData.append("remoteip", clientIp);
-        }
-
-        const cfRes = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: formData.toString(),
-        });
-
-        const cfData = await cfRes.json().catch(() => ({}));
-        if (!cfData.success) {
-          console.warn("[CS Support Report] Turnstile verification failed:", cfData["error-codes"]);
-          await logSecurityEvent({
-            type: "turnstile_fail",
-            title: "Cloudflare Turnstile Verification Failed",
-            detail: `Challenge rejected for "${userEmail}". Errors: ${JSON.stringify(cfData["error-codes"] || [])}`,
-            ip: clientIp,
-          });
-          return NextResponse.json(
-            { error: "Verifikasi keamanan anti-bot gagal. Silakan coba lagi.", code: "TURNSTILE_FAILED" },
-            { status: 403 }
-          );
-        }
-      } catch (cfErr) {
-        // Fail closed: letting submissions through when siteverify is
-        // unreachable means the bot filter is bypassable by blocking Cloudflare.
-        console.warn("[CS Support Report] Turnstile siteverify unreachable:", cfErr);
+      const verification = await verifyTurnstileToken(turnstileToken, clientIp);
+      if (verification.error === "TURNSTILE_UNAVAILABLE") {
+        console.warn("[CS Support Report] Turnstile siteverify unavailable");
         return NextResponse.json(
           { error: "Verifikasi keamanan tidak tersedia. Silakan coba lagi.", code: "TURNSTILE_UNAVAILABLE" },
-          { status: 503 }
+          { status: 503 },
+        );
+      }
+      if (!verification.success) {
+        await logSecurityEvent({
+          type: "turnstile_fail",
+          title: "Cloudflare Turnstile Verification Failed",
+          detail: `Challenge rejected for "${userEmail}". Errors: ${JSON.stringify(verification.errorCodes || [])}`,
+          ip: clientIp,
+        });
+        return NextResponse.json(
+          { error: "Verifikasi keamanan anti-bot gagal. Silakan coba lagi.", code: "TURNSTILE_FAILED" },
+          { status: 403 },
         );
       }
     }
 
     const categoryLabels: Record<string, { label: string; badge: string; color: string }> = {
       bug: { label: "Laporan Bug (Bug Report)", badge: "🐛 BUG", color: "#dc2626" },
-      feature: { label: "Request Fitur Baru (New Feature)", badge: "💡 FITUR", color: "#B91C1C" },
+      feature: { label: "Request Fitur Baru (New Feature)", badge: "💡 FITUR", color: "#2563eb" },
       other: { label: "Pertanyaan / Lain-lain (General)", badge: "💬 SUPPORT", color: "#2563eb" },
     };
 
@@ -195,7 +179,7 @@ export async function POST(req: Request) {
           </div>
 
           <div style="margin-top: 24px; text-align: center;">
-            <a href="mailto:${encodeURIComponent(userEmail)}?subject=Re: ${encodeURIComponent(finalSubject)}" style="display: inline-block; background: #DC2626; color: #ffffff; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 600;">
+            <a href="mailto:${encodeURIComponent(userEmail)}?subject=Re: ${encodeURIComponent(finalSubject)}" style="display: inline-block; background: #2563eb; color: #ffffff; padding: 10px 20px; border-radius: 8px; text-decoration: none; font-size: 13px; font-weight: 600;">
               Balas ke ${escapeHtml(userEmail)}
             </a>
           </div>

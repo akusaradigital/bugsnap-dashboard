@@ -54,7 +54,7 @@ export function SolutionsContent() {
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12]">
               {t("solutions.title") || "Clarity for every role"}
               <br />
-              <span className="text-blue-600 dark:text-blue-500">
+              <span className="text-emerald-600 dark:text-emerald-400">
                 {t("solutions.titleHighlight") || "in the debugging loop"}
               </span>
             </h1>
@@ -74,7 +74,7 @@ export function SolutionsContent() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center">
             {/* Left: Text */}
             <Reveal delay={0.1} className="lg:col-span-6 min-w-0 space-y-4 sm:space-y-5">
-              <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                 {t("solutions.qa.badge") || "QUALITY ASSURANCE"}
               </div>
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
@@ -83,7 +83,7 @@ export function SolutionsContent() {
               </h2>
               <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 leading-relaxed max-w-lg">
                 {t("solutions.qa.desc") ||
-                  "Stop typing. BugSnap captures the exact technical context automatically — from screenshots to console logs."}
+                  "Stop typing. BugSnap captures the exact technical context automatically -from screenshots to console logs."}
               </p>
               <ul className="space-y-3 pt-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium">
                 <li className="flex items-start gap-2.5">
@@ -171,7 +171,7 @@ export function SolutionsContent() {
 
                   {/* Step 1 */}
                   <div className="space-y-1">
-                    <div className="flex items-center justify-between text-[11px] text-slate-400 dark:text-slate-500">
+                    <div className="flex items-center justify-between text-[11px] text-emerald-600 dark:text-emerald-400">
                       <span>Step 1 (00:04)</span>
                       <span className="font-mono">10:14:23</span>
                     </div>
@@ -206,7 +206,7 @@ export function SolutionsContent() {
                         Audio: &quot;saat klik save muncul error&quot;
                       </span>
                     </div>
-                    <div className="flex items-center gap-1.5 shrink-0 text-xs text-slate-400 dark:text-slate-500 font-mono">
+                    <div className="flex items-center gap-1.5 shrink-0 text-xs text-emerald-600 dark:text-emerald-400 font-mono">
                       <span>00:00 / 00:24</span>
                       
                     </div>
@@ -329,7 +329,7 @@ export function SolutionsContent() {
               delay={0.1}
               className="lg:col-span-6 min-w-0 space-y-4 sm:space-y-5 order-1 lg:order-2"
             >
-              <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                 {t("solutions.dev.badge") || "ENGINEERING"}
               </div>
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
@@ -379,7 +379,7 @@ export function SolutionsContent() {
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center">
             {/* Left: Text */}
             <Reveal delay={0.1} className="lg:col-span-6 min-w-0 space-y-4 sm:space-y-5">
-              <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                 {t("solutions.pm.badge") || "PRODUCT MANAGEMENT"}
               </div>
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
@@ -388,7 +388,7 @@ export function SolutionsContent() {
               </h2>
               <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 leading-relaxed max-w-lg">
                 {t("solutions.pm.desc") ||
-                  "Annotate screenshots, add comments or draw directly on the screen. Share, track, and manage issues — all in one place."}
+                  "Annotate screenshots, add comments or draw directly on the screen. Share, track, and manage issues -all in one place."}
               </p>
               <ul className="space-y-3 pt-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium">
                 <li className="flex items-start gap-2.5">
@@ -583,7 +583,7 @@ export function SolutionsContent() {
               delay={0.1}
               className="lg:col-span-6 min-w-0 space-y-4 sm:space-y-5 order-1 lg:order-2"
             >
-              <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+              <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                 {t("solutions.support.badge") || "CUSTOMER SUPPORT"}
               </div>
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
@@ -631,16 +631,13 @@ export function SolutionsContent() {
 
           {/* Section 5: Bottom CTA Card */}
           <Reveal delay={0.2}>
-            <div className="rounded-3xl border border-blue-100 dark:border-blue-900/40 bg-[#f0f6ff] dark:bg-blue-950/25 p-6 sm:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm">
-              <div className="space-y-1.5 max-w-xl">
-                <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+            <div className="rounded-2xl sm:rounded-3xl border border-blue-100 dark:border-blue-900/40 bg-[#f0f6ff] dark:bg-blue-950/25 p-6 sm:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm min-w-0">
+              <div className="space-y-1.5 max-w-xl min-w-0">
+                <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                   {t("solutions.ctaEyebrow") || "READY TO SHIP FASTER?"}
                 </div>
                 <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                  Equip your whole team with{" "}
-                  <span className="text-blue-600 dark:text-blue-500">
-                    BugSnap
-                  </span>
+                  {t("solutions.ctaTitle") || "Equip your whole team with BugSnap"}
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
                   {t("solutions.ctaDesc") ||

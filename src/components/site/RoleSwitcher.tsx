@@ -91,7 +91,7 @@ export function RoleSwitcher() {
             </div>
 
             {/* Red / Pink Container: The Old Way */}
-            <div className="lg:min-h-[132px] rounded-2xl bg-[#FFF5F5] dark:bg-red-950/25 border border-[#FED7D7]/70 dark:border-red-900/40 p-4 sm:p-5 mb-6">
+            <div className="lg:min-h-[132px] rounded-2xl bg-red-50 dark:bg-red-950/25 border border-red-100 dark:border-red-900/40 p-4 sm:p-5 mb-6">
               <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-bold text-xs uppercase tracking-wider mb-2">
                 <Icon icon="lucide:x" className="w-3.5 h-3.5 stroke-[3] shrink-0" aria-hidden="true" />
                 <span>{t("site.roles.oldWay")}</span>
@@ -143,7 +143,7 @@ export function RoleSwitcher() {
           {workflowSteps.map((step, idx) => (
             <div key={step.num} className="contents lg:flex lg:items-center lg:gap-4 min-w-0">
               <div className="flex items-center gap-3.5 min-w-0">
-                <div className="w-9 h-9 rounded-full bg-[#EBF7E3] dark:bg-emerald-950/60 text-[#3D7A24] dark:text-emerald-400 font-extrabold text-sm flex items-center justify-center shrink-0">
+                <div className="w-9 h-9 rounded-full bg-[#EBF7E3] dark:bg-emerald-950/60 text-[#3D7A24] dark:text-[#72C048] font-extrabold text-sm flex items-center justify-center shrink-0">
                   {step.num}
                 </div>
                 <div className="min-w-0">

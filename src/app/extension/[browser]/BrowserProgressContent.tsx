@@ -125,7 +125,7 @@ export function BrowserProgressContent({}: BrowserProgressContentProps) {
               className="flex items-start gap-3 p-3.5 sm:p-4 rounded-xl bg-site-surface-2 border border-site-border min-w-0"
             >
               <div className="w-5 h-5 rounded-full bg-[#89BD49] dark:bg-[#89BD49] text-white dark:text-slate-900 flex items-center justify-center shrink-0 mt-0.5">
-                <Icon icon="tabler:check" className="w-3 h-3 stroke-[3]" />
+                <Icon icon="tabler:check" className="w-3 h-3 stroke-[3] brightness-0 invert" />
               </div>
               <p className="text-xs sm:text-sm text-site-text leading-snug break-words flex-1 min-w-0">
                 {t(key)}

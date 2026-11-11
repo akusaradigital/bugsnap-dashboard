@@ -342,7 +342,7 @@ const INTEGRATION_DETAILS: Record<string, IntegrationDetail> = {
       "Zapier / Make / n8n: Create a 'Catch Hook' trigger and copy the generated webhook endpoint URL.",
       "Custom Server: Create an HTTP POST route that accepts JSON payloads.",
       "In BugSnap Settings > Webhooks, enter your destination URL.",
-      "Click 'Test Connection' — BugSnap validates SSRF safety and sends a ping payload. Click 'Save Configuration'.",
+      "Click 'Test Connection' -BugSnap validates SSRF safety and sends a ping payload. Click 'Save Configuration'.",
     ],
     samplePayload: `{
   "event": "capture.created",
@@ -419,7 +419,7 @@ const INTEGRATION_DETAILS: Record<string, IntegrationDetail> = {
       "Launch your SnapTest AI Runner server or cloud endpoint (e.g. https://runner.snaptest.ai or local runner).",
       "Obtain your runner authentication token (optional for local endpoints).",
       "In BugSnap Settings > SnapTest AI, configure the Runner URL and Token.",
-      "Click 'Test Connection' — BugSnap queries the runner health endpoint (/health or /api/status) to verify connectivity.",
+      "Click 'Test Connection' -BugSnap queries the runner health endpoint (/health or /api/status) to verify connectivity.",
     ],
     samplePayload: `{
   "captureId": "cap_9a8f2",
@@ -454,7 +454,7 @@ const INTEGRATION_DETAILS: Record<string, IntegrationDetail> = {
       "Navigate to Settings > API Keys and click 'Create Key'.",
       "Copy your API key (starts with sk-ant-).",
       "In BugSnap Settings > Claude AI, enter your key. Optionally select your model (default: claude-3-5-sonnet-latest).",
-      "Click 'Test Connection' — BugSnap runs a lightweight auth check without consuming chat tokens.",
+      "Click 'Test Connection' -BugSnap runs a lightweight auth check without consuming chat tokens.",
     ],
     samplePayload: `### AI Root Cause & Repro Analysis (Claude 3.5 Sonnet)
 
@@ -683,7 +683,7 @@ export function IntegrationsDocsContent() {
                 </div>
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
                   {t("docs.probeDesc") ||
-                    "Every integration in BugSnap features a non-mutating 'Test Connection' probe. It validates your tokens, project keys, and database permissions using read-only API calls — without spamming your issue trackers with fake test tickets or consuming chat prompt quotas."}
+                    "Every integration in BugSnap features a non-mutating 'Test Connection' probe. It validates your tokens, project keys, and database permissions using read-only API calls -without spamming your issue trackers with fake test tickets or consuming chat prompt quotas."}
                 </p>
               </div>
               <Link
@@ -809,7 +809,7 @@ export function IntegrationsDocsContent() {
                             </span>
                             {f.hint && (
                               <span className="text-slate-400 dark:text-slate-500 text-[11px] block mt-0.5 break-words">
-                                — {f.hint}
+                                -{f.hint}
                               </span>
                             )}
                           </li>

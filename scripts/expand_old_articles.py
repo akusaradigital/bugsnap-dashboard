@@ -18,7 +18,7 @@ ART1_CONTENT_EN = """
 
 <p>What follows is an exhausting, multi-day game of asynchronous ping-pong. A developer pulls the ticket, attempts to reproduce the issue on their local machine, finds that checkout works fine for their test user, and moves the ticket to <em>"Cannot Reproduce"</em>. The tester re-opens it with indignation, the engineering manager questions sprint velocity, and days of productive coding time evaporate. According to global research by the Consortium for Information &amp; Software Quality (CISQ), poorly communicated software defects cost technology organizations upwards of $2.4 trillion annually in wasted triage hours, delayed releases, and post-production hotfixes.</p>
 
-<p>Writing a world-class, reproduction-ready bug report is not an innate talent — it is a disciplined engineering process. Here is the definitive field guide to crafting bug reports that developers can diagnose, reproduce, and resolve in the first sprint.</p>
+<p>Writing a world-class, reproduction-ready bug report is not an innate talent -it is a disciplined engineering process. Here is the definitive field guide to crafting bug reports that developers can diagnose, reproduce, and resolve in the first sprint.</p>
 
 <h2>The 7 Deadly Sins of Bug Reporting</h2>
 <p>Before examining the structure of a high-signal report, engineering teams must recognize the common communication anti-patterns that derail debugging:</p>
@@ -115,7 +115,7 @@ ART1_CONTENT_EN = """
 <h2>How BugSnap Automates 90% of the Work</h2>
 <p>Following this comprehensive checklist manually can feel tedious during rapid exploratory testing. This is why modern engineering teams utilize <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a>.</p>
 
-<p>With a single keyboard shortcut (<code>Ctrl+Shift+F</code>), BugSnap captures high-definition screen video while silently recording network request and response headers, uncaught console exceptions, client-side breadcrumbs, and complete hardware/browser specs. When you finish recording, BugSnap generates a shareable link that packages all seven diagnostic criteria automatically — giving developers everything they need without requiring testers to manually copy and paste DevTools data.</p>
+<p>With a single keyboard shortcut (<code>Ctrl+Shift+F</code>), BugSnap captures high-definition screen video while silently recording network request and response headers, uncaught console exceptions, client-side breadcrumbs, and complete hardware/browser specs. When you finish recording, BugSnap generates a shareable link that packages all seven diagnostic criteria automatically -giving developers everything they need without requiring testers to manually copy and paste DevTools data.</p>
 """.strip()
 
 ART1_CONTENT_ID = """
@@ -123,7 +123,7 @@ ART1_CONTENT_ID = """
 
 <p>Yang terjadi berikutnya adalah drama komunikasi bolak-balik yang memakan waktu berhari-hari. Developer mengambil tiket tersebut, mencoba mereproduksinya di mesin lokal, mendapati bahwa alur checkout berjalan normal pada akun pengembangnya, lalu menutup tiket dengan label <em>"Cannot Reproduce"</em>. Tester merasa frustrasi, manajer proyek mempertanyakan kecepatan sprint, dan jam kerja produktif tim terbuang sia-sia. Riset global oleh Consortium for Information &amp; Software Quality (CISQ) mengungkapkan bahwa komunikasi cacat software yang buruk merugikan industri teknologi hingga lebih dari $2,4 triliun per tahun akibat waktu investigasi yang terbuang dan keterlambatan rilis produk.</p>
 
-<p>Membuat laporan bug berkualitas tinggi yang siap direproduksi bukanlah bakat bawaan — melainkan sebuah disiplin engineering yang terstruktur. Berikut adalah panduan komprehensif untuk menyusun laporan bug standar internasional yang dapat langsung dipahami, direproduksi, dan diselesaikan oleh developer dalam satu sprint.</p>
+<p>Membuat laporan bug berkualitas tinggi yang siap direproduksi bukanlah bakat bawaan -melainkan sebuah disiplin engineering yang terstruktur. Berikut adalah panduan komprehensif untuk menyusun laporan bug standar internasional yang dapat langsung dipahami, direproduksi, dan diselesaikan oleh developer dalam satu sprint.</p>
 
 <h2>7 Kesalahan Fatal dalam Pelaporan Bug</h2>
 <p>Sebelum mempelajari struktur laporan yang ideal, tim penguji harus menghindari 7 kebiasaan buruk yang sering menghambat proses debugging:</p>
@@ -480,7 +480,7 @@ ART3_CONTENT_EN = """
 <p>Multi-step checkout funnels, checkout wizards, and permission delegation modals where internal state propagates across several asynchronous steps.</p>
 
 <h3>2. UI Layout Shifts &amp; CSS Animation Jank</h3>
-<p>Describing a layout glitch in text — <em>"When I resize the window, the navigation drawer jumps 10 pixels to the right before snapping back"</em> — is subjective and imprecise. A high-framerate video proves the exact CSS transform breakdown immediately.</p>
+<p>Describing a layout glitch in text -<em>"When I resize the window, the navigation drawer jumps 10 pixels to the right before snapping back"</em> -is subjective and imprecise. A high-framerate video proves the exact CSS transform breakdown immediately.</p>
 
 <h3>3. Drag-and-Drop and Canvas Interactions</h3>
 <p>Interactive Kanban boards, visual canvas editors (like Figma or Miro), and flowchart tools depend on pointer coordinates and drag physics that cannot be articulated in prose.</p>
@@ -501,7 +501,7 @@ ART3_CONTENT_EN = """
 <h2>The Ultimate Synergy: Video + Synchronized Telemetry</h2>
 <p>A video recording proves <strong>what</strong> happened on screen. But to fix the bug, a developer must know <strong>why</strong> it happened under the hood. A video alone still forces the developer to wonder: <em>"Did an API call fail, or was it a React component exception?"</em></p>
 
-<p>This is where <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> provides the ultimate solution. BugSnap pairs a crystal-clear screen recording with synchronized developer telemetry: uncaught console errors, network request/response headers, and user action breadcrumbs are embedded directly alongside the video timeline. When the developer scrubs the video, the network log scrubs in unison — closing the loop between visual symptom and technical cause.</p>
+<p>This is where <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> provides the ultimate solution. BugSnap pairs a crystal-clear screen recording with synchronized developer telemetry: uncaught console errors, network request/response headers, and user action breadcrumbs are embedded directly alongside the video timeline. When the developer scrubs the video, the network log scrubs in unison -closing the loop between visual symptom and technical cause.</p>
 """.strip()
 
 ART3_CONTENT_ID = """
@@ -535,7 +535,7 @@ ART3_CONTENT_ID = """
 <p>Alur checkout bertahap, konfigurasi wizard, dan dialog konfirmasi multi-langkah di mana state data berpindah-pindah antar langkah.</p>
 
 <h3>2. Pergeseran Layout &amp; Animasi CSS yang Patah (Jank)</h3>
-<p>Mendeskripsikan kerusakan visual dalam teks — <em>"Saat jendela browser diperkecil, menu samping loncat 10 piksel ke kanan lalu balik lagi"</em> — sangatlah subjektif dan sulit dimengerti. Video dengan framerate tinggi membuktikannya secara instan.</p>
+<p>Mendeskripsikan kerusakan visual dalam teks -<em>"Saat jendela browser diperkecil, menu samping loncat 10 piksel ke kanan lalu balik lagi"</em> -sangatlah subjektif dan sulit dimengerti. Video dengan framerate tinggi membuktikannya secara instan.</p>
 
 <h3>3. Fitur Drag-and-Drop &amp; Manipulasi Canvas</h3>
 <p>Papan Kanban interaktif, editor visual berbasis kanvas, dan diagram alur sangat bergantung pada koordinasi pointer mouse yang tidak bisa diwakili oleh kata-kata.</p>
@@ -556,7 +556,7 @@ ART3_CONTENT_ID = """
 <h2>Kombinasi Sempurna: Video + Telemetri Tersinkronisasi</h2>
 <p>Rekaman video membuktikan <strong>apa</strong> yang terjadi di layar. Namun untuk memperbaiki kode, developer harus tahu <strong>mengapa</strong> hal itu bisa terjadi di balik layar. Video semata masih menyisakan teka-teki: <em>"Apakah API yang gagal, atau komponen React yang crash?"</em></p>
 
-<p>Inilah keunggulan utama <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a>. BugSnap memadukan rekaman video beresolusi tinggi dengan telemetri teknis yang tersinkronisasi: error konsol JavaScript, header request dan respons jaringan, serta jejak klik pengguna terpampang langsung di timeline video. Saat developer menggeser durasi video, log jaringan bergerak sinkron — menghubungkan bukti visual dengan akar masalah teknis secara instan.</p>
+<p>Inilah keunggulan utama <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a>. BugSnap memadukan rekaman video beresolusi tinggi dengan telemetri teknis yang tersinkronisasi: error konsol JavaScript, header request dan respons jaringan, serta jejak klik pengguna terpampang langsung di timeline video. Saat developer menggeser durasi video, log jaringan bergerak sinkron -menghubungkan bukti visual dengan akar masalah teknis secara instan.</p>
 """.strip()
 
 
@@ -584,10 +584,10 @@ ART4_CONTENT_EN = """
 </ul>
 
 <h3>2. The Compliance and Regulatory Nightmare</h3>
-<p>Modern data protection frameworks — including <strong>GDPR (Europe), HIPAA (US), and Law No. 27/2022 on Personal Data Protection (UU PDP - Indonesia)</strong> — impose strict statutory liabilities on data controllers regarding third-party sub-processors. When a QA engineer captures a screen, they frequently capture sensitive customer PII, internal staging database connection strings, or pre-release intellectual property. Storing these assets on unvetted multi-tenant cloud storage violates data minimization principles and complicates statutory compliance audits.</p>
+<p>Modern data protection frameworks -including <strong>GDPR (Europe), HIPAA (US), and Law No. 27/2022 on Personal Data Protection (UU PDP - Indonesia)</strong> -impose strict statutory liabilities on data controllers regarding third-party sub-processors. When a QA engineer captures a screen, they frequently capture sensitive customer PII, internal staging database connection strings, or pre-release intellectual property. Storing these assets on unvetted multi-tenant cloud storage violates data minimization principles and complicates statutory compliance audits.</p>
 
 <h3>3. Egregious Cloud Storage Markups</h3>
-<p>Raw cloud storage is a commodity: major providers charge approximately $0.02 per gigabyte per month. Yet proprietary bug capture tools routinely charge steep markups — often charging $0.15 to $0.30 per GB for storage overages, or forcing teams to upgrade to higher tiers simply to expand retention windows for videos they already pay Google Workspace to host.</p>
+<p>Raw cloud storage is a commodity: major providers charge approximately $0.02 per gigabyte per month. Yet proprietary bug capture tools routinely charge steep markups -often charging $0.15 to $0.30 per GB for storage overages, or forcing teams to upgrade to higher tiers simply to expand retention windows for videos they already pay Google Workspace to host.</p>
 
 <h2>What True File Ownership Looks Like</h2>
 <p>Genuine data sovereignty is defined by three non-negotiable architectural principles:</p>
@@ -651,7 +651,7 @@ ART4_CONTENT_ID = """
 
 <p><em>"Siapa yang sebenarnya memiliki dan mengendalikan file video diagnostik tim kita? Di mana file-file tersebut disimpan secara fisik, siapa yang memiliki akses administratif, dan apa yang terjadi pada data kita jika langganan dihentikan?"</em></p>
 
-<p>Pada sebagian besar platform perekam layar dan pelapor bug konvensional, jawabannya cukup mengkhawatirkan. Rekaman dashboard staging internal, alur data pelanggan sensitif, dan video fitur rahasia perusahaan terkunci di dalam bucket AWS S3 multi-tenant milik startup pihak ketiga di bawah ketentuan layanan mereka — dan hanya dapat diakses selama Anda terus membayar biaya langganan bulanan.</p>
+<p>Pada sebagian besar platform perekam layar dan pelapor bug konvensional, jawabannya cukup mengkhawatirkan. Rekaman dashboard staging internal, alur data pelanggan sensitif, dan video fitur rahasia perusahaan terkunci di dalam bucket AWS S3 multi-tenant milik startup pihak ketiga di bawah ketentuan layanan mereka -dan hanya dapat diakses selama Anda terus membayar biaya langganan bulanan.</p>
 
 <p>Memahami realitas kedaulatan data (data sovereignty), bahaya vendor lock-in, dan liabilitas hukum penyimpanan data adalah hal mutlak bagi organisasi engineering modern. Inilah alasan mengapa model <strong>Bring-Your-Own-Storage (BYOS)</strong> kini menjadi standar wajib bagi perusahaan teknologi terkemuka.</p>
 
@@ -667,10 +667,10 @@ ART4_CONTENT_ID = """
 </ul>
 
 <h3>2. Jebakan Kepatuhan Regulasi dan UU PDP</h3>
-<p>Regulasi perlindungan data modern — seperti <strong>UU No. 27 Tahun 2022 tentang Pelindungan Data Pribadi (UU PDP di Indonesia)</strong> dan GDPR di Eropa — menuntut pengendali data memiliki tata kelola ketat atas pihak ketiga pemroses data. Saat QA merekam layar, data pribadi pengguna, connection string database internal, atau rahasia bisnis perusahaan sering kali ikut terekam tanpa sengaja. Menyimpan data ini di server cloud pihak ketiga tanpa perjanjian DPA ketat membuka celah pelanggaran hukum yang berisiko denda administratif besar.</p>
+<p>Regulasi perlindungan data modern -seperti <strong>UU No. 27 Tahun 2022 tentang Pelindungan Data Pribadi (UU PDP di Indonesia)</strong> dan GDPR di Eropa -menuntut pengendali data memiliki tata kelola ketat atas pihak ketiga pemroses data. Saat QA merekam layar, data pribadi pengguna, connection string database internal, atau rahasia bisnis perusahaan sering kali ikut terekam tanpa sengaja. Menyimpan data ini di server cloud pihak ketiga tanpa perjanjian DPA ketat membuka celah pelanggaran hukum yang berisiko denda administratif besar.</p>
 
 <h3>3. Markup Biaya Penyimpanan Cloud yang Berlebihan</h3>
-<p>Biaya penyimpanan cloud mentah saat ini sangat murah: penyedia cloud besar mematok tarif sekitar $0,02 per gigabyte per bulan. Namun, platform SaaS pelaporan bug sering kali membebankan markup berkali-kali lipat — mematok biaya overage $0,15 hingga $0,30 per GB, atau memaksa tim meng-upgrade paket langganan hanya untuk memperpanjang masa retensi video yang sebenarnya sudah ditanggung kuotanya oleh Google Workspace perusahaan.</p>
+<p>Biaya penyimpanan cloud mentah saat ini sangat murah: penyedia cloud besar mematok tarif sekitar $0,02 per gigabyte per bulan. Namun, platform SaaS pelaporan bug sering kali membebankan markup berkali-kali lipat -mematok biaya overage $0,15 hingga $0,30 per GB, atau memaksa tim meng-upgrade paket langganan hanya untuk memperpanjang masa retensi video yang sebenarnya sudah ditanggung kuotanya oleh Google Workspace perusahaan.</p>
 
 <h2>Definisi Kepemilikan File yang Sejati</h2>
 <p>Kedaulatan data sejati diukur berdasarkan tiga prinsip arsitektur yang tidak dapat ditawar:</p>
@@ -719,7 +719,7 @@ ART4_CONTENT_ID = """
 <p><a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> dirancang sejak baris kode pertama untuk menuntaskan masalah liabilitas penyimpanan ini secara permanen melalui arsitektur <strong>Zero Server Storage</strong>:</p>
 
 <ul>
-  <li><strong>Izin OAuth Terbatas (Scoped):</strong> Saat menghubungkan akun Google, BugSnap hanya meminta scope minimal: <code>https://www.googleapis.com/auth/drive.file</code>. Izin ini hanya membolehkan BugSnap membaca dan menulis file yang dibuat oleh BugSnap sendiri — sama sekali tidak memiliki akses ke dokumen rahasia, spreadsheet keuangan, atau folder lain di Google Drive Anda.</li>
+  <li><strong>Izin OAuth Terbatas (Scoped):</strong> Saat menghubungkan akun Google, BugSnap hanya meminta scope minimal: <code>https://www.googleapis.com/auth/drive.file</code>. Izin ini hanya membolehkan BugSnap membaca dan menulis file yang dibuat oleh BugSnap sendiri -sama sekali tidak memiliki akses ke dokumen rahasia, spreadsheet keuangan, atau folder lain di Google Drive Anda.</li>
   <li><strong>Unggah Langsung Browser ke Drive:</strong> Setelah perekaman selesai, file video dikompresi di memori browser dan langsung diunggah dari Chrome ke folder Google Drive pengguna melalui API resmi Google resumable upload.</li>
   <li><strong>Nol Byte Transit di Server:</strong> Data video tidak pernah melintasi, diproses, atau disimpan di server backend BugSnap. Database kami hanya menyimpan metadata ringan (waktu pembuatan, judul rekaman, dan ID file Google Drive).</li>
   <li><strong>Kemandirian Permanen:</strong> Jika Anda meng-uninstall BugSnap besok hari, 100% video rekaman bug historis Anda tetap tersimpan utuh di Google Drive perusahaan Anda, siap dibuka dan dibagikan selamanya.</li>

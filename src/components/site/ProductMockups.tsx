@@ -374,7 +374,7 @@ export function PlaywrightExportCard() {
           @playwright/test
         </span>
       </div>
-      <pre className="mt-2.5 p-2.5 rounded bg-site-surface-2 text-[10px] text-site-text leading-relaxed overflow-x-auto">
+      <pre className="mt-2.5 max-w-full min-w-0 p-2.5 rounded bg-site-surface-2 text-[10px] text-site-text leading-relaxed overflow-x-auto">
 {`test('reproduce checkout button failure', async ({ page }) => {
   await page.goto('/checkout');
   await page.getByRole('button', { name: 'Apply Promo' }).click();

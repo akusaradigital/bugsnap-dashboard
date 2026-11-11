@@ -26,6 +26,7 @@ function getTurnstile(): TurnstileApi | undefined {
 export default function FloatingSupport() {
   const { t } = useT();
   const [isOpen, setIsOpen] = useState(false);
+  const [supportView, setSupportView] = useState<"welcome" | "form">("welcome");
   const [showPrompt, setShowPrompt] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -103,6 +104,7 @@ export default function FloatingSupport() {
         setCategory(custom.detail.category);
       }
       setIsOpen(true);
+      setSupportView("form");
       setShowPrompt(false);
     };
     window.addEventListener("open-support-modal", handleOpen);
@@ -313,32 +315,67 @@ export default function FloatingSupport() {
 
       {/* Support Pop-up Modal Card */}
       {isOpen && (
-        <div className="absolute bottom-14 sm:bottom-16 right-0 w-[calc(100vw-2rem)] sm:w-[390px] max-w-[390px] max-h-[85vh] flex flex-col rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 shadow-2xl overflow-hidden transition-all duration-200">
-          {/* Header - Brand Green Accent */}
-          <div className="flex items-center justify-between border-b border-[#46741A] dark:border-zinc-800 bg-[#89BD49] dark:bg-zinc-900 px-5 py-4 text-white">
-            <div className="flex items-center gap-2.5">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#B91C1C]/60 dark:bg-zinc-800 text-white">
-                <Icon icon="lucide:message-square" className="h-4 w-4" />
-              </span>
-              <div>
-                <h3 className="text-sm font-bold leading-tight text-white">{t("support.title")}</h3>
-                <p className="text-[11px] text-white/80 dark:text-zinc-400 leading-tight">
-                  {t("support.subtitle")}
-                </p>
+        <div className={`absolute bottom-[calc(100%+0.75rem)] right-0 w-[min(400px,calc(100vw-2rem))] min-w-0 max-h-[min(640px,calc(100vh-5rem))] flex flex-col overflow-hidden shadow-2xl transition-all duration-200 ${supportView === "welcome" ? "rounded-2xl bg-[linear-gradient(145deg,#2563EB_0%,#1D4ED8_100%)] p-2.5" : "rounded-2xl border border-slate-200 bg-white dark:border-zinc-800 dark:bg-zinc-950"}`}>
+          {supportView === "form" && (
+            <div className="relative flex items-center justify-between border-b border-slate-200 bg-white px-5 py-4 dark:border-zinc-800 dark:bg-zinc-950">
+              <div className="flex min-w-0 items-center gap-3 pl-1">
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#2563EB]/10 text-[#2563EB] dark:bg-blue-500/15 dark:text-blue-400">
+                  <Icon icon="lucide:message-square" className="h-5 w-5" />
+                </span>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2">
+                    <h3 className="truncate text-sm font-bold leading-tight text-slate-950 dark:text-white">{t("support.title")}</h3>
+                    <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#89BD49]" aria-label={t("support.onlineLabel")} />
+                  </div>
+                  <p className="mt-1 truncate text-[11px] leading-tight text-slate-500 dark:text-zinc-400">
+                    {t("support.subtitle")}
+                  </p>
+                </div>
               </div>
+              <button
+                type="button"
+                onClick={() => setIsOpen(false)}
+                className="ml-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-800 dark:hover:text-white"
+                aria-label={t("support.close")}
+              >
+                <Icon icon="lucide:x" className="h-4 w-4" />
+              </button>
             </div>
-            <button
-              type="button"
-              onClick={() => setIsOpen(false)}
-              className="flex h-7 w-7 items-center justify-center rounded-lg text-white/80 hover:text-white hover:bg-white/10 dark:hover:bg-zinc-800 transition-colors"
-              aria-label={t("support.close")}
-            >
-              <Icon icon="lucide:x" className="h-4 w-4" />
-            </button>
-          </div>
+          )}
 
-          <div className="flex-1 overflow-y-auto p-5 text-slate-800 dark:text-zinc-200">
-            {success ? (
+          <div className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-5 py-5 text-slate-800 dark:text-zinc-200 sm:px-6 sm:py-6">
+            {supportView === "welcome" ? (
+              <div className="-mx-5 -my-5 flex min-h-[380px] flex-col justify-between rounded-xl bg-slate-50 p-5 sm:-mx-6 sm:-my-6 sm:p-6 dark:bg-zinc-950">
+                <div>
+                  <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl shadow-sm dark:bg-zinc-900" aria-hidden="true">
+                    👋
+                  </div>
+                  <h4 className="text-xl font-bold tracking-tight text-slate-950 dark:text-white">
+                    {t("support.welcomeTitle")}
+                  </h4>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-zinc-400">
+                    {t("support.welcomeDesc")}
+                  </p>
+                </div>
+                <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_2px_4px_rgba(15,23,42,0.08)] dark:border-zinc-800 dark:bg-zinc-900">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <h5 className="text-sm font-bold text-slate-950 dark:text-white">{t("support.onlineTitle")}</h5>
+                      <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-zinc-400">{t("support.onlineDesc")}</p>
+                    </div>
+                    <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#89BD49]" aria-label={t("support.onlineLabel")} />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setSupportView("form")}
+                    className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[#2563EB] transition-colors hover:text-[#1D4ED8] dark:text-blue-400"
+                  >
+                    {t("support.startConversation")}
+                    <Icon icon="lucide:arrow-right" className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+            ) : success ? (
               <div className="flex flex-col items-center justify-center py-6 text-center space-y-4">
                 <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 text-2xl">
                   <Icon icon="lucide:check" className="h-7 w-7" />
@@ -371,7 +408,7 @@ export default function FloatingSupport() {
                 </div>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-4">
+              <form onSubmit={handleSubmit} className="min-w-0 space-y-4">
                 {/* Anti-spam Honeypot (hidden from human users, traps automated scrapers) */}
                 <div className="absolute -left-[9999px] top-0 opacity-0 pointer-events-none" aria-hidden="true">
                   <input
@@ -399,7 +436,7 @@ export default function FloatingSupport() {
                           onClick={() => setCategory(cat.id)}
                           className={`flex items-center justify-center gap-1.5 py-1.5 px-2 rounded-lg text-xs font-semibold transition-all ${
                             isActive
-                              ? "bg-white dark:bg-zinc-800 text-[#B91C1C] dark:text-[#F87171] shadow-xs"
+                              ? "bg-white dark:bg-zinc-800 text-[#2563EB] dark:text-[#3B82F6] shadow-xs"
                               : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
                           }`}
                         >
@@ -430,7 +467,7 @@ export default function FloatingSupport() {
                       if (errorMessage) setErrorMessage(null);
                     }}
                     placeholder="nama@perusahaan.com"
-                    className="w-full text-xs rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-[#DC2626] transition-colors"
+                    className="block w-full min-w-0 max-w-full text-xs rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-[#2563EB] transition-colors"
                   />
                 </div>
 
@@ -444,7 +481,7 @@ export default function FloatingSupport() {
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
                     placeholder={activeCategoryMeta.subjectPlaceholder}
-                    className="w-full text-xs rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-[#DC2626] transition-colors"
+                    className="block w-full min-w-0 max-w-full text-xs rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-[#2563EB] transition-colors"
                   />
                 </div>
 
@@ -462,7 +499,7 @@ export default function FloatingSupport() {
                       if (errorMessage) setErrorMessage(null);
                     }}
                     placeholder={activeCategoryMeta.placeholder}
-                    className="w-full text-xs rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-[#DC2626] transition-colors resize-none leading-relaxed"
+                    className="block w-full min-w-0 max-w-full text-xs rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-[#2563EB] transition-colors resize-none leading-relaxed"
                   />
                 </div>
 
@@ -477,7 +514,7 @@ export default function FloatingSupport() {
                   <button
                     type="submit"
                     disabled={submitting || !email.trim() || !message.trim()}
-                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#DC2626] hover:bg-[#B91C1C] disabled:opacity-50 text-white text-xs font-bold py-2.5 transition-colors shadow-sm"
+                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white text-xs font-bold py-2.5 transition-colors shadow-sm"
                   >
                     {submitting ? (
                       <>
@@ -495,7 +532,7 @@ export default function FloatingSupport() {
                   {t("support.urgent")}{" "}
                   <a
                     href={`mailto:support@bugsnap.akusaraproject.my.id?subject=[BugSnap%20Support]&body=${encodeURIComponent(message || "")}`}
-                    className="text-[#B91C1C] dark:text-[#F87171] hover:underline font-medium break-all"
+                    className="text-[#2563EB] dark:text-[#3B82F6] hover:underline font-medium break-all"
                   >
                     support@bugsnap.akusaraproject.my.id
                   </a>
@@ -513,13 +550,13 @@ export default function FloatingSupport() {
             setIsOpen(true);
             dismissPrompt();
           }}
-          className="absolute bottom-13 sm:bottom-14 right-0 mb-1 flex items-center gap-2.5 rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3.5 sm:px-4 py-2 sm:py-2.5 shadow-2xl animate-in fade-in slide-in-from-bottom-2 duration-300 text-xs font-semibold text-slate-800 dark:text-zinc-100 cursor-pointer hover:border-[#DC2626] dark:hover:border-[#DC2626] transition-all group max-w-[calc(100vw-2.5rem)] sm:max-w-xs z-50"
+          className="absolute bottom-[calc(100%+0.75rem)] right-0 mb-0 flex items-center gap-2.5 rounded-xl border border-slate-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3.5 py-2.5 shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-300 text-xs font-semibold text-slate-800 dark:text-zinc-100 cursor-pointer hover:border-[#2563EB] dark:hover:border-[#2563EB] transition-all group w-[min(280px,calc(100vw-2rem))] z-50"
         >
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#DC2626]/15 text-[#B91C1C] dark:text-[#F87171] text-sm">
+          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#2563EB]/15 text-[#2563EB] dark:text-[#3B82F6] text-sm">
             <Icon icon="lucide:hand" className="w-3.5 h-3.5" />
           </span>
           <div className="flex-1 min-w-0">
-            <p className="text-[12px] font-bold leading-tight group-hover:text-[#B91C1C] dark:group-hover:text-[#F87171] transition-colors">
+            <p className="text-[12px] font-bold leading-tight group-hover:text-[#2563EB] dark:group-hover:text-[#3B82F6] transition-colors">
               {t("support.helpPrompt")}
             </p>
           </div>
@@ -535,32 +572,35 @@ export default function FloatingSupport() {
         </div>
       )}
 
-      {/* Floating Trigger Button - Sleek rectangular badge (no pills) */}
+      {/* Floating trigger: compact when closed, clear action label. */}
       <button
         type="button"
         onClick={() => {
-          setIsOpen((prev) => !prev);
+          if (isOpen) {
+            setIsOpen(false);
+          } else {
+            setSupportView("welcome");
+            setIsOpen(true);
+          }
           if (showPrompt) dismissPrompt();
         }}
-        className={`relative flex items-center gap-2 px-3.5 sm:px-4 h-11 rounded-xl shadow-lg transition-all hover:scale-105 active:scale-95 border border-white/20 ${
+        className={`relative flex items-center gap-2 px-3.5 sm:px-4 h-12 rounded-full shadow-lg transition-all hover:-translate-y-0.5 active:scale-95 border border-white/20 ${
           isOpen
             ? "bg-slate-900 dark:bg-zinc-800 text-white"
-            : "bg-[#DC2626] hover:bg-[#B91C1C] text-white shadow-[#DC2626]/25"
+            : "bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-[#2563EB]/25"
         }`}
         title={isOpen ? t("support.close") : t("support.btn")}
         aria-label={t("support.btn")}
       >
         {isOpen ? (
-          <Icon icon="lucide:x" className="w-4 h-4" />
+          <Icon icon="custom:x-white" className="h-5 w-5" />
         ) : (
           <>
-            {/* Live Online Pulse Indicator */}
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-white"></span>
+            <span className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-[#2563EB]" aria-hidden="true">
+              <Icon icon="lucide:message-square" className="h-3.5 w-3.5" />
+              <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-[#89BD49] ring-2 ring-white" />
             </span>
-            <Icon icon="lucide:message-square" className="h-4 w-4" />
-            <span className="hidden sm:inline text-xs font-bold tracking-tight">
+            <span className="hidden sm:inline text-sm font-bold tracking-tight">
               {t("support.btn")}
             </span>
           </>

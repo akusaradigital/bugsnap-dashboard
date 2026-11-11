@@ -70,7 +70,7 @@ export function ContactContent() {
                 {/* 1. Email Support */}
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0 pr-2">
-                    <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5">
+                    <span className="block text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1.5">
                       {t("contact.emailSupportLabel") || "EMAIL SUPPORT"}
                     </span>
                     <a
@@ -100,7 +100,7 @@ export function ContactContent() {
                 {/* 2. Company & Publisher */}
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0 pr-2">
-                    <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5">
+                    <span className="block text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1.5">
                       {t("contact.companyLabel") || "COMPANY & PUBLISHER"}
                     </span>
                     <div className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white">
@@ -138,7 +138,7 @@ export function ContactContent() {
                 {/* 3. Enterprise & Sales */}
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0 pr-2">
-                    <span className="block text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-1.5">
+                    <span className="block text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1.5">
                       {t("contact.enterpriseLabel") || "ENTERPRISE & SALES"}
                     </span>
                     <div className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white">
@@ -300,7 +300,7 @@ export function ContactContent() {
           {/* Bottom Card: Support & Consumer Satisfaction */}
           <Reveal delay={0.24}>
             <div id="complaint" className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-6 sm:p-8 shadow-xs">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 block">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">
                 {t("contact.complaintEyebrow") ||
                   "SUPPORT & CONSUMER SATISFACTION"}
               </span>

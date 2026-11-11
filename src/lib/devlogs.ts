@@ -33,6 +33,15 @@ export interface NetworkLog extends TimedLog {
   responseBody?: string;
   requestHeaders?: Record<string, string>;
   responseHeaders?: Record<string, string>;
+  /** Response MIME type (content-type without parameters). */
+  mimeType?: string;
+  /** Request body bytes observed before redaction/truncation. */
+  requestBodySize?: number;
+  /** Response bytes from Content-Length or the captured prefix. */
+  responseBodySize?: number;
+  /** Why a request or response body was not fully stored. */
+  requestBodyOmitted?: "binary" | "size_limit" | "unavailable";
+  responseBodyOmitted?: "binary" | "size_limit" | "unavailable";
   /** Transferred bytes, from resource timing or content-length. */
   size?: number;
   /** Negotiated protocol (h2, http/1.1), from resource timing. */
@@ -154,6 +163,13 @@ export function normalizeDevLog(log: Record<string, unknown>): DevLog {
       : undefined;
   const requestHeaders = headerMap(log.requestHeaders);
   const responseHeaders = headerMap(log.responseHeaders);
+  const mimeType = typeof log.mimeType === "string" ? log.mimeType : undefined;
+  const requestBodySize = typeof log.requestBodySize === "number" ? log.requestBodySize : undefined;
+  const responseBodySize = typeof log.responseBodySize === "number" ? log.responseBodySize : undefined;
+  const bodyOmitted = (value: unknown): NetworkLog["responseBodyOmitted"] =>
+    value === "binary" || value === "size_limit" || value === "unavailable" ? value : undefined;
+  const requestBodyOmitted = bodyOmitted(log.requestBodyOmitted);
+  const responseBodyOmitted = bodyOmitted(log.responseBodyOmitted);
   const size = typeof log.size === "number" ? log.size : undefined;
   const protocol = typeof log.protocol === "string" ? log.protocol : undefined;
   const frameId = typeof log.frameId === "number" || typeof log.frameId === "string" ? log.frameId : undefined;
@@ -181,7 +197,7 @@ export function normalizeDevLog(log: Record<string, unknown>): DevLog {
     return { type: "console", level, message, text, stack, time, timestamp, count };
   }
   if (type === "network" || (type === "" && (method !== undefined || status !== undefined || requestBody !== undefined || responseBody !== undefined))) {
-    return { type: "network", level, method, status, resourceType, url, statusText, duration, requestBody, responseBody, requestHeaders, responseHeaders, size, protocol, frameId, fromCache, timings, error, time, timestamp, count };
+    return { type: "network", level, method, status, resourceType, url, statusText, duration, requestBody, responseBody, requestHeaders, responseHeaders, mimeType, requestBodySize, responseBodySize, requestBodyOmitted, responseBodyOmitted, size, protocol, frameId, fromCache, timings, error, time, timestamp, count };
   }
   if (type === "navigation") {
     return { type: "navigation", message, url, time, timestamp, count };
@@ -324,8 +340,9 @@ const EXT_KIND: Array<[RegExp, NetworkKind]> = [
 
 /** Which filter bucket a request belongs to. One source of truth so the chip
  *  counts and the Type column can never disagree. */
-export function networkKind(log: { resourceType?: string; method?: string; url?: string }): NetworkKind {
+export function networkKind(log: { resourceType?: string; method?: string; url?: string; mimeType?: string }): NetworkKind {
   const rt = (log.resourceType || "").toLowerCase();
+  const mime = (log.mimeType || "").toLowerCase().split(";", 1)[0];
   if (rt === "websocket" || (log.method || "").toUpperCase() === "WS") return "ws";
   if (rt === "xmlhttprequest" || rt === "fetch" || rt === "beacon" || rt === "ping") return "fetchxhr";
   if (rt === "script") return "js";
@@ -334,8 +351,12 @@ export function networkKind(log: { resourceType?: string; method?: string; url?:
   if (rt === "font") return "font";
   if (rt === "main_frame" || rt === "sub_frame" || rt === "document") return "doc";
   if (rt && rt !== "resource" && rt !== "other") return "other";
-  // No usable resourceType: fall back to the URL, then to fetch/XHR, which is
-  // what a page-side patch necessarily observed.
+  if (mime.startsWith("text/javascript") || mime.includes("ecmascript") || mime.includes("javascript")) return "js";
+  if (mime === "text/css") return "css";
+  if (mime.startsWith("image/") || mime.startsWith("audio/") || mime.startsWith("video/")) return "media";
+  if (mime.startsWith("font/")) return "font";
+  if (mime.includes("html")) return "doc";
+  // No usable resourceType or MIME: fall back to the URL, then to fetch/XHR.
   const url = log.url || "";
   for (const [re, kind] of EXT_KIND) if (re.test(url)) return kind;
   if (/^wss?:\/\//i.test(url)) return "ws";

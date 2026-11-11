@@ -16,6 +16,7 @@ import { useToast } from "@/components/Toast";
 import { Dropdown } from "@/components/Dropdown";
 import { Icon } from "@/lib/iconify";
 import { pickAvatar, initialOf } from "@/lib/avatar";
+import { FIREFOX_STORE_URL } from "@/lib/constants";
 import EditModal from "@/components/CaptureEditModal";
 import {
   type Capture,
@@ -1595,7 +1596,7 @@ function CapturesContent() {
                     {showScreenshot && (
                       <Icon
                         icon="lucide:check"
-                        className="w-2.5 h-2.5 text-white shrink-0"
+                        className="w-2.5 h-2.5 text-white shrink-0 brightness-0 invert"
                       />
                     )}
                   </div>
@@ -1629,7 +1630,7 @@ function CapturesContent() {
                     {showVideo && (
                       <Icon
                         icon="lucide:check"
-                        className="w-2.5 h-2.5 text-white shrink-0"
+                        className="w-2.5 h-2.5 text-white shrink-0 brightness-0 invert"
                       />
                     )}
                   </div>
@@ -2183,9 +2184,6 @@ function CapturesContent() {
         ) : (
           <div className="rounded-2xl border border-border/80 bg-white/80 dark:bg-subtle/70 p-6 sm:p-10 text-center shadow-lg shadow-slate-200/50 dark:shadow-none backdrop-blur-sm space-y-8">
             <div className="max-w-xl mx-auto space-y-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-lg border border-sky-500/30 bg-sky-500/10 text-sky-600 dark:text-sky-400 text-xs font-semibold">
-                <span>{t("cap.quickStartTitle")}</span>
-              </div>
               <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-foreground tracking-tight">
                 {t("cap.empty")}
               </h2>
@@ -2208,15 +2206,26 @@ function CapturesContent() {
                     {t("cap.step1Desc")}
                   </p>
                 </div>
-                <a
-                  href={CHROME_WEB_STORE_URL}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2 px-3.5 py-2 rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] text-white text-xs font-bold shadow-xs shadow-[#89BD49]/25 transition-all w-full"
-                >
-                  <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
-                  <span>{t("cap.install")}</span>
-                </a>
+                <div className="flex flex-col gap-2">
+                  <a
+                    href={CHROME_WEB_STORE_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-start gap-2 px-3.5 py-2 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold shadow-xs shadow-[#2563EB]/25 transition-all w-full"
+                  >
+                    <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
+                    <span>{t("cap.install")}</span>
+                  </a>
+                  <a
+                    href={FIREFOX_STORE_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center justify-start gap-2 px-3.5 py-2 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold shadow-xs shadow-[#2563EB]/25 transition-all w-full"
+                  >
+                    <Icon icon="logos:firefox" className="w-4 h-4 shrink-0" aria-hidden="true" />
+                    <span>{t("cap.installFirefox")}</span>
+                  </a>
+                </div>
               </div>
 
               <div className="rounded-xl border border-border bg-white dark:bg-subtle p-5 flex flex-col justify-between space-y-4 hover:border-sky-500/40 transition-colors">
@@ -2231,13 +2240,23 @@ function CapturesContent() {
                     {t("cap.step2Desc")}
                   </p>
                 </div>
-                <div className="p-2.5 rounded-lg border border-border/80 bg-slate-50 dark:bg-subtle/50 flex items-center justify-center gap-2 text-xs">
-                  <span className="text-muted text-[11px]">
-                    {t("cap.hotkey")}
-                  </span>
-                  <kbd className="px-2 py-0.5 text-[11px] font-mono font-bold bg-white dark:bg-subtle text-foreground border border-slate-300 dark:border-border rounded-md shadow-2xs">
-                    Alt + Shift + S
-                  </kbd>
+                <div className="p-2.5 rounded-lg border border-border/80 bg-slate-50 dark:bg-subtle/50 flex flex-col items-center justify-center gap-1.5 text-xs">
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted text-[11px]">
+                      {t("cap.hotkeyScreenshot")}
+                    </span>
+                    <kbd className="px-2 py-0.5 text-[11px] font-mono font-bold bg-white dark:bg-subtle text-foreground border border-slate-300 dark:border-border rounded-md shadow-2xs">
+                      Ctrl + Shift + S
+                    </kbd>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-muted text-[11px]">
+                      {t("cap.hotkeyRecord")}
+                    </span>
+                    <kbd className="px-2 py-0.5 text-[11px] font-mono font-bold bg-white dark:bg-subtle text-foreground border border-slate-300 dark:border-border rounded-md shadow-2xs">
+                      Ctrl + Shift + F
+                    </kbd>
+                  </div>
                 </div>
               </div>
 
@@ -2356,7 +2375,7 @@ function CapturesContent() {
                           <div className="absolute inset-0 z-10 flex items-center justify-center bg-black/25">
                             <Icon
                               icon="lucide:play"
-                              className="w-4 h-4 text-white fill-current shrink-0"
+                              className="w-4 h-4 text-white fill-current shrink-0 brightness-0 invert"
                             />
                           </div>
                         )}
@@ -2775,7 +2794,7 @@ function CapturesContent() {
                       <div className="absolute bottom-2.5 right-2.5 bg-black/70 backdrop-blur-sm text-white text-[11px] font-medium px-2 py-1 rounded flex items-center gap-1.5 shadow-sm">
                         <Icon
                           icon="lucide:play"
-                          className="w-3.5 h-3.5 text-white fill-current shrink-0"
+                          className="w-3.5 h-3.5 text-white fill-current shrink-0 brightness-0 invert"
                         />
                         <span>{formatDuration(item.duration)}</span>
                       </div>

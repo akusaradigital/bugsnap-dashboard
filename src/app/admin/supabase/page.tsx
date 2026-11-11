@@ -240,7 +240,7 @@ export default function AdminSupabasePage() {
             <span className="text-xs font-semibold uppercase tracking-wider text-muted">
               {t("admin.supabase.diskUsage")}
             </span>
-            <span className="rounded bg-[#DC2626]/10 dark:bg-[#DC2626]/20 px-2 py-0.5 text-xs font-bold text-[#B91C1C] dark:text-[#F87171] border border-[#DC2626]/30 dark:border-[#DC2626]/40">
+            <span className="rounded bg-blue-50 dark:bg-blue-950/20 px-2 py-0.5 text-xs font-bold text-[#2563EB] dark:text-[#3B82F6] border border-blue-200 dark:border-blue-900/40">
               {stats?.total_size_pretty || "0 MB"} / {stats?.quota_pretty || "500 MB"}
             </span>
           </div>
@@ -328,7 +328,7 @@ export default function AdminSupabasePage() {
             <span className="text-xs font-semibold uppercase tracking-wider text-muted">
               {t("admin.supabase.zeroLoadTitle")}
             </span>
-            <span className="rounded bg-[#DC2626]/10 dark:bg-[#DC2626]/20 px-2 py-0.5 text-xs font-bold text-[#B91C1C] dark:text-[#F87171] border border-[#DC2626]/30 dark:border-[#DC2626]/40">
+            <span className="rounded bg-emerald-500/10 px-2 py-0.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
               Drive 100%
             </span>
           </div>
@@ -342,7 +342,7 @@ export default function AdminSupabasePage() {
           </div>
           <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-zinc-800">
             <div
-              className="h-full bg-[#DC2626] transition-all duration-500"
+              className="h-full bg-emerald-500 transition-all duration-500"
               style={{
                 width: `${
                   stats?.captures.total_captures
@@ -373,12 +373,12 @@ export default function AdminSupabasePage() {
             <button
               onClick={() => handleMaintenance("vacuum")}
               disabled={Boolean(maintenanceLoading)}
-              className="inline-flex items-center gap-1.5 rounded-lg bg-[#DC2626] hover:bg-[#B91C1C] px-3 py-1.5 text-xs font-semibold text-white shadow-xs shadow-[#DC2626]/25 transition-colors disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] px-3 py-1.5 text-xs font-semibold text-white shadow-xs shadow-[#2563EB]/25 transition-colors disabled:opacity-50"
             >
               {maintenanceLoading === "vacuum" ? (
-                <Icon icon="lucide:loader-2" className="w-3.5 h-3.5 shrink-0 animate-spin" />
+                <Icon icon="lucide:loader-2" className="w-3.5 h-3.5 shrink-0 animate-spin brightness-0 invert" />
               ) : (
-                <Icon icon="lucide:sparkles" className="w-3.5 h-3.5 shrink-0" />
+                <Icon icon="lucide:sparkles" className="w-3.5 h-3.5 shrink-0 brightness-0 invert" />
               )}
               <span>{t("admin.supabase.runVacuum")}</span>
             </button>
@@ -417,7 +417,7 @@ export default function AdminSupabasePage() {
               placeholder={t("admin.supabase.searchTables")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground placeholder:text-muted focus:border-[#DC2626] focus:ring-1 focus:ring-[#DC2626]/20 focus:outline-none"
+              className="rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-foreground placeholder:text-muted focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 focus:outline-none"
             />
 
             {/* Schema Filter */}
@@ -477,7 +477,7 @@ export default function AdminSupabasePage() {
                           <span
                             className={`rounded px-1.5 py-0.5 font-mono text-[10px] font-semibold ${
                               table.schema_name === "public"
-                                ? "bg-[#DC2626]/10 text-[#B91C1C] dark:text-[#F87171] border border-[#DC2626]/30 dark:border-[#DC2626]/40"
+                                ? "bg-blue-50 text-[#2563EB] dark:text-[#3B82F6] border border-blue-200 dark:border-blue-900/40"
                                 : table.schema_name === "auth"
                                 ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
                                 : "bg-zinc-500/10 text-zinc-600 dark:text-zinc-400"

@@ -45,7 +45,7 @@ export function HowItWorksContent() {
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12]">
               {t("howItWorks.title") || "From instant capture"}
               <br />
-              <span className="text-blue-600 dark:text-blue-500">
+              <span className="text-emerald-600 dark:text-emerald-400">
                 {t("howItWorks.titleHighlight") || "to the root-cause fix"}
               </span>
             </h1>
@@ -61,19 +61,12 @@ export function HowItWorksContent() {
 
         {/* Steps Container */}
         <div className="mx-auto max-w-6xl px-4 sm:px-6 space-y-12 sm:space-y-16 lg:space-y-20 pb-12 sm:pb-16">
-          {/* STEP 01 */}
           <Reveal delay={0.05}>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
               {/* Text */}
               <div className="space-y-4 min-w-0">
-                <div className="flex items-center gap-1.5 text-xs font-bold tracking-wider">
-                  <span className="text-[#89BD49] dark:text-[#A8D666]">
-                    {t("howItWorks.step01")}
-                  </span>
-                  <span className="text-slate-300 dark:text-slate-600">·</span>
-                  <span className="text-slate-500 dark:text-slate-400 uppercase">
-                    {t("howItWorks.cat01")}
-                  </span>
+                <div className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                  {t("howItWorks.cat01")}
                 </div>
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
                   {t("howItWorks.title01")}
@@ -124,15 +117,15 @@ export function HowItWorksContent() {
                   </div>
                   <div className="flex gap-2 mb-4">
                     <div className="w-8 h-8 rounded bg-slate-200 dark:bg-slate-700" />
-                    <div className="w-20 h-8 rounded bg-blue-500/30" />
+                    <div className="w-20 h-8 rounded bg-emerald-500/30" />
                     <div className="w-20 h-8 rounded bg-slate-200 dark:bg-slate-700" />
                   </div>
                   {/* Dashed crop rectangle */}
-                  <div className="relative border-2 border-dashed border-blue-500 bg-blue-500/10 rounded-lg w-44 h-32 mt-2">
-                    <span className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm" />
-                    <span className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm" />
-                    <span className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm" />
-                    <span className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-blue-500 rounded-sm" />
+                  <div className="relative border-2 border-dashed border-emerald-500 bg-emerald-500/10 rounded-lg w-44 h-32 mt-2">
+                    <span className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-emerald-500 rounded-sm" />
+                    <span className="absolute -top-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-emerald-500 rounded-sm" />
+                    <span className="absolute -bottom-1.5 -left-1.5 w-3 h-3 bg-white border-2 border-emerald-500 rounded-sm" />
+                    <span className="absolute -bottom-1.5 -right-1.5 w-3 h-3 bg-white border-2 border-emerald-500 rounded-sm" />
                     <div className="absolute -bottom-3 -right-3">
                       <Icon
                         icon="lucide:mouse-pointer"
@@ -165,7 +158,7 @@ export function HowItWorksContent() {
                   </div>
 
                   <div className="flex items-center gap-4 border-b border-slate-100 dark:border-slate-800 text-xs">
-                    <span className="font-semibold text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 pb-1.5">
+                    <span className="font-semibold text-emerald-600 dark:text-emerald-400 border-b-2 border-emerald-600 pb-1.5">
                       {t("howItWorks.m1TabCapture")}
                     </span>
                     <span className="text-slate-400 pb-1.5">
@@ -179,7 +172,7 @@ export function HowItWorksContent() {
                   {/* Take Screenshot */}
                   <div className="border border-slate-100 dark:border-slate-800 rounded-xl p-2.5 flex items-center justify-between gap-3 bg-slate-50/50 dark:bg-slate-800/30">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                      <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
                         <Icon icon="lucide:camera" className="w-4 h-4" />
                       </div>
                       <div className="min-w-0">
@@ -220,7 +213,6 @@ export function HowItWorksContent() {
             </div>
           </Reveal>
 
-          {/* STEP 02 */}
           <Reveal delay={0.05}>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
               {/* Mockup 02 (Left on desktop, second on mobile) */}
@@ -279,14 +271,8 @@ export function HowItWorksContent() {
 
               {/* Text */}
               <div className="order-1 lg:order-2 space-y-4 min-w-0">
-                <div className="flex items-center gap-1.5 text-xs font-bold tracking-wider">
-                  <span className="text-[#89BD49] dark:text-[#A8D666]">
-                    {t("howItWorks.step02")}
-                  </span>
-                  <span className="text-slate-300 dark:text-slate-600">·</span>
-                  <span className="text-slate-500 dark:text-slate-400 uppercase">
-                    {t("howItWorks.cat02")}
-                  </span>
+                <div className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                  {t("howItWorks.cat02")}
                 </div>
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
                   {t("howItWorks.title02")}
@@ -327,19 +313,12 @@ export function HowItWorksContent() {
             </div>
           </Reveal>
 
-          {/* STEP 03 */}
           <Reveal delay={0.05}>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
               {/* Text */}
               <div className="space-y-4 min-w-0">
-                <div className="flex items-center gap-1.5 text-xs font-bold tracking-wider">
-                  <span className="text-[#89BD49] dark:text-[#A8D666]">
-                    {t("howItWorks.step03")}
-                  </span>
-                  <span className="text-slate-300 dark:text-slate-600">·</span>
-                  <span className="text-slate-500 dark:text-slate-400 uppercase">
-                    {t("howItWorks.cat03")}
-                  </span>
+                <div className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                  {t("howItWorks.cat03")}
                 </div>
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
                   {t("howItWorks.title03")}
@@ -435,7 +414,6 @@ export function HowItWorksContent() {
             </div>
           </Reveal>
 
-          {/* STEP 04 */}
           <Reveal delay={0.05}>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
               {/* Mockup 04 (Left on desktop, second on mobile) */}
@@ -465,7 +443,7 @@ export function HowItWorksContent() {
                         {t("howItWorks.m4MyDrive")}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-[#E8F0FE] dark:bg-blue-950/60 text-[#1A73E8] dark:text-blue-400 font-bold">
+                    <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 font-bold">
                       <Icon icon="lucide:folder" className="w-3.5 h-3.5" />
                       <span className="truncate">
                         {t("howItWorks.m4BugSnap")}
@@ -518,7 +496,7 @@ export function HowItWorksContent() {
 
                       <div className="py-2 flex items-center justify-between gap-3">
                         <div className="flex items-center gap-2 min-w-0">
-                          <span className="p-1 rounded bg-blue-500/10 text-blue-600 dark:text-blue-400 shrink-0">
+                          <span className="p-1 rounded bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">
                             <Icon
                               icon="lucide:file-code"
                               className="w-3.5 h-3.5"
@@ -584,14 +562,8 @@ export function HowItWorksContent() {
 
               {/* Text */}
               <div className="order-1 lg:order-2 space-y-4 min-w-0">
-                <div className="flex items-center gap-1.5 text-xs font-bold tracking-wider">
-                  <span className="text-[#89BD49] dark:text-[#A8D666]">
-                    {t("howItWorks.step04")}
-                  </span>
-                  <span className="text-slate-300 dark:text-slate-600">·</span>
-                  <span className="text-slate-500 dark:text-slate-400 uppercase">
-                    {t("howItWorks.cat04")}
-                  </span>
+                <div className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                  {t("howItWorks.cat04")}
                 </div>
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
                   {t("howItWorks.title04")}
@@ -632,19 +604,12 @@ export function HowItWorksContent() {
             </div>
           </Reveal>
 
-          {/* STEP 05 */}
           <Reveal delay={0.05}>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
               {/* Text */}
               <div className="space-y-4 min-w-0">
-                <div className="flex items-center gap-1.5 text-xs font-bold tracking-wider">
-                  <span className="text-[#89BD49] dark:text-[#A8D666]">
-                    {t("howItWorks.step05")}
-                  </span>
-                  <span className="text-slate-300 dark:text-slate-600">·</span>
-                  <span className="text-slate-500 dark:text-slate-400 uppercase">
-                    {t("howItWorks.cat05")}
-                  </span>
+                <div className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                  {t("howItWorks.cat05")}
                 </div>
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
                   {t("howItWorks.title05")}
@@ -702,7 +667,7 @@ export function HowItWorksContent() {
                 </div>
 
                 <div className="flex items-center gap-3 sm:gap-4 border-b border-slate-100 dark:border-slate-800 text-[11px] pt-2">
-                  <span className="font-bold text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 pb-1.5">
+                  <span className="font-bold text-emerald-600 dark:text-emerald-400 border-b-2 border-emerald-600 pb-1.5">
                     {t("howItWorks.m5TabSummary")}
                   </span>
                   <span className="text-slate-400 pb-1.5">
@@ -747,7 +712,7 @@ export function HowItWorksContent() {
                       <span className="text-slate-400 block text-[10px] uppercase font-semibold">
                         {t("howItWorks.m5UrlLabel")}
                       </span>
-                      <span className="text-blue-600 dark:text-blue-400 font-mono break-all">
+                      <span className="text-emerald-600 dark:text-emerald-400 font-mono break-all">
                         https://example.com/checkout
                       </span>
                     </div>
@@ -776,7 +741,7 @@ export function HowItWorksContent() {
                       <div className="w-1/2 h-2 rounded bg-slate-200 dark:bg-slate-700" />
                     </div>
 
-                    <div className="w-full flex items-center justify-center gap-1.5 text-xs font-bold text-[#1A73E8] dark:text-blue-400 border border-blue-200 dark:border-blue-900/60 bg-blue-50/50 dark:bg-blue-950/30 py-2 px-3 rounded-xl">
+                    <div className="w-full flex items-center justify-center gap-1.5 text-xs font-bold text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/60 bg-emerald-50/50 dark:bg-emerald-950/30 py-2 px-3 rounded-xl">
                       <Icon icon="lucide:share-2" className="w-3.5 h-3.5" />
                       <span>{t("howItWorks.m5ExportJira")}</span>
                     </div>
@@ -786,14 +751,13 @@ export function HowItWorksContent() {
             </div>
           </Reveal>
 
-          {/* STEP 06 */}
           <Reveal delay={0.05}>
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
               {/* Mockup 06 (Left on desktop, second on mobile) */}
               <div className="order-2 lg:order-1 rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm p-4 sm:p-5 overflow-hidden font-mono">
                 <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800 font-sans">
                   <div className="flex items-center gap-3 sm:gap-4 text-xs">
-                    <span className="font-bold text-blue-600 dark:text-blue-400 border-b-2 border-blue-600 pb-1">
+                    <span className="font-bold text-emerald-600 dark:text-emerald-400 border-b-2 border-emerald-600 pb-1">
                       {t("howItWorks.m6TabPlaywright")}
                     </span>
                     <span className="text-slate-400 pb-1">
@@ -809,7 +773,7 @@ export function HowItWorksContent() {
                   </span>
                 </div>
 
-                <pre className="pt-3 text-[11px] sm:text-xs leading-relaxed overflow-x-auto text-slate-800 dark:text-slate-200">
+                <pre className="pt-3 max-w-full min-w-0 text-[11px] sm:text-xs leading-relaxed overflow-x-auto text-slate-800 dark:text-slate-200">
                   <code>
                     <div>
                       <span className="text-slate-400 select-none mr-3 w-3 inline-block text-right">
@@ -836,7 +800,7 @@ export function HowItWorksContent() {
                       <span className="text-slate-400 select-none mr-3 w-3 inline-block text-right">
                         3
                       </span>
-                      <span className="text-blue-600 dark:text-blue-400 font-semibold">
+                      <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
                         test
                       </span>
                       (
@@ -858,7 +822,7 @@ export function HowItWorksContent() {
                         await
                       </span>{" "}
                       page.
-                      <span className="text-blue-600 dark:text-blue-400">
+                      <span className="text-emerald-600 dark:text-emerald-400">
                         goto
                       </span>
                       (
@@ -876,7 +840,7 @@ export function HowItWorksContent() {
                         await
                       </span>{" "}
                       page.
-                      <span className="text-blue-600 dark:text-blue-400">
+                      <span className="text-emerald-600 dark:text-emerald-400">
                         click
                       </span>
                       (
@@ -893,11 +857,11 @@ export function HowItWorksContent() {
                       <span className="text-pink-600 dark:text-pink-400 font-semibold">
                         await
                       </span>{" "}
-                      <span className="text-blue-600 dark:text-blue-400">
+                      <span className="text-emerald-600 dark:text-emerald-400">
                         expect
                       </span>
                       (page.
-                      <span className="text-blue-600 dark:text-blue-400">
+                      <span className="text-emerald-600 dark:text-emerald-400">
                         locator
                       </span>
                       (
@@ -911,7 +875,7 @@ export function HowItWorksContent() {
                         7
                       </span>
                       {"    "}
-                      <span className="text-blue-600 dark:text-blue-400">
+                      <span className="text-emerald-600 dark:text-emerald-400">
                         toBeVisible
                       </span>
                       ();
@@ -928,14 +892,8 @@ export function HowItWorksContent() {
 
               {/* Text */}
               <div className="order-1 lg:order-2 space-y-4 min-w-0">
-                <div className="flex items-center gap-1.5 text-xs font-bold tracking-wider">
-                  <span className="text-[#89BD49] dark:text-[#A8D666]">
-                    {t("howItWorks.step06")}
-                  </span>
-                  <span className="text-slate-300 dark:text-slate-600">·</span>
-                  <span className="text-slate-500 dark:text-slate-400 uppercase">
-                    {t("howItWorks.cat06")}
-                  </span>
+                <div className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                  {t("howItWorks.cat06")}
                 </div>
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
                   {t("howItWorks.title06")}
@@ -978,24 +936,24 @@ export function HowItWorksContent() {
 
           {/* Bottom CTA Banner */}
           <Reveal delay={0.08}>
-            <div className="rounded-2xl border border-[#DCEBC9] dark:border-[#2D4524] bg-[#F2F8ED] dark:bg-[#182614] p-6 sm:p-8 lg:p-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div className="space-y-1 text-left min-w-0 flex-1">
-                <div className="text-[11px] font-bold text-[#6B9A35] dark:text-[#A8D666] tracking-wider uppercase">
+            <div className="rounded-2xl sm:rounded-3xl border border-blue-100 dark:border-blue-900/40 bg-[#f0f6ff] dark:bg-blue-950/25 p-6 sm:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm min-w-0">
+              <div className="space-y-1.5 max-w-xl min-w-0">
+                <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                   {t("howItWorks.ctaEyebrow")}
                 </div>
-                <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
+                <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                   {t("howItWorks.ctaTitle")}
                 </h2>
-                <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400">
+                <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
                   {t("howItWorks.ctaDesc")}
                 </p>
               </div>
-              <div className="shrink-0 flex flex-wrap items-center gap-3">
+              <div className="flex flex-wrap items-center gap-3 shrink-0 min-w-0">
                 <a
                   href={CHROME_STORE_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl font-bold text-sm bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-sm transition-all hover:scale-[1.02] active:scale-[0.99] whitespace-nowrap"
+                  className="inline-flex items-center gap-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold px-6 py-3.5 rounded-xl shadow-md transition-all hover:scale-[1.02] active:scale-[0.99] shrink-0 touch-manipulation whitespace-nowrap"
                 >
                   <Icon icon="logos:chrome" className="w-5 h-5 shrink-0" />
                   <span>{t("extension.addToChrome") || "Add to Chrome"}</span>
@@ -1004,7 +962,7 @@ export function HowItWorksContent() {
                   href={FIREFOX_STORE_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-xl font-bold text-sm bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-sm transition-all hover:scale-[1.02] active:scale-[0.99] whitespace-nowrap"
+                  className="inline-flex items-center gap-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold px-6 py-3.5 rounded-xl shadow-md transition-all hover:scale-[1.02] active:scale-[0.99] shrink-0 touch-manipulation whitespace-nowrap"
                 >
                   <Icon icon="logos:firefox" className="w-5 h-5 shrink-0" />
                   <span>{t("extension.addToFirefox")}</span>

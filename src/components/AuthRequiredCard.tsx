@@ -41,7 +41,7 @@ export function AuthRequiredCard({ title }: { title?: string }) {
             href="/login"
             className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] text-white text-sm font-semibold shadow-sm shadow-[#89BD49]/25 transition-colors"
           >
-            <Icon icon="lucide:log-in" className="w-4 h-4 shrink-0" aria-hidden="true" />
+            <Icon icon="lucide:log-in" className="w-4 h-4 shrink-0 brightness-0 invert" aria-hidden="true" />
             {t("auth.signInBugSnap")}
           </Link>
 

@@ -172,6 +172,35 @@ export async function GET(req: Request) {
     forwardHeaders["Range"] = rangeHeader;
   }
 
+  // Video poster/thumbnail: drive.google.com/thumbnail redirects to
+  // lh3.googleusercontent.com, which Chrome's Opaque Response Blocking (ORB)
+  // rejects for a cross-origin <video poster>/<img> (no CORS headers) - the
+  // request fails with net::ERR_BLOCKED_BY_ORB and the preview never renders,
+  // even though the video itself streams fine through this same proxy.
+  // Fetching it server-side and re-serving from our own origin sidesteps ORB
+  // entirely.
+  if (type === "thumbnail") {
+    try {
+      const thumbRes = await fetch(
+        `https://drive.google.com/thumbnail?id=${id}&sz=w2400`,
+        { cache: "no-store" },
+      );
+      const thumbContentType = thumbRes.headers.get("content-type") || "";
+      if (thumbRes.ok && thumbRes.body && thumbContentType.startsWith("image/")) {
+        return new NextResponse(thumbRes.body, {
+          status: 200,
+          headers: {
+            "Content-Type": thumbContentType,
+            "Cache-Control": cacheControl,
+          },
+        });
+      }
+    } catch (err) {
+      console.warn("Drive thumbnail fetch failed:", err);
+    }
+    return NextResponse.json({ error: "Thumbnail unavailable" }, { status: 404 });
+  }
+
   // 1. Try authenticated Drive API v3 first whenever an owner token is available - it's Google's
   // fast, reliable media endpoint. The public drive.google.com/uc fallback below was being hit
   // first for every screenshot (only video/Range requests reached this branch before), and that

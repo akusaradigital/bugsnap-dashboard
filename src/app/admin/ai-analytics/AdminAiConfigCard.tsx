@@ -662,7 +662,7 @@ export function AdminAiConfigCard() {
                     key={idx}
                     type="button"
                     onClick={() => setSampleDraft(sample)}
-                    className="text-[10px] px-2 py-0.5 rounded bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 hover:border-[#DC2626] transition-colors cursor-pointer truncate max-w-[150px]"
+                    className="text-[10px] px-2 py-0.5 rounded bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 hover:border-[#2563EB] transition-colors cursor-pointer truncate max-w-[150px]"
                     title={sample}
                   >
                     Contoh {idx + 1}
@@ -678,7 +678,7 @@ export function AdminAiConfigCard() {
                 value={sampleDraft}
                 onChange={(e) => setSampleDraft(e.target.value)}
                 placeholder="Ketik catatan kasar bug di sini (misal: tombol ga bisa diklik pas mobile)..."
-                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-red-600/30 focus:border-red-600 transition-colors"
+                className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#2563EB]/30 focus:border-[#2563EB] transition-colors"
               />
               <div className="flex items-center justify-between">
                 <span className="text-[10px] text-slate-400">
@@ -688,7 +688,7 @@ export function AdminAiConfigCard() {
                   type="button"
                   onClick={handleTestPolish}
                   disabled={testingPolish || !sampleDraft.trim()}
-                  className="px-3.5 py-1.5 rounded-lg bg-[#DC2626] hover:bg-[#B91C1C] text-slate-900 text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  className="px-3.5 py-1.5 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
                 >
                   {testingPolish ? (
                     <>
@@ -710,7 +710,7 @@ export function AdminAiConfigCard() {
               <div
                 className={`p-3.5 rounded-lg border text-xs space-y-2 ${
                   polishResult.ok
-                    ? "bg-white dark:bg-zinc-900 border-[#DC2626]/40 text-slate-900 dark:text-zinc-100 shadow-xs"
+                    ? "bg-white dark:bg-zinc-900 border-[#2563EB]/40 text-slate-900 dark:text-zinc-100 shadow-xs"
                     : "bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/50 text-rose-800 dark:text-rose-300"
                 }`}
               >
@@ -718,7 +718,7 @@ export function AdminAiConfigCard() {
                   <div className="flex items-center gap-1.5 font-bold text-[11px]">
                     <Icon
                       icon={polishResult.ok ? "lucide:check" : "lucide:alert-triangle"}
-                      className={`w-3.5 h-3.5 ${polishResult.ok ? "text-red-600" : "text-rose-500"}`}
+                      className={`w-3.5 h-3.5 ${polishResult.ok ? "text-emerald-600" : "text-rose-500"}`}
                     />
                     <span>{polishResult.ok ? "Hasil AI Polish:" : "Gagal Memproses"}</span>
                   </div>
@@ -739,7 +739,7 @@ export function AdminAiConfigCard() {
                       <button
                         type="button"
                         onClick={handleCopyPolish}
-                        className="text-[11px] font-semibold text-[#B91C1C] dark:text-[#F87171] hover:underline flex items-center gap-1 cursor-pointer"
+                        className="text-[11px] font-semibold text-[#2563EB] dark:text-[#3B82F6] hover:underline flex items-center gap-1 cursor-pointer"
                       >
                         <Icon icon={copiedResult ? "lucide:check" : "lucide:copy"} className="w-3 h-3" />
                         <span>{copiedResult ? "Tersalin!" : "Salin Hasil"}</span>

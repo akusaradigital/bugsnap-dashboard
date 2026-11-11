@@ -440,9 +440,9 @@ export function VisualCompareContent() {
         {/* Wide CTA card */}
         <section className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <Reveal delay={0}>
-            <div className="rounded-3xl border border-blue-100 dark:border-blue-900/40 bg-[#f0f6ff] dark:bg-blue-950/25 p-6 sm:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm">
+            <div className="rounded-2xl sm:rounded-3xl border border-blue-100 dark:border-blue-900/40 bg-[#f0f6ff] dark:bg-blue-950/25 p-6 sm:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm min-w-0">
               <div className="space-y-1.5 max-w-xl min-w-0">
-                <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                   {t("vc.ctaEyebrow") || "READY TO COMPARE?"}
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">

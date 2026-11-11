@@ -213,7 +213,7 @@ function printSummary(results, totalDurationMs) {
 
   if (allPassed) {
     console.log(
-      `  Overall Status: ${c.green}${c.bold}✔ ALL QUALITY GATES PASSED (${passCount}/${gates.length})${c.reset} — Safe to push!`
+      `  Overall Status: ${c.green}${c.bold}✔ ALL QUALITY GATES PASSED (${passCount}/${gates.length})${c.reset} -Safe to push!`
     );
   } else {
     const failedCount = results.length - passCount;
@@ -251,11 +251,11 @@ async function main() {
 
     if (passed) {
       console.log(
-        `  ${c.green}${c.bold}✔ PASSED${c.reset} ${c.dim}in ${formatDuration(res.durationMs)} — ${summaryNote}${c.reset}\n`
+        `  ${c.green}${c.bold}✔ PASSED${c.reset} ${c.dim}in ${formatDuration(res.durationMs)} -${summaryNote}${c.reset}\n`
       );
     } else {
       console.log(
-        `  ${c.red}${c.bold}✖ FAILED${c.reset} ${c.dim}in ${formatDuration(res.durationMs)} — ${summaryNote}${c.reset}\n`
+        `  ${c.red}${c.bold}✖ FAILED${c.reset} ${c.dim}in ${formatDuration(res.durationMs)} -${summaryNote}${c.reset}\n`
       );
 
       // Print error details

@@ -138,7 +138,7 @@ export function ExtensionContent() {
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12]">
               {t("extension.title") || "Capture & debug bugs"}
               <br />
-              <span className="text-blue-600 dark:text-blue-500">
+              <span className="text-[#5B8C2A] dark:text-[#A8D666]">
                 {t("extension.titleHighlight") || "directly in your browser"}
               </span>
             </h1>
@@ -155,40 +155,28 @@ export function ExtensionContent() {
                 href={CHROME_STORE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2.5 bg-[#2563EB] hover:bg-[#6B9A35] text-white text-sm font-bold px-6 py-3 min-h-[44px] rounded-xl transition-all shadow-sm active:scale-[0.99] touch-manipulation w-full sm:w-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#89BD49] dark:focus-visible:ring-[#A8D666]"
+                className="inline-flex items-center justify-center gap-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold px-6 py-3 min-h-[44px] rounded-xl transition-all shadow-sm active:scale-[0.99] touch-manipulation w-full sm:w-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#2563EB] dark:focus-visible:ring-[#3B82F6]"
               >
                 <Icon icon="logos:chrome" className="w-5 h-5 shrink-0" aria-hidden="true" />
                 <span>{t("extension.addToChrome") || "Add to Chrome"}</span>
               </a>
+              <a
+                href={FIREFOX_STORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center justify-center gap-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold px-6 py-3 min-h-[44px] rounded-xl transition-all shadow-sm active:scale-[0.99] touch-manipulation w-full sm:w-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#2563EB] dark:focus-visible:ring-[#3B82F6]"
+              >
+                <Icon icon="logos:firefox" className="w-5 h-5 shrink-0" aria-hidden="true" />
+                <span>{t("extension.addToFirefox") || "Add to Firefox"}</span>
+              </a>
               <Link
                 href="/docs"
-                className="inline-flex items-center justify-center gap-2 border border-site-border bg-site-surface hover:bg-site-surface-2 text-site-text text-sm font-semibold px-5 py-3 min-h-[44px] rounded-xl transition-colors touch-manipulation shadow-2xs w-full sm:w-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#89BD49] dark:focus-visible:ring-[#A8D666]"
+                className="inline-flex items-center justify-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold px-5 py-3 min-h-[44px] rounded-xl transition-all shadow-sm active:scale-[0.99] touch-manipulation w-full sm:w-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#2563EB] dark:focus-visible:ring-[#3B82F6]"
               >
                 <span>{t("extension.viewDocs") || "View Documentation"}</span>
               </Link>
             </div>
 
-            {/* Trust Badges */}
-            <div className="pt-2 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs text-site-text-2">
-              <div className="flex items-center gap-2">
-                <span className="w-4 h-4 rounded-full bg-[#89BD49] dark:bg-[#A8D666] text-white dark:text-slate-900 flex items-center justify-center shrink-0">
-                  <Icon icon="lucide:check" className="w-2.5 h-2.5 stroke-[3]" aria-hidden="true" />
-                </span>
-                <span>{t("extension.trustBrowser") || "Works on your daily browser"}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-4 h-4 rounded-full bg-[#89BD49] dark:bg-[#A8D666] text-white dark:text-slate-900 flex items-center justify-center shrink-0">
-                  <Icon icon="lucide:check" className="w-2.5 h-2.5 stroke-[3]" aria-hidden="true" />
-                </span>
-                <span>{t("extension.trustNoLockin") || "No server lock-in"}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="w-4 h-4 rounded-full bg-[#89BD49] dark:bg-[#A8D666] text-white dark:text-slate-900 flex items-center justify-center shrink-0">
-                  <Icon icon="lucide:check" className="w-2.5 h-2.5 stroke-[3]" aria-hidden="true" />
-                </span>
-                <span>{t("extension.trustDriveData") || "Your data stays in your Google Drive"}</span>
-              </div>
-            </div>
           </div>
 
           {/* Global Browser Shortcuts & Extension Popup Mockup */}
@@ -213,7 +201,7 @@ export function ExtensionContent() {
                 {/* Take Screenshot Card */}
                 <div className="rounded-xl border border-site-border bg-site-surface p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 shadow-xs">
                   <div className="flex items-center gap-3.5 min-w-0">
-                    <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200/50 dark:border-blue-800/40 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
+                    <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-950/40 border border-blue-200/50 dark:border-blue-800/40 flex items-center justify-center text-[#5B8C2A] dark:text-[#A8D666] shrink-0">
                       <Icon icon="lucide:scan" className="w-5 h-5" aria-hidden="true" />
                     </div>
                     <div className="min-w-0">
@@ -221,7 +209,7 @@ export function ExtensionContent() {
                         <h3 className="text-sm font-bold text-site-text">
                           {t("extension.takeScreenshot") || "Take Screenshot"}
                         </h3>
-                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20">
+                        <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-[#5B8C2A] dark:text-[#A8D666] border border-blue-500/20">
                           {t("extension.shortcutsCustomBadge") || "Bisa Diubah"}
                         </span>
                       </div>
@@ -284,7 +272,7 @@ export function ExtensionContent() {
                       type="button"
                       onClick={handleCopyUrl}
                       aria-label={`${copiedUrl ? (t("extension.shortcutsCopied") || "Tersalin!") : (t("extension.shortcutsCopyUrl") || "Salin URL")} ${activeTutorial.url}`}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[36px] rounded-md text-xs font-semibold bg-site-surface border border-site-border hover:bg-site-surface-2 text-site-text transition-colors cursor-pointer shrink-0 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#89BD49] dark:focus-visible:ring-[#A8D666] focus-visible:ring-offset-1 focus-visible:ring-offset-site-surface"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[36px] rounded-md text-xs font-semibold bg-site-surface border border-site-border hover:bg-site-surface-2 text-site-text transition-colors cursor-pointer shrink-0 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] dark:focus-visible:ring-[#3B82F6] focus-visible:ring-offset-1 focus-visible:ring-offset-site-surface"
                       title={`Salin ${activeTutorial.url} ke clipboard`}
                     >
                       <Icon
@@ -320,9 +308,9 @@ export function ExtensionContent() {
                             setActiveBrowser(b.id);
                             setCopiedUrl(false);
                           }}
-                          className={`inline-flex items-center justify-center gap-1.5 flex-1 sm:flex-initial px-3 py-2 sm:py-1.5 min-h-[40px] sm:min-h-[34px] rounded-md text-xs font-semibold transition-all cursor-pointer touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#89BD49] dark:focus-visible:ring-[#A8D666] focus-visible:ring-offset-1 focus-visible:ring-offset-site-surface ${
+                          className={`inline-flex items-center justify-center gap-1.5 flex-1 sm:flex-initial px-3 py-2 sm:py-1.5 min-h-[40px] sm:min-h-[34px] rounded-md text-xs font-semibold transition-all cursor-pointer touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] dark:focus-visible:ring-[#3B82F6] focus-visible:ring-offset-1 focus-visible:ring-offset-site-surface ${
                             isActive
-                              ? "bg-[#89BD49]/15 text-[#5B8C2A] dark:text-[#A8D666] border border-[#89BD49]/30 shadow-2xs font-bold"
+                              ? "bg-[#EBF7E3] dark:bg-emerald-950/40 text-[#5B8C2A] dark:text-[#A8D666] border border-[#CFE6BF] dark:border-emerald-800/60 shadow-2xs font-bold"
                               : "text-site-text-2 hover:text-site-text hover:bg-site-surface-2 border border-transparent"
                           }`}
                         >
@@ -406,7 +394,7 @@ export function ExtensionContent() {
 
                   {/* Tabs */}
                   <div className="flex items-center gap-5 border-b border-site-border text-xs font-medium pb-2">
-                    <span className="text-blue-600 dark:text-blue-400 font-semibold cursor-pointer border-b-2 border-blue-600 dark:border-blue-400 pb-2 -mb-2">
+                    <span className="text-[#5B8C2A] dark:text-[#A8D666] font-semibold cursor-pointer border-b-2 border-[#5B8C2A] dark:border-[#A8D666] pb-2 -mb-2">
                       {t("extension.tabCapture") || "Capture"}
                     </span>
                     <span className="text-site-text-2 hover:text-site-text cursor-pointer">
@@ -421,7 +409,7 @@ export function ExtensionContent() {
                   <div className="space-y-3 pt-1">
                     <div className="flex items-center justify-between gap-3">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
+                        <div className="w-8 h-8 rounded-lg bg-blue-50 dark:bg-blue-950/40 text-[#5B8C2A] dark:text-[#A8D666] flex items-center justify-center shrink-0">
                           <Icon icon="lucide:scan" className="w-4 h-4" aria-hidden="true" />
                         </div>
                         <div className="min-w-0">
@@ -817,25 +805,25 @@ export function ExtensionContent() {
           </div>
 
           {/* Bottom Banner - Ready to Get Started? */}
-          <div className="rounded-2xl border border-emerald-200/80 dark:border-emerald-800/40 bg-[#EBF5E1] dark:bg-emerald-950/20 p-4 sm:p-6 md:p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6 shadow-xs">
-            <div className="space-y-1.5 min-w-0">
-              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-[#5B8C2A] dark:text-lime-400">
+          <div className="rounded-2xl sm:rounded-3xl border border-blue-100 dark:border-blue-900/40 bg-[#f0f6ff] dark:bg-blue-950/25 p-6 sm:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm min-w-0">
+            <div className="space-y-1.5 max-w-xl min-w-0">
+              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
                 {t("extension.ctaEyebrow") || "READY TO GET STARTED?"}
               </span>
-              <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
+              <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                 {t("extension.ctaTitle") || "Start capturing bugs with DevTools telemetry"}
               </h2>
-              <p className="text-xs sm:text-sm text-site-text-2">
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
                 {t("extension.ctaImgSub") ||
                   "Install the BugSnap Chrome Extension and bring clarity to every bug report."}
               </p>
             </div>
-            <div className="shrink-0 w-full sm:w-auto flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3 shrink-0 min-w-0">
               <a
                 href={CHROME_STORE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2.5 bg-[#2563EB] hover:bg-[#6B9A35] text-white text-sm font-bold px-6 py-3 min-h-[44px] rounded-xl transition-all shadow-sm active:scale-[0.99] touch-manipulation w-full sm:w-auto whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#89BD49] dark:focus-visible:ring-[#A8D666]"
+                className="inline-flex items-center gap-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold px-6 py-3.5 rounded-xl shadow-md transition-all hover:scale-[1.02] active:scale-[0.99] shrink-0 touch-manipulation whitespace-nowrap"
               >
                 <Icon icon="logos:chrome" className="w-5 h-5 shrink-0" aria-hidden="true" />
                 <span>{t("extension.addToChrome") || "Add to Chrome"}</span>
@@ -844,7 +832,7 @@ export function ExtensionContent() {
                 href={FIREFOX_STORE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold px-6 py-3 min-h-[44px] rounded-xl transition-all shadow-sm active:scale-[0.99] touch-manipulation w-full sm:w-auto whitespace-nowrap"
+                className="inline-flex items-center gap-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold px-6 py-3.5 rounded-xl shadow-md transition-all hover:scale-[1.02] active:scale-[0.99] shrink-0 touch-manipulation whitespace-nowrap"
               >
                 <Icon icon="logos:firefox" className="w-5 h-5 shrink-0" aria-hidden="true" />
                 <span>{t("extension.addToFirefox")}</span>

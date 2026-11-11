@@ -9,7 +9,7 @@ export default function UpgradePage() {
   const { t } = useT();
 
   return (
-    <div className="min-h-screen flex flex-col bg-site-bg text-site-text font-site transition-colors selection:bg-[#DC2626]/20 selection:text-[#B91C1C] dark:selection:text-[#F87171]">
+    <div className="min-h-screen flex flex-col bg-site-bg text-site-text font-site transition-colors selection:bg-[#2563EB]/20 selection:text-[#2563EB] dark:selection:text-[#3B82F6]">
       <SiteNavbar />
       <main className="flex-1 flex items-center justify-center">
         <InProgressView

@@ -454,7 +454,7 @@ export default function LandingPage() {
             <div className="mx-auto max-w-6xl">
               <Reveal>
                 <div className="mb-10 sm:mb-12 max-w-4xl">
-                  <p className="text-xs sm:text-[13px] font-bold uppercase tracking-wider text-[#3D7A24] dark:text-[#72C048] mb-3 sm:mb-4">
+                  <p className="text-xs sm:text-[13px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3 sm:mb-4">
                     {t("site.bugsnap.metricsEyebrow")}
                   </p>
                   <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] text-balance">
@@ -632,7 +632,7 @@ export default function LandingPage() {
             <div className="mx-auto max-w-6xl">
               <Reveal>
                 <div className="text-center mb-12 sm:mb-16">
-                  <p className="text-xs sm:text-[13px] font-bold uppercase tracking-wider text-[#3D7A24] dark:text-[#72C048] mb-3">
+                  <p className="text-xs sm:text-[13px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">
                     {t("site.bugsnap.roleEyebrow")}
                   </p>
                   <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] text-balance">
@@ -657,7 +657,7 @@ export default function LandingPage() {
             <div className="mx-auto max-w-6xl">
               <Reveal>
                 <div className="text-center mb-12 sm:mb-16">
-                  <p className="text-xs sm:text-[13px] font-bold uppercase tracking-wider text-[#3D7A24] dark:text-[#72C048] mb-3">
+                  <p className="text-xs sm:text-[13px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">
                     {t("site.flow.badge")}
                   </p>
                   <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] text-balance">
@@ -918,7 +918,7 @@ export default function LandingPage() {
             <div className="mx-auto max-w-6xl">
               <Reveal>
                 <div className="text-center mb-12 sm:mb-16">
-                  <p className="text-xs sm:text-[13px] font-bold uppercase tracking-wider text-[#3D7A24] dark:text-[#72C048] mb-3">
+                  <p className="text-xs sm:text-[13px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">
                     {t("site.trust.eyebrow")}
                   </p>
                   <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] text-balance">
@@ -964,7 +964,7 @@ export default function LandingPage() {
                 {/* Left: sticky heading, subtitle, and docs link */}
                 <Reveal>
                   <div className="lg:sticky lg:top-24">
-                    <p className="text-xs sm:text-[13px] font-bold uppercase tracking-wider text-[#3D7A24] dark:text-[#72C048] mb-3">
+                    <p className="text-xs sm:text-[13px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">
                       {t("site.faq.eyebrow")}
                     </p>
                     <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] mb-4 text-balance">
@@ -975,7 +975,7 @@ export default function LandingPage() {
                     </p>
                     <Link
                       href="/docs"
-                      className="inline-flex items-center gap-2 text-sm font-bold text-[#3D7A24] dark:text-[#72C048] hover:underline group"
+                      className="inline-flex items-center gap-2 text-sm font-bold text-[#2563EB] dark:text-[#3B82F6] hover:underline group"
                     >
                       <span>{t("site.faq.docButton")}</span>
                     </Link>
@@ -1004,7 +1004,7 @@ export default function LandingPage() {
                             <span
                               className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-transform duration-200 mt-0.5 ${
                                 isExpanded
-                                  ? "rotate-180 text-[#3D7A24] dark:text-[#72C048] bg-[#EBF7E3] dark:bg-emerald-950/60"
+                                  ? "rotate-180 text-[#2563EB] dark:text-[#3B82F6] bg-blue-50 dark:bg-blue-950/40"
                                   : "text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800"
                               }`}
                             >
@@ -1035,8 +1035,8 @@ export default function LandingPage() {
           {/* Final Extension CTA Banner */}
           <section className="px-4 sm:px-6 py-12 sm:py-16 bg-white dark:bg-slate-950 font-site">
             <Reveal>
-              <div className="relative mx-auto max-w-6xl rounded-3xl border border-[#CFE6BF] dark:border-emerald-900/50 bg-[#EBF7E3] dark:bg-emerald-950/40 p-8 sm:p-12 lg:p-16 text-center shadow-xs overflow-hidden">
-                <p className="text-xs sm:text-[13px] font-bold uppercase tracking-wider text-[#3D7A24] dark:text-[#72C048] mb-3">
+              <div className="relative mx-auto max-w-6xl rounded-3xl border border-blue-100 dark:border-blue-900/40 bg-[#f0f6ff] dark:bg-blue-950/25 p-8 sm:p-12 lg:p-16 text-center shadow-xs overflow-hidden">
+                <p className="text-xs sm:text-[13px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">
                   {t("site.cta.badge")}
                 </p>
                 <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] max-w-3xl mx-auto text-balance">
@@ -1061,7 +1061,7 @@ export default function LandingPage() {
                     href={FIREFOX_STORE_URL}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold shadow-md shadow-[#89BD49]/20 hover:scale-[1.02] active:scale-[0.99] transition-all whitespace-nowrap"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold shadow-md shadow-[#2563EB]/20 hover:scale-[1.02] active:scale-[0.99] transition-all whitespace-nowrap"
                   >
                     <Icon icon="logos:firefox" className="w-5 h-5 shrink-0" aria-hidden="true" />
                     <span>{t("extension.addToFirefox")}</span>

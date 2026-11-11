@@ -95,7 +95,7 @@ export function WelcomeContent() {
                 onClick={triggerTestCapture}
                 className="inline-flex items-center justify-center gap-2.5 bg-[#89BD49] hover:bg-[#6B9A35] text-white text-sm font-bold px-6 py-3 min-h-[44px] rounded-xl transition-all shadow-sm active:scale-[0.99] touch-manipulation w-full sm:w-auto cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#89BD49] dark:focus-visible:ring-[#A8D666]"
               >
-                <Icon icon="lucide:scan" className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <Icon icon="lucide:scan" className="w-4 h-4 shrink-0 brightness-0 invert" aria-hidden="true" />
                 <span>{t("welcome.testCaptureBtn") || "Test Instant Capture"}</span>
               </button>
               <Link
@@ -110,19 +110,19 @@ export function WelcomeContent() {
             <div className="pt-2 flex flex-wrap items-center justify-center gap-4 sm:gap-8 text-xs text-site-text-2">
               <div className="flex items-center gap-2">
                 <span className="w-4 h-4 rounded-full bg-[#89BD49] dark:bg-[#A8D666] text-white dark:text-slate-900 flex items-center justify-center shrink-0">
-                  <Icon icon="lucide:check" className="w-2.5 h-2.5 stroke-[3]" aria-hidden="true" />
+                  <Icon icon="lucide:check" className="w-2.5 h-2.5 stroke-[3] brightness-0 invert dark:invert-0" aria-hidden="true" />
                 </span>
                 <span>{t("welcome.trustFree") || "Free & Unlimited"}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-4 h-4 rounded-full bg-[#89BD49] dark:bg-[#A8D666] text-white dark:text-slate-900 flex items-center justify-center shrink-0">
-                  <Icon icon="lucide:check" className="w-2.5 h-2.5 stroke-[3]" aria-hidden="true" />
+                  <Icon icon="lucide:check" className="w-2.5 h-2.5 stroke-[3] brightness-0 invert dark:invert-0" aria-hidden="true" />
                 </span>
                 <span>{t("welcome.trustDrive") || "Direct Sync to Google Drive"}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-4 h-4 rounded-full bg-[#89BD49] dark:bg-[#A8D666] text-white dark:text-slate-900 flex items-center justify-center shrink-0">
-                  <Icon icon="lucide:check" className="w-2.5 h-2.5 stroke-[3]" aria-hidden="true" />
+                  <Icon icon="lucide:check" className="w-2.5 h-2.5 stroke-[3] brightness-0 invert dark:invert-0" aria-hidden="true" />
                 </span>
                 <span>{t("welcome.trustDevtools") || "Automated DevTools Telemetry"}</span>
               </div>

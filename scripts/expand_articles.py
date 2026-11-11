@@ -17,12 +17,12 @@ BLOG_TS_PATH = os.path.join(BASE_DIR, "src", "content", "blog.ts")
 ART1_CONTENT_EN = """
 <p>"It worked when I tested it locally, but now it fails in staging." Every developer and QA engineer has experienced the maddening frustration of flaky, intermittent front-end bugs. You reproduce the flow five times, and on the sixth attempt, a modal freezes, a button fails to trigger an API call, or a form quietly resets without explanation.</p>
 
-<p>Intermittent bugs are among the most expensive defects in software engineering. According to industry studies, developers spend up to 25% of their working hours reproducing and investigating bug reports that turn out to be labeled as "Cannot Reproduce" or "Works as Designed." The root issue is not that the bug is magical — it is that traditional bug reporting relies on static artifacts that fail to capture <strong>time-synchronized causality</strong>.</p>
+<p>Intermittent bugs are among the most expensive defects in software engineering. According to industry studies, developers spend up to 25% of their working hours reproducing and investigating bug reports that turn out to be labeled as "Cannot Reproduce" or "Works as Designed." The root issue is not that the bug is magical -it is that traditional bug reporting relies on static artifacts that fail to capture <strong>time-synchronized causality</strong>.</p>
 
 <h2>The Fundamental Flaw of Static Bug Reports</h2>
 <p>When a tester files a bug report using traditional methods, they typically provide two things: a static screenshot and a short written description. Even when a screen recording is attached, video alone is an incomplete visual medium. A video proves that a button was clicked and that nothing happened, but it cannot explain <em>why</em> the application state refused to transition.</p>
 
-<p>In modern web applications, the visual symptom on screen is almost never the origin of the bug. Instead, it is the downstream consequence of an asynchronous sequence of events that began seconds — or even minutes — earlier in the browser tab lifecycle. If you only look at the exact moment of failure, you are looking at the crime scene after the culprit has already fled.</p>
+<p>In modern web applications, the visual symptom on screen is almost never the origin of the bug. Instead, it is the downstream consequence of an asynchronous sequence of events that began seconds -or even minutes -earlier in the browser tab lifecycle. If you only look at the exact moment of failure, you are looking at the crime scene after the culprit has already fled.</p>
 
 <h2>The 4 Archetypes of Flaky Front-End Failures</h2>
 <p>To eliminate intermittent bugs systematically, engineering teams must recognize the four primary architectural failure modes in client-side applications:</p>
@@ -136,12 +136,12 @@ export function useCartCheckout(cartId: string, shippingMethod: string) {
 ART1_CONTENT_ID = """
 <p>"Tadi pas dicoba di lokal lancar, giliran di staging malah error." Hampir setiap developer dan QA engineer pasti pernah dibuat frustrasi oleh bug yang muncul sesekali (flaky / intermittent). Anda mencoba alurnya lima kali dan semuanya normal, tapi begitu masuk percobaan keenam, tombol tiba-tiba tidak merespons, modal macet, atau form ter-reset tanpa pesan apa pun.</p>
 
-<p>Bug intermiten adalah salah satu jenis cacat software paling mahal dalam rekayasa perangkat lunak modern. Riset industri menunjukkan bahwa developer menghabiskan hingga 25% dari total jam kerja mereka hanya untuk mereproduksi laporan bug yang berujung pada status "Cannot Reproduce" (Tidak Dapat Direproduksi). Masalah mendasarnya bukan karena bug tersebut gaib — melainkan karena metode pelaporan tradisional mengandalkan bukti statis yang kehilangan <strong>hubungan kausalitas waktu (time-synchronized causality)</strong>.</p>
+<p>Bug intermiten adalah salah satu jenis cacat software paling mahal dalam rekayasa perangkat lunak modern. Riset industri menunjukkan bahwa developer menghabiskan hingga 25% dari total jam kerja mereka hanya untuk mereproduksi laporan bug yang berujung pada status "Cannot Reproduce" (Tidak Dapat Direproduksi). Masalah mendasarnya bukan karena bug tersebut gaib -melainkan karena metode pelaporan tradisional mengandalkan bukti statis yang kehilangan <strong>hubungan kausalitas waktu (time-synchronized causality)</strong>.</p>
 
 <h2>Kelemahan Mendasar Laporan Bug Statis</h2>
 <p>Ketika seorang penguji melaporkan bug dengan cara lama, mereka umumnya hanya melampirkan screenshot statis dan penjelasan tertulis singkat. Bahkan jika ada rekaman video, video semata adalah media visual yang belum lengkap. Video membuktikan bahwa sebuah tombol telah diklik dan tidak ada respons visual, tetapi tidak dapat menjelaskan <em>mengapa</em> state internal aplikasi menolak berpindah.</p>
 
-<p>Pada arsitektur aplikasi web modern, tampilan error di layar hampir tidak pernah menjadi akar masalah sebenarnya. Tampilan tersebut hanyalah akibat hilir dari rangkaian event asinkron yang terjadi beberapa detik — bahkan beberapa menit — sebelumnya di lifecycle tab browser. Jika developer hanya memeriksa saat momen crash terjadi, mereka ibarat memeriksa tempat kejadian perkara setelah pelakunya sudah lama kabur.</p>
+<p>Pada arsitektur aplikasi web modern, tampilan error di layar hampir tidak pernah menjadi akar masalah sebenarnya. Tampilan tersebut hanyalah akibat hilir dari rangkaian event asinkron yang terjadi beberapa detik -bahkan beberapa menit -sebelumnya di lifecycle tab browser. Jika developer hanya memeriksa saat momen crash terjadi, mereka ibarat memeriksa tempat kejadian perkara setelah pelakunya sudah lama kabur.</p>
 
 <h2>4 Pola Utama Penyebab Bug Flaky Front-End</h2>
 <p>Untuk menuntaskan bug intermiten secara sistematis, tim engineer perlu memahami 4 pola kegagalan asinkron pada sisi client:</p>
@@ -288,7 +288,7 @@ ART2_CONTENT_EN = """
 <p>Here is how the direct-to-Drive streaming architecture works under the hood:</p>
 
 <ol>
-  <li><strong>Scoped Client-Side Authentication:</strong> When a tester signs in to BugSnap, the browser requests Google OAuth 2.0 authorization with the minimal <code>https://www.googleapis.com/auth/drive.file</code> scope. This strict permission grants BugSnap access <em>only</em> to the files it creates — never to existing company spreadsheets, documents, or team drives.</li>
+  <li><strong>Scoped Client-Side Authentication:</strong> When a tester signs in to BugSnap, the browser requests Google OAuth 2.0 authorization with the minimal <code>https://www.googleapis.com/auth/drive.file</code> scope. This strict permission grants BugSnap access <em>only</em> to the files it creates -never to existing company spreadsheets, documents, or team drives.</li>
   <li><strong>Direct Browser-to-Cloud Uploads:</strong> When recording completes, the Chrome extension encodes the video stream into high-efficiency WebM format directly in memory. The media is uploaded straight from the browser to the user's designated Google Drive storage folder via Google's official resumable upload API.</li>
   <li><strong>Zero Byte Server Transit:</strong> Raw video chunks never travel through, touch, or get buffered on BugSnap's backend servers. BugSnap stores only lightweight relational metadata (capture title, timestamp, and the Google Drive file identifier) in a secure Supabase database.</li>
   <li><strong>Authenticated Streaming Playback:</strong> When an engineer opens the bug report link, the BugSnap viewer requests an ephemeral signed streaming URL directly from Google Drive. Access is governed exclusively by your organization's Google Workspace permission policies.</li>
@@ -376,7 +376,7 @@ ART2_CONTENT_ID = """
 <p>Berikut cara kerja arsitektur streaming langsung ke Google Drive di balik layar:</p>
 
 <ol>
-  <li><strong>Otentikasi Izin Minimal:</strong> Saat tester login ke BugSnap, ekstensi meminta izin Google OAuth 2.0 dengan scope paling aman, yaitu <code>https://www.googleapis.com/auth/drive.file</code>. Izin ini hanya membolehkan BugSnap mengakses file yang dibuatnya sendiri — sama sekali tidak bisa membaca dokumen, spreadsheet, atau folder lain di Google Drive perusahaan Anda.</li>
+  <li><strong>Otentikasi Izin Minimal:</strong> Saat tester login ke BugSnap, ekstensi meminta izin Google OAuth 2.0 dengan scope paling aman, yaitu <code>https://www.googleapis.com/auth/drive.file</code>. Izin ini hanya membolehkan BugSnap mengakses file yang dibuatnya sendiri -sama sekali tidak bisa membaca dokumen, spreadsheet, atau folder lain di Google Drive perusahaan Anda.</li>
   <li><strong>Unggah Langsung Browser-ke-Drive:</strong> Setelah perekaman selesai, ekstensi Chrome mengompresi video menjadi WebM langsung di memori browser. File tersebut langsung diunggah dari browser ke folder Google Drive milik pengguna melalui API resmi Google.</li>
   <li><strong>Nol Byte Melintasi Server:</strong> Data video mentah tidak pernah singgah, diproses, atau disimpan di server backend BugSnap. Backend BugSnap hanya mencatat metadata relasional ringan (judul capture, waktu, dan ID file Google Drive) di database Supabase yang terenkripsi.</li>
   <li><strong>Pemutaran Terotentikasi:</strong> Ketika developer membuka link laporan bug, pemutar video BugSnap meminta URL streaming sementara langsung dari Google Drive. Izin akses video sepenuhnya diatur oleh kebijakan hak akses Google Workspace perusahaan Anda.</li>
@@ -439,7 +439,7 @@ ART2_CONTENT_ID = """
 ART3_CONTENT_EN = """
 <p>In high-velocity software engineering teams, one of the most persistent bottlenecks is the friction between manual QA bug reporting and automated regression test creation. A QA engineer discovers an intermittent layout break during checkout, records a screen recording, and files a detailed ticket. Then, the baton passes to an automation engineer or software developer, who must spend an hour or more painstakingly reverse-engineering the exact sequence of clicks, inputs, and DOM locators to craft a reproduction script in Playwright or Cypress.</p>
 
-<p>This manual translation process is where valuable engineering velocity evaporates. Worse yet, because writing automated tests for every one-off bug is tedious, many teams simply fix the immediate bug and move on — leaving their continuous integration (CI) pipeline completely unguarded against future regressions of the exact same defect.</p>
+<p>This manual translation process is where valuable engineering velocity evaporates. Worse yet, because writing automated tests for every one-off bug is tedious, many teams simply fix the immediate bug and move on -leaving their continuous integration (CI) pipeline completely unguarded against future regressions of the exact same defect.</p>
 
 <h2>Why Video Recordings Alone Cannot Automate QA</h2>
 <p>Screen recordings are phenomenal for human communication. A ten-second video immediately shows a developer that a modal failed to open. But an automated testing framework like Playwright is not a human watching a screen: it requires <strong>deterministic locators, semantic accessibility roles, precise network timing mocks, and unambiguous assertion states</strong>.</p>
@@ -528,7 +528,7 @@ test.describe('Checkout Flow Regression Suite', () =&gt; {
 ART3_CONTENT_ID = """
 <p>Dalam alur kerja tim engineering modern yang bergerak cepat, salah satu titik hambatan terbesar adalah jurang pemisah antara pengujian manual QA dan pembuatan skrip tes regresi otomatis. Tim QA menemukan bug tampilan yang macet saat checkout, merekam video masalah tersebut, lalu membuat tiket pelaporan. Setelah itu, tugas beralih ke automation engineer atau developer yang harus menghabiskan waktu berjam-jam mencoba merekonstruksi urutan klik, nama form, dan selektor DOM dari nol agar bisa dituangkan ke dalam skrip Playwright atau Cypress.</p>
 
-<p>Proses translasi manual ini menguras jam kerja produktif yang sangat besar. Lebih buruknya lagi, karena menulis tes otomatis untuk setiap satu bug membutuhkan waktu lama, banyak tim akhirnya memilih langsung memperbaiki kode tanpa membuat tes regresi — membiarkan pipeline Continuous Integration (CI) rentan mengalami kebocoran bug yang sama di masa mendatang.</p>
+<p>Proses translasi manual ini menguras jam kerja produktif yang sangat besar. Lebih buruknya lagi, karena menulis tes otomatis untuk setiap satu bug membutuhkan waktu lama, banyak tim akhirnya memilih langsung memperbaiki kode tanpa membuat tes regresi -membiarkan pipeline Continuous Integration (CI) rentan mengalami kebocoran bug yang sama di masa mendatang.</p>
 
 <h2>Mengapa Rekaman Video Saja Belum Cukup untuk Otomasi</h2>
 <p>Rekaman video sangat efektif untuk komunikasi antar-manusia. Video berdurasi 10 detik langsung membuktikan kepada developer bahwa sebuah tombol gagal membuka modal. Namun framework otomatisasi pengujian seperti Playwright bukanlah manusia yang menonton layar: Playwright membutuhkan <strong>selektor deterministik, role aksesibilitas semantik, mock timing jaringan yang presisi, dan kriteria asersi yang jelas</strong>.</p>
@@ -651,7 +651,7 @@ ART4_CONTENT_EN = """
 <p>Calling <code>setInterval</code> or trailing debounce functions inside component lifecycles without clearing the handle in the unmount return callback. The timer continues firing in the background, keeping the entire component subtree in memory.</p>
 
 <h3>3. Detached DOM Nodes from Imperative Libraries</h3>
-<p>Integrating non-React third-party libraries (such as D3.js, Chart.js, Leaflet maps, or rich-text editors like Quill) often requires imperative DOM manipulation. If these libraries append elements directly to <code>document.body</code> or retain internal references after the React wrapper component unmounts, the underlying DOM nodes become <em>detached</em> — removed from the visible layout tree, but permanently trapped in JavaScript heap memory.</p>
+<p>Integrating non-React third-party libraries (such as D3.js, Chart.js, Leaflet maps, or rich-text editors like Quill) often requires imperative DOM manipulation. If these libraries append elements directly to <code>document.body</code> or retain internal references after the React wrapper component unmounts, the underlying DOM nodes become <em>detached</em> -removed from the visible layout tree, but permanently trapped in JavaScript heap memory.</p>
 
 <h3>4. Unbounded Global State Caches</h3>
 <p>State stores (such as Zustand, Redux, or Apollo Client) that accumulate collection records over time without implementing eviction policies (LRU cache or maximum size boundaries). In long-running sessions, fetching pages of data continuously expands the heap footprint without bound.</p>
@@ -660,7 +660,7 @@ ART4_CONTENT_EN = """
 <p>Creating helper callbacks inside custom hooks that capture large data arrays or DOM elements. If these callbacks are passed to persistent contexts or memoized without proper dependency arrays, stale closures retain megabytes of discarded data.</p>
 
 <h2>The 1,500 Element Benchmark: Why DOM Bloat Destroys INP</h2>
-<p>Memory leaks are intimately connected to <strong>DOM bloat</strong> — the accumulation of excessive DOM nodes in the document tree. Google's Lighthouse and Chrome Web Vitals teams recommend keeping total DOM elements under <strong>1,500 nodes</strong> per page.</p>
+<p>Memory leaks are intimately connected to <strong>DOM bloat</strong> -the accumulation of excessive DOM nodes in the document tree. Google's Lighthouse and Chrome Web Vitals teams recommend keeping total DOM elements under <strong>1,500 nodes</strong> per page.</p>
 
 <p>When an application hoards 3,000 to 5,000+ DOM nodes:</p>
 <ul>
@@ -720,7 +720,7 @@ export function RealtimeMetricWidget({ metricId }: { metricId: string }) {
 }</code></pre>
 
 <h2>Conclusion: Building a Culture of Memory Health</h2>
-<p>In client-side software engineering, performance is not an afterthought to be tackled after launch — it is a core feature that defines user experience. By measuring DOM element density and JS heap deltas during routine QA testing, engineering teams can catch memory leaks before they ever reach production users.</p>
+<p>In client-side software engineering, performance is not an afterthought to be tackled after launch -it is a core feature that defines user experience. By measuring DOM element density and JS heap deltas during routine QA testing, engineering teams can catch memory leaks before they ever reach production users.</p>
 """.strip()
 
 ART4_CONTENT_ID = """
@@ -756,7 +756,7 @@ ART4_CONTENT_ID = """
 <p>Penggunaan <code>setInterval</code> atau trailing debounce di dalam lifecycle komponen tanpa pembersihan <code>clearInterval</code> pada return callback effect. Timer akan terus berdetak di latar belakang dan menahan pohon komponen terkait agar tidak di-garbage collect.</p>
 
 <h3>3. Detached DOM Nodes dari Library Pihak Ketiga</h3>
-<p>Integrasi library pihak ketiga non-React (seperti grafik Chart.js/D3, peta Leaflet, atau rich text editor) umumnya memanipulasi elemen DOM secara langsung. Jika library ini menempelkan elemen ke <code>document.body</code> dan referensinya tidak dibersihkan saat komponen pembungkus di-unmount, node DOM tersebut menjadi <em>detached</em> — hilang dari pandangan layar, namun tetap terkunci di memori browser.</p>
+<p>Integrasi library pihak ketiga non-React (seperti grafik Chart.js/D3, peta Leaflet, atau rich text editor) umumnya memanipulasi elemen DOM secara langsung. Jika library ini menempelkan elemen ke <code>document.body</code> dan referensinya tidak dibersihkan saat komponen pembungkus di-unmount, node DOM tersebut menjadi <em>detached</em> -hilang dari pandangan layar, namun tetap terkunci di memori browser.</p>
 
 <h3>4. Cache State Global Tanpa Batas (Unbounded Stores)</h3>
 <p>Penggunaan state store (seperti Zustand atau Redux) yang terus menumpuk data riwayat query atau pagination tanpa kebijakan eviksi (seperti batasan LRU cache). Dalam sesi penggunaan yang lama, ukuran heap akan terus membengkak tanpa batas.</p>

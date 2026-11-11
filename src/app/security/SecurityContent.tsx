@@ -242,25 +242,28 @@ export function SecurityContent() {
 
         {/* Bottom CTA Box */}
         <Reveal delay={0.2}>
-          <div className="rounded-2xl sm:rounded-3xl border border-blue-100 dark:border-blue-900/40 bg-[#f0f6ff] dark:bg-blue-950/25 p-6 sm:p-8 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-            <div className="space-y-1.5 flex-1 min-w-0">
-              <h3 className="text-xl sm:text-2xl font-extrabold text-site-text tracking-tight">
+          <div className="rounded-2xl sm:rounded-3xl border border-blue-100 dark:border-blue-900/40 bg-[#f0f6ff] dark:bg-blue-950/25 p-6 sm:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm min-w-0">
+            <div className="space-y-1.5 max-w-xl min-w-0">
+              <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                {t("security.ctaEyebrow") || "READY TO GET STARTED?"}
+              </div>
+              <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                 {t("security.ctaTitle")}
               </h3>
-              <p className="text-xs sm:text-sm text-site-text-2 leading-relaxed max-w-xl">
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
                 {t("security.ctaDesc")}
               </p>
             </div>
-            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+            <div className="flex flex-wrap items-center gap-3 shrink-0 min-w-0">
               <a
                 href={CHROME_STORE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-sm font-bold px-6 py-3 min-h-[44px] transition-all shadow-sm shadow-accent/20 hover:scale-[1.01] active:scale-[0.99] whitespace-nowrap touch-manipulation"
+                className="inline-flex items-center gap-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold px-6 py-3.5 rounded-xl shadow-md transition-all hover:scale-[1.02] active:scale-[0.99] shrink-0 touch-manipulation whitespace-nowrap"
               >
                 <Icon
                   icon="logos:chrome"
-                  className="w-4 h-4 shrink-0"
+                  className="w-5 h-5 shrink-0"
                   aria-hidden="true"
                 />
                 <span>{t("security.installFree")}</span>
@@ -269,14 +272,14 @@ export function SecurityContent() {
                 href={FIREFOX_STORE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-sm font-bold px-6 py-3 min-h-[44px] transition-all shadow-sm shadow-accent/20 hover:scale-[1.01] active:scale-[0.99] whitespace-nowrap touch-manipulation"
+                className="inline-flex items-center gap-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold px-6 py-3.5 rounded-xl shadow-md transition-all hover:scale-[1.02] active:scale-[0.99] shrink-0 touch-manipulation whitespace-nowrap"
               >
-                <Icon icon="logos:firefox" className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <Icon icon="logos:firefox" className="w-5 h-5 shrink-0" aria-hidden="true" />
                 <span>{t("extension.addToFirefox")}</span>
               </a>
               <Link
                 href="/pricing"
-                className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-site-border bg-site-surface hover:bg-site-surface-2 text-site-text text-xs sm:text-sm font-semibold px-5 py-3 min-h-[44px] transition-colors whitespace-nowrap touch-manipulation"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-site-border bg-white dark:bg-site-surface hover:bg-slate-50 dark:hover:bg-site-surface-2 text-site-text text-sm font-semibold px-6 py-3.5 transition-colors shrink-0 whitespace-nowrap"
               >
                 <span>{t("security.seePricing")}</span>
               </Link>

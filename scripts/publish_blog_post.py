@@ -28,7 +28,7 @@ EDITORIAL_TOPICS = [
         "content": """
 <p>Modern frontend frameworks like React, Vue, and Next.js make dynamic user interfaces effortless, but they also introduce an insidious class of bugs: <strong>Single Page Application (SPA) memory leaks and DOM bloat</strong>.</p>
 
-<p>Unlike traditional multi-page websites where every navigation wipes the JavaScript heap clean, an SPA retains its runtime context indefinitely. If a developer forgets to clear an interval, detach a global event listener, or clean up an RxJS subscription, retained DOM nodes accumulate in memory — causing the browser tab to slow down, stutter, and eventually crash.</p>
+<p>Unlike traditional multi-page websites where every navigation wipes the JavaScript heap clean, an SPA retains its runtime context indefinitely. If a developer forgets to clear an interval, detach a global event listener, or clean up an RxJS subscription, retained DOM nodes accumulate in memory -causing the browser tab to slow down, stutter, and eventually crash.</p>
 
 <h2>What Causes SPA DOM Bloat?</h2>
 <p>DOM bloat occurs when components unmount visually, but references to their DOM elements remain in closures or global registries. Common culprits include:</p>
@@ -182,7 +182,7 @@ test('reproduce checkout button failure', async ({ page }) => {
         "content": """
 <p>"It worked when I tested it, but now it fails." Every developer and QA tester has experienced the frustration of flaky, intermittent front-end bugs.</p>
 
-<p>The core problem with intermittent bugs is that a single isolated artifact — a static screenshot or a lone error stack trace — lacks <strong>causality</strong>. An error displayed on screen is almost never the origin of the bug; it is the final symptom of an asynchronous chain of events that started several seconds earlier.</p>
+<p>The core problem with intermittent bugs is that a single isolated artifact -a static screenshot or a lone error stack trace -lacks <strong>causality</strong>. An error displayed on screen is almost never the origin of the bug; it is the final symptom of an asynchronous chain of events that started several seconds earlier.</p>
 
 <h2>The Anatomy of an Asynchronous Failure</h2>
 <p>Consider an e-commerce checkout button that occasionally freezes:</p>
@@ -190,7 +190,7 @@ test('reproduce checkout button failure', async ({ page }) => {
   <li><strong>T-5.2s:</strong> User clicks "Standard Shipping" (User Action).</li>
   <li><strong>T-3.8s:</strong> Background pre-flight API request returns <code>429 Too Many Requests</code> (Silent Network Failure).</li>
   <li><strong>T-1.2s:</strong> State management store leaves <code>isCalculatingTax: true</code> without resolving.</li>
-  <li><strong>T-0.0s:</strong> User clicks "Place Order" — button disabled, no visual error feedback.</li>
+  <li><strong>T-0.0s:</strong> User clicks "Place Order" -button disabled, no visual error feedback.</li>
 </ol>
 <p>If the tester only submits a screenshot showing a disabled button, the developer assumes the button state is broken. But with a time-synchronized timeline, the <code>429 Rate Limit</code> at T-3.8s immediately reveals the true root cause.</p>
 
@@ -417,7 +417,7 @@ app.options('*', cors());</code></pre>
         "content": """
 <p>In March 2024, Google officially transitioned <strong>Interaction to Next Paint (INP)</strong> into a core ranking factor within the Core Web Vitals standard, permanently retiring the legacy First Input Delay (FID) metric.</p>
 
-<p>For engineering teams, this represents a monumental paradigm shift. While FID only measured the initial delay of the very first click when a page loaded, INP monitors <em>every single user interaction</em> — clicks, taps, keypresses, and modal transitions — throughout the entire lifespan of the browser tab. It measures the total latency from user input to the exact moment the browser paints updated visual pixels on screen.</p>
+<p>For engineering teams, this represents a monumental paradigm shift. While FID only measured the initial delay of the very first click when a page loaded, INP monitors <em>every single user interaction</em> -clicks, taps, keypresses, and modal transitions -throughout the entire lifespan of the browser tab. It measures the total latency from user input to the exact moment the browser paints updated visual pixels on screen.</p>
 
 <h2>The 3 Phases of Every User Interaction</h2>
 <p>When an INP latency spike occurs, the bottleneck lives within one of three sequential phases:</p>
@@ -496,7 +496,7 @@ export function SearchFilterList({ items }: { items: string[] }) {
         "contentId": """
 <p>Pada Maret 2024, Google secara resmi menetapkan <strong>Interaction to Next Paint (INP)</strong> sebagai metrik utama dalam standar Core Web Vitals dan memensiunkan metrik lama First Input Delay (FID).</p>
 
-<p>Bagi tim rekayasa web, ini adalah perubahan standar yang sangat besar. Jika metrik FID lama hanya mengukur kelancaran klik pertama saat halaman baru dimuat, metrik INP memantau <em>setiap interaksi pengguna</em> — klik tombol, pengetikan keyboard, dan pembukaan modal — selama tab browser dibuka. INP mengukur total latensi dari saat input dilakukan hingga frame visual baru berhasil digambar (paint) di layar.</p>
+<p>Bagi tim rekayasa web, ini adalah perubahan standar yang sangat besar. Jika metrik FID lama hanya mengukur kelancaran klik pertama saat halaman baru dimuat, metrik INP memantau <em>setiap interaksi pengguna</em> -klik tombol, pengetikan keyboard, dan pembukaan modal -selama tab browser dibuka. INP mengukur total latensi dari saat input dilakukan hingga frame visual baru berhasil digambar (paint) di layar.</p>
 
 <h2>3 Tahapan dalam Setiap Interaksi Pengguna</h2>
 <p>Ketika skor INP melonjak tinggi, pembekuan antarmuka terjadi di salah satu dari tiga fase berurutan:</p>

@@ -53,7 +53,7 @@ export function RetentionModal({
           >
             {copiedCode ? (
               <span className="inline-flex items-center gap-1.5">
-                <Icon icon="lucide:check" className="w-3.5 h-3.5 shrink-0" />
+                <Icon icon="lucide:check" className="w-3.5 h-3.5 shrink-0 brightness-0 invert" />
                 <span>Copied SAVE50!</span>
               </span>
             ) : (

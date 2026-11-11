@@ -166,7 +166,7 @@ export default function TeamManagementPage() {
           <h1 className="text-2xl font-bold tracking-tight text-foreground">{t("members.title")}</h1>
           <p className="text-sm text-muted mt-1">{t("members.subtitle")}</p>
         </div>
-        <Link href="/settings" className="text-sm text-[#B91C1C] dark:text-[#F87171] hover:text-[#991B1B] dark:hover:text-[#FCA5A5] font-medium hover:underline">
+        <Link href="/settings" className="text-sm text-[#2563EB] dark:text-[#3B82F6] hover:text-[#1D4ED8] dark:hover:text-[#60A5FA] font-medium hover:underline">
           {t("members.backToSettings")}
         </Link>
       </div>
@@ -196,7 +196,7 @@ export default function TeamManagementPage() {
             placeholder="teammate@company.com"
             onKeyDown={(e) => e.key === "Enter" && handleInvite()}
             disabled={cap !== null && members.length >= cap}
-            className="flex-1 text-sm rounded-lg border border-border px-3.5 py-2.5 outline-none focus:border-[#DC2626] focus:ring-1 focus:ring-[#DC2626]/20 bg-subtle text-foreground placeholder:text-muted disabled:bg-subtle disabled:cursor-not-allowed"
+            className="flex-1 text-sm rounded-lg border border-border px-3.5 py-2.5 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 bg-subtle text-foreground placeholder:text-muted disabled:bg-subtle disabled:cursor-not-allowed"
           />
           <div className="flex items-center gap-2">
             <div className="relative flex-1 sm:flex-none">
@@ -227,7 +227,7 @@ export default function TeamManagementPage() {
                           <span className="block text-xs text-muted">{opt.hint}</span>
                         </span>
                         {inviteRole === opt.value && (
-                          <Icon icon="lucide:check" className="w-4 h-4 text-[#DC2626] shrink-0 mt-0.5" aria-hidden="true" />
+                          <Icon icon="lucide:check" className="w-4 h-4 text-[#2563EB] shrink-0 mt-0.5" aria-hidden="true" />
                         )}
                       </button>
                     ))}
@@ -238,7 +238,7 @@ export default function TeamManagementPage() {
             <button
               onClick={handleInvite}
               disabled={inviting || !inviteEmail.trim() || (cap !== null && members.length >= cap)}
-              className="px-5 py-2.5 min-h-[44px] rounded-lg bg-[#DC2626] text-white text-sm font-semibold hover:bg-[#B91C1C] shadow-xs shadow-[#DC2626]/25 disabled:opacity-50 transition-colors shrink-0 touch-manipulation flex items-center justify-center"
+              className="px-5 py-2.5 min-h-[44px] rounded-lg bg-[#2563EB] text-white text-sm font-semibold hover:bg-[#1D4ED8] shadow-xs shadow-[#2563EB]/25 disabled:opacity-50 transition-colors shrink-0 touch-manipulation flex items-center justify-center"
             >
               {inviting ? t("members.inviting") : t("members.invite")}
             </button>
@@ -289,7 +289,7 @@ export default function TeamManagementPage() {
                     className="w-9 h-9 rounded-full object-cover shrink-0"
                   />
                 ) : (
-                  <div className="w-9 h-9 rounded-full bg-[#DC2626]/15 dark:bg-[#DC2626]/25 text-[#B91C1C] dark:text-[#F87171] text-xs font-bold flex items-center justify-center shrink-0">
+                  <div className="w-9 h-9 rounded-full bg-blue-50 dark:bg-blue-950/25 text-[#2563EB] dark:text-[#3B82F6] text-xs font-bold flex items-center justify-center shrink-0">
                     {(m.full_name || m.email || "?").charAt(0).toUpperCase()}
                   </div>
                 )}
@@ -297,7 +297,7 @@ export default function TeamManagementPage() {
                   <p className="text-sm font-medium text-foreground truncate">
                     {m.full_name || m.email}
                     {m.role === "owner" && <span className="ml-2 text-[10px] font-semibold text-muted bg-muted/10 border border-border px-1.5 py-0.5 rounded">{t("members.owner")}</span>}
-                    {m.role === "admin" && <span className="ml-2 text-[10px] font-semibold text-[#B91C1C] dark:text-[#F87171] bg-[#DC2626]/10 dark:bg-[#DC2626]/20 border border-[#DC2626]/30 dark:border-[#DC2626]/40 px-1.5 py-0.5 rounded">{t("members.admin")}</span>}
+                    {m.role === "admin" && <span className="ml-2 text-[10px] font-semibold text-[#2563EB] dark:text-[#3B82F6] bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/40 px-1.5 py-0.5 rounded">{t("members.admin")}</span>}
                     {(m.role === "member" || m.role === "creator") && <span className="ml-2 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 px-1.5 py-0.5 rounded">Creator</span>}
                     {m.role === "viewer" && <span className="ml-2 text-[10px] font-semibold text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/40 px-1.5 py-0.5 rounded">Viewer</span>}
                   </p>

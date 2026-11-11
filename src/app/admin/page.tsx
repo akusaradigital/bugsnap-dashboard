@@ -466,11 +466,11 @@ export default function AdminOverviewPage() {
             <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">
               {stats?.totalCaptures?.toLocaleString() ?? "0"}
             </p>
-            <span className="text-[10px] text-[#B91C1C] dark:text-[#F87171] font-semibold mt-0.5 block">
+            <span className="text-[10px] text-[#2563EB] dark:text-[#3B82F6] font-semibold mt-0.5 block">
               {t("admin.recentCaptures14", { count: stats?.recentCapturesCount ?? 0 })}
             </span>
           </div>
-          <Sparkline data={capturePoints} color="#DC2626" />
+          <Sparkline data={capturePoints} color="#2563eb" />
         </div>
 
         {/* CARD 3: TOTAL WORKSPACES */}
@@ -498,11 +498,11 @@ export default function AdminOverviewPage() {
             <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">
               {stats?.totalUsers?.toLocaleString() ?? "0"}
             </p>
-            <span className="text-[10px] text-[#B91C1C] dark:text-[#F87171] font-semibold mt-0.5 block">
+            <span className="text-[10px] text-[#2563EB] dark:text-[#3B82F6] font-semibold mt-0.5 block">
               {t("admin.usersSub")}
             </span>
           </div>
-          <Sparkline data={userPoints} color="#DC2626" />
+          <Sparkline data={userPoints} color="#2563eb" />
         </div>
       </div>
 
@@ -526,7 +526,7 @@ export default function AdminOverviewPage() {
                   </div>
                   <p className="text-xl font-black text-slate-900 dark:text-white">{stage.count}</p>
                   <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-zinc-800 overflow-hidden">
-                    <div className="h-full bg-[#DC2626]" style={{ width: `${Math.max(pctOfTotal, 4)}%` }} />
+                    <div className="h-full bg-[#2563EB]" style={{ width: `${Math.max(pctOfTotal, 4)}%` }} />
                   </div>
                   <span className="text-[10px] text-slate-400 block">
                     {pctOfTotal}% {t("admin.funnelOfSignups")}
@@ -553,8 +553,8 @@ export default function AdminOverviewPage() {
               </p>
             </div>
             <div className="flex items-center gap-3 text-xs font-semibold">
-              <span className="flex items-center gap-1.5 text-[#B91C1C] dark:text-[#F87171]">
-                <span className="h-2 w-4 rounded-full bg-[#DC2626]" />
+              <span className="flex items-center gap-1.5 text-[#2563EB] dark:text-[#3B82F6]">
+                <span className="h-2 w-4 rounded-full bg-[#2563EB]" />
                 <span>{t("admin.chartCaptures")}</span>
               </span>
               <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
@@ -609,10 +609,10 @@ export default function AdminOverviewPage() {
                 points={viewPolyline}
               />
 
-              {/* Capture Path (Indigo) */}
+              {/* Capture Path (Blue) */}
               <polyline
                 fill="none"
-                stroke="#DC2626"
+                stroke="#2563eb"
                 strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -627,7 +627,7 @@ export default function AdminOverviewPage() {
               {/* Data points for Captures */}
               {capturePathPoints.map((p, i) => (
                 <g key={`c-${i}`}>
-                  <circle cx={p.x} cy={p.y} r="3.5" fill="#DC2626" />
+                  <circle cx={p.x} cy={p.y} r="3.5" fill="#2563eb" />
                   {/* Date Label on X Axis */}
                   <text
                     x={p.x}
@@ -667,7 +667,7 @@ export default function AdminOverviewPage() {
             <div className="space-y-3 mt-4">
               {[
                 { label: "Free Tier", count: plans.free, color: "bg-slate-400" },
-                { label: "Pro Tier", count: plans.pro, color: "bg-[#DC2626]" },
+                { label: "Pro Tier", count: plans.pro, color: "bg-[#2563EB]" },
                 { label: "Team Tier", count: plans.team, color: "bg-blue-600" },
                 { label: "Enterprise", count: plans.enterprise, color: "bg-slate-700 dark:bg-slate-300" },
               ].map((tier) => {
@@ -719,10 +719,10 @@ export default function AdminOverviewPage() {
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
           <Link
             href="/admin/users"
-            className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#DC2626]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
+            className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#2563EB]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
           >
             <Icon icon={APP_ICONS.nav.users} className="w-5 h-5 text-indigo-500" />
-            <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#B91C1C] dark:group-hover:text-[#F87171] transition-colors">
+            <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#2563EB] dark:group-hover:text-[#3B82F6] transition-colors">
               {t("admin.manageUsers")}
             </p>
             <span className="text-[10px] text-slate-400 block truncate">Plan & 360° Profile</span>
@@ -730,10 +730,10 @@ export default function AdminOverviewPage() {
 
           <Link
             href="/admin/workspaces"
-            className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#DC2626]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
+            className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#2563EB]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
           >
             <Icon icon={APP_ICONS.nav.workspaces} className="w-5 h-5 text-sky-500" />
-            <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#B91C1C] dark:group-hover:text-[#F87171] transition-colors">
+            <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#2563EB] dark:group-hover:text-[#3B82F6] transition-colors">
               {t("admin.navWorkspaces")}
             </p>
             <span className="text-[10px] text-slate-400 block truncate">Teams & Ownership</span>
@@ -741,10 +741,10 @@ export default function AdminOverviewPage() {
 
           <Link
             href="/admin/captures"
-            className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#DC2626]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
+            className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#2563EB]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
           >
             <Icon icon={APP_ICONS.nav.captures} className="w-5 h-5 text-emerald-500" />
-            <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#B91C1C] dark:group-hover:text-[#F87171] transition-colors">
+            <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#2563EB] dark:group-hover:text-[#3B82F6] transition-colors">
               {t("admin.navCaptures")}
             </p>
             <span className="text-[10px] text-slate-400 block truncate">Audit & Takedown</span>
@@ -752,10 +752,10 @@ export default function AdminOverviewPage() {
 
           <Link
             href="/admin/revenue"
-            className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#DC2626]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
+            className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#2563EB]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
           >
             <Icon icon={APP_ICONS.nav.revenue} className="w-5 h-5 text-amber-500" />
-            <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#B91C1C] dark:group-hover:text-[#F87171] transition-colors">
+            <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#2563EB] dark:group-hover:text-[#3B82F6] transition-colors">
               {t("admin.navRevenue")}
             </p>
             <span className="text-[10px] text-slate-400 block truncate">MRR & Stripe Health</span>
@@ -763,10 +763,10 @@ export default function AdminOverviewPage() {
 
           <Link
             href="/admin/ai-analytics"
-            className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#DC2626]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
+            className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#2563EB]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
           >
             <Icon icon={APP_ICONS.nav.aiAnalytics} className="w-5 h-5 text-purple-500" />
-            <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#B91C1C] dark:group-hover:text-[#F87171] transition-colors">
+            <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#2563EB] dark:group-hover:text-[#3B82F6] transition-colors">
               {t("admin.navAiAnalytics")}
             </p>
             <span className="text-[10px] text-slate-400 block truncate">Tokens & API Keys</span>
@@ -774,10 +774,10 @@ export default function AdminOverviewPage() {
 
           <Link
             href="/admin/security-audit"
-            className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#DC2626]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
+            className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#2563EB]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
           >
             <Icon icon={APP_ICONS.nav.securityAudit} className="w-5 h-5 text-rose-500" />
-            <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#B91C1C] dark:group-hover:text-[#F87171] transition-colors">
+            <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#2563EB] dark:group-hover:text-[#3B82F6] transition-colors">
               {t("admin.auditTitle")}
             </p>
             <span className="text-[10px] text-slate-400 block truncate">Action Audit Trail</span>
@@ -808,7 +808,7 @@ export default function AdminOverviewPage() {
                     <p className="text-[11px] text-slate-500 dark:text-zinc-400 truncate">{w.owner_email}</p>
                   </div>
                   <div className="flex items-center gap-1 shrink-0 ml-3">
-                    <span className="text-xs font-black text-[#B91C1C] dark:text-[#F87171]">{w.capture_count}</span>
+                    <span className="text-xs font-black text-[#2563EB] dark:text-[#3B82F6]">{w.capture_count}</span>
                     <span className="text-[10px] text-slate-400">{t("admin.capLabel")}</span>
                   </div>
                 </li>
@@ -834,7 +834,7 @@ export default function AdminOverviewPage() {
               value={promoMessage}
               onChange={(e) => setPromoMessage(e.target.value)}
               placeholder={t("admin.promoBannerPlaceholder")}
-              className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-3 outline-none focus:border-[#DC2626] resize-none leading-relaxed"
+              className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-3 outline-none focus:border-[#2563EB] resize-none leading-relaxed"
             />
           </div>
 
@@ -847,7 +847,7 @@ export default function AdminOverviewPage() {
                 type="datetime-local"
                 value={promoExpiresAt}
                 onChange={(e) => setPromoExpiresAt(e.target.value)}
-                className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#DC2626]"
+                className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#2563EB]"
               />
             </div>
             <div>
@@ -875,7 +875,7 @@ export default function AdminOverviewPage() {
                 type="checkbox"
                 checked={promoEnabled}
                 onChange={(e) => setPromoEnabled(e.target.checked)}
-                className="w-4 h-4 rounded border-slate-300 dark:border-zinc-700 text-[#DC2626] focus:ring-[#DC2626]"
+                className="w-4 h-4 rounded border-slate-300 dark:border-zinc-700 text-[#2563EB] focus:ring-[#2563EB]"
               />
               <span>{t("admin.enableBanner")}</span>
             </label>
@@ -884,9 +884,9 @@ export default function AdminOverviewPage() {
               type="button"
               onClick={savePromo}
               disabled={savingPromo}
-              className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold bg-[#DC2626] text-white rounded-lg hover:bg-[#B91C1C] disabled:opacity-50 transition-colors shadow-sm cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold bg-[#2563EB] text-white rounded-lg hover:bg-[#1D4ED8] disabled:opacity-50 transition-colors shadow-sm cursor-pointer"
             >
-              <Icon icon="lucide:check" className="w-3.5 h-3.5 shrink-0" />
+              <Icon icon="lucide:check" className="w-3.5 h-3.5 shrink-0 brightness-0 invert" />
               <span>{savingPromo ? t("admin.savingBanner") : t("admin.saveBanner")}</span>
             </button>
           </div>

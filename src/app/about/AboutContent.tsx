@@ -218,39 +218,37 @@ export function AboutContent() {
 
         {/* Akusara Digital CTA Banner */}
         <Reveal delay={0.28}>
-          <div className="rounded-2xl sm:rounded-3xl border border-site-border bg-site-surface p-6 sm:p-8 shadow-xs flex flex-col md:flex-row md:items-center md:justify-between gap-6 min-w-0">
-            <div className="flex items-center gap-4 sm:gap-5 min-w-0 flex-1">
-              <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-[#eefcf3] dark:bg-emerald-950/40 border border-emerald-500/10 flex items-center justify-center shrink-0 text-[#16a34a] dark:text-emerald-400">
-                <Icon icon="lucide:zap" className="w-6 h-6" aria-hidden="true" />
+          <div className="rounded-2xl sm:rounded-3xl border border-blue-100 dark:border-blue-900/40 bg-[#f0f6ff] dark:bg-blue-950/25 p-6 sm:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm min-w-0">
+            <div className="space-y-1.5 max-w-xl min-w-0">
+              <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                {t("about.ctaEyebrow") || "READY TO GET STARTED?"}
               </div>
-              <div className="space-y-1 min-w-0 flex-1">
-                <h3 className="text-lg sm:text-xl md:text-2xl font-extrabold text-site-text tracking-tight leading-snug">
-                  {t("about.ctaTitle") || "Start capturing and resolving bugs with BugSnap"}
-                </h3>
-                <p className="text-xs sm:text-sm text-site-text-2 leading-relaxed">
-                  {t("about.ctaSubtitle") ||
-                    "Install the Chrome extension in seconds and experience the fastest path from bug discovery to code commit."}
-                </p>
-              </div>
+              <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
+                {t("about.ctaTitle") || "Start capturing and resolving bugs with BugSnap"}
+              </h3>
+              <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
+                {t("about.ctaSubtitle") ||
+                  "Install the Chrome extension and go from bug discovery to code commit in seconds."}
+              </p>
             </div>
 
-            <div className="shrink-0 w-full md:w-auto flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center gap-3 shrink-0 min-w-0">
               <a
                 href={CHROME_STORE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full md:w-auto inline-flex items-center justify-center gap-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-sm font-bold px-6 py-3.5 min-h-[44px] rounded-2xl transition-all shadow-sm hover:scale-[1.02] active:scale-[0.99] touch-manipulation whitespace-nowrap"
+                className="inline-flex items-center gap-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold px-6 py-3.5 rounded-xl shadow-md transition-all hover:scale-[1.02] active:scale-[0.99] shrink-0 touch-manipulation whitespace-nowrap"
               >
-                <Icon icon="logos:chrome" className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" aria-hidden="true" />
+                <Icon icon="logos:chrome" className="w-5 h-5 shrink-0" aria-hidden="true" />
                 <span>{t("about.ctaButton") || "Add to Chrome - Free"}</span>
               </a>
               <a
                 href={FIREFOX_STORE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full md:w-auto inline-flex items-center justify-center gap-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-sm font-bold px-6 py-3.5 min-h-[44px] rounded-2xl transition-all shadow-sm hover:scale-[1.02] active:scale-[0.99] touch-manipulation whitespace-nowrap"
+                className="inline-flex items-center gap-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold px-6 py-3.5 rounded-xl shadow-md transition-all hover:scale-[1.02] active:scale-[0.99] shrink-0 touch-manipulation whitespace-nowrap"
               >
-                <Icon icon="logos:firefox" className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" aria-hidden="true" />
+                <Icon icon="logos:firefox" className="w-5 h-5 shrink-0" aria-hidden="true" />
                 <span>{t("extension.addToFirefox")}</span>
               </a>
             </div>

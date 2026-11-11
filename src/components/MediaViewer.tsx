@@ -277,6 +277,15 @@ function MediaViewer({
   const sigReady = !needsSig || sigQuery !== "";
   const streamUrl = fileId && sigReady ? `/api/google-drive/download?id=${encodeURIComponent(fileId)}&type=${type === "video" ? "video" : "screenshot"}&disposition=inline${sigQuery}` : null;
   const downloadUrl = fileId && sigReady ? `/api/google-drive/download?id=${encodeURIComponent(fileId)}&type=${type === "video" ? "video" : "screenshot"}&filename=${encodeURIComponent(title || "capture")}${sigQuery}` : isDirectWebUrl ? driveUrl : null;
+  // The video poster can't use the probe-and-fallback dance below (it's set once,
+  // directly, on the <video> tag) - drive.google.com/thumbnail redirects to
+  // lh3.googleusercontent.com, which Chrome's ORB blocks for a cross-origin
+  // poster/img with no CORS headers, so it must go through our own origin instead.
+  const posterUrl = fileId && sigReady
+    ? `/api/google-drive/download?id=${encodeURIComponent(fileId)}&type=thumbnail${sigQuery}`
+    : isDirectWebUrl
+    ? driveUrl
+    : null;
   const previewUrl = fileId ? `https://drive.google.com/file/d/${fileId}/preview` : null;
   const [activeImageSrc, setActiveImageSrc] = useState<string | null>(imageUrl);
   const [activeVideoSrc, setActiveVideoSrc] = useState<string>("");
@@ -1124,9 +1133,9 @@ function MediaViewer({
           title={isPlaying ? t("mv.pause") : t("mv.play")}
         >
           {isPlaying ? (
-            <Icon icon="lucide:pause" className="w-4 h-4 fill-current" aria-hidden="true" />
+            <Icon icon="lucide:pause" className="w-4 h-4 brightness-0 invert" aria-hidden="true" />
           ) : (
-            <Icon icon="lucide:play" className="w-4 h-4 fill-current ml-0.5" aria-hidden="true" />
+            <Icon icon="lucide:play" className="w-4 h-4 ml-0.5 brightness-0 invert" aria-hidden="true" />
           )}
         </button>
 
@@ -1302,7 +1311,7 @@ function MediaViewer({
               onChange={handleVolumeChange}
               onClick={(e) => e.stopPropagation()}
               aria-label="Volume"
-              className="hidden sm:inline-block w-14 sm:w-16 h-1.5 accent-[#DC2626] bg-zinc-200 dark:bg-zinc-700 rounded-lg cursor-pointer"
+              className="hidden sm:inline-block w-14 sm:w-16 h-1.5 accent-[#2563EB] bg-zinc-200 dark:bg-zinc-700 rounded-lg cursor-pointer"
             />
           </div>
 
@@ -1419,7 +1428,7 @@ function MediaViewer({
                 ref={videoRef}
                 playsInline
                 preload="metadata"
-                poster={imageUrl || undefined}
+                poster={posterUrl || undefined}
                 src={activeVideoSrc || streamUrl || directUrl || downloadUrl || ""}
                 onPlay={() => {
                   setIsPlaying(true);

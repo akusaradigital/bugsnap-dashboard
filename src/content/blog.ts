@@ -36,12 +36,12 @@ export const blogPosts: BlogPost[] = [
     content: `
 <p>"It worked when I tested it locally, but now it fails in staging." Every developer and QA engineer has experienced the maddening frustration of flaky, intermittent front-end bugs. You reproduce the flow five times, and on the sixth attempt, a modal freezes, a button fails to trigger an API call, or a form quietly resets without explanation.</p>
 
-<p>Intermittent bugs are among the most expensive defects in software engineering. According to industry studies, developers spend up to 25% of their working hours reproducing and investigating bug reports that turn out to be labeled as "Cannot Reproduce" or "Works as Designed." The root issue is not that the bug is magical — it is that traditional bug reporting relies on static artifacts that fail to capture <strong>time-synchronized causality</strong>.</p>
+<p>Intermittent bugs are among the most expensive defects in software engineering. According to industry studies, developers spend up to 25% of their working hours reproducing and investigating bug reports that turn out to be labeled as "Cannot Reproduce" or "Works as Designed." The root issue is not that the bug is magical -it is that traditional bug reporting relies on static artifacts that fail to capture <strong>time-synchronized causality</strong>.</p>
 
 <h2>The Fundamental Flaw of Static Bug Reports</h2>
 <p>When a tester files a bug report using traditional methods, they typically provide two things: a static screenshot and a short written description. Even when a screen recording is attached, video alone is an incomplete visual medium. A video proves that a button was clicked and that nothing happened, but it cannot explain <em>why</em> the application state refused to transition.</p>
 
-<p>In modern web applications, the visual symptom on screen is almost never the origin of the bug. Instead, it is the downstream consequence of an asynchronous sequence of events that began seconds — or even minutes — earlier in the browser tab lifecycle. If you only look at the exact moment of failure, you are looking at the crime scene after the culprit has already fled.</p>
+<p>In modern web applications, the visual symptom on screen is almost never the origin of the bug. Instead, it is the downstream consequence of an asynchronous sequence of events that began seconds -or even minutes -earlier in the browser tab lifecycle. If you only look at the exact moment of failure, you are looking at the crime scene after the culprit has already fled.</p>
 
 <h2>The 4 Archetypes of Flaky Front-End Failures</h2>
 <p>To eliminate intermittent bugs systematically, engineering teams must recognize the four primary architectural failure modes in client-side applications:</p>
@@ -154,12 +154,12 @@ export function useCartCheckout(cartId: string, shippingMethod: string) {
     contentId: `
 <p>"Tadi pas dicoba di lokal lancar, giliran di staging malah error." Hampir setiap developer dan QA engineer pasti pernah dibuat frustrasi oleh bug yang muncul sesekali (flaky / intermittent). Anda mencoba alurnya lima kali dan semuanya normal, tapi begitu masuk percobaan keenam, tombol tiba-tiba tidak merespons, modal macet, atau form ter-reset tanpa pesan apa pun.</p>
 
-<p>Bug intermiten adalah salah satu jenis cacat software paling mahal dalam rekayasa perangkat lunak modern. Riset industri menunjukkan bahwa developer menghabiskan hingga 25% dari total jam kerja mereka hanya untuk mereproduksi laporan bug yang berujung pada status "Cannot Reproduce" (Tidak Dapat Direproduksi). Masalah mendasarnya bukan karena bug tersebut gaib — melainkan karena metode pelaporan tradisional mengandalkan bukti statis yang kehilangan <strong>hubungan kausalitas waktu (time-synchronized causality)</strong>.</p>
+<p>Bug intermiten adalah salah satu jenis cacat software paling mahal dalam rekayasa perangkat lunak modern. Riset industri menunjukkan bahwa developer menghabiskan hingga 25% dari total jam kerja mereka hanya untuk mereproduksi laporan bug yang berujung pada status "Cannot Reproduce" (Tidak Dapat Direproduksi). Masalah mendasarnya bukan karena bug tersebut gaib -melainkan karena metode pelaporan tradisional mengandalkan bukti statis yang kehilangan <strong>hubungan kausalitas waktu (time-synchronized causality)</strong>.</p>
 
 <h2>Kelemahan Mendasar Laporan Bug Statis</h2>
 <p>Ketika seorang penguji melaporkan bug dengan cara lama, mereka umumnya hanya melampirkan screenshot statis dan penjelasan tertulis singkat. Bahkan jika ada rekaman video, video semata adalah media visual yang belum lengkap. Video membuktikan bahwa sebuah tombol telah diklik dan tidak ada respons visual, tetapi tidak dapat menjelaskan <em>mengapa</em> state internal aplikasi menolak berpindah.</p>
 
-<p>Pada arsitektur aplikasi web modern, tampilan error di layar hampir tidak pernah menjadi akar masalah sebenarnya. Tampilan tersebut hanyalah akibat hilir dari rangkaian event asinkron yang terjadi beberapa detik — bahkan beberapa menit — sebelumnya di lifecycle tab browser. Jika developer hanya memeriksa saat momen crash terjadi, mereka ibarat memeriksa tempat kejadian perkara setelah pelakunya sudah lama kabur.</p>
+<p>Pada arsitektur aplikasi web modern, tampilan error di layar hampir tidak pernah menjadi akar masalah sebenarnya. Tampilan tersebut hanyalah akibat hilir dari rangkaian event asinkron yang terjadi beberapa detik -bahkan beberapa menit -sebelumnya di lifecycle tab browser. Jika developer hanya memeriksa saat momen crash terjadi, mereka ibarat memeriksa tempat kejadian perkara setelah pelakunya sudah lama kabur.</p>
 
 <h2>4 Pola Utama Penyebab Bug Flaky Front-End</h2>
 <p>Untuk menuntaskan bug intermiten secara sistematis, tim engineer perlu memahami 4 pola kegagalan asinkron pada sisi client:</p>
@@ -317,7 +317,7 @@ export function useCartCheckout(cartId: string, shippingMethod: string) {
 <p>Here is how the direct-to-Drive streaming architecture works under the hood:</p>
 
 <ol>
-  <li><strong>Scoped Client-Side Authentication:</strong> When a tester signs in to BugSnap, the browser requests Google OAuth 2.0 authorization with the minimal <code>https://www.googleapis.com/auth/drive.file</code> scope. This strict permission grants BugSnap access <em>only</em> to the files it creates — never to existing company spreadsheets, documents, or team drives.</li>
+  <li><strong>Scoped Client-Side Authentication:</strong> When a tester signs in to BugSnap, the browser requests Google OAuth 2.0 authorization with the minimal <code>https://www.googleapis.com/auth/drive.file</code> scope. This strict permission grants BugSnap access <em>only</em> to the files it creates -never to existing company spreadsheets, documents, or team drives.</li>
   <li><strong>Direct Browser-to-Cloud Uploads:</strong> When recording completes, the Chrome extension encodes the video stream into high-efficiency WebM format directly in memory. The media is uploaded straight from the browser to the user's designated Google Drive storage folder via Google's official resumable upload API.</li>
   <li><strong>Zero Byte Server Transit:</strong> Raw video chunks never travel through, touch, or get buffered on BugSnap's backend servers. BugSnap stores only lightweight relational metadata (capture title, timestamp, and the Google Drive file identifier) in a secure Supabase database.</li>
   <li><strong>Authenticated Streaming Playback:</strong> When an engineer opens the bug report link, the BugSnap viewer requests an ephemeral signed streaming URL directly from Google Drive. Access is governed exclusively by your organization's Google Workspace permission policies.</li>
@@ -404,7 +404,7 @@ export function useCartCheckout(cartId: string, shippingMethod: string) {
 <p>Berikut cara kerja arsitektur streaming langsung ke Google Drive di balik layar:</p>
 
 <ol>
-  <li><strong>Otentikasi Izin Minimal:</strong> Saat tester login ke BugSnap, ekstensi meminta izin Google OAuth 2.0 dengan scope paling aman, yaitu <code>https://www.googleapis.com/auth/drive.file</code>. Izin ini hanya membolehkan BugSnap mengakses file yang dibuatnya sendiri — sama sekali tidak bisa membaca dokumen, spreadsheet, atau folder lain di Google Drive perusahaan Anda.</li>
+  <li><strong>Otentikasi Izin Minimal:</strong> Saat tester login ke BugSnap, ekstensi meminta izin Google OAuth 2.0 dengan scope paling aman, yaitu <code>https://www.googleapis.com/auth/drive.file</code>. Izin ini hanya membolehkan BugSnap mengakses file yang dibuatnya sendiri -sama sekali tidak bisa membaca dokumen, spreadsheet, atau folder lain di Google Drive perusahaan Anda.</li>
   <li><strong>Unggah Langsung Browser-ke-Drive:</strong> Setelah perekaman selesai, ekstensi Chrome mengompresi video menjadi WebM langsung di memori browser. File tersebut langsung diunggah dari browser ke folder Google Drive milik pengguna melalui API resmi Google.</li>
   <li><strong>Nol Byte Melintasi Server:</strong> Data video mentah tidak pernah singgah, diproses, atau disimpan di server backend BugSnap. Backend BugSnap hanya mencatat metadata relasional ringan (judul capture, waktu, dan ID file Google Drive) di database Supabase yang terenkripsi.</li>
   <li><strong>Pemutaran Terotentikasi:</strong> Ketika developer membuka link laporan bug, pemutar video BugSnap meminta URL streaming sementara langsung dari Google Drive. Izin akses video sepenuhnya diatur oleh kebijakan hak akses Google Workspace perusahaan Anda.</li>
@@ -478,7 +478,7 @@ export function useCartCheckout(cartId: string, shippingMethod: string) {
     content: `
 <p>In high-velocity software engineering teams, one of the most persistent bottlenecks is the friction between manual QA bug reporting and automated regression test creation. A QA engineer discovers an intermittent layout break during checkout, records a screen recording, and files a detailed ticket. Then, the baton passes to an automation engineer or software developer, who must spend an hour or more painstakingly reverse-engineering the exact sequence of clicks, inputs, and DOM locators to craft a reproduction script in Playwright or Cypress.</p>
 
-<p>This manual translation process is where valuable engineering velocity evaporates. Worse yet, because writing automated tests for every one-off bug is tedious, many teams simply fix the immediate bug and move on — leaving their continuous integration (CI) pipeline completely unguarded against future regressions of the exact same defect.</p>
+<p>This manual translation process is where valuable engineering velocity evaporates. Worse yet, because writing automated tests for every one-off bug is tedious, many teams simply fix the immediate bug and move on -leaving their continuous integration (CI) pipeline completely unguarded against future regressions of the exact same defect.</p>
 
 <h2>Why Video Recordings Alone Cannot Automate QA</h2>
 <p>Screen recordings are phenomenal for human communication. A ten-second video immediately shows a developer that a modal failed to open. But an automated testing framework like Playwright is not a human watching a screen: it requires <strong>deterministic locators, semantic accessibility roles, precise network timing mocks, and unambiguous assertion states</strong>.</p>
@@ -566,7 +566,7 @@ test.describe('Checkout Flow Regression Suite', () =&gt; {
     contentId: `
 <p>Dalam alur kerja tim engineering modern yang bergerak cepat, salah satu titik hambatan terbesar adalah jurang pemisah antara pengujian manual QA dan pembuatan skrip tes regresi otomatis. Tim QA menemukan bug tampilan yang macet saat checkout, merekam video masalah tersebut, lalu membuat tiket pelaporan. Setelah itu, tugas beralih ke automation engineer atau developer yang harus menghabiskan waktu berjam-jam mencoba merekonstruksi urutan klik, nama form, dan selektor DOM dari nol agar bisa dituangkan ke dalam skrip Playwright atau Cypress.</p>
 
-<p>Proses translasi manual ini menguras jam kerja produktif yang sangat besar. Lebih buruknya lagi, karena menulis tes otomatis untuk setiap satu bug membutuhkan waktu lama, banyak tim akhirnya memilih langsung memperbaiki kode tanpa membuat tes regresi — membiarkan pipeline Continuous Integration (CI) rentan mengalami kebocoran bug yang sama di masa mendatang.</p>
+<p>Proses translasi manual ini menguras jam kerja produktif yang sangat besar. Lebih buruknya lagi, karena menulis tes otomatis untuk setiap satu bug membutuhkan waktu lama, banyak tim akhirnya memilih langsung memperbaiki kode tanpa membuat tes regresi -membiarkan pipeline Continuous Integration (CI) rentan mengalami kebocoran bug yang sama di masa mendatang.</p>
 
 <h2>Mengapa Rekaman Video Saja Belum Cukup untuk Otomasi</h2>
 <p>Rekaman video sangat efektif untuk komunikasi antar-manusia. Video berdurasi 10 detik langsung membuktikan kepada developer bahwa sebuah tombol gagal membuka modal. Namun framework otomatisasi pengujian seperti Playwright bukanlah manusia yang menonton layar: Playwright membutuhkan <strong>selektor deterministik, role aksesibilitas semantik, mock timing jaringan yang presisi, dan kriteria asersi yang jelas</strong>.</p>
@@ -700,7 +700,7 @@ test.describe('Suite Regresi Alur Checkout', () =&gt; {
 <p>Calling <code>setInterval</code> or trailing debounce functions inside component lifecycles without clearing the handle in the unmount return callback. The timer continues firing in the background, keeping the entire component subtree in memory.</p>
 
 <h3>3. Detached DOM Nodes from Imperative Libraries</h3>
-<p>Integrating non-React third-party libraries (such as D3.js, Chart.js, Leaflet maps, or rich-text editors like Quill) often requires imperative DOM manipulation. If these libraries append elements directly to <code>document.body</code> or retain internal references after the React wrapper component unmounts, the underlying DOM nodes become <em>detached</em> — removed from the visible layout tree, but permanently trapped in JavaScript heap memory.</p>
+<p>Integrating non-React third-party libraries (such as D3.js, Chart.js, Leaflet maps, or rich-text editors like Quill) often requires imperative DOM manipulation. If these libraries append elements directly to <code>document.body</code> or retain internal references after the React wrapper component unmounts, the underlying DOM nodes become <em>detached</em> -removed from the visible layout tree, but permanently trapped in JavaScript heap memory.</p>
 
 <h3>4. Unbounded Global State Caches</h3>
 <p>State stores (such as Zustand, Redux, or Apollo Client) that accumulate collection records over time without implementing eviction policies (LRU cache or maximum size boundaries). In long-running sessions, fetching pages of data continuously expands the heap footprint without bound.</p>
@@ -709,7 +709,7 @@ test.describe('Suite Regresi Alur Checkout', () =&gt; {
 <p>Creating helper callbacks inside custom hooks that capture large data arrays or DOM elements. If these callbacks are passed to persistent contexts or memoized without proper dependency arrays, stale closures retain megabytes of discarded data.</p>
 
 <h2>The 1,500 Element Benchmark: Why DOM Bloat Destroys INP</h2>
-<p>Memory leaks are intimately connected to <strong>DOM bloat</strong> — the accumulation of excessive DOM nodes in the document tree. Google's Lighthouse and Chrome Web Vitals teams recommend keeping total DOM elements under <strong>1,500 nodes</strong> per page.</p>
+<p>Memory leaks are intimately connected to <strong>DOM bloat</strong> -the accumulation of excessive DOM nodes in the document tree. Google's Lighthouse and Chrome Web Vitals teams recommend keeping total DOM elements under <strong>1,500 nodes</strong> per page.</p>
 
 <p>When an application hoards 3,000 to 5,000+ DOM nodes:</p>
 <ul>
@@ -769,7 +769,7 @@ export function RealtimeMetricWidget({ metricId }: { metricId: string }) {
 }</code></pre>
 
 <h2>Conclusion: Building a Culture of Memory Health</h2>
-<p>In client-side software engineering, performance is not an afterthought to be tackled after launch — it is a core feature that defines user experience. By measuring DOM element density and JS heap deltas during routine QA testing, engineering teams can catch memory leaks before they ever reach production users.</p>
+<p>In client-side software engineering, performance is not an afterthought to be tackled after launch -it is a core feature that defines user experience. By measuring DOM element density and JS heap deltas during routine QA testing, engineering teams can catch memory leaks before they ever reach production users.</p>
     `.trim(),
     contentId: `
 <p>Framework frontend modern seperti React, Next.js, Vue, dan Angular telah membawa revolusi besar dalam rekayasa aplikasi web. Berpindahnya navigasi ke sisi client menghadirkan pengalaman pengguna yang instan dan mulus layaknya aplikasi desktop. Namun, fondasi arsitektur Single Page Application (SPA) memicu kategori cacat sistem yang sering kali tidak terlihat secara kasat mata: <strong>kebocoran memori (memory leak) kumulatif dan pembengkakan elemen DOM (DOM bloat)</strong>.</p>
@@ -804,7 +804,7 @@ export function RealtimeMetricWidget({ metricId }: { metricId: string }) {
 <p>Penggunaan <code>setInterval</code> atau trailing debounce di dalam lifecycle komponen tanpa pembersihan <code>clearInterval</code> pada return callback effect. Timer akan terus berdetak di latar belakang dan menahan pohon komponen terkait agar tidak di-garbage collect.</p>
 
 <h3>3. Detached DOM Nodes dari Library Pihak Ketiga</h3>
-<p>Integrasi library pihak ketiga non-React (seperti grafik Chart.js/D3, peta Leaflet, atau rich text editor) umumnya memanipulasi elemen DOM secara langsung. Jika library ini menempelkan elemen ke <code>document.body</code> dan referensinya tidak dibersihkan saat komponen pembungkus di-unmount, node DOM tersebut menjadi <em>detached</em> — hilang dari pandangan layar, namun tetap terkunci di memori browser.</p>
+<p>Integrasi library pihak ketiga non-React (seperti grafik Chart.js/D3, peta Leaflet, atau rich text editor) umumnya memanipulasi elemen DOM secara langsung. Jika library ini menempelkan elemen ke <code>document.body</code> dan referensinya tidak dibersihkan saat komponen pembungkus di-unmount, node DOM tersebut menjadi <em>detached</em> -hilang dari pandangan layar, namun tetap terkunci di memori browser.</p>
 
 <h3>4. Cache State Global Tanpa Batas (Unbounded Stores)</h3>
 <p>Penggunaan state store (seperti Zustand atau Redux) yang terus menumpuk data riwayat query atau pagination tanpa kebijakan eviksi (seperti batasan LRU cache). Dalam sesi penggunaan yang lama, ukuran heap akan terus membengkak tanpa batas.</p>
@@ -896,7 +896,7 @@ export function RealtimeMetricWidget({ metricId }: { metricId: string }) {
 
 <p>What follows is an exhausting, multi-day game of asynchronous ping-pong. A developer pulls the ticket, attempts to reproduce the issue on their local machine, finds that checkout works fine for their test user, and moves the ticket to <em>"Cannot Reproduce"</em>. The tester re-opens it with indignation, the engineering manager questions sprint velocity, and days of productive coding time evaporate. According to global research by the Consortium for Information &amp; Software Quality (CISQ), poorly communicated software defects cost technology organizations upwards of $2.4 trillion annually in wasted triage hours, delayed releases, and post-production hotfixes.</p>
 
-<p>Writing a world-class, reproduction-ready bug report is not an innate talent — it is a disciplined engineering process. Here is the definitive field guide to crafting bug reports that developers can diagnose, reproduce, and resolve in the first sprint.</p>
+<p>Writing a world-class, reproduction-ready bug report is not an innate talent -it is a disciplined engineering process. Here is the definitive field guide to crafting bug reports that developers can diagnose, reproduce, and resolve in the first sprint.</p>
 
 <h2>The 7 Deadly Sins of Bug Reporting</h2>
 <p>Before examining the structure of a high-signal report, engineering teams must recognize the common communication anti-patterns that derail debugging:</p>
@@ -993,14 +993,14 @@ export function RealtimeMetricWidget({ metricId }: { metricId: string }) {
 <h2>How BugSnap Automates 90% of the Work</h2>
 <p>Following this comprehensive checklist manually can feel tedious during rapid exploratory testing. This is why modern engineering teams utilize <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a>.</p>
 
-<p>With a single keyboard shortcut (<code>Ctrl+Shift+F</code>), BugSnap captures high-definition screen video while silently recording network request and response headers, uncaught console exceptions, client-side breadcrumbs, and complete hardware/browser specs. When you finish recording, BugSnap generates a shareable link that packages all seven diagnostic criteria automatically — giving developers everything they need without requiring testers to manually copy and paste DevTools data.</p>
+<p>With a single keyboard shortcut (<code>Ctrl+Shift+F</code>), BugSnap captures high-definition screen video while silently recording network request and response headers, uncaught console exceptions, client-side breadcrumbs, and complete hardware/browser specs. When you finish recording, BugSnap generates a shareable link that packages all seven diagnostic criteria automatically -giving developers everything they need without requiring testers to manually copy and paste DevTools data.</p>
     `.trim(),
     contentId: `
 <p>Setiap organisasi rekayasa perangkat lunak pasti pernah merasakan frustrasi akibat laporan bug yang tidak jelas. Seorang tester QA atau tim support menemukan kendala saat pengujian, mengambil screenshot seadanya, lalu menuliskan tiket singkat: <em>"Halaman checkout error."</em></p>
 
 <p>Yang terjadi berikutnya adalah drama komunikasi bolak-balik yang memakan waktu berhari-hari. Developer mengambil tiket tersebut, mencoba mereproduksinya di mesin lokal, mendapati bahwa alur checkout berjalan normal pada akun pengembangnya, lalu menutup tiket dengan label <em>"Cannot Reproduce"</em>. Tester merasa frustrasi, manajer proyek mempertanyakan kecepatan sprint, dan jam kerja produktif tim terbuang sia-sia. Riset global oleh Consortium for Information &amp; Software Quality (CISQ) mengungkapkan bahwa komunikasi cacat software yang buruk merugikan industri teknologi hingga lebih dari $2,4 triliun per tahun akibat waktu investigasi yang terbuang dan keterlambatan rilis produk.</p>
 
-<p>Membuat laporan bug berkualitas tinggi yang siap direproduksi bukanlah bakat bawaan — melainkan sebuah disiplin engineering yang terstruktur. Berikut adalah panduan komprehensif untuk menyusun laporan bug standar internasional yang dapat langsung dipahami, direproduksi, dan diselesaikan oleh developer dalam satu sprint.</p>
+<p>Membuat laporan bug berkualitas tinggi yang siap direproduksi bukanlah bakat bawaan -melainkan sebuah disiplin engineering yang terstruktur. Berikut adalah panduan komprehensif untuk menyusun laporan bug standar internasional yang dapat langsung dipahami, direproduksi, dan diselesaikan oleh developer dalam satu sprint.</p>
 
 <h2>7 Kesalahan Fatal dalam Pelaporan Bug</h2>
 <p>Sebelum mempelajari struktur laporan yang ideal, tim penguji harus menghindari 7 kebiasaan buruk yang sering menghambat proses debugging:</p>
@@ -1378,7 +1378,7 @@ export function RealtimeMetricWidget({ metricId }: { metricId: string }) {
 <p>Multi-step checkout funnels, checkout wizards, and permission delegation modals where internal state propagates across several asynchronous steps.</p>
 
 <h3>2. UI Layout Shifts &amp; CSS Animation Jank</h3>
-<p>Describing a layout glitch in text — <em>"When I resize the window, the navigation drawer jumps 10 pixels to the right before snapping back"</em> — is subjective and imprecise. A high-framerate video proves the exact CSS transform breakdown immediately.</p>
+<p>Describing a layout glitch in text -<em>"When I resize the window, the navigation drawer jumps 10 pixels to the right before snapping back"</em> -is subjective and imprecise. A high-framerate video proves the exact CSS transform breakdown immediately.</p>
 
 <h3>3. Drag-and-Drop and Canvas Interactions</h3>
 <p>Interactive Kanban boards, visual canvas editors (like Figma or Miro), and flowchart tools depend on pointer coordinates and drag physics that cannot be articulated in prose.</p>
@@ -1399,7 +1399,7 @@ export function RealtimeMetricWidget({ metricId }: { metricId: string }) {
 <h2>The Ultimate Synergy: Video + Synchronized Telemetry</h2>
 <p>A video recording proves <strong>what</strong> happened on screen. But to fix the bug, a developer must know <strong>why</strong> it happened under the hood. A video alone still forces the developer to wonder: <em>"Did an API call fail, or was it a React component exception?"</em></p>
 
-<p>This is where <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> provides the ultimate solution. BugSnap pairs a crystal-clear screen recording with synchronized developer telemetry: uncaught console errors, network request/response headers, and user action breadcrumbs are embedded directly alongside the video timeline. When the developer scrubs the video, the network log scrubs in unison — closing the loop between visual symptom and technical cause.</p>
+<p>This is where <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> provides the ultimate solution. BugSnap pairs a crystal-clear screen recording with synchronized developer telemetry: uncaught console errors, network request/response headers, and user action breadcrumbs are embedded directly alongside the video timeline. When the developer scrubs the video, the network log scrubs in unison -closing the loop between visual symptom and technical cause.</p>
     `.trim(),
     contentId: `
 <p>Bayangkan drama klasik dalam tim pengembangan software: Seorang QA engineer menguji alur registrasi bertahap yang kompleks. Pada modal konfirmasi terakhir, mengeklik tombol "Selesaikan Pendaftaran" ternyata membuat form ter-reset secara diam-diam tanpa menyimpan data. Tester tersebut meluangkan waktu menulis tiket laporan sepanjang lima paragraf di Jira atau Linear, lalu melanjutkan pengujian lain.</p>
@@ -1432,7 +1432,7 @@ export function RealtimeMetricWidget({ metricId }: { metricId: string }) {
 <p>Alur checkout bertahap, konfigurasi wizard, dan dialog konfirmasi multi-langkah di mana state data berpindah-pindah antar langkah.</p>
 
 <h3>2. Pergeseran Layout &amp; Animasi CSS yang Patah (Jank)</h3>
-<p>Mendeskripsikan kerusakan visual dalam teks — <em>"Saat jendela browser diperkecil, menu samping loncat 10 piksel ke kanan lalu balik lagi"</em> — sangatlah subjektif dan sulit dimengerti. Video dengan framerate tinggi membuktikannya secara instan.</p>
+<p>Mendeskripsikan kerusakan visual dalam teks -<em>"Saat jendela browser diperkecil, menu samping loncat 10 piksel ke kanan lalu balik lagi"</em> -sangatlah subjektif dan sulit dimengerti. Video dengan framerate tinggi membuktikannya secara instan.</p>
 
 <h3>3. Fitur Drag-and-Drop &amp; Manipulasi Canvas</h3>
 <p>Papan Kanban interaktif, editor visual berbasis kanvas, dan diagram alur sangat bergantung pada koordinasi pointer mouse yang tidak bisa diwakili oleh kata-kata.</p>
@@ -1453,7 +1453,7 @@ export function RealtimeMetricWidget({ metricId }: { metricId: string }) {
 <h2>Kombinasi Sempurna: Video + Telemetri Tersinkronisasi</h2>
 <p>Rekaman video membuktikan <strong>apa</strong> yang terjadi di layar. Namun untuk memperbaiki kode, developer harus tahu <strong>mengapa</strong> hal itu bisa terjadi di balik layar. Video semata masih menyisakan teka-teki: <em>"Apakah API yang gagal, atau komponen React yang crash?"</em></p>
 
-<p>Inilah keunggulan utama <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a>. BugSnap memadukan rekaman video beresolusi tinggi dengan telemetri teknis yang tersinkronisasi: error konsol JavaScript, header request dan respons jaringan, serta jejak klik pengguna terpampang langsung di timeline video. Saat developer menggeser durasi video, log jaringan bergerak sinkron — menghubungkan bukti visual dengan akar masalah teknis secara instan.</p>
+<p>Inilah keunggulan utama <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a>. BugSnap memadukan rekaman video beresolusi tinggi dengan telemetri teknis yang tersinkronisasi: error konsol JavaScript, header request dan respons jaringan, serta jejak klik pengguna terpampang langsung di timeline video. Saat developer menggeser durasi video, log jaringan bergerak sinkron -menghubungkan bukti visual dengan akar masalah teknis secara instan.</p>
     `.trim(),
   },
 
@@ -1492,10 +1492,10 @@ export function RealtimeMetricWidget({ metricId }: { metricId: string }) {
 </ul>
 
 <h3>2. The Compliance and Regulatory Nightmare</h3>
-<p>Modern data protection frameworks — including <strong>GDPR (Europe), HIPAA (US), and Law No. 27/2022 on Personal Data Protection (UU PDP - Indonesia)</strong> — impose strict statutory liabilities on data controllers regarding third-party sub-processors. When a QA engineer captures a screen, they frequently capture sensitive customer PII, internal staging database connection strings, or pre-release intellectual property. Storing these assets on unvetted multi-tenant cloud storage violates data minimization principles and complicates statutory compliance audits.</p>
+<p>Modern data protection frameworks -including <strong>GDPR (Europe), HIPAA (US), and Law No. 27/2022 on Personal Data Protection (UU PDP - Indonesia)</strong> -impose strict statutory liabilities on data controllers regarding third-party sub-processors. When a QA engineer captures a screen, they frequently capture sensitive customer PII, internal staging database connection strings, or pre-release intellectual property. Storing these assets on unvetted multi-tenant cloud storage violates data minimization principles and complicates statutory compliance audits.</p>
 
 <h3>3. Egregious Cloud Storage Markups</h3>
-<p>Raw cloud storage is a commodity: major providers charge approximately $0.02 per gigabyte per month. Yet proprietary bug capture tools routinely charge steep markups — often charging $0.15 to $0.30 per GB for storage overages, or forcing teams to upgrade to higher tiers simply to expand retention windows for videos they already pay Google Workspace to host.</p>
+<p>Raw cloud storage is a commodity: major providers charge approximately $0.02 per gigabyte per month. Yet proprietary bug capture tools routinely charge steep markups -often charging $0.15 to $0.30 per GB for storage overages, or forcing teams to upgrade to higher tiers simply to expand retention windows for videos they already pay Google Workspace to host.</p>
 
 <h2>What True File Ownership Looks Like</h2>
 <p>Genuine data sovereignty is defined by three non-negotiable architectural principles:</p>
@@ -1558,7 +1558,7 @@ export function RealtimeMetricWidget({ metricId }: { metricId: string }) {
 
 <p><em>"Siapa yang sebenarnya memiliki dan mengendalikan file video diagnostik tim kita? Di mana file-file tersebut disimpan secara fisik, siapa yang memiliki akses administratif, dan apa yang terjadi pada data kita jika langganan dihentikan?"</em></p>
 
-<p>Pada sebagian besar platform perekam layar dan pelapor bug konvensional, jawabannya cukup mengkhawatirkan. Rekaman dashboard staging internal, alur data pelanggan sensitif, dan video fitur rahasia perusahaan terkunci di dalam bucket AWS S3 multi-tenant milik startup pihak ketiga di bawah ketentuan layanan mereka — dan hanya dapat diakses selama Anda terus membayar biaya langganan bulanan.</p>
+<p>Pada sebagian besar platform perekam layar dan pelapor bug konvensional, jawabannya cukup mengkhawatirkan. Rekaman dashboard staging internal, alur data pelanggan sensitif, dan video fitur rahasia perusahaan terkunci di dalam bucket AWS S3 multi-tenant milik startup pihak ketiga di bawah ketentuan layanan mereka -dan hanya dapat diakses selama Anda terus membayar biaya langganan bulanan.</p>
 
 <p>Memahami realitas kedaulatan data (data sovereignty), bahaya vendor lock-in, dan liabilitas hukum penyimpanan data adalah hal mutlak bagi organisasi engineering modern. Inilah alasan mengapa model <strong>Bring-Your-Own-Storage (BYOS)</strong> kini menjadi standar wajib bagi perusahaan teknologi terkemuka.</p>
 
@@ -1574,10 +1574,10 @@ export function RealtimeMetricWidget({ metricId }: { metricId: string }) {
 </ul>
 
 <h3>2. Jebakan Kepatuhan Regulasi dan UU PDP</h3>
-<p>Regulasi perlindungan data modern — seperti <strong>UU No. 27 Tahun 2022 tentang Pelindungan Data Pribadi (UU PDP di Indonesia)</strong> dan GDPR di Eropa — menuntut pengendali data memiliki tata kelola ketat atas pihak ketiga pemroses data. Saat QA merekam layar, data pribadi pengguna, connection string database internal, atau rahasia bisnis perusahaan sering kali ikut terekam tanpa sengaja. Menyimpan data ini di server cloud pihak ketiga tanpa perjanjian DPA ketat membuka celah pelanggaran hukum yang berisiko denda administratif besar.</p>
+<p>Regulasi perlindungan data modern -seperti <strong>UU No. 27 Tahun 2022 tentang Pelindungan Data Pribadi (UU PDP di Indonesia)</strong> dan GDPR di Eropa -menuntut pengendali data memiliki tata kelola ketat atas pihak ketiga pemroses data. Saat QA merekam layar, data pribadi pengguna, connection string database internal, atau rahasia bisnis perusahaan sering kali ikut terekam tanpa sengaja. Menyimpan data ini di server cloud pihak ketiga tanpa perjanjian DPA ketat membuka celah pelanggaran hukum yang berisiko denda administratif besar.</p>
 
 <h3>3. Markup Biaya Penyimpanan Cloud yang Berlebihan</h3>
-<p>Biaya penyimpanan cloud mentah saat ini sangat murah: penyedia cloud besar mematok tarif sekitar $0,02 per gigabyte per bulan. Namun, platform SaaS pelaporan bug sering kali membebankan markup berkali-kali lipat — mematok biaya overage $0,15 hingga $0,30 per GB, atau memaksa tim meng-upgrade paket langganan hanya untuk memperpanjang masa retensi video yang sebenarnya sudah ditanggung kuotanya oleh Google Workspace perusahaan.</p>
+<p>Biaya penyimpanan cloud mentah saat ini sangat murah: penyedia cloud besar mematok tarif sekitar $0,02 per gigabyte per bulan. Namun, platform SaaS pelaporan bug sering kali membebankan markup berkali-kali lipat -mematok biaya overage $0,15 hingga $0,30 per GB, atau memaksa tim meng-upgrade paket langganan hanya untuk memperpanjang masa retensi video yang sebenarnya sudah ditanggung kuotanya oleh Google Workspace perusahaan.</p>
 
 <h2>Definisi Kepemilikan File yang Sejati</h2>
 <p>Kedaulatan data sejati diukur berdasarkan tiga prinsip arsitektur yang tidak dapat ditawar:</p>
@@ -1626,7 +1626,7 @@ export function RealtimeMetricWidget({ metricId }: { metricId: string }) {
 <p><a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> dirancang sejak baris kode pertama untuk menuntaskan masalah liabilitas penyimpanan ini secara permanen melalui arsitektur <strong>Zero Server Storage</strong>:</p>
 
 <ul>
-  <li><strong>Izin OAuth Terbatas (Scoped):</strong> Saat menghubungkan akun Google, BugSnap hanya meminta scope minimal: <code>https://www.googleapis.com/auth/drive.file</code>. Izin ini hanya membolehkan BugSnap membaca dan menulis file yang dibuat oleh BugSnap sendiri — sama sekali tidak memiliki akses ke dokumen rahasia, spreadsheet keuangan, atau folder lain di Google Drive Anda.</li>
+  <li><strong>Izin OAuth Terbatas (Scoped):</strong> Saat menghubungkan akun Google, BugSnap hanya meminta scope minimal: <code>https://www.googleapis.com/auth/drive.file</code>. Izin ini hanya membolehkan BugSnap membaca dan menulis file yang dibuat oleh BugSnap sendiri -sama sekali tidak memiliki akses ke dokumen rahasia, spreadsheet keuangan, atau folder lain di Google Drive Anda.</li>
   <li><strong>Unggah Langsung Browser ke Drive:</strong> Setelah perekaman selesai, file video dikompresi di memori browser dan langsung diunggah dari Chrome ke folder Google Drive pengguna melalui API resmi Google resumable upload.</li>
   <li><strong>Nol Byte Transit di Server:</strong> Data video tidak pernah melintasi, diproses, atau disimpan di server backend BugSnap. Database kami hanya menyimpan metadata ringan (waktu pembuatan, judul rekaman, dan ID file Google Drive).</li>
   <li><strong>Kemandirian Permanen:</strong> Jika Anda meng-uninstall BugSnap besok hari, 100% video rekaman bug historis Anda tetap tersimpan utuh di Google Drive perusahaan Anda, siap dibuka dan dibagikan selamanya.</li>

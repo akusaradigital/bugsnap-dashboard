@@ -153,7 +153,11 @@ export function Dropdown({ value, options, onChange, variant = "field", placehol
         className={`${TRIGGER_BASE} ${TRIGGER_VARIANT[variant]} ${disabled ? "opacity-50 cursor-not-allowed pointer-events-none" : ""}`}
       >
         <span className="truncate">{selected?.label ?? placeholder ?? value}</span>
-        
+        <Icon
+          icon="lucide:chevron-down"
+          className={`w-3.5 h-3.5 shrink-0 text-muted transition-transform duration-150 ${open ? "rotate-180" : ""}`}
+          aria-hidden="true"
+        />
       </button>
 
       {open && (

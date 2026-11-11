@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useT } from "@/components/I18nProvider";
-import { Icon } from "@/lib/iconify";
 
 export default function NotFound() {
   const { t } = useT();
@@ -76,20 +75,19 @@ export default function NotFound() {
 
       <header className="relative z-10 border-b border-site-border bg-site-surface px-4 sm:px-6 py-3.5">
         <div className="mx-auto max-w-5xl flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2 font-bold text-sm text-site-text group shrink-0">
+          <Link href="/" className="flex min-w-0 items-center gap-2 group shrink-0" aria-label="BugSnap. From Click to Fix.">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img
-              src="/logo-day.svg"
+              src="/bugsnap-icon-day.svg"
               alt="BugSnap"
-              className="w-6 h-6 object-contain transition-transform group-hover:scale-110 dark:hidden"
+              width={32}
+              height={32}
+              className="h-8 w-8 shrink-0 object-contain"
             />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/logo-dark.svg"
-              alt="BugSnap"
-              className="w-6 h-6 object-contain transition-transform group-hover:scale-110 hidden dark:block"
-            />
-            <span>BugSnap</span>
+            <span className="flex min-w-0 flex-col justify-center leading-tight">
+              <span className="text-base font-bold tracking-tight text-slate-900 dark:text-white">BugSnap</span>
+              <span className="max-w-[180px] truncate text-[10px] font-medium tracking-[0.12em] text-slate-600 dark:text-slate-300 sm:max-w-[220px]">From Click to Fix.</span>
+            </span>
           </Link>
         </div>
       </header>
@@ -147,17 +145,15 @@ export default function NotFound() {
           <div className="mt-7 flex flex-col sm:flex-row items-stretch sm:items-center justify-center gap-2.5 sm:gap-3 w-full sm:w-auto max-w-xs sm:max-w-none">
             <Link
               href="/"
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-accent hover:bg-accent-hover text-slate-900 text-xs font-bold transition-all shadow-xs shadow-accent/25 hover:shadow-accent/40 text-center"
+              className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold transition-all shadow-md hover:scale-[1.02] active:scale-[0.99] text-center"
             >
-              
-              <span>{t("notFound.backHome")}</span>
+              {t("notFound.backHome")}
             </Link>
             <Link
               href="/dashboard"
-              className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl border border-site-border bg-site-surface hover:bg-site-surface-2 text-site-text text-xs font-semibold transition-all text-center"
+              className="inline-flex items-center justify-center px-6 py-3 rounded-xl border border-site-border bg-site-surface hover:bg-site-surface-2 text-site-text text-sm font-semibold transition-colors text-center"
             >
-              <Icon icon="lucide:layout-dashboard" className="w-4 h-4 shrink-0" />
-              <span>{t("notFound.goDashboard")}</span>
+              {t("notFound.goDashboard")}
             </Link>
           </div>
         </div>

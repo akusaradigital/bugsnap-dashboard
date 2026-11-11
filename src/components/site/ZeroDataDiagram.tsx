@@ -127,13 +127,13 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
             </div>
 
             {/* NODE 2 - Your Google Drive (Hero Node) */}
-            <div className="flex-1 rounded-2xl border-2 border-[#DC2626] dark:border-emerald-700 bg-[#F4FBF0] dark:bg-emerald-950/25 p-5 text-center flex flex-col items-center justify-between min-h-[190px] shadow-sm relative overflow-hidden min-w-0">
+            <div className="flex-1 rounded-2xl border-2 border-[#CFE6BF] dark:border-emerald-700 bg-[#F4FBF0] dark:bg-emerald-950/25 p-5 text-center flex flex-col items-center justify-between min-h-[190px] shadow-sm relative overflow-hidden min-w-0">
               <div className="w-full flex items-center justify-between mb-3">
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-[#EBF7E3] dark:bg-emerald-900/40 text-[#3D7A24] dark:text-emerald-300 border border-[#CFE6BF] dark:border-emerald-800/60 text-[10px] font-mono font-bold">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#3D7A24] dark:bg-emerald-400" />
                   100% PRIVATE
                 </span>
-                <span className="text-[10px] font-mono font-bold tracking-wider text-[#3D7A24] dark:text-emerald-400 uppercase">
+                <span className="text-[10px] font-mono font-bold tracking-wider text-[#3D7A24] dark:text-[#72C048] uppercase">
                   {t("site.trust.driveBadge")}
                 </span>
               </div>
@@ -266,7 +266,7 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
           </div>
 
           {/* NODE 2 - Google Drive */}
-          <div className="rounded-2xl border-2 border-[#DC2626] dark:border-emerald-700 bg-[#F4FBF0] dark:bg-emerald-950/25 p-5 text-center relative">
+          <div className="rounded-2xl border-2 border-[#CFE6BF] dark:border-emerald-700 bg-[#F4FBF0] dark:bg-emerald-950/25 p-5 text-center relative">
             <div className="flex items-center justify-center mb-2">
               <Icon icon="logos:google-drive" className="w-10 h-10" aria-hidden="true" />
             </div>
@@ -318,7 +318,7 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
         {/* BOTTOM TRUST CHECKMARKS */}
         <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800/80 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
           <div className="flex items-start gap-2.5">
-            <div className="w-5 h-5 rounded-full bg-[#EBF7E3] dark:bg-emerald-950/60 text-[#3D7A24] dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+            <div className="w-5 h-5 rounded-full bg-[#EBF7E3] dark:bg-emerald-900/40 text-[#3D7A24] dark:text-emerald-300 flex items-center justify-center shrink-0 mt-0.5">
               <Icon icon="lucide:check" className="w-3.5 h-3.5 stroke-[3]" aria-hidden="true" />
             </div>
             <span className="text-slate-700 dark:text-slate-300 leading-snug">
@@ -327,7 +327,7 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
           </div>
 
           <div className="flex items-start gap-2.5">
-            <div className="w-5 h-5 rounded-full bg-[#EBF7E3] dark:bg-emerald-950/60 text-[#3D7A24] dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+            <div className="w-5 h-5 rounded-full bg-[#EBF7E3] dark:bg-emerald-900/40 text-[#3D7A24] dark:text-emerald-300 flex items-center justify-center shrink-0 mt-0.5">
               <Icon icon="lucide:check" className="w-3.5 h-3.5 stroke-[3]" aria-hidden="true" />
             </div>
             <span className="text-slate-700 dark:text-slate-300 leading-snug">
@@ -336,7 +336,7 @@ export function ZeroDataDiagram({ className = "" }: ZeroDataDiagramProps = {}) {
           </div>
 
           <div className="flex items-start gap-2.5">
-            <div className="w-5 h-5 rounded-full bg-[#EBF7E3] dark:bg-emerald-950/60 text-[#3D7A24] dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
+            <div className="w-5 h-5 rounded-full bg-[#EBF7E3] dark:bg-emerald-900/40 text-[#3D7A24] dark:text-emerald-300 flex items-center justify-center shrink-0 mt-0.5">
               <Icon icon="lucide:check" className="w-3.5 h-3.5 stroke-[3]" aria-hidden="true" />
             </div>
             <span className="text-slate-700 dark:text-slate-300 leading-snug">

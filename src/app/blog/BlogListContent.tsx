@@ -84,6 +84,7 @@ export function BlogListContent() {
     <StaticShell
       title={t("blog.heroTitlePrefix") || "Engineering insights &"}
       titleHighlight={t("blog.heroTitleHighlight") || "debugging guides"}
+      titleHighlightClass="text-emerald-600 dark:text-emerald-400"
       breadcrumb={t("blog.title") || "Blog"}
       subtitle={
         t("blog.subtitle") ||
