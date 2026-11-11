@@ -209,7 +209,13 @@ test("Info renders captured environment values instead of fabricated location", 
   if (!logger) return t.skip("bugsnap-extension sibling directory not present in CI environment");
   for (const field of ["screenResolution", "viewport", "devicePixelRatio", "language", "network", "timezone"]) {
     assert.match(logger, new RegExp(`${field}:`), `collector must record ${field}`);
+  }
+  for (const field of ["viewport", "language"]) {
     assert.match(panel, new RegExp(`specs\\?\\.${field}`), `Info panel must display captured ${field}`);
+  }
+  assert.match(panel, /networkSpeedDetails|networkLabel/, "Info panel must display captured network data");
+  for (const key of ["dt.windowSize", "dt.screenResolution", "dt.devicePixelRatio", "dt.timezone"]) {
+    assert.doesNotMatch(panel, new RegExp(`label: t\\("${key}"\\)`), `Info panel should omit redundant ${key}`);
   }
   assert.doesNotMatch(panel, /value:\s*"Indonesia"/, "location must not be hardcoded without capture provenance");
   for (const key of ["dt.environment", "dt.screenResolution", "dt.viewport", "dt.devicePixelRatio", "dt.language", "dt.connection", "dt.timezone"]) {

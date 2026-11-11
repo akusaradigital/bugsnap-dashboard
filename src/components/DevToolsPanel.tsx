@@ -32,10 +32,9 @@ import {
   consoleText,
   dedupeNetworkLogs,
   getTargetHost,
-  groupActionLogs,
   groupConsoleLogs,
+  normalizeActionLogs,
   isConsoleError,
-  isDeadAction,
   isFirstPartyUrl,
   isNetworkFailed,
   isSummary,
@@ -912,7 +911,7 @@ function McpTabPanel({
   };
 
   return (
-    <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-6 space-y-5 text-xs">
+    <div className="flex-1 min-h-0 h-[36rem] max-h-[60vh] sm:max-h-[36rem] overflow-y-auto p-4 sm:p-6 space-y-5 text-xs">
       <div className="rounded-xl border border-border bg-blue-50 dark:bg-blue-950/15 p-4 sm:p-5 space-y-2">
         <div className="flex items-center gap-2">
           <span className="px-2 py-0.5 rounded bg-[#2563EB] text-white font-mono text-[10px] font-bold">MCP</span>
@@ -1456,15 +1455,15 @@ ${stack}` : body);
 
   const allActionLogs = useMemo(
     () =>
-      groupActionLogs(
+      normalizeActionLogs(
         logs
-          .map((log, srcIdx) => ({ log, srcIdx }))
-          .filter((e): e is { log: ActionLog | NavigationLog | ScreenshotLog; srcIdx: number } =>
-            e.log.type === "step" || e.log.type === "navigation" || e.log.type === "screenshot")
-          .map(({ log, srcIdx }) => ({ ...log, srcIdx, message: cleanActionMessage(log.message), count: logCount(log) }))
-          .filter((log) => !isDeadAction(log))
+          .map((log, srcIdx) => ({ ...log, srcIdx }))
+          .filter((log) =>
+            log.type === "step" || log.type === "navigation" || log.type === "screenshot")
+          .map((log) => ({ ...log, count: logCount(log) }) as ActionLog | NavigationLog | ScreenshotLog),
+        { screenshotOnly: capture.type === "screenshot" },
       ),
-    [logs]
+    [logs, capture.type]
   );
   const actionLogs = useMemo(
     () =>
@@ -1670,7 +1669,7 @@ ${stack}` : body);
           : networkType
     : "-";
   const networkSpeedDetails = [
-    networkDownlink !== null ? `${networkDownlink} Mbps` : null,
+    networkDownlink !== null ? `${networkDownlink >= 10 ? `${Math.floor(networkDownlink)}+` : networkDownlink} Mbps` : null,
     networkRtt !== null ? `${networkRtt}ms latency` : null,
   ].filter(Boolean).join(" ");
   const networkSignalIcon = networkType === "offline" ? "lucide:wifi-off" : "lucide:signal";
@@ -1770,7 +1769,7 @@ ${stack}` : body);
   };
 
   return (
-    <div className={`w-full rounded-xl border border-border bg-white shadow-sm dark:bg-background flex flex-col min-h-0 h-full overflow-hidden ${activeTab === "Network" && selectedNetworkKey ? "min-h-[34rem] " : ""}${className || ""}`}>
+    <div className={`w-full rounded-xl border border-border bg-white shadow-sm dark:bg-background flex flex-col min-h-0 h-[42rem] max-h-[calc(100vh-6rem)] overflow-hidden ${activeTab === "Network" && selectedNetworkKey ? "min-h-[34rem] " : ""}${className || ""}`}>
       <div className="min-h-11 border-b border-border px-3 sm:px-4 flex items-center justify-between gap-2 shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           <span className="text-sm font-semibold text-foreground">{t("v.devTools")}</span>
@@ -2032,7 +2031,7 @@ ${stack}` : body);
 
         {/* INFO TAB */}
         {activeTab === "Info" && (
-          <div className="flex-1 min-h-0 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 min-h-0 h-[36rem] max-h-[60vh] sm:max-h-[36rem] overflow-y-auto p-4 space-y-4">
             {capture.site_url && (
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-muted mb-1.5">URL</p>
@@ -2144,26 +2143,25 @@ ${stack}` : body);
                 {[
                 { icon: "lucide:monitor", label: t("dt.os"), value: detectedOs },
                 { icon: "lucide:chrome", label: t("dt.browser"), value: detectedBrowser },
-                { icon: "lucide:maximize", label: t("dt.windowSize"), value: capture.window_size || "-" },
-                { icon: "lucide:monitor", label: t("dt.screenResolution"), value: typeof specs?.screenResolution === "string" ? specs.screenResolution : "-" },
                 { icon: "lucide:layout-dashboard", label: t("dt.viewport"), value: typeof specs?.viewport === "string" ? specs.viewport : "-" },
-                { icon: "lucide:maximize", label: t("dt.devicePixelRatio"), value: typeof specs?.devicePixelRatio === "number" ? `${specs.devicePixelRatio}×` : "-" },
                 { icon: "lucide:globe", label: t("dt.language"), value: typeof specs?.language === "string" ? specs.language : "-" },
-                { icon: "lucide:clock", label: t("dt.timezone"), value: typeof specs?.timezone === "string" ? specs.timezone : "-" },
                 {
                   icon: networkSignalIcon,
                   label: t("dt.networkSpeed"),
-                  value: networkType ? (
+                  value: networkType || networkSpeedDetails ? (
                     <span className="inline-flex min-w-0 items-center gap-2">
-                      <span className="font-semibold text-foreground">{networkLabel}</span>
-                      <span className="text-muted font-normal">{networkSpeedDetails || networkType}</span>
+                      {networkLabel !== "-" && <span className="font-semibold text-foreground">{networkLabel}</span>}
+                      {networkSpeedDetails && <span className="text-muted font-normal">{networkSpeedDetails}</span>}
                     </span>
                   ) : "-",
                 },
               ].map((row) => (
                 <div key={row.label} className="grid grid-cols-[7.5rem_minmax(0,1fr)] sm:grid-cols-[9rem_minmax(0,1fr)] items-center gap-3 min-w-0 px-3 py-2 border-b border-border/60 last:border-0">
                   <div className="flex items-center gap-2 text-muted shrink-0">
-                    <Icon icon={row.icon} className="w-3.5 h-3.5 shrink-0" />
+                    <Icon
+                      icon={row.icon}
+                      className={`w-3.5 h-3.5 shrink-0 ${row.icon === networkSignalIcon ? "text-emerald-600 dark:text-emerald-400" : ""}`}
+                    />
                     <span className="text-xs">{row.label}</span>
                   </div>
                   <span className="min-w-0 text-left text-xs font-medium text-foreground break-all">{row.value}</span>
@@ -2244,7 +2242,7 @@ ${stack}` : body);
 
         {/* CONSOLE TAB */}
         {activeTab === "Console" && (
-          <div className="flex-1 min-h-0 overflow-y-auto">
+          <div className="flex-1 min-h-0 h-[36rem] max-h-[60vh] sm:max-h-[36rem] overflow-y-auto">
             {visibleConsoleLogs.length === 0 ? (
               summary ? (
                 <div className="p-4 space-y-3">
@@ -2375,7 +2373,7 @@ ${stack}` : body);
 
         {/* NETWORK TAB */}
         {activeTab === "Network" && (
-          <div className="flex-1 min-h-0 overflow-y-auto flex flex-col">
+          <div className="flex-1 min-h-0 h-[36rem] max-h-[60vh] sm:max-h-[36rem] overflow-y-auto flex flex-col">
             {networkLogs.length === 0 ? (
               summary ? (
                 <div className="p-4 space-y-3">
@@ -2449,7 +2447,7 @@ ${stack}` : body);
 
         {/* ACTIONS TAB */}
         {activeTab === "Actions" && (
-          <div className="flex-1 min-h-0 overflow-y-auto p-3">
+          <div className="flex-1 min-h-0 h-[36rem] max-h-[60vh] sm:max-h-[36rem] overflow-y-auto p-3">
             {actionLogs.length === 0 ? (
               logSearch || actionKindFilter !== "all" ? (
                 <EmptyLogState filtered emptyText="" onReset={resetLogFilters} t={t} />

@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [bugsnap-dashboard]
 
+### 2026-11-11 (v0.14.3)
+- **feat**: Normalize duplicate navigation and screenshot telemetry across DevTools, public capture API, MCP, AI summaries, and generated Playwright actions
+- **fix**: Keep screenshot captures limited to screenshot markers and preserve repeated-action counts
+- **fix**: Disable API caching for capture details so MCP and agents receive current telemetry
+
 ### 2026-11-09 (v0.14.2)
 - **feat**: Capture-driven DevTools MCP actions for fixes, summaries, E2E tests, and setup guidance
 - **fix**: Preserve real network telemetry and report Brave runtime identity instead of a Chromium fallback

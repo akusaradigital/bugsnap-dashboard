@@ -50,7 +50,7 @@ describe("Changelog Parser & Markdown Integrity", () => {
     const latestExtension = releases.find((r) => r.project === "extension");
     const latestMcp = releases.find((r) => r.project === "mcp");
 
-    assert.equal(latestDashboard?.version, "v0.14.2", "Latest dashboard version should be v0.14.2");
+    assert.equal(latestDashboard?.version, "v0.14.3", "Latest dashboard version should be v0.14.3");
     assert.equal(latestExtension?.version, "v1.0.74", "Latest extension version should be v1.0.74");
     assert.equal(latestMcp?.version, "v0.3.2", "Latest mcp version should be v0.3.2");
   });

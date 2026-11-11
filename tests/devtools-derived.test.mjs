@@ -165,6 +165,61 @@ test("isDeadAction filters non-interactive layout containers and empty targets",
   assert.equal(isDeadAction({ type: "navigation", message: "Navigated to /dashboard" }), false);
 });
 
+test("normalizeActionLogs preserves the user sequence while removing semantic duplicates", () => {
+  const normalizeText = (value) => (value || "").trim().replace(/\s+/g, " ").toLowerCase();
+  const canonicalUrl = (value) => (value || "").split("#", 1)[0];
+  const timestamp = (log) => Number(log.timestamp ?? log.time);
+  const identity = (log) => {
+    if (log.type === "navigation") {
+      const target = log.url || log.message || "";
+      return canonicalUrl((target.match(/(?:navigate|navigated)\s+to\s+(.+)$/i)?.[1] || target).trim());
+    }
+    return normalizeText(log.message || log.url);
+  };
+  const normalize = (items) => {
+    const out = [];
+    for (const item of items) {
+      const previous = out[out.length - 1];
+      const duplicate = previous && previous.type === item.type &&
+        (item.type === "navigation" || item.type === "screenshot") &&
+        identity(previous) === identity(item) &&
+        Math.abs(timestamp(previous) - timestamp(item)) <= (item.type === "navigation" ? 1500 : 250);
+      if (duplicate) previous.count = (previous.count || 1) + (item.count || 1);
+      else out.push({ ...item, count: item.count || 1 });
+    }
+    return out;
+  };
+
+  const result = normalize([
+    { type: "step", message: "Typed in #username", timestamp: 1000 },
+    { type: "step", message: "Typed in #password", timestamp: 1200 },
+    { type: "step", message: "Clicked button: Submit", timestamp: 1400 },
+    { type: "navigation", message: "Navigate to /dashboard", timestamp: 1600 },
+    { type: "navigation", message: "Navigated to /dashboard", timestamp: 1700 },
+    { type: "screenshot", message: "Screenshot taken", timestamp: 1800 },
+    { type: "screenshot", message: "Screenshot taken", timestamp: 1900 },
+    { type: "step", message: "Clicked button: Submit", timestamp: 2000 },
+  ]);
+
+  assert.deepEqual(result.map((item) => item.message), [
+    "Typed in #username",
+    "Typed in #password",
+    "Clicked button: Submit",
+    "Navigate to /dashboard",
+    "Screenshot taken",
+    "Clicked button: Submit",
+  ]);
+  assert.equal(result[3].count, 2, "same navigation transition is merged");
+  assert.equal(result[4].count, 2, "same screenshot marker is merged");
+  assert.equal(result[5].count, 1, "a later real click remains a separate action");
+
+  const separate = normalize([
+    { type: "screenshot", message: "Screenshot taken", timestamp: 1000 },
+    { type: "screenshot", message: "Screenshot taken", timestamp: 2000 },
+  ]);
+  assert.equal(separate.length, 2, "screenshots outside the identity window remain separate");
+});
+
 test("groupActionLogs collapses consecutive identical actions into a single entry with count", () => {
   const groupActionLogs = (items) => {
     const grouped = [];

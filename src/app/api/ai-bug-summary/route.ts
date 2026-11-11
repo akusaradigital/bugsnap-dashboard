@@ -15,6 +15,7 @@ import { resolveStack, formatResolvedStack } from "@/lib/sourcemap";
 import { parseLlmContent, parseLlmUsage, normalizeEndpointUrl } from "@/lib/ai-endpoint";
 import { assertPublicUrl } from "@/lib/safe-url";
 import { logAiUsage } from "@/lib/ai-usage-log";
+import { normalizeActionLogs, normalizeDevLog } from "@/lib/devlogs";
 
 interface DevLog {
   type: string;
@@ -243,10 +244,19 @@ export async function POST(req: Request) {
           url: cleanUrlForTelemetry(l.url, 150),
         }));
 
-      steps = logs
-        .filter((l) => l.type === "step" || l.type === "navigation")
+      steps = normalizeActionLogs(
+        logs
+          .map((l) => normalizeDevLog(l as unknown as Record<string, unknown>))
+          .filter((l): l is import("@/lib/devlogs").ActionEvent =>
+            l.type === "step" || l.type === "navigation" || l.type === "screenshot"
+          )
+      )
         .slice(0, 20)
-        .map((l) => sanitizePromptData(l.message || l.text || l.url || "", 100))
+        .map((l) => {
+          const message = ("message" in l ? l.message : "") || ("url" in l ? l.url : "") || "";
+          const suffix = l.count > 1 ? ` (repeated ${l.count} times)` : "";
+          return sanitizePromptData(`${message}${suffix}`, 120);
+        })
         .filter(Boolean);
     } else {
       const s = devLogs as DevLogSummary | null;

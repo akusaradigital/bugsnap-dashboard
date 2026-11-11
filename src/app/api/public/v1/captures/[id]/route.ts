@@ -6,6 +6,7 @@ import { isUuid, parseDriveFileId } from "@/lib/google-drive-values";
 import { decompressDevLogs } from "@/lib/devlogs-compression";
 import {
   normalizeDevLog,
+  normalizeActionLogs,
   isConsoleError,
   isNetworkFailed,
   type DevLog,
@@ -23,6 +24,7 @@ import { signDownload } from "@/lib/download-signing";
 import { buildPlaywrightTest, buildGitHubActionWorkflow, buildAiMcpPrompt } from "@/lib/devlogs-export";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 const CONSOLE_CAP = 15;
 const NETWORK_CAP = 15;
@@ -110,11 +112,16 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
           url: cleanUrlForTelemetry(l.url, 150),
         }));
 
-      userSteps = logs
-        .filter((l) => l.type === "step" || l.type === "navigation")
-        .slice(0, STEPS_CAP)
-        .map((l) => sanitizePromptData(("message" in l ? l.message : "") || ("url" in l ? l.url : "") || "", 100))
-        .filter(Boolean);
+      userSteps = normalizeActionLogs(
+        logs.filter((l): l is ActionLog | NavigationLog | ScreenshotLog =>
+          l.type === "step" || l.type === "navigation" || l.type === "screenshot"
+        ),
+        { screenshotOnly: cap.type === "screenshot" },
+      ).slice(0, STEPS_CAP).map((l) => {
+        const message = ("message" in l ? l.message : "") || ("url" in l ? l.url : "") || "";
+        const suffix = l.count > 1 ? ` (repeated ${l.count} times)` : "";
+        return sanitizePromptData(`${message}${suffix}`, 120);
+      }).filter(Boolean);
     } else if (isDevLogSummary(devLogs)) {
       consoleErrors = (devLogs.topErrors ?? []).slice(0, CONSOLE_CAP).map((message) => ({
         level: "error",
@@ -164,10 +171,15 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     }
 
     const actionLogsForPlaywright: (ActionLog | NavigationLog | ScreenshotLog)[] = Array.isArray(devLogs)
-      ? (devLogs
-          .filter((l): l is Record<string, unknown> => Boolean(l) && typeof l === "object")
-          .map((l) => normalizeDevLog(l))
-          .filter((l) => l.type === "step" || l.type === "navigation" || l.type === "screenshot") as unknown as (ActionLog | NavigationLog | ScreenshotLog)[])
+      ? normalizeActionLogs(
+          devLogs
+            .filter((l): l is Record<string, unknown> => Boolean(l) && typeof l === "object")
+            .map((l) => normalizeDevLog(l))
+            .filter((l): l is ActionLog | NavigationLog | ScreenshotLog =>
+              l.type === "step" || l.type === "navigation" || l.type === "screenshot"
+            ),
+          { screenshotOnly: cap.type === "screenshot" },
+        ) as (ActionLog | NavigationLog | ScreenshotLog)[]
       : [];
 
     const captureMeta: CaptureMeta = {
@@ -243,7 +255,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       },
       {
         headers: {
-          "Cache-Control": "private, max-age=60, stale-while-revalidate=300",
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate",
+          Pragma: "no-cache",
+          Expires: "0",
         },
       }
     );

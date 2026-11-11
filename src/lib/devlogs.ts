@@ -634,7 +634,7 @@ export function groupActionLogs<T extends { type: string; message?: string; coun
     const isSameMessage = last && (last.message || "") === (item.message || "");
     const isSameUrl = last && (last.url || "") === (item.url || "");
 
-    if (last && isSameType && isSameMessage && isSameUrl) {
+    if (last && isSameType && isSameMessage && isSameUrl && item.type === "step") {
       last.count = (last.count || 1) + (item.count || 1);
     } else {
       grouped.push({
@@ -644,6 +644,76 @@ export function groupActionLogs<T extends { type: string; message?: string; coun
     }
   }
   return grouped;
+}
+
+const ACTION_DEDUPE_WINDOWS_MS = {
+  navigation: 1500,
+  screenshot: 250,
+} as const;
+
+function logTimestamp(log: TimedLog): number | null {
+  const value = log.timestamp ?? log.time;
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string") {
+    const parsed = Date.parse(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+  return null;
+}
+
+function sameActionTimestamp(a: TimedLog, b: TimedLog, maxDelta: number): boolean {
+  const left = logTimestamp(a);
+  const right = logTimestamp(b);
+  return left !== null && right !== null && Math.abs(left - right) <= maxDelta;
+}
+
+function actionIdentity(log: { type: string; message?: string; url?: string }): string {
+  if (log.type === "navigation") {
+    const target = log.url || log.message || "";
+    const messageTarget = target.match(/(?:navigate|navigated)\s+to\s+(.+)$/i)?.[1] || target;
+    return canonicalUrl(messageTarget.trim());
+  }
+  return normalizeText(log.message || log.url);
+}
+
+/**
+ * Produces the canonical action sequence shared by the UI and agent exports.
+ * Raw telemetry stays untouched; only adjacent reports of the same event are merged.
+ */
+export type ActionEvent = ActionLog | NavigationLog | ScreenshotLog;
+
+export function normalizeActionLogs(
+  items: ActionEvent[],
+  options?: { screenshotOnly?: boolean },
+): (ActionEvent & { count: number })[] {
+  const candidates = items
+    .filter((item) => !options?.screenshotOnly || item.type === "screenshot")
+    .map((item) => ({ ...item, message: item.message ? cleanActionMessage(item.message) : item.message }))
+    .filter((item) => !isDeadAction(item));
+
+  const deduped: ActionEvent[] = [];
+  for (const item of candidates) {
+    const previous = deduped[deduped.length - 1];
+    const sameKind = previous?.type === item.type;
+    const sameIdentity = previous && actionIdentity(previous) === actionIdentity(item);
+    const window = item.type === "navigation" ? ACTION_DEDUPE_WINDOWS_MS.navigation : ACTION_DEDUPE_WINDOWS_MS.screenshot;
+    const duplicate = Boolean(
+      previous &&
+      sameKind &&
+      sameIdentity &&
+      (item.type === "navigation" || item.type === "screenshot") &&
+      sameActionTimestamp(previous, item, window),
+    );
+
+    if (duplicate) {
+      previous.count = (previous.count || 1) + (item.count || 1);
+      if (!previous.message && item.message) previous.message = item.message;
+    } else {
+      deduped.push({ ...item });
+    }
+  }
+
+  return groupActionLogs(deduped);
 }
 
 export function isTracker(url?: string) {
