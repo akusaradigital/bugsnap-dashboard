@@ -315,7 +315,7 @@ function CompareContent() {
               className="inline-flex items-center gap-1.5 text-xs font-medium text-muted hover:text-foreground transition-colors mb-2"
             >
               <Icon icon="lucide:arrow-left" className="w-3.5 h-3.5" />
-              {t("common.back") || "Back to captures"}
+              {t("compare.backToCaptures")}
             </Link>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
               {t("compare.title")}
