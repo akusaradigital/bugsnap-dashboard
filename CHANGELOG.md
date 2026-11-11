@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [bugsnap-dashboard]
 
+### 2026-11-11 (v0.14.5)
+- **fix**: Keep explicitly white preview controls white while applying the blue icon treatment everywhere else
+
 ### 2026-11-11 (v0.14.4)
 - **fix**: Bust immutable browser and CDN caches for the blue network icons with versioned asset URLs
 

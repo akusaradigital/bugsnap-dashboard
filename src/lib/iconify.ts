@@ -56,15 +56,21 @@ export function Icon({
   height,
   color,
   style,
+  className,
   ...props
 }: StaticIconProps) {
+  const isWhiteIcon = className?.split(/\s+/).includes("invert");
   const mergedStyle: CSSProperties = {
     ...style,
     color: color ?? style?.color ?? "#2563eb",
     width: width ?? style?.width,
     height: height ?? style?.height,
     minWidth: style?.minWidth ?? 0,
-    filter: style?.filter ?? "brightness(0) saturate(100%) invert(35%) sepia(98%) saturate(1685%) hue-rotate(205deg) brightness(94%) contrast(94%)",
+    filter:
+      style?.filter ??
+      (isWhiteIcon
+        ? "brightness(0) invert(1)"
+        : "brightness(0) saturate(100%) invert(35%) sepia(98%) saturate(1685%) hue-rotate(205deg) brightness(94%) contrast(94%)"),
   };
 
   const handleIconError = (event: SyntheticEvent<HTMLImageElement>) => {
@@ -76,6 +82,7 @@ export function Icon({
       "svg",
       {
         ...props,
+        className,
         viewBox: "0 0 24 24",
         fill: "currentColor",
         xmlns: "http://www.w3.org/2000/svg",
@@ -93,6 +100,7 @@ export function Icon({
   return createElement("img", {
     src: iconPath(icon),
     alt: "",
+    className,
     style: mergedStyle,
     onError: handleIconError,
     ...props,
