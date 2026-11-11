@@ -13,6 +13,8 @@ interface DayCount {
   day: number; // 1 to 31
   label: string;
   count: number;
+  videoCount: number;
+  screenshotCount: number;
 }
 
 interface DashboardStats {
@@ -85,6 +87,8 @@ function DashboardContent() {
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
   const [selectedMonth, setSelectedMonth] = useState<number>(currentMonth);
   const [dailyCounts, setDailyCounts] = useState<number[]>([]);
+  const [dailyVideoCounts, setDailyVideoCounts] = useState<number[]>([]);
+  const [dailyScreenshotCounts, setDailyScreenshotCounts] = useState<number[]>([]);
   const [monthlyLoading, setMonthlyLoading] = useState<boolean>(true);
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -269,7 +273,7 @@ function DashboardContent() {
 
       let query = supabase
         .from("captures")
-        .select("created_at")
+        .select("created_at, type")
         .gte("created_at", startDate)
         .lt("created_at", endDate);
 
@@ -285,12 +289,19 @@ function DashboardContent() {
       }
 
       const counts = new Array(daysInMonth).fill(0);
+      const videoCounts = new Array(daysInMonth).fill(0);
+      const screenshotCounts = new Array(daysInMonth).fill(0);
       if (data) {
         for (const item of data) {
           if (item.created_at) {
             const d = new Date(item.created_at).getDate(); // 1 to 31
             if (d >= 1 && d <= daysInMonth) {
               counts[d - 1]++;
+              if (item.type === "video") {
+                videoCounts[d - 1]++;
+              } else {
+                screenshotCounts[d - 1]++;
+              }
             }
           }
         }
@@ -298,6 +309,8 @@ function DashboardContent() {
 
       if (!cancelled) {
         setDailyCounts(counts);
+        setDailyVideoCounts(videoCounts);
+        setDailyScreenshotCounts(screenshotCounts);
         setMonthlyLoading(false);
       }
     })();
@@ -331,6 +344,8 @@ function DashboardContent() {
     day: idx + 1,
     label: String(idx + 1),
     count: dailyCounts[idx] || 0,
+    videoCount: dailyVideoCounts[idx] || 0,
+    screenshotCount: dailyScreenshotCounts[idx] || 0,
   }));
   const maxDayCount = Math.max(1, ...days.map((d) => d.count));
 
@@ -523,9 +538,11 @@ function DashboardContent() {
                   return (
                   <div key={d.day} className="flex-1 min-w-0 flex flex-col items-center gap-1.5 group h-full justify-end relative cursor-pointer">
                     {/* Tooltip on hover */}
-                    <div className={`opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none bg-neutral-900 text-white text-[11px] font-semibold px-2.5 py-1 rounded-lg border border-neutral-700 shadow-xl mb-2 absolute bottom-full ${tooltipPos} z-30 whitespace-nowrap`}>
-                      {MONTH_NAMES[selectedMonth]} {d.day}: <span className="font-bold text-[#3B82F6]">{d.count}</span>
-                      <div className={`absolute top-full ${arrowPos} -mt-1 border-4 border-transparent border-t-neutral-900`} />
+                    <div className={`opacity-0 group-hover:opacity-100 transition-opacity duration-150 pointer-events-none bg-subtle text-foreground text-[11px] font-semibold px-2.5 py-1 rounded-lg border border-border shadow-xl mb-2 absolute bottom-full ${tooltipPos} z-30 whitespace-nowrap flex items-center gap-1.5`}>
+                      <span>{t("dash.shots")}: {d.screenshotCount}</span>
+                      <span className="text-muted">|</span>
+                      <span>{t("dash.videos")}: {d.videoCount}</span>
+                      <div className={`absolute top-full ${arrowPos} -mt-1 border-4 border-transparent border-t-subtle`} />
                     </div>
                     {d.count > 0 ? (
                       <div
