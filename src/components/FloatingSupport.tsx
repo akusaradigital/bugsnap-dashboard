@@ -440,7 +440,11 @@ export default function FloatingSupport() {
                               : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white"
                           }`}
                         >
-                          <Icon icon={cat.icon} className="w-3.5 h-3.5 shrink-0" />
+                          <Icon
+                            icon={cat.icon}
+                            className="w-3.5 h-3.5 shrink-0 text-[#2563EB] dark:text-[#3B82F6]"
+                            aria-hidden="true"
+                          />
                           <span className="truncate">{cat.label}</span>
                         </button>
                       );
@@ -527,16 +531,6 @@ export default function FloatingSupport() {
                   </button>
                 </div>
 
-                {/* Direct mailto fallback link */}
-                <div className="pt-2 text-center border-t border-slate-100 dark:border-zinc-800 text-[11px] text-slate-600 dark:text-zinc-400">
-                  {t("support.urgent")}{" "}
-                  <a
-                    href={`mailto:support@bugsnap.akusaraproject.my.id?subject=[BugSnap%20Support]&body=${encodeURIComponent(message || "")}`}
-                    className="text-[#2563EB] dark:text-[#3B82F6] hover:underline font-medium break-all"
-                  >
-                    support@bugsnap.akusaraproject.my.id
-                  </a>
-                </div>
               </form>
             )}
           </div>
