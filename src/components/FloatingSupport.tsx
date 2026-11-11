@@ -443,6 +443,7 @@ export default function FloatingSupport() {
                           <Icon
                             icon={cat.icon}
                             className="w-3.5 h-3.5 shrink-0 text-[#2563EB] dark:text-[#3B82F6]"
+                            style={{ filter: "brightness(0) saturate(100%) invert(35%) sepia(98%) saturate(1685%) hue-rotate(205deg) brightness(94%) contrast(94%)" }}
                             aria-hidden="true"
                           />
                           <span className="truncate">{cat.label}</span>
