@@ -314,6 +314,14 @@ function CapturesContent() {
     return () => clearTimeout(id);
   }, [search]);
 
+  // The top-bar global search (layout.tsx) navigates to /captures?q=...
+  // without remounting this component when already on this page, so `search`
+  // must re-sync from the URL on every q change, not just on first mount.
+  useEffect(() => {
+    const q = searchParams.get("q") || "";
+    setSearch((prev) => (prev === q ? prev : q));
+  }, [searchParams]);
+
   // Both checked (or neither) means "all", so there is only ever one type to filter on.
   const typeFilter =
     showVideo === showScreenshot ? "" : showVideo ? "video" : "screenshot";

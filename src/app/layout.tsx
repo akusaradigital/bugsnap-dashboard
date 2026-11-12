@@ -10,7 +10,7 @@ const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://bugsnap.akusaraproje
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "BugSnap - Free Bug Reporting Tool & Screen Recorder for Chrome",
+    default: "BugSnap - Screenshot, Screen Recorder & Bug Tracker",
     template: "BugSnap | %s",
   },
   description:
@@ -63,7 +63,7 @@ export const metadata: Metadata = {
     locale: "en_US",
     url: siteUrl,
     siteName: "BugSnap",
-    title: "BugSnap - Free Bug Reporting Tool & Screen Recorder for Chrome",
+    title: "BugSnap - Screenshot, Screen Recorder & Bug Tracker",
     description:
       "Capture bugs with screenshots, screen recordings, console logs, and network requests. Free browser extension with automatic Google Drive storage.",
     images: [
@@ -73,7 +73,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "BugSnap - Free Bug Reporting Tool & Screen Recorder for Chrome",
+    title: "BugSnap - Screenshot, Screen Recorder & Bug Tracker",
     description:
       "Capture bugs with screenshots, screen recordings, console logs, and network requests. Free browser extension with automatic Google Drive storage.",
     images: [`${siteUrl}/opengraph-image.png`],

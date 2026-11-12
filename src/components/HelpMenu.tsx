@@ -120,6 +120,8 @@ export default function HelpMenu({ className = "" }: HelpMenuProps) {
           {/* 1. Report an issue with BugSnap */}
           <Link
             href="/contact?category=bug"
+            target="_blank"
+            rel="noopener noreferrer"
             role="menuitem"
             onClick={handleReportIssue}
             className="flex items-center gap-2.5 px-3 py-2 text-slate-700 dark:text-zinc-200 hover:text-foreground hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
@@ -135,6 +137,8 @@ export default function HelpMenu({ className = "" }: HelpMenuProps) {
           {/* 2. Contact support */}
           <Link
             href="/contact"
+            target="_blank"
+            rel="noopener noreferrer"
             role="menuitem"
             onClick={closeAll}
             className="flex items-center gap-2.5 px-3 py-2 text-slate-700 dark:text-zinc-200 hover:text-foreground hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
@@ -150,6 +154,8 @@ export default function HelpMenu({ className = "" }: HelpMenuProps) {
           {/* 3. Docs */}
           <Link
             href="/docs"
+            target="_blank"
+            rel="noopener noreferrer"
             role="menuitem"
             onClick={closeAll}
             className="flex items-center gap-2.5 px-3 py-2 text-slate-700 dark:text-zinc-200 hover:text-foreground hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
@@ -165,6 +171,8 @@ export default function HelpMenu({ className = "" }: HelpMenuProps) {
           {/* 4. Connect MCP */}
           <Link
             href="/docs/mcp"
+            target="_blank"
+            rel="noopener noreferrer"
             role="menuitem"
             onClick={closeAll}
             className="flex items-center gap-2.5 px-3 py-2 text-slate-700 dark:text-zinc-200 hover:text-foreground hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
@@ -180,6 +188,8 @@ export default function HelpMenu({ className = "" }: HelpMenuProps) {
           {/* 5. Security */}
           <Link
             href="/security"
+            target="_blank"
+            rel="noopener noreferrer"
             role="menuitem"
             onClick={closeAll}
             className="flex items-center gap-2.5 px-3 py-2 text-slate-700 dark:text-zinc-200 hover:text-foreground hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
@@ -195,6 +205,8 @@ export default function HelpMenu({ className = "" }: HelpMenuProps) {
           {/* 6. System status */}
           <Link
             href="/status"
+            target="_blank"
+            rel="noopener noreferrer"
             role="menuitem"
             onClick={closeAll}
             className="flex items-center gap-2.5 px-3 py-2 text-slate-700 dark:text-zinc-200 hover:text-foreground hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
@@ -226,6 +238,8 @@ export default function HelpMenu({ className = "" }: HelpMenuProps) {
           {/* 8. Blog */}
           <Link
             href="/blog"
+            target="_blank"
+            rel="noopener noreferrer"
             role="menuitem"
             onClick={closeAll}
             className="flex items-center gap-2.5 px-3 py-2 text-slate-700 dark:text-zinc-200 hover:text-foreground hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"

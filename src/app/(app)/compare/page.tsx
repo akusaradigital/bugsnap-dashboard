@@ -9,7 +9,6 @@ import {
   useState,
 } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
@@ -307,16 +306,9 @@ function CompareContent() {
       />
 
       {/* Main Container */}
-      <div className="w-full min-w-0 p-3 sm:p-8 max-w-6xl mx-auto flex-1 flex flex-col">
+      <div className="w-full min-w-0 p-3 sm:p-8 max-w-7xl mx-auto flex-1 flex flex-col">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 sm:mb-8 gap-4">
           <div className="min-w-0">
-            <Link
-              href="/captures"
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-muted hover:text-foreground transition-colors mb-2"
-            >
-              <Icon icon="lucide:arrow-left" className="w-3.5 h-3.5" />
-              {t("compare.backToCaptures")}
-            </Link>
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
               {t("compare.title")}
             </h1>

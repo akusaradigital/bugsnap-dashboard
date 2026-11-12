@@ -8,6 +8,24 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [bugsnap-dashboard]
 
+### 2026-11-12 (v0.15.2)
+- **fix**: Re-sync the Captures page's search filter from the URL when navigating from the global top-bar search while already on `/captures`, so the query actually filters the grid instead of being silently ignored
+- **fix**: Point the sidebar Drive "Manage" link and the dashboard summary "Check Storage" action at `/folders` (with consistent blue icon styling) instead of `/settings`
+- **fix**: Unify Quick Action and Manage Folders icon colors to the standard blue accent, remove the decorative Quick Actions header icon, remove the folder icon from the Manage Folders title, bold the sidebar FOLDERS label, and make it link to `/folders`
+- **fix**: Restyle the dashboard welcome banner with a sky-blue gradient and dot-grid/wave decoration, and show the user's full name instead of first name only
+- **fix**: Add a back arrow icon to the Settings "Back to app" button (desktop and mobile), reorder the Settings sidebar groups to Account → Workspace → Apps & Tools, and default `/settings` with no `?tab=` to the Account tab
+- **fix**: Force the marketing navbar's "Dashboard" button icon to render white against its blue background instead of blending into it
+- **fix**: Open all non-install Help menu links (report issue, contact support, docs, MCP, security, system status, blog) in a new tab
+- **fix**: Update the browser tab title and social-share metadata from "Free Bug Reporting Tool & Screen Recorder for Chrome" to "Screenshot, Screen Recorder & Bug Tracker"
+- **fix**: Remove the ⌘K keyboard-shortcut hint from the top search bar and the green pill/arrow styling from the "+N This Week" stat on the dashboard, both now plain text
+- **chore**: Audit and restore 9 Lucide icons that were missing their static SVG files (rendered invisible in the UI despite correct code)
+
+### 2026-11-12 (v0.15.1)
+- **fix**: Sync folder rename/color/delete from the new Manage Folders page back into the sidebar's own folder state, so both surfaces reflect changes immediately
+
+### 2026-11-12 (v0.15.0)
+- **feat**: New `/folders` page (Manage Folders) with real capture counts, last-modified times, Google Drive storage usage, and full rename/delete/color-change actions backed by the same RPCs as the sidebar folder manager
+
 ### 2026-11-11 (v0.14.7)
 - **fix**: Preserve original browser and operating-system logos from gilbarbara/logos without applying the dashboard blue filter
 

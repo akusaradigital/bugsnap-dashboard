@@ -375,10 +375,13 @@ export default function LandingPage() {
                         {t("site.bugsnap.split.cta")}
                       </a>
                       <a
-                        href="#how-it-works"
-                        className="inline-flex items-center justify-center gap-2 px-2 py-3 min-h-[44px] text-sm sm:text-base font-semibold text-slate-700 dark:text-slate-200 hover:text-slate-900 dark:hover:text-white transition-colors touch-manipulation group"
+                        href={FIREFOX_STORE_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 min-h-[48px] rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm sm:text-base font-bold shadow-sm hover:shadow hover:scale-[1.01] active:scale-[0.99] transition-all touch-manipulation"
                       >
-                        <span>{t("site.hero.ctaSecondary")}</span>
+                        <Icon icon="logos:firefox" className="w-5 h-5 shrink-0" aria-hidden="true" />
+                        {t("extension.addToFirefox")}
                       </a>
                     </div>
                   </Reveal>

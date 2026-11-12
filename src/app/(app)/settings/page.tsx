@@ -30,7 +30,7 @@ function SettingsContent() {
   const wsParam = searchParams.get("ws") || "";
   const rawTab = searchParams.get("tab") as string | null;
   // Billing tab temporarily excluded while payment is not ready
-  const activeTab: Tab = rawTab === "webhooks" ? "integrations" : rawTab && ["general","members","integrations","account","notifications"].includes(rawTab) ? (rawTab as Tab) : "general";
+  const activeTab: Tab = rawTab === "webhooks" ? "integrations" : rawTab && ["general","members","integrations","account","notifications"].includes(rawTab) ? (rawTab as Tab) : "account";
 
   useEffect(() => {
     // no-op: referrer-based navigation handled inline in the button
@@ -821,10 +821,10 @@ function SettingsContent() {
     <button
       type="button"
       onClick={() => setTab(tab)}
-      className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg border-l-2 transition-colors text-left ${
+      className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-lg transition-colors text-left ${
         activeTab === tab
-          ? "bg-blue-50 dark:bg-blue-950/20 border-[#2563EB] text-[#2563EB] dark:text-[#3B82F6]"
-          : "border-transparent text-muted hover:text-foreground hover:bg-border/30"
+          ? "bg-blue-50 dark:bg-blue-950/20 text-[#2563EB] dark:text-[#3B82F6]"
+          : "text-muted hover:text-foreground hover:bg-border/30"
       }`}
     >
       <span className="shrink-0 w-4 h-4 flex items-center justify-center">{icon}</span>
@@ -868,9 +868,15 @@ function SettingsContent() {
               }}
               className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-muted hover:text-foreground hover:bg-border/30 rounded-lg transition-colors text-left"
             >
-              
+              <Icon icon="lucide:arrow-left" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
               {t("settings.backToApp")}
             </button>
+          </div>
+
+          <div className="space-y-1">
+            <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-wider text-muted">{t("settings.groupAccount")}</p>
+            {navItem("account", t(TAB_TITLES.account.title), <Icon icon="lucide:user" className="w-4 h-4 shrink-0" aria-hidden="true" />)}
+            {navItem("notifications", t(TAB_TITLES.notifications.title), <Icon icon="lucide:bell" className="w-4 h-4 shrink-0" aria-hidden="true" />)}
           </div>
 
           <div className="space-y-1">
@@ -884,12 +890,6 @@ function SettingsContent() {
           <div className="space-y-1">
             <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-wider text-muted">{t("settings.groupApps")}</p>
             {navItem("integrations", t(TAB_TITLES.integrations.title), <Icon icon="lucide:link" className="w-4 h-4 shrink-0" aria-hidden="true" />)}
-          </div>
-
-          <div className="space-y-1">
-            <p className="px-3 mb-1 text-[10px] font-bold uppercase tracking-wider text-muted">{t("settings.groupAccount")}</p>
-            {navItem("account", t(TAB_TITLES.account.title), <Icon icon="lucide:user" className="w-4 h-4 shrink-0" aria-hidden="true" />)}
-            {navItem("notifications", t(TAB_TITLES.notifications.title), <Icon icon="lucide:bell" className="w-4 h-4 shrink-0" aria-hidden="true" />)}
           </div>
         </div>
       </aside>
@@ -910,7 +910,7 @@ function SettingsContent() {
               }}
               className="flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-foreground transition-colors"
             >
-              
+              <Icon icon="lucide:arrow-left" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
               <span>{t("settings.backToApp")}</span>
             </button>
             <div className="flex items-center gap-2">

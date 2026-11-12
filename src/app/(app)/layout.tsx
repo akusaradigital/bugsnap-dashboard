@@ -7,7 +7,7 @@ import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
 import { normalizePlan, seatLimit, tierLabel, type Plan } from "@/lib/tiers";
-import { pickAvatar, initialOf } from "@/lib/avatar";
+import { pickAvatar, initialOf, isRealAvatar } from "@/lib/avatar";
 import { AuthRequiredCard } from "@/components/AuthRequiredCard";
 import DriveStorageMeter from "@/components/DriveStorageMeter";
 import FloatingSupport from "@/components/FloatingSupport";
@@ -77,6 +77,7 @@ export default function DashboardLayout({
   const workspaceMenuRef = useRef<HTMLDivElement>(null);
   const wsPickerTimerRef = useRef<NodeJS.Timeout | null>(null);
   const notifMenuRef = useRef<HTMLDivElement>(null);
+  const [topSearch, setTopSearch] = useState("");
 
   const handleWsPickerEnter = () => {
     if (wsPickerTimerRef.current) {
@@ -139,13 +140,13 @@ export default function DashboardLayout({
   const [renamingProject, setRenamingProject] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<{ id: string; name: string } | null>(null);
   const [deletingProject, setDeletingProject] = useState(false);
-  
+
   // Custom Rename & Delete Folder Modal states
   const [renameFolderModalOpen, setRenameFolderModalOpen] = useState(false);
   const [folderToRename, setFolderToRename] = useState<string | null>(null);
   const [renameFolderNameInput, setRenameFolderNameInput] = useState("");
   const [renameFolderError, setRenameFolderError] = useState<string | null>(null);
-  
+
   const [deleteFolderModalOpen, setDeleteFolderModalOpen] = useState(false);
   const [folderToDelete, setFolderToDelete] = useState<string | null>(null);
   const [deletingFolder, setDeletingFolder] = useState(false);
@@ -211,6 +212,9 @@ export default function DashboardLayout({
     const handleOutsidePointer = (event: PointerEvent) => {
       const target = event.target;
       if (!(target instanceof Node)) return;
+      // Mobile and desktop headers are both mounted (one is CSS-hidden per
+      // breakpoint), so a single ref can't contain both popover copies -
+      // check by data attribute instead, which matches whichever is visible.
       if ((wsOpen || workspacePickerOpen) && !workspaceMenuRef.current?.contains(target)) {
         closeWorkspaceMenus();
       }
@@ -340,10 +344,10 @@ export default function DashboardLayout({
             body: JSON.stringify({ captureId: refCaptureId }),
           })
             .then(() => localStorage.removeItem("bugsnap_ref_capture_id"))
-            .catch(() => {});
+            .catch(() => { });
         }
-      } catch {}
-      
+      } catch { }
+
       // Read the plan from public.users (source of truth updated by the
       // Stripe webhook) so upgrades take effect immediately without re-login.
       let dbPlan: Plan = normalizePlan(meta.plan);
@@ -395,7 +399,7 @@ export default function DashboardLayout({
           localStorage.removeItem("BugSnap_notif_read_ids");
           localStorage.removeItem("BugSnap_promo_dismissed");
           sessionStorage.removeItem("bs_drive_quota");
-        } catch {}
+        } catch { }
         router.replace("/login");
       }
     });
@@ -414,13 +418,13 @@ export default function DashboardLayout({
       setSession((prev) =>
         prev.user
           ? {
-              ...prev,
-              user: {
-                ...prev.user,
-                name: detail.fullName?.trim() || prev.user.name,
-                avatar: pickAvatar(detail.avatarUrl, prev.user.avatar),
-              },
-            }
+            ...prev,
+            user: {
+              ...prev.user,
+              name: detail.fullName?.trim() || prev.user.name,
+              avatar: pickAvatar(detail.avatarUrl, prev.user.avatar),
+            },
+          }
           : prev
       );
     };
@@ -439,9 +443,56 @@ export default function DashboardLayout({
     };
     window.addEventListener("bugsnap:workspace-updated", onWorkspaceUpdated);
 
+    // The /folders page renames, recolors, and deletes folders through the
+    // same RPCs as this sidebar's own menu, but it's a separate page
+    // instance with its own state - sync in place here too, same pattern
+    // as profile/workspace above, instead of requiring a reload to see it.
+    const onFolderUpdated = (e: Event) => {
+      const detail = (e as CustomEvent<{
+        action: "renamed" | "recolored" | "deleted";
+        oldName?: string;
+        newName?: string;
+        color?: string | null;
+      }>).detail;
+      if (!detail) return;
+      if (detail.action === "renamed" && detail.oldName && detail.newName) {
+        const { oldName, newName } = detail;
+        setFolders((prev) => Array.from(new Set(prev.map((f) => (f === oldName ? newName : f)))).sort());
+        setFolderItems((prev) => prev.map((f) => (f.name === oldName ? { ...f, name: newName } : f)));
+        setFolderColors((prev) => {
+          const next = { ...prev };
+          if (next[oldName]) {
+            next[newName] = next[oldName];
+            delete next[oldName];
+          }
+          return next;
+        });
+      } else if (detail.action === "recolored" && detail.oldName) {
+        const name = detail.oldName;
+        setFolderColors((prev) => {
+          const next = { ...prev };
+          if (detail.color) next[name] = detail.color;
+          else delete next[name];
+          return next;
+        });
+        setFolderItems((prev) => prev.map((f) => (f.name === name ? { ...f, color: detail.color ?? null } : f)));
+      } else if (detail.action === "deleted" && detail.oldName) {
+        const name = detail.oldName;
+        setFolders((prev) => prev.filter((f) => f !== name));
+        setFolderItems((prev) => prev.filter((f) => f.name !== name));
+        setFolderColors((prev) => {
+          const next = { ...prev };
+          delete next[name];
+          return next;
+        });
+      }
+    };
+    window.addEventListener("bugsnap:folder-updated", onFolderUpdated);
+
     return () => {
       window.removeEventListener("bugsnap:profile-updated", onProfileUpdated);
       window.removeEventListener("bugsnap:workspace-updated", onWorkspaceUpdated);
+      window.removeEventListener("bugsnap:folder-updated", onFolderUpdated);
     };
   }, []);
 
@@ -530,7 +581,7 @@ export default function DashboardLayout({
         );
         if (memErr) throw memErr;
         if (!active) return;
-        
+
         const emails: string[] = [];
         (mem ?? []).forEach((m: { user_id: string; email: string; role: string }) => {
           if (m.role !== "owner" && m.email) {
@@ -568,7 +619,7 @@ export default function DashboardLayout({
             setPromoDismissed(true);
           }
         }
-      } catch {}
+      } catch { }
     })();
     return () => { active = false; };
   }, []);
@@ -1038,10 +1089,10 @@ export default function DashboardLayout({
       }
 
       setDeleteFolderModalOpen(false);
-        showToast(t("layout.folderQueued", { name: folderToDelete }), "success");
+      showToast(t("layout.folderQueued", { name: folderToDelete }), "success");
     } catch (err) {
       console.warn("Failed to delete folder:", err);
-        showToast(t("layout.errDeleteFolder"), "error");
+      showToast(t("layout.errDeleteFolder"), "error");
     } finally {
       setDeletingFolder(false);
     }
@@ -1187,7 +1238,7 @@ export default function DashboardLayout({
       console.warn("Failed to invite member:", err);
       setInviteError(
         (err as { message?: string })?.message ||
-          t("layout.errInvite")
+        t("layout.errInvite")
       );
       showToast(t("layout.inviteFailedToast"), "error");
     } finally {
@@ -1234,13 +1285,11 @@ export default function DashboardLayout({
             setDragOverFolder(null);
           }}
           style={{ paddingLeft: `${4 + depth * 14}px` }}
-          className={`relative w-full flex items-center justify-between gap-1 pr-1 rounded-lg group/folder transition-colors ${
-            isActiveFolder
+          className={`relative w-full flex items-center justify-between gap-1 pr-1 rounded-lg group/folder transition-colors ${isActiveFolder
               ? "bg-blue-50 dark:bg-blue-950/15 font-semibold"
               : "hover:bg-subtle"
-          } ${dragOverFolder === folder && draggedFolder && draggedFolder !== folder ? "ring-2 ring-[#2563EB]" : ""} ${
-            draggedFolder === folder ? "opacity-40" : ""
-          }`}
+            } ${dragOverFolder === folder && draggedFolder && draggedFolder !== folder ? "ring-2 ring-[#2563EB]" : ""} ${draggedFolder === folder ? "opacity-40" : ""
+            }`}
         >
           <div className="flex-1 flex items-center min-w-0">
             {hasChildren ? (
@@ -1268,11 +1317,10 @@ export default function DashboardLayout({
                 setCurrentFolder(folder);
                 setSidebarOpen(false);
               }}
-              className={`flex-1 flex items-center gap-2 px-1.5 py-2 text-xs truncate ${
-                isActiveFolder
+              className={`flex-1 flex items-center gap-2 px-1.5 py-2 text-xs truncate ${isActiveFolder
                   ? "text-[#2563EB] dark:text-[#3B82F6] font-semibold"
                   : "text-muted hover:text-foreground"
-              }`}
+                }`}
             >
               <Icon
                 icon={folderColors[folder] ? "custom:folder-filled" : "lucide:folder"}
@@ -1405,7 +1453,7 @@ export default function DashboardLayout({
               type="button"
               aria-label={t("layout.dismissPromo")}
               onClick={() => {
-                try { localStorage.setItem("BugSnap_promo_dismissed", promoBanner.message); } catch {}
+                try { localStorage.setItem("BugSnap_promo_dismissed", promoBanner.message); } catch { }
                 setPromoDismissed(true);
               }}
               className="shrink-0 text-white/80 hover:text-white transition-colors"
@@ -1415,36 +1463,6 @@ export default function DashboardLayout({
           </div>
         );
       })()}
-      {/* Mobile top bar */}
-      <header className="lg:hidden shrink-0 border-b border-border bg-subtle flex items-center justify-between px-3 py-1.5">
-        <button
-          onClick={() => setSidebarOpen(true)}
-          className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-muted hover:text-foreground hover:bg-background transition-colors touch-manipulation"
-          aria-label="Open menu"
-        >
-          <Icon icon="lucide:menu" className="w-5 h-5" />
-        </button>
-        <a href="/dashboard" className="flex items-center gap-2">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-day.svg" alt="BugSnap" className="w-6 h-6 object-contain dark:hidden" />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-dark.svg" alt="BugSnap" className="w-6 h-6 object-contain hidden dark:block" />
-          <span className="text-sm font-bold tracking-tight">BugSnap</span>
-        </a>
-        <button
-          data-notif-trigger
-          onClick={() => setNotifOpen((o) => !o)}
-          className="relative min-h-[44px] min-w-[44px] flex items-center justify-center rounded-lg text-muted hover:text-foreground hover:bg-background transition-colors touch-manipulation"
-          aria-label={t("layout.notifications")}
-        >
-          <Icon icon="lucide:bell" className="w-4 h-4" />
-          {newCommentCount > 0 && (
-            <span className="absolute top-1.5 right-1.5 min-w-[16px] h-[16px] px-1 rounded-md bg-[#2563EB] text-white text-[9px] font-bold flex items-center justify-center">
-              {newCommentCount}
-            </span>
-          )}
-        </button>
-      </header>
 
       {/* Mobile drawer backdrop */}
       {sidebarOpen && (
@@ -1454,462 +1472,502 @@ export default function DashboardLayout({
         />
       )}
 
-    <div className="flex flex-1 min-h-0 bg-background overflow-hidden">
-      {/* Sidebar - hidden on settings route so settings page can render its own 2-panel layout with its own sidebar */}
-      {!pathname.startsWith("/settings") && (
-        <aside
-          className={`w-60 border-r border-border bg-subtle shrink-0 flex flex-col h-full overflow-visible max-h-screen lg:relative lg:translate-x-0 fixed inset-y-0 left-0 z-50 transform transition-transform duration-200 ${
-            sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-          }`}
-        >
-        <div className="px-5 py-5 border-b border-border flex items-center gap-2.5">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-day.svg" alt="BugSnap" className="w-7 h-7 shrink-0 object-contain dark:hidden" />
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/logo-dark.svg" alt="BugSnap" className="w-7 h-7 shrink-0 object-contain hidden dark:block" />
-          <div>
-            <h1 className="text-sm font-bold tracking-tight text-foreground leading-none">
-              BugSnap
-            </h1>
-            <p className="text-[10px] text-muted mt-1 leading-none font-medium">{t("layout.screenRecorder")}</p>
-          </div>
-
-          {/* Desktop Notification Bell */}
-          <div className="relative ml-auto hidden lg:block">
-            <button
-              data-notif-trigger
-              onClick={() => setNotifOpen((o) => !o)}
-              className="relative p-1.5 rounded-lg text-muted hover:text-foreground hover:bg-background transition-colors"
-              aria-label={t("layout.notifications")}
-            >
-              <Icon icon="lucide:bell" className="w-4 h-4" />
-              {newCommentCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 rounded-md bg-[#2563EB] text-white text-[9px] font-bold flex items-center justify-center">
-                  {newCommentCount > 99 ? "99+" : newCommentCount}
-                </span>
-              )}
-            </button>
-          </div>
-        </div>
-
-        {/* Responsive Notifications Popover (works for mobile top bar and desktop sidebar) */}
-        {notifOpen && (
-          <div
-            ref={notifMenuRef}
-            className="fixed right-3 top-14 lg:right-auto lg:left-4 lg:top-16 z-[70] w-[min(20rem,calc(100vw-1.5rem))] lg:w-72 rounded-xl border border-border bg-subtle shadow-2xl py-2 px-1 max-h-80 overflow-y-auto"
+      <div className="flex flex-1 min-h-0 bg-background overflow-hidden">
+        {/* Sidebar - hidden on settings route so settings page can render its own 2-panel layout with its own sidebar */}
+        {!pathname.startsWith("/settings") && (
+          <aside
+            className={`w-60 border-r border-border bg-subtle shrink-0 flex flex-col h-full overflow-visible max-h-screen lg:relative lg:translate-x-0 fixed inset-y-0 left-0 z-50 transform transition-transform duration-200 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+              }`}
           >
-            <div className="flex items-center justify-between px-3 py-1 mb-1 border-b border-border/50 pb-1.5">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">{t("layout.notifications")}</p>
-              {notifications.length > 0 && (
-                <button
-                  onClick={handleClearNotifications}
-                  className="text-[10px] font-semibold text-[#2563EB] dark:text-[#3B82F6] hover:underline"
-                >
-                  {t("layout.clearAll")}
-                </button>
-              )}
+            <div className="px-5 py-5 border-b border-border flex items-center gap-2.5">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo-day.svg" alt="BugSnap" className="w-7 h-7 shrink-0 object-contain dark:hidden" />
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src="/logo-dark.svg" alt="BugSnap" className="w-7 h-7 shrink-0 object-contain hidden dark:block" />
+              <div>
+                <h1 className="text-sm font-bold tracking-tight text-foreground leading-none">
+                  BugSnap
+                </h1>
+                <p className="text-[10px] text-muted mt-1 leading-none font-medium">{t("layout.screenRecorder")}</p>
+              </div>
             </div>
-            {notifications.length > 0 ? (
-              <div className="space-y-0.5">
-                {notifications.map((n) => {
-                  const isRead = readIds.has(n.capture_id);
+
+            <nav className="flex-1 flex flex-col min-h-0 px-3 py-3 overflow-hidden">
+              <div className="space-y-1 shrink-0">
+                {navItems.map((item) => {
+                  const active =
+                    item.href === "/captures"
+                      ? pathname === "/captures" && !currentFolder
+                      : pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+                  // Preserve the active workspace across navigation so the
+                  // captures/dashboard filters keep applying.
+                  const href = activeWsId ? `${item.href}?ws=${activeWsId}` : item.href;
                   return (
-                    <div
-                      key={n.comment_id}
-                      className={`px-3 py-2 text-xs rounded-lg transition-colors cursor-pointer ${
-                        isRead
-                          ? "text-muted hover:bg-subtle"
-                          : "text-foreground bg-blue-50 dark:bg-blue-950/25 hover:bg-blue-100 dark:hover:bg-blue-950/40 font-medium"
-                      }`}
+                    <Link
+                      key={item.href}
+                      href={href}
                       onClick={() => {
-                        markRead(n.capture_id);
-                        setNotifOpen(false);
-                        router.push(`/v/${n.capture_id}`);
+                        if (item.href === "/captures") {
+                          setCurrentFolder(null);
+                        }
+                        setSidebarOpen(false);
                       }}
+                      className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${active
+                          ? "bg-blue-50 dark:bg-blue-950/25 text-[#2563EB] dark:text-[#3B82F6]"
+                          : "text-muted hover:text-foreground hover:bg-subtle"
+                        }`}
                     >
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <Icon icon={isRead ? "lucide:message-square" : "lucide:circle"} className={`w-3.5 h-3.5 shrink-0 ${isRead ? "text-muted" : "text-emerald-500 fill-emerald-500"}`} />
-                        <p className="truncate font-semibold text-[11px] flex-1">
-                          {n.capture_title || "Untitled capture"}
-                        </p>
-                        <span className="text-[9px] text-muted shrink-0">
-                          {new Date(n.created_at).toLocaleDateString([], { month: "short", day: "numeric" })}
-                        </span>
-                      </div>
-                      <p className="truncate text-[10px] text-muted pl-4 mt-0.5">
-                        {n.body || "New comment"}
-                      </p>
-                    </div>
+                      <Icon icon={item.icon} className="h-4 w-4 shrink-0" aria-hidden="true" />
+                      {t(item.labelKey)}
+                    </Link>
                   );
                 })}
               </div>
-            ) : (
-              <div className="px-3 py-4 text-center">
-                <p className="text-xs text-muted/60">{t("layout.noNotifications")}</p>
-              </div>
-            )}
-          </div>
-        )}
 
-        {/* Workspace Switcher */}
-        <div ref={workspaceMenuRef} className="px-3 pt-4 relative">
-          <button
-            onClick={() => setWsOpen((o) => !o)}
-            className="w-full flex items-center gap-2.5 px-3 py-2.5 text-sm font-medium rounded-xl border border-border bg-subtle hover:bg-border/30 transition-colors text-left"
-          >
-            {activeWs?.avatar_url && !failedWsAvatars[activeWs.id] ? (
-              /* eslint-disable-next-line @next/next/no-img-element */
-              <img
-                src={activeWs.avatar_url}
-                alt={activeWs.name}
-                onError={() => setFailedWsAvatars((prev) => ({ ...prev, [activeWs.id]: true }))}
-                className="w-6 h-6 rounded-md object-cover shrink-0 bg-subtle border border-border"
-              />
-            ) : (
-              <span className="w-6 h-6 rounded-md bg-[#2563EB] text-white text-[11px] font-semibold flex items-center justify-center shrink-0">
-                {initialOf(activeWs?.name)}
-              </span>
-            )}
-            <span className="flex-1 truncate">{activeWs?.name || "Workspace"}</span>
-            
-          </button>
-
-          {wsOpen && (
-            <>
-              <div className="fixed inset-0 z-40" onClick={closeWorkspaceMenus} />
-              <div className="absolute left-3 right-3 top-[calc(100%+8px)] z-50 rounded-2xl border border-border bg-subtle shadow-xl overflow-visible">
-                <div className="p-4 flex items-center gap-3 border-b border-border">
-                  {activeWs?.avatar_url && !failedWsAvatars[activeWs.id] ? (
-                    /* eslint-disable-next-line @next/next/no-img-element */
-                    <img
-                      src={activeWs.avatar_url}
-                      alt={activeWs.name}
-                      onError={() => setFailedWsAvatars((prev) => ({ ...prev, [activeWs.id]: true }))}
-                      className="w-10 h-10 rounded-xl object-cover shrink-0 bg-subtle border border-border"
-                    />
-                  ) : (
-                    <span className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/20 text-[#2563EB] dark:text-[#3B82F6] text-lg font-semibold flex items-center justify-center shrink-0">
-                      {initialOf(activeWs?.name)}
-                    </span>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <p className="text-base font-semibold text-foreground truncate">{activeWs?.name || "Workspace"}</p>
-                      <span className="text-[11px] px-2 py-0.5 rounded-md border border-border text-muted shrink-0">{tierLabel(currentUser.plan)}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <Link
-                  href={activeWsId ? `/settings?ws=${activeWsId}` : "/settings"}
-                  onClick={() => setWsOpen(false)}
-                  className="w-full flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-subtle transition-colors border-b border-border"
-                >
-                  <Icon icon="lucide:settings" className="w-4 h-4 text-muted shrink-0" />
-                  {t("nav.settings")}
-                </Link>
-
-                <div
-                  className="px-4 py-3 border-b border-border relative"
-                  onMouseEnter={handleWsPickerEnter}
-                  onMouseLeave={handleWsPickerLeave}
-                >
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (wsPickerTimerRef.current) {
-                        clearTimeout(wsPickerTimerRef.current);
-                        wsPickerTimerRef.current = null;
-                      }
-                      setWorkspacePickerOpen((o) => !o);
-                    }}
-                    className="w-full flex items-center justify-between gap-3 rounded-lg py-1 text-left text-sm font-medium text-foreground hover:bg-subtle transition-colors"
-                  >
-                    <span className="flex items-center gap-3">
-                      <Icon icon="lucide:building-2" className="w-4 h-4 text-muted shrink-0" />
-                      {t("layout.switchWorkspace")}
-                    </span>
-                    
-                  </button>
-                  {workspacePickerOpen && (
-                    <>
-                      {/* Invisible hover bridge over the 8px (lg:ml-2) margin gap to prevent premature closure */}
-                      <div
-                        className="hidden lg:block absolute left-full top-0 ml-0 w-3 h-full z-[55]"
-                        onMouseEnter={handleWsPickerEnter}
-                        onMouseLeave={handleWsPickerLeave}
-                        aria-hidden="true"
-                      />
-                      <div
-                        onMouseEnter={handleWsPickerEnter}
-                        onMouseLeave={handleWsPickerLeave}
-                        className="mt-2 w-full rounded-xl border border-border bg-white dark:bg-background/95 shadow-md overflow-hidden lg:absolute lg:left-full lg:top-0 lg:ml-2 lg:mt-0 lg:w-72 lg:rounded-2xl lg:shadow-xl z-[60] before:hidden lg:before:block before:absolute before:-left-3 before:top-0 before:bottom-0 before:w-3 before:content-['']"
-                      >
-                      {workspaces.map((ws) => (
-                        <button
-                          key={ws.id}
-                          onClick={() => {
-                            setActiveWsId(ws.id);
-                            setWsParam(ws.id);
-                            setCurrentFolder(null);
-                            setWorkspacePickerOpen(false);
-                            setWsOpen(false);
-                            setSidebarOpen(false);
-                            router.replace(`${pathname}?ws=${ws.id}`, { scroll: false });
-                          }}
-                          className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm text-left transition-colors ${activeWsId === ws.id ? "bg-background dark:bg-subtle text-foreground font-semibold" : "text-foreground hover:bg-background dark:hover:bg-subtle"}`}
-                        >
-                          {ws.avatar_url && !failedWsAvatars[ws.id] ? (
-                            /* eslint-disable-next-line @next/next/no-img-element */
-                            <img
-                              src={ws.avatar_url}
-                              alt={ws.name}
-                              onError={() => setFailedWsAvatars((prev) => ({ ...prev, [ws.id]: true }))}
-                              className="w-7 h-7 rounded-lg object-cover shrink-0 bg-subtle border border-border"
-                            />
-                          ) : (
-                            <span className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 text-sm font-semibold flex items-center justify-center shrink-0">{ws.name.charAt(0)}</span>
-                          )}
-                          <span className="truncate flex-1">{ws.name}</span>
-                          <span className="text-[11px] px-2 py-0.5 rounded-md border border-border text-muted shrink-0">{tierLabel(currentUser.plan)}</span>
-                        </button>
-                      ))}
-                      <button
-                        onClick={() => {
-                          setWorkspacePickerOpen(false);
-                          setWsOpen(false);
-                          setSidebarOpen(false);
-                          setCreateWsModalOpen(true);
-                        }}
-                        className="w-full flex items-center gap-3 px-3 py-3 text-sm text-left text-foreground hover:bg-subtle transition-colors border-t border-border"
-                      >
-                        <Icon icon="lucide:plus" className="w-4 h-4 shrink-0" />
-                        {t("layout.joinOrCreateWorkspace")}
-                      </button>
-                    </div>
-                    </>
-                  )}
-                </div>
-
-                {isSuperAdmin && (
+              {/* Google Drive Folders List (Sync Bridge) */}
+              <div className="flex-1 flex flex-col min-h-0 pt-3 mt-2 border-t border-border/60">
+                <div className="flex items-center justify-between px-3 pb-1.5 shrink-0">
                   <Link
-                    href="/admin"
+                    href={activeWsId ? `/folders?ws=${activeWsId}` : "/folders"}
                     onClick={() => setSidebarOpen(false)}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-foreground hover:bg-subtle transition-colors border-t border-border"
+                    className="text-[10px] font-bold uppercase tracking-wider text-muted hover:text-foreground transition-colors flex items-center gap-1.5"
                   >
-                    <Icon icon="lucide:shield" className="w-4 h-4 text-purple-500 shrink-0" />
-                    <span>{t("nav.admin")} Console</span>
+                    <Icon icon="lucide:folder" className="w-3.5 h-3.5 shrink-0" />
+                    {t("layout.folders")}
                   </Link>
-                )}
-
-                <button
-                  onClick={async () => {
-                    try {
-                      if (typeof window !== "undefined") {
-                        window.postMessage({ source: "bugsnap-web", action: "sync_logout" }, window.location.origin);
-                      }
-                      localStorage.removeItem("BugSnap_notif_last_seen");
-                      localStorage.removeItem("BugSnap_notif_read_ids");
-                      localStorage.removeItem("BugSnap_promo_dismissed");
-                      sessionStorage.removeItem("bs_drive_quota");
-                    } catch {}
-                    await supabase.auth.signOut();
-                    window.location.assign("/");
-                  }}
-                  className={`w-full flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-subtle transition-colors ${!isSuperAdmin ? "border-t border-border" : ""}`}
-                >
-                  <Icon icon="lucide:log-out" className="w-4 h-4 text-muted shrink-0" />
-                  {t("nav.signOut")}
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-
-        <nav className="flex-1 flex flex-col min-h-0 px-3 py-3 overflow-hidden">
-          <div className="space-y-1 shrink-0">
-            {navItems.map((item) => {
-              const active =
-                item.href === "/captures"
-                  ? pathname === "/captures" && !currentFolder
-                  : pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
-              // Preserve the active workspace across navigation so the
-              // captures/dashboard filters keep applying.
-              const href = activeWsId ? `${item.href}?ws=${activeWsId}` : item.href;
-              return (
-                <Link
-                  key={item.href}
-                  href={href}
-                  onClick={() => {
-                    if (item.href === "/captures") {
-                      setCurrentFolder(null);
-                    }
-                    setSidebarOpen(false);
-                  }}
-                  className={`flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                    active
-                      ? "bg-blue-50 dark:bg-blue-950/25 text-[#2563EB] dark:text-[#3B82F6]"
-                      : "text-muted hover:text-foreground hover:bg-subtle"
-                  }`}
-                >
-                  <Icon icon={item.icon} className="h-4 w-4 shrink-0" aria-hidden="true" />
-                  {t(item.labelKey)}
-                </Link>
-              );
-            })}
-          </div>
-
-          {/* Google Drive Folders List (Sync Bridge) */}
-          <div className="flex-1 flex flex-col min-h-0 pt-3 mt-2 border-t border-border/60">
-            <div className="flex items-center justify-between px-3 pb-1.5 shrink-0">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted flex items-center gap-1.5">
-                <Icon icon="lucide:folder" className="w-3.5 h-3.5 shrink-0" />
-                {t("layout.folders")}
-              </p>
-              {activeWsRole === "owner" && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setParentFolderId(null);
-                    setCreateFolderModalOpen(true);
-                  }}
-                  className="text-[10px] font-bold text-[#2563EB] dark:text-[#3B82F6] hover:underline"
-                >
-                  {t("layout.create")}
-                </button>
-              )}
-            </div>
-
-            <div className="flex-1 overflow-y-auto space-y-0.5 pr-0.5">
-              {rootFolders.map((item: FolderItem) => renderFolderItemRow(item, 0))}
-
-              {folders.length === 0 && (
-                <div className="px-3 py-2 text-center rounded-lg border border-dashed border-border/80 mx-1 bg-subtle/30">
-                  <p className="text-[10px] text-muted">{t("layout.noFolders")}</p>
                   {activeWsRole === "owner" && (
                     <button
+                      type="button"
                       onClick={() => {
                         setParentFolderId(null);
                         setCreateFolderModalOpen(true);
                       }}
-                      className="text-[10px] font-semibold text-[#2563EB] dark:text-[#3B82F6] hover:underline mt-1"
+                      className="text-[10px] font-bold text-[#2563EB] dark:text-[#3B82F6] hover:underline"
                     >
-                      {t("layout.createFolder")}
+                      {t("layout.create")}
                     </button>
                   )}
                 </div>
-              )}
+
+                <div className="flex-1 overflow-y-auto space-y-0.5 pr-0.5">
+                  {rootFolders.map((item: FolderItem) => renderFolderItemRow(item, 0))}
+
+                  {folders.length === 0 && (
+                    <div className="px-3 py-2 text-center rounded-lg border border-dashed border-border/80 mx-1 bg-subtle/30">
+                      <p className="text-[10px] text-muted">{t("layout.noFolders")}</p>
+                      {activeWsRole === "owner" && (
+                        <button
+                          onClick={() => {
+                            setParentFolderId(null);
+                            setCreateFolderModalOpen(true);
+                          }}
+                          className="text-[10px] font-semibold text-[#2563EB] dark:text-[#3B82F6] hover:underline mt-1"
+                        >
+                          {t("layout.createFolder")}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </nav>
+
+            <div className="mt-auto shrink-0" />
+            <DriveStorageMeter />
+            <div className="px-3 py-2.5 border-t border-border/60 flex items-center justify-between shrink-0 bg-subtle">
+              <HelpMenu />
+              <SiteThemeToggle compact />
+            </div>
+          </aside>
+        )}
+
+        {/* Main content column */}
+        <div className="flex-1 min-w-0 h-full flex flex-col overflow-hidden">
+          {/* Top bar: mobile menu toggle + global search + notifications + account menu */}
+          {!pathname.startsWith("/settings") && (
+            <header className="shrink-0 flex items-center gap-2 sm:gap-4 border-b border-border bg-subtle px-3 sm:px-6 py-2.5 sm:py-3">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                className="lg:hidden min-h-[40px] min-w-[40px] flex items-center justify-center rounded-lg text-muted hover:text-foreground hover:bg-background transition-colors touch-manipulation shrink-0"
+                aria-label="Open menu"
+              >
+                <Icon icon="lucide:menu" className="w-5 h-5" />
+              </button>
+
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  const q = topSearch.trim();
+                  router.push(
+                    `/captures${activeWsId ? `?ws=${activeWsId}` : ""}${q ? `${activeWsId ? "&" : "?"}q=${encodeURIComponent(q)}` : ""}`
+                  );
+                }}
+                className="flex-1 max-w-xl min-w-0"
+              >
+                <div className="relative">
+                  <Icon icon="lucide:search" className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" aria-hidden="true" />
+                  <input
+                    type="search"
+                    value={topSearch}
+                    onChange={(e) => setTopSearch(e.target.value)}
+                    placeholder={t("dash.searchPlaceholder")}
+                    className="w-full text-sm rounded-xl border border-border bg-background pl-10 pr-3 py-2.5 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 text-foreground placeholder:text-muted"
+                  />
+                </div>
+              </form>
+
+              <div className="flex items-center gap-1.5 sm:gap-3 ml-auto shrink-0">
+                {/* Notification Bell */}
+                <div className="relative">
+                  <button
+                    data-notif-trigger
+                    onClick={() => setNotifOpen((o) => !o)}
+                    className="relative p-2 rounded-lg text-muted hover:text-foreground hover:bg-background transition-colors"
+                    aria-label={t("layout.notifications")}
+                  >
+                    <Icon icon="lucide:bell" className="w-4 h-4" />
+                    {newCommentCount > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 min-w-[16px] h-[16px] px-1 rounded-md bg-[#2563EB] text-white text-[9px] font-bold flex items-center justify-center">
+                        {newCommentCount > 99 ? "99+" : newCommentCount}
+                      </span>
+                    )}
+                  </button>
+
+                  {notifOpen && (
+                    <div
+                      ref={notifMenuRef}
+                      data-notif-menu
+                      className="absolute right-0 top-full mt-2 z-[70] w-72 rounded-xl border border-border bg-subtle shadow-2xl py-2 px-1 max-h-80 overflow-y-auto"
+                    >
+                      <div className="flex items-center justify-between px-3 py-1 mb-1 border-b border-border/50 pb-1.5">
+                        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">{t("layout.notifications")}</p>
+                        {notifications.length > 0 && (
+                          <button
+                            onClick={handleClearNotifications}
+                            className="text-[10px] font-semibold text-[#2563EB] dark:text-[#3B82F6] hover:underline"
+                          >
+                            {t("layout.clearAll")}
+                          </button>
+                        )}
+                      </div>
+                      {notifications.length > 0 ? (
+                        <div className="space-y-0.5">
+                          {notifications.map((n) => {
+                            const isRead = readIds.has(n.capture_id);
+                            return (
+                              <div
+                                key={n.comment_id}
+                                className={`px-3 py-2 text-xs rounded-lg transition-colors cursor-pointer ${isRead
+                                    ? "text-muted hover:bg-subtle"
+                                    : "text-foreground bg-blue-50 dark:bg-blue-950/25 hover:bg-blue-100 dark:hover:bg-blue-950/40 font-medium"
+                                  }`}
+                                onClick={() => {
+                                  markRead(n.capture_id);
+                                  setNotifOpen(false);
+                                  router.push(`/v/${n.capture_id}`);
+                                }}
+                              >
+                                <div className="flex items-center gap-1.5 min-w-0">
+                                  <Icon icon={isRead ? "lucide:message-square" : "lucide:circle"} className={`w-3.5 h-3.5 shrink-0 ${isRead ? "text-muted" : "text-emerald-500 fill-emerald-500"}`} />
+                                  <p className="truncate font-semibold text-[11px] flex-1">
+                                    {n.capture_title || "Untitled capture"}
+                                  </p>
+                                  <span className="text-[9px] text-muted shrink-0">
+                                    {new Date(n.created_at).toLocaleDateString([], { month: "short", day: "numeric" })}
+                                  </span>
+                                </div>
+                                <p className="truncate text-[10px] text-muted pl-4 mt-0.5">
+                                  {n.body || "New comment"}
+                                </p>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : (
+                        <div className="px-3 py-4 text-center">
+                          <p className="text-xs text-muted/60">{t("layout.noNotifications")}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Account / Workspace Dropdown */}
+                <div ref={workspaceMenuRef} className="relative">
+                  <button
+                    data-ws-trigger
+                    onClick={() => setWsOpen((o) => !o)}
+                    className="flex items-center gap-2 p-1 pr-1.5 rounded-full hover:bg-background transition-colors"
+                  >
+                    {isRealAvatar(currentUser.avatar) ? (
+                      /* eslint-disable-next-line @next/next/no-img-element */
+                      <img
+                        src={currentUser.avatar}
+                        alt={currentUser.name}
+                        referrerPolicy="no-referrer"
+                        className="w-8 h-8 rounded-full object-cover shrink-0 border border-border"
+                      />
+                    ) : (
+                      <span className="w-8 h-8 rounded-full bg-[#2563EB] text-white text-xs font-semibold flex items-center justify-center shrink-0">
+                        {initialOf(currentUser.name)}
+                      </span>
+                    )}
+                    <Icon icon="lucide:chevron-down" className={`w-3.5 h-3.5 text-muted transition-transform ${wsOpen ? "rotate-180" : ""}`} aria-hidden="true" />
+                  </button>
+
+                  {wsOpen && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={closeWorkspaceMenus} />
+                      <div data-ws-menu className="absolute right-0 top-[calc(100%+8px)] z-50 w-72 rounded-2xl border border-border bg-subtle shadow-xl overflow-visible">
+                        <div className="p-4 flex items-center gap-3 border-b border-border">
+                          {activeWs?.avatar_url && !failedWsAvatars[activeWs.id] ? (
+                            /* eslint-disable-next-line @next/next/no-img-element */
+                            <img
+                              src={activeWs.avatar_url}
+                              alt={activeWs.name}
+                              onError={() => setFailedWsAvatars((prev) => ({ ...prev, [activeWs.id]: true }))}
+                              className="w-10 h-10 rounded-xl object-cover shrink-0 bg-subtle border border-border"
+                            />
+                          ) : (
+                            <span className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/20 text-[#2563EB] dark:text-[#3B82F6] text-lg font-semibold flex items-center justify-center shrink-0">
+                              {initialOf(activeWs?.name)}
+                            </span>
+                          )}
+                          <div className="min-w-0 flex-1">
+                            <div className="flex items-center justify-between gap-2">
+                              <p className="text-base font-semibold text-foreground truncate">{activeWs?.name || "Workspace"}</p>
+                              <span className="text-[11px] px-2 py-0.5 rounded-md border border-border text-muted shrink-0">{tierLabel(currentUser.plan)}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <Link
+                          href={activeWsId ? `/settings?ws=${activeWsId}` : "/settings"}
+                          onClick={() => setWsOpen(false)}
+                          className="w-full flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-subtle transition-colors border-b border-border"
+                        >
+                          <Icon icon="lucide:settings" className="w-4 h-4 text-muted shrink-0" />
+                          {t("nav.settings")}
+                        </Link>
+
+                        <div
+                          className="px-4 py-3 border-b border-border relative"
+                          onMouseEnter={handleWsPickerEnter}
+                          onMouseLeave={handleWsPickerLeave}
+                        >
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (wsPickerTimerRef.current) {
+                                clearTimeout(wsPickerTimerRef.current);
+                                wsPickerTimerRef.current = null;
+                              }
+                              setWorkspacePickerOpen((o) => !o);
+                            }}
+                            className="w-full flex items-center justify-between gap-3 rounded-lg py-1 text-left text-sm font-medium text-foreground hover:bg-subtle transition-colors"
+                          >
+                            <span className="flex items-center gap-3">
+                              <Icon icon="lucide:building-2" className="w-4 h-4 text-muted shrink-0" />
+                              {t("layout.switchWorkspace")}
+                            </span>
+                            <Icon icon="lucide:chevron-right" className="w-4 h-4 text-muted shrink-0" aria-hidden="true" />
+                          </button>
+                          {workspacePickerOpen && (
+                            <>
+                              {/* Invisible hover bridge over the 8px (lg:ml-2) margin gap to prevent premature closure */}
+                              <div
+                                className="hidden lg:block absolute right-full top-0 mr-0 w-3 h-full z-[55]"
+                                onMouseEnter={handleWsPickerEnter}
+                                onMouseLeave={handleWsPickerLeave}
+                                aria-hidden="true"
+                              />
+                              <div
+                                onMouseEnter={handleWsPickerEnter}
+                                onMouseLeave={handleWsPickerLeave}
+                                className="mt-2 w-full rounded-xl border border-border bg-white dark:bg-background/95 shadow-md overflow-hidden lg:absolute lg:right-full lg:top-0 lg:mr-2 lg:mt-0 lg:w-72 lg:rounded-2xl lg:shadow-xl z-[60] before:hidden lg:before:block before:absolute before:-right-3 before:top-0 before:bottom-0 before:w-3 before:content-['']"
+                              >
+                                {workspaces.map((ws) => (
+                                  <button
+                                    key={ws.id}
+                                    onClick={() => {
+                                      setActiveWsId(ws.id);
+                                      setWsParam(ws.id);
+                                      setCurrentFolder(null);
+                                      setWorkspacePickerOpen(false);
+                                      setWsOpen(false);
+                                      setSidebarOpen(false);
+                                      router.replace(`${pathname}?ws=${ws.id}`, { scroll: false });
+                                    }}
+                                    className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm text-left transition-colors ${activeWsId === ws.id ? "bg-background dark:bg-subtle text-foreground font-semibold" : "text-foreground hover:bg-background dark:hover:bg-subtle"}`}
+                                  >
+                                    {ws.avatar_url && !failedWsAvatars[ws.id] ? (
+                                      /* eslint-disable-next-line @next/next/no-img-element */
+                                      <img
+                                        src={ws.avatar_url}
+                                        alt={ws.name}
+                                        onError={() => setFailedWsAvatars((prev) => ({ ...prev, [ws.id]: true }))}
+                                        className="w-7 h-7 rounded-lg object-cover shrink-0 bg-subtle border border-border"
+                                      />
+                                    ) : (
+                                      <span className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 text-sm font-semibold flex items-center justify-center shrink-0">{ws.name.charAt(0)}</span>
+                                    )}
+                                    <span className="truncate flex-1">{ws.name}</span>
+                                    <span className="text-[11px] px-2 py-0.5 rounded-md border border-border text-muted shrink-0">{tierLabel(currentUser.plan)}</span>
+                                  </button>
+                                ))}
+                                <button
+                                  onClick={() => {
+                                    setWorkspacePickerOpen(false);
+                                    setWsOpen(false);
+                                    setSidebarOpen(false);
+                                    setCreateWsModalOpen(true);
+                                  }}
+                                  className="w-full flex items-center gap-3 px-3 py-3 text-sm text-left text-foreground hover:bg-subtle transition-colors border-t border-border"
+                                >
+                                  <Icon icon="lucide:plus" className="w-4 h-4 shrink-0" />
+                                  {t("layout.joinOrCreateWorkspace")}
+                                </button>
+                              </div>
+                            </>
+                          )}
+                        </div>
+
+                        {isSuperAdmin && (
+                          <Link
+                            href="/admin"
+                            onClick={() => setWsOpen(false)}
+                            className="w-full flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-foreground hover:bg-subtle transition-colors border-t border-border"
+                          >
+                            <Icon icon="lucide:shield" className="w-4 h-4 text-purple-500 shrink-0" />
+                            <span>{t("nav.admin")} Console</span>
+                          </Link>
+                        )}
+
+                        <button
+                          onClick={async () => {
+                            try {
+                              if (typeof window !== "undefined") {
+                                window.postMessage({ source: "bugsnap-web", action: "sync_logout" }, window.location.origin);
+                              }
+                              localStorage.removeItem("BugSnap_notif_last_seen");
+                              localStorage.removeItem("BugSnap_notif_read_ids");
+                              localStorage.removeItem("BugSnap_promo_dismissed");
+                              sessionStorage.removeItem("bs_drive_quota");
+                            } catch { }
+                            await supabase.auth.signOut();
+                            window.location.assign("/");
+                          }}
+                          className={`w-full flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-subtle transition-colors ${!isSuperAdmin ? "border-t border-border" : ""}`}
+                        >
+                          <Icon icon="lucide:log-out" className="w-4 h-4 text-muted shrink-0" />
+                          {t("nav.signOut")}
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            </header>
+          )}
+
+          <main id="main-content" className={`flex-1 min-h-0 ${pathname.startsWith("/settings") ? "overflow-hidden" : "overflow-y-auto"}`}>{children}</main>
+        </div>
+
+        {/* Invite Modal */}
+        {inviteModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
+            <div className="absolute inset-0 bg-black/40" onClick={() => setInviteModalOpen(false)} />
+            <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6">
+              <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.inviteToWorkspace")}</h2>
+              <p className="text-sm text-muted mb-5">
+                {t("layout.inviteDescPre")} <span className="font-semibold text-foreground">{activeWsName}</span> {t("layout.inviteDescPost")}
+              </p>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("layout.emailAddress")}</label>
+                  <input
+                    type="email"
+                    value={inviteEmail}
+                    onChange={(e) => setInviteEmail(e.target.value)}
+                    placeholder="colleague@example.com"
+                    className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#2563EB] bg-subtle text-foreground placeholder:text-muted"
+                    autoFocus
+                  />
+                </div>
+                {inviteError && (
+                  <p className="text-xs text-red-600 dark:text-red-400">{inviteError}</p>
+                )}
+              </div>
+              <div className="flex items-center justify-end gap-3 mt-6">
+                <button
+                  onClick={() => setInviteModalOpen(false)}
+                  className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors"
+                >
+                  {t("common.cancel")}
+                </button>
+                <button
+                  onClick={handleInvite}
+                  disabled={!inviteEmail.trim() || inviting}
+                  className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors shadow-sm shadow-[#89BD49]/25"
+                >
+                  {t("layout.sendInvite")}
+                </button>
+              </div>
             </div>
           </div>
-        </nav>
+        )}
 
-        <div className="mt-auto shrink-0" />
-        <DriveStorageMeter />
-        <div className="px-3 py-2.5 border-t border-border/60 flex items-center justify-between shrink-0 bg-subtle">
-          <HelpMenu />
-          <SiteThemeToggle compact />
-        </div>
-      </aside>
-      )}
-
-      {/* Main content */}
-      <main id="main-content" className={`flex-1 h-full ${pathname.startsWith("/settings") ? "overflow-hidden" : "overflow-y-auto"}`}>{children}</main>
-
-      {/* Invite Modal */}
-      {inviteModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setInviteModalOpen(false)} />
-          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6">
-            <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.inviteToWorkspace")}</h2>
-            <p className="text-sm text-muted mb-5">
-              {t("layout.inviteDescPre")} <span className="font-semibold text-foreground">{activeWsName}</span> {t("layout.inviteDescPost")}
-            </p>
-            <div className="space-y-4">
+        {/* Create Workspace Modal */}
+        {createWsModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
+            <div className="absolute inset-0 bg-black/40" onClick={() => setCreateWsModalOpen(false)} />
+            <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6">
+              <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.createWorkspace")}</h2>
+              <p className="text-sm text-muted mb-5">
+                {t("layout.createWorkspaceDesc")}
+              </p>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("layout.emailAddress")}</label>
+                <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("layout.workspaceName")}</label>
                 <input
-                  type="email"
-                  value={inviteEmail}
-                  onChange={(e) => setInviteEmail(e.target.value)}
-                  placeholder="colleague@example.com"
+                  type="text"
+                  value={newWsName}
+                  onChange={(e) => setNewWsName(e.target.value)}
+                  placeholder="e.g. QA Team"
                   className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#2563EB] bg-subtle text-foreground placeholder:text-muted"
                   autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && newWsName.trim()) {
+                      handleCreateWorkspace(newWsName.trim());
+                    }
+                  }}
                 />
+                {createWsError && (
+                  <p className="text-xs text-red-600 dark:text-red-400 mt-1.5">{createWsError}</p>
+                )}
               </div>
-              {inviteError && (
-                <p className="text-xs text-red-600 dark:text-red-400">{inviteError}</p>
-              )}
-            </div>
-            <div className="flex items-center justify-end gap-3 mt-6">
-              <button
-                onClick={() => setInviteModalOpen(false)}
-                className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors"
-              >
-                {t("common.cancel")}
-              </button>
-              <button
-                onClick={handleInvite}
-                disabled={!inviteEmail.trim() || inviting}
-                className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors shadow-sm shadow-[#89BD49]/25"
-              >
-                {t("layout.sendInvite")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Create Workspace Modal */}
-      {createWsModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setCreateWsModalOpen(false)} />
-          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6">
-            <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.createWorkspace")}</h2>
-            <p className="text-sm text-muted mb-5">
-              {t("layout.createWorkspaceDesc")}
-            </p>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("layout.workspaceName")}</label>
-              <input
-                type="text"
-                value={newWsName}
-                onChange={(e) => setNewWsName(e.target.value)}
-                placeholder="e.g. QA Team"
-                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#2563EB] bg-subtle text-foreground placeholder:text-muted"
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && newWsName.trim()) {
-                    handleCreateWorkspace(newWsName.trim());
-                  }
-                }}
-              />
-              {createWsError && (
-                <p className="text-xs text-red-600 dark:text-red-400 mt-1.5">{createWsError}</p>
-              )}
-            </div>
-            <div className="flex items-center justify-end gap-3 mt-6">
-              <button
-                onClick={() => setCreateWsModalOpen(false)}
-                className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors"
-              >
-                {t("common.cancel")}
-              </button>
-              <button
-                onClick={() => {
-                  const name = newWsName.trim();
-                  if (name) handleCreateWorkspace(name);
-                }}
-                disabled={!newWsName.trim() || creating}
-                className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors shadow-sm shadow-[#89BD49]/25"
-              >
-                {t("layout.createWorkspace")}
-              </button>
+              <div className="flex items-center justify-end gap-3 mt-6">
+                <button
+                  onClick={() => setCreateWsModalOpen(false)}
+                  className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors"
+                >
+                  {t("common.cancel")}
+                </button>
+                <button
+                  onClick={() => {
+                    const name = newWsName.trim();
+                    if (name) handleCreateWorkspace(name);
+                  }}
+                  disabled={!newWsName.trim() || creating}
+                  className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors shadow-sm shadow-[#89BD49]/25"
+                >
+                  {t("layout.createWorkspace")}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Upgrade CTA - temporarily commented out until payment is ready:
+        {/* Upgrade CTA - temporarily commented out until payment is ready:
       {billingModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setBillingModalOpen(false)} />
@@ -1934,346 +1992,345 @@ export default function DashboardLayout({
       )}
       */}
 
-      {/* Create Project Modal */}
-      {createProjectModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setCreateProjectModalOpen(false)} />
-          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6">
-            <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.createProjectTitle")}</h2>
-            <p className="text-sm text-muted mb-5">{t("layout.createProjectSubtitle")}</p>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("layout.projectName")}</label>
-              <input
-                type="text"
-                value={newProjectName}
-                onChange={(e) => setNewProjectName(e.target.value)}
-                placeholder={t("layout.projectNamePlaceholder")}
-                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#2563EB] bg-subtle text-foreground placeholder:text-muted"
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && newProjectName.trim()) {
-                    handleCreateProject(newProjectName.trim());
-                  }
-                }}
-              />
-              {createProjectError && (
-                <p className="text-xs text-red-600 dark:text-red-400 mt-1.5">{createProjectError}</p>
-              )}
-            </div>
-            <div className="flex items-center justify-end gap-3 mt-6">
-              <button
-                onClick={() => setCreateProjectModalOpen(false)}
-                className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors"
-              >
-                {t("common.cancel")}
-              </button>
-              <button
-                onClick={() => handleCreateProject(newProjectName.trim())}
-                disabled={!newProjectName.trim() || creatingProject}
-                className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors shadow-sm shadow-[#89BD49]/25"
-              >
-                {creatingProject ? t("layout.creating") : t("layout.createProject")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Rename Project Modal */}
-      {projectToRename && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setProjectToRename(null)} />
-          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6">
-            <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.renameProjectTitle")}</h2>
-            <p className="text-sm text-muted mb-5">{t("layout.renameProjectSubtitle")}</p>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("layout.projectName")}</label>
-              <input
-                type="text"
-                value={renameProjectName}
-                onChange={(e) => setRenameProjectName(e.target.value)}
-                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#2563EB] bg-subtle text-foreground placeholder:text-muted"
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && renameProjectName.trim()) submitRenameProject();
-                }}
-              />
-              {renameProjectError && <p className="text-xs text-red-600 dark:text-red-400 mt-1.5">{renameProjectError}</p>}
-            </div>
-            <div className="flex items-center justify-end gap-3 mt-6">
-              <button onClick={() => setProjectToRename(null)} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors">{t("common.cancel")}</button>
-              <button onClick={submitRenameProject} disabled={!renameProjectName.trim() || renamingProject} className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors shadow-sm shadow-[#89BD49]/25">
-                {renamingProject ? t("common.saving") : t("common.save")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Project Modal */}
-      {projectToDelete && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setProjectToDelete(null)} />
-          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6 text-center">
-            <h2 className="text-lg font-bold text-foreground mb-2">{t("layout.deleteProjectTitle")}</h2>
-            <p className="text-xs text-muted leading-relaxed mb-6">{t("layout.deleteProjectConfirm", { name: projectToDelete.name })}</p>
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
-              <button onClick={() => setProjectToDelete(null)} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors">{t("common.cancel")}</button>
-              <button onClick={submitDeleteProject} disabled={deletingProject} className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors">
-                {deletingProject ? t("layout.deleting") : t("common.delete")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Create Folder Modal */}
-      {createFolderModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setCreateFolderModalOpen(false)} />
-          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6">
-            <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.createFolderTitle")}</h2>
-            <p className="text-sm text-muted mb-5">
-              {t("layout.createFolderDesc")}
-            </p>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("layout.folderName")}</label>
-              <input
-                type="text"
-                value={newFolderName}
-                onChange={(e) => {
-                  setNewFolderName(e.target.value);
-                  setCreateFolderError(null);
-                }}
-                placeholder="e.g. Eyden - Quaker"
-                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#2563EB] bg-subtle text-foreground placeholder:text-muted"
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && newFolderName.trim()) {
-                    handleCreateFolder(newFolderName.trim(), parentFolderId);
-                  }
-                }}
-              />
-              {createFolderError && (
-                <p className="text-xs text-red-600 dark:text-red-400 mt-1.5">{createFolderError}</p>
-              )}
-            </div>
-
-            <div className="mt-4">
-              <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("layout.parentFolder")}</label>
-              <Dropdown
-                value={parentFolderId || ""}
-                onChange={(val) => setParentFolderId(val || null)}
-                options={[
-                  { value: "", label: t("layout.topLevelFolder") },
-                  ...folderItems.map((f) => ({ value: f.id, label: f.name })),
-                ]}
-                variant="field"
-              />
-            </div>
-
-            <div className="flex items-center justify-end gap-3 mt-6">
-              <button
-                onClick={() => {
-                  setCreateFolderModalOpen(false);
-                  setParentFolderId(null);
-                }}
-                className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors"
-              >
-                {t("common.cancel")}
-              </button>
-              <button
-                onClick={() => handleCreateFolder(newFolderName.trim(), parentFolderId)}
-                disabled={!newFolderName.trim() || creatingFolder}
-                className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors shadow-sm shadow-[#89BD49]/25"
-              >
-                {creatingFolder ? t("layout.creating") : t("layout.createFolderTitle")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Rename Folder Modal */}
-      {renameFolderModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setRenameFolderModalOpen(false)} />
-          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6">
-            <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.renameFolder")}</h2>
-            <p className="text-sm text-muted mb-5">
-              {t("layout.renameFolderDesc")}
-            </p>
-            <div>
-              <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("layout.newFolderName")}</label>
-              <input
-                type="text"
-                value={renameFolderNameInput}
-                onChange={(e) => {
-                  setRenameFolderNameInput(e.target.value);
-                  setRenameFolderError(null);
-                }}
-                placeholder="e.g. Eyden - Quaker"
-                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#2563EB] bg-subtle text-foreground placeholder:text-muted"
-                autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && renameFolderNameInput.trim()) {
-                    submitRenameFolder();
-                  }
-                }}
-              />
-              {renameFolderError && (
-                <p className="text-xs text-red-600 dark:text-red-400 mt-1.5">{renameFolderError}</p>
-              )}
-            </div>
-            <div className="flex items-center justify-end gap-3 mt-6">
-              <button
-                onClick={() => setRenameFolderModalOpen(false)}
-                className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors"
-              >
-                {t("common.cancel")}
-              </button>
-              <button
-                onClick={submitRenameFolder}
-                disabled={!renameFolderNameInput.trim() || renameFolderNameInput.trim() === folderToRename}
-                className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors shadow-sm shadow-[#89BD49]/25"
-              >
-                {t("layout.saveChanges")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Delete Folder Modal (Jira Style Popup Confirmation) */}
-      {deleteFolderModalOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setDeleteFolderModalOpen(false)} />
-          <div className="relative w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6 text-center">
-            <div className="mx-auto mb-4 w-12 h-12 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 flex items-center justify-center text-red-600 dark:text-red-400">
-              <Icon icon="lucide:trash-2" className="w-6 h-6" aria-hidden="true" />
-            </div>
-            <h2 className="text-lg font-bold text-foreground mb-2">{t("layout.deleteFolderQ")}</h2>
-            <p className="text-xs text-muted leading-relaxed mb-6">
-              {t("layout.deleteFolderDesc", { name: folderToDelete ?? "" })}
-            </p>
-            
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
-              <button
-                onClick={() => setDeleteFolderModalOpen(false)}
-                className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors"
-              >
-                {t("common.cancel")}
-              </button>
-              <button
-                onClick={submitDeleteFolder}
-                disabled={deletingFolder}
-                className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors"
-              >
-                {deletingFolder ? t("layout.deleting") : t("layout.deleteFolderTitle")}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Folder Color Modal (Google Drive Style) */}
-      {folderColorModalOpen && folderToColor && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setFolderColorModalOpen(false)} />
-          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6">
-            <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.folderColor")}</h2>
-            <p className="text-xs text-muted mb-4">
-              {t("layout.folderColorDesc")}
-            </p>
-
-            {/* Folder preview */}
-            <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card mb-4">
-              <Icon
-                icon={selectedFolderColor ? "custom:folder-filled" : "lucide:folder"}
-                className={`w-6 h-6 shrink-0 transition-colors ${selectedFolderColor ? "" : "text-muted"}`}
-                style={
-                  selectedFolderColor
-                    ? { color: selectedFolderColor }
-                    : undefined
-                }
-              />
-              <div className="min-w-0 flex-1">
-                <p className="text-sm font-semibold text-foreground truncate">{folderToColor}</p>
-                <p className="text-[11px] text-muted">
-                  {selectedFolderColor
-                    ? (GOOGLE_DRIVE_FOLDER_COLORS.find((c) => c.value.toLowerCase() === selectedFolderColor.toLowerCase())?.name || selectedFolderColor.toUpperCase())
-                    : t("layout.defaultColor")}
-                </p>
+        {/* Create Project Modal */}
+        {createProjectModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
+            <div className="absolute inset-0 bg-black/40" onClick={() => setCreateProjectModalOpen(false)} />
+            <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6">
+              <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.createProjectTitle")}</h2>
+              <p className="text-sm text-muted mb-5">{t("layout.createProjectSubtitle")}</p>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("layout.projectName")}</label>
+                <input
+                  type="text"
+                  value={newProjectName}
+                  onChange={(e) => setNewProjectName(e.target.value)}
+                  placeholder={t("layout.projectNamePlaceholder")}
+                  className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#2563EB] bg-subtle text-foreground placeholder:text-muted"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && newProjectName.trim()) {
+                      handleCreateProject(newProjectName.trim());
+                    }
+                  }}
+                />
+                {createProjectError && (
+                  <p className="text-xs text-red-600 dark:text-red-400 mt-1.5">{createProjectError}</p>
+                )}
+              </div>
+              <div className="flex items-center justify-end gap-3 mt-6">
+                <button
+                  onClick={() => setCreateProjectModalOpen(false)}
+                  className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors"
+                >
+                  {t("common.cancel")}
+                </button>
+                <button
+                  onClick={() => handleCreateProject(newProjectName.trim())}
+                  disabled={!newProjectName.trim() || creatingProject}
+                  className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors shadow-sm shadow-[#89BD49]/25"
+                >
+                  {creatingProject ? t("layout.creating") : t("layout.createProject")}
+                </button>
               </div>
             </div>
+          </div>
+        )}
 
-            {/* Google Drive Color Grid */}
-            <div className="grid grid-cols-5 gap-2.5 mb-3 justify-items-center">
-              {GOOGLE_DRIVE_FOLDER_COLORS.map((c) => {
-                const isSelected = selectedFolderColor?.toLowerCase() === c.value.toLowerCase();
-                return (
-                  <button
-                    key={c.value}
-                    type="button"
-                    onClick={() => setSelectedFolderColor(c.value)}
-                    title={c.name}
-                    aria-label={c.name}
-                    className={`h-8 w-8 rounded-full flex items-center justify-center transition-all hover:scale-110 focus:outline-none ${
-                      isSelected
-                        ? "ring-2 ring-offset-2 ring-foreground scale-105"
-                        : "hover:ring-1 hover:ring-border"
-                    }`}
-                    style={{ backgroundColor: c.value }}
-                  >
-                    {isSelected && (
-                      <Icon icon="lucide:check" className="w-4 h-4 text-white drop-shadow brightness-0 invert" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Reset to default color */}
-            <div className="flex items-center justify-between pt-2 mb-5 border-t border-border/60">
-              <button
-                type="button"
-                onClick={() => setSelectedFolderColor(null)}
-                className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors"
-              >
-                <Icon icon="lucide:rotate-ccw" className="w-3.5 h-3.5" />
-                <span>{t("layout.resetColor")}</span>
-              </button>
-              {selectedFolderColor && (
-                <span className="text-[11px] font-mono text-muted uppercase">
-                  {selectedFolderColor}
-                </span>
-              )}
-            </div>
-
-            <div className="flex items-center justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => setFolderColorModalOpen(false)}
-                className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors"
-              >
-                {t("common.cancel")}
-              </button>
-              <button
-                type="button"
-                onClick={submitFolderColor}
-                disabled={savingFolderColor}
-                className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors shadow-sm shadow-[#89BD49]/25"
-              >
-                {savingFolderColor ? t("layout.saving") : t("layout.saveChanges")}
-              </button>
+        {/* Rename Project Modal */}
+        {projectToRename && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
+            <div className="absolute inset-0 bg-black/40" onClick={() => setProjectToRename(null)} />
+            <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6">
+              <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.renameProjectTitle")}</h2>
+              <p className="text-sm text-muted mb-5">{t("layout.renameProjectSubtitle")}</p>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("layout.projectName")}</label>
+                <input
+                  type="text"
+                  value={renameProjectName}
+                  onChange={(e) => setRenameProjectName(e.target.value)}
+                  className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#2563EB] bg-subtle text-foreground placeholder:text-muted"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && renameProjectName.trim()) submitRenameProject();
+                  }}
+                />
+                {renameProjectError && <p className="text-xs text-red-600 dark:text-red-400 mt-1.5">{renameProjectError}</p>}
+              </div>
+              <div className="flex items-center justify-end gap-3 mt-6">
+                <button onClick={() => setProjectToRename(null)} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors">{t("common.cancel")}</button>
+                <button onClick={submitRenameProject} disabled={!renameProjectName.trim() || renamingProject} className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors shadow-sm shadow-[#89BD49]/25">
+                  {renamingProject ? t("common.saving") : t("common.save")}
+                </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
 
-      {/* Customer Support Floating Widget */}
-      <FloatingSupport />
-    </div>
+        {/* Delete Project Modal */}
+        {projectToDelete && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
+            <div className="absolute inset-0 bg-black/40" onClick={() => setProjectToDelete(null)} />
+            <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6 text-center">
+              <h2 className="text-lg font-bold text-foreground mb-2">{t("layout.deleteProjectTitle")}</h2>
+              <p className="text-xs text-muted leading-relaxed mb-6">{t("layout.deleteProjectConfirm", { name: projectToDelete.name })}</p>
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
+                <button onClick={() => setProjectToDelete(null)} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors">{t("common.cancel")}</button>
+                <button onClick={submitDeleteProject} disabled={deletingProject} className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors">
+                  {deletingProject ? t("layout.deleting") : t("common.delete")}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Create Folder Modal */}
+        {createFolderModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
+            <div className="absolute inset-0 bg-black/40" onClick={() => setCreateFolderModalOpen(false)} />
+            <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6">
+              <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.createFolderTitle")}</h2>
+              <p className="text-sm text-muted mb-5">
+                {t("layout.createFolderDesc")}
+              </p>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("layout.folderName")}</label>
+                <input
+                  type="text"
+                  value={newFolderName}
+                  onChange={(e) => {
+                    setNewFolderName(e.target.value);
+                    setCreateFolderError(null);
+                  }}
+                  placeholder="Name your folder"
+                  className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#2563EB] bg-subtle text-foreground placeholder:text-muted"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && newFolderName.trim()) {
+                      handleCreateFolder(newFolderName.trim(), parentFolderId);
+                    }
+                  }}
+                />
+                {createFolderError && (
+                  <p className="text-xs text-red-600 dark:text-red-400 mt-1.5">{createFolderError}</p>
+                )}
+              </div>
+
+              <div className="mt-4">
+                <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("layout.parentFolder")}</label>
+                <Dropdown
+                  value={parentFolderId || ""}
+                  onChange={(val) => setParentFolderId(val || null)}
+                  options={[
+                    { value: "", label: t("layout.topLevelFolder") },
+                    ...folderItems.map((f) => ({ value: f.id, label: f.name })),
+                  ]}
+                  variant="field"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 mt-6">
+                <button
+                  onClick={() => {
+                    setCreateFolderModalOpen(false);
+                    setParentFolderId(null);
+                  }}
+                  className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors"
+                >
+                  {t("common.cancel")}
+                </button>
+                <button
+                  onClick={() => handleCreateFolder(newFolderName.trim(), parentFolderId)}
+                  disabled={!newFolderName.trim() || creatingFolder}
+                  className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors shadow-sm shadow-[#89BD49]/25"
+                >
+                  {creatingFolder ? t("layout.creating") : t("layout.createFolderTitle")}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Rename Folder Modal */}
+        {renameFolderModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
+            <div className="absolute inset-0 bg-black/40" onClick={() => setRenameFolderModalOpen(false)} />
+            <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6">
+              <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.renameFolder")}</h2>
+              <p className="text-sm text-muted mb-5">
+                {t("layout.renameFolderDesc")}
+              </p>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("layout.newFolderName")}</label>
+                <input
+                  type="text"
+                  value={renameFolderNameInput}
+                  onChange={(e) => {
+                    setRenameFolderNameInput(e.target.value);
+                    setRenameFolderError(null);
+                  }}
+                  placeholder="Name your folder"
+                  className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#2563EB] bg-subtle text-foreground placeholder:text-muted"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && renameFolderNameInput.trim()) {
+                      submitRenameFolder();
+                    }
+                  }}
+                />
+                {renameFolderError && (
+                  <p className="text-xs text-red-600 dark:text-red-400 mt-1.5">{renameFolderError}</p>
+                )}
+              </div>
+              <div className="flex items-center justify-end gap-3 mt-6">
+                <button
+                  onClick={() => setRenameFolderModalOpen(false)}
+                  className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors"
+                >
+                  {t("common.cancel")}
+                </button>
+                <button
+                  onClick={submitRenameFolder}
+                  disabled={!renameFolderNameInput.trim() || renameFolderNameInput.trim() === folderToRename}
+                  className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors shadow-sm shadow-[#89BD49]/25"
+                >
+                  {t("layout.saveChanges")}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Delete Folder Modal (Jira Style Popup Confirmation) */}
+        {deleteFolderModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
+            <div className="absolute inset-0 bg-black/40" onClick={() => setDeleteFolderModalOpen(false)} />
+            <div className="relative w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6 text-center">
+              <div className="mx-auto mb-4 w-12 h-12 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 flex items-center justify-center text-red-600 dark:text-red-400">
+                <Icon icon="lucide:trash-2" className="w-6 h-6" aria-hidden="true" />
+              </div>
+              <h2 className="text-lg font-bold text-foreground mb-2">{t("layout.deleteFolderQ")}</h2>
+              <p className="text-xs text-muted leading-relaxed mb-6">
+                {t("layout.deleteFolderDesc", { name: folderToDelete ?? "" })}
+              </p>
+
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
+                <button
+                  onClick={() => setDeleteFolderModalOpen(false)}
+                  className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors"
+                >
+                  {t("common.cancel")}
+                </button>
+                <button
+                  onClick={submitDeleteFolder}
+                  disabled={deletingFolder}
+                  className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors"
+                >
+                  {deletingFolder ? t("layout.deleting") : t("layout.deleteFolderTitle")}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Folder Color Modal (Google Drive Style) */}
+        {folderColorModalOpen && folderToColor && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
+            <div className="absolute inset-0 bg-black/40" onClick={() => setFolderColorModalOpen(false)} />
+            <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6">
+              <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.folderColor")}</h2>
+              <p className="text-xs text-muted mb-4">
+                {t("layout.folderColorDesc")}
+              </p>
+
+              {/* Folder preview */}
+              <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card mb-4">
+                <Icon
+                  icon={selectedFolderColor ? "custom:folder-filled" : "lucide:folder"}
+                  className={`w-6 h-6 shrink-0 transition-colors ${selectedFolderColor ? "" : "text-muted"}`}
+                  style={
+                    selectedFolderColor
+                      ? { color: selectedFolderColor }
+                      : undefined
+                  }
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-semibold text-foreground truncate">{folderToColor}</p>
+                  <p className="text-[11px] text-muted">
+                    {selectedFolderColor
+                      ? (GOOGLE_DRIVE_FOLDER_COLORS.find((c) => c.value.toLowerCase() === selectedFolderColor.toLowerCase())?.name || selectedFolderColor.toUpperCase())
+                      : t("layout.defaultColor")}
+                  </p>
+                </div>
+              </div>
+
+              {/* Google Drive Color Grid */}
+              <div className="grid grid-cols-5 gap-2.5 mb-3 justify-items-center">
+                {GOOGLE_DRIVE_FOLDER_COLORS.map((c) => {
+                  const isSelected = selectedFolderColor?.toLowerCase() === c.value.toLowerCase();
+                  return (
+                    <button
+                      key={c.value}
+                      type="button"
+                      onClick={() => setSelectedFolderColor(c.value)}
+                      title={c.name}
+                      aria-label={c.name}
+                      className={`h-8 w-8 rounded-full flex items-center justify-center transition-all hover:scale-110 focus:outline-none ${isSelected
+                          ? "ring-2 ring-offset-2 ring-foreground scale-105"
+                          : "hover:ring-1 hover:ring-border"
+                        }`}
+                      style={{ backgroundColor: c.value }}
+                    >
+                      {isSelected && (
+                        <Icon icon="lucide:check" className="w-4 h-4 text-white drop-shadow brightness-0 invert" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Reset to default color */}
+              <div className="flex items-center justify-between pt-2 mb-5 border-t border-border/60">
+                <button
+                  type="button"
+                  onClick={() => setSelectedFolderColor(null)}
+                  className="flex items-center gap-1.5 text-xs text-muted hover:text-foreground transition-colors"
+                >
+                  <Icon icon="lucide:rotate-ccw" className="w-3.5 h-3.5" />
+                  <span>{t("layout.resetColor")}</span>
+                </button>
+                {selectedFolderColor && (
+                  <span className="text-[11px] font-mono text-muted uppercase">
+                    {selectedFolderColor}
+                  </span>
+                )}
+              </div>
+
+              <div className="flex items-center justify-end gap-3">
+                <button
+                  type="button"
+                  onClick={() => setFolderColorModalOpen(false)}
+                  className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors"
+                >
+                  {t("common.cancel")}
+                </button>
+                <button
+                  type="button"
+                  onClick={submitFolderColor}
+                  disabled={savingFolderColor}
+                  className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors shadow-sm shadow-[#89BD49]/25"
+                >
+                  {savingFolderColor ? t("layout.saving") : t("layout.saveChanges")}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Customer Support Floating Widget */}
+        <FloatingSupport />
+      </div>
     </div>
   );
 }

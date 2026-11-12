@@ -118,9 +118,9 @@ export function SiteNavbar() {
           {isLoggedIn ? (
             <Link
               href="/dashboard"
-              className="inline-flex items-center gap-1.5 px-4 py-2 min-h-[40px] sm:min-h-0 rounded-full bg-accent text-slate-900 text-xs sm:text-sm font-semibold hover:bg-accent-hover transition-all shadow-xs"
+              className="inline-flex items-center gap-1.5 px-4 py-2 min-h-[40px] sm:min-h-0 rounded-full bg-accent text-white text-xs sm:text-sm font-semibold hover:bg-accent-hover transition-all shadow-xs"
             >
-              <IconHome size={15} className="shrink-0" />
+              <IconHome size={15} className="shrink-0 invert" />
               <span>{t("site.nav.dashboard")}</span>
             </Link>
           ) : (
@@ -179,9 +179,9 @@ export function SiteNavbar() {
             <div className="pt-2 border-t border-site-border-subtle mt-2">
               <Link
                 href="/dashboard"
-                className="flex items-center gap-2 min-h-[44px] px-3 py-2.5 rounded-md text-sm font-semibold bg-accent text-slate-900"
+                className="flex items-center gap-2 min-h-[44px] px-3 py-2.5 rounded-md text-sm font-semibold bg-accent text-white"
               >
-                <IconHome size={16} className="shrink-0" />
+                <IconHome size={16} className="shrink-0 invert" />
                 <span>{t("site.nav.dashboard")}</span>
               </Link>
             </div>

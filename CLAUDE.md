@@ -22,7 +22,7 @@ node scripts/apply-migration.mjs --sql "<verification query>"                   
 
 ## 2. Versioning
 
-- Bump `package.json` + `package-lock.json` only at explicit release time (see `../CLAUDE.md` §2). Current: **`0.14.2`**.
+- Bump `package.json` + `package-lock.json` only at explicit release time (see `../CLAUDE.md` §2). Current: **`0.15.2`**.
 - PATCH `0.7.0→0.7.1` bugfix/hotfix/copy/asset/dependency · MINOR `0.7.x→0.8.0` new feature/route/module · MAJOR `0.x→1.0.0` breaking change.
 - CI does **not** auto-tag on push (removed 2026-11-10) - this repo is Vercel-deployed and was never meant to carry GitHub Releases; tag/release manually only if asked.
 

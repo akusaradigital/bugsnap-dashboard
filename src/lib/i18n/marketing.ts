@@ -1266,7 +1266,7 @@ export const marketingEn: Dict = {
     "Blurry bug reports waste hours. BugSnap solves them in seconds.",
   "site.bugsnap.split.sub":
     "Capture your screen with automatic console errors, failed network requests, and system specs attached. Stored directly in your Google Drive.",
-  "site.bugsnap.split.cta": "Add to Chrome - Free",
+  "site.bugsnap.split.cta": "Add to Chrome",
   "site.bugsnap.split.chatQa":
     "Hey, the $2,400 Pay button threw an error on checkout staging!",
   "site.bugsnap.split.chatDev":
@@ -3058,7 +3058,7 @@ export const marketingId: Dict = {
     "Bug di-report samar, developer buang waktu nebak-nebak.",
   "site.bugsnap.split.sub":
     "Ambil screenshot atau rekam layar, lalu lampirkan log console, error network, dan spesifikasi perangkat secara otomatis. Semuanya tersimpan aman di Google Drive Anda.",
-  "site.bugsnap.split.cta": "Tambah ke Chrome - Gratis",
+  "site.bugsnap.split.cta": "Tambah ke Chrome",
   "site.bugsnap.split.chatQa":
     "Kak, tombol Bayar $2,400 error pas diklik di staging!",
   "site.bugsnap.split.chatDev":

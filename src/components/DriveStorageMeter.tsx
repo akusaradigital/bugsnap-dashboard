@@ -136,7 +136,7 @@ export default function DriveStorageMeter() {
           {t("drive.storageUsed", { used: formatBytes(used), total: formatBytes(total) })}
         </span>
         <Link
-          href="/settings"
+          href="/folders"
           className="text-[#2563EB] dark:text-[#3B82F6] hover:underline font-medium shrink-0 ml-1"
         >
           {t("drive.manage")}

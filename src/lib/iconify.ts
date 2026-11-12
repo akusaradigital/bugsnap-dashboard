@@ -29,6 +29,8 @@ const OFFLINE_ICON_PATHS: Record<string, string> = {
   "logos:github-icon": "/integrations/github.png",
   "logos:slack-icon": "/integrations/slack.png",
   "logos:jira": "/integrations/jira.png",
+  "logos:linux": "/icons/linux-tux.svg",
+  "lucide:building-2": "/icons/lucide-building-complex.svg",
   "tabler:lock": "/icons/lucide-lock.svg",
   "tabler:x": "/icons/lucide-x.svg",
   "tabler:layout-columns": "/icons/lucide-columns-2.svg",
