@@ -42,7 +42,7 @@ describe("Changelog Parser & Markdown Integrity", () => {
     }
   });
 
-  it("verifies latest releases match known active versions", () => {
+  it("verifies latest releases match known active versions", (t) => {
     const raw = fs.readFileSync(changelogPath, "utf8");
     const releases = parseChangelog(raw);
 
@@ -53,13 +53,24 @@ describe("Changelog Parser & Markdown Integrity", () => {
     // Compare against each project's real version source, not a hardcoded number,
     // so a new release only needs its changelog entry and the source bump.
     const dashboardPkg = JSON.parse(fs.readFileSync(path.resolve("package.json"), "utf8")).version;
-    const extensionRoot = path.resolve(process.cwd(), "..", "bugsnap-extension");
-    const extensionManifest = JSON.parse(fs.readFileSync(path.join(extensionRoot, "manifest.json"), "utf8")).version;
-    const mcpRoot = path.resolve(process.cwd(), "..", "bugsnap-mcp");
-    const mcpPkg = JSON.parse(fs.readFileSync(path.join(mcpRoot, "package.json"), "utf8")).version;
-
     assert.equal(latestDashboard?.version, `v${dashboardPkg}`, `Latest dashboard changelog version should match package.json (${dashboardPkg})`);
-    assert.equal(latestExtension?.version, `v${extensionManifest}`, `Latest extension changelog version should match manifest.json (${extensionManifest})`);
-    assert.equal(latestMcp?.version, `v${mcpPkg}`, `Latest mcp changelog version should match package.json (${mcpPkg})`);
+
+    // The extension and MCP repos are sibling checkouts. CI checks out only this repo,
+    // so those comparisons run only where the siblings exist (same as bugsnap-devtools-parity).
+    const extensionManifestPath = path.resolve(process.cwd(), "..", "bugsnap-extension", "manifest.json");
+    if (fs.existsSync(extensionManifestPath)) {
+      const extensionManifest = JSON.parse(fs.readFileSync(extensionManifestPath, "utf8")).version;
+      assert.equal(latestExtension?.version, `v${extensionManifest}`, `Latest extension changelog version should match manifest.json (${extensionManifest})`);
+    } else {
+      t.diagnostic("bugsnap-extension sibling directory not present in CI environment; skipping extension version check");
+    }
+
+    const mcpPkgPath = path.resolve(process.cwd(), "..", "bugsnap-mcp", "package.json");
+    if (fs.existsSync(mcpPkgPath)) {
+      const mcpPkg = JSON.parse(fs.readFileSync(mcpPkgPath, "utf8")).version;
+      assert.equal(latestMcp?.version, `v${mcpPkg}`, `Latest mcp changelog version should match package.json (${mcpPkg})`);
+    } else {
+      t.diagnostic("bugsnap-mcp sibling directory not present in CI environment; skipping mcp version check");
+    }
   });
 });
