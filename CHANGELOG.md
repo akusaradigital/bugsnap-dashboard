@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [bugsnap-dashboard]
 
+### 2026-11-13 (v0.15.4)
+- **feat**: Translate remaining admin, settings, legal, marketing, and docs UI copy into English and Indonesian through the shared dictionary. Legal pages now load their copy per locale without a full-page reload.
+- **feat**: Add three English blog posts (bug report template, bug report with screenshot and console logs, reproducing bugs with clear steps) with matching cover images.
+- **fix**: Define 24 feature and visual-compare keys that components already referenced but were never written, so those labels no longer show raw key names.
+- **fix**: Remove 579 redundant fallback strings after `t()` calls, since every key is defined in both locales.
+- **fix**: Remove a duplicate `dt.responseBody` entry so the DevTools copy is the only source.
+- **seo**: Add `/docs/integrations` and `/extension/firefox` to the sitemap, add `TechArticle` structured data to the integration docs, and add `dateModified` to blog article structured data.
+- **chore**: Apply the uninstall-feedback and extension-device-connections migrations to the live database (idempotent; verified columns, RLS, and indexes).
+
 ### 2026-11-12 (v0.15.2)
 - **fix**: Re-sync the Captures page's search filter from the URL when navigating from the global top-bar search while already on `/captures`, so the query actually filters the grid instead of being silently ignored
 - **fix**: Point the sidebar Drive "Manage" link and the dashboard summary "Check Storage" action at `/folders` (with consistent blue icon styling) instead of `/settings`
