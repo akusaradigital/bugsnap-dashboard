@@ -471,7 +471,7 @@ export default function FloatingSupport() {
                       setEmail(e.target.value);
                       if (errorMessage) setErrorMessage(null);
                     }}
-                    placeholder="nama@perusahaan.com"
+                    placeholder={t("support.emailPlaceholder")}
                     className="block w-full min-w-0 max-w-full text-xs rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-[#2563EB] transition-colors"
                   />
                 </div>
@@ -560,7 +560,7 @@ export default function FloatingSupport() {
             onClick={dismissPrompt}
             className="text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 p-1 rounded-md transition-colors"
             title={t("support.close")}
-            aria-label="Dismiss"
+            aria-label={t("support.close")}
           >
             <Icon icon="lucide:x" className="w-3 h-3" />
           </button>

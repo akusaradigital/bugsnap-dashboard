@@ -601,13 +601,13 @@ export function IntegrationsDocsContent() {
             <Reveal delay={0}>
               <nav
                 className="inline-flex flex-wrap items-center justify-center gap-1.5 sm:gap-2 text-xs text-slate-500 dark:text-slate-400 mb-5 max-w-full px-2"
-                aria-label="Breadcrumb"
+                aria-label={t("sharedFx.breadcrumb")}
               >
                 <Link
                   href="/"
                   className="hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
-                  {t("landing.home") || "Home"}
+                  {t("landing.home")}
                 </Link>
                 <span className="text-slate-400 dark:text-slate-600" aria-hidden="true">
                   &gt;
@@ -616,31 +616,30 @@ export function IntegrationsDocsContent() {
                   href="/docs"
                   className="hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
-                  {t("docs.title") || "Documentation"}
+                  {t("docs.title")}
                 </Link>
                 <span className="text-slate-400 dark:text-slate-600" aria-hidden="true">
                   &gt;
                 </span>
                 <span className="text-slate-700 dark:text-slate-300 font-medium">
-                  {t("docs.navIntegrations") || "Integrations"}
+                  {t("docs.navIntegrations")}
                 </span>
               </nav>
             </Reveal>
 
             <Reveal delay={0.07}>
               <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12]">
-                {t("docs.integrationsTitle") || "Integration guides &"}
+                {t("docs.integrationsTitle")}
                 <br />
                 <span className="text-blue-600 dark:text-blue-500">
-                  {t("docs.integrationsTitleHighlight") || "setup tutorials"}
+                  {t("docs.integrationsTitleHighlight")}
                 </span>
               </h1>
             </Reveal>
 
             <Reveal delay={0.14}>
               <p className="mt-4 text-sm sm:text-lg text-slate-500 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
-                {t("docs.integrationsSubtitle") ||
-                  "Connect your development and QA toolchain to file actionable bug reports with zero manual typing."}
+                {t("docs.integrationsSubtitle")}
               </p>
             </Reveal>
 
@@ -652,14 +651,14 @@ export function IntegrationsDocsContent() {
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors"
                 >
                   <Icon icon="lucide:settings" className="w-4 h-4" />
-                  {t("docs.goToSettings") || "Configure in Workspace Settings"}
+                  {t("docs.goToSettings")}
                 </Link>
                 <a
                   href="#quick-test"
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold text-xs sm:text-sm shadow-2xs transition-colors"
                 >
                   <Icon icon="lucide:shield-check" className="w-4 h-4 text-emerald-500" />
-                  {t("docs.howWeTest") || "Universal Credential Probe"}
+                  {t("docs.howWeTest")}
                 </a>
               </div>
             </Reveal>
@@ -678,19 +677,18 @@ export function IntegrationsDocsContent() {
                 <div className="flex items-center gap-2">
                   <Icon icon="lucide:check-circle-2" className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                   <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-white">
-                    {t("docs.probeTitle") || "Pre-flight Verification Engine Built-In"}
+                    {t("docs.probeTitle")}
                   </h2>
                 </div>
                 <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed">
-                  {t("docs.probeDesc") ||
-                    "Every integration in BugSnap features a non-mutating 'Test Connection' probe. It validates your tokens, project keys, and database permissions using read-only API calls -without spamming your issue trackers with fake test tickets or consuming chat prompt quotas."}
+                  {t("docs.probeDesc")}
                 </p>
               </div>
               <Link
                 href="/settings"
                 className="shrink-0 text-xs font-semibold px-3 py-1.5 rounded-lg bg-blue-600 dark:bg-blue-500 border border-blue-600 dark:border-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 shadow-2xs transition-colors"
               >
-                {t("docs.openSettings") || "Test in Settings "}
+                {t("docs.openSettings")}
               </Link>
             </div>
           </Reveal>
@@ -700,11 +698,11 @@ export function IntegrationsDocsContent() {
             {/* Category tabs */}
             <div role="tablist" aria-label="Integration categories" className="flex flex-wrap gap-1.5">
               {[
-                { id: "all", label: t("docs.catAll") || "All" },
-                { id: "tracker", label: t("docs.catTrackers") || "Issue Trackers" },
-                { id: "alert", label: t("docs.catAlerts") || "Chat & Alerts" },
-                { id: "doc", label: t("docs.catDocs") || "Docs & Productivity" },
-                { id: "ai", label: t("docs.catAi") || "AI & Automation" },
+                { id: "all", label: t("docs.catAll") },
+                { id: "tracker", label: t("docs.catTrackers") },
+                { id: "alert", label: t("docs.catAlerts") },
+                { id: "doc", label: t("docs.catDocs") },
+                { id: "ai", label: t("docs.catAi") },
               ].map((tab) => (
                 <button
                   key={tab.id}
@@ -731,7 +729,7 @@ export function IntegrationsDocsContent() {
               />
               <input
                 type="text"
-                placeholder={t("docs.searchIntegrations") || "Search integrations..."}
+                placeholder={t("docs.searchIntegrations")}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full text-xs rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 pl-9 pr-3 py-2 text-slate-900 dark:text-slate-100 placeholder:text-slate-400 focus:outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500/20"
@@ -789,7 +787,7 @@ export function IntegrationsDocsContent() {
                       className="shrink-0 inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-1.5 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300 hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors"
                     >
                       <Icon icon="lucide:plug" className="w-3.5 h-3.5" />
-                      {t("docs.connectInSettings") || "Connect in Settings"}
+                      {t("docs.connectInSettings")}
                     </Link>
                   </div>
 
@@ -798,7 +796,7 @@ export function IntegrationsDocsContent() {
                     {/* Fields */}
                     <div className="rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 p-4 space-y-2 min-w-0">
                       <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                        {t("docs.requiredFields") || "Configured Fields"}
+                        {t("docs.requiredFields")}
                       </h3>
                       <ul className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
                         {item.fields.map((f) => (
@@ -820,7 +818,7 @@ export function IntegrationsDocsContent() {
                     {/* Scopes & Token URL */}
                     <div className="rounded-xl bg-slate-50 dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 p-4 space-y-2 min-w-0">
                       <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                        {t("docs.requiredScopes") || "Permissions & Scope"}
+                        {t("docs.requiredScopes")}
                       </h3>
                       <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
                         {details?.scopeSummary || "Personal API token or incoming webhook endpoint."}
@@ -845,7 +843,7 @@ export function IntegrationsDocsContent() {
                   {details?.steps && details.steps.length > 0 && (
                     <div className="space-y-3">
                       <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                        {t("docs.stepByStep") || "Step-by-Step Setup Guide"}
+                        {t("docs.stepByStep")}
                       </h3>
                       <ol className="space-y-2.5">
                         {details.steps.map((step, idx) => (
@@ -866,7 +864,7 @@ export function IntegrationsDocsContent() {
                     <div className="space-y-2">
                       <div className="flex items-center justify-between">
                         <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                          {t("docs.samplePayload") || "Delivered Payload Preview"}
+                          {t("docs.samplePayload")}
                         </h3>
                         <button
                           type="button"
@@ -889,7 +887,7 @@ export function IntegrationsDocsContent() {
                   {details?.troubleshooting && details.troubleshooting.length > 0 && (
                     <div className="space-y-2 pt-2 border-t border-slate-100 dark:border-slate-800/80">
                       <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                        {t("docs.troubleshooting") || "Common Issues & Resolutions"}
+                        {t("docs.troubleshooting")}
                       </h3>
                       <div className="space-y-2">
                         {details.troubleshooting.map((item, idx) => (

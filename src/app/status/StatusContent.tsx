@@ -142,8 +142,8 @@ export function StatusContent() {
 
   return (
     <StaticShell
-      title={t("status.title") || "System status &"}
-      titleHighlight={t("status.titleHighlight") || "service health"}
+      title={t("status.title")}
+      titleHighlight={t("status.titleHighlight")}
       breadcrumb={isId ? "Status Sistem" : "Status"}
       subtitle={t("status.subtitle")}
       hideDivider
@@ -282,7 +282,7 @@ export function StatusContent() {
           <div className="rounded-2xl sm:rounded-3xl border border-blue-100 dark:border-blue-900/40 bg-[#f0f6ff] dark:bg-blue-950/25 p-6 sm:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm min-w-0">
             <div className="space-y-1.5 max-w-xl min-w-0">
               <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                {t("status.ctaEyebrow") || "READY TO GET STARTED?"}
+                {t("status.ctaEyebrow")}
               </div>
               <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                 {t("status.ctaTitle")}
@@ -299,7 +299,7 @@ export function StatusContent() {
                 className="inline-flex items-center gap-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold px-6 py-3.5 rounded-xl shadow-md transition-all hover:scale-[1.02] active:scale-[0.99] shrink-0 touch-manipulation whitespace-nowrap"
               >
                 <Icon icon="logos:chrome" className="w-5 h-5 shrink-0" aria-hidden="true" />
-                <span>{t("extension.addToChrome") || "Add to Chrome"}</span>
+                <span>{t("extension.addToChrome")}</span>
               </a>
               <a
                 href={FIREFOX_STORE_URL}

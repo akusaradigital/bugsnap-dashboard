@@ -39,31 +39,30 @@ export function SolutionsContent() {
                 href="/"
                 className="hover:text-slate-900 dark:hover:text-white transition-colors"
               >
-                {t("landing.home") || "Home"}
+                {t("landing.home")}
               </Link>
               <span className="text-slate-400 dark:text-slate-600 font-normal" aria-hidden="true">
                 /
               </span>
               <span className="text-slate-900 dark:text-white font-medium">
-                {t("site.nav.solutions") || "Solutions"}
+                {t("site.nav.solutions")}
               </span>
             </nav>
           </Reveal>
 
           <Reveal delay={0.06}>
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12]">
-              {t("solutions.title") || "Clarity for every role"}
+              {t("solutions.title")}
               <br />
               <span className="text-emerald-600 dark:text-emerald-400">
-                {t("solutions.titleHighlight") || "in the debugging loop"}
+                {t("solutions.titleHighlight")}
               </span>
             </h1>
           </Reveal>
 
           <Reveal delay={0.12}>
             <p className="mt-4 sm:mt-5 text-sm sm:text-base lg:text-lg text-slate-500 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
-              {t("solutions.subtitle") ||
-                "From initial discovery to root-cause fix, BugSnap removes the friction between reporters, engineers, and product managers."}
+              {t("solutions.subtitle")}
             </p>
           </Reveal>
         </div>
@@ -75,15 +74,13 @@ export function SolutionsContent() {
             {/* Left: Text */}
             <Reveal delay={0.1} className="lg:col-span-6 min-w-0 space-y-4 sm:space-y-5">
               <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                {t("solutions.qa.badge") || "QUALITY ASSURANCE"}
+                {t("solutions.qa.badge")}
               </div>
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
-                {t("solutions.qa.role") ||
-                  "File airtight bug reports in seconds, not minutes"}
+                {t("solutions.qa.role")}
               </h2>
               <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 leading-relaxed max-w-lg">
-                {t("solutions.qa.desc") ||
-                  "Stop typing. BugSnap captures the exact technical context automatically -from screenshots to console logs."}
+                {t("solutions.qa.desc")}
               </p>
               <ul className="space-y-3 pt-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium">
                 <li className="flex items-start gap-2.5">
@@ -92,8 +89,7 @@ export function SolutionsContent() {
                     className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5 stroke-[2.5]"
                   />
                   <span>
-                    {t("solutions.qa.point1") ||
-                      "Record with hotkeys (Ctrl+Shift+F)"}
+                    {t("solutions.qa.point1")}
                   </span>
                 </li>
                 <li className="flex items-start gap-2.5">
@@ -102,8 +98,7 @@ export function SolutionsContent() {
                     className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5 stroke-[2.5]"
                   />
                   <span>
-                    {t("solutions.qa.point2") ||
-                      "Automatic capture of console errors, network headers, and SPA memory"}
+                    {t("solutions.qa.point2")}
                   </span>
                 </li>
                 <li className="flex items-start gap-2.5">
@@ -112,8 +107,7 @@ export function SolutionsContent() {
                     className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5 stroke-[2.5]"
                   />
                   <span>
-                    {t("solutions.qa.point3") ||
-                      "Auto-generates runnable Playwright regression tests"}
+                    {t("solutions.qa.point3")}
                   </span>
                 </li>
               </ul>
@@ -330,15 +324,13 @@ export function SolutionsContent() {
               className="lg:col-span-6 min-w-0 space-y-4 sm:space-y-5 order-1 lg:order-2"
             >
               <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                {t("solutions.dev.badge") || "ENGINEERING"}
+                {t("solutions.dev.badge")}
               </div>
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
-                {t("solutions.dev.role") ||
-                  "Fix bugs on the first pass with full diagnostic context"}
+                {t("solutions.dev.role")}
               </h2>
               <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 leading-relaxed max-w-lg">
-                {t("solutions.dev.desc") ||
-                  "Inspect HTTP status codes, request bodies, stack traces, and device specs side-by-side with video. Never ask for \"more info\" again."}
+                {t("solutions.dev.desc")}
               </p>
               <ul className="space-y-3 pt-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium">
                 <li className="flex items-start gap-2.5">
@@ -347,8 +339,7 @@ export function SolutionsContent() {
                     className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5 stroke-[2.5]"
                   />
                   <span>
-                    {t("solutions.dev.point1") ||
-                      "Full, unedited sessions with complete stack traces"}
+                    {t("solutions.dev.point1")}
                   </span>
                 </li>
                 <li className="flex items-start gap-2.5">
@@ -357,8 +348,7 @@ export function SolutionsContent() {
                     className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5 stroke-[2.5]"
                   />
                   <span>
-                    {t("solutions.dev.point2") ||
-                      "Exact HTTP payloads, headers, and responses"}
+                    {t("solutions.dev.point2")}
                   </span>
                 </li>
                 <li className="flex items-start gap-2.5">
@@ -367,8 +357,7 @@ export function SolutionsContent() {
                     className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5 stroke-[2.5]"
                   />
                   <span>
-                    {t("solutions.dev.point3") ||
-                      "Native MCP server lets AI agents read and fix bugs directly"}
+                    {t("solutions.dev.point3")}
                   </span>
                 </li>
               </ul>
@@ -380,15 +369,13 @@ export function SolutionsContent() {
             {/* Left: Text */}
             <Reveal delay={0.1} className="lg:col-span-6 min-w-0 space-y-4 sm:space-y-5">
               <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                {t("solutions.pm.badge") || "PRODUCT MANAGEMENT"}
+                {t("solutions.pm.badge")}
               </div>
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
-                {t("solutions.pm.role") ||
-                  "Communicate visual anomalies and edge cases with precision"}
+                {t("solutions.pm.role")}
               </h2>
               <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 leading-relaxed max-w-lg">
-                {t("solutions.pm.desc") ||
-                  "Annotate screenshots, add comments or draw directly on the screen. Share, track, and manage issues -all in one place."}
+                {t("solutions.pm.desc")}
               </p>
               <ul className="space-y-3 pt-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium">
                 <li className="flex items-start gap-2.5">
@@ -397,8 +384,7 @@ export function SolutionsContent() {
                     className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5 stroke-[2.5]"
                   />
                   <span>
-                    {t("solutions.pm.point1") ||
-                      "On-screen callouts, arrows, and visual markers"}
+                    {t("solutions.pm.point1")}
                   </span>
                 </li>
                 <li className="flex items-start gap-2.5">
@@ -407,8 +393,7 @@ export function SolutionsContent() {
                     className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5 stroke-[2.5]"
                   />
                   <span>
-                    {t("solutions.pm.point2") ||
-                      "Interactive web links that open directly to issues"}
+                    {t("solutions.pm.point2")}
                   </span>
                 </li>
                 <li className="flex items-start gap-2.5">
@@ -417,8 +402,7 @@ export function SolutionsContent() {
                     className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5 stroke-[2.5]"
                   />
                   <span>
-                    {t("solutions.pm.point3") ||
-                      "Private Google Drive links without video file upload limits"}
+                    {t("solutions.pm.point3")}
                   </span>
                 </li>
               </ul>
@@ -584,15 +568,13 @@ export function SolutionsContent() {
               className="lg:col-span-6 min-w-0 space-y-4 sm:space-y-5 order-1 lg:order-2"
             >
               <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                {t("solutions.support.badge") || "CUSTOMER SUPPORT"}
+                {t("solutions.support.badge")}
               </div>
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
-                {t("solutions.support.role") ||
-                  "Turn customer issues into actionable engineering tickets"}
+                {t("solutions.support.role")}
               </h2>
               <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 leading-relaxed max-w-lg">
-                {t("solutions.support.desc") ||
-                  "Gather the technical details silently in the background without needing customer-facing agents to understand DevTools."}
+                {t("solutions.support.desc")}
               </p>
               <ul className="space-y-3 pt-2 text-xs sm:text-sm text-slate-700 dark:text-slate-300 font-medium">
                 <li className="flex items-start gap-2.5">
@@ -601,8 +583,7 @@ export function SolutionsContent() {
                     className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5 stroke-[2.5]"
                   />
                   <span>
-                    {t("solutions.support.point1") ||
-                      "Background diagnostic capture without asking users for DevTools"}
+                    {t("solutions.support.point1")}
                   </span>
                 </li>
                 <li className="flex items-start gap-2.5">
@@ -611,8 +592,7 @@ export function SolutionsContent() {
                     className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5 stroke-[2.5]"
                   />
                   <span>
-                    {t("solutions.support.point2") ||
-                      "Export complete ticket summaries to helpdesk systems"}
+                    {t("solutions.support.point2")}
                   </span>
                 </li>
                 <li className="flex items-start gap-2.5">
@@ -621,8 +601,7 @@ export function SolutionsContent() {
                     className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5 stroke-[2.5]"
                   />
                   <span>
-                    {t("solutions.support.point3") ||
-                      "One share link contains recordings, logs, and network details"}
+                    {t("solutions.support.point3")}
                   </span>
                 </li>
               </ul>
@@ -634,14 +613,13 @@ export function SolutionsContent() {
             <div className="rounded-2xl sm:rounded-3xl border border-blue-100 dark:border-blue-900/40 bg-[#f0f6ff] dark:bg-blue-950/25 p-6 sm:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm min-w-0">
               <div className="space-y-1.5 max-w-xl min-w-0">
                 <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                  {t("solutions.ctaEyebrow") || "READY TO SHIP FASTER?"}
+                  {t("solutions.ctaEyebrow")}
                 </div>
                 <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                  {t("solutions.ctaTitle") || "Equip your whole team with BugSnap"}
+                  {t("solutions.ctaTitle")}
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                  {t("solutions.ctaDesc") ||
-                    "Free. Saves directly to your team's Google Drive. No server lock-in."}
+                  {t("solutions.ctaDesc")}
                 </p>
               </div>
 
@@ -657,7 +635,7 @@ export function SolutionsContent() {
                     className="w-5 h-5 shrink-0"
                     aria-hidden="true"
                   />
-                  <span>{t("extension.addToChrome") || "Add to Chrome"}</span>
+                  <span>{t("extension.addToChrome")}</span>
                 </a>
                 <a
                   href={FIREFOX_STORE_URL}

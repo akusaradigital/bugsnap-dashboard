@@ -15,71 +15,65 @@ export function AboutContent() {
 
   const milestones = [
     {
-      metric: t("about.stat1Value") || "0 KB",
-      label: t("about.stat1Label") || "User media stored on BugSnap servers",
-      detail: t("about.stat1Detail") || "Drive-to-Drive sharing architecture",
+      metric: t("about.stat1Value"),
+      label: t("about.stat1Label"),
+      detail: t("about.stat1Detail"),
     },
     {
-      metric: t("about.stat2Value") || "<25 MB",
-      label: t("about.stat2Label") || "Active memory footprint in Chrome",
-      detail: t("about.stat2Detail") || "Minimal V8 background worker design",
+      metric: t("about.stat2Value"),
+      label: t("about.stat2Label"),
+      detail: t("about.stat2Detail"),
     },
     {
-      metric: t("about.stat3Value") || "100%",
-      label: t("about.stat3Label") || "Client-side telemetry redaction",
+      metric: t("about.stat3Value"),
+      label: t("about.stat3Label"),
       detail:
-        t("about.stat3Detail") || "Sensitive tokens & passwords excluded in RAM",
+        t("about.stat3Detail"),
     },
     {
-      metric: t("about.stat4Value") || "Full Context",
-      label: t("about.stat4Label") || "Full reproduction capture",
+      metric: t("about.stat4Value"),
+      label: t("about.stat4Label"),
       detail:
-        t("about.stat4Detail") || "Full stack trace, network & URL included",
+        t("about.stat4Detail"),
     },
   ];
 
   const corePrinciples = [
     {
       title:
-        t("about.principle1Title") || "Data Sovereignty Over Cloud Lock-In",
+        t("about.principle1Title"),
       desc:
-        t("about.principle1Desc") ||
-        "Your internal screen recordings and reproduction videos should never be held hostage on proprietary SaaS clouds. Files remain directly in your enterprise Google Drive under your own organization's compliance boundaries.",
+        t("about.principle1Desc"),
       icon: "lucide:hard-drive",
     },
     {
-      title: t("about.principle2Title") || "Zero-Overhead Engineering",
+      title: t("about.principle2Title"),
       desc:
-        t("about.principle2Desc") ||
-        "Modern browser extensions shouldn't consume gigabytes of RAM or impact heavy loading scripts in your CI/CD. BugSnap is built strictly on Chrome Manifest V3, consuming under 25MB RAM and staying dormant when not recording.",
+        t("about.principle2Desc"),
       icon: "lucide:cpu",
     },
     {
-      title: t("about.principle3Title") || "Honest, Respectful Tooling",
+      title: t("about.principle3Title"),
       desc:
-        t("about.principle3Desc") ||
-        "We don't believe in bait and switch pricing or crippled free tiers. BugSnap provides real utility for developers and QA engineers from day one without holding back debugging telemetry behind paywalls.",
+        t("about.principle3Desc"),
       icon: "lucide:heart-handshake",
     },
     {
       title:
-        t("about.principle4Title") ||
-        "Global Standards, Thoughtful Craftsmanship",
+        t("about.principle4Title"),
       desc:
-        t("about.principle4Desc") ||
-        "Engineered by Akusara Digital, BugSnap is built for distributed engineering teams worldwide who value speed, precision, and respectful software architecture.",
+        t("about.principle4Desc"),
       icon: "lucide:box",
     },
   ];
 
   return (
     <StaticShell
-      title={t("about.title") || "About the team"}
-      titleHighlight={t("about.titleHighlight") || "behind BugSnap"}
+      title={t("about.title")}
+      titleHighlight={t("about.titleHighlight")}
       breadcrumb={isId ? "Tentang Kami" : "About"}
       subtitle={
-        t("about.subtitle") ||
-        "Built by Akusara Digital to make bug reporting clear and direct for developers, QA, and product teams."
+        t("about.subtitle")
       }
       ambientGlow
       hideDivider
@@ -91,11 +85,10 @@ export function AboutContent() {
           <div className="rounded-2xl sm:rounded-3xl border border-site-border bg-site-surface p-6 sm:p-10 space-y-5 shadow-xs">
             <div className="space-y-4">
               <span className="inline-block text-xs font-bold uppercase tracking-wider text-[#16a34a] dark:text-emerald-400 px-3 py-1 rounded-full bg-[#eefcf3] dark:bg-emerald-950/40">
-                {t("about.originTag") || "OUR ORIGIN"}
+                {t("about.originTag")}
               </span>
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
-                {t("about.headline") ||
-                  "From Click to Fix: Eliminating Friction in Bug Reports"}
+                {t("about.headline")}
               </h2>
               <p className="text-sm sm:text-base text-site-text-2 leading-relaxed">
                 {t("about.originP1") || (
@@ -141,14 +134,13 @@ export function AboutContent() {
         <div className="space-y-6 pt-2">
           <div className="text-center max-w-xl mx-auto space-y-2">
             <span className="text-xs font-bold uppercase tracking-widest text-[#16a34a] dark:text-emerald-400">
-              {t("about.principlesTag") || "CORE PRINCIPLES"}
+              {t("about.principlesTag")}
             </span>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug mt-1">
-              {t("about.principlesTitle") || "How We Build Software"}
+              {t("about.principlesTitle")}
             </h2>
             <p className="text-xs sm:text-sm text-site-text-2 max-w-xl mx-auto">
-              {t("about.principlesSubtitle") ||
-                "Our engineering values reflect the kind of tools we want to use ourselves every day."}
+              {t("about.principlesSubtitle")}
             </p>
           </div>
 
@@ -173,43 +165,40 @@ export function AboutContent() {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <span className="text-xs font-bold uppercase tracking-wider text-[#16a34a] dark:text-emerald-400">
-                  {t("about.complianceTag") || "COMPLIANCE & GOVERNANCE"}
+                  {t("about.complianceTag")}
                 </span>
                 <h3 className="font-extrabold text-xl sm:text-2xl text-site-text tracking-tight mt-0.5">
-                  {t("about.complianceTitle") || "Regulatory & Legal Disclosures"}
+                  {t("about.complianceTitle")}
                 </h3>
               </div>
               <span className="inline-flex items-center px-3.5 py-1 rounded-full bg-[#dcfce7] dark:bg-emerald-950/50 text-[#16a34a] dark:text-emerald-400 text-xs font-bold tracking-wide self-start sm:self-auto">
-                {t("about.complianceBadge") || "Statutory Compliance"}
+                {t("about.complianceBadge")}
               </span>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-site-text-2 leading-relaxed">
               <div className="p-4 sm:p-5 rounded-2xl bg-site-surface border border-site-border-subtle space-y-1.5 shadow-2xs">
                 <div className="font-bold text-site-text text-sm">
-                  {t("about.complianceCol1Title") || "Consumer Protection"}
+                  {t("about.complianceCol1Title")}
                 </div>
                 <p>
-                  {t("about.complianceCol1Desc") ||
-                    "Built with digital consumer protection standards. Transparent pricing, 14-day refund guarantee, and responsive customer support."}
+                  {t("about.complianceCol1Desc")}
                 </p>
               </div>
               <div className="p-4 sm:p-5 rounded-2xl bg-site-surface border border-site-border-subtle space-y-1.5 shadow-2xs">
                 <div className="font-bold text-site-text text-sm">
-                  {t("about.complianceCol2Title") || "Data Privacy (GDPR Aligned)"}
+                  {t("about.complianceCol2Title")}
                 </div>
                 <p>
-                  {t("about.complianceCol2Desc") ||
-                    "Aligned with GDPR and global privacy standards. Media files remain directly to your Google Drive (Zero Server Storage). Self-serve data erasure."}
+                  {t("about.complianceCol2Desc")}
                 </p>
               </div>
               <div className="p-4 sm:p-5 rounded-2xl bg-site-surface border border-site-border-subtle space-y-1.5 shadow-2xs">
                 <div className="font-bold text-site-text text-sm">
-                  {t("about.complianceCol3Title") || "Security & Responsible Disclosure"}
+                  {t("about.complianceCol3Title")}
                 </div>
                 <p>
-                  {t("about.complianceCol3Desc") ||
-                    "Engineered with real-world security standards. Standardized vulnerability disclosure policy via RFC 9116 security.txt."}
+                  {t("about.complianceCol3Desc")}
                 </p>
               </div>
             </div>
@@ -221,14 +210,13 @@ export function AboutContent() {
           <div className="rounded-2xl sm:rounded-3xl border border-blue-100 dark:border-blue-900/40 bg-[#f0f6ff] dark:bg-blue-950/25 p-6 sm:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm min-w-0">
             <div className="space-y-1.5 max-w-xl min-w-0">
               <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                {t("about.ctaEyebrow") || "READY TO GET STARTED?"}
+                {t("about.ctaEyebrow")}
               </div>
               <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                {t("about.ctaTitle") || "Start capturing and resolving bugs with BugSnap"}
+                {t("about.ctaTitle")}
               </h3>
               <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                {t("about.ctaSubtitle") ||
-                  "Install the Chrome extension and go from bug discovery to code commit in seconds."}
+                {t("about.ctaSubtitle")}
               </p>
             </div>
 
@@ -240,7 +228,7 @@ export function AboutContent() {
                 className="inline-flex items-center gap-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold px-6 py-3.5 rounded-xl shadow-md transition-all hover:scale-[1.02] active:scale-[0.99] shrink-0 touch-manipulation whitespace-nowrap"
               >
                 <Icon icon="logos:chrome" className="w-5 h-5 shrink-0" aria-hidden="true" />
-                <span>{t("about.ctaButton") || "Add to Chrome - Free"}</span>
+                <span>{t("about.ctaButton")}</span>
               </a>
               <a
                 href={FIREFOX_STORE_URL}

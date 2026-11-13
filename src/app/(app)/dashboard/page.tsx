@@ -44,6 +44,7 @@ function formatBytes(bytes: number | null): string {
 
 function getBrowserIcon(name: string): string {
   const n = name.toLowerCase();
+  if (n.includes("brave")) return "logos:brave";
   if (n.includes("chrome")) return "logos:chrome";
   if (n.includes("edge") || n.includes("edg")) return "logos:microsoft-edge";
   if (n.includes("firefox")) return "logos:firefox";
@@ -223,7 +224,8 @@ function DashboardContent() {
       for (const item of data) {
         const b = (item.browser || "Unknown").toLowerCase();
         let bKey = "Other";
-        if (b.includes("chrome") && !b.includes("edg")) bKey = "Chrome";
+        if (b.includes("brave")) bKey = "Brave";
+        else if (b.includes("chrome") && !b.includes("edg")) bKey = "Chrome";
         else if (b.includes("edg")) bKey = "Edge";
         else if (b.includes("safari") && !b.includes("chrome")) bKey = "Safari";
         else if (b.includes("firefox")) bKey = "Firefox";
@@ -244,6 +246,7 @@ function DashboardContent() {
         Edge: "bg-cyan-500",
         Safari: "bg-sky-500",
         Firefox: "bg-orange-500",
+        Brave: "bg-orange-600",
         Other: "bg-zinc-400",
       };
       const browserBreakdown = Array.from(browserMap.entries())

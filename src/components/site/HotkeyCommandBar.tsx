@@ -94,7 +94,7 @@ export function HotkeyCommandBar() {
           </div>
           <div className="flex items-center gap-1.5 min-w-0 text-xs font-semibold text-site-text">
             <Icon icon="logos:chrome" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-            <span className="truncate">Chrome Extension Shortcuts</span>
+            <span className="truncate">{t("siteFx.extShortcuts")}</span>
           </div>
         </div>
 
@@ -207,7 +207,7 @@ export function HotkeyCommandBar() {
             type="button"
             onClick={handleCopyUrl}
             className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-semibold bg-site-surface border border-site-border hover:bg-site-surface-2 text-site-text transition-colors cursor-pointer shrink-0"
-            title="Salin chrome://extensions/shortcuts ke clipboard"
+            title={t("siteFx.copyShortcuts")}
           >
             <Icon
               icon={copied ? "lucide:check" : "lucide:copy"}

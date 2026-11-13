@@ -92,7 +92,7 @@ export function UpgradeModal({
         <button
           onClick={onClose}
           type="button"
-          aria-label="Close"
+          aria-label={t("upgradeFx.close")}
           className="absolute top-4 sm:top-6 left-4 sm:left-6 p-2 rounded-full text-neutral-400 hover:text-neutral-700 dark:hover:text-neutral-200 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors"
         >
           <Icon icon="lucide:x" className="w-5 h-5 shrink-0" />
@@ -101,7 +101,7 @@ export function UpgradeModal({
         {/* Heading */}
         <div className="text-center pt-2 pb-6">
           <h2 id="upgrade-modal-title" className="text-2xl sm:text-3xl font-extrabold tracking-tight text-neutral-900 dark:text-white">
-            Level-up with advanced features
+            {t("upgradeFx.levelUp")}
           </h2>
         </div>
 
@@ -130,7 +130,7 @@ export function UpgradeModal({
           <div className="flex items-center gap-2">
             <Icon icon="lucide:globe" className="w-3.5 h-3.5 shrink-0 text-[#2563EB] dark:text-[#3B82F6]" />
             <span className="text-neutral-700 dark:text-neutral-300">
-              <strong>Regional Pricing:</strong> Indonesian creators get 40% off with code <code className="font-mono bg-white dark:bg-neutral-800 px-1 py-0.5 rounded font-bold text-[#2563EB] dark:text-[#3B82F6]">INDO40</code>
+              <strong>{t("upgradeFx.regionalPricing")}</strong> {t("upgradeFx.regionalDesc")} <code className="font-mono bg-white dark:bg-neutral-800 px-1 py-0.5 rounded font-bold text-[#2563EB] dark:text-[#3B82F6]">INDO40</code>
             </span>
           </div>
           <button
@@ -141,7 +141,7 @@ export function UpgradeModal({
             }}
             className="text-[#2563EB] dark:text-[#3B82F6] font-bold hover:underline shrink-0 text-left sm:text-right"
           >
-            Apply Code
+            {t("upgradeFx.applyCode")}
           </button>
         </div>
 
@@ -152,13 +152,13 @@ export function UpgradeModal({
           <div className="p-4 sm:p-8 flex flex-col justify-between rounded-2xl bg-neutral-50 dark:bg-neutral-900/60">
             <div>
               <div className="flex items-baseline justify-between">
-                <h3 className="text-xl font-bold text-neutral-900 dark:text-white">Free</h3>
+                <h3 className="text-xl font-bold text-neutral-900 dark:text-white">{t("upgradeFx.freeName")}</h3>
               </div>
               <div className="mt-3 flex items-baseline gap-1">
                 <span className="text-3xl sm:text-4xl font-extrabold text-neutral-900 dark:text-white">$0</span>
               </div>
               <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-3 pb-4 border-b border-neutral-200/80 dark:border-neutral-800">
-                Free for everyone
+                {t("upgradeFx.freeForEveryone")}
               </p>
 
               <div className="my-6">
@@ -167,13 +167,13 @@ export function UpgradeModal({
                   disabled
                   className="w-full py-2.5 px-4 rounded-xl bg-neutral-200/70 dark:bg-neutral-800 text-neutral-500 dark:text-neutral-400 font-semibold text-sm cursor-default text-center"
                 >
-                  {currentPlan === "free" ? "Your current plan" : "Free"}
+                  {currentPlan === "free" ? t("upgradeFx.currentPlan") : t("upgradeFx.freeName")}
                 </button>
               </div>
 
               <div>
                 <p className="text-xs font-semibold text-neutral-900 dark:text-white mb-4">
-                  Basic features
+                  {t("upgradeFx.basicFeatures")}
                 </p>
                 <ul className="space-y-3.5 text-xs text-neutral-700 dark:text-neutral-300">
                   <li className="flex items-center gap-3">
@@ -186,15 +186,15 @@ export function UpgradeModal({
                   </li>
                   <li className="flex items-center gap-3">
                     <Icon icon="lucide:clock" className="w-4 h-4 text-neutral-600 dark:text-neutral-400 shrink-0" aria-hidden="true" />
-                    <span>5 minute recording time</span>
+                    <span>{t("upgradeFx.feat5min")}</span>
                   </li>
                   <li className="flex items-center gap-3">
                     <Icon icon="lucide:layout-grid" className="w-4 h-4 text-neutral-600 dark:text-neutral-400 shrink-0" aria-hidden="true" />
-                    <span>Connect Jira, Linear and more</span>
+                    <span>{t("upgradeFx.featJira")}</span>
                   </li>
                   <li className="flex items-center gap-3">
                     <Icon icon="lucide:code-2" className="w-4 h-4 text-neutral-600 dark:text-neutral-400 shrink-0" aria-hidden="true" />
-                    <span>Debug via Console & Network Logs</span>
+                    <span>{t("upgradeFx.featLogs")}</span>
                   </li>
                 </ul>
               </div>
@@ -205,7 +205,7 @@ export function UpgradeModal({
           <div className="p-4 sm:p-8 flex flex-col justify-between rounded-2xl bg-white dark:bg-neutral-900 shadow-sm border border-neutral-200/80 dark:border-neutral-800">
             <div>
               <div className="flex items-baseline justify-between">
-                <h3 className="text-xl font-bold text-neutral-900 dark:text-white">Team</h3>
+                <h3 className="text-xl font-bold text-neutral-900 dark:text-white">{t("upgradeFx.teamName")}</h3>
               </div>
               <div className="mt-3 flex items-baseline gap-1.5">
                 <span className="text-3xl sm:text-4xl font-extrabold text-neutral-900 dark:text-white">
@@ -246,7 +246,7 @@ export function UpgradeModal({
                     onClick={() => setShowPromoInput(true)}
                     className="text-neutral-600 dark:text-neutral-400 hover:text-[#2563EB] dark:hover:text-[#3B82F6] underline flex items-center gap-1"
                   >
-                    <span>Have a promo code?</span>
+                    <span>{t("upgradeFx.havePromo")}</span>
                   </button>
                 ) : (
                   <div className="flex items-center gap-2 animate-in fade-in">
@@ -254,7 +254,7 @@ export function UpgradeModal({
                       type="text"
                       value={promoCode}
                       onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                      placeholder="e.g. INDO40 / LAUNCH50"
+                      placeholder={t("upgradeFx.promoPlaceholder")}
                       className="w-full px-2.5 py-1.5 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-950 text-xs text-foreground uppercase tracking-wide font-mono focus:outline-none focus:ring-1 focus:ring-[#2563EB]"
                     />
                     {promoCode && (
@@ -317,28 +317,28 @@ export function UpgradeModal({
 
               <div>
                 <p className="text-xs font-semibold text-neutral-900 dark:text-white mb-4">
-                  Everything in Free, and
+                  {t("upgradeFx.everythingFree")}
                 </p>
                 <ul className="space-y-3.5 text-xs text-neutral-700 dark:text-neutral-300">
                   <li className="flex items-center gap-3 font-medium">
                     <Icon icon="lucide:play-circle" className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                    <span>Unlimited Captures & Jams</span>
+                    <span>{t("upgradeFx.featUnlimited")}</span>
                   </li>
                   <li className="flex items-center gap-3 font-medium">
                     <Icon icon="lucide:link" className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                    <span>150 Recording Links</span>
+                    <span>{t("upgradeFx.feat150Links")}</span>
                   </li>
                   <li className="flex items-center gap-3 font-medium">
                     <Icon icon="lucide:clock" className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-                    <span>15 minute recording time</span>
+                    <span>{t("upgradeFx.feat15min")}</span>
                   </li>
                   <li className="flex items-center gap-3 font-medium">
                     <Icon icon="lucide:sparkles" className="w-4 h-4 text-amber-500 shrink-0" />
-                    <span>200 AI bug summaries</span>
+                    <span>{t("upgradeFx.feat200ai")}</span>
                   </li>
                   <li className="flex items-center gap-3 font-medium">
                     <Icon icon="lucide:shield" className="w-4 h-4 text-[#2563EB] dark:text-[#3B82F6] shrink-0" />
-                    <span>Access controls & Custom Branding</span>
+                    <span>{t("upgradeFx.featAccess")}</span>
                   </li>
                 </ul>
 
@@ -348,7 +348,7 @@ export function UpgradeModal({
                     onClick={() => setShowAllFeatures(!showAllFeatures)}
                     className="text-xs text-[#2563EB] dark:text-[#3B82F6] font-semibold hover:underline flex items-center gap-1 cursor-pointer"
                   >
-                    <span>{showAllFeatures ? "Hide feature details" : "See all features"}</span>
+                    <span>{showAllFeatures ? t("upgradeFx.hideDetails") : t("upgradeFx.seeAll")}</span>
                     
                   </button>
 
@@ -356,23 +356,23 @@ export function UpgradeModal({
                     <div className="mt-3 p-3 rounded-xl bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 text-[11px] text-neutral-600 dark:text-neutral-400 space-y-1.5 animate-in fade-in">
                       <p className="flex items-center gap-1.5">
                         <Icon icon="lucide:check" className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                        <span>Unlimited team workspace seats</span>
+                        <span>{t("upgradeFx.featSeats")}</span>
                       </p>
                       <p className="flex items-center gap-1.5">
                         <Icon icon="lucide:check" className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                        <span>Remove BugSnap watermark</span>
+                        <span>{t("upgradeFx.featWatermark")}</span>
                       </p>
                       <p className="flex items-center gap-1.5">
                         <Icon icon="lucide:check" className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                        <span>Custom brand logo & colors</span>
+                        <span>{t("upgradeFx.featBrand")}</span>
                       </p>
                       <p className="flex items-center gap-1.5">
                         <Icon icon="lucide:check" className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                        <span>Webhook triggers for Slack, Discord & Zapier</span>
+                        <span>{t("upgradeFx.featWebhooks")}</span>
                       </p>
                       <p className="flex items-center gap-1.5">
                         <Icon icon="lucide:check" className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                        <span>Priority support response SLA</span>
+                        <span>{t("upgradeFx.featSla")}</span>
                       </p>
                     </div>
                   )}
@@ -387,7 +387,7 @@ export function UpgradeModal({
         <div className="mt-8 text-center text-xs text-neutral-500 dark:text-neutral-400">
           Looking for our Enterprise plan?{" "}
           <Link href="/contact" onClick={onClose} className="text-[#2563EB] dark:text-[#3B82F6] font-semibold hover:underline">
-            Contact sales
+            {t("upgradeFx.contactSales")}
           </Link>
         </div>
       </div>

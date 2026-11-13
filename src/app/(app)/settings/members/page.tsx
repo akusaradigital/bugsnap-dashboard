@@ -5,6 +5,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { normalizePlan, seatLimit, type Plan } from "@/lib/tiers";
 import { Dropdown } from "@/components/Dropdown";
 import { Icon } from "@/lib/iconify";
@@ -23,6 +24,7 @@ interface Workspace {
 }
 
 export default function TeamManagementPage() {
+  const confirm = useConfirm();
   const { t } = useT();
   const { showToast } = useToast();
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
@@ -139,7 +141,12 @@ export default function TeamManagementPage() {
 
   async function handleRemove(member: Member) {
     if (member.role === "owner") return;
-    if (!confirm(t("members.removeConfirm", { email: member.email }))) return;
+    const ok = await confirm({
+      title: t("members.removeConfirmTitle"),
+      message: t("members.removeConfirm", { email: member.email }),
+      danger: true,
+    });
+    if (!ok) return;
     try {
       const { data, error } = await supabase
         .from("workspace_members")
@@ -175,7 +182,7 @@ export default function TeamManagementPage() {
       <div>
         <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">{t("members.workspaceLabel")}</label>
         <Dropdown
-          variant="field"
+          variant="field-white"
           className="w-full sm:w-64"
           value={activeWsId ?? ""}
           onChange={setActiveWsId}
@@ -196,17 +203,17 @@ export default function TeamManagementPage() {
             placeholder="teammate@company.com"
             onKeyDown={(e) => e.key === "Enter" && handleInvite()}
             disabled={cap !== null && members.length >= cap}
-            className="flex-1 text-sm rounded-lg border border-border px-3.5 py-2.5 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 bg-subtle text-foreground placeholder:text-muted disabled:bg-subtle disabled:cursor-not-allowed"
+            className="flex-1 text-sm rounded-lg border border-border px-3.5 py-2.5 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 bg-white dark:bg-zinc-900 text-foreground placeholder:text-muted disabled:bg-border/20 disabled:cursor-not-allowed"
           />
           <div className="flex items-center gap-2">
             <div className="relative flex-1 sm:flex-none">
               <button
                 type="button"
                 onClick={() => setRoleMenuOpen((o) => !o)}
-                className="w-full sm:w-auto min-h-[44px] flex items-center justify-between gap-1.5 text-sm rounded-lg border border-border px-3.5 py-2.5 bg-subtle hover:bg-border/30 text-foreground transition-colors touch-manipulation"
+                className="w-full sm:w-auto min-h-[44px] flex items-center justify-between gap-1.5 text-sm rounded-lg border border-border px-3.5 py-2.5 bg-white dark:bg-zinc-900 hover:bg-border/30 text-foreground transition-colors touch-manipulation"
               >
                 {inviteRole === "creator" ? "Creator" : "Viewer"}
-                
+                <Icon icon="lucide:chevron-down" className={`w-4 h-4 text-muted shrink-0 transition-transform ${roleMenuOpen ? "rotate-180" : ""}`} aria-hidden="true" />
               </button>
               {roleMenuOpen && (
                 <>

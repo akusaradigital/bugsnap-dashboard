@@ -5,7 +5,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
 import { SiteThemeToggle } from "@/components/site/SiteThemeToggle";
-import { Icon } from "@/lib/iconify";
+import { Icon, withAssetVersion } from "@/lib/iconify";
 
 function getSafeRedirectPath(): string {
   if (typeof window === "undefined") return "/dashboard";
@@ -31,7 +31,7 @@ function getSafeRedirectPath(): string {
 function GoogleLogo({ className = "w-5 h-5 shrink-0" }: { className?: string }) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
-    <img src="/icons/google.svg" alt="" aria-hidden="true" className={className} />
+    <img src={withAssetVersion("/icons/google.svg")} alt="" aria-hidden="true" className={className} />
   );
 }
 

@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { useTheme, type Theme } from "@/components/ThemeProvider";
 import { hasBranding, normalizePlan, seatLimit, tierLabel, type Plan } from "@/lib/tiers";
 import { getEffectivePlan } from "@/lib/paddle";
@@ -22,6 +23,7 @@ import { Icon } from "@/lib/iconify";
 
 function SettingsContent() {
   const { t, locale, setLocale } = useT();
+  const confirm = useConfirm();
   const { showToast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -37,6 +39,13 @@ function SettingsContent() {
   }, []);
 
   // General / Workspace
+  // Only the owner can update `workspaces` (RLS: owner_user_id = auth.uid());
+  // owner OR admin can update `workspace_settings`. Both silently affect 0 rows
+  // under RLS instead of erroring, so a plain member editing this form used to
+  // see a false "Saved" toast while nothing actually changed server-side.
+  const [canEditWorkspace, setCanEditWorkspace] = useState(true);
+  const [canEditWorkspaceSettings, setCanEditWorkspaceSettings] = useState(true);
+  const [workspaceRoleLoaded, setWorkspaceRoleLoaded] = useState(false);
   const [workspaceName, setWorkspaceName] = useState("My Workspace");
   const [workspaceAvatar, setWorkspaceAvatar] = useState("");
   const [editingWsName, setEditingWsName] = useState(false);
@@ -189,11 +198,17 @@ function SettingsContent() {
       if (cancelled) return;
       setUserPlan(plan);
       if (activeWsId) {
-        const [{ data: wsData }, { data: wsSet }] = await Promise.all([
-          supabase.from("workspaces").select("name, avatar_url").eq("id", activeWsId).maybeSingle(),
-          supabase.from("workspace_settings").select("*").eq("workspace_id", activeWsId).maybeSingle()
+        const [{ data: wsData }, { data: wsSet }, { data: memberRow }] = await Promise.all([
+          supabase.from("workspaces").select("name, avatar_url, owner_user_id").eq("id", activeWsId).maybeSingle(),
+          supabase.from("workspace_settings").select("*").eq("workspace_id", activeWsId).maybeSingle(),
+          supabase.from("workspace_members").select("role").eq("workspace_id", activeWsId).eq("user_id", u.id).maybeSingle(),
         ]);
         if (cancelled) return;
+        const isOwner = !!wsData?.owner_user_id && wsData.owner_user_id === u.id;
+        const isAdmin = memberRow?.role === "admin";
+        setCanEditWorkspace(isOwner);
+        setCanEditWorkspaceSettings(isOwner || isAdmin);
+        setWorkspaceRoleLoaded(true);
         if (wsData?.name) setWorkspaceName(wsData.name);
         if (wsData?.avatar_url) setWorkspaceAvatar(wsData.avatar_url);
         if (wsSet) {
@@ -307,6 +322,12 @@ function SettingsContent() {
 
   async function disconnectDrive() {
     if (driveActionLoading) return;
+    const ok = await confirm({
+      title: t("settings.disconnectDriveConfirmTitle"),
+      message: t("settings.disconnectDriveConfirm"),
+      danger: true,
+    });
+    if (!ok) return;
     setDriveActionLoading(true); setDriveError(null);
     try {
       await driveRequest("/api/google-drive/disconnect", { method: "DELETE" });
@@ -320,10 +341,17 @@ function SettingsContent() {
     e.preventDefault(); setSaving(true); setSaveError(null); setSaved(false);
     try {
       if (!activeWsId) throw new Error(t("settings.noWs"));
+      if (!canEditWorkspaceSettings) {
+        // RLS would silently affect 0 rows here (members fail this check), which
+        // used to show a false "Saved" toast while nothing changed server-side.
+        throw new Error("Only the workspace owner or an admin can change these settings.");
+      }
       const canBrand = hasBranding(normalizePlan(userPlan));
 
-      // Update workspace name if changed
-      if (workspaceName.trim() || workspaceAvatar !== undefined) {
+      // Update workspace name if changed - RLS only allows the owner, which is
+      // stricter than workspace_settings (owner or admin), so an admin's save
+      // must still skip this write rather than silently no-op it under RLS.
+      if (canEditWorkspace && (workspaceName.trim() || workspaceAvatar !== undefined)) {
         const { error: wsError } = await supabase.from("workspaces").update({
           name: workspaceName.trim() || undefined,
           avatar_url: workspaceAvatar.trim() || null
@@ -692,7 +720,13 @@ function SettingsContent() {
   }
 
   async function handleRevokeBugsnapApiKey(id: string) {
-    if (!activeWsId || !confirm("Revoke this BugSnap API key? Any tools using it will lose access immediately.")) return;
+    if (!activeWsId) return;
+    const ok = await confirm({
+      title: t("settings.revokeKeyConfirmTitle"),
+      message: t("settings.revokeKeyConfirm"),
+      danger: true,
+    });
+    if (!ok) return;
     setRevokingKeyId(id);
     try {
       const { data: { session } } = await supabase.auth.getSession();
@@ -851,7 +885,7 @@ function SettingsContent() {
             <h1 className="text-sm font-bold tracking-tight text-foreground leading-none">
               BugSnap
             </h1>
-            <p className="text-[10px] text-muted mt-1 leading-none font-medium">Workspace Settings</p>
+            <p className="text-[10px] text-muted mt-1 leading-none font-medium">{t("sp.workspaceSettings")}</p>
           </div>
         </div>
 
@@ -965,10 +999,18 @@ function SettingsContent() {
         {/* ── General ────────────────────────────── */}
         {activeTab === "general" && (
           <form onSubmit={handleSave} className="space-y-6">
+            {workspaceRoleLoaded && !canEditWorkspaceSettings && (
+              <div className="rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/20 px-4 py-3 text-xs text-amber-800 dark:text-amber-300 flex items-start gap-2.5">
+                <Icon icon="lucide:lock" className="w-4 h-4 shrink-0 mt-0.5" aria-hidden="true" />
+                <span>{t("sp.ownerOnlyNotice")}</span>
+              </div>
+            )}
+
+            <fieldset disabled={workspaceRoleLoaded && !canEditWorkspaceSettings} className="space-y-6 disabled:opacity-70">
 
             {/* Workspace Name & Avatar Section */}
             <div className="rounded-xl border border-border bg-subtle p-5 shadow-xs">
-              <h2 className="text-sm font-bold text-foreground mb-3">Workspace name</h2>
+              <h2 className="text-sm font-bold text-foreground mb-3">{t("sp.workspaceName")}</h2>
               <div className="flex items-center gap-4">
                 {/* Workspace Avatar with Hover Upload/Delete (like Account profile) */}
                 <div className="group relative w-14 h-14 shrink-0 rounded-xl overflow-hidden border-2 border-border bg-subtle shadow-sm">
@@ -988,7 +1030,7 @@ function SettingsContent() {
                   )}
                   <div className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex flex-col">
                     <label className={`w-full flex items-center justify-center bg-blue-600/90 hover:bg-blue-600 text-white text-[10px] font-semibold cursor-pointer transition-colors ${workspaceAvatar ? "h-1/2" : "h-full"}`}>
-                      Upload
+                      {t("settings.uploadLabel")}
                       <input
                         type="file"
                         accept="image/png,image/jpeg,image/svg+xml,image/webp"
@@ -1005,7 +1047,7 @@ function SettingsContent() {
                         onClick={handleWorkspaceIconDelete}
                         className="w-full h-1/2 flex items-center justify-center bg-blue-950/90 hover:bg-blue-900 text-white text-[10px] font-semibold transition-colors"
                       >
-                        Delete
+                        {t("common.delete")}
                       </button>
                     )}
                   </div>
@@ -1019,16 +1061,16 @@ function SettingsContent() {
                     onChange={(e) => setWorkspaceName(e.target.value)}
                     onBlur={() => setEditingWsName(false)}
                     onKeyDown={(e) => e.key === "Enter" && setEditingWsName(false)}
-                    placeholder="My Workspace"
-                    className="flex-1 min-w-0 text-sm font-medium rounded-lg border border-border px-3.5 py-2.5 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 bg-background text-foreground transition-colors shadow-sm"
+                    placeholder={t("sp.workspacePlaceholder")}
+                    className="flex-1 min-w-0 text-sm font-medium rounded-lg border border-border px-3.5 py-2.5 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 bg-white dark:bg-zinc-900 text-foreground transition-colors shadow-sm"
                   />
                 ) : (
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-foreground truncate">{workspaceName || "My Workspace"}</p>
-                    <p className="text-xs text-muted mt-0.5">This is the name of your workspace.</p>
+                    <p className="text-xs text-muted mt-0.5">{t("sp.workspaceNameHint")}</p>
                     <div className="flex flex-wrap items-center gap-2 mt-1.5">
                       <label className="text-[11px] font-medium text-[#2563EB] dark:text-[#3B82F6] hover:underline cursor-pointer">
-                        Upload icon
+                        {t("settings.uploadIcon")}
                         <input
                           type="file"
                           accept="image/png,image/jpeg,image/svg+xml,image/webp"
@@ -1047,11 +1089,11 @@ function SettingsContent() {
                             onClick={handleWorkspaceIconDelete}
                             className="text-[11px] font-medium text-red-600 dark:text-red-400 hover:underline"
                           >
-                            Remove icon
+                            {t("settings.removeIcon")}
                           </button>
                         </>
                       )}
-                      <span className="text-muted text-[11px]">· Square image up to 2MB</span>
+                      <span className="text-muted text-[11px]">· {t("sp.squareImageHint")}</span>
                     </div>
                   </div>
                 )}
@@ -1068,20 +1110,20 @@ function SettingsContent() {
             {/* Data Retention Section */}
             <div className="rounded-xl border border-border bg-subtle p-5 space-y-4 shadow-xs">
               <h2 className="text-sm font-bold text-foreground border-b border-border pb-2.5">
-                Data retention
+                {t("settings.dataRetention")}
               </h2>
 
               {/* Auto-delete captures */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
                 <div className="space-y-0.5">
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-foreground">Auto-delete captures</span>
+                    <span className="text-sm font-semibold text-foreground">{t("sp.autoDelete")}</span>
                     <span className="text-[10px] font-semibold text-[#2563EB] dark:text-[#3B82F6] bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/40 px-1.5 py-0.5 rounded">
-                      Enterprise
+                      {t("sp.enterprise")}
                     </span>
                   </div>
                   <p className="text-xs text-muted">
-                    Automatically delete captures older than the selected retention window.
+                    {t("settings.retentionDesc")}
                   </p>
                 </div>
                 <div className="flex items-center gap-2">
@@ -1108,7 +1150,7 @@ function SettingsContent() {
                   </button>
                   {autoDeleteEnabled && (
                     <Dropdown
-                      variant="field"
+                      variant="field-white"
                       className="w-auto"
                       value={String(autoDeleteMonths)}
                       onChange={(v) => setAutoDeleteMonths(Number(v))}
@@ -1123,76 +1165,83 @@ function SettingsContent() {
             <div className="rounded-xl border border-border bg-subtle p-5 space-y-4 shadow-xs">
               <div className="flex items-center justify-between border-b border-border pb-2.5">
                 <h2 className="text-sm font-bold text-foreground">
-                  Custom branding
+                  {t("settings.customBranding")}
                 </h2>
-                {!hasBranding(userPlan) ? (
+                {!hasBranding(userPlan) && (
                   <ShimmerLockBadge label="PRO+" onClick={() => router.push("/upgrade")} />
-                ) : (
-                  <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/40 px-2 py-0.5 rounded-md">
-                    Included
-                  </span>
                 )}
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-medium text-muted mb-1.5">Brand Name</label>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <label className="text-xs font-medium text-muted">{t("sp.brandName")}</label>
+                    {!hasBranding(userPlan) && (
+                      <ShimmerLockBadge label="PRO+" onClick={() => router.push("/upgrade")} />
+                    )}
+                  </div>
                   <input
                     type="text"
                     value={brandName}
                     onChange={(e) => setBrandName(e.target.value)}
-                    placeholder="Acme Corp"
-                    className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 bg-background text-foreground shadow-sm"
+                    disabled={!hasBranding(userPlan)}
+                    placeholder={t("sp.brandPlaceholder")}
+                    className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 bg-white dark:bg-zinc-900 text-foreground shadow-sm disabled:bg-border/20 disabled:opacity-60 disabled:cursor-not-allowed"
                   />
                 </div>
                 <div>
                   <div className="flex items-center justify-between mb-1.5">
-                    <label className="text-xs font-medium text-muted">Logo URL or Image</label>
-                    <div className="flex items-center gap-2">
-                      <label className="text-[11px] font-medium text-[#2563EB] dark:text-[#3B82F6] hover:underline cursor-pointer">
-                        Upload file
-                        <input
-                          type="file"
-                          accept="image/png,image/jpeg,image/svg+xml,image/webp"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              if (file.size > 2 * 1024 * 1024) {
-                                showToast("Logo file size must be less than 2MB", "error");
-                                return;
-                              }
-                              const reader = new FileReader();
-                              reader.onload = () => {
-                                if (typeof reader.result === "string") {
-                                  setLogoUrl(reader.result);
-                                  setLogoPreviewError(false);
+                    <label className="text-xs font-medium text-muted">{t("sp.logoUrlOrImage")}</label>
+                    {!hasBranding(userPlan) ? (
+                      <ShimmerLockBadge label="PRO+" onClick={() => router.push("/upgrade")} />
+                    ) : (
+                      <div className="flex items-center gap-2">
+                        <label className="text-[11px] font-medium text-[#2563EB] dark:text-[#3B82F6] hover:underline cursor-pointer">
+                          {t("settings.uploadFileLabel")}
+                          <input
+                            type="file"
+                            accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                if (file.size > 2 * 1024 * 1024) {
+                                  showToast("Logo file size must be less than 2MB", "error");
+                                  return;
                                 }
-                              };
-                              reader.readAsDataURL(file);
-                            }
-                          }}
-                        />
-                      </label>
-                      {logoUrl && (
-                        <>
-                          <span className="text-muted text-[11px]">·</span>
-                          <button
-                            type="button"
-                            onClick={() => { setLogoUrl(""); setLogoPreviewError(false); }}
-                            className="text-[11px] font-medium text-red-600 dark:text-red-400 hover:underline"
-                          >
-                            Clear
-                          </button>
-                        </>
-                      )}
-                    </div>
+                                const reader = new FileReader();
+                                reader.onload = () => {
+                                  if (typeof reader.result === "string") {
+                                    setLogoUrl(reader.result);
+                                    setLogoPreviewError(false);
+                                  }
+                                };
+                                reader.readAsDataURL(file);
+                              }
+                            }}
+                          />
+                        </label>
+                        {logoUrl && (
+                          <>
+                            <span className="text-muted text-[11px]">·</span>
+                            <button
+                              type="button"
+                              onClick={() => { setLogoUrl(""); setLogoPreviewError(false); }}
+                              className="text-[11px] font-medium text-red-600 dark:text-red-400 hover:underline"
+                            >
+                              {t("settings.clearLabel")}
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    )}
                   </div>
                   <input
                     type="text"
                     value={logoUrl}
                     onChange={(e) => { setLogoUrl(e.target.value); setLogoPreviewError(false); }}
-                    placeholder="https://example.com/logo.png"
-                    className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 bg-background text-foreground shadow-sm"
+                    disabled={!hasBranding(userPlan)}
+                    placeholder={t("sp.logoPlaceholder")}
+                    className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 bg-white dark:bg-zinc-900 text-foreground shadow-sm disabled:bg-border/20 disabled:opacity-60 disabled:cursor-not-allowed"
                   />
                 </div>
               </div>
@@ -1200,10 +1249,7 @@ function SettingsContent() {
               {/* Live Preview of Header & Watermark on /v/[id] */}
               <div className="rounded-xl border border-border bg-subtle/50 p-3.5 space-y-2.5">
                 <div className="flex items-center justify-between text-[11px] font-medium text-muted">
-                  <span>Preview on public capture page (<code className="font-mono text-[10px]">/v/[id]</code>)</span>
-                  <span className="text-[10px] px-2 py-0.5 rounded font-mono bg-background border border-border text-foreground">
-                    {hideWatermark ? "Watermark & promo: Hidden" : "Watermark & promo: Visible"}
-                  </span>
+                  <span>{t("sp.previewPublicPage")} (<code className="font-mono text-[10px]">/v/[id]</code>)</span>
                 </div>
                 <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-background shadow-xs">
                   <div className="flex items-center gap-2.5 min-w-0">
@@ -1228,7 +1274,7 @@ function SettingsContent() {
                     )}
                   </div>
                   <div className="text-[11px] text-muted font-medium shrink-0">
-                    Header Preview
+                    {t("settings.headerPreview")}
                   </div>
                 </div>
               </div>
@@ -1247,7 +1293,7 @@ function SettingsContent() {
                   className="w-4 h-4 rounded border-border text-[#2563EB] focus:ring-[#2563EB]/20"
                 />
                 <span className="text-xs font-medium text-foreground flex items-center gap-2">
-                  <span>Hide &quot;Powered by BugSnap&quot; watermark</span>
+                  <span>{t("sp.hidePoweredBy")}</span>
                   {!hasBranding(userPlan) && (
                     <ShimmerLockBadge label="PRO+" onClick={() => router.push("/upgrade")} />
                   )}
@@ -1255,7 +1301,7 @@ function SettingsContent() {
               </label>
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-xs font-medium text-muted">Custom Domain</label>
+                  <label className="text-xs font-medium text-muted">{t("sp.customDomain")}</label>
                   {!hasBranding(userPlan) && (
                     <ShimmerLockBadge label="PRO+" onClick={() => router.push("/upgrade")} />
                   )}
@@ -1264,8 +1310,9 @@ function SettingsContent() {
                   type="text"
                   value={customDomain}
                   onChange={(e) => setCustomDomain(e.target.value)}
-                  placeholder="captures.yourcompany.com"
-                  className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 bg-background text-foreground font-mono shadow-sm"
+                  disabled={!hasBranding(userPlan)}
+                  placeholder={t("sp.customDomainPlaceholder")}
+                  className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 bg-white dark:bg-zinc-900 text-foreground font-mono shadow-sm disabled:bg-border/20 disabled:opacity-60 disabled:cursor-not-allowed"
                 />
               </div>
             </div>
@@ -1291,11 +1338,13 @@ function SettingsContent() {
               </label>
             </div>
 
+            </fieldset>
+
             {saveError && <p className="text-xs text-red-600 dark:text-red-400">{saveError}</p>}
             <div className="pt-2">
               <button
                 type="submit"
-                disabled={saving}
+                disabled={saving || (workspaceRoleLoaded && !canEditWorkspaceSettings)}
                 className={`rounded-xl px-6 py-2.5 text-sm font-semibold transition-all shadow-xs shadow-[#2563EB]/25 active:scale-[0.99] min-w-[145px] flex items-center justify-center gap-2 ${
                   saved
                     ? "bg-emerald-600 text-white"
@@ -1305,15 +1354,15 @@ function SettingsContent() {
                 {saving ? (
                   <>
                     <Icon icon="lucide:loader-2" className="w-4 h-4 animate-spin text-white shrink-0 brightness-0 invert" aria-hidden="true" />
-                    <span>Saving…</span>
+                    <span>{t("sp.saving")}</span>
                   </>
                 ) : saved ? (
                   <>
                     <Icon icon="lucide:check" className="w-4 h-4 text-white shrink-0 brightness-0 invert" aria-hidden="true" />
-                    <span>Saved</span>
+                    <span>{t("sp.saved")}</span>
                   </>
                 ) : (
-                  <span>Save changes</span>
+                  <span>{t("sp.saveChanges")}</span>
                 )}
               </button>
             </div>
@@ -1327,24 +1376,24 @@ function SettingsContent() {
             {/* Invite */}
             <div className="rounded-xl border border-border bg-subtle p-6 space-y-5 shadow-sm">
               <div>
-                <h2 className="text-lg font-bold tracking-tight text-foreground">Invite member</h2>
-                <p className="text-[15px] text-muted mt-3">If they don&apos;t have an account yet, we&apos;ll send them a join link + extension download.</p>
+                <h2 className="text-lg font-bold tracking-tight text-foreground">{t("sp.inviteMember")}</h2>
+                <p className="text-[15px] text-muted mt-3">{t("sp.inviteNoAccountDesc")}</p>
               </div>
               <div className="flex flex-col sm:grid sm:grid-cols-[minmax(0,1fr)_minmax(140px,180px)_auto] gap-3">
                 <input type="email" value={inviteEmail} onChange={e=>setInviteEmail(e.target.value)} onKeyDown={e=>e.key==="Enter"&&handleInvite()}
                   disabled={seatLimit(userPlan) !== null && members.length >= (seatLimit(userPlan) ?? 0)}
-                  placeholder="Enter email address"
-                  className="h-12 min-w-0 text-[15px] rounded-lg border border-border px-4 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 bg-subtle disabled:bg-border/30 disabled:cursor-not-allowed" />
+                  placeholder={t("sp.emailPlaceholder")}
+                  className="h-12 min-w-0 text-[15px] rounded-lg border border-border px-4 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 bg-white dark:bg-zinc-900 text-foreground disabled:bg-border/30 disabled:cursor-not-allowed" />
                 <div className="relative">
                   <button type="button" onClick={() => setInviteRoleMenuOpen(o => !o)}
-                    className="h-12 w-full flex items-center justify-between text-[15px] rounded-lg border border-border px-4 bg-subtle hover:bg-border/30 transition-colors">
+                    className="h-12 w-full flex items-center justify-between text-[15px] rounded-lg border border-border px-4 bg-white dark:bg-zinc-900 text-foreground hover:bg-border/30 transition-colors">
                     {inviteRole === "creator" ? "Creator" : "Viewer"}
-                    
+                    <Icon icon="lucide:chevron-down" className={`w-4 h-4 text-muted shrink-0 transition-transform ${inviteRoleMenuOpen ? "rotate-180" : ""}`} aria-hidden="true" />
                   </button>
                   {inviteRoleMenuOpen && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setInviteRoleMenuOpen(false)} />
-                      <div className="absolute right-0 mt-1 w-64 rounded-lg border border-border bg-subtle shadow-lg z-50 py-1">
+                      <div className="absolute right-0 mt-1 w-64 rounded-lg border border-border bg-white dark:bg-zinc-900 shadow-lg z-50 py-1">
                         {([
                           { value: "creator", label: "Creator", hint: "Can create and comment" },
                           { value: "viewer", label: "Viewer", hint: "Can view and comment" },
@@ -1369,10 +1418,10 @@ function SettingsContent() {
                   {inviting ? (
                     <>
                       <Icon icon="lucide:loader-2" className="w-4 h-4 animate-spin text-white shrink-0 brightness-0 invert" aria-hidden="true" />
-                      <span>Sending…</span>
+                      <span>{t("sp.sending")}</span>
                     </>
                   ) : (
-                    <span>Invite</span>
+                    <span>{t("sp.invite")}</span>
                   )}
                 </button>
               </div>
@@ -1394,7 +1443,7 @@ function SettingsContent() {
                   ))}
                 </div>
               ) : members.length === 0 ? (
-                <div className="py-12 text-center text-sm text-muted">No members yet. Invite someone above.</div>
+                <div className="py-12 text-center text-sm text-muted">{t("sp.noMembers")}</div>
               ) : (
                 <ul className="divide-y divide-border/60">
                   {members.map((m) => {
@@ -1423,7 +1472,7 @@ function SettingsContent() {
                         <div className="flex items-center gap-3 self-end sm:self-center shrink-0">
                           {isOwner ? (
                             <span className="px-3 py-1 rounded-lg text-xs font-semibold uppercase tracking-wider bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700 select-none">
-                              Owner
+                              {t("settings.ownerBadge")}
                             </span>
                           ) : (
                             <div className="flex items-center gap-2">
@@ -1436,7 +1485,7 @@ function SettingsContent() {
                                   { value: "creator", label: "Creator" },
                                   { value: "viewer", label: "Viewer" },
                                 ]}
-                                variant="pill"
+                                variant="pill-white"
                                 className="w-28"
                               />
 
@@ -1450,10 +1499,10 @@ function SettingsContent() {
                                 {isRemoving ? (
                                   <>
                                     <Icon icon="lucide:loader-2" className="w-3 h-3 animate-spin text-red-600 dark:text-red-400 shrink-0" aria-hidden="true" />
-                                    <span>Removing…</span>
+                                    <span>{t("sp.removing")}</span>
                                   </>
                                 ) : (
-                                  <span>Remove</span>
+                                  <span>{t("sp.remove")}</span>
                                 )}
                               </button>
                             </div>
@@ -1544,7 +1593,7 @@ function SettingsContent() {
                 <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                   {t("settings.customerPortal")}
                   <span className="text-[10px] uppercase tracking-wider font-bold bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400 px-2 py-0.5 rounded-md border border-neutral-200 dark:border-neutral-700">
-                    Paddle Billing
+                    {t("settings.paddleBilling")}
                   </span>
                 </h3>
                 <p className="text-xs text-muted mt-1 max-w-xl">
@@ -1574,7 +1623,7 @@ function SettingsContent() {
             )}
 
             <div className="rounded-xl border border-border bg-subtle p-4 space-y-3 shadow-xs">
-              <h2 className="text-sm font-semibold text-foreground border-b border-border pb-2">Plan features</h2>
+              <h2 className="text-sm font-semibold text-foreground border-b border-border pb-2">{t("sp.planFeatures")}</h2>
               {[
                 { label:"Weekly capture quota", value: userPlan==="free" ? "5 captures/week" : "Unlimited", included: true },
                 { label:"Team seats", value: seatLimit(userPlan) !== null ? `${seatLimit(userPlan)}` : "Unlimited", included: true },
@@ -1598,15 +1647,15 @@ function SettingsContent() {
         {activeTab === "integrations" && (
           <div className="space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <input type="text" placeholder="Search integrations…" value={intSearch} onChange={e=>setIntSearch(e.target.value)}
-                className="w-full sm:max-w-md text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 bg-subtle text-foreground" />
+              <input type="text" placeholder={t("sp.searchIntegrations")} value={intSearch} onChange={e=>setIntSearch(e.target.value)}
+                className="w-full sm:max-w-md text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 bg-white dark:bg-zinc-900 text-foreground" />
               <Link
                 href="/docs/integrations"
                 target="_blank"
                 className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#2563EB] dark:text-[#3B82F6] hover:underline shrink-0"
               >
                 <Icon icon="lucide:book-open" className="w-4 h-4 shrink-0" />
-                <span>Integration Guides & Tutorials </span>
+                <span>{t("sp.integrationGuides")} </span>
               </Link>
             </div>
 
@@ -1615,7 +1664,7 @@ function SettingsContent() {
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div className="min-w-0 flex-1">
                   <h2 className="text-sm font-semibold text-foreground flex flex-wrap items-center gap-2">
-                    Google Drive
+                    {t("settings.googleDrive")}
                     {!driveLoading && <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-md border ${driveStatus === "connected" ? "text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/40" : driveStatus === "reconnect_required" ? "text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800/40" : "text-muted bg-background border-border"}`}>{driveStatus === "connected" ? t("settings.connected") : driveStatus === "reconnect_required" ? t("settings.reconnectRequired") : t("settings.notConnected")}</span>}
                   </h2>
                   <p className="text-xs text-muted mt-0.5 break-all">{driveLoading ? "Checking..." : driveStatus === "connected" ? `Dashboard actions using ${driveEmail || "connected account"}` : driveStatus === "reconnect_required" ? "Reconnect Drive for server-side actions." : "Connect for server-side Drive actions."}</p>
@@ -1634,7 +1683,7 @@ function SettingsContent() {
                       </div>
                     );
                   })()}
-                  <p className="text-[11px] text-muted">Extension connection is managed separately.</p>
+                  <p className="text-[11px] text-muted">{t("sp.extensionManagedSeparately")}</p>
                 </div>
                 {driveStatus === "connected" ? (
                   <button type="button" onClick={disconnectDrive} disabled={driveActionLoading} className="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline disabled:opacity-50 shrink-0 self-start sm:self-center">{driveActionLoading ? "Disconnecting…" : "Disconnect"}</button>
@@ -1668,7 +1717,7 @@ function SettingsContent() {
                         <p className="text-sm font-semibold text-foreground">{int.name}</p>
                         {isConnected && (
                           <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-100 dark:border-emerald-800/40 px-1.5 py-0.2 rounded-md">
-                            Connected
+                            {t("settings.connected")}
                           </span>
                         )}
                       </div>
@@ -1700,19 +1749,19 @@ function SettingsContent() {
                 );
               })}
             </div>
-            {filteredIntegrations.length === 0 && <p className="text-sm text-muted text-center py-8">No integrations match your search.</p>}
+            {filteredIntegrations.length === 0 && <p className="text-sm text-muted text-center py-8">{t("sp.noIntegrationsMatch")}</p>}
 
             {/* ── BugSnap Public API Keys ─────────────────────────────────── */}
             <div id="bugsnap-api-keys" className="rounded-xl border border-border bg-subtle p-4 space-y-4 pt-5 border-t-2 shadow-xs scroll-mt-24">
               <div>
                 <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-                  <span>BugSnap API Keys</span>
+                  <span>{t("sp.apiKeys")}</span>
                   <span className="text-[10px] font-semibold text-[#2563EB] dark:text-[#3B82F6] bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/40 px-2 py-0.5 rounded-md">
-                    Inbound API
+                    {t("settings.inboundApi")}
                   </span>
                 </h2>
                 <p className="text-xs text-muted mt-0.5">
-                  Generate API keys to let Aksora, SnapTest, CI/CD pipelines, and other external services push captures directly into this workspace.
+                  {t("settings.inboundApiDesc")}
                 </p>
               </div>
 
@@ -1734,14 +1783,14 @@ function SettingsContent() {
                       }}
                       className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded text-xs font-medium shrink-0"
                     >
-                      Copy
+                      {t("settings.copyLabel")}
                     </button>
                     <button
                       type="button"
                       onClick={() => setRevealedBugsnapKey(null)}
                       className="px-3 py-1.5 bg-border hover:bg-border/80 text-foreground rounded text-xs shrink-0"
                     >
-                      Dismiss
+                      {t("settings.dismissLabel")}
                     </button>
                   </div>
                 </div>
@@ -1750,10 +1799,10 @@ function SettingsContent() {
               <form onSubmit={handleCreateBugsnapApiKey} className="flex flex-col sm:flex-row gap-2">
                 <input
                   type="text"
-                  placeholder="Key name (e.g. SnapTest AI Integration)"
+                  placeholder={t("sp.keyNamePlaceholder")}
                   value={newKeyName}
                   onChange={(e) => setNewKeyName(e.target.value)}
-                  className="flex-1 min-w-0 text-xs rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 bg-background"
+                  className="flex-1 min-w-0 text-xs rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 bg-white dark:bg-zinc-900 text-foreground"
                 />
                 <button
                   type="submit"
@@ -1763,20 +1812,20 @@ function SettingsContent() {
                   {creatingKey ? (
                     <>
                       <Icon icon="lucide:loader-2" className="w-3.5 h-3.5 animate-spin text-white shrink-0 brightness-0 invert" aria-hidden="true" />
-                      <span>Generating…</span>
+                      <span>{t("sp.generating")}</span>
                     </>
                   ) : (
-                    <span>Generate Key</span>
+                    <span>{t("sp.generateKey")}</span>
                   )}
                 </button>
               </form>
 
               <div className="space-y-2 pt-2">
-                <h3 className="text-[11px] font-semibold text-muted uppercase tracking-wider">Active Workspace Keys</h3>
+                <h3 className="text-[11px] font-semibold text-muted uppercase tracking-wider">{t("sp.activeWorkspaceKeys")}</h3>
                 {apiKeysLoading ? (
-                  <p className="text-xs text-muted py-2">Loading API keys…</p>
+                  <p className="text-xs text-muted py-2">{t("sp.loadingKeys")}</p>
                 ) : apiKeys.length === 0 ? (
-                  <p className="text-xs text-muted py-2 italic">No active API keys for this workspace.</p>
+                  <p className="text-xs text-muted py-2 italic">{t("sp.noActiveKeys")}</p>
                 ) : (
                   <div className="divide-y divide-border/60">
                     {apiKeys.map((k) => (
@@ -1877,12 +1926,12 @@ function SettingsContent() {
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">{t("settings.firstName")}</label>
                 <input type="text" value={firstName} onChange={e=>setFirstName(e.target.value)}
-                  className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 bg-background" />
+                  className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 bg-white dark:bg-zinc-900 text-foreground" />
               </div>
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">{t("settings.lastName")}</label>
                 <input type="text" value={lastName} onChange={e=>setLastName(e.target.value)}
-                  className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 bg-background" />
+                  className="w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 bg-white dark:bg-zinc-900 text-foreground" />
               </div>
               <div>
                 <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-1.5">{t("settings.role")}</label>
@@ -1890,10 +1939,10 @@ function SettingsContent() {
                   <button
                     type="button"
                     onClick={() => setRoleMenuOpen((o) => !o)}
-                    className="w-full flex items-center justify-between text-sm rounded-lg border border-border px-3 py-2 bg-background text-left"
+                    className="w-full flex items-center justify-between text-sm rounded-lg border border-border px-3 py-2 bg-white dark:bg-zinc-900 text-left"
                   >
                     <span className={jobRole ? "text-foreground" : "text-muted"}>{jobRole || t("settings.selectRole")}</span>
-                    
+                    <Icon icon="lucide:chevron-down" className={`w-4 h-4 text-muted shrink-0 transition-transform ${roleMenuOpen ? "rotate-180" : ""}`} aria-hidden="true" />
                   </button>
                   {roleMenuOpen && (
                     <>
@@ -1945,7 +1994,7 @@ function SettingsContent() {
                       className={`flex flex-col items-center gap-1.5 rounded-lg border px-1.5 sm:px-3 py-2.5 sm:py-3 text-[11px] sm:text-xs font-semibold transition-colors ${
                         theme === opt.id
                           ? "border-[#2563EB] bg-blue-50 dark:bg-blue-950/20 text-[#2563EB] dark:text-[#3B82F6] shadow-xs"
-                          : "border-border bg-subtle text-muted hover:text-foreground hover:bg-border/30"
+                          : "border-border bg-white dark:bg-zinc-900 text-muted hover:text-foreground hover:bg-border/30"
                       }`}
                     >
                       {opt.icon}
@@ -1972,7 +2021,7 @@ function SettingsContent() {
                       className={`flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 sm:py-3 text-[11px] sm:text-xs font-semibold transition-colors ${
                         locale === opt.id
                           ? "border-[#2563EB] bg-blue-50 dark:bg-blue-950/20 text-[#2563EB] dark:text-[#3B82F6] shadow-xs"
-                          : "border-border bg-subtle text-muted hover:text-foreground hover:bg-border/30"
+                          : "border-border bg-white dark:bg-zinc-900 text-muted hover:text-foreground hover:bg-border/30"
                       }`}
                     >
                       <span className="text-base select-none">{opt.flag}</span>
@@ -2210,7 +2259,7 @@ function SettingsContent() {
 
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
-            <button className="absolute inset-0 bg-black/40 backdrop-blur-xs" aria-label="Close" onClick={() => !intModalSaving && setActiveModalInt(null)} />
+            <button className="absolute inset-0 bg-black/40 backdrop-blur-xs" aria-label={t("sp.closeLabel")} onClick={() => !intModalSaving && setActiveModalInt(null)} />
             <div className="relative w-[min(28rem,calc(100vw-2rem))] min-w-0 rounded-xl border border-border bg-background p-4 sm:p-6 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto overflow-x-hidden">
               <div className="flex items-center gap-3">
                 <div className="shrink-0 w-10 h-10 rounded-lg border border-border bg-background flex items-center justify-center p-2">
@@ -2235,7 +2284,7 @@ function SettingsContent() {
                         target="_blank"
                         className="text-[11px] font-semibold text-[#2563EB] dark:text-[#3B82F6] hover:underline inline-flex items-center gap-1 shrink-0"
                       >
-                        <span>Setup Guide</span>
+                        <span>{t("sp.setupGuide")}</span>
                         <Icon icon="lucide:external-link" className="w-3 h-3" />
                       </Link>
                     )}
@@ -2259,7 +2308,7 @@ function SettingsContent() {
                           setIntModalForm(prev => ({ ...prev, [f.key]: e.target.value }));
                           setWebhookTestResult(null);
                         }}
-                        className={`w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 bg-background font-mono text-xs text-foreground ${
+                        className={`w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 bg-white dark:bg-zinc-900 font-mono text-xs text-foreground ${
                           f.type === "password" ? "pr-9" : ""
                         }`}
                       />
@@ -2286,7 +2335,7 @@ function SettingsContent() {
                 {activeDef && (
                   <div className="pt-2 border-t border-border space-y-3">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 min-w-0">
-                      <span className="text-xs text-muted min-w-0">Verify credentials or test live synchronization</span>
+                      <span className="text-xs text-muted min-w-0">{t("sp.verifyLive")}</span>
                       <div className="flex flex-wrap items-center gap-2 min-w-0">
                         <button
                           type="button"
@@ -2328,7 +2377,7 @@ function SettingsContent() {
                           className="rounded-lg border border-border bg-subtle px-2.5 py-1.5 text-xs font-semibold text-foreground hover:bg-subtle/80 hover:border-accent/40 disabled:opacity-50 transition-all shrink-0 inline-flex items-center gap-1.5"
                         >
                           {testingWebhook && <Icon icon="lucide:loader-2" className="w-3 h-3 animate-spin shrink-0" />}
-                          <span>{testingWebhook ? "Testing…" : (t("settings.testConnection") || "Test Connection")}</span>
+                          <span>{testingWebhook ? "Testing…" : (t("settings.testConnection"))}</span>
                         </button>
 
                         <button
@@ -2381,7 +2430,7 @@ function SettingsContent() {
                           ) : (
                             <Icon icon="lucide:download" className="w-3 h-3 shrink-0" />
                           )}
-                          <span>{pullingData ? (t("settings.pulling") || "Pulling…") : (t("settings.pullData") || "Pull Live Data")}</span>
+                          <span>{pullingData ? (t("settings.pulling")) : (t("settings.pullData"))}</span>
                         </button>
                       </div>
                     </div>
@@ -2429,7 +2478,7 @@ function SettingsContent() {
                               </div>
                             ) : (
                               <p className="text-[11px] text-muted italic">
-                                {t("settings.pullEmpty") || "No recent records found in this destination."}
+                                {t("settings.pullEmpty")}
                               </p>
                             )}
                           </>
@@ -2453,7 +2502,7 @@ function SettingsContent() {
                     disabled={intModalSaving}
                     className="text-xs font-semibold text-red-600 dark:text-red-400 hover:underline disabled:opacity-50"
                   >
-                    Disconnect
+                    {t("settings.disconnect")}
                   </button>
                 ) : <div />}
                 <div className="flex gap-2">
@@ -2463,7 +2512,7 @@ function SettingsContent() {
                     disabled={intModalSaving}
                     className="px-3 py-1.5 text-xs font-medium text-foreground hover:bg-border/30 rounded-lg disabled:opacity-50"
                   >
-                    Cancel
+                    {t("common.cancel")}
                   </button>
                   <button
                     type="button"
@@ -2474,10 +2523,10 @@ function SettingsContent() {
                     {intModalSaving ? (
                       <>
                         <Icon icon="lucide:loader-2" className="w-3.5 h-3.5 animate-spin text-white shrink-0 brightness-0 invert" aria-hidden="true" />
-                        <span>Saving…</span>
+                        <span>{t("sp.saving")}</span>
                       </>
                     ) : (
-                      <span>Save Credentials</span>
+                      <span>{t("sp.saveCredentials")}</span>
                     )}
                   </button>
                 </div>
@@ -2515,13 +2564,14 @@ function SettingsContent() {
 }
 
 export default function SettingsPage() {
+  const { t } = useT();
   return (
     <Suspense
       fallback={
-        <div className="p-8 sm:p-12 max-w-5xl mx-auto flex items-center justify-center min-h-[300px]" role="status" aria-label="Loading settings">
+        <div className="p-8 sm:p-12 max-w-5xl mx-auto flex items-center justify-center min-h-[300px]" role="status" aria-label={t("sp.loadingLabel")}>
           <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-xl bg-subtle border border-border text-xs text-muted shadow-xs">
             <Icon icon="lucide:loader-2" className="w-4 h-4 animate-spin text-[#2563EB] dark:text-[#3B82F6] shrink-0" aria-hidden="true" />
-            <span className="font-medium">Loading settings…</span>
+            <span className="font-medium">{t("sp.loadingSettings")}</span>
           </div>
         </div>
       }

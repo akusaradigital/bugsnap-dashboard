@@ -5,7 +5,7 @@ import { useT } from "@/components/I18nProvider";
 import { SiteNavbar } from "@/components/site/SiteNavbar";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Reveal } from "@/components/site/motion";
-import { Icon } from "@/lib/iconify";
+import { Icon, withAssetVersion } from "@/lib/iconify";
 import { FIREFOX_STORE_URL } from "@/lib/constants";
 
 const CHROME_STORE_URL =
@@ -31,31 +31,30 @@ export function ContactContent() {
                 href="/"
                 className="hover:text-slate-900 dark:hover:text-white transition-colors"
               >
-                {t("landing.home") || "Home"}
+                {t("landing.home")}
               </Link>
               <span className="text-slate-400 dark:text-slate-600 font-normal" aria-hidden="true">
                 /
               </span>
               <span className="text-slate-900 dark:text-white font-medium">
-                {t("contact.title") || "Contact Us"}
+                {t("contact.title")}
               </span>
             </nav>
           </Reveal>
 
           <Reveal delay={0.06}>
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12]">
-              {t("contact.heroTitlePrefix") || "We are here to"}
+              {t("contact.heroTitlePrefix")}
               <br />
               <span className="text-blue-600 dark:text-blue-500">
-                {t("contact.heroTitleHighlight") || "help your team"}
+                {t("contact.heroTitleHighlight")}
               </span>
             </h1>
           </Reveal>
 
           <Reveal delay={0.12}>
             <p className="mt-3.5 sm:mt-4 text-sm sm:text-base text-slate-500 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
-              {t("contact.subtitle") ||
-                "Have questions, feedback, or need help with BugSnap? Reach out to our team."}
+              {t("contact.subtitle")}
             </p>
           </Reveal>
         </div>
@@ -71,7 +70,7 @@ export function ContactContent() {
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0 pr-2">
                     <span className="block text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1.5">
-                      {t("contact.emailSupportLabel") || "EMAIL SUPPORT"}
+                      {t("contact.emailSupportLabel")}
                     </span>
                     <a
                       href="mailto:support@akusaradigital.com"
@@ -80,13 +79,12 @@ export function ContactContent() {
                       support@akusaradigital.com
                     </a>
                     <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
-                      {t("contact.emailDesc") ||
-                        "For technical issues, account help, security reports, or general inquiries. We aim to reply within 24 hours."}
+                      {t("contact.emailDesc")}
                     </p>
                   </div>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="/illustrations/contact-email.png"
+                    src={withAssetVersion("/illustrations/contact-email.png")}
                     alt="Email Support"
                     className="w-24 sm:w-28 h-auto object-contain shrink-0"
                     loading="lazy"
@@ -101,17 +99,16 @@ export function ContactContent() {
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0 pr-2">
                     <span className="block text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1.5">
-                      {t("contact.companyLabel") || "COMPANY & PUBLISHER"}
+                      {t("contact.companyLabel")}
                     </span>
                     <div className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white">
                       Akusara Digital
                     </div>
                     <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                      {t("contact.companyDesc") ||
-                        "Developer and operator of BugSnap (From Click to Fix)."}
+                      {t("contact.companyDesc")}
                     </p>
                     <div className="mt-3.5 text-xs sm:text-sm text-slate-500 dark:text-slate-400 flex items-center gap-1.5 flex-wrap">
-                      <span>{t("contact.websiteLabel") || "Website:"}</span>
+                      <span>{t("contact.websiteLabel")}</span>
                       <a
                         href="https://akusaradigital.com"
                         target="_blank"
@@ -124,7 +121,7 @@ export function ContactContent() {
                   </div>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="/illustrations/contact-company.png"
+                    src={withAssetVersion("/illustrations/contact-company.png")}
                     alt="Akusara Digital Office"
                     className="w-24 sm:w-28 h-auto object-contain shrink-0"
                     loading="lazy"
@@ -139,19 +136,18 @@ export function ContactContent() {
                 <div className="flex items-center justify-between gap-4">
                   <div className="flex-1 min-w-0 pr-2">
                     <span className="block text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 mb-1.5">
-                      {t("contact.enterpriseLabel") || "ENTERPRISE & SALES"}
+                      {t("contact.enterpriseLabel")}
                     </span>
                     <div className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white">
-                      {t("contact.enterpriseTitle") || "Custom Deployment"}
+                      {t("contact.enterpriseTitle")}
                     </div>
                     <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
-                      {t("contact.enterpriseDesc") ||
-                        "Need SLA guarantees, SSO, or custom integrations for your team? Contact our sales team to discuss enterprise options."}
+                      {t("contact.enterpriseDesc")}
                     </p>
                   </div>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="/illustrations/contact-enterprise.png"
+                    src={withAssetVersion("/illustrations/contact-enterprise.png")}
                     alt="Enterprise Solutions"
                     className="w-24 sm:w-28 h-auto object-contain shrink-0"
                     loading="lazy"
@@ -168,17 +164,15 @@ export function ContactContent() {
                   <div className="flex items-start justify-between gap-4">
                     <div className="flex-1 min-w-0 pr-2">
                       <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white">
-                        {t("contact.startCapturing") ||
-                          "Start capturing with BugSnap"}
+                        {t("contact.startCapturing")}
                       </h3>
                       <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1 leading-relaxed">
-                        {t("contact.startCapturingDesc") ||
-                          "Install the Chrome extension and start debugging faster with full DevTools context."}
+                        {t("contact.startCapturingDesc")}
                       </p>
                     </div>
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src="/illustrations/contact-chrome-doc.png"
+                      src={withAssetVersion("/illustrations/contact-chrome-doc.png")}
                       alt="Chrome Extension"
                       className="w-16 sm:w-20 h-auto object-contain shrink-0"
                       loading="lazy"
@@ -198,7 +192,7 @@ export function ContactContent() {
                         aria-hidden="true"
                       />
                       <span>
-                        {t("extension.addToChrome") || "Add to Chrome"}
+                        {t("extension.addToChrome")}
                       </span>
                     </a>
                     <a
@@ -214,7 +208,7 @@ export function ContactContent() {
                       href="/pricing"
                       className="w-full py-3 px-4 rounded-xl font-semibold text-sm border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/60 text-slate-800 dark:text-slate-200 flex items-center justify-center transition-colors shadow-xs touch-manipulation"
                     >
-                      <span>{t("contact.seePricing") || "See Pricing"}</span>
+                      <span>{t("contact.seePricing")}</span>
                     </Link>
                   </div>
                 </div>
@@ -224,7 +218,7 @@ export function ContactContent() {
               <Reveal delay={0.2}>
                 <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-6 sm:p-7 shadow-xs">
                   <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-4">
-                    {t("contact.usefulResources") || "Useful Resources"}
+                    {t("contact.usefulResources")}
                   </h3>
                   <div className="divide-y divide-slate-100 dark:divide-slate-800/80">
                     <div className="pb-3.5">
@@ -232,11 +226,10 @@ export function ContactContent() {
                         href="/privacy"
                         className="text-sm font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors block"
                       >
-                        {t("contact.privacy") || "Privacy Policy"}
+                        {t("contact.privacy")}
                       </Link>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
-                        {t("contact.privacyDesc") ||
-                          "How we handle your data, Google Drive integration, and Chrome permissions."}
+                        {t("contact.privacyDesc")}
                       </p>
                     </div>
 
@@ -245,11 +238,10 @@ export function ContactContent() {
                         href="/terms"
                         className="text-sm font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors block"
                       >
-                        {t("contact.terms") || "Terms of Service"}
+                        {t("contact.terms")}
                       </Link>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
-                        {t("contact.termsDesc") ||
-                          "The agreement between you and BugSnap regarding acceptable use and service limits."}
+                        {t("contact.termsDesc")}
                       </p>
                     </div>
 
@@ -258,11 +250,10 @@ export function ContactContent() {
                         href="/docs"
                         className="text-sm font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors block"
                       >
-                        {t("contact.docs") || "Documentation & Extension Setup"}
+                        {t("contact.docs")}
                       </Link>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
-                        {t("contact.docsDesc") ||
-                          "Guides on how to install, configure Google Drive OAuth, and use the annotation editor."}
+                        {t("contact.docsDesc")}
                       </p>
                     </div>
 
@@ -271,11 +262,10 @@ export function ContactContent() {
                         href="/help"
                         className="text-sm font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors block"
                       >
-                        {t("help.title") || "Help Center & FAQs"}
+                        {t("help.title")}
                       </Link>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
-                        {t("help.subtitle") ||
-                          "Find answers to common questions about setting up the Chrome extension, managing permissions, and using the dashboard."}
+                        {t("help.subtitle")}
                       </p>
                     </div>
 
@@ -284,11 +274,10 @@ export function ContactContent() {
                         href="/terms#refund"
                         className="text-sm font-bold text-slate-900 dark:text-white hover:text-blue-600 dark:hover:text-blue-400 transition-colors block"
                       >
-                        {t("contact.refund") || "Refund & Cancellation Policy"}
+                        {t("contact.refund")}
                       </Link>
                       <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 leading-relaxed">
-                        {t("contact.refundDesc") ||
-                          "14-day statutory money-back guarantee and self-serve cancellation from your account."}
+                        {t("contact.refundDesc")}
                       </p>
                     </div>
                   </div>
@@ -301,12 +290,10 @@ export function ContactContent() {
           <Reveal delay={0.24}>
             <div id="complaint" className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-6 sm:p-8 shadow-xs">
               <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">
-                {t("contact.complaintEyebrow") ||
-                  "SUPPORT & CONSUMER SATISFACTION"}
+                {t("contact.complaintEyebrow")}
               </span>
               <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 dark:text-white mt-1">
-                {t("contact.complaintTitle") ||
-                  "Customer Support & Dispute Resolution Channel"}
+                {t("contact.complaintTitle")}
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5 sm:gap-6 mt-6">
@@ -318,20 +305,17 @@ export function ContactContent() {
                         1
                       </div>
                       <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
-                        {t("contact.box1Title") ||
-                          "Dedicated Customer Support & Inquiries"}
+                        {t("contact.box1Title")}
                       </h3>
                     </div>
                     <p className="text-xs sm:text-[13px] text-slate-500 dark:text-slate-400 leading-relaxed mt-3">
-                      {t("contact.box1Desc") ||
-                        "In accordance with global consumer protection standards and fair digital practices, we provide dedicated channels to resolve questions, billing inquiries, feedback, or refund requests promptly."}
+                      {t("contact.box1Desc")}
                     </p>
                   </div>
                   <div className="space-y-1.5 mt-5 text-xs sm:text-[13px] leading-relaxed">
                     <div>
                       <span className="font-semibold text-slate-700 dark:text-slate-300">
-                        {t("contact.box1EmailLabel") ||
-                          "Support & Resolution Email:"}{" "}
+                        {t("contact.box1EmailLabel")}{" "}
                       </span>
                       <a
                         href="mailto:support@akusaradigital.com"
@@ -342,16 +326,15 @@ export function ContactContent() {
                     </div>
                     <div>
                       <span className="font-semibold text-slate-700 dark:text-slate-300">
-                        {t("contact.box1SlaLabel") || "Response SLA:"}{" "}
+                        {t("contact.box1SlaLabel")}{" "}
                       </span>
                       <span className="text-slate-500 dark:text-slate-400">
-                        {t("contact.box1SlaDesc") ||
-                          "Within 2 business days (typically under 24 hours)."}
+                        {t("contact.box1SlaDesc")}
                       </span>
                     </div>
                     <div>
                       <span className="font-semibold text-slate-700 dark:text-slate-300">
-                        {t("contact.box1EntityLabel") || "Operating Entity:"}{" "}
+                        {t("contact.box1EntityLabel")}{" "}
                       </span>
                       <span className="text-slate-500 dark:text-slate-400">
                         Akusara Digital.
@@ -368,44 +351,36 @@ export function ContactContent() {
                         2
                       </div>
                       <h3 className="font-bold text-sm sm:text-base text-slate-900 dark:text-white">
-                        {t("contact.box2Title") ||
-                          "Fair Resolution & 14-Day Refund Guarantee"}
+                        {t("contact.box2Title")}
                       </h3>
                     </div>
                     <p className="text-xs sm:text-[13px] text-slate-500 dark:text-slate-400 leading-relaxed mt-3">
-                      {t("contact.box2Desc") ||
-                        "We are committed to fair customer treatment worldwide. If you encounter any issue or are dissatisfied with BugSnap Pro:"}
+                      {t("contact.box2Desc")}
                     </p>
                   </div>
                   <div className="space-y-1.5 mt-5 text-xs sm:text-[13px] leading-relaxed">
                     <div>
                       <strong className="font-semibold text-slate-700 dark:text-slate-300">
-                        {t("contact.box2GuaranteeLabel") ||
-                          "14-Day Money-Back Guarantee:"}{" "}
+                        {t("contact.box2GuaranteeLabel")}{" "}
                       </strong>
                       <span className="text-slate-500 dark:text-slate-400">
-                        {t("contact.box2GuaranteeDesc") ||
-                          "100% full refund upon request within 14 days of purchase."}
+                        {t("contact.box2GuaranteeDesc")}
                       </span>
                     </div>
                     <div>
                       <strong className="font-semibold text-slate-700 dark:text-slate-300">
-                        {t("contact.box2CancelLabel") ||
-                          "Self-Serve Cancellation:"}{" "}
+                        {t("contact.box2CancelLabel")}{" "}
                       </strong>
                       <span className="text-slate-500 dark:text-slate-400">
-                        {t("contact.box2CancelDesc") ||
-                          "Manage or cancel your subscription anytime in the billing portal."}
+                        {t("contact.box2CancelDesc")}
                       </span>
                     </div>
                     <div>
                       <strong className="font-semibold text-slate-700 dark:text-slate-300">
-                        {t("contact.box2GoodFaithLabel") ||
-                          "Good-Faith Resolution:"}{" "}
+                        {t("contact.box2GoodFaithLabel")}{" "}
                       </strong>
                       <span className="text-slate-500 dark:text-slate-400">
-                        {t("contact.box2GoodFaithDesc") ||
-                          "All inquiries are reviewed directly by our core engineering team."}
+                        {t("contact.box2GoodFaithDesc")}
                       </span>
                     </div>
                   </div>

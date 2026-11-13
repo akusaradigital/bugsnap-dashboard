@@ -15,6 +15,27 @@ import { NextResponse, type NextRequest } from "next/server";
 
 const SUPABASE_ORIGIN = process.env.NEXT_PUBLIC_SUPABASE_URL || "";
 
+// Logged-in surfaces (user dashboard + admin console) and the shared capture
+// viewer, which holds user content. Matched on the segment so "/dashboard" and
+// "/dashboard/x" both count, and "/dashboard-old" does not.
+const PRIVATE_PREFIXES = [
+  "/admin",
+  "/api",
+  "/dashboard",
+  "/captures",
+  "/compare",
+  "/folders",
+  "/settings",
+  "/welcome",
+  "/upgrade",
+  "/v",
+  "/uninstall-feedback",
+];
+
+function isPrivatePath(pathname: string): boolean {
+  return PRIVATE_PREFIXES.some((p) => pathname === p || pathname.startsWith(p + "/"));
+}
+
 // Next.js injects inline bootstrap scripts and styled-jsx style tags, so
 // script-src and style-src need 'unsafe-inline'. Everything else is locked
 // down - most importantly frame-ancestors, object-src and base-uri, which are
@@ -97,6 +118,12 @@ export function middleware(req: NextRequest) {
   }
 
   const res = NextResponse.next();
+
+  // Private surfaces must never be indexed, even if a link to them leaks.
+  // Robots.txt alone only stops crawling; X-Robots-Tag stops indexing.
+  if (isPrivatePath(pathname)) {
+    res.headers.set("X-Robots-Tag", "noindex, nofollow, noarchive");
+  }
 
   res.headers.set("Content-Security-Policy", buildCsp());
   res.headers.set("X-Frame-Options", "DENY");

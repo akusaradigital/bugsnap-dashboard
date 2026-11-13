@@ -96,7 +96,7 @@ export default function AdminSupabasePage() {
       const url = fresh ? "/api/admin/supabase-stats?fresh=true" : "/api/admin/supabase-stats";
       const res = await fetch(url, { headers });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Gagal memuat statistik database.");
+      if (!res.ok) throw new Error(json.error || t("adminSupa.errLoad"));
 
       setStats(json.stats);
       setProject(json.project);
@@ -104,7 +104,7 @@ export default function AdminSupabasePage() {
       setAdminCache("admin_supabase_project", json.project);
       setLastRefreshed(new Date().toLocaleTimeString());
     } catch (err: unknown) {
-      const msg = (err as Error)?.message || "Gagal memuat statistik Supabase";
+      const msg = (err as Error)?.message || t("adminSupa.errLoadToast");
       showToast(msg, "error");
     } finally {
       setLoading(false);
@@ -121,12 +121,12 @@ export default function AdminSupabasePage() {
         body: JSON.stringify({ action }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Gagal mengeksekusi pemeliharaan.");
+      if (!res.ok) throw new Error(json.error || t("adminSupa.errMaint"));
 
-      showToast(json.message || "Pemeliharaan berhasil dijalankan.", "success");
+      showToast(json.message || t("adminSupa.maintDone"), "success");
       await loadStats();
     } catch (err: unknown) {
-      const msg = (err as Error)?.message || "Gagal mengeksekusi tindakan pemeliharaan";
+      const msg = (err as Error)?.message || t("adminSupa.errMaintToast");
       showToast(msg, "error");
     } finally {
       setMaintenanceLoading(null);
@@ -227,7 +227,7 @@ export default function AdminSupabasePage() {
         <div className="rounded-xl border border-border bg-subtle p-4">
           <p className="text-xs font-medium text-muted">{t("admin.supabase.uptime")}</p>
           <p className="mt-1 text-sm font-semibold text-foreground truncate" title={stats?.uptime}>
-            {stats?.uptime ? stats.uptime.split(".")[0] : "Active"}
+            {stats?.uptime ? stats.uptime.split(".")[0] : t("adminSupa.active")}
           </p>
         </div>
       </div>
@@ -308,7 +308,7 @@ export default function AdminSupabasePage() {
             </span>
             <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
               <Icon icon="lucide:zap" className="w-3.5 h-3.5 shrink-0" />
-              <span>RAM Cache</span>
+              <span>{t("adminSupa.ramCache")}</span>
             </span>
           </div>
           <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-slate-100 dark:bg-zinc-800">
@@ -425,10 +425,10 @@ export default function AdminSupabasePage() {
               value={schemaFilter}
               onChange={(val) => setSchemaFilter(val)}
               options={[
-                { value: "all", label: "All Schemas" },
+                { value: "all", label: t("adminSupa.allSchemas") },
                 ...uniqueSchemas.map((s) => ({ value: s, label: s })),
               ]}
-              variant="pill"
+              variant="field-white"
               className="min-w-[120px]"
             />
 
@@ -437,11 +437,11 @@ export default function AdminSupabasePage() {
               value={sortBy}
               onChange={(val) => setSortBy(val as "size" | "live_rows" | "dead_rows")}
               options={[
-                { value: "size", label: "Sort: Ukuran Total" },
-                { value: "live_rows", label: "Sort: Baris Aktif" },
-                { value: "dead_rows", label: "Sort: Dead Tuples" },
+                { value: "size", label: t("adminSupa.sortSize") },
+                { value: "live_rows", label: t("adminSupa.sortLive") },
+                { value: "dead_rows", label: t("adminSupa.sortDead") },
               ]}
-              variant="pill"
+              variant="field-white"
               className="min-w-[150px]"
             />
           </div>

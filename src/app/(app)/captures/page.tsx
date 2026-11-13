@@ -292,7 +292,9 @@ function CapturesContent() {
   // Dropdown states: false = not actively filtering by this type.
   // If BOTH are false, we show ALL (no filter applied).
   const [typeMenuOpen, setTypeMenuOpen] = useState(false);
+  const [filterMenuOpen, setFilterMenuOpen] = useState(false);
   const typeMenuRef = useRef<HTMLDivElement>(null);
+  const filterMenuRef = useRef<HTMLDivElement>(null);
   const initialTypes = (searchParams.get("type") || "").split(",");
   const [showVideo, setShowVideo] = useState(() =>
     initialTypes.includes("video"),
@@ -363,6 +365,13 @@ function CapturesContent() {
         setTypeMenuOpen(false);
       }
       if (
+        filterMenuOpen &&
+        filterMenuRef.current &&
+        !filterMenuRef.current.contains(e.target as Node)
+      ) {
+        setFilterMenuOpen(false);
+      }
+      if (
         activeMenuId &&
         !(e.target as HTMLElement)?.closest?.("[data-capture-menu]")
       ) {
@@ -371,7 +380,7 @@ function CapturesContent() {
     }
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [typeMenuOpen, activeMenuId]);
+  }, [typeMenuOpen, filterMenuOpen, activeMenuId]);
 
   // Infinite scroll / pagination state
   const PAGE_SIZE = 12;
@@ -1379,19 +1388,10 @@ function CapturesContent() {
   const videoCount = typeCounts.video;
   const screenshotCount = typeCounts.screenshot;
 
-  const toggleSelectAllVisible = useCallback(() => {
-    if (filteredCaptures.length === 0) return;
-    const allSelected = filteredCaptures.every((c) => selectedIds.has(c.id));
-    if (allSelected) {
-      clearSelection();
-    } else {
-      setSelectedIds(new Set(filteredCaptures.map((c) => c.id)));
-    }
-  }, [filteredCaptures, selectedIds, clearSelection]);
 
   return (
     <div
-      className="w-full min-w-0 p-3 sm:p-8 max-w-6xl mx-auto"
+      className="w-full min-w-0 p-3 sm:p-8 max-w-7xl mx-auto"
       onDragEnter={(e) => {
         e.preventDefault();
         setDragActive(true);
@@ -1458,21 +1458,7 @@ function CapturesContent() {
         </h1>
 
         <div className="flex items-center gap-2 w-full lg:w-auto">
-          <div className="relative flex-1 min-w-[150px] sm:min-w-[200px] lg:flex-none lg:w-64">
-            <Icon
-              icon="lucide:search"
-              className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted shrink-0"
-            />
-            <input
-              type="text"
-              placeholder={t("cap.search")}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="h-10 pl-9 pr-3 text-sm rounded-lg border border-border bg-subtle text-foreground placeholder:text-muted focus:outline-none focus:border-[#89BD49] focus:ring-1 focus:ring-[#89BD49]/20 w-full"
-            />
-          </div>
-
-          {/* Compact upload icon button */}
+          {/* Upload file */}
           {(() => {
             const ringProgress =
               uploadTasks.length > 1
@@ -1506,7 +1492,7 @@ function CapturesContent() {
                           })
                     : t("cap.uploadBtnTitle")
                 }
-                className={`relative h-10 w-10 flex items-center justify-center rounded-lg border transition-colors shrink-0 cursor-pointer ${
+                className={`relative h-10 w-48 flex items-center justify-center gap-2 rounded-lg border transition-colors shrink-0 cursor-pointer ${
                   uploading
                     ? "border-sky-500/40 bg-sky-500/10 text-sky-600 dark:text-sky-400 cursor-wait"
                     : "border-border bg-subtle text-muted hover:text-foreground hover:border-sky-500/40"
@@ -1531,6 +1517,9 @@ function CapturesContent() {
                     className="w-4 h-4 shrink-0"
                   />
                 )}
+                <span className="text-sm font-medium whitespace-nowrap">
+                  {t("cap.uploadFile")}
+                </span>
                 {/* Progress ring overlay */}
                 {uploading && ringProgress > 0 && (
                   <svg
@@ -1572,7 +1561,7 @@ function CapturesContent() {
           <div ref={typeMenuRef} className="relative min-w-0">
             <button
               onClick={() => setTypeMenuOpen((o) => !o)}
-              className={`flex items-center justify-center gap-2 px-3 py-1.5 rounded-lg border text-sm font-medium transition-colors ${
+              className={`flex items-center justify-start gap-1.5 w-auto min-w-0 h-10 px-2.5 rounded-lg border text-sm font-medium transition-colors ${
                 typeMenuOpen || showVideo || showScreenshot
                   ? "bg-subtle border-sky-500/40 text-foreground"
                   : "bg-subtle border-border text-muted hover:text-foreground hover:bg-subtle"
@@ -1582,7 +1571,11 @@ function CapturesContent() {
               {(showVideo || showScreenshot) && (
                 <span className="w-2 h-2 rounded-full bg-sky-500 shrink-0" />
               )}
-              
+              <Icon
+                icon="lucide:chevron-down"
+                className={`w-4 h-4 shrink-0 transition-transform ${typeMenuOpen ? "rotate-180" : ""}`}
+                aria-hidden="true"
+              />
             </button>
 
             {typeMenuOpen && (
@@ -1681,50 +1674,77 @@ function CapturesContent() {
             )}
           </div>
 
-          {/* Sort: newest (default keyset grid) vs most reported (ranked RPC) */}
-          <div className="flex min-w-0 items-center gap-1.5 text-xs border border-border bg-subtle rounded-lg px-2 py-1.5 text-muted hover:text-foreground hover:bg-subtle transition-colors">
-            <span>{t("cap.sortFilter")}</span>
-            <Dropdown
-              variant="inline"
-              className="flex-1"
-              value={sortMode}
-              onChange={(v) => setSortMode(v === "frequent" ? "frequent" : "newest")}
-              options={[
-                { value: "newest", label: t("cap.sortNewest") },
-                { value: "frequent", label: t("cap.sortFrequent") },
-              ]}
-            />
-          </div>
-
-          {/* Tag Filter */}
-          <div className="flex min-w-0 items-center gap-1.5 text-xs border border-border bg-subtle rounded-lg px-2 py-1.5 text-muted hover:text-foreground hover:bg-subtle transition-colors">
-            <span>{t("cap.tagFilter")}</span>
-            <Dropdown
-              variant="inline"
-              className="flex-1"
-              value={filterTag}
-              onChange={setFilterTag}
-              options={[
-                { value: "", label: t("cap.all") },
-                ...TAG_OPTIONS.map((t) => ({ value: t, label: t })),
-              ]}
-            />
-          </div>
-
-          {/* Status Filter */}
-          <div className="flex min-w-0 items-center gap-1.5 text-xs border border-border bg-subtle rounded-lg px-2 py-1.5 text-muted hover:text-foreground hover:bg-subtle transition-colors">
-            <span>{t("cap.statusFilter")}</span>
-            <Dropdown
-              variant="inline"
-              className="flex-1"
-              align="right"
-              value={filterStatus}
-              onChange={setFilterStatus}
-              options={[
-                { value: "", label: t("cap.all") },
-                ...STATUS_OPTIONS.map((s) => ({ value: s, label: s })),
-              ]}
-            />
+          {/* Combined sorting and filtering menu */}
+          <div ref={filterMenuRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setFilterMenuOpen((open) => !open)}
+              className={`flex items-center justify-start gap-1.5 w-auto min-w-0 h-10 px-2.5 rounded-lg border text-sm font-medium transition-colors ${
+                filterMenuOpen || filterTag || filterStatus || sortMode !== "newest"
+                  ? "bg-subtle border-sky-500/40 text-foreground"
+                  : "bg-subtle border-border text-muted hover:text-foreground hover:bg-subtle"
+              }`}
+            >
+              <span>{t("cap.filterSort")}</span>
+              {(filterTag || filterStatus) && (
+                <span className="min-w-4 h-4 px-1 rounded-md bg-sky-500 text-white text-[10px] font-bold flex items-center justify-center">
+                  {(filterTag ? 1 : 0) + (filterStatus ? 1 : 0)}
+                </span>
+              )}
+              <Icon
+                icon="lucide:chevron-down"
+                className={`w-4 h-4 shrink-0 transition-transform ${filterMenuOpen ? "rotate-180" : ""}`}
+                aria-hidden="true"
+              />
+            </button>
+            {filterMenuOpen && (
+              <div className="absolute top-full left-0 mt-1.5 w-64 z-30 bg-subtle border border-border rounded-lg shadow-lg p-3 space-y-3">
+                <div>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted mb-2">{t("cap.filter")}</p>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="block text-[10px] font-medium text-muted mb-1">{t("cap.tagFilter")}</label>
+                      <Dropdown
+                        variant="field-white"
+                        value={filterTag}
+                        onChange={setFilterTag}
+                        options={[
+                          { value: "", label: t("cap.all") },
+                          ...TAG_OPTIONS.map((tag) => ({ value: tag, label: tag })),
+                        ]}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] font-medium text-muted mb-1">{t("cap.statusFilter")}</label>
+                      <Dropdown
+                        variant="field-white"
+                        value={filterStatus}
+                        onChange={setFilterStatus}
+                        align="right"
+                        options={[
+                          { value: "", label: t("cap.all") },
+                          ...STATUS_OPTIONS.map((status) => ({ value: status, label: status })),
+                        ]}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="border-t border-border pt-3">
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-muted mb-1">
+                    {t("cap.sortBy")}
+                  </label>
+                  <Dropdown
+                    variant="field-white"
+                    value={sortMode}
+                    onChange={(value) => setSortMode(value === "frequent" ? "frequent" : "newest")}
+                    options={[
+                      { value: "newest", label: t("cap.sortNewest") },
+                      { value: "frequent", label: t("cap.sortFrequent") },
+                    ]}
+                  />
+                </div>
+              </div>
+            )}
           </div>
 
           {activeFilterCount > 0 && (
@@ -1739,34 +1759,20 @@ function CapturesContent() {
             </button>
           )}
 
-          {/* Quick Select All in Filter Bar (only visible when no items are selected) */}
-          {filteredCaptures.length > 0 && selectedIds.size === 0 && (
-            <button
-              type="button"
-              onClick={toggleSelectAllVisible}
-              className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-border bg-subtle text-muted hover:text-foreground hover:bg-subtle/80 transition-colors cursor-pointer"
-              title={t("cap.selectAll")}
-            >
-              <span className="w-3.5 h-3.5 rounded border border-slate-300 dark:border-zinc-600 flex items-center justify-center text-[10px]" />
-              <span>{t("cap.selectAll")}</span>
-            </button>
-          )}
-
-          {/* Scan Missing Drive files button */}
+          {/* Scan missing Drive files */}
           <button
             type="button"
             onClick={() => scanMissingDrive(true)}
             disabled={scanningDrive}
-            className="flex items-center gap-1.5 text-xs font-medium px-2.5 py-1.5 rounded-lg border border-border bg-subtle text-muted hover:text-foreground hover:bg-subtle/80 transition-colors cursor-pointer disabled:opacity-50"
-            title={t("cap.scanMissing")}
+            aria-label={scanningDrive ? t("cap.scanning") : t("cap.scanMissing")}
+            title={scanningDrive ? t("cap.scanning") : t("cap.scanMissing")}
+            className="w-9 h-9 flex items-center justify-center rounded-lg border border-border bg-subtle text-muted hover:text-foreground hover:bg-subtle/80 transition-colors cursor-pointer disabled:opacity-50"
           >
             <Icon
               icon="lucide:refresh-cw"
               className={`w-3.5 h-3.5 shrink-0 ${scanningDrive ? "animate-spin text-amber-500" : "text-muted"}`}
+              aria-hidden="true"
             />
-            <span className="hidden md:inline">
-              {scanningDrive ? t("cap.scanning") : t("cap.scanMissing")}
-            </span>
           </button>
         </div>
 

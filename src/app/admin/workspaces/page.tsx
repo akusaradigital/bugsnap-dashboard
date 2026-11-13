@@ -1,10 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useToast } from "@/components/Toast";
 import { useT } from "@/components/I18nProvider";
 import { getAdminHeaders } from "@/lib/admin-cache";
 import { Icon } from "@/lib/iconify";
+import { Dropdown } from "@/components/Dropdown";
+import { useConfirm } from "@/components/ConfirmDialog";
+import { AdminPagination } from "@/components/AdminPagination";
 
 interface WorkspaceItem {
   id: string;
@@ -41,11 +44,15 @@ interface CaptureInfo {
 export default function AdminWorkspacesPage() {
   const { showToast } = useToast();
   const { t } = useT();
+  const confirm = useConfirm();
 
   const [loading, setLoading] = useState(true);
   const [workspaces, setWorkspaces] = useState<WorkspaceItem[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [planFilter, setPlanFilter] = useState("all");
+  const [vipFilter, setVipFilter] = useState("all");
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
@@ -64,28 +71,42 @@ export default function AdminWorkspacesPage() {
   const [newOwnerEmail, setNewOwnerEmail] = useState("");
   const [transferring, setTransferring] = useState(false);
 
-  useEffect(() => {
-    loadWorkspaces();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  // Per-page cache keyed by filters, so going back is instant.
+  const pageCache = useRef(new Map<string, { workspaces: WorkspaceItem[]; totalPages: number; total: number }>());
 
+  async function fetchPage(p: number, size: number, search: string, plan: string, vip: string) {
+    const key = `${p}|${size}|${search}|${plan}|${vip}`;
+    const hit = pageCache.current.get(key);
+    if (hit) return hit;
+
+    const headers = await getAdminHeaders();
+    const params = new URLSearchParams({ page: p.toString(), limit: String(size), search, plan, vip });
+    const res = await fetch(`/api/admin/workspaces?${params.toString()}`, { headers });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || t("admin.loadFailed"));
+
+    const result = {
+      workspaces: (json.workspaces || []) as WorkspaceItem[],
+      totalPages: json.pagination?.totalPages || 1,
+      total: json.pagination?.total || 0,
+    };
+    pageCache.current.set(key, result);
+    return result;
+  }
+
+  // Keep the previous rows visible while the next page loads.
   async function loadWorkspaces() {
     setLoading(true);
     try {
-      const headers = await getAdminHeaders();
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: "20",
-        search: searchQuery.trim(),
-      });
+      const search = searchQuery.trim();
+      const result = await fetchPage(page, pageSize, search, planFilter, vipFilter);
+      setWorkspaces(result.workspaces);
+      setTotalPages(result.totalPages);
+      setTotalCount(result.total);
 
-      const res = await fetch(`/api/admin/workspaces?${params.toString()}`, { headers });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || t("admin.loadFailed"));
-
-      setWorkspaces(json.workspaces || []);
-      setTotalPages(json.pagination?.totalPages || 1);
-      setTotalCount(json.pagination?.total || 0);
+      if (page < result.totalPages) {
+        fetchPage(page + 1, pageSize, search, planFilter, vipFilter).catch(() => {});
+      }
     } catch (err: unknown) {
       showToast((err as Error)?.message || t("admin.loadFailed"), "error");
     } finally {
@@ -93,10 +114,19 @@ export default function AdminWorkspacesPage() {
     }
   }
 
+  useEffect(() => {
+    loadWorkspaces();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, pageSize, planFilter, vipFilter]);
+
   function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setPage(1);
-    loadWorkspaces();
+    pageCache.current.clear();
+    if (page !== 1) {
+      setPage(1);
+    } else {
+      loadWorkspaces();
+    }
   }
 
   async function openWorkspaceDetail(ws: WorkspaceItem) {
@@ -150,6 +180,7 @@ export default function AdminWorkspacesPage() {
       if (!res.ok) throw new Error(json.error || t("admin.vipOverrideFailed"));
 
       const finalLimit = parsedLimit && !isNaN(parsedLimit) ? parsedLimit : null;
+      pageCache.current.clear();
       setWorkspaces((prev) =>
         prev.map((w) =>
           w.id === selectedWs.id
@@ -195,8 +226,9 @@ export default function AdminWorkspacesPage() {
         }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed to transfer ownership");
+      if (!res.ok) throw new Error(json.error || t("adminMisc.errTransfer"));
 
+      pageCache.current.clear();
       setWorkspaces((prev) =>
         prev.map((w) =>
           w.id === transferWs.id ? { ...w, owner_email: newOwnerEmail.trim() } : w
@@ -206,16 +238,19 @@ export default function AdminWorkspacesPage() {
       setTransferWs(null);
       setNewOwnerEmail("");
     } catch (err: unknown) {
-      showToast((err as Error)?.message || "Failed to transfer ownership", "error");
+      showToast((err as Error)?.message || t("adminMisc.errTransferToast"), "error");
     } finally {
       setTransferring(false);
     }
   }
 
   async function handleDeleteWorkspace(ws: WorkspaceItem) {
-    if (!confirm(t("admin.deleteWorkspaceConfirm", { name: ws.name }))) {
-      return;
-    }
+    const ok = await confirm({
+      title: t("admin.deleteWorkspaceConfirmTitle"),
+      message: t("admin.deleteWorkspaceConfirm", { name: ws.name }),
+      danger: true,
+    });
+    if (!ok) return;
 
     try {
       const headers = await getAdminHeaders();
@@ -224,13 +259,14 @@ export default function AdminWorkspacesPage() {
         headers,
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed to delete workspace");
+      if (!res.ok) throw new Error(json.error || t("adminMisc.errDeleteWs"));
 
+      pageCache.current.clear();
       setWorkspaces((prev) => prev.filter((w) => w.id !== ws.id));
       if (selectedWs?.id === ws.id) setSelectedWs(null);
       showToast("Workspace deleted successfully", "success");
     } catch (err: unknown) {
-      showToast((err as Error)?.message || "Failed to delete workspace", "error");
+      showToast((err as Error)?.message || t("adminMisc.errDeleteWsToast"), "error");
     }
   }
 
@@ -258,7 +294,10 @@ export default function AdminWorkspacesPage() {
         </div>
         <button
           type="button"
-          onClick={() => loadWorkspaces()}
+          onClick={() => {
+            pageCache.current.clear();
+            loadWorkspaces();
+          }}
           disabled={loading}
           className="self-start sm:self-auto px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs font-semibold text-slate-700 dark:text-zinc-300 transition-colors shadow-xs cursor-pointer"
         >
@@ -266,15 +305,65 @@ export default function AdminWorkspacesPage() {
         </button>
       </div>
 
-      {/* Search Bar */}
-      <div className="flex items-center justify-between">
+      {/* Toolbar: plan + VIP filters + page size on the left, search on the right (same as Manage Users) */}
+      <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-center justify-between">
+        <div className="flex flex-wrap items-center gap-2">
+          <Dropdown
+            value={planFilter}
+            onChange={(val) => {
+              pageCache.current.clear();
+              setPlanFilter(val);
+              setPage(1);
+            }}
+            options={[
+              { value: "all", label: t("admin.allPlans") },
+              { value: "free", label: t("adminMisc.planFree") },
+              { value: "pro", label: "Pro" },
+              { value: "pro_plus", label: t("adminUsers.planProPlus") },
+              { value: "enterprise", label: t("adminMisc.planEnterprise") },
+            ]}
+            variant="field-white"
+          />
+
+          <Dropdown
+            value={vipFilter}
+            onChange={(val) => {
+              pageCache.current.clear();
+              setVipFilter(val);
+              setPage(1);
+            }}
+            options={[
+              { value: "all", label: t("admin.allWorkspaces") },
+              { value: "vip", label: t("admin.vipBadge") },
+              { value: "regular", label: t("admin.regularWorkspaces") },
+            ]}
+            variant="field-white"
+          />
+
+          <Dropdown
+            value={String(pageSize)}
+            onChange={(val) => {
+              pageCache.current.clear();
+              setPageSize(Number(val));
+              setPage(1);
+            }}
+            options={[
+              { value: "10", label: "10" },
+              { value: "20", label: "20" },
+              { value: "50", label: "50" },
+              { value: "100", label: "100" },
+            ]}
+            variant="field-white"
+          />
+        </div>
+
         <form onSubmit={handleSearchSubmit} className="flex items-center gap-1.5 w-full sm:w-80">
           <input
             type="text"
             placeholder={t("admin.searchPlaceholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full min-w-0 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600/20 text-slate-900 dark:text-white"
+            className="w-full min-w-0 text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 text-slate-900 dark:text-white"
           />
           <button
             type="submit"
@@ -299,8 +388,8 @@ export default function AdminWorkspacesPage() {
                 <th className="py-3 px-4 text-right">{t("admin.actions")}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-zinc-800">
-              {loading ? (
+            <tbody className={`divide-y divide-slate-100 dark:divide-zinc-800 transition-opacity ${loading && workspaces.length > 0 ? "opacity-50" : ""}`}>
+              {loading && workspaces.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="p-8 text-center text-slate-400">
                     {t("common.loading")}
@@ -317,30 +406,25 @@ export default function AdminWorkspacesPage() {
                   <tr key={ws.id} className="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
                     <td className="py-3 px-4 whitespace-nowrap">
                       <div className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                        <span>{ws.name}</span>
-                        {ws.is_vip && (
-                          <span className="inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded text-[9px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800">
-                            <Icon icon="lucide:crown" className="w-2.5 h-2.5 shrink-0" />
-                            <span>{t("admin.vipBadge")}</span>
-                          </span>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => openWorkspaceDetail(ws)}
+                          className="text-left hover:text-[#2563EB] dark:hover:text-[#3B82F6] transition-colors cursor-pointer"
+                        >
+                          {ws.name}
+                        </button>
+                        {ws.is_vip && <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">{t("admin.vipBadge")}</span>}
                       </div>
                       <div className="text-[10px] text-slate-400 font-mono">{ws.id.slice(0, 12)}…</div>
                     </td>
                     <td className="py-3 px-4 whitespace-nowrap text-slate-600 dark:text-zinc-300 font-mono">
                       {ws.owner_email || "-"}
                     </td>
-                    <td className="py-3 px-4 whitespace-nowrap">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300">
-                        <Icon icon="lucide:users" className="w-3 h-3 shrink-0" />
-                        <span>{ws.member_count}</span>
-                      </span>
+                    <td className="py-3 px-4 whitespace-nowrap tabular-nums text-slate-700 dark:text-zinc-300">
+                      {ws.member_count}
                     </td>
-                    <td className="py-3 px-4 whitespace-nowrap">
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 dark:bg-blue-950/20 text-[#2563EB] dark:text-[#3B82F6] border border-blue-200 dark:border-blue-900/40">
-                        <Icon icon="lucide:video" className="w-3 h-3 shrink-0" />
-                        <span>{ws.capture_count}</span>
-                      </span>
+                    <td className="py-3 px-4 whitespace-nowrap tabular-nums text-slate-700 dark:text-zinc-300">
+                      {ws.capture_count}
                     </td>
                     <td className="py-3 px-4 whitespace-nowrap text-slate-500 dark:text-zinc-400">
                       {new Date(ws.created_at).toLocaleDateString("id-ID", {
@@ -350,34 +434,27 @@ export default function AdminWorkspacesPage() {
                       })}
                     </td>
                     <td className="py-3 px-4 text-right whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => openWorkspaceDetail(ws)}
-                          className="px-2 py-1 rounded text-xs font-semibold border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors inline-flex items-center justify-center"
-                          title="View Details"
-                        >
-                          <Icon icon="lucide:eye" className="w-3.5 h-3.5 shrink-0" />
-                        </button>
+                      <div className="flex items-center justify-end gap-1">
                         <button
                           type="button"
                           onClick={() => {
                             setTransferWs(ws);
                             setNewOwnerEmail(ws.owner_email || "");
                           }}
-                          className="px-2.5 py-1 rounded text-xs font-semibold border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors inline-flex items-center gap-1"
                           title={t("admin.transferOwner")}
+                          aria-label={t("admin.transferOwner")}
+                          className="p-1.5 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-800 cursor-pointer"
                         >
-                          
-                          <span>Owner</span>
+                          <Icon icon="lucide:user-round-cog" className="w-4 h-4" aria-hidden="true" />
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDeleteWorkspace(ws)}
-                          className="px-2 py-1 rounded text-xs font-semibold border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors inline-flex items-center justify-center"
                           title={t("admin.deleteWorkspace")}
+                          aria-label={t("admin.deleteWorkspace")}
+                          className="p-1.5 rounded-md text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40 cursor-pointer"
                         >
-                          <Icon icon="lucide:trash-2" className="w-3.5 h-3.5 shrink-0" />
+                          <Icon icon="lucide:trash-2" className="w-4 h-4" aria-hidden="true" />
                         </button>
                       </div>
                     </td>
@@ -390,28 +467,15 @@ export default function AdminWorkspacesPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="p-3 border-t border-slate-200 dark:border-zinc-800 flex items-center justify-between text-xs text-slate-500 dark:text-zinc-400">
-            <span>
-              {t("admin.pageOf", { page: String(page), totalPages: String(totalPages) })}
-            </span>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                disabled={page <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="px-2.5 py-1 rounded border border-slate-200 dark:border-zinc-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-zinc-800"
-              >
-                {t("admin.prev")}
-              </button>
-              <button
-                type="button"
-                disabled={page >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                className="px-2.5 py-1 rounded border border-slate-200 dark:border-zinc-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-zinc-800"
-              >
-                {t("admin.next")}
-              </button>
-            </div>
+          <div className="p-3 border-t border-slate-200 dark:border-zinc-800">
+            <AdminPagination
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              disabled={loading}
+              prevLabel={t("admin.prev")}
+              nextLabel={t("admin.next")}
+            />
           </div>
         )}
       </div>
@@ -487,7 +551,7 @@ export default function AdminWorkspacesPage() {
                 type="button"
                 onClick={() => setSelectedWs(null)}
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-white transition-colors"
-                aria-label="Close"
+                aria-label={t("adminMisc.close")}
               >
                 <Icon icon="lucide:x" className="w-4 h-4 shrink-0" />
               </button>
@@ -611,7 +675,7 @@ export default function AdminWorkspacesPage() {
                           className="flex items-center justify-between p-2 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950"
                         >
                           <div>
-                            <span className="font-medium text-slate-900 dark:text-white">{cap.title || "Untitled"}</span>
+                            <span className="font-medium text-slate-900 dark:text-white">{cap.title || t("adminMisc.untitled")}</span>
                             <span className="text-[10px] text-slate-400 ml-2">({cap.type})</span>
                           </div>
                           <a

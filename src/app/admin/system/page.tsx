@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useToast } from "@/components/Toast";
+import { useT } from "@/components/I18nProvider";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { getAdminHeaders, getAdminCache, setAdminCache } from "@/lib/admin-cache";
 import { Icon } from "@/lib/iconify";
 
@@ -61,6 +63,8 @@ const SERVICE_ICONS: Record<string, string> = {
 };
 
 export default function AdminSystemPage() {
+  const { t, locale } = useT();
+  const confirm = useConfirm();
   const { showToast } = useToast();
 
   const cachedServices = getAdminCache<PingService[]>("admin_system_services");
@@ -104,14 +108,14 @@ export default function AdminSystemPage() {
       const url = fresh ? "/api/admin/integrations/ping?fresh=true" : "/api/admin/integrations/ping";
       const res = await fetch(url, { headers });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Gagal melakukan ping integrasi.");
+      if (!res.ok) throw new Error(json.error || t("adminSys.errPing"));
 
       const newServices = json.services || [];
       setServices(newServices);
       setAdminCache("admin_system_services", newServices);
       setLastPing(new Date().toLocaleTimeString("id-ID"));
     } catch (err: unknown) {
-      if (!services.length) showToast((err as Error)?.message || "Gagal memeriksa ping integrasi", "error");
+      if (!services.length) showToast((err as Error)?.message || t("adminSys.errPingToast"), "error");
     } finally {
       setPingLoading(false);
     }
@@ -141,12 +145,12 @@ export default function AdminSystemPage() {
       const headers = await getAdminHeaders();
       const res = await fetch("/api/admin/drive-health", { headers });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Gagal memeriksa koneksi Google Drive.");
+      if (!res.ok) throw new Error(json.error || t("adminSys.errDrive"));
       const data: DriveHealthData = { connections: json.connections || [], capturesAtRisk: json.capturesAtRisk || [] };
       setDriveHealth(data);
       setAdminCache("admin_drive_health", data);
     } catch (err: unknown) {
-      showToast((err as Error)?.message || "Gagal memeriksa koneksi Google Drive", "error");
+      showToast((err as Error)?.message || t("adminSys.errDriveToast"), "error");
     } finally {
       setCheckingDriveHealth(false);
     }
@@ -161,12 +165,12 @@ export default function AdminSystemPage() {
       const query = targetId ? `?userId=${encodeURIComponent(targetId)}` : "";
       const res = await fetch(`/api/admin/drive-orphans${query}`, { headers });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Gagal memindai Google Drive");
+      if (!res.ok) throw new Error(json.error || t("adminSys.errScan"));
 
       setOrphanData(json);
       showToast(`Pemindaian selesai. Ditemukan ${json.orphanCount} file orphan.`, "info");
     } catch (err: unknown) {
-      const msg = (err as Error)?.message || "Gagal memindai Drive";
+      const msg = (err as Error)?.message || t("adminSys.errScanToast");
       setDriveError(msg);
       showToast(msg, "error");
     } finally {
@@ -177,7 +181,13 @@ export default function AdminSystemPage() {
   async function handleCleanDrive() {
     if (!orphanData || orphanData.orphans.length === 0) return;
     const fileIds = orphanData.orphans.map((f) => f.id);
-    if (!confirm(`Apakah Anda yakin ingin memindahkan ${fileIds.length} file orphan ke Trash Google Drive?`)) return;
+    const ok = await confirm({
+      title: t("admin.cleanDriveConfirmTitle"),
+      message: t("admin.cleanDriveConfirm", { count: fileIds.length }),
+      confirmLabel: t("admin.cleanDriveSend"),
+      danger: true,
+    });
+    if (!ok) return;
 
     setCleaningDrive(true);
     try {
@@ -189,12 +199,12 @@ export default function AdminSystemPage() {
         body: JSON.stringify({ fileIds, userId: targetUserId }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Gagal membersihkan file orphan.");
+      if (!res.ok) throw new Error(json.error || t("adminSys.errClean"));
 
       showToast(`Berhasil membersihkan ${json.trashed} file dari Drive!`, "success");
       handleScanDrive();
     } catch (err: unknown) {
-      showToast((err as Error)?.message || "Gagal membersihkan Drive", "error");
+      showToast((err as Error)?.message || t("adminSys.errCleanToast"), "error");
     } finally {
       setCleaningDrive(false);
     }
@@ -220,14 +230,14 @@ export default function AdminSystemPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-3 border-b border-slate-200 dark:border-zinc-800">
         <div>
           <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            <span className="flex items-center gap-2"><Icon icon="lucide:hard-drive" className="w-4 h-4 shrink-0 text-[#2563EB] dark:text-[#3B82F6]" /> Sistem & Integrasi Diagnostics</span>
+            <span className="flex items-center gap-2"><Icon icon="lucide:hard-drive" className="w-4 h-4 shrink-0 text-[#2563EB] dark:text-[#3B82F6]" /> {t("adminSys.title")}</span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
-            Pusat pemantauan konektivitas API eksternal, pembersihan storage orphan Google Drive, dan audit integritas skema database.
+            {t("adminSys.desc")}
           </p>
         </div>
         <div className="flex items-center gap-2">
-          {lastPing && <span className="text-xs text-slate-400 hidden sm:inline">Diperiksa: {lastPing}</span>}
+          {lastPing && <span className="text-xs text-slate-400 hidden sm:inline">{t("adminSys.checkedAt", { time: lastPing })}</span>}
           <button
             type="button"
             onClick={() => {
@@ -237,10 +247,10 @@ export default function AdminSystemPage() {
             disabled={pingLoading || loadingAudit}
             className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs font-semibold text-slate-700 dark:text-zinc-300 transition-colors shadow-xs cursor-pointer inline-flex items-center gap-1.5"
           >
-            {pingLoading ? "Memeriksa..." : (
+            {pingLoading ? t("adminSys.checking") : (
               <>
                 <Icon icon="lucide:refresh-cw" className="w-3.5 h-3.5 shrink-0" />
-                <span>Diagnosa Ulang</span>
+                <span>{t("adminSys.reDiagnose")}</span>
               </>
             )}
           </button>
@@ -252,10 +262,10 @@ export default function AdminSystemPage() {
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-200 flex items-center gap-2">
-              <span className="flex items-center gap-1.5"><Icon icon="lucide:globe" className="w-4 h-4 shrink-0 text-sky-500" /> Pemantauan Konektivitas API & Integrasi</span>
+              <span className="flex items-center gap-1.5"><Icon icon="lucide:globe" className="w-4 h-4 shrink-0 text-sky-500" /> {t("adminSys.pingTitle")}</span>
             </h3>
             <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">
-              Status ketersediaan real-time dan latensi jaringan ke database, cloud storage, email, dan proteksi spam.
+              {t("adminSys.pingDesc")}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -292,7 +302,7 @@ export default function AdminSystemPage() {
                           : "bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400"
                       }`}
                     >
-                      {isOnline ? "ONLINE" : s.status.toUpperCase()}
+                      {isOnline ? t("adminSys.online") : s.status.toUpperCase()}
                     </span>
                   </div>
                   <h4 className="text-xs font-bold text-slate-900 dark:text-white mt-2">{s.name}</h4>
@@ -318,17 +328,17 @@ export default function AdminSystemPage() {
           <div>
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-200 flex items-center gap-2">
-                <span className="flex items-center gap-2"><Icon icon="lucide:folder" className="w-4 h-4 shrink-0 text-amber-500" /> Google Drive Orphan Storage Cleaner</span>
+                <span className="flex items-center gap-2"><Icon icon="lucide:folder" className="w-4 h-4 shrink-0 text-amber-500" /> {t("adminSys.orphanTitle")}</span>
               </h3>
             </div>
             <p className="text-[11px] text-slate-500 dark:text-zinc-400 leading-relaxed">
-              Mendeteksi rekaman di Google Drive yang datanya telah terhapus dari database BugSnap namun masih memakan kuota cloud storage.
+              {t("adminSys.orphanDesc")}
             </p>
 
             <div className="flex flex-col sm:flex-row gap-2 mt-2">
               <input
                 type="text"
-                placeholder="Target User UUID (opsional jika login dengan akun admin)"
+                placeholder={t("adminSys.scanPlaceholder")}
                 value={targetUserIdInput}
                 onChange={(e) => setTargetUserIdInput(e.target.value)}
                 className="text-xs px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-200 flex-1 font-mono placeholder:font-sans placeholder:text-slate-400 focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 min-w-0"
@@ -339,9 +349,9 @@ export default function AdminSystemPage() {
                 disabled={scanningDrive || cleaningDrive}
                 className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs shadow-[#2563EB]/25 disabled:opacity-50 transition-colors cursor-pointer shrink-0 inline-flex items-center justify-center gap-1.5"
               >
-                {scanningDrive ? "Memindai..." : (
+                {scanningDrive ? t("adminSys.scanning") : (
                   <>
-                    <span>Pindai File</span>
+                    <span>{t("adminSys.scanFiles")}</span>
                     <Icon icon="lucide:search" className="w-3.5 h-3.5 shrink-0 brightness-0 invert" />
                   </>
                 )}
@@ -363,19 +373,19 @@ export default function AdminSystemPage() {
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-center">
                   <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 min-w-0">
-                    <span className="text-[10px] text-slate-400 uppercase font-bold">Total File</span>
+                    <span className="text-[10px] text-slate-400 uppercase font-bold">{t("adminSys.totalFiles")}</span>
                     <p className="text-base font-black text-slate-900 dark:text-white mt-0.5 truncate">
                       {orphanData.totalDriveFiles}
                     </p>
                   </div>
                   <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 min-w-0">
-                    <span className="text-[10px] text-slate-400 uppercase font-bold">Terhubung</span>
+                    <span className="text-[10px] text-slate-400 uppercase font-bold">{t("adminSys.linked")}</span>
                     <p className="text-base font-black text-emerald-600 dark:text-emerald-400 mt-0.5 truncate">
                       {orphanData.linkedCaptureFiles}
                     </p>
                   </div>
                   <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-zinc-950 border border-slate-200 dark:border-zinc-800 min-w-0">
-                    <span className="text-[10px] text-slate-400 uppercase font-bold">Orphan</span>
+                    <span className="text-[10px] text-slate-400 uppercase font-bold">{t("adminSys.orphan")}</span>
                     <p className="text-base font-black text-rose-600 dark:text-rose-400 mt-0.5 truncate">
                       {orphanData.orphanCount}
                     </p>
@@ -406,9 +416,9 @@ export default function AdminSystemPage() {
                 onClick={handleCleanDrive}
                 className="px-4 py-2 text-xs font-bold rounded-lg bg-rose-600 hover:bg-rose-700 text-white disabled:opacity-50 transition-colors shadow-sm cursor-pointer inline-flex items-center gap-1.5"
               >
-                {cleaningDrive ? "Memindahkan ke Trash..." : (
+                {cleaningDrive ? t("adminSys.cleaning") : (
                   <>
-                    <span>Bersihkan {orphanData.orphanCount} File Orphan</span>
+                    <span>{t("adminSys.cleanOrphans", { count: orphanData.orphanCount })}</span>
                     <Icon icon="lucide:trash-2" className="w-3.5 h-3.5 shrink-0 brightness-0 invert" />
                   </>
                 )}
@@ -422,7 +432,7 @@ export default function AdminSystemPage() {
           <div>
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-200 flex items-center gap-2">
-                <span className="flex items-center gap-2"><Icon icon="lucide:database" className="w-4 h-4 shrink-0 text-emerald-500" /> Audit Integritas Database Supabase</span>
+                <span className="flex items-center gap-2"><Icon icon="lucide:database" className="w-4 h-4 shrink-0 text-emerald-500" /> {t("adminSys.auditTitle")}</span>
               </h3>
               <button
                 type="button"
@@ -430,30 +440,30 @@ export default function AdminSystemPage() {
                 disabled={loadingAudit}
                 className="text-xs text-[#2563EB] hover:text-[#1D4ED8] dark:text-[#3B82F6] dark:hover:text-[#60A5FA] hover:underline font-semibold cursor-pointer inline-flex items-center gap-1"
               >
-                {loadingAudit ? "Memeriksa..." : (
+                {loadingAudit ? t("adminSys.auditing") : (
                   <>
-                    <span>Audit Ulang</span>
+                    <span>{t("adminSys.reAudit")}</span>
                     <Icon icon="lucide:refresh-cw" className="w-3 h-3 shrink-0" />
                   </>
                 )}
               </button>
             </div>
             <p className="text-[11px] text-slate-500 dark:text-zinc-400 leading-relaxed mb-4">
-              Verifikasi konsistensi relasi kunci asing (foreign key) dan integritas skema database produksi.
+              {t("adminSys.auditDesc")}
             </p>
 
             <div className="space-y-3 text-xs">
               <div className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 min-w-0">
-                <h4 className="font-bold text-slate-900 dark:text-white mb-1">Schema Drift Check:</h4>
+                <h4 className="font-bold text-slate-900 dark:text-white mb-1">{t("adminSys.driftLabel")}</h4>
                 <pre className="text-[11px] font-mono text-slate-600 dark:text-zinc-400 overflow-x-auto">
-                  {driftData ? JSON.stringify(driftData, null, 2) : "Semua tabel dan relasi skema selaras (OK)."}
+                  {driftData ? JSON.stringify(driftData, null, 2) : t("adminSys.driftOk")}
                 </pre>
               </div>
 
               <div className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 min-w-0">
-                <h4 className="font-bold text-slate-900 dark:text-white mb-1">Referential Integrity Check:</h4>
+                <h4 className="font-bold text-slate-900 dark:text-white mb-1">{t("adminSys.integrityLabel")}</h4>
                 <pre className="text-[11px] font-mono text-slate-600 dark:text-zinc-400 overflow-x-auto">
-                  {integrityData ? JSON.stringify(integrityData, null, 2) : "Tidak ada foreign key yatim (OK)."}
+                  {integrityData ? JSON.stringify(integrityData, null, 2) : t("adminSys.integrityOk")}
                 </pre>
               </div>
             </div>
@@ -502,33 +512,33 @@ export default function AdminSystemPage() {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 min-w-0">
             <div className="flex items-center justify-between text-slate-500 dark:text-zinc-400 mb-1">
-              <span className="text-[10px] uppercase font-bold tracking-wider">Estimasi Kuota Reclaimed</span>
+              <span className="text-[10px] uppercase font-bold tracking-wider">{t("adminSys.reclaimed")}</span>
               <Icon icon="lucide:hard-drive" className="w-4 h-4 text-emerald-500 shrink-0" />
             </div>
             <p className="text-xl font-black text-slate-900 dark:text-white truncate">
               {simulatedReclaimedDisplay}
             </p>
             <span className="text-[10px] text-slate-400 block mt-0.5">
-              Estimasi kapasitas storage dapat dipulihkan
+              {t("adminSys.reclaimedHint")}
             </span>
           </div>
 
           <div className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 min-w-0">
             <div className="flex items-center justify-between text-slate-500 dark:text-zinc-400 mb-1">
-              <span className="text-[10px] uppercase font-bold tracking-wider">File Terdampak</span>
+              <span className="text-[10px] uppercase font-bold tracking-wider">{t("adminSys.affected")}</span>
               <Icon icon="lucide:file-text" className="w-4 h-4 text-sky-500 shrink-0" />
             </div>
             <p className="text-xl font-black text-slate-900 dark:text-white truncate">
-              {simulatedAffectedFiles.toLocaleString("id-ID")} file
+              {simulatedAffectedFiles.toLocaleString(locale === "id" ? "id-ID" : "en-US")} {locale === "id" ? "file" : "files"}
             </p>
             <span className="text-[10px] text-slate-400 block mt-0.5">
-              File berumur &gt; {retentionDays} hari + {orphanCount} orphan
+              {t("adminSys.affectedHint", { days: retentionDays, orphans: orphanCount })}
             </span>
           </div>
 
           <div className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950 min-w-0">
             <div className="flex items-center justify-between text-slate-500 dark:text-zinc-400 mb-1">
-              <span className="text-[10px] uppercase font-bold tracking-wider">Estimasi Reduksi</span>
+              <span className="text-[10px] uppercase font-bold tracking-wider">{t("adminSys.reduction")}</span>
               <Icon icon="lucide:trending-down" className="w-4 h-4 text-amber-500 shrink-0" />
             </div>
             <p className="text-xl font-black text-emerald-600 dark:text-emerald-400 truncate">
@@ -553,10 +563,10 @@ export default function AdminSystemPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
           <div className="min-w-0">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-200 flex items-center gap-2">
-              <span className="flex items-center gap-2"><Icon icon="lucide:link" className="w-4 h-4 shrink-0 text-amber-500" /> Koneksi Google Drive Pengguna</span>
+              <span className="flex items-center gap-2"><Icon icon="lucide:link" className="w-4 h-4 shrink-0 text-amber-500" /> {t("adminSys.driveConnTitle")}</span>
             </h3>
             <p className="text-[11px] text-slate-500 dark:text-zinc-400 leading-relaxed mt-0.5">
-              Cek satu per satu apakah refresh token tiap pengguna masih berlaku di Google - dijalankan manual, bukan otomatis, karena tiap baris memanggil API Google.
+              {t("adminSys.driveConnDesc")}
             </p>
           </div>
           <button
@@ -565,9 +575,9 @@ export default function AdminSystemPage() {
             disabled={checkingDriveHealth}
             className="px-3 py-1.5 text-xs font-semibold rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs shadow-[#2563EB]/25 disabled:opacity-50 transition-colors cursor-pointer shrink-0 inline-flex items-center gap-1.5"
           >
-            {checkingDriveHealth ? "Memeriksa..." : (
+            {checkingDriveHealth ? t("adminSys.checking") : (
               <>
-                <span>Jalankan Pemeriksaan</span>
+                <span>{t("adminSys.checkNow")}</span>
                 <Icon icon="lucide:search" className="w-3.5 h-3.5 shrink-0 brightness-0 invert" />
               </>
             )}
@@ -597,21 +607,21 @@ export default function AdminSystemPage() {
                 );
               })}
               {driveHealth.connections.length === 0 && (
-                <p className="text-xs text-slate-400 p-2">Belum ada koneksi Google Drive tersimpan.</p>
+                <p className="text-xs text-slate-400 p-2">{t("adminSys.noDriveConn")}</p>
               )}
             </div>
 
             <div>
               <h4 className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 mb-1.5">
-                Capture Berisiko Media Rusak ({driveHealth.capturesAtRisk.length})
+                {t("adminSys.atRiskTitle", { count: driveHealth.capturesAtRisk.length })}
               </h4>
               {driveHealth.capturesAtRisk.length === 0 ? (
-                <p className="text-xs text-slate-400 p-2">Tidak ada - semua pemilik capture punya koneksi Drive sehat.</p>
+                <p className="text-xs text-slate-400 p-2">{t("adminSys.atRiskNone")}</p>
               ) : (
                 <div className="max-h-48 overflow-y-auto divide-y divide-slate-100 dark:divide-zinc-800 border border-slate-200 dark:border-zinc-800 rounded-lg">
                   {driveHealth.capturesAtRisk.map((cap) => (
                     <div key={cap.id} className="p-2 flex items-center justify-between gap-2 text-xs">
-                      <span className="truncate min-w-0 text-slate-700 dark:text-zinc-300">{cap.title || "(tanpa judul)"}</span>
+                      <span className="truncate min-w-0 text-slate-700 dark:text-zinc-300">{cap.title || t("adminSys.untitled")}</span>
                       <span className="text-[10px] text-slate-400 truncate break-all shrink-0 max-w-[40%]">{cap.ownerEmail}</span>
                     </div>
                   ))}

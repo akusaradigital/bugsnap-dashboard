@@ -148,7 +148,7 @@ export default function AdminRevenuePage() {
         return;
       }
       const rows = payingCustomers.map((c) => ({
-        Name: c.full_name || "Subscriber",
+        Name: c.full_name || t("adminMisc.subscriber"),
         Email: c.email,
         Plan: c.plan,
         MonthlyValueUSD: c.monthlyValue,
@@ -156,14 +156,14 @@ export default function AdminRevenuePage() {
         JoinedDate: c.created_at,
       }));
       exportToCsv("bugsnap_subscribers", rows);
-      showToast("Data pelanggan berhasil diekspor ke CSV", "success");
+      showToast(t("adminMisc.exportedToast"), "success");
     } else if (activeTab === "prospects") {
       if (hotProspects.length === 0) {
-        showToast("Tidak ada prospek aktif untuk diekspor", "info");
+        showToast(t("adminMisc.noProspects"), "info");
         return;
       }
       const rows = hotProspects.map((h) => ({
-        Name: h.full_name || "Free User",
+        Name: h.full_name || t("adminMisc.freeUser"),
         Email: h.email,
         PaywallHits: h.paywall_hits,
         LastBlockedFeature: h.last_paywall_feature,
@@ -199,7 +199,7 @@ export default function AdminRevenuePage() {
         return;
       }
       const rows = atRiskCustomers.map((c) => ({
-        Name: c.full_name || "Subscriber",
+        Name: c.full_name || t("adminMisc.subscriber"),
         Email: c.email,
         Plan: c.plan,
         LastSeen: c.extension_last_seen || "Never",
@@ -291,7 +291,7 @@ export default function AdminRevenuePage() {
         {/* Stripe Gateway Status */}
         <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm">
           <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
-            Stripe Integration
+            {t("adminCopy.stripeIntegration")}
           </span>
           <div className="mt-2 flex items-center gap-2">
             <span
@@ -300,7 +300,7 @@ export default function AdminRevenuePage() {
               }`}
             />
             <span className="text-sm font-bold text-slate-800 dark:text-zinc-200">
-              {stripe?.configured ? "Active & Linked" : "Partially Configured"}
+              {stripe?.configured ? t("adminMisc.stripeLinked") : t("adminMisc.stripePartial")}
             </span>
           </div>
           <span className="text-[10px] text-slate-400 mt-1 flex items-center gap-1">
@@ -371,10 +371,8 @@ export default function AdminRevenuePage() {
                 : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200"
             }`}
           >
-            <span className="flex items-center gap-1.5"><Icon icon="lucide:dollar-sign" className="w-3.5 h-3.5 shrink-0" /> {t("admin.tabSubscribers")}</span>
-            <span className="px-1.5 py-0.5 rounded-md text-[10px] bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 font-bold">
-              {payingCustomers.length}
-            </span>
+            <span>{t("admin.tabSubscribers")}</span>
+            <span className="text-[10px] font-bold tabular-nums text-slate-500 dark:text-zinc-400">{payingCustomers.length}</span>
           </button>
 
           <button
@@ -386,16 +384,8 @@ export default function AdminRevenuePage() {
                 : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200"
             }`}
           >
-            <span className="flex items-center gap-1.5"><Icon icon="lucide:flame" className="w-3.5 h-3.5 shrink-0 text-amber-500" /> {t("admin.tabProspects")}</span>
-            <span
-              className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
-                hotProspects.length > 0
-                  ? "bg-amber-100 text-amber-800 dark:bg-amber-950/80 dark:text-amber-300"
-                  : "bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300"
-              }`}
-            >
-              {hotProspects.length}
-            </span>
+            <span>{t("admin.tabProspects")}</span>
+            <span className="text-[10px] font-bold tabular-nums text-slate-500 dark:text-zinc-400">{hotProspects.length}</span>
           </button>
 
           <button
@@ -407,16 +397,8 @@ export default function AdminRevenuePage() {
                 : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200"
             }`}
           >
-            <span className="flex items-center gap-1.5"><Icon icon="lucide:shopping-cart" className="w-3.5 h-3.5 shrink-0 text-rose-500" /> {t("admin.tabAbandoned")}</span>
-            <span
-              className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
-                abandonedCheckouts.length > 0
-                  ? "bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300"
-                  : "bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300"
-              }`}
-            >
-              {abandonedCheckouts.length}
-            </span>
+            <span>{t("admin.tabAbandoned")}</span>
+            <span className="text-[10px] font-bold tabular-nums text-slate-500 dark:text-zinc-400">{abandonedCheckouts.length}</span>
           </button>
 
           <button
@@ -428,16 +410,8 @@ export default function AdminRevenuePage() {
                 : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200"
             }`}
           >
-            <span className="flex items-center gap-1.5"><Icon icon="lucide:trending-down" className="w-3.5 h-3.5 shrink-0 text-rose-500" /> {t("admin.tabAtRisk")}</span>
-            <span
-              className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
-                atRiskCustomers.length > 0
-                  ? "bg-rose-100 text-rose-800 dark:bg-rose-950/80 dark:text-rose-300"
-                  : "bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300"
-              }`}
-            >
-              {atRiskCustomers.length}
-            </span>
+            <span>{t("admin.tabAtRisk")}</span>
+            <span className="text-[10px] font-bold tabular-nums text-slate-500 dark:text-zinc-400">{atRiskCustomers.length}</span>
           </button>
 
           <button
@@ -449,16 +423,8 @@ export default function AdminRevenuePage() {
                 : "text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-zinc-200"
             }`}
           >
-            <span className="flex items-center gap-1.5"><Icon icon="lucide:flask-conical" className="w-3.5 h-3.5 shrink-0 text-purple-500" /> {t("admin.tabExperiments")}</span>
-            <span
-              className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold ${
-                Object.keys(data?.abExperiments || {}).length > 0
-                  ? "bg-blue-50 dark:bg-blue-950/20 text-[#2563EB] dark:text-[#3B82F6] border border-blue-200 dark:border-blue-900/40"
-                  : "bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300"
-              }`}
-            >
-              {Object.keys(data?.abExperiments || {}).length}
-            </span>
+            <span>{t("admin.tabExperiments")}</span>
+            <span className="text-[10px] font-bold tabular-nums text-slate-500 dark:text-zinc-400">{Object.keys(data?.abExperiments || {}).length}</span>
           </button>
         </div>
 
@@ -482,7 +448,7 @@ export default function AdminRevenuePage() {
                   {t("admin.tabSubscribers")} ({payingCustomers.length})
                 </h3>
                 <p className="text-[11px] text-slate-500 dark:text-zinc-400">
-                  Users currently on active paid subscription plans (Pro, Team, Enterprise).
+                  {t("adminCopy.paidSubsDesc")}
                 </p>
               </div>
             </div>
@@ -509,7 +475,7 @@ export default function AdminRevenuePage() {
                   ) : payingCustomers.length === 0 ? (
                     <tr>
                       <td colSpan={6} className="p-8 text-center text-slate-400">
-                        No paying subscribers yet. Upgrades via Stripe will automatically appear here.
+                        {t("adminCopy.noPayingSubs")}
                       </td>
                     </tr>
                   ) : (
@@ -534,11 +500,11 @@ export default function AdminRevenuePage() {
                         <td className="py-3 px-4 whitespace-nowrap">
                           {cust.suspended ? (
                             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400">
-                              SUSPENDED
+                              {t("adminCopy.suspendedBadge")}
                             </span>
                           ) : (
                             <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400">
-                              ACTIVE
+                              {t("adminCopy.activeBadge")}
                             </span>
                           )}
                         </td>
@@ -554,7 +520,7 @@ export default function AdminRevenuePage() {
                             href="/admin/users"
                             className="text-[11px] font-semibold text-[#2563EB] hover:text-[#1D4ED8] dark:text-[#3B82F6] dark:hover:text-[#60A5FA] hover:underline"
                           >
-                            Manage User
+                            {t("admin.manageUser")}
                           </a>
                         </td>
                       </tr>
@@ -600,7 +566,7 @@ export default function AdminRevenuePage() {
                   ) : hotProspects.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="p-8 text-center text-slate-400">
-                        No free users have hit quota barriers yet. As users record & hit limits, high-intent leads appear here automatically.
+                        {t("adminCopy.noProspects")}
                       </td>
                     </tr>
                   ) : (
@@ -608,7 +574,7 @@ export default function AdminRevenuePage() {
                       <tr key={lead.id} className="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
                         <td className="py-3 px-4 whitespace-nowrap">
                           <div className="font-bold text-slate-900 dark:text-white">
-                            {lead.full_name || "Free User"}
+                            {lead.full_name || t("adminMisc.freeUser")}
                           </div>
                           <div className="text-[11px] text-slate-500 dark:text-zinc-400 font-mono">
                             {lead.email}
@@ -687,7 +653,7 @@ export default function AdminRevenuePage() {
                   ) : abandonedCheckouts.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="p-8 text-center text-slate-400">
-                        No abandoned checkouts detected. When a user cancels checkout or their session expires, they are flagged here for recovery.
+                        {t("adminCopy.noAbandoned")}
                       </td>
                     </tr>
                   ) : (
@@ -774,7 +740,7 @@ export default function AdminRevenuePage() {
                   ) : atRiskCustomers.length === 0 ? (
                     <tr>
                       <td colSpan={5} className="p-8 text-center text-slate-400">
-                        No paying customers have gone quiet. Everyone with a paid plan has used the extension in the last 30 days.
+                        {t("adminCopy.noAtRisk")}
                       </td>
                     </tr>
                   ) : (

@@ -6,9 +6,11 @@ import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
+import { PageLoader } from "@/components/PageLoader";
 import { normalizePlan, seatLimit, tierLabel, type Plan } from "@/lib/tiers";
 import { pickAvatar, initialOf, isRealAvatar } from "@/lib/avatar";
 import { AuthRequiredCard } from "@/components/AuthRequiredCard";
+import { AppHeader } from "@/components/AppHeader";
 import DriveStorageMeter from "@/components/DriveStorageMeter";
 import FloatingSupport from "@/components/FloatingSupport";
 import HelpMenu from "@/components/HelpMenu";
@@ -771,14 +773,7 @@ export default function DashboardLayout({
   }, [currentFolder, folderItems]);
 
   if (session.loading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="flex flex-col items-center gap-3">
-          <div className="h-7 w-7 rounded-full border-2 border-[#2563EB] border-t-transparent animate-spin" aria-hidden="true" />
-          <p className="text-sm text-muted">{t("layout.loading")}</p>
-        </div>
-      </div>
-    );
+    return <PageLoader message={t("layout.loading")} fullScreen />;
   }
 
   if (!session.user && session.suspended) {
@@ -1437,7 +1432,7 @@ export default function DashboardLayout({
         href="#main-content"
         className="sr-only focus:not-sr-only focus:fixed focus:top-3 focus:left-3 focus:z-[100] px-3 py-1.5 bg-red-600 text-white rounded-lg text-xs font-bold shadow-lg"
       >
-        {t("layout.skipToContent") || "Skip to main content"}
+        {t("layout.skipToContent")}
       </a>
       {promoBanner && promoBanner.enabled && promoBanner.message && !promoDismissed && (() => {
         const targetPlan = promoBanner.targetPlan || promoBanner.target_plan;
@@ -1481,9 +1476,9 @@ export default function DashboardLayout({
           >
             <div className="px-5 py-5 border-b border-border flex items-center gap-2.5">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo-day.svg" alt="BugSnap" className="w-7 h-7 shrink-0 object-contain dark:hidden" />
+              <img src="/logo-day.svg" alt="BugSnap" width={28} height={28} decoding="async" className="w-7 h-7 shrink-0 object-contain dark:hidden" />
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo-dark.svg" alt="BugSnap" className="w-7 h-7 shrink-0 object-contain hidden dark:block" />
+              <img src="/logo-dark.svg" alt="BugSnap" width={28} height={28} decoding="async" className="w-7 h-7 shrink-0 object-contain hidden dark:block" />
               <div>
                 <h1 className="text-sm font-bold tracking-tight text-foreground leading-none">
                   BugSnap
@@ -1583,17 +1578,12 @@ export default function DashboardLayout({
 
         {/* Main content column */}
         <div className="flex-1 min-w-0 h-full flex flex-col overflow-hidden">
-          {/* Top bar: mobile menu toggle + global search + notifications + account menu */}
+          {/* Top bar: shared AppHeader (same layout as the admin console) */}
           {!pathname.startsWith("/settings") && (
-            <header className="shrink-0 flex items-center gap-2 sm:gap-4 border-b border-border bg-subtle px-3 sm:px-6 py-2.5 sm:py-3">
-              <button
-                onClick={() => setSidebarOpen(true)}
-                className="lg:hidden min-h-[40px] min-w-[40px] flex items-center justify-center rounded-lg text-muted hover:text-foreground hover:bg-background transition-colors touch-manipulation shrink-0"
-                aria-label="Open menu"
-              >
-                <Icon icon="lucide:menu" className="w-5 h-5" />
-              </button>
-
+            <AppHeader
+              onOpenMenu={() => setSidebarOpen(true)}
+              openMenuLabel={t("layout.openMenu")}
+              search={
               <form
                 onSubmit={(e) => {
                   e.preventDefault();
@@ -1602,7 +1592,6 @@ export default function DashboardLayout({
                     `/captures${activeWsId ? `?ws=${activeWsId}` : ""}${q ? `${activeWsId ? "&" : "?"}q=${encodeURIComponent(q)}` : ""}`
                   );
                 }}
-                className="flex-1 max-w-xl min-w-0"
               >
                 <div className="relative">
                   <Icon icon="lucide:search" className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted pointer-events-none" aria-hidden="true" />
@@ -1615,8 +1604,10 @@ export default function DashboardLayout({
                   />
                 </div>
               </form>
+              }
+              actions={
+              <>
 
-              <div className="flex items-center gap-1.5 sm:gap-3 ml-auto shrink-0">
                 {/* Notification Bell */}
                 <div className="relative">
                   <button
@@ -1719,26 +1710,9 @@ export default function DashboardLayout({
                     <>
                       <div className="fixed inset-0 z-40" onClick={closeWorkspaceMenus} />
                       <div data-ws-menu className="absolute right-0 top-[calc(100%+8px)] z-50 w-72 rounded-2xl border border-border bg-subtle shadow-xl overflow-visible">
-                        <div className="p-4 flex items-center gap-3 border-b border-border">
-                          {activeWs?.avatar_url && !failedWsAvatars[activeWs.id] ? (
-                            /* eslint-disable-next-line @next/next/no-img-element */
-                            <img
-                              src={activeWs.avatar_url}
-                              alt={activeWs.name}
-                              onError={() => setFailedWsAvatars((prev) => ({ ...prev, [activeWs.id]: true }))}
-                              className="w-10 h-10 rounded-xl object-cover shrink-0 bg-subtle border border-border"
-                            />
-                          ) : (
-                            <span className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/20 text-[#2563EB] dark:text-[#3B82F6] text-lg font-semibold flex items-center justify-center shrink-0">
-                              {initialOf(activeWs?.name)}
-                            </span>
-                          )}
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center justify-between gap-2">
-                              <p className="text-base font-semibold text-foreground truncate">{activeWs?.name || "Workspace"}</p>
-                              <span className="text-[11px] px-2 py-0.5 rounded-md border border-border text-muted shrink-0">{tierLabel(currentUser.plan)}</span>
-                            </div>
-                          </div>
+                        <div className="px-4 py-3 flex items-center justify-between gap-2 border-b border-border">
+                          <p className="text-xs font-medium text-foreground truncate min-w-0">{currentUser.email || activeWs?.name || "Workspace"}</p>
+                          <span className="text-[10px] px-1.5 py-0.5 rounded border border-border text-muted shrink-0">{tierLabel(currentUser.plan)}</span>
                         </div>
 
                         <Link
@@ -1866,8 +1840,9 @@ export default function DashboardLayout({
                     </>
                   )}
                 </div>
-              </div>
-            </header>
+              </>
+              }
+            />
           )}
 
           <main id="main-content" className={`flex-1 min-h-0 ${pathname.startsWith("/settings") ? "overflow-hidden" : "overflow-y-auto"}`}>{children}</main>

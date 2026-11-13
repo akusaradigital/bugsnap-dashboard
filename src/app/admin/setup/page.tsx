@@ -67,18 +67,18 @@ export default function AdminSetupPage() {
       const headers = await getAdminHeaders();
       const res = await fetch("/api/admin/setup", { headers });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed to load setup configuration");
+      if (!res.ok) throw new Error(json.error || t("adminSetup.errLoad"));
 
       startTransition(() => {
         setData(json);
         setFormConfig(json.config);
       });
     } catch (err: unknown) {
-      showToast((err as Error)?.message || "Failed to load setup data", "error");
+      showToast((err as Error)?.message || t("adminSetup.errLoadToast"), "error");
     } finally {
       setLoading(false);
     }
-  }, [showToast]);
+  }, [showToast, t]);
 
   useEffect(() => {
     loadSetupData();
@@ -101,15 +101,15 @@ export default function AdminSetupPage() {
       });
 
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed to save website configuration");
+      if (!res.ok) throw new Error(json.error || t("adminSetup.errSave"));
 
-      showToast("Website configuration saved successfully!", "success");
+      showToast(t("adminSetup.savedToast"), "success");
       setFormConfig(json.config);
       if (data) {
         setData({ ...data, config: json.config });
       }
     } catch (err: unknown) {
-      showToast((err as Error)?.message || "Failed to save configuration", "error");
+      showToast((err as Error)?.message || t("adminSetup.errSaveToast"), "error");
     } finally {
       setSaving(false);
     }
@@ -133,7 +133,7 @@ export default function AdminSetupPage() {
 
       const json = await res.json();
       if (!res.ok || !json.ok) {
-        throw new Error(json.error || "Diagnostic test returned error");
+        throw new Error(json.error || t("adminSetup.errDiag"));
       }
 
       setDiagResult({
@@ -142,7 +142,7 @@ export default function AdminSetupPage() {
       });
       showToast(json.message, "success");
     } catch (err: unknown) {
-      const errMsg = (err as Error)?.message || "Diagnostic failed";
+      const errMsg = (err as Error)?.message || t("adminSetup.diagFailed");
       setDiagResult({ message: errMsg, ok: false });
       showToast(errMsg, "error");
     } finally {
@@ -155,10 +155,10 @@ export default function AdminSetupPage() {
     try {
       await navigator.clipboard.writeText(text);
       setCopiedKey(key);
-      showToast("Copied to clipboard!", "success");
+      showToast(t("adminSetup.copiedToast"), "success");
       setTimeout(() => setCopiedKey(null), 2000);
     } catch {
-      showToast("Failed to copy", "error");
+      showToast(t("adminSetup.copyFailedToast"), "error");
     }
   }
 
@@ -173,9 +173,7 @@ GOOGLE_DRIVE_CLIENT_ID=your-client-id.apps.googleusercontent.com
 GOOGLE_DRIVE_CLIENT_SECRET=GOCSPX-...
 GOOGLE_DRIVE_REDIRECT_URI=https://${formConfig?.siteDomain || "your-domain.com"}/api/google-drive/callback
 
-# Super Admin Credentials (Required)
-ADMIN_USERNAME=admin
-ADMIN_PASSWORD=your-secure-password-here
+# Super Admin Access (Required - Google-account whitelist, comma-separated)
 SUPER_ADMIN_EMAILS=owner@yourdomain.com
 
 # Transactional Email via Resend (Optional)
@@ -224,7 +222,7 @@ CRON_SECRET=your-random-cron-secret-token`;
                 ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20"
                 : "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20"
             }`}>
-              <span className={`w-2 h-2 rounded-full ${data.readiness.isProductionReady ? "bg-emerald-500 animate-pulse" : "bg-amber-500"}`} />
+              <span className={`w-2 h-2 rounded-full ${data.readiness.isProductionReady ? "bg-emerald-500" : "bg-amber-500"}`} />
               <span>{data.readiness.configured}/{data.readiness.total} Services ({data.readiness.percentage}%)</span>
             </div>
           )}
@@ -236,7 +234,7 @@ CRON_SECRET=your-random-cron-secret-token`;
             className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg border border-site-border bg-site-surface hover:bg-site-surface-2 transition-colors text-site-text"
           >
             <Icon icon="lucide:refresh-cw" className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
-            <span>Refresh</span>
+            <span>{t("adminSetup.refresh")}</span>
           </button>
         </div>
       </div>
@@ -257,7 +255,7 @@ CRON_SECRET=your-random-cron-secret-token`;
             onClick={() => setDiagResult(null)}
             className="opacity-70 hover:opacity-100 text-xs underline"
           >
-            Dismiss
+            {t("adminSetup.dismiss")}
           </button>
         </div>
       )}
@@ -322,9 +320,9 @@ CRON_SECRET=your-random-cron-secret-token`;
         <div className="space-y-6">
           <div className="p-4 rounded-xl bg-site-surface border border-site-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h3 className="font-bold text-sm text-site-text">Infrastructure Readiness</h3>
+              <h3 className="font-bold text-sm text-site-text">{t("adminSetup.infraTitle")}</h3>
               <p className="text-xs text-site-text-2 mt-0.5">
-                Essential services required to run BugSnap at full operational capacity.
+                {t("adminSetup.infraDesc")}
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -335,7 +333,7 @@ CRON_SECRET=your-random-cron-secret-token`;
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-site-surface-2 border border-site-border hover:bg-site-surface text-site-text transition-colors shadow-xs"
               >
                 <Icon icon="lucide:database" className={`w-3.5 h-3.5 ${testingDb ? "animate-spin" : ""}`} />
-                <span>Test Database</span>
+                <span>{t("adminSetup.testDb")}</span>
               </button>
               <button
                 type="button"
@@ -344,7 +342,7 @@ CRON_SECRET=your-random-cron-secret-token`;
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg bg-site-surface-2 border border-site-border hover:bg-site-surface text-site-text transition-colors shadow-xs"
               >
                 <Icon icon="lucide:bot" className={`w-3.5 h-3.5 ${testingAi ? "animate-spin" : ""}`} />
-                <span>Test AI Inference</span>
+                <span>{t("adminSetup.testAi")}</span>
               </button>
             </div>
           </div>
@@ -381,10 +379,10 @@ CRON_SECRET=your-random-cron-secret-token`;
                       />
                       <span>
                         {svc.isConfigured
-                          ? "Configured"
+                          ? t("adminSetup.statusConfigured")
                           : svc.status === "optional"
-                          ? "Optional (Not Set)"
-                          : "Missing in .env"}
+                          ? t("adminSetup.statusOptional")
+                          : t("adminSetup.statusMissing")}
                       </span>
                     </span>
                   </div>
@@ -419,7 +417,7 @@ CRON_SECRET=your-random-cron-secret-token`;
             <div>
               <h3 className="text-base font-bold text-site-text">Platform Brand &amp; Domain</h3>
               <p className="text-xs text-site-text-2">
-                Configure basic site identity, support email, and primary canonical domain.
+                {t("adminSetup.identityDesc")}
               </p>
             </div>
 
@@ -430,7 +428,7 @@ CRON_SECRET=your-random-cron-secret-token`;
                   type="text"
                   value={formConfig.siteName}
                   onChange={(e) => setFormConfig({ ...formConfig, siteName: e.target.value })}
-                  placeholder="BugSnap"
+                  placeholder={t("adminSetup.phName")}
                   required
                   className="w-full px-3 py-2 text-xs rounded-lg border border-site-border bg-site-surface-2 text-site-text focus:outline-hidden focus:ring-1 focus:ring-accent"
                 />
@@ -442,7 +440,7 @@ CRON_SECRET=your-random-cron-secret-token`;
                   type="text"
                   value={formConfig.siteDomain}
                   onChange={(e) => setFormConfig({ ...formConfig, siteDomain: e.target.value })}
-                  placeholder="bugsnap.akusaraproject.my.id"
+                  placeholder={t("adminSetup.phDomain")}
                   required
                   className="w-full px-3 py-2 text-xs rounded-lg border border-site-border bg-site-surface-2 text-site-text focus:outline-hidden focus:ring-1 focus:ring-accent"
                 />
@@ -454,7 +452,7 @@ CRON_SECRET=your-random-cron-secret-token`;
                   type="email"
                   value={formConfig.supportEmail}
                   onChange={(e) => setFormConfig({ ...formConfig, supportEmail: e.target.value })}
-                  placeholder="support@akusaradigital.com"
+                  placeholder={t("adminSetup.phEmail")}
                   required
                   className="w-full px-3 py-2 text-xs rounded-lg border border-site-border bg-site-surface-2 text-site-text focus:outline-hidden focus:ring-1 focus:ring-accent"
                 />
@@ -476,7 +474,7 @@ CRON_SECRET=your-random-cron-secret-token`;
               <div>
                 <h3 className="text-base font-bold text-site-text">Feature Toggles &amp; Access Controls</h3>
                 <p className="text-xs text-site-text-2">
-                  Control user registration, Google Drive requirements, and capture retention policies.
+                  {t("adminSetup.accessDesc")}
                 </p>
               </div>
 
@@ -491,7 +489,7 @@ CRON_SECRET=your-random-cron-secret-token`;
                   <div className="space-y-0.5">
                     <span className="font-semibold text-xs text-site-text block">Allow Public User Signups</span>
                     <span className="text-[11px] text-site-text-2 block">
-                      When disabled, only users invited to existing workspaces can sign in.
+                      {t("adminSetup.signupsDesc")}
                     </span>
                   </div>
                 </label>
@@ -506,7 +504,7 @@ CRON_SECRET=your-random-cron-secret-token`;
                   <div className="space-y-0.5">
                     <span className="font-semibold text-xs text-site-text block">Zero Server Storage (Google Drive)</span>
                     <span className="text-[11px] text-site-text-2 block">
-                      Require users to authorize their Google Drive before recording video media.
+                      {t("adminSetup.driveReqDesc")}
                     </span>
                   </div>
                 </label>
@@ -521,7 +519,7 @@ CRON_SECRET=your-random-cron-secret-token`;
                   <div className="space-y-0.5">
                     <span className="font-semibold text-xs text-site-text block">Enable Public Share Links</span>
                     <span className="text-[11px] text-site-text-2 block">
-                      Allow users to generate unlisted public URLs to share bug reports with clients.
+                      {t("adminSetup.shareDesc")}
                     </span>
                   </div>
                 </label>
@@ -532,7 +530,7 @@ CRON_SECRET=your-random-cron-secret-token`;
                     value={String(formConfig.defaultRetentionDays)}
                     onChange={(val) => setFormConfig({ ...formConfig, defaultRetentionDays: Number(val) })}
                     options={[
-                      { value: "0", label: "Unlimited (Keep Captures Forever)" },
+                      { value: "0", label: t("adminSetup.retUnlimited") },
                       { value: "30", label: "30 Days Storage Window" },
                       { value: "60", label: "60 Days Storage Window" },
                       { value: "90", label: "90 Days Storage Window" },
@@ -551,7 +549,7 @@ CRON_SECRET=your-random-cron-secret-token`;
               <div>
                 <h3 className="text-base font-bold text-site-text">Emergency &amp; Maintenance Mode</h3>
                 <p className="text-xs text-site-text-2">
-                  Broadcast notices or temporarily gate public access during deployments.
+                  {t("adminSetup.maintDesc")}
                 </p>
               </div>
 
@@ -564,7 +562,7 @@ CRON_SECRET=your-random-cron-secret-token`;
                     className="rounded border-site-border text-accent focus:ring-accent"
                   />
                   <span className="font-semibold text-xs text-site-text">
-                    Enable System Maintenance Mode
+                    {t("adminSetup.maintEnable")}
                   </span>
                 </label>
 
@@ -589,7 +587,7 @@ CRON_SECRET=your-random-cron-secret-token`;
                 className="inline-flex items-center gap-2 px-5 py-2.5 text-xs font-bold rounded-xl bg-accent text-accent-contrast hover:opacity-90 transition-opacity shadow-sm disabled:opacity-50"
               >
                 <Icon icon={saving ? "lucide:loader-2" : "lucide:save"} className={`w-4 h-4 ${saving ? "animate-spin" : ""}`} />
-                <span>{saving ? "Saving Configuration..." : "Save Website Settings"}</span>
+                <span>{saving ? t("adminSetup.saving") : t("adminSetup.saveSettings")}</span>
               </button>
             </div>
           </div>
@@ -602,39 +600,39 @@ CRON_SECRET=your-random-cron-secret-token`;
           <div className="p-4 rounded-xl bg-site-surface border border-site-border">
             <h3 className="text-sm font-bold text-site-text">Authorized Callback &amp; Webhook URLs</h3>
             <p className="text-xs text-site-text-2 mt-0.5">
-              Copy and paste these exact URLs into your Google Cloud Console, Paddle, Stripe, and MCP configurations.
+              {t("adminSetup.callbacksDesc")}
             </p>
           </div>
 
           <div className="space-y-3">
             {[
               {
-                title: "Google OAuth 2.0 Authorized Redirect URI",
-                desc: "Paste into Google Cloud Console > Credentials > Authorized redirect URIs.",
+                title: t("adminSetup.cbGoogleRedirectTitle"),
+                desc: t("adminSetup.cbGoogleRedirectDesc"),
                 url: data.callbackUrls.googleOAuthRedirect,
                 key: "google_redirect",
               },
               {
-                title: "Google Authorized JavaScript Origin",
-                desc: "Paste into Google Cloud Console > Credentials > Authorized JavaScript origins.",
+                title: t("adminSetup.cbGoogleOriginTitle"),
+                desc: t("adminSetup.cbGoogleOriginDesc"),
                 url: data.callbackUrls.googleJsOrigin,
                 key: "google_origin",
               },
               {
-                title: "Paddle Webhook Notification Endpoint",
-                desc: "Paste into Paddle Dashboard > Developer Tools > Notifications/Webhooks.",
+                title: t("adminSetup.cbPaddleTitle"),
+                desc: t("adminSetup.cbPaddleDesc"),
                 url: data.callbackUrls.paddleWebhook,
                 key: "paddle_webhook",
               },
               {
-                title: "Stripe Webhook Endpoint",
-                desc: "Paste into Stripe Dashboard > Developers > Webhooks.",
+                title: t("adminSetup.cbStripeTitle"),
+                desc: t("adminSetup.cbStripeDesc"),
                 url: data.callbackUrls.stripeWebhook,
                 key: "stripe_webhook",
               },
               {
-                title: "BugSnap MCP Server Public Captures API",
-                desc: "Public read endpoint utilized by @modelcontextprotocol/sdk MCP servers.",
+                title: t("adminSetup.cbMcpTitle"),
+                desc: t("adminSetup.cbMcpDesc"),
                 url: data.callbackUrls.mcpPublicApi,
                 key: "mcp_api",
               },
@@ -659,7 +657,7 @@ CRON_SECRET=your-random-cron-secret-token`;
                     icon={copiedKey === item.key ? "lucide:check" : "lucide:copy"}
                     className={`w-3.5 h-3.5 ${copiedKey === item.key ? "text-emerald-500" : ""}`}
                   />
-                  <span>{copiedKey === item.key ? "Copied" : "Copy URL"}</span>
+                  <span>{copiedKey === item.key ? t("adminSetup.copied") : t("adminSetup.copyUrl")}</span>
                 </button>
               </div>
             ))}
@@ -672,9 +670,9 @@ CRON_SECRET=your-random-cron-secret-token`;
         <div className="space-y-4">
           <div className="p-4 rounded-xl bg-site-surface border border-site-border flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <div>
-              <h3 className="text-sm font-bold text-site-text">Production &amp; Local Environment Template</h3>
+              <h3 className="text-sm font-bold text-site-text">{t("adminSetup.envTitle")}</h3>
               <p className="text-xs text-site-text-2 mt-0.5">
-                Ready-to-use template for your Vercel Environment Variables or local <code className="font-mono">.env.local</code>.
+                {t("adminSetup.envDescLead")} <code className="font-mono">.env.local</code>.
               </p>
             </div>
             <button
@@ -686,7 +684,7 @@ CRON_SECRET=your-random-cron-secret-token`;
                 icon={copiedKey === "env_template" ? "lucide:check" : "lucide:copy"}
                 className="w-4 h-4"
               />
-              <span>{copiedKey === "env_template" ? "Copied Template!" : "Copy .env Template"}</span>
+              <span>{copiedKey === "env_template" ? t("adminSetup.copiedTemplate") : t("adminSetup.copyEnv")}</span>
             </button>
           </div>
 

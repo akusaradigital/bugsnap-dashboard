@@ -1775,6 +1775,19 @@ export const marketingEn: Dict = {
   "welcome.goDashboard": "Go to Dashboard ",
   "welcome.docsCta": "View Documentation",
   "welcome.shortcutsCta": "Customize Shortcuts",
+  "uninstallFeedback.title": "We're sorry to see you go",
+  "uninstallFeedback.subtitle":
+    "Tell us what went wrong or what we could have done better - it's completely optional, but it genuinely helps.",
+  "uninstallFeedback.messageLabel": "What made you uninstall BugSnap?",
+  "uninstallFeedback.messagePlaceholder": "Anything you share here is read by our team directly...",
+  "uninstallFeedback.emailLabel": "Email (optional)",
+  "uninstallFeedback.emailPlaceholder": "you@example.com",
+  "uninstallFeedback.emailHint": "Only if you're open to us following up. Leave blank to stay anonymous.",
+  "uninstallFeedback.submit": "Send Feedback",
+  "uninstallFeedback.submitting": "Submitting...",
+  "uninstallFeedback.submitError": "Failed to submit feedback",
+  "uninstallFeedback.thanksTitle": "Thanks for letting us know",
+  "uninstallFeedback.thanksDesc": "Your feedback helps us make BugSnap better.",
 };
 
 export const marketingId: Dict = {
@@ -3569,4 +3582,17 @@ export const marketingId: Dict = {
   "welcome.goDashboard": "Buka Dashboard ",
   "welcome.docsCta": "Lihat Dokumentasi",
   "welcome.shortcutsCta": "Atur Pintasan",
+  "uninstallFeedback.title": "Maaf kamu harus pergi",
+  "uninstallFeedback.subtitle":
+    "Ceritakan apa yang kurang atau apa yang bisa kami perbaiki - sepenuhnya opsional, tapi sangat membantu kami.",
+  "uninstallFeedback.messageLabel": "Apa yang membuatmu uninstall BugSnap?",
+  "uninstallFeedback.messagePlaceholder": "Apapun yang kamu tulis di sini akan dibaca langsung oleh tim kami...",
+  "uninstallFeedback.emailLabel": "Email (opsional)",
+  "uninstallFeedback.emailPlaceholder": "kamu@contoh.com",
+  "uninstallFeedback.emailHint": "Isi hanya jika kamu bersedia kami hubungi balik. Kosongkan untuk tetap anonim.",
+  "uninstallFeedback.submit": "Kirim Feedback",
+  "uninstallFeedback.submitting": "Mengirim...",
+  "uninstallFeedback.submitError": "Gagal mengirim feedback",
+  "uninstallFeedback.thanksTitle": "Terima kasih atas masukannya",
+  "uninstallFeedback.thanksDesc": "Feedback kamu membantu kami membuat BugSnap lebih baik.",
 };

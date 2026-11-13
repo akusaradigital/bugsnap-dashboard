@@ -126,6 +126,8 @@ export async function GET(req: Request) {
   const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
   const limit = Math.min(100, Math.max(1, parseInt(searchParams.get("limit") || "20", 10)));
   const search = sanitizePostgrestFilter(searchParams.get("search"));
+  const plan = searchParams.get("plan") || "all";
+  const vip = searchParams.get("vip") || "all";
 
   const from = (page - 1) * limit;
   const to = from + limit - 1;
@@ -141,6 +143,29 @@ export async function GET(req: Request) {
       matchingOwnerIds = (matchedUsers || []).map((u) => u.id).filter(Boolean);
     }
 
+    // Owner plan lives on users.plan, not on the workspace row, so filtering
+    // by it means resolving matching owner ids first.
+    let planOwnerIds: string[] | null = null;
+    if (plan !== "all") {
+      const { data: planUsers } = await supabase
+        .from("users")
+        .select("id")
+        .eq("plan", plan.toLowerCase());
+      planOwnerIds = (planUsers || []).map((u) => u.id).filter(Boolean);
+    }
+
+    // is_vip lives in workspace_settings (one row per workspace at most); a
+    // workspace with no row there is "regular" by default, so "Regular" means
+    // "not in the VIP id list" rather than "has an explicit is_vip=false row".
+    let vipWorkspaceIds: string[] | null = null;
+    if (vip !== "all") {
+      const { data: vipRows } = await supabase
+        .from("workspace_settings")
+        .select("workspace_id")
+        .eq("is_vip", true);
+      vipWorkspaceIds = (vipRows || []).map((r) => r.workspace_id).filter(Boolean);
+    }
+
     let query = supabase
       .from("workspaces")
       .select("id, name, slug, owner_user_id, created_at", { count: "exact" });
@@ -150,6 +175,19 @@ export async function GET(req: Request) {
         query = query.or(`name.ilike.%${search}%,owner_user_id.in.(${matchingOwnerIds.join(",")})`);
       } else {
         query = query.ilike("name", `%${search}%`);
+      }
+    }
+
+    if (planOwnerIds !== null) {
+      query = planOwnerIds.length > 0 ? query.in("owner_user_id", planOwnerIds) : query.eq("owner_user_id", "00000000-0000-0000-0000-000000000000");
+    }
+
+    if (vipWorkspaceIds !== null) {
+      if (vip === "vip") {
+        query = vipWorkspaceIds.length > 0 ? query.in("id", vipWorkspaceIds) : query.eq("id", "00000000-0000-0000-0000-000000000000");
+      } else {
+        // "regular": anything not in the VIP id list, including workspaces with no settings row.
+        if (vipWorkspaceIds.length > 0) query = query.not("id", "in", `(${vipWorkspaceIds.join(",")})`);
       }
     }
 

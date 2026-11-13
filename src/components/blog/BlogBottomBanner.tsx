@@ -19,7 +19,7 @@ export function BlogBottomBanner() {
 
     const trimmed = email.trim();
     if (!trimmed || !trimmed.includes("@")) {
-      setError(t("blog.subEmailPlaceholder") || "Please enter a valid email address.");
+      setError(t("blog.subEmailPlaceholder"));
       emailInputRef.current?.focus();
       return;
     }
@@ -66,17 +66,16 @@ export function BlogBottomBanner() {
 
         <div>
           <span className="text-xs font-bold tracking-wider uppercase text-[#5ca338] dark:text-emerald-400">
-            {t("blog.stayUpdated") || "STAY UPDATED"}
+            {t("blog.stayUpdated")}
           </span>
         </div>
 
         <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-          {t("blog.promoTitle") || "Debug Bugs Faster with BugSnap"}
+          {t("blog.promoTitle")}
         </h3>
 
         <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed max-w-xl mx-auto">
-          {t("blog.promoDesc") ||
-            "Get practical tutorials, real-world examples, and expert insights on bug reporting, DevTools, Playwright, and developer productivity."}
+          {t("blog.promoDesc")}
         </p>
 
         {subscribed ? (
@@ -85,10 +84,10 @@ export function BlogBottomBanner() {
               <Icon icon="lucide:check" className="w-5 h-5 text-emerald-600 dark:text-emerald-400 stroke-[3]" />
             </div>
             <p className="text-sm font-bold">
-              {t("blog.subSuccess") || "Thank you! You are now subscribed."}
+              {t("blog.subSuccess")}
             </p>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              {t("blog.promoNoSpam") || "No spam. Unsubscribe anytime."}
+              {t("blog.promoNoSpam")}
             </p>
           </div>
         ) : (
@@ -120,7 +119,7 @@ export function BlogBottomBanner() {
                     setEmail(e.target.value);
                     if (error) setError("");
                   }}
-                  placeholder={t("blog.subEmailPlaceholder") || "Enter your email"}
+                  placeholder={t("blog.subEmailPlaceholder")}
                   required
                   className="w-full h-11 pl-10 pr-4 rounded-xl border border-slate-200 dark:border-site-border bg-white dark:bg-site-surface text-sm text-slate-900 dark:text-white placeholder:text-slate-400 focus:outline-hidden focus:border-[#68a63c] transition-colors shadow-2xs"
                 />
@@ -135,7 +134,7 @@ export function BlogBottomBanner() {
                 <span>
                   {loading
                     ? "..."
-                    : (t("blog.promoButton") || "Subscribe")}
+                    : (t("blog.promoButton"))}
                 </span>
               </button>
             </div>
@@ -147,7 +146,7 @@ export function BlogBottomBanner() {
             )}
 
             <span className="text-[11px] text-slate-400 dark:text-slate-500 mt-2 block text-center">
-              {t("blog.promoNoSpam") || "No spam. Unsubscribe anytime."}
+              {t("blog.promoNoSpam")}
             </span>
           </form>
         )}

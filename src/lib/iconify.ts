@@ -48,8 +48,21 @@ const OFFLINE_ICON_PATHS: Record<string, string> = {
   "tabler:check": "/icons/lucide-check.svg",
 };
 
+// All static icon/image responses carry a 1-year immutable Cache-Control
+// (next.config.mjs), so a file whose *content* changes at the same URL would
+// otherwise stay stale in every visitor's browser cache until it expires.
+// Suffixing every request with the current app version busts that cache on
+// each release while still letting unchanged assets cache for a full year.
+const ASSET_VERSION = process.env.NEXT_PUBLIC_ASSET_VERSION || "0";
+
+/** Cache-busts a static asset path for any raw <img src> that bypasses <Icon>. */
+export function withAssetVersion(path: string): string {
+  return `${path}?v=${ASSET_VERSION}`;
+}
+
 function iconPath(icon: string): string {
-  return OFFLINE_ICON_PATHS[icon] ?? `/icons/${icon.replace(/:/g, "-")}.svg`;
+  const path = OFFLINE_ICON_PATHS[icon] ?? `/icons/${icon.replace(/:/g, "-")}.svg`;
+  return withAssetVersion(path);
 }
 
 export function Icon({
@@ -62,7 +75,9 @@ export function Icon({
   ...props
 }: StaticIconProps) {
   const isWhiteIcon = className?.split(/\s+/).includes("invert");
-  const isBrandLogo = icon.startsWith("logos:");
+  // Guard: an undefined icon id from a caller should not crash the whole route.
+  const iconId = typeof icon === "string" ? icon : "";
+  const isBrandLogo = iconId.startsWith("logos:");
   const mergedStyle: CSSProperties = {
     ...style,
     color: color ?? style?.color ?? "#2563eb",
@@ -82,7 +97,7 @@ export function Icon({
     event.currentTarget.style.display = "none";
   };
 
-  if (icon === "custom:folder-filled") {
+  if (iconId === "custom:folder-filled") {
     return createElement(
       "svg",
       {
@@ -103,7 +118,7 @@ export function Icon({
   }
 
   return createElement("img", {
-    src: iconPath(icon),
+    src: iconPath(iconId),
     alt: "",
     className,
     style: mergedStyle,

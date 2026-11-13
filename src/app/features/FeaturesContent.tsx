@@ -62,35 +62,34 @@ export function FeaturesContent() {
               {/* Breadcrumb */}
               <nav
                 className="inline-flex items-center justify-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mb-6"
-                aria-label="Breadcrumb"
+                aria-label={t("featFx.breadcrumbLabel")}
               >
                 <Link
                   href="/"
                   className="hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
-                  {t("landing.home") || "Home"}
+                  {t("landing.home")}
                 </Link>
                 <span className="text-slate-300 dark:text-slate-600" aria-hidden="true">/</span>
                 <span className="text-slate-700 dark:text-slate-300 font-medium">
-                  {t("features.breadcrumb") || "Product Capabilities"}
+                  {t("features.breadcrumb")}
                 </span>
               </nav>
             </Reveal>
 
             <Reveal delay={0.07}>
               <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12]">
-                {t("features.title") || "The bug reporting toolkit"}
+                {t("features.title")}
                 <br />
                 <span className="text-emerald-600 dark:text-emerald-400">
-                  {t("features.titleHighlight") || "built for high-velocity teams"}
+                  {t("features.titleHighlight")}
                 </span>
               </h1>
             </Reveal>
 
             <Reveal delay={0.14}>
               <p className="mt-4 text-sm sm:text-base md:text-lg text-slate-500 dark:text-slate-400 max-w-3xl mx-auto leading-relaxed">
-                {t("features.subtitle") ||
-                  "From intelligent capture to automated debugging, BugSnap gives modern teams visibility, context, and AI-ready data -without slowing down their workflow."}
+                {t("features.subtitle")}
               </p>
             </Reveal>
           </div>
@@ -105,15 +104,13 @@ export function FeaturesContent() {
                 {/* Left: Text Content */}
                 <div className="lg:col-span-6 min-w-0 space-y-4">
                   <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">
-                    {t("features.s1Eyebrow") || "DEVTOOLS & TELEMETRY"}
+                    {t("features.s1Eyebrow")}
                   </span>
                   <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
-                    {t("features.s1Title") ||
-                      "Automated Console & Network Telemetry"}
+                    {t("features.s1Title")}
                   </h2>
                   <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed">
-                    {t("features.s1Desc") ||
-                      "BugSnap automatically captures browser console logs, network requests, errors, and key runtime data so you get the full technical context of an issue -without asking users to do anything manually."}
+                    {t("features.s1Desc")}
                   </p>
                   <ul className="space-y-3 pt-2">
                     <li className="flex items-start gap-3">
@@ -121,8 +118,7 @@ export function FeaturesContent() {
                         <Icon icon="lucide:check" className="w-3.5 h-3.5 stroke-[3]" />
                       </div>
                       <span className="text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                        {t("features.s1Bullet1") ||
-                          "Captures logs, network requests, and error messages with rich metadata (URL, headers, status, etc.)"}
+                        {t("features.s1Bullet1")}
                       </span>
                     </li>
                     <li className="flex items-start gap-3">
@@ -130,8 +126,7 @@ export function FeaturesContent() {
                         <Icon icon="lucide:check" className="w-3.5 h-3.5 stroke-[3]" />
                       </div>
                       <span className="text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                        {t("features.s1Bullet2") ||
-                          "Runs in the background while you capture"}
+                        {t("features.s1Bullet2")}
                       </span>
                     </li>
                     <li className="flex items-start gap-3">
@@ -139,8 +134,7 @@ export function FeaturesContent() {
                         <Icon icon="lucide:check" className="w-3.5 h-3.5 stroke-[3]" />
                       </div>
                       <span className="text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                        {t("features.s1Bullet3") ||
-                          "Structures data for easy debugging and AI analysis"}
+                        {t("features.s1Bullet3")}
                       </span>
                     </li>
                   </ul>
@@ -325,27 +319,27 @@ export function FeaturesContent() {
                         </span>
                         <div className="space-y-1 text-xs">
                           <div className="flex items-center justify-between px-2 py-1 rounded text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60">
-                            <span>User Click</span>
+                            <span>{t("featFx.evUserClick")}</span>
                             <span className="text-[11px] font-mono text-slate-400">00:02.1</span>
                           </div>
                           <div className="flex items-center justify-between px-2 py-1 rounded text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60">
-                            <span>Input Change</span>
+                            <span>{t("featFx.evInputChange")}</span>
                             <span className="text-[11px] font-mono text-slate-400">00:03.4</span>
                           </div>
                           <div className="flex items-center justify-between px-2 py-1 rounded text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60">
-                            <span>Network Request</span>
+                            <span>{t("featFx.evNetworkRequest")}</span>
                             <span className="text-[11px] font-mono text-slate-400">00:04.8</span>
                           </div>
                           <div className="flex items-center justify-between px-2 py-1 rounded bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-300 font-medium">
-                            <span className="font-semibold">Console Error</span>
+                            <span className="font-semibold">{t("featFx.evConsoleError")}</span>
                             <span className="text-[11px] font-mono text-rose-500">00:06.2</span>
                           </div>
                           <div className="flex items-center justify-between px-2 py-1 rounded text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60">
-                            <span>User Scroll</span>
+                            <span>{t("featFx.evUserScroll")}</span>
                             <span className="text-[11px] font-mono text-slate-400">00:08.1</span>
                           </div>
                           <div className="flex items-center justify-between px-2 py-1 rounded text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800/60">
-                            <span>API Response</span>
+                            <span>{t("featFx.evApiResponse")}</span>
                             <span className="text-[11px] font-mono text-slate-400">00:10.3</span>
                           </div>
                         </div>
@@ -392,7 +386,7 @@ export function FeaturesContent() {
                           <button
                             type="button"
                             className="text-slate-700 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white"
-                            aria-label="Play"
+                            aria-label={t("featFx.play")}
                           >
                             <Icon icon="lucide:play" className="w-3.5 h-3.5" />
                           </button>
@@ -417,15 +411,13 @@ export function FeaturesContent() {
                 {/* Right: Text Content */}
                 <div className="lg:col-span-6 min-w-0 order-1 lg:order-2 space-y-4">
                   <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">
-                    {t("features.s2Eyebrow") || "VISUAL STUDIO"}
+                    {t("features.s2Eyebrow")}
                   </span>
                   <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
-                    {t("features.s2Title") ||
-                      "High-Definition Visual Studio & Annotations"}
+                    {t("features.s2Title")}
                   </h2>
                   <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed">
-                    {t("features.s2Desc") ||
-                      "Capture high-resolution screenshots, screen recordings, and audio with built-in annotation tools. Give clear visual context so your team can understand and reproduce issues instantly."}
+                    {t("features.s2Desc")}
                   </p>
                   <ul className="space-y-3 pt-2">
                     <li className="flex items-start gap-3">
@@ -433,8 +425,7 @@ export function FeaturesContent() {
                         <Icon icon="lucide:check" className="w-3.5 h-3.5 stroke-[3]" />
                       </div>
                       <span className="text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                        {t("features.s2Bullet1") ||
-                          "High-definition screenshots and video recordings (tab, window, or full screen)"}
+                        {t("features.s2Bullet1")}
                       </span>
                     </li>
                     <li className="flex items-start gap-3">
@@ -442,8 +433,7 @@ export function FeaturesContent() {
                         <Icon icon="lucide:check" className="w-3.5 h-3.5 stroke-[3]" />
                       </div>
                       <span className="text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                        {t("features.s2Bullet2") ||
-                          "Annotations, arrows, text, and highlights to point out key details"}
+                        {t("features.s2Bullet2")}
                       </span>
                     </li>
                     <li className="flex items-start gap-3">
@@ -451,8 +441,7 @@ export function FeaturesContent() {
                         <Icon icon="lucide:check" className="w-3.5 h-3.5 stroke-[3]" />
                       </div>
                       <span className="text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                        {t("features.s2Bullet3") ||
-                          "Audio recording with microphone support for better context"}
+                        {t("features.s2Bullet3")}
                       </span>
                     </li>
                   </ul>
@@ -468,15 +457,13 @@ export function FeaturesContent() {
                 {/* Left: Text Content */}
                 <div className="lg:col-span-6 min-w-0 space-y-4">
                   <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">
-                    {t("features.s3Eyebrow") || "PRIVACY & DATA CONTROL"}
+                    {t("features.s3Eyebrow")}
                   </span>
                   <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
-                    {t("features.s3Title") ||
-                      "Client-Side Redaction & Zero Server Retention"}
+                    {t("features.s3Title")}
                   </h2>
                   <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed">
-                    {t("features.s3Desc") ||
-                      "Keep sensitive information safe. Redact personal data directly in your browser before it's saved, and store everything in your own Google Drive -with zero server retention."}
+                    {t("features.s3Desc")}
                   </p>
                   <ul className="space-y-3 pt-2">
                     <li className="flex items-start gap-3">
@@ -484,8 +471,7 @@ export function FeaturesContent() {
                         <Icon icon="lucide:check" className="w-3.5 h-3.5 stroke-[3]" />
                       </div>
                       <span className="text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                        {t("features.s3Bullet1") ||
-                          "Automatic and manual redaction for emails, tokens, credit cards, phone numbers, and custom patterns"}
+                        {t("features.s3Bullet1")}
                       </span>
                     </li>
                     <li className="flex items-start gap-3">
@@ -493,8 +479,7 @@ export function FeaturesContent() {
                         <Icon icon="lucide:check" className="w-3.5 h-3.5 stroke-[3]" />
                       </div>
                       <span className="text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                        {t("features.s3Bullet2") ||
-                          "Data never stored on our servers -saved directly to your Google Drive"}
+                        {t("features.s3Bullet2")}
                       </span>
                     </li>
                     <li className="flex items-start gap-3">
@@ -502,8 +487,7 @@ export function FeaturesContent() {
                         <Icon icon="lucide:check" className="w-3.5 h-3.5 stroke-[3]" />
                       </div>
                       <span className="text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                        {t("features.s3Bullet3") ||
-                          "Full control over what to include or exclude"}
+                        {t("features.s3Bullet3")}
                       </span>
                     </li>
                   </ul>
@@ -554,7 +538,7 @@ export function FeaturesContent() {
                             tabIndex={-1}
                             aria-disabled="true"
                             className="text-emerald-600 dark:text-emerald-400 cursor-default"
-                            aria-label="Options (illustration)"
+                            aria-label={t("featFx.optionsIllustration")}
                           >
                             <Icon icon="lucide:more-vertical" className="w-4 h-4" />
                           </button>
@@ -588,7 +572,7 @@ export function FeaturesContent() {
                             tabIndex={-1}
                             aria-disabled="true"
                             className="text-emerald-600 dark:text-emerald-400 cursor-default"
-                            aria-label="Options (illustration)"
+                            aria-label={t("featFx.optionsIllustration")}
                           >
                             <Icon icon="lucide:more-vertical" className="w-4 h-4" />
                           </button>
@@ -622,7 +606,7 @@ export function FeaturesContent() {
                             tabIndex={-1}
                             aria-disabled="true"
                             className="text-emerald-600 dark:text-emerald-400 cursor-default"
-                            aria-label="Options (illustration)"
+                            aria-label={t("featFx.optionsIllustration")}
                           >
                             <Icon icon="lucide:more-vertical" className="w-4 h-4" />
                           </button>
@@ -656,7 +640,7 @@ export function FeaturesContent() {
                             tabIndex={-1}
                             aria-disabled="true"
                             className="text-emerald-600 dark:text-emerald-400 cursor-default"
-                            aria-label="Options (illustration)"
+                            aria-label={t("featFx.optionsIllustration")}
                           >
                             <Icon icon="lucide:more-vertical" className="w-4 h-4" />
                           </button>
@@ -848,15 +832,15 @@ export function FeaturesContent() {
                       <div className="flex items-center justify-center gap-6 pt-1 text-[11px] font-medium text-slate-600 dark:text-slate-400">
                         <div className="flex items-center gap-1.5">
                           <span className="w-2 h-2 rounded-full bg-[#10b981]" />
-                          <span>JS Heap</span>
+                          <span>{t("featFx.jsHeap")}</span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           <span className="w-2 h-2 rounded-full bg-[#3b82f6]" />
-                          <span>DOM Nodes</span>
+                          <span>{t("featFx.domNodes")}</span>
                         </div>
                         <div className="flex items-center gap-1.5">
                           <span className="w-2 h-2 rounded-full bg-[#f59e0b]" />
-                          <span>Event Listeners</span>
+                          <span>{t("featFx.eventListeners")}</span>
                         </div>
                       </div>
                     </div>
@@ -866,15 +850,13 @@ export function FeaturesContent() {
                 {/* Right: Text Content */}
                 <div className="lg:col-span-6 min-w-0 order-1 lg:order-2 space-y-4">
                   <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">
-                    {t("features.s4Eyebrow") || "PERFORMANCE & DIAGNOSTICS"}
+                    {t("features.s4Eyebrow")}
                   </span>
                   <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
-                    {t("features.s4Title") ||
-                      "SPA Memory Leak & DOM Bloat Detector"}
+                    {t("features.s4Title")}
                   </h2>
                   <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed">
-                    {t("features.s4Desc") ||
-                      "Built-in performance insights to help you find memory leaks, excessive DOM growth, and long-running JavaScript tasks. Identify issues early with clear metrics and visualizations."}
+                    {t("features.s4Desc")}
                   </p>
                   <ul className="space-y-3 pt-2">
                     <li className="flex items-start gap-3">
@@ -882,8 +864,7 @@ export function FeaturesContent() {
                         <Icon icon="lucide:check" className="w-3.5 h-3.5 stroke-[3]" />
                       </div>
                       <span className="text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                        {t("features.s4Bullet1") ||
-                          "Real-time memory usage, DOM node count, and performance metrics"}
+                        {t("features.s4Bullet1")}
                       </span>
                     </li>
                     <li className="flex items-start gap-3">
@@ -891,8 +872,7 @@ export function FeaturesContent() {
                         <Icon icon="lucide:check" className="w-3.5 h-3.5 stroke-[3]" />
                       </div>
                       <span className="text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                        {t("features.s4Bullet2") ||
-                          "Detect potential memory leaks and DOM bloat"}
+                        {t("features.s4Bullet2")}
                       </span>
                     </li>
                     <li className="flex items-start gap-3">
@@ -900,8 +880,7 @@ export function FeaturesContent() {
                         <Icon icon="lucide:check" className="w-3.5 h-3.5 stroke-[3]" />
                       </div>
                       <span className="text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                        {t("features.s4Bullet3") ||
-                          "Highlights long tasks, heavy event listeners, and suspicious activity"}
+                        {t("features.s4Bullet3")}
                       </span>
                     </li>
                   </ul>
@@ -917,15 +896,13 @@ export function FeaturesContent() {
                 {/* Left: Text Content */}
                 <div className="lg:col-span-6 min-w-0 space-y-4">
                   <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 block">
-                    {t("features.s5Eyebrow") || "AUTOMATION & AI INTEGRATION"}
+                    {t("features.s5Eyebrow")}
                   </span>
                   <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
-                    {t("features.s5Title") ||
-                      "Playwright Regression Tests & AI MCP Server"}
+                    {t("features.s5Title")}
                   </h2>
                   <p className="text-sm sm:text-base text-slate-600 dark:text-slate-400 leading-relaxed">
-                    {t("features.s5Desc") ||
-                      "Go beyond manual bug reports. Generate runnable Playwright tests from user actions and connect with MCP servers for AI agents like Claude Code, Claude Desktop, or Cursor."}
+                    {t("features.s5Desc")}
                   </p>
                   <ul className="space-y-3 pt-2">
                     <li className="flex items-start gap-3">
@@ -933,8 +910,7 @@ export function FeaturesContent() {
                         <Icon icon="lucide:check" className="w-3.5 h-3.5 stroke-[3]" />
                       </div>
                       <span className="text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                        {t("features.s5Bullet1") ||
-                          "Auto-generates Playwright regression tests from user sessions"}
+                        {t("features.s5Bullet1")}
                       </span>
                     </li>
                     <li className="flex items-start gap-3">
@@ -942,8 +918,7 @@ export function FeaturesContent() {
                         <Icon icon="lucide:check" className="w-3.5 h-3.5 stroke-[3]" />
                       </div>
                       <span className="text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                        {t("features.s5Bullet2") ||
-                          "Works with MCP server for AI agents (Claude Code, Claude Desktop, Cursor)"}
+                        {t("features.s5Bullet2")}
                       </span>
                     </li>
                     <li className="flex items-start gap-3">
@@ -951,8 +926,7 @@ export function FeaturesContent() {
                         <Icon icon="lucide:check" className="w-3.5 h-3.5 stroke-[3]" />
                       </div>
                       <span className="text-xs sm:text-sm text-slate-700 dark:text-slate-300">
-                        {t("features.s5Bullet3") ||
-                          "Export tests directly to your repository"}
+                        {t("features.s5Bullet3")}
                       </span>
                     </li>
                   </ul>
@@ -1049,15 +1023,13 @@ export function FeaturesContent() {
             <div className="rounded-2xl sm:rounded-3xl border border-blue-100 dark:border-blue-900/40 bg-[#f0f6ff] dark:bg-blue-950/25 p-6 sm:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm min-w-0">
               <div className="space-y-1.5 max-w-xl min-w-0">
                 <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                  {t("features.ctaEyebrow") || "READY TO GET STARTED?"}
+                  {t("features.ctaEyebrow")}
                 </div>
                 <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                  {t("features.bannerTitle") ||
-                    "Inspect the full telemetry schema"}
+                  {t("features.bannerTitle")}
                 </h3>
                 <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                  {t("features.bannerSubtitle") ||
-                    "Explore payload structure and field definitions to integrate with your own tools."}
+                  {t("features.bannerSubtitle")}
                 </p>
               </div>
 
@@ -1070,7 +1042,7 @@ export function FeaturesContent() {
                 >
                   <Icon icon="logos:chrome" className="w-5 h-5 shrink-0" />
                   <span>
-                    {t("extension.addToChrome") || "Add to Chrome"}
+                    {t("extension.addToChrome")}
                   </span>
                 </a>
                 <a
@@ -1086,7 +1058,7 @@ export function FeaturesContent() {
                   href="/docs"
                   className="inline-flex items-center gap-1.5 rounded-xl border border-site-border bg-white dark:bg-site-surface hover:bg-slate-50 dark:hover:bg-site-surface-2 text-site-text text-sm font-semibold px-6 py-3.5 transition-colors shrink-0 whitespace-nowrap"
                 >
-                  {t("features.bannerDocsBtn") || "Read Developer Docs"}
+                  {t("features.bannerDocsBtn")}
                 </Link>
               </div>
             </div>

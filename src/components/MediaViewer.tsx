@@ -1110,7 +1110,7 @@ function MediaViewer({
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-rose-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
             </span>
-            <span>Interactive Error Timeline</span>
+            <span>{t("mediaFx.errorTimeline")}</span>
             <span className={`rounded-md px-2 py-0.5 text-[10px] font-semibold ${
               inFs
                 ? "bg-rose-500/20 text-rose-300 border border-rose-500/30"
@@ -1310,7 +1310,7 @@ function MediaViewer({
               value={volumeState.muted ? 0 : volumeState.volume}
               onChange={handleVolumeChange}
               onClick={(e) => e.stopPropagation()}
-              aria-label="Volume"
+              aria-label={t("mediaFx.volume")}
               className="hidden sm:inline-block w-14 sm:w-16 h-1.5 accent-[#2563EB] bg-zinc-200 dark:bg-zinc-700 rounded-lg cursor-pointer"
             />
           </div>

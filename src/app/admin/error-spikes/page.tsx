@@ -41,12 +41,12 @@ export default function AdminErrorSpikesPage() {
       const headers = await getAdminHeaders();
       const res = await fetch("/api/admin/error-spikes", { headers });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Gagal memuat lonjakan error.");
+      if (!res.ok) throw new Error(json.error || t("adminMisc.errSpikes"));
 
       setData(json);
       setAdminCache("admin_error_spikes_data", json);
     } catch (err: unknown) {
-      if (!cached) showToast((err as Error)?.message || "Gagal memuat data lonjakan error", "error");
+      if (!cached) showToast((err as Error)?.message || t("adminMisc.errSpikesToast"), "error");
     } finally {
       setLoading(false);
     }

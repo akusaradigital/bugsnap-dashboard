@@ -584,7 +584,7 @@ function Comments({
             <Icon icon="lucide:message-square" className="h-3 w-3" />
           </div>
           <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">
-            {t("cm.comments") || "Comments"}
+            {t("cm.comments")}
           </h3>
           <span className="rounded-md bg-subtle px-1.5 py-0.2 text-[10px] font-semibold text-muted">
             {comments.length}
@@ -615,13 +615,13 @@ function Comments({
         {loading ? (
           <div className="flex items-center justify-center py-4 text-xs text-muted gap-2">
             <Icon icon="lucide:loader-circle" className="h-4 w-4 animate-spin text-muted" />
-            <span>{t("cm.loading") || "Loading comments..."}</span>
+            <span>{t("cm.loading")}</span>
           </div>
         ) : comments.length === 0 ? (
           <div className="rounded-lg border border-dashed border-border/70 py-2.5 px-3 text-center bg-subtle/10">
             <p className="text-xs text-muted flex items-center justify-center gap-1.5">
               <Icon icon="lucide:message-square" className="h-3.5 w-3.5 shrink-0 opacity-60" />
-              <span>{t("cm.none") || "No comments yet."}</span>
+              <span>{t("cm.none")}</span>
             </p>
           </div>
         ) : (
@@ -720,7 +720,7 @@ function Comments({
                             className="inline-flex items-center gap-1 text-[11px] font-medium text-muted hover:text-[#1D4ED8] transition-colors"
                           >
                             <Icon icon="lucide:reply" className="h-3 w-3 shrink-0" />
-                            <span>{t("cm.reply") || "Reply"}</span>
+                            <span>{t("cm.reply")}</span>
                           </button>
                         </div>
                       </div>
@@ -751,8 +751,8 @@ function Comments({
                               className="flex-1 sm:flex-initial px-3 py-1.5 sm:py-2 rounded-lg bg-[#2563EB] text-white text-xs font-semibold hover:bg-[#1D4ED8] shadow-xs shadow-[#2563EB]/25 disabled:opacity-40 transition-colors shrink-0 text-center"
                             >
                               {replying
-                                ? t("cm.posting") || "..."
-                                : t("cm.reply") || "Reply"}
+                                ? t("cm.posting")
+                                : t("cm.reply")}
                             </button>
                             <button
                               type="button"
@@ -861,7 +861,7 @@ function Comments({
                 handleSubmit();
               }
             }}
-            placeholder={t("cm.writePlaceholder") || "Add a comment..."}
+            placeholder={t("cm.writePlaceholder")}
             rows={body.length > 80 ? 3 : 2}
             className="w-full text-xs text-foreground px-3 pt-2 pb-1.5 outline-none bg-transparent resize-none placeholder:text-muted/60 leading-snug min-h-[38px]"
           />
@@ -878,14 +878,14 @@ function Comments({
                       : "text-muted hover:bg-subtle hover:text-foreground border border-transparent"
                   }`}
                   title={
-                    t("cm.atVideoTime") || "Link comment to video timestamp"
+                    t("cm.atVideoTime")
                   }
                 >
                   <Icon icon="lucide:clock" className="h-3 w-3 shrink-0" />
                   {timestampOn && getCurrentTime ? (
                     <span>@ {formatTimestamp(activeTime ?? getCurrentTime())}</span>
                   ) : (
-                    <span>{t("cm.atCurrentTime") || "Current time"}</span>
+                    <span>{t("cm.atCurrentTime")}</span>
                   )}
                 </button>
               )}
@@ -893,12 +893,12 @@ function Comments({
                 <input
                   value={manualTime}
                   onChange={(e) => setManualTime(e.target.value)}
-                  placeholder={t("cm.timePlaceholder") || "m:ss"}
+                  placeholder={t("cm.timePlaceholder")}
                   className="w-14 rounded-md border border-border bg-white dark:bg-zinc-900 px-2 py-0.5 text-[11px] font-mono outline-none"
                 />
               )}
               <span className="text-[10px] text-muted/60 hidden sm:inline">
-                {t("cm.enterToSend") || "Enter ↵ to send"}
+                {t("cm.enterToSend")}
               </span>
             </div>
 
@@ -923,11 +923,11 @@ function Comments({
                 {submitting || cfVerifying ? (
                   <>
                     <Icon icon="lucide:loader-circle" className="h-3.5 w-3.5 animate-spin brightness-0 invert" />
-                    <span>{t("cm.posting") || "Posting..."}</span>
+                    <span>{t("cm.posting")}</span>
                   </>
                 ) : (
                   <>
-                    <span>{t("cm.post") || "Comment"}</span>
+                    <span>{t("cm.post")}</span>
                     <Icon icon="lucide:send" className="h-3 w-3 shrink-0 brightness-0 invert" />
                   </>
                 )}

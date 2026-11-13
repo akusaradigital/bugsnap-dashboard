@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useToast } from "@/components/Toast";
+import { useT } from "@/components/I18nProvider";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { getAdminHeaders, getAdminCache, setAdminCache } from "@/lib/admin-cache";
 import { Icon } from "@/lib/iconify";
 
@@ -22,6 +24,8 @@ interface EmailHealthData {
 }
 
 export default function AdminEmailHealthPage() {
+  const { t, locale } = useT();
+  const confirm = useConfirm();
   const { showToast } = useToast();
   const cached = getAdminCache<EmailHealthData>("admin_email_health_data");
   const [loading, setLoading] = useState(!cached);
@@ -48,7 +52,7 @@ export default function AdminEmailHealthPage() {
       const headers = await getAdminHeaders();
       const res = await fetch("/api/admin/email-health", { headers });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Gagal memeriksa kesehatan email.");
+      if (!res.ok) throw new Error(json.error || t("adminEmail.errCheck"));
 
       setData(json);
       setAdminCache("admin_email_health_data", json);
@@ -56,7 +60,7 @@ export default function AdminEmailHealthPage() {
         setTestRecipient(json.csTargetEmail);
       }
     } catch (err: unknown) {
-      if (!cached) showToast((err as Error)?.message || "Gagal memeriksa kesehatan email", "error");
+      if (!cached) showToast((err as Error)?.message || t("adminEmail.errCheck"), "error");
     } finally {
       setLoading(false);
     }
@@ -81,20 +85,20 @@ export default function AdminEmailHealthPage() {
       if (!res.ok) {
         setProbeResult({
           ok: false,
-          message: json.error || "Gagal mengirim email pengujian.",
+          message: json.error || t("adminEmail.errProbe"),
           latencyMs: json.latencyMs,
         });
-        showToast(json.error || "Gagal mengirim probe", "error");
+        showToast(json.error || t("adminEmail.errProbeToast"), "error");
       } else {
         setProbeResult({
           ok: true,
-          message: `Berhasil dikirim! ID Pesan: ${json.messageId}`,
+          message: t("adminEmail.probeOk", { id: json.messageId }),
           latencyMs: json.latencyMs,
         });
-        showToast("Email uji coba berhasil dikirim!", "success");
+        showToast(t("adminEmail.probeSentToast"), "success");
       }
     } catch (err: unknown) {
-      const msg = (err as Error)?.message || "Koneksi ke endpoint gagal.";
+      const msg = (err as Error)?.message || t("adminEmail.errEndpoint");
       setProbeResult({ ok: false, message: msg });
       showToast(msg, "error");
     } finally {
@@ -105,7 +109,13 @@ export default function AdminEmailHealthPage() {
   async function handleBroadcast(e: React.FormEvent) {
     e.preventDefault();
     if (!broadcastSubject.trim() || !broadcastBody.trim()) return;
-    if (!confirm("Kirim email broadcast ke seluruh pengguna terdaftar? Tindakan ini tidak dapat dibatalkan.")) return;
+    const ok = await confirm({
+      title: t("admin.broadcastConfirmTitle"),
+      message: t("admin.broadcastConfirmBody"),
+      confirmLabel: t("admin.broadcastSend"),
+      danger: true,
+    });
+    if (!ok) return;
 
     setBroadcasting(true);
     try {
@@ -119,13 +129,13 @@ export default function AdminEmailHealthPage() {
         }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Gagal mengirim broadcast.");
+      if (!res.ok) throw new Error(json.error || t("adminEmail.errBroadcast"));
 
-      showToast(`Broadcast berhasil dikirim ke ${json.sentCount} penerima!`, "success");
+      showToast(t("adminEmail.broadcastSentToast", { count: json.sentCount }), "success");
       setBroadcastSubject("");
       setBroadcastBody("");
     } catch (err: unknown) {
-      showToast((err as Error)?.message || "Gagal mengirim broadcast", "error");
+      showToast((err as Error)?.message || t("adminEmail.errBroadcastToast"), "error");
     } finally {
       setBroadcasting(false);
     }
@@ -136,10 +146,10 @@ export default function AdminEmailHealthPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-3 border-b border-slate-200 dark:border-zinc-800">
         <div>
           <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
-            <span className="flex items-center gap-2"><Icon icon="lucide:mail" className="w-4 h-4 shrink-0 text-violet-500" /> Email & Broadcast Hub</span>
+            <span className="flex items-center gap-2"><Icon icon="lucide:mail" className="w-4 h-4 shrink-0 text-violet-500" /> {t("adminEmail.title")}</span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
-            Monitoring koneksi Resend API, status verifikasi DKIM/SPF domain, live delivery probe, dan broadcast email massal.
+            {t("adminEmail.desc")}
           </p>
         </div>
         <button
@@ -148,10 +158,10 @@ export default function AdminEmailHealthPage() {
           disabled={loading}
           className="self-start sm:self-auto px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs font-semibold text-slate-700 dark:text-zinc-300 transition-colors cursor-pointer inline-flex items-center gap-1.5"
         >
-          {loading ? "Menyegarkan..." : (
+          {loading ? t("adminEmail.refreshing") : (
             <>
               <Icon icon="lucide:refresh-cw" className="w-3.5 h-3.5 shrink-0" />
-              <span>Uji Ulang Endpoint</span>
+              <span>{t("adminEmail.retestEndpoint")}</span>
             </>
           )}
         </button>
@@ -161,7 +171,7 @@ export default function AdminEmailHealthPage() {
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm">
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
-            Resend API Status
+            {t("adminEmail.apiStatus")}
           </span>
           <div className="flex items-center gap-2 mt-1">
             <span
@@ -170,47 +180,47 @@ export default function AdminEmailHealthPage() {
               }`}
             />
             <p className="text-lg font-bold text-slate-900 dark:text-white">
-              {loading ? "..." : data?.apiReachable ? "Online & Terhubung" : "Offline / Unreachable"}
+              {loading ? "..." : data?.apiReachable ? t("adminEmail.online") : t("adminEmail.offline")}
             </p>
           </div>
           <span className="text-[10px] text-slate-400 mt-1 block">
-            Kunci: {data?.maskedKey || "Belum dikonfigurasi"}
+            {t("adminEmail.keyLabel", { key: data?.maskedKey || t("adminEmail.notConfigured") })}
           </span>
         </div>
 
         <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm">
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
-            API Ping Latency
+            {t("adminEmail.pingLatency")}
           </span>
           <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">
             {loading ? "..." : `${data?.latencyMs || 0} ms`}
           </p>
           <span className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1 block">
-            Direct roundtrip to api.resend.com
+            {t("adminEmail.roundtrip")}
           </span>
         </div>
 
         <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm">
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
-            Email Pengirim (Sender)
+            {t("adminEmail.sender")}
           </span>
           <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 truncate">
             {loading ? "..." : data?.fromEmail}
           </p>
           <span className="text-[10px] text-slate-400 mt-1 block truncate">
-            Digunakan untuk kirim balasan CS
+            {t("adminEmail.senderHint")}
           </span>
         </div>
 
         <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm">
           <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
-            Target Inbox CS
+            {t("adminEmail.csInbox")}
           </span>
           <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 truncate">
             {loading ? "..." : data?.csTargetEmail}
           </p>
           <span className="text-[10px] text-slate-400 mt-1 block truncate">
-            Penerima notifikasi laporan masuk
+            {t("adminEmail.csInboxHint")}
           </span>
         </div>
       </div>
@@ -221,19 +231,19 @@ export default function AdminEmailHealthPage() {
         <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden flex flex-col">
           <div className="p-4 border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 flex items-center justify-between">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-200">
-              Domain Terdaftar di Resend ({data?.domains?.length || 0})
+              {t("adminEmail.domainsRegistered", { count: data?.domains?.length || 0 })}
             </h3>
-            <span className="text-[10px] text-slate-400">DKIM / SPF Verifikasi</span>
+            <span className="text-[10px] text-slate-400">{t("adminEmail.dkimSpf")}</span>
           </div>
 
           <div className="p-4 flex-1">
             {loading ? (
-              <p className="text-xs text-slate-400 text-center py-6">Memeriksa domain Resend...</p>
+              <p className="text-xs text-slate-400 text-center py-6">{t("adminEmail.checkingDomains")}</p>
             ) : !data?.domains || data.domains.length === 0 ? (
               <div className="text-center py-8 text-xs text-slate-500 space-y-1">
-                <p>Belum ada domain kustom yang terdeteksi atau API key menggunakan fallback.</p>
+                <p>{t("adminEmail.noDomains")}</p>
                 <p className="text-[11px] text-slate-400">
-                  Email fallback saat ini: <code className="font-mono text-slate-600 dark:text-zinc-400">onboarding@resend.dev</code>
+                  {t("adminEmail.fallbackNow")} <code className="font-mono text-slate-600 dark:text-zinc-400">onboarding@resend.dev</code>
                 </p>
               </div>
             ) : (
@@ -243,7 +253,7 @@ export default function AdminEmailHealthPage() {
                     <div>
                       <p className="text-xs font-bold text-slate-900 dark:text-white font-mono">{dom.name}</p>
                       <p className="text-[10px] text-slate-400">
-                        Ditambahkan: {new Date(dom.created_at).toLocaleDateString("id-ID")}
+                        {t("adminEmail.addedOn", { date: new Date(dom.created_at).toLocaleDateString(locale === "id" ? "id-ID" : "en-US") })}
                       </p>
                     </div>
                     <span
@@ -273,17 +283,17 @@ export default function AdminEmailHealthPage() {
         <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm space-y-4">
           <div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-200 flex items-center gap-2">
-              <span className="flex items-center gap-1.5"><Icon icon="lucide:flask-conical" className="w-3.5 h-3.5 shrink-0 text-violet-500" /> Live Delivery Probe Tester</span>
+              <span className="flex items-center gap-1.5"><Icon icon="lucide:flask-conical" className="w-3.5 h-3.5 shrink-0 text-violet-500" /> {t("adminEmail.probeTitle")}</span>
             </h3>
             <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">
-              Kirimkan satu email diagnosis langsung untuk memverifikasi jalur pengiriman serverless ke kotak masuk penerima.
+              {t("adminEmail.probeDesc")}
             </p>
           </div>
 
           <form onSubmit={handleSendProbe} className="space-y-3">
             <div>
               <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">
-                Alamat Email Penerima Uji Coba:
+                {t("adminEmail.probeRecipient")}
               </label>
               <input
                 type="email"
@@ -297,7 +307,7 @@ export default function AdminEmailHealthPage() {
 
             <div className="flex items-center justify-between pt-1">
               <span className="text-[10px] text-slate-400">
-                Pesan berisi header diagnostik & timestamp server.
+                {t("adminEmail.probeFooter")}
               </span>
               <button
                 type="submit"
@@ -305,10 +315,10 @@ export default function AdminEmailHealthPage() {
                 className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs shadow-[#2563EB]/25 disabled:opacity-50 transition-colors"
               >
                 {sendingProbe ? (
-                  "Mengirim Probe..."
+                  t("adminEmail.sendingProbe")
                 ) : (
                   <>
-                    <span>Kirim Email Diagnostik</span>
+                    <span>{t("adminEmail.sendProbe")}</span>
                     <Icon icon="lucide:send" className="w-3.5 h-3.5 shrink-0 brightness-0 invert" />
                   </>
                 )}
@@ -330,7 +340,7 @@ export default function AdminEmailHealthPage() {
                     icon={probeResult.ok ? "lucide:check-circle" : "lucide:x-circle"}
                     className="w-3.5 h-3.5 shrink-0"
                   />
-                  <span>{probeResult.ok ? "Pengujian Sukses" : "Pengujian Gagal"}</span>
+                  <span>{probeResult.ok ? t("adminEmail.probeSuccess") : t("adminEmail.probeFailed")}</span>
                 </span>
                 {probeResult.latencyMs && <span>{probeResult.latencyMs} ms</span>}
               </div>
@@ -344,45 +354,45 @@ export default function AdminEmailHealthPage() {
       <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm space-y-4">
         <div>
           <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-200 flex items-center gap-2">
-            <span className="flex items-center gap-1.5"><Icon icon="lucide:megaphone" className="w-3.5 h-3.5 shrink-0 text-amber-500" /> Broadcast Email Pengguna Platform</span>
+            <span className="flex items-center gap-1.5"><Icon icon="lucide:megaphone" className="w-3.5 h-3.5 shrink-0 text-amber-500" /> {t("adminEmail.broadcastTitle")}</span>
           </h3>
           <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">
-            Kirimkan pengumuman resmi, rilis fitur baru, atau update maintenance langsung ke seluruh akun terdaftar.
+            {t("adminEmail.broadcastDesc")}
           </p>
         </div>
 
         <form onSubmit={handleBroadcast} className="space-y-3">
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">
-              Subjek Email
+              {t("adminEmail.subject")}
             </label>
             <input
               type="text"
               required
               value={broadcastSubject}
               onChange={(e) => setBroadcastSubject(e.target.value)}
-              placeholder="Contoh: [Pembaruan] Fitur Baru BugSnap & Pemeliharaan Terjadwal"
+              placeholder={t("adminEmail.subjectPlaceholder")}
               className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2.5 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20"
             />
           </div>
 
           <div>
             <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">
-              Isi Pesan Email (Format HTML didukung)
+              {t("adminEmail.body")}
             </label>
             <textarea
               required
               rows={4}
               value={broadcastBody}
               onChange={(e) => setBroadcastBody(e.target.value)}
-              placeholder="<p>Halo Pengguna BugSnap,</p><p>Kami memperbarui sistem...</p>"
+              placeholder={t("adminEmail.bodyPlaceholder")}
               className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2.5 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 font-mono text-[11px] leading-relaxed"
             />
           </div>
 
           <div className="flex items-center justify-between pt-1">
             <span className="text-[10px] text-slate-400">
-              Email dikirim via Resend ke seluruh pengguna aktif di database Supabase.
+              {t("adminEmail.broadcastFooter")}
             </span>
             <button
               type="submit"
@@ -390,10 +400,10 @@ export default function AdminEmailHealthPage() {
               className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs shadow-[#2563EB]/25 disabled:opacity-50 transition-colors cursor-pointer"
             >
               {broadcasting ? (
-                "Mengirimkan Broadcast..."
+                t("adminEmail.sendingBroadcast")
               ) : (
                 <>
-                  <span>Kirim Broadcast Email</span>
+                  <span>{t("adminEmail.sendBroadcast")}</span>
                   <Icon icon="lucide:send" className="w-3.5 h-3.5 shrink-0 brightness-0 invert" />
                 </>
               )}

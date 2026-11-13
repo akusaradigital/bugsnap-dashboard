@@ -1,5 +1,7 @@
 "use client";
 
+import { useT } from "@/components/I18nProvider";
+
 import { Icon } from "@/lib/iconify";
 
 export interface MemberToRemove {
@@ -21,13 +23,14 @@ export function RemoveMemberModal({
   onConfirm,
   removingMemberId,
 }: RemoveMemberModalProps) {
+  const { t } = useT();
   if (!member) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
       <button
         className="absolute inset-0 bg-black/40 backdrop-blur-xs"
-        aria-label="Close"
+        aria-label={t("common.close")}
         onClick={() => !removingMemberId && onClose()}
       />
       <div className="relative w-[min(28rem,calc(100vw-2rem))] rounded-2xl border border-border bg-subtle p-4 sm:p-6 shadow-2xl space-y-4">
@@ -36,7 +39,7 @@ export function RemoveMemberModal({
             <Icon icon="lucide:trash-2" className="w-5 h-5 shrink-0" aria-hidden="true" />
           </div>
           <div className="space-y-1 min-w-0 flex-1">
-            <h2 className="text-base font-bold text-foreground">Remove Member?</h2>
+            <h2 className="text-base font-bold text-foreground">{t("modalFx.removeMemberTitle")}</h2>
             <p className="text-xs text-muted leading-relaxed">
               Are you sure you want to remove <span className="font-semibold text-foreground break-all">{member.email}</span> from this workspace? They will immediately lose access to all captures and team discussions.
             </p>
@@ -50,7 +53,7 @@ export function RemoveMemberModal({
             disabled={Boolean(removingMemberId)}
             className="px-4 py-2 text-xs font-semibold text-foreground hover:bg-border/30 rounded-xl transition-colors disabled:opacity-50"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             type="button"
@@ -61,10 +64,10 @@ export function RemoveMemberModal({
             {removingMemberId === member.user_id ? (
               <>
                 <Icon icon="lucide:loader-2" className="w-3.5 h-3.5 animate-spin text-white shrink-0 brightness-0 invert" aria-hidden="true" />
-                <span>Removing…</span>
+                <span>{t("modalFx.removingLabel")}</span>
               </>
             ) : (
-              <span>Remove member</span>
+              <span>{t("modalFx.removeMemberBtn")}</span>
             )}
           </button>
         </div>

@@ -118,7 +118,7 @@ export function AdminAiConfigCard() {
       const headers = await getAdminHeaders();
       const res = await fetch("/api/admin/ai-config", { headers });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Gagal memuat konfigurasi AI");
+      if (!res.ok) throw new Error(json.error || t("admin.aiLoadFailed"));
 
       if (json.config) {
         setProvider(json.config.provider || "akusara");
@@ -131,7 +131,7 @@ export function AdminAiConfigCard() {
         }
       }
     } catch (err: unknown) {
-      showToast((err as Error)?.message || "Gagal memuat konfigurasi AI", "error");
+      showToast((err as Error)?.message || t("admin.aiLoadFailed"), "error");
     } finally {
       setLoading(false);
     }
@@ -172,10 +172,10 @@ export function AdminAiConfigCard() {
           setApiKey(json.apiKey);
           setShowPassword(true);
         } else {
-          showToast("Gagal memuat API Key tersimpan", "error");
+          showToast(t("admin.aiKeyLoadFailed"), "error");
         }
       } catch (err: unknown) {
-        showToast((err as Error)?.message || "Gagal memuat API Key", "error");
+        showToast((err as Error)?.message || t("admin.aiKeyLoadFailed"), "error");
       } finally {
         setRevealingKey(false);
       }
@@ -191,7 +191,7 @@ export function AdminAiConfigCard() {
       return;
     }
     if (!model.trim()) {
-      showToast("Nama model tidak boleh kosong", "error");
+      showToast(t("admin.aiModelRequired"), "error");
       return;
     }
 
@@ -220,10 +220,10 @@ export function AdminAiConfigCard() {
       if (json.ok) {
         showToast(`Terhubung! Latensi: ${json.latencyMs}ms (${json.model})`, "success");
       } else {
-        showToast(json.error || "Ping gagal terhubung", "error");
+        showToast(json.error || t("admin.aiPingFail"), "error");
       }
     } catch (err: unknown) {
-      const msg = (err as Error)?.message || "Ping gagal terhubung";
+      const msg = (err as Error)?.message || t("admin.aiPingFail");
       setPingResult({ ok: false, error: msg });
       showToast(msg, "error");
     } finally {
@@ -233,11 +233,11 @@ export function AdminAiConfigCard() {
 
   async function handleTestPolish() {
     if (!endpointUrl.trim() || !model.trim()) {
-      showToast("Lengkapi Endpoint dan Model terlebih dahulu", "error");
+      showToast(t("admin.aiFillFirst"), "error");
       return;
     }
     if (!sampleDraft.trim()) {
-      showToast("Ketik catatan uji coba terlebih dahulu", "error");
+      showToast(t("admin.aiPlaygroundEmpty"), "error");
       return;
     }
 
@@ -267,10 +267,10 @@ export function AdminAiConfigCard() {
       if (json.ok) {
         showToast(`AI Polish sukses! (${json.latencyMs}ms)`, "success");
       } else {
-        showToast(json.error || "Gagal menguji AI Polish", "error");
+        showToast(json.error || t("admin.aiPolishFailed"), "error");
       }
     } catch (err: unknown) {
-      const msg = (err as Error)?.message || "Gagal menguji AI Polish";
+      const msg = (err as Error)?.message || t("admin.aiPolishFailed");
       setPolishResult({ ok: false, error: msg });
       showToast(msg, "error");
     } finally {
@@ -284,7 +284,7 @@ export function AdminAiConfigCard() {
       return;
     }
     if (!model.trim()) {
-      showToast("Nama model wajib diisi", "error");
+      showToast(t("admin.aiModelRequired"), "error");
       return;
     }
 
@@ -307,9 +307,9 @@ export function AdminAiConfigCard() {
       });
 
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Gagal menyimpan konfigurasi AI");
+      if (!res.ok) throw new Error(json.error || t("admin.aiSaveFailed"));
 
-      showToast("Konfigurasi AI berhasil disimpan", "success");
+      showToast(t("admin.aiSaved"), "success");
       if (json.config?.hasKey) {
         setHasStoredKey(true);
         setIsChangingKey(false);
@@ -318,7 +318,7 @@ export function AdminAiConfigCard() {
       }
       setPingResult(null);
     } catch (err: unknown) {
-      showToast((err as Error)?.message || "Gagal menyimpan konfigurasi AI", "error");
+      showToast((err as Error)?.message || t("admin.aiSaveFailed"), "error");
     } finally {
       setSaving(false);
     }
@@ -329,7 +329,7 @@ export function AdminAiConfigCard() {
       navigator.clipboard.writeText(polishResult.polishedText);
       setCopiedResult(true);
       setTimeout(() => setCopiedResult(false), 2000);
-      showToast("Hasil Polish berhasil disalin", "info");
+      showToast(t("admin.aiCopied"), "info");
     }
   }
 
@@ -338,62 +338,34 @@ export function AdminAiConfigCard() {
   return (
     <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 sm:p-6 shadow-xs space-y-5">
       {/* Header with Brand Accent & Live Status Badge */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-100 dark:border-zinc-800">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-4 border-b border-slate-200 dark:border-zinc-800">
         <div className="space-y-1">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="p-1.5 rounded-lg bg-red-600/15 text-red-700 dark:text-red-300">
-              <Icon icon="lucide:sparkles" className="w-4 h-4" />
-            </span>
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
-              <span>AI Polish &amp; Model Provider Settings</span>
-              {loading && (
-                <span className="inline-flex items-center gap-1.5 text-[11px] text-slate-400 font-normal">
-                  <span className="w-3 h-3 border-2 border-slate-400 border-t-transparent rounded-full animate-spin" />
-                  <span>Memuat...</span>
-                </span>
-              )}
-            </h3>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded font-bold bg-red-600/10 text-red-700 dark:text-red-300 border border-red-600/20 inline-flex items-center gap-1">
-              <Icon icon="lucide:sparkles" className="w-3 h-3" />
-              <span>Extension AI Polish</span>
-            </span>
-          </div>
-          <p className="text-xs text-slate-500 dark:text-zinc-400">
-            Konfigurasi model AI untuk fitur AI Polish di extension Chrome. Ubah model &amp; endpoint kapan saja tanpa perlu redeploy.
-          </p>
+          <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+            <span>{t("admin.aiConfigTitle")}</span>
+            {loading && <span className="text-[11px] text-slate-400 font-normal">{t("common.loading")}</span>}
+          </h3>
+          <p className="text-xs text-slate-500 dark:text-zinc-400">{t("admin.aiConfigDesc")}</p>
         </div>
 
-        {/* Live Model Indicator & Status Toggle */}
-        <div className="flex items-center gap-3 self-start sm:self-auto flex-wrap">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-mono bg-slate-100 dark:bg-zinc-800 border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300">
-            <span
-              className={`w-2 h-2 rounded-full ${
-                enabled
-                  ? pingResult?.ok
-                    ? "bg-emerald-500 animate-pulse"
-                    : "bg-red-600"
-                  : "bg-slate-400"
-              }`}
-            />
-            <span className="font-semibold">{currentPreset?.name || provider}</span>
-            <span className="text-slate-400">·</span>
-            <span className="text-slate-500 dark:text-zinc-400 truncate max-w-[130px]" title={model}>
-              {model || "no-model"}
-            </span>
-          </div>
+        {/* Model summary & on/off switch */}
+        <div className="flex items-center gap-4 self-start sm:self-auto flex-wrap">
+          <span className="text-xs text-slate-600 dark:text-zinc-400" title={model}>
+            {currentPreset?.name || provider}
+            {model ? ` · ${model}` : ""}
+          </span>
 
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold text-slate-700 dark:text-zinc-300">
-              {enabled ? "Aktif" : "Nonaktif"}
+              {enabled ? t("admin.aiEnabled") : t("admin.aiDisabled")}
             </span>
             <button
               type="button"
               role="switch"
               aria-checked={enabled}
-              aria-label="Toggle status aktif model AI"
+              aria-label={t("admin.aiToggleLabel")}
               onClick={() => setEnabled(!enabled)}
               className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
-                enabled ? "bg-red-600" : "bg-slate-300 dark:bg-zinc-700"
+                enabled ? "bg-[#2563EB]" : "bg-slate-300 dark:bg-zinc-700"
               }`}
             >
               <span
@@ -410,7 +382,7 @@ export function AdminAiConfigCard() {
         {/* Provider Preset Selector Pills */}
         <div className="space-y-2">
           <label className="text-xs font-bold text-slate-700 dark:text-zinc-300">
-            Provider Preset
+            {t("aiCard.providerPreset")}
           </label>
           <div className="flex flex-wrap gap-2">
             {PROVIDER_PRESETS.map((p) => {
@@ -422,7 +394,7 @@ export function AdminAiConfigCard() {
                   onClick={() => handlePresetChange(p.id)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                     isSelected
-                      ? "bg-red-600 text-white shadow-xs"
+                      ? "bg-[#2563EB] text-white shadow-xs"
                       : "bg-slate-50 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-700"
                   }`}
                 >
@@ -438,28 +410,25 @@ export function AdminAiConfigCard() {
           {/* Endpoint URL */}
           <div className="space-y-1.5 md:col-span-2">
             <label className="text-xs font-semibold text-slate-700 dark:text-zinc-300 flex items-center justify-between">
-              <span>API Endpoint URL</span>
-              <span className="text-[10px] text-slate-400">OpenAI-compatible /v1/chat/completions</span>
+              <span>{t("aiCard.endpointLabel")}</span>
+              <span className="text-[10px] text-slate-400">{t("aiCard.endpointHint")}</span>
             </label>
             <input
               type="url"
               value={endpointUrl}
               onChange={(e) => setEndpointUrl(e.target.value)}
-              placeholder="https://..."
-              className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-mono text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-red-600/30 focus:border-red-600 transition-colors"
+              placeholder={t("aiCard.endpointPlaceholder")}
+              className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-mono text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#2563EB]/30 focus:border-[#2563EB] transition-colors"
             />
           </div>
 
           {/* API Key / Password */}
           <div className="space-y-1.5">
             <div className="flex items-center justify-between text-xs font-semibold text-slate-700 dark:text-zinc-300">
-              <span>API Key / Password</span>
+              <span>{t("admin.aiApiKeyLabel")}</span>
               {hasStoredKey && (
                 <div className="flex items-center gap-2">
-                  <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-1">
-                    <Icon icon="lucide:check-circle-2" className="w-3 h-3" />
-                    <span>Tersimpan di DB</span>
-                  </span>
+                  <span className="text-[10px] text-slate-500 dark:text-zinc-400">{t("admin.aiKeyStored")}</span>
                   <button
                     type="button"
                     onClick={() => {
@@ -475,7 +444,7 @@ export function AdminAiConfigCard() {
                     }}
                     className="text-[10px] font-semibold text-slate-600 dark:text-zinc-400 hover:text-slate-900 dark:hover:text-white underline cursor-pointer"
                   >
-                    {isChangingKey ? "Batal" : "Ganti Key"}
+                    {isChangingKey ? t("common.cancel") : t("admin.aiChangeKey")}
                   </button>
                 </div>
               )}
@@ -488,9 +457,9 @@ export function AdminAiConfigCard() {
                   setApiKey(e.target.value);
                   if (!isChangingKey && hasStoredKey) setIsChangingKey(true);
                 }}
-                placeholder={hasStoredKey && !isChangingKey ? "•••••••• (Klik 'Ganti Key' untuk mengubah)" : "sk-..."}
+                placeholder={hasStoredKey && !isChangingKey ? t("admin.aiKeyPlaceholderStored") : "sk-..."}
                 disabled={hasStoredKey && !isChangingKey}
-                className="w-full pl-3 pr-10 py-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-mono text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-red-600/30 focus:border-red-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                className="w-full pl-3 pr-10 py-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-mono text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#2563EB]/30 focus:border-[#2563EB] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
               />
               <button
                 type="button"
@@ -512,10 +481,10 @@ export function AdminAiConfigCard() {
           {/* Model Name */}
           <div className="space-y-1.5">
             <label className="text-xs font-semibold text-slate-700 dark:text-zinc-300 flex items-center justify-between">
-              <span>Model Identifier</span>
+              <span>{t("admin.aiModelLabel")}</span>
               {currentPreset?.suggestedModels && currentPreset.suggestedModels.length > 0 && (
-                <span className="text-[10px] text-slate-400 truncate max-w-[200px]">
-                  Contoh: {currentPreset.suggestedModels[0]}
+                <span className="text-[10px] text-slate-500 dark:text-zinc-400 truncate max-w-[200px]">
+                  {t("admin.aiModelExample")} {currentPreset.suggestedModels[0]}
                 </span>
               )}
             </label>
@@ -523,57 +492,23 @@ export function AdminAiConfigCard() {
               type="text"
               value={model}
               onChange={(e) => setModel(e.target.value)}
-              placeholder="gpt-4o-mini, qwen/qwen-2.5-72b-instruct, etc."
-              className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-mono text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-red-600/30 focus:border-red-600 transition-colors"
+              placeholder={t("admin.aiModelPlaceholder")}
+              className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-mono text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#2563EB]/30 focus:border-[#2563EB] transition-colors"
             />
           </div>
         </div>
 
         {/* Ping Live Feedback Banner */}
         {pingResult && (
-          <div
-            className={`p-3.5 rounded-lg border text-xs transition-all ${
-              pingResult.ok
-                ? "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-900/50 text-emerald-800 dark:text-emerald-300"
-                : "bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-900/50 text-rose-800 dark:text-rose-300"
+          <p
+            className={`text-xs ${
+              pingResult.ok ? "text-emerald-700 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"
             }`}
           >
-            <div className="flex items-start gap-2.5">
-              <span className="mt-0.5 shrink-0">
-                <Icon
-                  icon={pingResult.ok ? "lucide:check-circle-2" : "lucide:alert-triangle"}
-                  className="w-4 h-4"
-                />
-              </span>
-              <div className="space-y-1 min-w-0 flex-1">
-                <div className="font-bold flex items-center justify-between flex-wrap gap-2">
-                  <span>{pingResult.ok ? "Ping Berhasil Terhubung!" : "Ping Gagal / Error"}</span>
-                  {pingResult.latencyMs !== undefined && (
-                    <span className="font-mono text-[10px] font-semibold opacity-80 px-2 py-0.5 rounded bg-white/70 dark:bg-black/30 inline-flex items-center gap-1">
-                      <Icon icon="lucide:zap" className="w-3 h-3" />
-                      <span>Latensi: {pingResult.latencyMs}ms</span>
-                    </span>
-                  )}
-                </div>
-                {pingResult.ok ? (
-                  <div className="text-[11px] opacity-90 space-y-1">
-                    <div>
-                      Model <strong className="font-mono">{pingResult.model}</strong> merespons dengan normal.
-                    </div>
-                    {pingResult.sampleReply && (
-                      <div className="font-mono text-[10px] bg-white/70 dark:bg-black/25 p-2 rounded truncate border border-emerald-200 dark:border-emerald-800/40">
-                        Response: {pingResult.sampleReply}
-                      </div>
-                    )}
-                  </div>
-                ) : (
-                  <div className="text-[11px] font-mono break-all opacity-90">
-                    {pingResult.error}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
+            {pingResult.ok
+              ? `${t("admin.aiPingOk")}${pingResult.latencyMs !== undefined ? ` · ${pingResult.latencyMs} ms` : ""}`
+              : `${t("admin.aiPingFail")}: ${pingResult.error ?? ""}`}
+          </p>
         )}
 
         {/* Action Buttons: Playground Toggle, Ping, & Save */}
@@ -588,13 +523,8 @@ export function AdminAiConfigCard() {
                   : "bg-slate-50 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-700"
               }`}
             >
-              <Icon icon="lucide:flask-conical" className="w-3.5 h-3.5" />
-              <span>{playgroundOpen ? "Tutup Playground" : "Playground Test Polish"}</span>
-              
+              <span>{playgroundOpen ? t("admin.aiPlaygroundClose") : t("admin.aiPlaygroundOpen")}</span>
             </button>
-            <span className="hidden md:inline text-[11px] text-slate-400">
-              Disimpan di tabel <code className="font-mono">app_settings</code>
-            </span>
           </div>
 
           <div className="flex items-center gap-2 self-end sm:self-auto flex-wrap">
@@ -608,13 +538,10 @@ export function AdminAiConfigCard() {
               {pinging ? (
                 <>
                   <span className="w-3.5 h-3.5 border-2 border-slate-500 border-t-transparent rounded-full animate-spin" />
-                  <span>Pinging Model...</span>
+                  <span>{t("admin.aiPinging")}</span>
                 </>
               ) : (
-                <>
-                  <Icon icon="lucide:zap" className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Ping &amp; Test Connection</span>
-                </>
+                <span>{t("admin.aiPing")}</span>
               )}
             </button>
 
@@ -623,18 +550,15 @@ export function AdminAiConfigCard() {
               type="button"
               onClick={handleSave}
               disabled={saving || pinging || testingPolish}
-              className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+              className="px-4 py-2 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
             >
               {saving ? (
                 <>
                   <span className="w-3.5 h-3.5 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
-                  <span>Menyimpan...</span>
+                  <span>{t("common.saving")}</span>
                 </>
               ) : (
-                <>
-                  <Icon icon="lucide:save" className="w-3.5 h-3.5" />
-                  <span>Save Configuration</span>
-                </>
+                <span>{t("admin.aiSave")}</span>
               )}
             </button>
           </div>
@@ -645,27 +569,26 @@ export function AdminAiConfigCard() {
           <div className="mt-4 p-4 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/70 dark:bg-zinc-950/50 space-y-3.5">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div className="space-y-0.5">
-                <div className="text-xs font-bold text-slate-900 dark:text-white flex items-center gap-1.5">
-                  <Icon icon="lucide:sparkles" className="w-3.5 h-3.5 text-red-600" />
-                  <span>Playground: Uji Coba Respon Polish Langsung</span>
+                <div className="text-xs font-bold text-slate-900 dark:text-white">
+                  {t("admin.aiPlaygroundTitle")}
                 </div>
                 <p className="text-[11px] text-slate-500 dark:text-zinc-400">
-                  Uji instruksi sistem dan ketepatan bahasa model terhadap catatan bug kasar secara real-time.
+                  {t("admin.aiPlaygroundDesc")}
                 </p>
               </div>
 
-              {/* Sample Quick Preset Pills */}
-              <div className="flex items-center gap-1.5 flex-wrap">
-                <span className="text-[10px] text-slate-400 font-semibold">Contoh:</span>
+              {/* Sample inputs as plain text links */}
+              <div className="flex items-center gap-3 flex-wrap text-[11px]">
+                <span className="text-slate-500 dark:text-zinc-400">{t("admin.aiSamplesLabel")}</span>
                 {SAMPLE_NOTES.map((sample, idx) => (
                   <button
                     key={idx}
                     type="button"
                     onClick={() => setSampleDraft(sample)}
-                    className="text-[10px] px-2 py-0.5 rounded bg-white dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 border border-slate-200 dark:border-zinc-700 hover:border-[#2563EB] transition-colors cursor-pointer truncate max-w-[150px]"
+                    className="font-semibold text-slate-700 hover:text-[#2563EB] dark:text-zinc-300 dark:hover:text-[#3B82F6] cursor-pointer"
                     title={sample}
                   >
-                    Contoh {idx + 1}
+                    {idx + 1}
                   </button>
                 ))}
               </div>
@@ -677,30 +600,18 @@ export function AdminAiConfigCard() {
                 rows={2}
                 value={sampleDraft}
                 onChange={(e) => setSampleDraft(e.target.value)}
-                placeholder="Ketik catatan kasar bug di sini (misal: tombol ga bisa diklik pas mobile)..."
+                placeholder={t("admin.aiPlaygroundPlaceholder")}
                 className="w-full px-3 py-2 rounded-lg border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-xs text-slate-900 dark:text-white focus:outline-hidden focus:ring-2 focus:ring-[#2563EB]/30 focus:border-[#2563EB] transition-colors"
               />
-              <div className="flex items-center justify-between">
-                <span className="text-[10px] text-slate-400">
-                  Model akan otomatis mendeteksi bahasa input dan menyusun ringkasan profesional.
-                </span>
+              <div className="flex items-center justify-between gap-3">
+                <span className="text-[10px] text-slate-500 dark:text-zinc-400">{t("admin.aiPlaygroundHint")}</span>
                 <button
                   type="button"
                   onClick={handleTestPolish}
                   disabled={testingPolish || !sampleDraft.trim()}
-                  className="px-3.5 py-1.5 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold transition-all shadow-xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+                  className="px-3.5 py-1.5 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold transition-all shadow-xs cursor-pointer disabled:opacity-50"
                 >
-                  {testingPolish ? (
-                    <>
-                      <span className="w-3 h-3 border-2 border-slate-900 border-t-transparent rounded-full animate-spin" />
-                      <span>Memproses Polish...</span>
-                    </>
-                  ) : (
-                    <>
-                      <Icon icon="lucide:play" className="w-3 h-3" />
-                      <span>Uji Polish</span>
-                    </>
-                  )}
+                  {testingPolish ? t("admin.aiPolishing") : t("admin.aiPolishRun")}
                 </button>
               </div>
             </div>
@@ -715,18 +626,11 @@ export function AdminAiConfigCard() {
                 }`}
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 font-bold text-[11px]">
-                    <Icon
-                      icon={polishResult.ok ? "lucide:check" : "lucide:alert-triangle"}
-                      className={`w-3.5 h-3.5 ${polishResult.ok ? "text-emerald-600" : "text-rose-500"}`}
-                    />
-                    <span>{polishResult.ok ? "Hasil AI Polish:" : "Gagal Memproses"}</span>
-                  </div>
+                  <span className={`font-bold text-[11px] ${polishResult.ok ? "text-slate-700 dark:text-zinc-300" : "text-rose-600 dark:text-rose-400"}`}>
+                    {polishResult.ok ? t("admin.aiPolishResult") : t("admin.aiPolishFailed")}
+                  </span>
                   {polishResult.latencyMs !== undefined && (
-                    <span className="font-mono text-[10px] font-semibold text-slate-500 dark:text-zinc-400 inline-flex items-center gap-1">
-                      <Icon icon="lucide:zap" className="w-3 h-3" />
-                      <span>{polishResult.latencyMs}ms</span>
-                    </span>
+                    <span className="text-[10px] text-slate-500 dark:text-zinc-400">{polishResult.latencyMs} ms</span>
                   )}
                 </div>
 
@@ -742,7 +646,7 @@ export function AdminAiConfigCard() {
                         className="text-[11px] font-semibold text-[#2563EB] dark:text-[#3B82F6] hover:underline flex items-center gap-1 cursor-pointer"
                       >
                         <Icon icon={copiedResult ? "lucide:check" : "lucide:copy"} className="w-3 h-3" />
-                        <span>{copiedResult ? "Tersalin!" : "Salin Hasil"}</span>
+                        <span>{copiedResult ? t("admin.aiCopiedShort") : t("admin.aiCopy")}</span>
                       </button>
                     </div>
                   </div>

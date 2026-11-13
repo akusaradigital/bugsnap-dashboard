@@ -61,12 +61,12 @@ export default function AdminChangelogPage() {
       const headers = await getAdminHeaders();
       const res = await fetch("/api/admin/changelog", { headers });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Gagal memuat catatan changelog.");
+      if (!res.ok) throw new Error(json.error || t("adminMisc.errChangelog"));
 
       setData(json);
       setAdminCache("admin_changelog_data", json);
     } catch (err: unknown) {
-      const msg = (err as Error)?.message || "Gagal memuat changelog";
+      const msg = (err as Error)?.message || t("adminMisc.errChangelogToast");
       setError(msg);
       if (!cached) showToast(msg, "error");
     } finally {
@@ -155,7 +155,7 @@ export default function AdminChangelogPage() {
       showToast(t("admin.changelog.copied"), "success");
       setTimeout(() => setCopied(false), 2000);
     } catch {
-      showToast("Failed to copy to clipboard", "error");
+      showToast(t("adminMisc.copyFailed"), "error");
     }
   }
 
@@ -419,7 +419,7 @@ export default function AdminChangelogPage() {
           {viewMode === "raw" ? (
             <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-950 text-slate-100 p-4 shadow-sm overflow-x-auto">
               <pre className="font-mono text-xs leading-relaxed whitespace-pre font-normal break-words">
-                {data?.raw || "No raw changelog content available."}
+                {data?.raw || t("adminMisc.noRawChangelog")}
               </pre>
             </div>
           ) : (

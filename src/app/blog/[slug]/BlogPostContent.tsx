@@ -243,6 +243,7 @@ export function BlogPostContent({ slug }: { slug: string }) {
     description: post.description,
     image: post.coverImage || post.ogImage || `${siteUrl}/opengraph-image.png`,
     datePublished: post.date,
+    dateModified: post.date,
     author: { "@type": "Organization", name: post.author },
     publisher: {
       "@type": "Organization",
@@ -292,7 +293,7 @@ export function BlogPostContent({ slug }: { slug: string }) {
                   href="/"
                   className="shrink-0 hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
-                  {t("landing.home") || "Home"}
+                  {t("landing.home")}
                 </Link>
                 <span className="text-slate-300 dark:text-slate-600 shrink-0" aria-hidden="true">
                   /
@@ -301,7 +302,7 @@ export function BlogPostContent({ slug }: { slug: string }) {
                   href="/blog"
                   className="shrink-0 hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
-                  {t("blog.title") || "Blog"}
+                  {t("blog.title")}
                 </Link>
                 <span className="text-slate-300 dark:text-slate-600 shrink-0" aria-hidden="true">
                   /
@@ -385,7 +386,7 @@ export function BlogPostContent({ slug }: { slug: string }) {
                   href="/blog"
                   className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 hover:underline transition-colors"
                 >
-                  {t("blog.backToBlog") || "Back to Blog"}
+                  {t("blog.backToBlog")}
                 </Link>
               </div>
             </article>
@@ -396,7 +397,7 @@ export function BlogPostContent({ slug }: { slug: string }) {
               {tocItems.length > 0 && (
                 <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-5 shadow-xs space-y-3">
                   <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 block">
-                    {t("blog.tableOfContents") || "TABLE OF CONTENTS"}
+                    {t("blog.tableOfContents")}
                   </span>
                   <nav className="space-y-2">
                     {tocItems.map((h) => {
@@ -436,13 +437,13 @@ export function BlogPostContent({ slug }: { slug: string }) {
                 <div className="rounded-2xl border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900/60 p-5 shadow-xs space-y-4">
                   <div className="flex items-center justify-between pb-1">
                     <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-                      {t("blog.relatedPosts") || "RELATED ARTICLES"}
+                      {t("blog.relatedPosts")}
                     </span>
                     <Link
                       href="/blog"
                       className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
                     >
-                      {t("blog.allArticles") || "All Articles"} 
+                      {t("blog.allArticles")} 
                     </Link>
                   </div>
 

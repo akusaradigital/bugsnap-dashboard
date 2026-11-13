@@ -83,7 +83,7 @@ export default function AdminExtensionFleetPage() {
       const headers = await getAdminHeaders();
       const res = await fetch("/api/admin/extension", { headers });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Gagal memuat konfigurasi extension fleet.");
+      if (!res.ok) throw new Error(json.error || t("adminMisc.errExtFleet"));
 
       const newConfig = json.config || config;
       const newErrors = Array.isArray(json.errors) ? json.errors : [];
@@ -91,7 +91,7 @@ export default function AdminExtensionFleetPage() {
       setErrors(newErrors);
       setAdminCache("admin_extension_data", { config: newConfig, errors: newErrors });
     } catch (err: unknown) {
-      if (!cached) showToast((err as Error)?.message || "Gagal memuat data extension fleet", "error");
+      if (!cached) showToast((err as Error)?.message || t("adminMisc.errExtFleetToast"), "error");
     } finally {
       setLoading(false);
     }
@@ -108,12 +108,12 @@ export default function AdminExtensionFleetPage() {
         body: JSON.stringify(config),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Gagal menyimpan konfigurasi extension.");
+      if (!res.ok) throw new Error(json.error || t("adminMisc.errExtSave"));
 
       setAdminCache("admin_extension_data", { config, errors });
       showToast("Konfigurasi extension fleet berhasil disimpan!", "success");
     } catch (err: unknown) {
-      showToast((err as Error)?.message || "Gagal menyimpan", "error");
+      showToast((err as Error)?.message || t("adminMisc.errExtSaveToast"), "error");
     } finally {
       setSaving(false);
     }
@@ -153,12 +153,9 @@ export default function AdminExtensionFleetPage() {
         <div>
           <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
             <span className="flex items-center gap-2"><Icon icon="lucide:puzzle" className="w-4 h-4 shrink-0 text-amber-500" /> Extension Version Fleet & Force Update Control</span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300">
-              Fitur 4
-            </span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
-            Kendalikan versi ekstensi Chrome, paksa pembaruan (force update), dan pantau crash telemetry.
+            {t("adminExt.subtitle")}
           </p>
         </div>
         <button
@@ -183,11 +180,11 @@ export default function AdminExtensionFleetPage() {
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-200 flex items-center gap-2">
               <span className="flex items-center gap-1.5">
                 <Icon icon="lucide:pie-chart" className="w-4 h-4 text-emerald-500 shrink-0" />
-                Extension Fleet Version Adoption
+                {t("adminExt.adoptionTitle")}
               </span>
             </h3>
             <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">
-              Visualisasi distribusi adopsi versi ekstensi antara versi rilis terbaru ({config.latestVersion}), batas minimum didukung ({config.minVersion}), dan versi legacy.
+              {t("adminExt.adoptionDesc", { latest: config.latestVersion, min: config.minVersion })}
             </p>
           </div>
           <div className="flex items-center gap-2 shrink-0">
@@ -231,7 +228,7 @@ export default function AdminExtensionFleetPage() {
             <div className="flex items-center justify-between text-slate-500 dark:text-zinc-400 mb-1">
               <span className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 truncate">
                 <Icon icon="lucide:check-circle-2" className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
-                Latest (v{config.latestVersion})
+                {t("adminExt.latest", { version: config.latestVersion })}
               </span>
               <span className="text-[10px] font-mono font-bold text-emerald-600 dark:text-emerald-400 shrink-0">
                 {latestPct}%
@@ -241,7 +238,7 @@ export default function AdminExtensionFleetPage() {
               {finalLatest} <span className="text-xs font-normal text-slate-400">instans</span>
             </p>
             <span className="text-[10px] text-slate-400 block mt-0.5 truncate">
-              Versi terbaru di Chrome Web Store
+              {t("adminExt.latestDesc")}
             </span>
           </div>
 
@@ -250,7 +247,7 @@ export default function AdminExtensionFleetPage() {
             <div className="flex items-center justify-between text-slate-500 dark:text-zinc-400 mb-1">
               <span className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 truncate">
                 <Icon icon="lucide:shield" className="w-3.5 h-3.5 text-amber-500 shrink-0" />
-                Supported (≥ v{config.minVersion})
+                {t("adminExt.supported", { version: config.minVersion })}
               </span>
               <span className="text-[10px] font-mono font-bold text-amber-600 dark:text-amber-400 shrink-0">
                 {supportedPct}%
@@ -260,7 +257,7 @@ export default function AdminExtensionFleetPage() {
               {finalSupported} <span className="text-xs font-normal text-slate-400">instans</span>
             </p>
             <span className="text-[10px] text-slate-400 block mt-0.5 truncate">
-              Versi memenuhi batas minimum
+              {t("adminExt.supportedDesc")}
             </span>
           </div>
 
@@ -269,7 +266,7 @@ export default function AdminExtensionFleetPage() {
             <div className="flex items-center justify-between text-slate-500 dark:text-zinc-400 mb-1">
               <span className="text-[10px] font-bold uppercase tracking-wider flex items-center gap-1.5 truncate">
                 <Icon icon="lucide:alert-triangle" className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-                Legacy (&lt; v{config.minVersion})
+                {t("adminExt.legacy", { version: config.minVersion })}
               </span>
               <span className="text-[10px] font-mono font-bold text-rose-600 dark:text-rose-400 shrink-0">
                 {legacyPct}%
@@ -279,7 +276,7 @@ export default function AdminExtensionFleetPage() {
               {finalLegacy} <span className="text-xs font-normal text-slate-400">instans</span>
             </p>
             <span className="text-[10px] text-slate-400 block mt-0.5 truncate">
-              {config.forceUpdate ? "Diblokir oleh Force Update" : "Perlu pembaruan rilis"}
+              {config.forceUpdate ? t("adminExt.legacyBlocked") : t("adminExt.legacyNeedsUpdate")}
             </span>
           </div>
         </div>
@@ -291,13 +288,13 @@ export default function AdminExtensionFleetPage() {
         <form onSubmit={handleSave} className="lg:col-span-2 space-y-4">
           <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 sm:p-5 shadow-sm space-y-4">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-200">
-              Kebijakan Versi & Force Update
+              {t("adminExt.policyTitle")}
             </h3>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="min-w-0">
                 <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">
-                  Versi Ekstensi Terbaru (Latest Release)
+                  {t("adminExt.latestLabel")}
                 </label>
                 <input
                   type="text"
@@ -308,13 +305,13 @@ export default function AdminExtensionFleetPage() {
                   className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2.5 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 font-mono"
                 />
                 <span className="text-[10px] text-slate-400 mt-1 block">
-                  Nomor rilis versi terbaru di Chrome Web Store.
+                  {t("adminExt.latestHint")}
                 </span>
               </div>
 
               <div className="min-w-0">
                 <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">
-                  Versi Minimal Yang Diizinkan (Min Required)
+                  {t("adminExt.minLabel")}
                 </label>
                 <input
                   type="text"
@@ -325,14 +322,14 @@ export default function AdminExtensionFleetPage() {
                   className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-2.5 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 font-mono"
                 />
                 <span className="text-[10px] text-slate-400 mt-1 block">
-                  Pengguna dengan versi di bawah ini akan diwajibkan update.
+                  {t("adminExt.minHint")}
                 </span>
               </div>
             </div>
 
             <div className="min-w-0">
               <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">
-                Tautan Chrome Web Store (Update Link)
+                {t("adminExt.storeLinkLabel")}
               </label>
               <input
                 type="url"
@@ -355,10 +352,10 @@ export default function AdminExtensionFleetPage() {
                 />
                 <div className="min-w-0">
                   <span className="text-xs font-bold text-slate-900 dark:text-white block">
-                    Paksa Pembaruan (Force Update Mode)
+                    {t("adminExt.forceTitle")}
                   </span>
                   <span className="text-[11px] text-slate-500 dark:text-zinc-400">
-                    Jika aktif, ekstensi yang berada di bawah versi minimal akan memblokir proses capture/rekam dan menampilkan dialog wajib update ke Chrome Web Store.
+                    {t("adminExt.forceDesc")}
                   </span>
                 </div>
               </label>
@@ -372,10 +369,10 @@ export default function AdminExtensionFleetPage() {
                 />
                 <div className="min-w-0">
                   <span className="text-xs font-bold text-rose-600 dark:text-rose-400 block">
-                    Mode Darurat Pemeliharaan (Emergency Maintenance)
+                    {t("adminExt.maintenanceTitle")}
                   </span>
                   <span className="text-[11px] text-slate-500 dark:text-zinc-400">
-                    Aktifkan saat server atau Supabase sedang maintenance darurat agar ekstensi tidak melakukan request upload yang berpotensi error.
+                    {t("adminExt.maintenanceDesc")}
                   </span>
                 </div>
               </label>
@@ -448,7 +445,7 @@ export default function AdminExtensionFleetPage() {
             {/* Announcement Box */}
             <div className="pt-2 border-t border-slate-100 dark:border-zinc-800 min-w-0">
               <label className="block text-xs font-bold text-slate-700 dark:text-zinc-300 mb-1">
-                Pesan Notifikasi Fleet (Pop-up Announcement)
+                {t("adminExt.popupTitle")}
               </label>
               <textarea
                 rows={2}
@@ -480,10 +477,8 @@ export default function AdminExtensionFleetPage() {
         <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden flex flex-col h-[460px] sm:h-[520px]">
           <div className="p-4 border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 flex items-center justify-between">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-200 flex items-center gap-1.5">
-              <span className="flex items-center gap-1.5"><Icon icon="lucide:alert-triangle" className="w-3.5 h-3.5 shrink-0 text-amber-500" /> Crash & Error Logs</span>
-              <span className="text-[10px] px-1.5 py-0.2 rounded bg-slate-200 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400">
-                {errors.length}
-              </span>
+              <span>Crash &amp; Error Logs</span>
+              <span className="text-[10px] font-normal text-slate-500 dark:text-zinc-400 tabular-nums">({errors.length})</span>
             </h3>
             <span className="text-[10px] text-slate-400">Terbaru dari ekstensi</span>
           </div>
@@ -491,7 +486,7 @@ export default function AdminExtensionFleetPage() {
           <div className="p-3 overflow-y-auto flex-1 divide-y divide-slate-100 dark:divide-zinc-800 space-y-3">
             {errors.length === 0 ? (
               <div className="p-8 text-center text-xs text-slate-400">
-                Tidak ada laporan error ekstensi saat ini. Fleet dalam keadaan prima.
+                {t("adminExt.noErrors")}
               </div>
             ) : (
               errors.map((err) => (

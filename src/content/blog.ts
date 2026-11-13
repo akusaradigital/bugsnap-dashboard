@@ -1824,6 +1824,143 @@ export function RealtimeMetricWidget({ metricId }: { metricId: string }) {
 <p>Cukup dengan menekan pintasan <code>Ctrl+Shift+F</code>, BugSnap merekam video visual beserta narasi audio sembari merekam setiap request jaringan, header respons, error konsol JavaScript, dan spesifikasi perangkat keras pengguna. Saat perekaman dihentikan, satu URL aman langsung tercipta. Developer dapat menonton video di bagian atas, memeriksa log jaringan dan konsol yang bergerak sinkron di bagian bawah, serta mengekspor perintah cURL langsung dari laporan. Tanpa pertanyaan susulan. Tanpa ping-pong chat di Slack. Murni kecepatan rekayasa software tanpa hambatan.</p>
     `.trim(),
   },
+  {
+    slug: "how-to-write-a-bug-report-template",
+    title: "How to Write a Bug Report Template Engineers Actually Use",
+    titleId: "How to Write a Bug Report Template Engineers Actually Use",
+    description: "A bug report template only helps if engineers fill it in. Learn the fields that matter, what to leave out, and a copy-ready structure for QA and developers.",
+    descriptionId: "A bug report template only helps if engineers fill it in. Learn the fields that matter, what to leave out, and a copy-ready structure for QA and developers.",
+    date: "2026-11-13",
+    author: "BugSnap Team",
+    readTime: "7 min read",
+    category: "GUIDE",
+    tags: ["bug-report", "qa", "template", "process"],
+    coverImage: "/blog/how-to-write-a-bug-report-template.webp",
+    ogImage: "/blog/how-to-write-a-bug-report-template.webp",
+    content: `
+<p>Most bug reports fail for the same reason: the person filing them skipped the details the developer needs. A template fixes that, but only when it asks for the right things and stays short enough that people actually finish it.</p>
+
+<h2>Why Templates Get Ignored</h2>
+<p>A template with fifteen mandatory fields gets filled with "N/A" by the third week. Good templates ask for a small number of facts that cannot be guessed later. Everything else is optional.</p>
+
+<h2>The Fields That Matter</h2>
+<ol>
+  <li><strong>Title:</strong> One line that names the symptom and the place it happens, such as "Checkout button throws TypeError after applying a coupon".</li>
+  <li><strong>Environment:</strong> Browser and version, operating system, and the app build or commit if you have it.</li>
+  <li><strong>Steps to reproduce:</strong> Numbered, starting from a known state. Each step should be one action.</li>
+  <li><strong>Expected result:</strong> What should have happened, in one sentence.</li>
+  <li><strong>Actual result:</strong> What happened, including the exact error message if there is one.</li>
+  <li><strong>Evidence:</strong> A screenshot or short recording, plus console and network output when relevant.</li>
+</ol>
+
+<h2>A Copy-Ready Structure</h2>
+<pre><code>Title: [Symptom] on [page or feature]
+
+Environment: Chrome 132, Windows 11, build 2026.11.10
+
+Steps to reproduce:
+1. Log in as a standard user
+2. Add two items to the cart
+3. Apply coupon SAVE50
+4. Click "Pay now"
+
+Expected: Order summary updates and payment page opens.
+Actual: Button does nothing. Console shows TypeError: Cannot read properties of undefined.
+
+Evidence: [screenshot], [recording], console and network logs attached.</code></pre>
+
+<h2>What to Leave Out</h2>
+<p>Skip opinions about severity and guesses about the cause. Severity is usually decided by the team, and a wrong guess about the cause sends the developer in the wrong direction. Describe what you saw and let the evidence speak.</p>
+
+<h2>Make the Evidence Automatic</h2>
+<p>Typing out console errors and failed requests by hand is where most reports stop being useful. A capture tool such as <a href="${CHROME_STORE_URL}" target="_blank" rel="noopener noreferrer">BugSnap</a> records the screen with console and network context attached, so the template only needs the human-readable steps.</p>
+
+<h2>Conclusion</h2>
+<p>Keep the template short, ask for facts that cannot be recovered later, and make the evidence the easy part. A report that someone can act on in five minutes is worth more than a perfect one nobody finishes.</p>
+`,
+    contentId: "",
+  },
+  {
+    slug: "bug-report-with-screenshot-and-console-logs",
+    title: "Bug Report with Screenshot and Console Logs: What to Include",
+    titleId: "Bug Report with Screenshot and Console Logs: What to Include",
+    description: "A screenshot shows the symptom, but the console and network logs show the cause. Here is what to capture, how to attach it, and what developers look for first.",
+    descriptionId: "A screenshot shows the symptom, but the console and network logs show the cause. Here is what to capture, how to attach it, and what developers look for first.",
+    date: "2026-11-13",
+    author: "BugSnap Team",
+    readTime: "6 min read",
+    category: "DEVTOOLS",
+    tags: ["devtools", "console", "network", "screenshot"],
+    coverImage: "/blog/bug-report-with-screenshot-and-console-logs.webp",
+    ogImage: "/blog/bug-report-with-screenshot-and-console-logs.webp",
+    content: `
+<p>A screenshot tells a developer what the page looked like. It almost never tells them why it broke. The why lives in the console and the network tab, and most bug reports leave both out.</p>
+
+<h2>What the Screenshot Gets Right</h2>
+<p>A screenshot proves the symptom and shows the state of the UI at the moment it failed. It is the fastest way to confirm you are both looking at the same thing.</p>
+
+<h2>What the Screenshot Misses</h2>
+<ul>
+  <li><strong>Console errors:</strong> The exception message and stack trace usually name the file and line that failed.</li>
+  <li><strong>Failed requests:</strong> A 500 or a blocked CORS request explains many "the button does nothing" reports.</li>
+  <li><strong>Timing:</strong> Which action came first. A request that fired before the user clicked points to a different cause than one that fired after.</li>
+</ul>
+
+<h2>How to Capture Console Output Without Guessing</h2>
+<ol>
+  <li>Open DevTools before reproducing the bug, so nothing is lost on page load.</li>
+  <li>Reproduce once, and keep the console and network panels as they are.</li>
+  <li>Copy the first error, not the last. The first error is usually the cause, and later ones are often side effects.</li>
+  <li>For network failures, note the URL, the status code, and the response body if it is short.</li>
+</ol>
+
+<h2>Attach Both, Labeled</h2>
+<p>Put the screenshot first, then the error text in a code block, then the failing request. A label such as "Console: TypeError at checkout.js:42" lets the developer jump straight to the line.</p>
+
+<h2>Keep Sensitive Data Out</h2>
+<p>Before you attach logs, remove tokens, cookies, and personal data. Authorization headers and session identifiers should never appear in a bug report. A tool that redacts these automatically reduces the risk, but check the output anyway.</p>
+
+<h2>Conclusion</h2>
+<p>The screenshot shows the symptom and the console shows the cause. Include both, label them, and remove anything sensitive before you send the report.</p>
+`,
+    contentId: "",
+  },
+  {
+    slug: "how-to-reproduce-bugs-with-clear-steps",
+    title: "How to Reproduce Bugs with Clear Steps: A QA Method That Works",
+    titleId: "How to Reproduce Bugs with Clear Steps: A QA Method That Works",
+    description: "A bug nobody can reproduce is a bug nobody fixes. Learn a simple method for writing reproduction steps that developers can follow on the first try.",
+    descriptionId: "A bug nobody can reproduce is a bug nobody fixes. Learn a simple method for writing reproduction steps that developers can follow on the first try.",
+    date: "2026-11-13",
+    author: "BugSnap Team",
+    readTime: "6 min read",
+    category: "DEBUGGING",
+    tags: ["debugging", "reproduction", "qa", "steps"],
+    coverImage: "/blog/how-to-reproduce-bugs-with-clear-steps.webp",
+    ogImage: "/blog/how-to-reproduce-bugs-with-clear-steps.webp",
+    content: `
+<p>"I can't reproduce it" is one of the most expensive sentences in software. It sends the ticket back and forth, and the bug often survives another release. The fix is almost always better steps, not better developers.</p>
+
+<h2>Start from a Known State</h2>
+<p>Write down where the bug starts: the account, the data, the page, and the browser. A bug that happens after "a few clicks" is not reproducible. A bug that happens after "logging in as a free user with an empty cart" is.</p>
+
+<h2>Write One Action per Step</h2>
+<p>Each step should be a single thing a person can do: click, type, select, or wait. "Fill in the form and submit" hides three actions and two possible failures.</p>
+
+<h2>Check Whether It Is Intermittent</h2>
+<p>Run the steps three times. If the bug appears only sometimes, note the rate and any difference between runs, such as timing, network speed, or a second tab. Intermittent bugs usually depend on timing, and the timing details are what developers need.</p>
+
+<h2>Reduce the Steps</h2>
+<p>Remove every step that does not change the result. A five-step reproduction is easier to debug than a twelve-step one, and removing steps often reveals the real trigger.</p>
+
+<h2>Record the Steps as You Go</h2>
+<p>The easiest way to get accurate steps is to record yourself doing them. A screen recording preserves the exact order, the clicks, and the timing. Developers can replay it instead of guessing what you meant.</p>
+
+<h2>Conclusion</h2>
+<p>Start from a known state, one action per step, check for intermittence, cut what does not matter, and record it. Those four habits turn "I can't reproduce it" into a ticket that gets fixed the first time.</p>
+`,
+    contentId: "",
+  },
 ];
 
 export function getSortedBlogPosts(): BlogPost[] {

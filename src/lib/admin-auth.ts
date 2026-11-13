@@ -2,12 +2,8 @@ import crypto from "crypto";
 import { cookies } from "next/headers";
 import { createServiceClient } from "@/lib/supabase-server";
 
-// No literal fallbacks: a committed default password is a published password,
-// and a default HMAC secret lets anyone forge an admin session token.
-// All four are set in Vercel (production/preview/development).
-const ADMIN_USERNAME = process.env.ADMIN_USERNAME || "";
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || "";
-
+// No literal fallback: a default HMAC secret would let anyone forge an admin
+// session token. Set in Vercel (production/preview/development).
 export function getSuperAdminEmails(): string[] {
   const configured = (process.env.SUPER_ADMIN_EMAILS || "contact.akusaraproject@gmail.com")
     .split(",")
@@ -37,41 +33,6 @@ export function isSuperAdminEmail(email?: string | null): boolean {
   if (!email) return false;
   const normalized = email.trim().toLowerCase();
   return getSuperAdminEmails().includes(normalized);
-}
-
-export function hashAdminPassword(password: string, salt?: string): { hash: string; salt: string } {
-  const actualSalt = salt || crypto.randomBytes(16).toString("hex");
-  const hash = crypto.pbkdf2Sync(password, actualSalt, 100000, 64, "sha512").toString("hex");
-  return { hash, salt: actualSalt };
-}
-
-export async function checkAdminCredentials(user: string, pass: string): Promise<boolean> {
-  if (!ADMIN_USERNAME) return false;
-  if (!safeEqual(user.toLowerCase(), ADMIN_USERNAME.toLowerCase())) return false;
-
-  // Check custom password from app_settings
-  try {
-    const serviceClient = createServiceClient();
-    const { data } = await serviceClient
-      .from("app_settings")
-      .select("value")
-      .eq("key", "admin_custom_credentials")
-      .maybeSingle();
-
-    if (data?.value && typeof data.value === "object") {
-      const val = data.value as { hash?: string; salt?: string };
-      if (val.hash && val.salt) {
-        const testHash = crypto.pbkdf2Sync(pass, val.salt, 100000, 64, "sha512").toString("hex");
-        return safeEqual(testHash, val.hash);
-      }
-    }
-  } catch (err) {
-    console.warn("[admin-auth] Error checking custom credentials:", err);
-  }
-
-  // Fallback to env password
-  if (!ADMIN_PASSWORD) return false;
-  return safeEqual(pass, ADMIN_PASSWORD);
 }
 
 export function createAdminToken(username: string): string {

@@ -25,6 +25,7 @@ export const APP_ICONS = {
     setup: "lucide:sliders",
     home: "lucide:house",
     changelog: "lucide:file-text",
+    uninstallFeedback: "lucide:log-out",
   },
   // Actions & Controls
   action: {

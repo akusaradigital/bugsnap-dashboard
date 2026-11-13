@@ -48,7 +48,7 @@ export function SiteThemeToggle({ compact = false }: SiteThemeToggleProps) {
   return (
     <div
       role="radiogroup"
-      aria-label="Theme selection"
+      aria-label={t("siteFx.themeSelection")}
       className="inline-flex items-center rounded-lg border border-site-border bg-site-surface p-0.5 shadow-2xs"
     >
       {options.map((opt) => {

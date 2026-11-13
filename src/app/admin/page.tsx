@@ -6,7 +6,6 @@ import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/Toast";
 import { useT } from "@/components/I18nProvider";
 import { Icon } from "@/lib/iconify";
-import { APP_ICONS } from "@/lib/icons";
 import { Dropdown } from "@/components/Dropdown";
 import { getAdminHeaders, getAdminCache, setAdminCache } from "@/lib/admin-cache";
 
@@ -36,11 +35,6 @@ interface AdminData {
     team: number;
     enterprise: number;
   };
-  mediaTypes: {
-    screenshot: number;
-    video: number;
-    other: number;
-  };
   funnel?: {
     signups: number;
     driveConnected: number;
@@ -65,19 +59,12 @@ interface AdminData {
     hotProspects: number;
     abandonedCarts: number;
   };
-  systemPulse?: {
-    database: string;
-    stripe: string;
-    googleDrive: string;
-    emailService: string;
-  };
 }
 
-// Mini Sparkline SVG component
-function Sparkline({ data, color }: { data: number[]; color: string }) {
+// Mini sparkline. One neutral color for every KPI, so the cards don't compete.
+function Sparkline({ data }: { data: number[] }) {
   if (!data || data.length === 0) return null;
   const max = Math.max(...data, 1);
-  const min = 0;
   const width = 90;
   const height = 30;
   const step = width / (data.length - 1 || 1);
@@ -85,21 +72,14 @@ function Sparkline({ data, color }: { data: number[]; color: string }) {
   const points = data
     .map((val, idx) => {
       const x = idx * step;
-      const y = height - ((val - min) / (max - min)) * (height - 6) - 3;
+      const y = height - (val / max) * (height - 6) - 3;
       return `${x},${y}`;
     })
     .join(" ");
 
   return (
     <svg className="overflow-visible shrink-0" width={width} height={height} viewBox={`0 0 ${width} ${height}`}>
-      <polyline
-        fill="none"
-        stroke={color}
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        points={points}
-      />
+      <polyline fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" points={points} />
     </svg>
   );
 }
@@ -133,7 +113,7 @@ export default function AdminOverviewPage() {
       const res = await fetch("/api/admin/data", { headers });
 
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Gagal memuat metrik real admin.");
+      if (!res.ok) throw new Error(json.error || t("adminMisc.errMetrics"));
 
       setData(json);
       setAdminCache("admin_overview_data", json);
@@ -142,7 +122,7 @@ export default function AdminOverviewPage() {
       setPromoExpiresAt(json.promo?.expiresAt ? json.promo.expiresAt.slice(0, 16) : "");
       setPromoTargetPlan(json.promo?.targetPlan || "all");
     } catch (err: unknown) {
-      if (!data) setError((err as Error)?.message || "Gagal memuat data.");
+      if (!data) setError((err as Error)?.message || t("adminMisc.errData"));
     } finally {
       setLoading(false);
     }
@@ -168,11 +148,11 @@ export default function AdminOverviewPage() {
         }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Gagal menyimpan banner");
+      if (!res.ok) throw new Error(json.error || t("adminMisc.errBanner"));
 
       showToast(t("admin.promoSavedSuccess"), "success");
     } catch (err: unknown) {
-      showToast((err as Error)?.message || "Gagal menyimpan banner", "error");
+      showToast((err as Error)?.message || t("adminMisc.errBannerToast"), "error");
     } finally {
       setSavingPromo(false);
     }
@@ -187,7 +167,6 @@ export default function AdminOverviewPage() {
 
   const totalUsers = stats?.totalUsers || 0;
   const plans = data?.planDistribution || { free: 0, pro: 0, team: 0, enterprise: 0 };
-  const media = data?.mediaTypes || { screenshot: 0, video: 0, other: 0 };
 
   const funnel = data?.funnel;
   const funnelStages = funnel
@@ -200,7 +179,7 @@ export default function AdminOverviewPage() {
       ]
     : [];
 
-  // Calculate coordinates for main 7-day trend chart (SVG)
+  // 7-day chart: captures and views
   const chartHeight = 220;
   const chartWidth = 600;
   const paddingX = 40;
@@ -211,17 +190,15 @@ export default function AdminOverviewPage() {
   const maxVal = Math.max(...capturePoints, ...viewPoints, 5);
   const stepX = availableWidth / (daily.length - 1 || 1);
 
-  const capturePathPoints = daily.map((d, i) => {
-    const x = paddingX + i * stepX;
-    const y = paddingY + availableHeight - (d.captures / maxVal) * availableHeight;
-    return { x, y, val: d.captures, label: d.label };
-  });
-
-  const viewPathPoints = daily.map((d, i) => {
-    const x = paddingX + i * stepX;
-    const y = paddingY + availableHeight - (d.views / maxVal) * availableHeight;
-    return { x, y, val: d.views, label: d.label };
-  });
+  const capturePathPoints = daily.map((d, i) => ({
+    x: paddingX + i * stepX,
+    y: paddingY + availableHeight - ((d.captures || 0) / maxVal) * availableHeight,
+    label: d.label,
+  }));
+  const viewPathPoints = daily.map((d, i) => ({
+    x: paddingX + i * stepX,
+    y: paddingY + availableHeight - ((d.views || 0) / maxVal) * availableHeight,
+  }));
 
   const capturePolyline = capturePathPoints.map((p) => `${p.x},${p.y}`).join(" ");
   const viewPolyline = viewPathPoints.map((p) => `${p.x},${p.y}`).join(" ");
@@ -231,9 +208,36 @@ export default function AdminOverviewPage() {
   const abandonedCarts = data?.needsAttention?.abandonedCarts ?? 0;
   const totalAttention = openTickets + hotProspects + abandonedCarts;
 
+  const kpis = [
+    {
+      label: t("admin.totalViews"),
+      value: stats?.totalViews ?? 0,
+      caption: t("admin.recentViews14", { count: stats?.recentViewsCount ?? 0 }),
+      points: viewPoints,
+    },
+    {
+      label: t("admin.captures"),
+      value: stats?.totalCaptures ?? 0,
+      caption: t("admin.recentCaptures14", { count: stats?.recentCapturesCount ?? 0 }),
+      points: capturePoints,
+    },
+    {
+      label: t("admin.workspaces"),
+      value: stats?.totalWorkspaces ?? 0,
+      caption: t("admin.workspacesSub"),
+      points: workspacePoints,
+    },
+    {
+      label: t("admin.totalUsers"),
+      value: stats?.totalUsers ?? 0,
+      caption: t("admin.usersSub"),
+      points: userPoints,
+    },
+  ];
+
   return (
     <div className="space-y-6">
-      {/* Top Welcome & Refresh Bar */}
+      {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-slate-200 dark:border-zinc-800">
         <div>
           <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-white">
@@ -247,7 +251,7 @@ export default function AdminOverviewPage() {
           type="button"
           onClick={loadData}
           disabled={loading}
-          className="self-start sm:self-auto px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs font-semibold text-slate-700 dark:text-zinc-300 transition-colors shadow-xs cursor-pointer"
+          className="self-start sm:self-auto px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs font-semibold text-slate-700 dark:text-zinc-300 transition-colors cursor-pointer"
         >
           {loading ? t("admin.refreshing") : t("admin.refreshMetrics")}
         </button>
@@ -266,249 +270,131 @@ export default function AdminOverviewPage() {
         </div>
       )}
 
-      {/* NEEDS ATTENTION TODAY ACTION STRIP */}
+      {/* Needs attention: one plain line, each number links to its inbox */}
       {data?.needsAttention && (
-        <div className="rounded-xl border border-amber-200/80 dark:border-amber-900/50 bg-gradient-to-r from-amber-50/90 via-white to-amber-50/40 dark:from-amber-950/20 dark:via-zinc-900/70 dark:to-amber-950/10 p-3 shadow-2xs flex flex-wrap items-center justify-between gap-3 text-xs">
-          <div className="flex items-center gap-2.5">
-            <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-amber-500/15 text-amber-600 dark:text-amber-400 font-bold text-sm">
-              <Icon icon="lucide:alert-triangle" className="w-3.5 h-3.5" />
-            </span>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-bold text-slate-800 dark:text-zinc-200">
-                  {t("admin.needsAttentionTitle")}
-                </span>
-                {totalAttention === 0 ? (
-                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
-                    <Icon icon="lucide:check" className="w-3.5 h-3.5" /> {t("admin.allClearToday")}
-                  </span>
-                ) : (
-                  <span className="text-[11px] text-slate-500 dark:text-zinc-400 hidden sm:inline">
-                    {t("admin.needsAttentionDesc")}
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 text-[11px] sm:text-xs">
-            {/* Open Tickets */}
-            <Link
-              href="/admin/support"
-              className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg font-medium transition-all ${
-                openTickets > 0
-                  ? "bg-rose-100 hover:bg-rose-200 dark:bg-rose-950/70 dark:hover:bg-rose-900/80 text-rose-700 dark:text-rose-300 font-semibold shadow-2xs"
-                  : "bg-slate-100 dark:bg-zinc-800/60 text-slate-500 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-800"
-              }`}
-            >
-              <Icon icon="lucide:inbox" className="w-3.5 h-3.5" />
-              <span>{t("admin.openTicketsLabel")}:</span>
-              <span className={`px-1.5 py-0.2 rounded font-bold text-[10px] sm:text-[11px] ${openTickets > 0 ? "bg-rose-600 text-white" : "bg-slate-200 dark:bg-zinc-700 text-slate-700 dark:text-zinc-300"}`}>
-                {openTickets}
-              </span>
-            </Link>
-
-            {/* Hot Prospects */}
-            <Link
-              href="/admin/revenue"
-              className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg font-medium transition-all ${
-                hotProspects > 0
-                  ? "bg-amber-100 hover:bg-amber-200 dark:bg-amber-950/70 dark:hover:bg-amber-900/80 text-amber-800 dark:text-amber-300 font-semibold shadow-2xs"
-                  : "bg-slate-100 dark:bg-zinc-800/60 text-slate-500 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-800"
-              }`}
-            >
-              <Icon icon="lucide:users" className="w-3.5 h-3.5 text-amber-500" />
-              <span>{t("admin.hotProspectsLabel")}:</span>
-              <span className={`px-1.5 py-0.2 rounded font-bold text-[10px] sm:text-[11px] ${hotProspects > 0 ? "bg-amber-600 text-white" : "bg-slate-200 dark:bg-zinc-700 text-slate-700 dark:text-zinc-300"}`}>
-                {hotProspects}
-              </span>
-            </Link>
-
-            {/* Abandoned Carts */}
-            <Link
-              href="/admin/revenue"
-              className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-2.5 py-1 rounded-lg font-medium transition-all ${
-                abandonedCarts > 0
-                  ? "bg-[#DC2626]/10 hover:bg-[#DC2626]/20 dark:bg-[#DC2626]/10 dark:hover:bg-[#DC2626]/20 text-[#B91C1C] dark:text-[#F87171] font-semibold shadow-2xs"
-                  : "bg-slate-100 dark:bg-zinc-800/60 text-slate-500 dark:text-zinc-400 hover:bg-slate-200 dark:hover:bg-zinc-800"
-              }`}
-            >
-              <Icon icon="lucide:shopping-cart" className="w-3.5 h-3.5 text-[#DC2626]" />
-              <span>{t("admin.abandonedCartsLabel")}:</span>
-              <span className={`px-1.5 py-0.2 rounded font-bold text-[10px] sm:text-[11px] ${abandonedCarts > 0 ? "bg-[#DC2626] text-white" : "bg-slate-200 dark:bg-zinc-700 text-slate-700 dark:text-zinc-300"}`}>
-                {abandonedCarts}
-              </span>
-            </Link>
-          </div>
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-600 dark:text-zinc-400">
+          <span className="font-semibold text-slate-900 dark:text-white">{t("admin.needsAttentionTitle")}</span>
+          {totalAttention === 0 ? (
+            <span>{t("admin.allClearToday")}</span>
+          ) : (
+            <>
+              <Link href="/admin/support" className="hover:text-[#2563EB] dark:hover:text-[#3B82F6]">
+                {t("admin.openTicketsLabel")}: <strong className="text-slate-900 dark:text-white">{openTickets}</strong>
+              </Link>
+              <Link href="/admin/revenue" className="hover:text-[#2563EB] dark:hover:text-[#3B82F6]">
+                {t("admin.hotProspectsLabel")}: <strong className="text-slate-900 dark:text-white">{hotProspects}</strong>
+              </Link>
+              <Link href="/admin/revenue" className="hover:text-[#2563EB] dark:hover:text-[#3B82F6]">
+                {t("admin.abandonedCartsLabel")}: <strong className="text-slate-900 dark:text-white">{abandonedCarts}</strong>
+              </Link>
+            </>
+          )}
         </div>
       )}
 
-      {/* SYSTEM & INTEGRATION PULSE BAR */}
-      <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white/80 dark:bg-zinc-900/80 backdrop-blur-xs p-3 shadow-2xs flex flex-wrap items-center justify-between gap-3 text-xs">
-        <div className="flex items-center gap-2">
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500" />
-          </span>
-          <span className="font-bold text-slate-800 dark:text-zinc-200 text-xs">
-            {t("admin.systemPulse")}
-          </span>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2.5 sm:gap-6 text-[10px] sm:text-[11px]">
-          {/* Supabase DB */}
-          <div className="flex items-center gap-1.5 font-medium text-slate-600 dark:text-zinc-400">
-            <span className="h-2 w-2 rounded-full bg-emerald-500 shrink-0" />
-            <span>{t("admin.dbConnected")}:</span>
-            <span className="font-bold text-emerald-600 dark:text-emerald-400">
-              {t("admin.statusHealthy")}
-            </span>
-          </div>
-
-          {/* Stripe Billing */}
-          <div className="flex items-center gap-1.5 font-medium text-slate-600 dark:text-zinc-400">
-            <span
-              className={`h-2 w-2 rounded-full shrink-0 ${
-                data?.systemPulse?.stripe === "configured" ? "bg-emerald-500" : "bg-amber-500"
-              }`}
-            />
-            <span>{t("admin.stripeStatusLabel")}:</span>
-            <span
-              className={`font-bold ${
-                data?.systemPulse?.stripe === "configured"
-                  ? "text-emerald-600 dark:text-emerald-400"
-                  : "text-amber-600 dark:text-amber-400"
-              }`}
-            >
-              {data?.systemPulse?.stripe === "configured"
-                ? t("admin.statusConfigured")
-                : t("admin.statusPending")}
-            </span>
-          </div>
-
-          {/* Google Drive */}
-          <div className="flex items-center gap-1.5 font-medium text-slate-600 dark:text-zinc-400">
-            <span
-              className={`h-2 w-2 rounded-full shrink-0 ${
-                data?.systemPulse?.googleDrive === "configured" ? "bg-emerald-500" : "bg-amber-500"
-              }`}
-            />
-            <span>{t("admin.driveStatusLabel")}:</span>
-            <span
-              className={`font-bold ${
-                data?.systemPulse?.googleDrive === "configured"
-                  ? "text-emerald-600 dark:text-emerald-400"
-                  : "text-amber-600 dark:text-amber-400"
-              }`}
-            >
-              {data?.systemPulse?.googleDrive === "configured"
-                ? t("admin.statusConfigured")
-                : t("admin.statusPending")}
-            </span>
-          </div>
-
-          {/* Email Service */}
-          <div className="flex items-center gap-1.5 font-medium text-slate-600 dark:text-zinc-400">
-            <span
-              className={`h-2 w-2 rounded-full shrink-0 ${
-                data?.systemPulse?.emailService === "configured" ? "bg-emerald-500" : "bg-amber-500"
-              }`}
-            />
-            <span>Email (Resend):</span>
-            <span
-              className={`font-bold ${
-                data?.systemPulse?.emailService === "configured"
-                  ? "text-emerald-600 dark:text-emerald-400"
-                  : "text-amber-600 dark:text-amber-400"
-              }`}
-            >
-              {data?.systemPulse?.emailService === "configured"
-                ? t("admin.statusConfigured")
-                : t("admin.statusPending")}
-            </span>
-          </div>
-
-          {/* Quick Setup Center */}
-          <Link
-            href="/admin/setup"
-            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-accent/10 hover:bg-accent/20 text-accent font-semibold transition-colors ml-auto shrink-0"
-          >
-            <Icon icon="lucide:sliders" className="w-3.5 h-3.5" />
-            <span>Setup &amp; Config</span>
-          </Link>
-        </div>
-      </div>
-
-      {/* 4 TOP STAT CARDS (STARADMIN DESIGN) */}
+      {/* KPI: number, 14-day caption, one sparkline */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* CARD 1: VISITS / VIEWS */}
-        <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
-              {t("admin.totalViews")}
-            </span>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">
-              {stats?.totalViews?.toLocaleString() ?? "0"}
-            </p>
-            <span className="text-[10px] text-blue-600 dark:text-blue-400 font-semibold mt-0.5 block">
-              {t("admin.recentViews14", { count: stats?.recentViewsCount ?? 0 })}
-            </span>
+        {kpis.map((kpi) => (
+          <div
+            key={kpi.label}
+            className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 flex items-center justify-between gap-3"
+          >
+            <div className="min-w-0">
+              <p className="text-[11px] font-semibold text-slate-500 dark:text-zinc-400">{kpi.label}</p>
+              <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">{kpi.value.toLocaleString()}</p>
+              <p className="text-[10px] text-slate-500 dark:text-zinc-400 mt-0.5">{kpi.caption}</p>
+            </div>
+            <Sparkline data={kpi.points} />
           </div>
-          <Sparkline data={viewPoints} color="#2563eb" />
+        ))}
+      </div>
+
+      {/* Main row: chart + plan distribution */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t("admin.chartTitle")}</h3>
+              <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">{t("admin.chartSubtitle")}</p>
+            </div>
+            <div className="flex items-center gap-3 text-xs text-slate-600 dark:text-zinc-400">
+              <span className="flex items-center gap-1.5">
+                <span className="h-0.5 w-4 bg-[#2563EB]" />
+                <span>{t("admin.chartCaptures")}</span>
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="h-0.5 w-4 bg-slate-400 dark:bg-zinc-500" />
+                <span>{t("admin.chartViews")}</span>
+              </span>
+            </div>
+          </div>
+
+          <div className="w-full overflow-x-auto pt-2">
+            <svg className="w-full min-w-[500px]" height={chartHeight} viewBox={`0 0 ${chartWidth} ${chartHeight}`}>
+              {[0, 0.5, 1].map((ratio) => {
+                const y = paddingY + availableHeight * (1 - ratio);
+                return (
+                  <g key={ratio}>
+                    <line x1={paddingX} y1={y} x2={chartWidth - paddingX} y2={y} stroke="#e2e8f0" strokeDasharray="4 4" className="dark:stroke-zinc-800" />
+                    <text x={paddingX - 8} y={y + 3} textAnchor="end" fontSize="9" fill="#94a3b8">
+                      {Math.round(ratio * maxVal)}
+                    </text>
+                  </g>
+                );
+              })}
+              <polyline fill="none" stroke="#94a3b8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" points={viewPolyline} />
+              <polyline fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" points={capturePolyline} />
+              {capturePathPoints.map((p, i) => (
+                <g key={i}>
+                  <circle cx={p.x} cy={p.y} r="3.5" fill="#2563eb" />
+                  <text x={p.x} y={chartHeight - 6} textAnchor="middle" fontSize="9" fill="#64748b">
+                    {p.label}
+                  </text>
+                </g>
+              ))}
+            </svg>
+          </div>
+
+          <div className="pt-2 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between text-xs text-slate-500 dark:text-zinc-400">
+            <span>{t("admin.chart7DayCaptures", { count: capturePoints.reduce((a, b) => a + b, 0) })}</span>
+            <span>{t("admin.chart7DayViews", { count: viewPoints.reduce((a, b) => a + b, 0) })}</span>
+          </div>
         </div>
 
-        {/* CARD 2: TOTAL CAPTURES */}
-        <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm flex items-center justify-between">
+        <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 space-y-4">
           <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
-              {t("admin.captures")}
-            </span>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">
-              {stats?.totalCaptures?.toLocaleString() ?? "0"}
-            </p>
-            <span className="text-[10px] text-[#2563EB] dark:text-[#3B82F6] font-semibold mt-0.5 block">
-              {t("admin.recentCaptures14", { count: stats?.recentCapturesCount ?? 0 })}
-            </span>
+            <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t("admin.planDistTitle")}</h3>
+            <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">{t("admin.planDistSubtitle")}</p>
           </div>
-          <Sparkline data={capturePoints} color="#2563eb" />
-        </div>
-
-        {/* CARD 3: TOTAL WORKSPACES */}
-        <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
-              {t("admin.workspaces")}
-            </span>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">
-              {stats?.totalWorkspaces?.toLocaleString() ?? "0"}
-            </p>
-            <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold mt-0.5 block">
-              {t("admin.workspacesSub")}
-            </span>
+          <div className="space-y-3">
+            {[
+              { label: t("adminUsers.planFree"), count: plans.free },
+              { label: t("adminMisc.planPro"), count: plans.pro },
+              { label: "Team", count: plans.team },
+              { label: t("adminMisc.planEnterprise"), count: plans.enterprise },
+            ].map((tier) => {
+              const pct = totalUsers > 0 ? Math.round((tier.count / totalUsers) * 100) : 0;
+              return (
+                <div key={tier.label} className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-semibold text-slate-700 dark:text-zinc-300">{tier.label}</span>
+                    <span className="font-mono text-slate-500 dark:text-zinc-400">
+                      {tier.count} ({pct}%)
+                    </span>
+                  </div>
+                  <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-zinc-800 overflow-hidden">
+                    <div className="h-full bg-[#2563EB]" style={{ width: `${Math.max(pct, 2)}%` }} />
+                  </div>
+                </div>
+              );
+            })}
           </div>
-          <Sparkline data={workspacePoints} color="#10b981" />
-        </div>
-
-        {/* CARD 4: TOTAL USERS */}
-        <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 shadow-sm flex items-center justify-between">
-          <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400">
-              {t("admin.totalUsers")}
-            </span>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-1">
-              {stats?.totalUsers?.toLocaleString() ?? "0"}
-            </p>
-            <span className="text-[10px] text-[#2563EB] dark:text-[#3B82F6] font-semibold mt-0.5 block">
-              {t("admin.usersSub")}
-            </span>
-          </div>
-          <Sparkline data={userPoints} color="#2563eb" />
         </div>
       </div>
 
-      {/* ONBOARDING FUNNEL */}
+      {/* Onboarding funnel */}
       {funnelStages.length > 0 && (
-        <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm space-y-4">
+        <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 space-y-4">
           <div>
             <h3 className="text-sm font-bold text-slate-900 dark:text-white">{t("admin.funnelTitle")}</h3>
             <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">{t("admin.funnelSubtitle")}</p>
@@ -521,14 +407,12 @@ export default function AdminOverviewPage() {
               const pctOfPrev = i > 0 ? Math.round((stage.count / prevCount) * 100) : 100;
               return (
                 <div key={stage.label} className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-slate-700 dark:text-zinc-300 truncate">{stage.label}</span>
-                  </div>
+                  <span className="text-xs font-semibold text-slate-700 dark:text-zinc-300 block truncate">{stage.label}</span>
                   <p className="text-xl font-black text-slate-900 dark:text-white">{stage.count}</p>
-                  <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-zinc-800 overflow-hidden">
-                    <div className="h-full bg-[#2563EB]" style={{ width: `${Math.max(pctOfTotal, 4)}%` }} />
+                  <div className="h-1.5 w-full rounded-full bg-slate-100 dark:bg-zinc-800 overflow-hidden">
+                    <div className="h-full bg-[#2563EB]" style={{ width: `${Math.max(pctOfTotal, 2)}%` }} />
                   </div>
-                  <span className="text-[10px] text-slate-400 block">
+                  <span className="text-[10px] text-slate-500 dark:text-zinc-400 block">
                     {pctOfTotal}% {t("admin.funnelOfSignups")}
                     {i > 0 ? ` · ${pctOfPrev}% ${t("admin.funnelOfPrevStage")}` : ""}
                   </span>
@@ -539,277 +423,30 @@ export default function AdminOverviewPage() {
         </div>
       )}
 
-      {/* MIDDLE SECTION: MAIN ACTIVITY CHART & USER DISTRIBUTION (STARADMIN LAYOUT) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* LEFT 2 COLS: DUAL LINE CHART (PLATFORM USAGE ACTIVITY) */}
-        <div className="lg:col-span-2 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-            <div>
-              <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-                {t("admin.chartTitle")}
-              </h3>
-              <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">
-                {t("admin.chartSubtitle")}
-              </p>
-            </div>
-            <div className="flex items-center gap-3 text-xs font-semibold">
-              <span className="flex items-center gap-1.5 text-[#2563EB] dark:text-[#3B82F6]">
-                <span className="h-2 w-4 rounded-full bg-[#2563EB]" />
-                <span>{t("admin.chartCaptures")}</span>
-              </span>
-              <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400">
-                <span className="h-2 w-4 rounded-full bg-[#10b981]" />
-                <span>{t("admin.chartViews")}</span>
-              </span>
-            </div>
-          </div>
-
-          {/* SVG DUAL LINE CHART */}
-          <div className="w-full overflow-x-auto pt-2">
-            <svg
-              className="w-full min-w-[500px]"
-              height={chartHeight}
-              viewBox={`0 0 ${chartWidth} ${chartHeight}`}
-            >
-              {/* Horizontal grid lines */}
-              {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
-                const y = paddingY + availableHeight * (1 - ratio);
-                return (
-                  <g key={ratio}>
-                    <line
-                      x1={paddingX}
-                      y1={y}
-                      x2={chartWidth - paddingX}
-                      y2={y}
-                      stroke="#e2e8f0"
-                      strokeDasharray="4 4"
-                      className="dark:stroke-zinc-800"
-                    />
-                    <text
-                      x={paddingX - 8}
-                      y={y + 3}
-                      textAnchor="end"
-                      fontSize="9"
-                      fill="#94a3b8"
-                      className="font-mono"
-                    >
-                      {Math.round(ratio * maxVal)}
-                    </text>
-                  </g>
-                );
-              })}
-
-              {/* View Path (Emerald) */}
-              <polyline
-                fill="none"
-                stroke="#10b981"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                points={viewPolyline}
-              />
-
-              {/* Capture Path (Blue) */}
-              <polyline
-                fill="none"
-                stroke="#2563eb"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                points={capturePolyline}
-              />
-
-              {/* Data points for Views */}
-              {viewPathPoints.map((p, i) => (
-                <circle key={`v-${i}`} cx={p.x} cy={p.y} r="3.5" fill="#10b981" />
-              ))}
-
-              {/* Data points for Captures */}
-              {capturePathPoints.map((p, i) => (
-                <g key={`c-${i}`}>
-                  <circle cx={p.x} cy={p.y} r="3.5" fill="#2563eb" />
-                  {/* Date Label on X Axis */}
-                  <text
-                    x={p.x}
-                    y={chartHeight - 6}
-                    textAnchor="middle"
-                    fontSize="9"
-                    fill="#64748b"
-                    className="font-semibold"
-                  >
-                    {p.label}
-                  </text>
-                </g>
-              ))}
-            </svg>
-          </div>
-
-          <div className="pt-2 border-t border-slate-100 dark:border-zinc-800 flex items-center justify-between text-xs text-slate-500 dark:text-zinc-400">
-            <span>
-              {t("admin.chart7DayCaptures", { count: capturePoints.reduce((a, b) => a + b, 0) })}
-            </span>
-            <span>
-              {t("admin.chart7DayViews", { count: viewPoints.reduce((a, b) => a + b, 0) })}
-            </span>
-          </div>
-        </div>
-
-        {/* RIGHT 1 COL: USER DISTRIBUTION & METRICS */}
-        <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm space-y-4 flex flex-col justify-between">
-          <div>
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-              {t("admin.planDistTitle")}
-            </h3>
-            <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">
-              {t("admin.planDistSubtitle")}
-            </p>
-
-            <div className="space-y-3 mt-4">
-              {[
-                { label: "Free Tier", count: plans.free, color: "bg-slate-400" },
-                { label: "Pro Tier", count: plans.pro, color: "bg-[#2563EB]" },
-                { label: "Team Tier", count: plans.team, color: "bg-blue-600" },
-                { label: "Enterprise", count: plans.enterprise, color: "bg-slate-700 dark:bg-slate-300" },
-              ].map((tier) => {
-                const pct = totalUsers > 0 ? Math.round((tier.count / totalUsers) * 100) : 0;
-                return (
-                  <div key={tier.label} className="space-y-1">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="font-semibold text-slate-700 dark:text-zinc-300">{tier.label}</span>
-                      <span className="font-mono text-slate-500 dark:text-zinc-400">
-                        {tier.count} ({pct}%)
-                      </span>
-                    </div>
-                    <div className="h-2 w-full rounded-full bg-slate-100 dark:bg-zinc-800 overflow-hidden">
-                      <div className={`h-full ${tier.color}`} style={{ width: `${Math.max(pct, 4)}%` }} />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Media Capture Types Breakdown */}
-          <div className="pt-4 border-t border-slate-100 dark:border-zinc-800 space-y-2">
-            <h4 className="text-xs font-bold text-slate-700 dark:text-zinc-300">
-              {t("admin.mediaFormats")}
-            </h4>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="p-2 rounded-lg bg-slate-50 dark:bg-zinc-950 border border-slate-100 dark:border-zinc-800">
-                <span className="text-[10px] text-slate-500 dark:text-zinc-400 block font-semibold">{t("admin.screenshots")}</span>
-                <span className="text-sm font-bold text-slate-900 dark:text-white">{media.screenshot}</span>
-              </div>
-              <div className="p-2 rounded-lg bg-slate-50 dark:bg-zinc-950 border border-slate-100 dark:border-zinc-800">
-                <span className="text-[10px] text-slate-500 dark:text-zinc-400 block font-semibold">{t("admin.videoRecords")}</span>
-                <span className="text-sm font-bold text-slate-900 dark:text-white">{media.video}</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* MASTER ADMIN HUBS QUICK ACCESS */}
-      <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm space-y-3">
-        <div className="flex items-center justify-between">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-200 flex items-center gap-2">
-            <span className="flex items-center gap-1.5">Master Administration Hubs</span>
-          </h3>
-          <span className="text-[11px] text-slate-400">Privileged Super Admin Modules</span>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
-          <Link
-            href="/admin/users"
-            className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#2563EB]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
-          >
-            <Icon icon={APP_ICONS.nav.users} className="w-5 h-5 text-indigo-500" />
-            <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#2563EB] dark:group-hover:text-[#3B82F6] transition-colors">
-              {t("admin.manageUsers")}
-            </p>
-            <span className="text-[10px] text-slate-400 block truncate">Plan & 360° Profile</span>
-          </Link>
-
-          <Link
-            href="/admin/workspaces"
-            className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#2563EB]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
-          >
-            <Icon icon={APP_ICONS.nav.workspaces} className="w-5 h-5 text-sky-500" />
-            <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#2563EB] dark:group-hover:text-[#3B82F6] transition-colors">
-              {t("admin.navWorkspaces")}
-            </p>
-            <span className="text-[10px] text-slate-400 block truncate">Teams & Ownership</span>
-          </Link>
-
-          <Link
-            href="/admin/captures"
-            className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#2563EB]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
-          >
-            <Icon icon={APP_ICONS.nav.captures} className="w-5 h-5 text-emerald-500" />
-            <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#2563EB] dark:group-hover:text-[#3B82F6] transition-colors">
-              {t("admin.navCaptures")}
-            </p>
-            <span className="text-[10px] text-slate-400 block truncate">Audit & Takedown</span>
-          </Link>
-
-          <Link
-            href="/admin/revenue"
-            className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#2563EB]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
-          >
-            <Icon icon={APP_ICONS.nav.revenue} className="w-5 h-5 text-amber-500" />
-            <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#2563EB] dark:group-hover:text-[#3B82F6] transition-colors">
-              {t("admin.navRevenue")}
-            </p>
-            <span className="text-[10px] text-slate-400 block truncate">MRR & Stripe Health</span>
-          </Link>
-
-          <Link
-            href="/admin/ai-analytics"
-            className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#2563EB]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
-          >
-            <Icon icon={APP_ICONS.nav.aiAnalytics} className="w-5 h-5 text-purple-500" />
-            <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#2563EB] dark:group-hover:text-[#3B82F6] transition-colors">
-              {t("admin.navAiAnalytics")}
-            </p>
-            <span className="text-[10px] text-slate-400 block truncate">Tokens & API Keys</span>
-          </Link>
-
-          <Link
-            href="/admin/security-audit"
-            className="p-3 rounded-lg border border-slate-200 dark:border-zinc-800 hover:border-[#2563EB]/50 hover:bg-slate-50 dark:hover:bg-zinc-800/60 transition-all text-left group"
-          >
-            <Icon icon={APP_ICONS.nav.securityAudit} className="w-5 h-5 text-rose-500" />
-            <p className="text-xs font-bold text-slate-900 dark:text-white mt-1 group-hover:text-[#2563EB] dark:group-hover:text-[#3B82F6] transition-colors">
-              {t("admin.auditTitle")}
-            </p>
-            <span className="text-[10px] text-slate-400 block truncate">Action Audit Trail</span>
-          </Link>
-        </div>
-      </div>
-
-      {/* BOTTOM ROW: TOP WORKSPACES & PROMO ANNOUNCEMENT */}
+      {/* Bottom row: top workspaces + promo */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top Workspaces Table */}
-        <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-sm overflow-hidden flex flex-col">
-          <div className="p-4 border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 flex items-center justify-between">
+        <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 overflow-hidden flex flex-col">
+          <div className="p-4 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-200">
               {t("admin.topWsTitle")}
             </h3>
-            <span className="text-[11px] text-slate-400">
+            <span className="text-[11px] text-slate-500 dark:text-zinc-400">
               {t("admin.wsCountLabel", { count: data?.topWorkspaces?.length || 0 })}
             </span>
           </div>
           <ul className="divide-y divide-slate-100 dark:divide-zinc-800 flex-1 overflow-y-auto max-h-72">
             {!data?.topWorkspaces || data.topWorkspaces.length === 0 ? (
-              <li className="p-6 text-center text-xs text-slate-400">{t("admin.noWsLoaded")}</li>
+              <li className="p-6 text-center text-xs text-slate-500 dark:text-zinc-400">{t("admin.noWsLoaded")}</li>
             ) : (
               data.topWorkspaces.map((w) => (
-                <li key={w.id || w.name} className="flex items-center justify-between px-4 py-3 hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
+                <li key={w.id || w.name} className="flex items-center justify-between px-4 py-3">
                   <div className="min-w-0">
                     <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{w.name}</p>
                     <p className="text-[11px] text-slate-500 dark:text-zinc-400 truncate">{w.owner_email}</p>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0 ml-3">
-                    <span className="text-xs font-black text-[#2563EB] dark:text-[#3B82F6]">{w.capture_count}</span>
-                    <span className="text-[10px] text-slate-400">{t("admin.capLabel")}</span>
+                  <div className="flex items-baseline gap-1 shrink-0 ml-3">
+                    <span className="text-xs font-black text-slate-900 dark:text-white">{w.capture_count}</span>
+                    <span className="text-[10px] text-slate-500 dark:text-zinc-400">{t("admin.capLabel")}</span>
                   </div>
                 </li>
               ))
@@ -817,28 +454,23 @@ export default function AdminOverviewPage() {
           </ul>
         </div>
 
-        {/* Global Announcement Banner Settings */}
-        <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 shadow-sm space-y-4">
+        <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-5 space-y-4">
           <div>
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-zinc-200">
               {t("admin.promoBannerTitle")}
             </h3>
-            <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">
-              {t("admin.promoBannerSubtitle")}
-            </p>
+            <p className="text-[11px] text-slate-500 dark:text-zinc-400 mt-0.5">{t("admin.promoBannerSubtitle")}</p>
           </div>
 
-          <div>
-            <textarea
-              rows={3}
-              value={promoMessage}
-              onChange={(e) => setPromoMessage(e.target.value)}
-              placeholder={t("admin.promoBannerPlaceholder")}
-              className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-3 outline-none focus:border-[#2563EB] resize-none leading-relaxed"
-            />
-          </div>
+          <textarea
+            rows={3}
+            value={promoMessage}
+            onChange={(e) => setPromoMessage(e.target.value)}
+            placeholder={t("admin.promoBannerPlaceholder")}
+            className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-3 outline-none focus:border-[#2563EB] resize-none leading-relaxed"
+          />
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-[11px] font-medium text-slate-600 dark:text-zinc-400 mb-1">
                 {t("admin.promoExpiresAt")}
@@ -884,7 +516,7 @@ export default function AdminOverviewPage() {
               type="button"
               onClick={savePromo}
               disabled={savingPromo}
-              className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold bg-[#2563EB] text-white rounded-lg hover:bg-[#1D4ED8] disabled:opacity-50 transition-colors shadow-sm cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold bg-[#2563EB] text-white rounded-lg hover:bg-[#1D4ED8] disabled:opacity-50 transition-colors cursor-pointer"
             >
               <Icon icon="lucide:check" className="w-3.5 h-3.5 shrink-0 brightness-0 invert" />
               <span>{savingPromo ? t("admin.savingBanner") : t("admin.saveBanner")}</span>

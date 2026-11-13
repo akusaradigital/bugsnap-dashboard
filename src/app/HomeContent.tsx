@@ -1,0 +1,1087 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import dynamic from "next/dynamic";
+import Link from "next/link";
+import { useT } from "@/components/I18nProvider";
+import { SiteNavbar } from "@/components/site/SiteNavbar";
+import { SiteFooter } from "@/components/site/SiteFooter";
+import { HeroRecorderPreview } from "@/components/site/HeroRecorderPreview";
+import {
+  DevToolsCard,
+  GoogleDriveProofCard,
+  SpaHealthCard,
+  PlaywrightExportCard,
+} from "@/components/site/ProductMockups";
+import {
+  IconSquare,
+  IconCheck,
+  IconX,
+} from "@/components/site/TablerIcons";
+import { Reveal } from "@/components/site/motion";
+import { SiteBackground } from "@/components/site/SiteBackground";
+import { Icon } from "@/lib/iconify";
+import { FIREFOX_STORE_URL } from "@/lib/constants";
+
+const ProductVideoDemo = dynamic(
+  () =>
+    import("@/components/site/ProductVideoDemo").then(
+      (m) => m.ProductVideoDemo,
+    ),
+  {
+    loading: () => (
+      <div
+        className="w-full max-w-5xl mx-auto min-h-[550px] sm:min-h-[600px] rounded-2xl border border-site-border bg-site-surface/50 animate-pulse"
+        aria-hidden="true"
+      />
+    ),
+  },
+);
+
+const LiveBugReportViewer = dynamic(
+  () =>
+    import("@/components/site/LiveBugReportViewer").then(
+      (m) => m.LiveBugReportViewer,
+    ),
+  {
+    loading: () => (
+      <div
+        className="w-full max-w-3xl mx-auto min-h-[380px] rounded-2xl border border-site-border bg-site-surface/50 animate-pulse"
+        aria-hidden="true"
+      />
+    ),
+  },
+);
+
+const BeforeAfterSlider = dynamic(
+  () =>
+    import("@/components/site/BeforeAfterSlider").then(
+      (m) => m.BeforeAfterSlider,
+    ),
+  {
+    loading: () => (
+      <div
+        className="w-full min-h-[420px] rounded-2xl border border-site-border bg-site-surface/50 animate-pulse"
+        aria-hidden="true"
+      />
+    ),
+  },
+);
+
+const RoleSwitcher = dynamic(
+  () => import("@/components/site/RoleSwitcher").then((m) => m.RoleSwitcher),
+  {
+    loading: () => (
+      <div
+        className="w-full min-h-[520px] rounded-2xl border border-site-border bg-site-surface/50 animate-pulse"
+        aria-hidden="true"
+      />
+    ),
+  },
+);
+
+const ZeroDataDiagram = dynamic(
+  () =>
+    import("@/components/site/ZeroDataDiagram").then(
+      (m) => m.ZeroDataDiagram,
+    ),
+  {
+    loading: () => (
+      <div
+        className="w-full max-w-2xl mx-auto min-h-[380px] rounded-2xl border border-site-border bg-site-surface/50 animate-pulse"
+        aria-hidden="true"
+      />
+    ),
+  },
+);
+
+const IntegrationSwitcher = dynamic(
+  () =>
+    import("@/components/site/IntegrationSwitcher").then(
+      (m) => m.IntegrationSwitcher,
+    ),
+  {
+    loading: () => (
+      <div
+        className="w-full max-w-4xl mx-auto min-h-[400px] rounded-2xl border border-site-border bg-site-surface/50 animate-pulse"
+        aria-hidden="true"
+      />
+    ),
+  },
+);
+
+const CHROME_STORE_URL =
+  "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
+
+export function HomeContent() {
+  const { t } = useT();
+  const [autoLoggingIn, setAutoLoggingIn] = useState(false);
+  const [expandedFaqIndex, setExpandedFaqIndex] = useState<number | null>(1);
+
+  // Preserve critical Extension token auto-login workflow
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const token = params.get("token") || params.get("provider_token");
+      if (token) {
+        setAutoLoggingIn(true);
+        fetch("/api/auth/token-login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ token, access_token: token }),
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.actionLink) {
+              window.location.assign(data.actionLink);
+            } else {
+              throw new Error("Invalid token login response");
+            }
+          })
+          .catch((err) => {
+            console.error("Auto login failed:", err);
+            setAutoLoggingIn(false);
+          });
+      }
+    }
+  }, []);
+
+  const faqItems = [
+    {
+      id: 1,
+      q: "site.faq.q1",
+      a: "site.faq.a1",
+    },
+    {
+      id: 2,
+      q: "site.faq.q2",
+      a: "site.faq.a2",
+    },
+    {
+      id: 3,
+      q: "site.faq.q3",
+      a: "site.faq.a3",
+    },
+    {
+      id: 4,
+      q: "site.faq.q4",
+      a: "site.faq.a4",
+    },
+    {
+      id: 5,
+      q: "site.faq.q5",
+      a: "site.faq.a5",
+    },
+    {
+      id: 6,
+      q: "site.faq.q6",
+      a: "site.faq.a6",
+    },
+  ];
+
+  const steps = [
+    {
+      num: "01",
+      icon: "lucide:video",
+      iconColor: "text-rose-500 dark:text-rose-400",
+      iconSurface: "bg-rose-50 dark:bg-rose-950/35 border-rose-200/70 dark:border-rose-900/50",
+      badgeColor: "bg-emerald-50 text-emerald-700 border border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/40",
+      title: t("site.flow.step1.title"),
+      desc: t("site.flow.step1.desc"),
+    },
+    {
+      num: "02",
+      icon: "logos:google-drive",
+      iconColor: "text-emerald-600 dark:text-emerald-400",
+      iconSurface: "bg-emerald-50 dark:bg-emerald-950/35 border-emerald-200/70 dark:border-emerald-900/50",
+      badgeColor: "bg-emerald-50 text-emerald-600 border border-emerald-200/60 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/40",
+      title: t("site.flow.step2.title"),
+      desc: t("site.flow.step2.desc"),
+    },
+    {
+      num: "03",
+      icon: "lucide:sparkles",
+      iconColor: "text-sky-500 dark:text-sky-400",
+      iconSurface: "bg-sky-50 dark:bg-sky-950/35 border-sky-200/70 dark:border-sky-900/50",
+      badgeColor: "bg-blue-50 text-blue-600 border border-blue-200/60 dark:bg-blue-950/40 dark:text-blue-400 dark:border-blue-900/40",
+      title: t("site.flow.step3.title"),
+      desc: t("site.flow.step3.desc"),
+    },
+    {
+      num: "04",
+      icon: "lucide:link-2",
+      iconColor: "text-amber-500 dark:text-amber-400",
+      iconSurface: "bg-amber-50 dark:bg-amber-950/35 border-amber-200/70 dark:border-amber-900/50",
+      badgeColor: "bg-amber-50 text-amber-600 border border-amber-200/60 dark:bg-amber-950/40 dark:text-amber-400 dark:border-amber-900/40",
+      title: t("site.flow.step4.title"),
+      desc: t("site.flow.step4.desc"),
+    },
+    {
+      num: "05",
+      icon: "lucide:cpu",
+      iconColor: "text-violet-500 dark:text-violet-400",
+      iconSurface: "bg-violet-50 dark:bg-violet-950/35 border-violet-200/70 dark:border-violet-900/50",
+      badgeColor: "bg-purple-50 text-purple-600 border border-purple-200/60 dark:bg-purple-950/40 dark:text-purple-400 dark:border-purple-900/40",
+      title: t("site.flow.step5.title"),
+      desc: t("site.flow.step5.desc"),
+    },
+    {
+      num: "06",
+      icon: "lucide:check",
+      iconColor: "text-lime-600 dark:text-lime-400",
+      iconSurface: "bg-lime-50 dark:bg-lime-950/35 border-lime-200/70 dark:border-lime-900/50",
+      badgeColor: "bg-[#EBF7E3] text-[#3D7A24] border border-[#CFE6BF] dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-900/40",
+      title: t("site.flow.step6.title"),
+      desc: t("site.flow.step6.desc"),
+    },
+  ];
+
+  const metrics = [
+    {
+      val: t("site.bugsnap.metric1.val"),
+      label: t("site.bugsnap.metric1.label"),
+      sub: t("site.bugsnap.metric1.sub"),
+    },
+    {
+      val: t("site.bugsnap.metric2.val"),
+      label: t("site.bugsnap.metric2.label"),
+      sub: t("site.bugsnap.metric2.sub"),
+    },
+    {
+      val: t("site.bugsnap.metric3.val"),
+      label: t("site.bugsnap.metric3.label"),
+      sub: t("site.bugsnap.metric3.sub"),
+    },
+    {
+      val: t("site.bugsnap.metric4.val"),
+      label: t("site.bugsnap.metric4.label"),
+      sub: t("site.bugsnap.metric4.sub"),
+    },
+  ];
+
+  const oldPoints = [
+    t("site.bugsnap.oldPoint1"),
+    t("site.bugsnap.oldPoint2"),
+    t("site.bugsnap.oldPoint3"),
+  ];
+
+  const newPoints = [
+    t("site.bugsnap.newPoint1"),
+    t("site.bugsnap.newPoint2"),
+    t("site.bugsnap.newPoint3"),
+  ];
+
+  if (autoLoggingIn) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-site-bg text-site-text font-site">
+        <div className="flex flex-col items-center gap-3">
+          <Icon
+            icon="lucide:loader-2"
+            className="w-7 h-7 text-accent animate-spin"
+            aria-hidden="true"
+          />
+          <p className="text-sm text-site-text-2 font-medium">
+            {t("landing.redirecting")}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen text-site-text font-site flex flex-col transition-colors relative isolate">
+      <SiteBackground />
+
+      <div className="relative z-10 flex flex-col flex-1">
+        <SiteNavbar />
+
+        <main id="main-content" className="flex-1">
+          {/* Hero */}
+          <section className="relative pt-6 sm:pt-10 pb-12 sm:pb-16 px-4 sm:px-6 overflow-hidden">
+            {/* Ambient theme gradient matching reference image */}
+            <div
+              className="pointer-events-none absolute inset-0 -z-10 overflow-hidden"
+              aria-hidden="true"
+            >
+              <div
+                className="pointer-events-none absolute -top-32 right-0 w-[640px] h-[640px] rounded-full blur-3xl opacity-50 dark:opacity-20"
+                style={{
+                  background:
+                    "radial-gradient(circle, rgba(191, 219, 254, 0.6) 0%, rgba(186, 230, 253, 0.3) 50%, transparent 70%)",
+                }}
+              />
+              <div
+                className="pointer-events-none absolute top-28 right-1/4 w-[520px] h-[520px] rounded-full blur-3xl opacity-45 dark:opacity-20"
+                style={{
+                  background:
+                    "radial-gradient(circle, rgba(167, 243, 208, 0.5) 0%, rgba(204, 251, 241, 0.25) 50%, transparent 70%)",
+                }}
+              />
+              <div
+                className="pointer-events-none absolute top-1/2 right-10 w-[420px] h-[420px] rounded-full blur-3xl opacity-40 dark:opacity-15"
+                style={{
+                  background:
+                    "radial-gradient(circle, rgba(233, 213, 255, 0.45) 0%, transparent 70%)",
+                }}
+              />
+            </div>
+
+            <div className="mx-auto max-w-6xl">
+              <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_1.15fr] gap-10 lg:gap-12 items-center">
+                {/* LEFT - Copy */}
+                <div className="py-4 sm:py-6">
+                  {/* Kicker */}
+                  <Reveal delay={0}>
+                    <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 tracking-wider uppercase mb-5">
+                      {t("site.bugsnap.split.kicker")}
+                    </p>
+                  </Reveal>
+
+                  {/* Headline */}
+                  <Reveal delay={0.05}>
+                    <h1 className="text-4xl sm:text-5xl lg:text-[3.25rem] xl:text-[3.6rem] font-extrabold tracking-tight leading-[1.08] text-balance mb-6">
+                      <span className="text-slate-900 dark:text-white block">
+                        {t("site.hero.headlineDark1")}
+                      </span>
+                      <span className="text-slate-900 dark:text-white block">
+                        {t("site.hero.headlineDark2")}
+                      </span>
+                      <span className="text-[#2563EB] dark:text-[#3B82F6] block">
+                        {t("site.hero.headlineBlue1")}
+                      </span>
+                      <span className="text-[#2563EB] dark:text-[#3B82F6] block">
+                        {t("site.hero.headlineBlue2")}
+                      </span>
+                    </h1>
+                  </Reveal>
+
+                  {/* Sub */}
+                  <Reveal delay={0.1}>
+                    <p className="text-base sm:text-lg text-slate-600 dark:text-slate-300 leading-relaxed mb-8 max-w-lg">
+                      {t("site.bugsnap.split.sub")}
+                    </p>
+                  </Reveal>
+
+                  {/* CTAs */}
+                  <Reveal delay={0.15}>
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 sm:gap-6 mb-8">
+                      <a
+                        href={CHROME_STORE_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 min-h-[48px] rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm sm:text-base font-bold shadow-sm hover:shadow hover:scale-[1.01] active:scale-[0.99] transition-all touch-manipulation"
+                      >
+                        <Icon icon="logos:chrome" className="w-5 h-5 shrink-0" aria-hidden="true" />
+                        {t("site.bugsnap.split.cta")}
+                      </a>
+                      <a
+                        href={FIREFOX_STORE_URL}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center justify-center gap-2.5 px-6 py-3.5 min-h-[48px] rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm sm:text-base font-bold shadow-sm hover:shadow hover:scale-[1.01] active:scale-[0.99] transition-all touch-manipulation"
+                      >
+                        <Icon icon="logos:firefox" className="w-5 h-5 shrink-0" aria-hidden="true" />
+                        {t("extension.addToFirefox")}
+                      </a>
+                    </div>
+                  </Reveal>
+
+                  {/* 3 Feature Highlights in a row */}
+                  <Reveal delay={0.2}>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t border-slate-100 dark:border-slate-800/80 max-w-xl">
+                      {/* Badge 1 */}
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-slate-100/90 dark:bg-slate-800 flex items-center justify-center shrink-0">
+                          <Icon icon="logos:google-drive" className="w-5 h-5 shrink-0" aria-hidden="true" />
+                        </div>
+                        <div className="text-xs leading-tight min-w-0">
+                          <div className="font-semibold text-slate-900 dark:text-white">
+                            {t("site.hero.badge1.title")}
+                          </div>
+                          <div className="text-slate-500 dark:text-slate-400">
+                            {t("site.hero.badge1.desc")}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Badge 2 */}
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center shrink-0 text-blue-600 dark:text-blue-400">
+                          <Icon icon="lucide:terminal" className="w-5 h-5 shrink-0" aria-hidden="true" />
+                        </div>
+                        <div className="text-xs leading-tight min-w-0">
+                          <div className="font-semibold text-slate-900 dark:text-white">
+                            {t("site.hero.badge2.title")}
+                          </div>
+                          <div className="text-slate-500 dark:text-slate-400">
+                            {t("site.hero.badge2.desc")}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Badge 3 */}
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-blue-50 dark:bg-blue-950/50 flex items-center justify-center shrink-0 text-blue-600 dark:text-blue-400">
+                          <Icon icon="lucide:zap" className="w-5 h-5 shrink-0" aria-hidden="true" />
+                        </div>
+                        <div className="text-xs leading-tight min-w-0">
+                          <div className="font-semibold text-slate-900 dark:text-white">
+                            {t("site.hero.badge3.title")}
+                          </div>
+                          <div className="text-slate-500 dark:text-slate-400">
+                            {t("site.hero.badge3.desc")}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </Reveal>
+
+                  {/* Trust line */}
+                  <Reveal delay={0.25}>
+                    <p className="text-xs text-slate-400 dark:text-slate-500 mt-6 font-normal">
+                      {t("site.hero.meta")}
+                    </p>
+                  </Reveal>
+                </div>
+
+                {/* RIGHT - Screen Recorder + DevTools Mockup */}
+                <Reveal delay={0.1}>
+                  <HeroRecorderPreview />
+                </Reveal>
+              </div>
+            </div>
+          </section>
+
+          {/* Metrics - SaaS Metrics for Faster Bug Resolution */}
+          <section className="py-12 sm:py-16 lg:py-20 px-4 sm:px-6 border-b border-slate-100 dark:border-slate-800/80 bg-white dark:bg-slate-950 font-site">
+            <div className="mx-auto max-w-6xl">
+              <Reveal>
+                <div className="mb-10 sm:mb-12 max-w-4xl">
+                  <p className="text-xs sm:text-[13px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3 sm:mb-4">
+                    {t("site.bugsnap.metricsEyebrow")}
+                  </p>
+                  <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] text-balance">
+                    <span className="block">{t("site.bugsnap.metricsTitle1")}</span>
+                    <span className="block">{t("site.bugsnap.metricsTitle2")}</span>
+                  </h2>
+                </div>
+              </Reveal>
+
+              {/* Metrics horizontal strip, dividers */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-0 lg:divide-x lg:divide-slate-200 dark:lg:divide-slate-800">
+                {metrics.map((m, i) => (
+                  <Reveal key={m.label} delay={i * 0.07}>
+                    <div className="flex flex-col min-w-0 lg:px-8 lg:first:pl-0 lg:last:pr-0">
+                      <span className="text-5xl sm:text-5xl lg:text-6xl font-black tracking-tight text-slate-950 dark:text-white tabular-nums leading-none">
+                        {m.val}
+                      </span>
+                      <span className="text-base sm:text-lg font-bold text-slate-900 dark:text-white mt-4 sm:mt-5 tracking-tight">
+                        {m.label}
+                      </span>
+                      <span className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-2 leading-relaxed">
+                        {m.sub}
+                      </span>
+                    </div>
+                  </Reveal>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Demo */}
+          <section className="py-12 sm:py-16 px-4 sm:px-6 bg-slate-950">
+            <div className="mx-auto max-w-6xl">
+              <Reveal>
+                <div className="mx-auto mb-8 sm:mb-10 max-w-3xl text-center">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-site-accent mb-3">
+                    {t("site.bugsnap.demoEyebrow")}
+                  </p>
+                  <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-white leading-[1.15] max-w-3xl mx-auto text-balance">
+                    {t("site.bugsnap.demoTitle")}
+                  </h2>
+                  <p className="text-sm text-slate-400 mt-3 max-w-xl mx-auto leading-relaxed">
+                    {t("site.bugsnap.demoSub")}
+                  </p>
+                </div>
+              </Reveal>
+              <Reveal delay={0.1}>
+                <ProductVideoDemo />
+              </Reveal>
+            </div>
+          </section>
+
+          {/* Live viewer */}
+          <section className="py-12 sm:py-16 px-4 sm:px-6 border-b border-site-border">
+            <div className="mx-auto max-w-6xl">
+              <Reveal>
+                <div className="text-center mb-12">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-site-accent mb-3">
+                    {t("site.viewer.eyebrow")}
+                  </p>
+                  <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] max-w-3xl mx-auto text-balance">
+                    {t("site.viewer.title")}
+                  </h2>
+                  <p className="text-sm text-site-text-2 mt-3 max-w-xl mx-auto leading-relaxed">
+                    {t("site.viewer.sub")}
+                  </p>
+                </div>
+              </Reveal>
+              <Reveal delay={0.1}>
+                <LiveBugReportViewer />
+              </Reveal>
+            </div>
+          </section>
+
+          {/* Comparison */}
+          <section className="py-12 sm:py-16 px-4 sm:px-6">
+            <div className="mx-auto max-w-5xl">
+              <Reveal>
+                <div className="mb-12">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-site-accent mb-3">
+                    {t("site.bugsnap.compareEyebrow")}
+                  </p>
+                  <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] max-w-2xl text-balance">
+                    {t("site.bugsnap.compareTitle")}
+                  </h2>
+                </div>
+              </Reveal>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                {/* Old Way - muted, dimmed */}
+                <Reveal delay={0}>
+                  <div className="rounded-2xl border border-site-border bg-site-surface-2 p-6 sm:p-8 h-full">
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-site-text-2 mb-4">
+                      {t("site.bugsnap.oldTitle")}
+                    </p>
+                    <p className="text-sm text-site-text-2 mb-6">
+                      {t("site.bugsnap.oldDesc")}
+                    </p>
+                    <ul className="space-y-4">
+                      {oldPoints.map((pt) => (
+                        <li
+                          key={pt}
+                          className="flex items-start gap-3 text-sm text-site-text-2"
+                        >
+                          <IconX
+                            size={14}
+                            strokeWidth={2}
+                            className="text-site-text-2/50 shrink-0 mt-0.5"
+                          />
+                          {pt}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </Reveal>
+
+                {/* With BugSnap - clean white, accent left border */}
+                <Reveal delay={0.1}>
+                  <div className="rounded-2xl border border-site-border bg-site-surface p-6 sm:p-8 h-full relative overflow-hidden">
+                    <div
+                      className="absolute inset-y-0 left-0 w-[3px] bg-accent rounded-l-2xl"
+                      aria-hidden="true"
+                    />
+                    <p className="text-[11px] font-bold uppercase tracking-widest text-site-accent mb-4">
+                      {t("site.bugsnap.newTitle")}
+                    </p>
+                    <p className="text-sm text-site-text-2 mb-6">
+                      {t("site.bugsnap.newDesc")}
+                    </p>
+                    <ul className="space-y-4">
+                      {newPoints.map((pt) => (
+                        <li
+                          key={pt}
+                          className="flex items-start gap-3 text-sm text-site-text"
+                        >
+                          <IconCheck
+                            size={14}
+                            strokeWidth={2.5}
+                            className="text-accent shrink-0 mt-0.5"
+                          />
+                          {pt}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </Reveal>
+              </div>
+            </div>
+          </section>
+
+          {/* Before / After */}
+          <section className="py-12 sm:py-16 px-4 sm:px-6 bg-site-surface-2 border-b border-site-border">
+            <div className="mx-auto max-w-6xl">
+              <Reveal>
+                <div className="text-center mb-12">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-site-accent mb-3">
+                    {t("site.before.eyebrow")}
+                  </p>
+                  <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] text-balance">
+                    {t("site.before.title")}
+                  </h2>
+                  <p className="text-sm text-site-text-2 mt-3 max-w-xl mx-auto">
+                    {t("site.before.sub")}
+                  </p>
+                </div>
+              </Reveal>
+              <Reveal delay={0.1}>
+                <BeforeAfterSlider />
+              </Reveal>
+            </div>
+          </section>
+
+          {/* Roles - Every role gets exactly what they need */}
+          <section className="py-12 sm:py-16 px-4 sm:px-6 bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800/80 font-site">
+            <div className="mx-auto max-w-6xl">
+              <Reveal>
+                <div className="text-center mb-12 sm:mb-16">
+                  <p className="text-xs sm:text-[13px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">
+                    {t("site.bugsnap.roleEyebrow")}
+                  </p>
+                  <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] text-balance">
+                    {t("site.bugsnap.roleTitle")}
+                  </h2>
+                  <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 max-w-2xl mx-auto mt-3">
+                    {t("site.bugsnap.roleSub")}
+                  </p>
+                </div>
+              </Reveal>
+              <Reveal delay={0.1}>
+                <RoleSwitcher />
+              </Reveal>
+            </div>
+          </section>
+
+          {/* How it works - Product Workflow 6-Card Grid */}
+          <section
+            id="how-it-works"
+            className="py-12 sm:py-16 px-4 sm:px-6 bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800/80 font-site"
+          >
+            <div className="mx-auto max-w-6xl">
+              <Reveal>
+                <div className="text-center mb-12 sm:mb-16">
+                  <p className="text-xs sm:text-[13px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">
+                    {t("site.flow.badge")}
+                  </p>
+                  <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] text-balance">
+                    {t("site.flow.title")}
+                  </h2>
+                  <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 max-w-2xl mx-auto mt-4 leading-relaxed">
+                    {t("site.flow.subtitle")}
+                  </p>
+                </div>
+              </Reveal>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 lg:gap-8">
+                {steps.map((step, i) => (
+                  <Reveal key={step.num} delay={i * 0.06}>
+                    <div className="group relative rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 p-6 sm:p-7 shadow-xs hover:border-[#2563EB]/60 hover:shadow-md transition-all duration-200 h-full flex flex-col justify-between min-w-0">
+                      <div>
+                        {/* Top row: Number Badge + Icon */}
+                        <div className="flex items-center justify-between mb-5">
+                          <span className={`px-2.5 py-1 rounded-full text-xs font-mono font-bold ${step.badgeColor}`}>
+                            {step.num}
+                          </span>
+                          <div className={`w-9 h-9 rounded-xl border flex items-center justify-center ${step.iconSurface} group-hover:scale-105 transition-transform`}>
+                            <Icon icon={step.icon} className={`w-5 h-5 shrink-0 ${step.iconColor}`} aria-hidden="true" />
+                          </div>
+                        </div>
+
+                        {/* Title */}
+                        <h3 className="text-lg sm:text-xl font-bold text-slate-950 dark:text-white mb-2 tracking-tight">
+                          {step.title}
+                        </h3>
+
+                        {/* Description */}
+                        <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                          {step.desc}
+                        </p>
+                      </div>
+                    </div>
+                  </Reveal>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          {/* Features */}
+          <section id="features" className="py-12 sm:py-16 px-4 sm:px-6">
+            <div className="mx-auto max-w-6xl">
+              <Reveal>
+                <div className="text-center mb-12">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-site-accent mb-3">
+                    {t("site.features.sectionBadge")}
+                  </p>
+                  <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] text-balance">
+                    {t("site.features.sectionTitle")}
+                  </h2>
+                  <p className="text-sm text-site-text-2 max-w-xl mx-auto mt-3">
+                    {t("site.features.sectionSub")}
+                  </p>
+                </div>
+              </Reveal>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 items-stretch">
+                {/* Feature 1 */}
+                <Reveal delay={0}>
+                  <div className="group p-6 rounded-xl border border-site-border bg-site-surface hover:border-accent/40 hover:-translate-y-0.5 transition-all duration-200 h-full flex flex-col gap-4">
+                    <div className="space-y-1.5 min-h-[132px] sm:min-h-[120px]">
+                      <h3 className="text-sm font-bold text-site-text group-hover:text-accent transition-colors">
+                        {t("site.features.f1.title")}
+                      </h3>
+                      <p className="text-xs text-site-text-2 leading-relaxed">
+                        {t("site.features.f1.desc")}
+                      </p>
+                    </div>
+                    {/* Recording visual */}
+                    <div className="flex-1 flex flex-col justify-start min-h-0">
+                      <div className="rounded-lg border border-site-border bg-site-surface-2 overflow-hidden min-h-[190px]">
+                        {/* Capture bar */}
+                        <div className="flex items-center justify-between px-3 py-2 border-b border-site-border bg-site-surface">
+                          <div className="flex items-center gap-1.5">
+                            <span className="h-2 w-2 rounded-full bg-red-500 animate-pulse" />
+                            <span className="text-[10px] font-mono font-semibold text-red-600 dark:text-red-400">
+                              REC 00:14
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-site-text-2 font-mono">
+                            checkout.acme.corp
+                          </span>
+                        </div>
+                        {/* Waveform rows */}
+                        <div className="px-3 py-2.5 space-y-1.5">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[9px] text-site-text-2 w-8 shrink-0">
+                              Screen
+                            </span>
+                            <div className="flex-1 h-3 rounded bg-site-border relative overflow-hidden">
+                              <div className="absolute inset-y-0 left-0 w-[72%] bg-accent/40 rounded" />
+                            </div>
+                            <span className="text-[9px] font-mono text-site-text-2">
+                              00:14
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-[9px] text-site-text-2 w-8 shrink-0">
+                              Mic
+                            </span>
+                            <div className="flex items-end gap-px flex-1 h-4">
+                              {[
+                                2, 4, 6, 3, 7, 5, 8, 4, 6, 3, 5, 7, 4, 3, 6, 5, 7,
+                                4, 3, 6, 5, 4, 3, 7, 5, 4, 6, 3, 5, 7,
+                              ].map((h, i) => (
+                                <div
+                                  key={i}
+                                  className="flex-1 rounded-sm bg-accent/50"
+                                  style={{ height: `${h * 0.18}rem` }}
+                                />
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                        {/* Hotkey strip */}
+                        <div className="flex items-center gap-2 px-3 py-2 border-t border-site-border">
+                          <kbd className="px-2 py-0.5 rounded bg-site-surface border border-site-border font-mono text-[10px] text-site-text">
+                            Ctrl+Shift+S
+                          </kbd>
+                          <kbd className="px-2 py-0.5 rounded bg-site-surface border border-site-border font-mono text-[10px] text-site-text">
+                            Ctrl+Shift+F
+                          </kbd>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Reveal>
+
+                {/* Feature 2 */}
+                <Reveal delay={0.07}>
+                  <div className="group p-6 rounded-xl border border-site-border bg-site-surface hover:border-accent/40 hover:-translate-y-0.5 transition-all duration-200 h-full flex flex-col gap-4">
+                    <div className="space-y-1.5 min-h-[132px] sm:min-h-[120px]">
+                      <h3 className="text-sm font-bold text-site-text group-hover:text-accent transition-colors">
+                        {t("site.features.f2.title")}
+                      </h3>
+                      <p className="text-xs text-site-text-2 leading-relaxed">
+                        {t("site.features.f2.desc")}
+                      </p>
+                    </div>
+                    <div className="flex-1 flex flex-col justify-start">
+                      <DevToolsCard />
+                    </div>
+                  </div>
+                </Reveal>
+
+                {/* Feature 3 */}
+                <Reveal delay={0.14}>
+                  <div className="group p-6 rounded-xl border border-site-border bg-site-surface hover:border-accent/40 hover:-translate-y-0.5 transition-all duration-200 h-full flex flex-col gap-4">
+                    <div className="space-y-1.5 min-h-[132px] sm:min-h-[120px]">
+                      <h3 className="text-sm font-bold text-site-text group-hover:text-accent transition-colors">
+                        {t("site.features.f3.title")}
+                      </h3>
+                      <p className="text-xs text-site-text-2 leading-relaxed">
+                        {t("site.features.f3.desc")}
+                      </p>
+                    </div>
+                    {/* Visual annotation canvas */}
+                    <div className="flex-1 flex flex-col justify-start min-h-0">
+                      <div className="rounded-lg border border-site-border bg-site-surface-2 overflow-hidden min-h-[190px]">
+                        {/* Mini canvas preview */}
+                        <div className="relative p-3 bg-site-surface border-b border-site-border">
+                          <div className="min-w-0 rounded border-2 border-red-500 bg-red-500/5 p-2.5 flex flex-wrap items-center justify-between gap-2">
+                            <span className="text-[10px] font-semibold text-red-600 dark:text-red-400">
+                              Pay $2,400.00
+                            </span>
+                            <span className="shrink-0 text-[9px] font-mono text-red-600 dark:text-red-400 bg-red-500/10 px-1 py-0.5 rounded">
+                              HTTP 500
+                            </span>
+                          </div>
+                          <div className="absolute -top-1.5 right-4 max-w-[calc(100%-2rem)] truncate bg-site-text text-site-surface text-[9px] font-medium px-1.5 py-0.5 rounded shadow flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+                            <span>Arrow #1</span>
+                          </div>
+                        </div>
+                        {/* Annotation toolbar */}
+                        <div className="p-2 flex items-center justify-around text-site-text-2">
+                          <span className="flex items-center gap-1 px-2 py-0.5 rounded bg-site-surface text-accent font-bold text-[11px] shadow-2xs">
+                            <IconSquare size={11} strokeWidth={2.5} />
+                            <span>Box</span>
+                          </span>
+                          <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px]">
+                            <span>Arrow</span>
+                          </span>
+                          <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] font-semibold">
+                            <span>T</span>
+                            <span>Text</span>
+                          </span>
+                          <span className="flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px]">
+                            <span className="font-mono text-[9px]">░░</span>
+                            <span>Blur</span>
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </Reveal>
+
+                {/* Feature 4 */}
+                <Reveal delay={0.21}>
+                  <div className="group p-6 rounded-xl border border-site-border bg-site-surface hover:border-accent/40 hover:-translate-y-0.5 transition-all duration-200 h-full flex flex-col gap-4">
+                    <div className="space-y-1.5 min-h-[132px] sm:min-h-[120px]">
+                      <h3 className="text-sm font-bold text-site-text group-hover:text-accent transition-colors">
+                        {t("site.features.f4.title")}
+                      </h3>
+                      <p className="text-xs text-site-text-2 leading-relaxed">
+                        {t("site.features.f4.desc")}
+                      </p>
+                    </div>
+                    <div className="flex-1 flex flex-col justify-start">
+                      <GoogleDriveProofCard />
+                    </div>
+                  </div>
+                </Reveal>
+
+                {/* Feature 5 */}
+                <Reveal delay={0.28}>
+                  <div className="group p-6 rounded-xl border border-site-border bg-site-surface hover:border-accent/40 hover:-translate-y-0.5 transition-all duration-200 h-full flex flex-col gap-4">
+                    <div className="space-y-1.5 min-h-[132px] sm:min-h-[120px]">
+                      <h3 className="text-sm font-bold text-site-text group-hover:text-accent transition-colors">
+                        {t("site.features.f5.title")}
+                      </h3>
+                      <p className="text-xs text-site-text-2 leading-relaxed">
+                        {t("site.features.f5.desc")}
+                      </p>
+                    </div>
+                    <div className="flex-1 flex flex-col justify-start">
+                      <SpaHealthCard />
+                    </div>
+                  </div>
+                </Reveal>
+
+                {/* Feature 6 */}
+                <Reveal delay={0.35}>
+                  <div className="group p-6 rounded-xl border border-site-border bg-site-surface hover:border-accent/40 hover:-translate-y-0.5 transition-all duration-200 h-full flex flex-col gap-4">
+                    <div className="space-y-1.5 min-h-[132px] sm:min-h-[120px]">
+                      <h3 className="text-sm font-bold text-site-text group-hover:text-accent transition-colors">
+                        {t("site.features.f6.title")}
+                      </h3>
+                      <p className="text-xs text-site-text-2 leading-relaxed">
+                        {t("site.features.f6.desc")}
+                      </p>
+                    </div>
+                    <div className="flex-1 flex flex-col justify-start">
+                      <PlaywrightExportCard />
+                    </div>
+                  </div>
+                </Reveal>
+              </div>
+            </div>
+          </section>
+
+          {/* Trust - Zero-Data Architecture */}
+          <section className="py-12 sm:py-16 px-4 sm:px-6 bg-slate-50/50 dark:bg-slate-900/40 border-b border-slate-100 dark:border-slate-800/80 font-site">
+            <div className="mx-auto max-w-6xl">
+              <Reveal>
+                <div className="text-center mb-12 sm:mb-16">
+                  <p className="text-xs sm:text-[13px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">
+                    {t("site.trust.eyebrow")}
+                  </p>
+                  <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] text-balance">
+                    {t("site.trust.title")}
+                  </h2>
+                  <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 max-w-2xl mx-auto mt-4 leading-relaxed">
+                    {t("site.trust.sub")}
+                  </p>
+                </div>
+              </Reveal>
+              <Reveal delay={0.1}>
+                <ZeroDataDiagram />
+              </Reveal>
+            </div>
+          </section>
+
+          {/* Integrations */}
+          <section className="border-y border-site-border bg-site-surface/50 py-16 sm:py-20 px-4 sm:px-6">
+            <div className="mx-auto max-w-6xl">
+              <Reveal>
+                <div className="text-center max-w-2xl mx-auto mb-12">
+                  <p className="text-xs font-semibold uppercase tracking-widest text-site-accent mb-3">
+                    {t("site.bugsnap.integrationsEyebrow")}
+                  </p>
+                  <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] mb-3 text-balance">
+                    {t("site.bugsnap.integrationsTitle")}
+                  </h2>
+                  <p className="text-sm text-site-text-2 leading-relaxed">
+                    {t("site.bugsnap.integrationsSub")}
+                  </p>
+                </div>
+              </Reveal>
+              <Reveal delay={0.1}>
+                <IntegrationSwitcher />
+              </Reveal>
+            </div>
+          </section>
+
+          {/* FAQ - Frequently Asked Questions */}
+          <section id="faq" className="py-12 sm:py-16 px-4 sm:px-6 bg-white dark:bg-slate-950 border-b border-slate-100 dark:border-slate-800/80 font-site">
+            <div className="mx-auto max-w-6xl">
+              <div className="grid grid-cols-1 lg:grid-cols-[360px_1fr] gap-10 lg:gap-16 items-start">
+                {/* Left: sticky heading, subtitle, and docs link */}
+                <Reveal>
+                  <div className="lg:sticky lg:top-24">
+                    <p className="text-xs sm:text-[13px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">
+                      {t("site.faq.eyebrow")}
+                    </p>
+                    <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] mb-4 text-balance">
+                      {t("site.faq.title")}
+                    </h2>
+                    <p className="text-sm sm:text-base text-slate-500 dark:text-slate-400 leading-relaxed mb-6">
+                      {t("site.faq.sub")}
+                    </p>
+                    <Link
+                      href="/docs"
+                      className="inline-flex items-center gap-2 text-sm font-bold text-[#2563EB] dark:text-[#3B82F6] hover:underline group"
+                    >
+                      <span>{t("site.faq.docButton")}</span>
+                    </Link>
+                  </div>
+                </Reveal>
+
+                {/* Right: accordion with 6 questions */}
+                <div className="space-y-3.5">
+                  {faqItems.map((faq, idx) => {
+                    const isExpanded = expandedFaqIndex === faq.id;
+                    return (
+                      <Reveal key={faq.id} delay={Math.min(idx * 0.05, 0.25)}>
+                        <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 overflow-hidden shadow-2xs transition-colors">
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setExpandedFaqIndex(isExpanded ? null : faq.id)
+                            }
+                            aria-expanded={isExpanded}
+                            aria-controls={`landing-faq-${faq.id}`}
+                            className="w-full text-left px-5 sm:px-6 py-4 sm:py-5 flex items-start justify-between gap-4 transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                          >
+                            <span className="text-sm sm:text-base font-bold text-slate-950 dark:text-white leading-snug">
+                              {t(faq.q)}
+                            </span>
+                            <span
+                              className={`w-6 h-6 rounded-full flex items-center justify-center shrink-0 transition-transform duration-200 mt-0.5 ${
+                                isExpanded
+                                  ? "rotate-180 text-[#2563EB] dark:text-[#3B82F6] bg-blue-50 dark:bg-blue-950/40"
+                                  : "text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800"
+                              }`}
+                            >
+                              <Icon
+                                icon="lucide:chevron-down"
+                                className="w-4 h-4 brightness-0"
+                                aria-hidden="true"
+                              />
+                            </span>
+                          </button>
+                          {isExpanded && (
+                            <div
+                              id={`landing-faq-${faq.id}`}
+                              className="px-5 sm:px-6 pb-5 pt-2 text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed border-t border-slate-100 dark:border-slate-800/80"
+                            >
+                              {t(faq.a)}
+                            </div>
+                          )}
+                        </div>
+                      </Reveal>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Final Extension CTA Banner */}
+          <section className="px-4 sm:px-6 py-12 sm:py-16 bg-white dark:bg-slate-950 font-site">
+            <Reveal>
+              <div className="relative mx-auto max-w-6xl rounded-3xl border border-blue-100 dark:border-blue-900/40 bg-[#f0f6ff] dark:bg-blue-950/25 p-8 sm:p-12 lg:p-16 text-center shadow-xs overflow-hidden">
+                <p className="text-xs sm:text-[13px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-3">
+                  {t("site.cta.badge")}
+                </p>
+                <h2 className="text-3xl sm:text-4xl lg:text-[2.65rem] font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.15] max-w-3xl mx-auto text-balance">
+                  {t("site.cta.title")}
+                </h2>
+                <p className="text-sm sm:text-base text-slate-600 dark:text-slate-300 max-w-xl mx-auto mt-4 mb-8 leading-relaxed">
+                  {t("site.cta.sub")}
+                </p>
+
+                {/* Centered CTA Buttons */}
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-6">
+                  <a
+                    href={CHROME_STORE_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-7 py-3.5 rounded-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold shadow-md shadow-[#2563EB]/20 hover:scale-[1.02] active:scale-[0.99] transition-all whitespace-nowrap"
+                  >
+                    <Icon icon="logos:chrome" className="w-5 h-5 shrink-0" aria-hidden="true" />
+                    <span>{t("extension.addToChrome")}</span>
+                  </a>
+                  <a
+                    href={FIREFOX_STORE_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2.5 px-6 py-3.5 rounded-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold shadow-md shadow-[#2563EB]/20 hover:scale-[1.02] active:scale-[0.99] transition-all whitespace-nowrap"
+                  >
+                    <Icon icon="logos:firefox" className="w-5 h-5 shrink-0" aria-hidden="true" />
+                    <span>{t("extension.addToFirefox")}</span>
+                  </a>
+                </div>
+
+                {/* Trust Line */}
+                <p className="text-xs text-slate-500 dark:text-slate-400 font-normal">
+                  {t("site.cta.meta")}
+                </p>
+              </div>
+            </Reveal>
+          </section>
+        </main>
+
+        <SiteFooter />
+      </div>
+    </div>
+  );
+}

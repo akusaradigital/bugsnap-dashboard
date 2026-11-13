@@ -82,13 +82,12 @@ export function BlogListContent() {
 
   return (
     <StaticShell
-      title={t("blog.heroTitlePrefix") || "Engineering insights &"}
-      titleHighlight={t("blog.heroTitleHighlight") || "debugging guides"}
+      title={t("blog.heroTitlePrefix")}
+      titleHighlight={t("blog.heroTitleHighlight")}
       titleHighlightClass="text-emerald-600 dark:text-emerald-400"
-      breadcrumb={t("blog.title") || "Blog"}
+      breadcrumb={t("blog.title")}
       subtitle={
-        t("blog.subtitle") ||
-        "Tips, guides, and insights on bug reporting and developer productivity."
+        t("blog.subtitle")
       }
       hideDivider={true}
       compactHero={true}
@@ -229,14 +228,14 @@ export function BlogListContent() {
 
         {/* Pagination Bar matching reference visual: < 1 2 3 ... 8 > */}
         <div className="flex items-center justify-center my-10 sm:my-12">
-          <nav aria-label={t("blog.pagination") || "Pagination"} className="inline-flex items-center gap-1.5">
+          <nav aria-label={t("blog.pagination")} className="inline-flex items-center gap-1.5">
             {/* Prev Button */}
             <button
               type="button"
               onClick={() => handlePageChange(Math.max(1, page - 1))}
               disabled={page <= 1}
               className="w-8 h-8 rounded-lg border border-slate-200 dark:border-site-border bg-white dark:bg-site-surface hover:bg-slate-50 dark:hover:bg-site-surface-2 disabled:opacity-40 disabled:cursor-not-allowed text-xs text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors touch-manipulation cursor-pointer"
-              aria-label={t("blog.pagePrev") || "Previous"}
+              aria-label={t("blog.pagePrev")}
             >
               
             </button>
@@ -277,7 +276,7 @@ export function BlogListContent() {
               onClick={() => handlePageChange(Math.min(totalPages, page + 1))}
               disabled={page >= totalPages}
               className="w-8 h-8 rounded-lg border border-slate-200 dark:border-site-border bg-white dark:bg-site-surface hover:bg-slate-50 dark:hover:bg-site-surface-2 disabled:opacity-40 disabled:cursor-not-allowed text-xs text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors touch-manipulation cursor-pointer"
-              aria-label={t("blog.pageNext") || "Next"}
+              aria-label={t("blog.pageNext")}
             >
               
             </button>

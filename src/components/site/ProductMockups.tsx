@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import { IconPencil, IconPlayerPlay } from "./TablerIcons";
-import { Icon } from "@/lib/iconify";
+import { Icon, withAssetVersion } from "@/lib/iconify";
 
 export function HeroProductShowcase() {
   const [activeTab, setActiveTab] = useState<"console" | "network" | "annotation" | "storage">("console");
@@ -274,7 +274,7 @@ export function GoogleDriveProofCard() {
         <div className="flex items-center gap-2">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/icons/google.svg"
+            src={withAssetVersion("/icons/google.svg")}
             alt=""
             aria-hidden="true"
             width={16}

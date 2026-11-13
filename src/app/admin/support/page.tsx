@@ -55,7 +55,7 @@ export default function AdminSupportPage() {
       const headers = await getAdminHeaders();
       const res = await fetch("/api/admin/support", { headers });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Gagal memuat tiket support.");
+      if (!res.ok) throw new Error(json.error || t("adminMisc.errTickets"));
 
       const newTickets = json.tickets || [];
       const newStats = json.stats || { total: 0, open: 0, in_progress: 0, resolved: 0 };
@@ -69,7 +69,7 @@ export default function AdminSupportPage() {
         if (refreshed) setSelectedTicket(refreshed);
       }
     } catch (err: unknown) {
-      if (!tickets.length) showToast((err as Error)?.message || "Gagal memuat tiket support", "error");
+      if (!tickets.length) showToast((err as Error)?.message || t("adminMisc.errTicketsToast"), "error");
     } finally {
       setLoading(false);
     }
@@ -85,7 +85,7 @@ export default function AdminSupportPage() {
         body: JSON.stringify({ ticketId, status: newStatus }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Gagal memperbarui status");
+      if (!res.ok) throw new Error(json.error || t("adminMisc.errStatus"));
 
       setTickets((prev) => {
         const next = prev.map((t) => (t.id === ticketId ? { ...t, status: newStatus } : t));
@@ -97,7 +97,7 @@ export default function AdminSupportPage() {
       }
       showToast(`Status tiket berhasil diubah ke ${newStatus}`, "success");
     } catch (err: unknown) {
-      showToast((err as Error)?.message || "Gagal memperbarui status", "error");
+      showToast((err as Error)?.message || t("adminMisc.errStatus"), "error");
     } finally {
       setUpdatingStatus(null);
     }
@@ -119,7 +119,7 @@ export default function AdminSupportPage() {
         }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Gagal mengirim balasan.");
+      if (!res.ok) throw new Error(json.error || t("adminMisc.errReply"));
 
       showToast(
         json.emailSent
@@ -130,7 +130,7 @@ export default function AdminSupportPage() {
       setReplyMessage("");
       loadTickets();
     } catch (err: unknown) {
-      showToast((err as Error)?.message || "Gagal mengirim balasan", "error");
+      showToast((err as Error)?.message || t("adminMisc.errReplyToast"), "error");
     } finally {
       setSendingReply(false);
     }
@@ -155,12 +155,9 @@ export default function AdminSupportPage() {
         <div>
           <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
             <span className="flex items-center gap-2"><Icon icon="lucide:inbox" className="w-4 h-4 shrink-0 text-sky-500" /> Support & Bug Report Inbox</span>
-            <span className="text-xs font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300">
-              Fitur 3
-            </span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
-            Daftar feedback, keluhan, dan laporan bug pengguna masuk melalui contact widget CS.
+            {t("adminCopy.supportDesc")}
           </p>
         </div>
         <button
@@ -200,12 +197,12 @@ export default function AdminSupportPage() {
             value={statusFilter}
             onChange={(val) => setStatusFilter(val)}
             options={[
-              { value: "all", label: "Semua Status" },
-              { value: "open", label: "Open (Terbuka)" },
-              { value: "in_progress", label: "In Progress (Ditangani)" },
-              { value: "resolved", label: "Resolved (Selesai)" },
+              { value: "all", label: t("admin.allStatuses") },
+              { value: "open", label: t("adminMisc.statusOpen") },
+              { value: "in_progress", label: t("adminMisc.statusInProgress") },
+              { value: "resolved", label: t("adminMisc.statusResolved") },
             ]}
-            variant="pill"
+            variant="field-white"
             className="min-w-[140px]"
           />
 
@@ -213,12 +210,12 @@ export default function AdminSupportPage() {
             value={categoryFilter}
             onChange={(val) => setCategoryFilter(val)}
             options={[
-              { value: "all", label: "Semua Kategori" },
-              { value: "bug", label: "Laporan Bug" },
-              { value: "feature", label: "Request Fitur" },
-              { value: "other", label: "Pertanyaan Umum" },
+              { value: "all", label: t("adminMisc.allCategories") },
+              { value: "bug", label: t("adminMisc.catBug") },
+              { value: "feature", label: t("adminMisc.catFeature") },
+              { value: "other", label: t("adminMisc.catOther") },
             ]}
-            variant="pill"
+            variant="field-white"
             className="min-w-[140px]"
           />
         </div>
@@ -226,7 +223,7 @@ export default function AdminSupportPage() {
         <div className="w-full sm:w-64">
           <input
             type="text"
-            placeholder="Cari email, subjek, isi..."
+            placeholder={t("adminCopy.supportSearchPlaceholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20"
@@ -252,36 +249,36 @@ export default function AdminSupportPage() {
               {loading ? (
                 <tr>
                   <td colSpan={6} className="p-8 text-center text-slate-400">
-                    Memuat tiket support...
+                    {t("adminCopy.supportLoading")}
                   </td>
                 </tr>
               ) : filteredTickets.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="p-8 text-center text-slate-400">
-                    Belum ada tiket support yang sesuai dengan filter.
+                    {t("adminCopy.supportEmpty")}
                   </td>
                 </tr>
               ) : (
-                filteredTickets.map((t) => (
+                filteredTickets.map((ticket) => (
                   <tr
-                    key={t.id}
-                    onClick={() => setSelectedTicket(t)}
+                    key={ticket.id}
+                    onClick={() => setSelectedTicket(ticket)}
                     className="hover:bg-slate-50 dark:hover:bg-zinc-800/60 cursor-pointer transition-colors"
                   >
                     <td className="py-3 px-4 whitespace-nowrap">
-                      {t.category === "bug" && (
+                      {ticket.category === "bug" && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400">
                           <Icon icon="lucide:bug" className="w-3 h-3 shrink-0" />
                           <span>BUG</span>
                         </span>
                       )}
-                      {t.category === "feature" && (
+                      {ticket.category === "feature" && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 dark:bg-blue-950/20 text-[#2563EB] dark:text-[#3B82F6] border border-blue-200 dark:border-blue-900/40">
                           <Icon icon="lucide:lightbulb" className="w-3 h-3 shrink-0" />
                           <span>FITUR</span>
                         </span>
                       )}
-                      {t.category === "other" && (
+                      {ticket.category === "other" && (
                         <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-400">
                           <Icon icon="lucide:message-square" className="w-3 h-3 shrink-0" />
                           <span>SUPPORT</span>
@@ -290,22 +287,22 @@ export default function AdminSupportPage() {
                     </td>
                     <td className="py-3 px-4">
                       <div className="font-bold text-slate-900 dark:text-white line-clamp-1">
-                        {t.subject}
+                        {ticket.subject}
                       </div>
                       <div className="text-[11px] text-slate-500 dark:text-zinc-400 line-clamp-1 mt-0.5">
-                        {t.message}
+                        {ticket.message}
                       </div>
                     </td>
                     <td className="py-3 px-4 whitespace-nowrap">
-                      <div className="font-medium text-slate-800 dark:text-zinc-200">{t.userEmail}</div>
-                      {t.userPlan && (
+                      <div className="font-medium text-slate-800 dark:text-zinc-200">{ticket.userEmail}</div>
+                      {ticket.userPlan && (
                         <span className="text-[9px] uppercase font-bold text-[#2563EB] dark:text-[#3B82F6]">
-                          {t.userPlan}
+                          {ticket.userPlan}
                         </span>
                       )}
                     </td>
                     <td className="py-3 px-4 whitespace-nowrap text-slate-500 dark:text-zinc-400">
-                      {new Date(t.created_at).toLocaleDateString("id-ID", {
+                      {new Date(ticket.created_at).toLocaleDateString("id-ID", {
                         day: "2-digit",
                         month: "short",
                         hour: "2-digit",
@@ -315,15 +312,15 @@ export default function AdminSupportPage() {
                     <td className="py-3 px-4 whitespace-nowrap">
                       <span
                         className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold ${
-                          t.status === "open"
+                          ticket.status === "open"
                             ? "bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400"
-                            : t.status === "in_progress"
+                            : ticket.status === "in_progress"
                             ? "bg-amber-50 text-amber-600 dark:bg-amber-950/50 dark:text-amber-400"
                             : "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400"
                         }`}
                       >
                         <span className="h-1.5 w-1.5 rounded-full bg-current" />
-                        {t.status === "open" ? "Open" : t.status === "in_progress" ? "In Progress" : "Resolved"}
+                        {ticket.status === "open" ? "Open" : ticket.status === "in_progress" ? "In Progress" : "Resolved"}
                       </span>
                     </td>
                     <td className="py-3 px-4 text-right whitespace-nowrap">
@@ -331,11 +328,11 @@ export default function AdminSupportPage() {
                         type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setSelectedTicket(t);
+                          setSelectedTicket(ticket);
                         }}
                         className="px-2.5 py-1 text-xs font-semibold rounded bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300"
                       >
-                        Detail & Balas
+                        {t("adminCopy.supportDetailReply")}
                       </button>
                     </td>
                   </tr>
@@ -365,7 +362,7 @@ export default function AdminSupportPage() {
                 type="button"
                 onClick={() => setSelectedTicket(null)}
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1 shrink-0"
-                aria-label="Close"
+                aria-label={t("adminMisc.close")}
               >
                 <Icon icon="lucide:x" className="w-4 h-4 shrink-0" />
               </button>
@@ -464,12 +461,12 @@ export default function AdminSupportPage() {
                   required
                   value={replyMessage}
                   onChange={(e) => setReplyMessage(e.target.value)}
-                  placeholder="Tuliskan respon resmi solusi atau klarifikasi bug ini..."
+                  placeholder={t("adminCopy.supportReplyPlaceholder")}
                   className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 p-3 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 resize-none"
                 />
                 <div className="flex items-center justify-between">
                   <p className="text-[10px] text-slate-400">
-                    Email balasan akan diteruskan langsung ke email pelapor melalui Resend.
+                    {t("adminCopy.supportReplyNote")}
                   </p>
                   <button
                     type="submit"

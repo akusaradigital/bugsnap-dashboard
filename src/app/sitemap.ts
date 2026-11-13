@@ -15,6 +15,8 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/blog',            priority: 0.8, changeFrequency: 'weekly'  as const },
     { path: '/docs',            priority: 0.8, changeFrequency: 'weekly'  as const },
     { path: '/docs/mcp',        priority: 0.8, changeFrequency: 'weekly'  as const },
+    { path: '/docs/integrations', priority: 0.8, changeFrequency: 'weekly' as const },
+    { path: '/extension/firefox', priority: 0.8, changeFrequency: 'weekly' as const },
     { path: '/visual-compare',  priority: 0.8, changeFrequency: 'weekly'  as const },
     { path: '/about',           priority: 0.8, changeFrequency: 'monthly' as const },
     { path: '/help',            priority: 0.7, changeFrequency: 'weekly'  as const },

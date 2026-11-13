@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { I18nProvider } from "@/components/I18nProvider";
 import { ToastProvider } from "@/components/Toast";
+import { ConfirmProvider } from "@/components/ConfirmDialog";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ExtensionSyncBridge } from "@/components/ExtensionSyncBridge";
 
@@ -181,7 +182,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta
           name="theme-color"
@@ -194,16 +195,24 @@ export default function RootLayout({
           media="(prefers-color-scheme: dark)"
         />
         <script
+          dangerouslySetInnerHTML={{
+            __html:
+              "(function(){try{var m=document.cookie.match(/(?:^|;\s*)BugSnap\.locale=(en|id)/);if(m){document.documentElement.lang=m[1];}}catch(e){}})();",
+          }}
+        />
+        <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
       </head>
       <body className="antialiased">
-        <I18nProvider>
+        <I18nProvider initialLocale="en">
           <ThemeProvider>
             <ToastProvider>
-              <ExtensionSyncBridge />
-              {children}
+              <ConfirmProvider>
+                <ExtensionSyncBridge />
+                {children}
+              </ConfirmProvider>
             </ToastProvider>
           </ThemeProvider>
         </I18nProvider>

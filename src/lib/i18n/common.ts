@@ -20,6 +20,8 @@ export const commonEn: Dict = {
   "layout.dismissPromo": "Dismiss promo",
   "layout.skipToContent": "Skip to main content",
   "layout.screenRecorder": "Screen Recorder",
+  "layout.openMenu": "Open menu",
+  "layout.closeMenu": "Close menu",
   "layout.notifications": "Notifications",
   "layout.clearAll": "Clear all",
   "layout.noNotifications": "No new notifications",
@@ -163,6 +165,7 @@ export const commonEn: Dict = {
   "common.save": "Save",
   "common.saving": "Saving…",
   "common.cancel": "Cancel",
+  "common.confirm": "Confirm",
   "common.delete": "Delete",
   "common.search": "Search",
   "common.loading": "Loading…",
@@ -233,6 +236,7 @@ export const commonEn: Dict = {
   "cookie.marketingTitle": "Marketing cookies",
   "cookie.marketingDesc": "Used to understand campaign performance and show more relevant content.",
   "cookie.savePreferences": "Save preferences",
+  "helpMenu.store": "Store",
 };
 
 export const commonId: Dict = {
@@ -255,6 +259,8 @@ export const commonId: Dict = {
   "layout.dismissPromo": "Tutup promo",
   "layout.skipToContent": "Lewati ke konten utama",
   "layout.screenRecorder": "Perekam Layar",
+  "layout.openMenu": "Buka menu",
+  "layout.closeMenu": "Tutup menu",
   "layout.notifications": "Notifikasi",
   "layout.clearAll": "Bersihkan semua",
   "layout.noNotifications": "Tidak ada notifikasi baru",
@@ -403,6 +409,7 @@ export const commonId: Dict = {
   "common.save": "Simpan",
   "common.saving": "Menyimpan…",
   "common.cancel": "Batal",
+  "common.confirm": "Konfirmasi",
   "common.delete": "Hapus",
   "common.search": "Cari",
   "common.loading": "Memuat…",
@@ -475,4 +482,5 @@ export const commonId: Dict = {
   "cookie.marketingTitle": "Cookie Pemasaran",
   "cookie.marketingDesc": "Digunakan untuk memahami kinerja kampanye dan menampilkan konten yang lebih relevan.",
   "cookie.savePreferences": "Simpan Preferensi",
+  "helpMenu.store": "Store",
 };

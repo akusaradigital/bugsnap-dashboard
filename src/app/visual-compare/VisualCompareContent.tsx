@@ -16,6 +16,7 @@ type CompareMode = "split" | "side" | "diff";
 
 // ── Realistic Simulated Checkout UI ───────────────────────────────────────────
 function CheckoutUiContent({ isFixed }: { isFixed: boolean }) {
+  const { t } = useT();
   return (
     <div className="w-full h-full min-w-0 flex flex-col bg-white text-slate-900 font-sans overflow-hidden select-none">
       {/* Top Browser URL bar */}
@@ -36,8 +37,8 @@ function CheckoutUiContent({ isFixed }: { isFixed: boolean }) {
         <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-red-50 border-b border-red-200 text-red-700 text-xs shrink-0">
           <div className="flex items-center gap-2 min-w-0">
             <Icon icon="tabler:alert-triangle" className="w-4 h-4 text-red-500 shrink-0" />
-            <span className="font-semibold truncate">Payment Gateway Error 504:</span>
-            <span className="truncate text-red-600 hidden sm:inline">Transaction timed out contacting upstream payment provider.</span>
+            <span className="font-semibold truncate">{t("vcFx.gatewayErrorTitle")}</span>
+            <span className="truncate text-red-600 hidden sm:inline">{t("vcFx.gatewayErrorDesc")}</span>
           </div>
           <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-red-100 font-bold shrink-0">FAIL_UPSTREAM</span>
         </div>
@@ -45,8 +46,8 @@ function CheckoutUiContent({ isFixed }: { isFixed: boolean }) {
         <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-[#2563EB]/10 border-b border-[#2563EB]/30 text-[#1D4ED8] text-xs shrink-0">
           <div className="flex items-center gap-2 min-w-0">
             <Icon icon="tabler:circle-check" className="w-4 h-4 text-[#2563EB] shrink-0" />
-            <span className="font-semibold truncate">Gateway Connected:</span>
-            <span className="truncate text-slate-600 hidden sm:inline">All payment endpoints online · Zero latency</span>
+            <span className="font-semibold truncate">{t("vcFx.gatewayOkTitle")}</span>
+            <span className="truncate text-slate-600 hidden sm:inline">{t("vcFx.gatewayOkDesc")}</span>
           </div>
           <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-[#2563EB]/15 font-bold shrink-0">200_OK</span>
         </div>
@@ -68,13 +69,13 @@ function CheckoutUiContent({ isFixed }: { isFixed: boolean }) {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
             <div>
-              <label className="block text-slate-500 text-[11px] font-medium mb-1">Billing Email</label>
+              <label className="block text-slate-500 text-[11px] font-medium mb-1">{t("vcFx.billingEmail")}</label>
               <div className="min-w-0 px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 font-mono text-[11px] truncate break-all">
                 qa-lead@akusaraproject.my.id
               </div>
             </div>
             <div>
-              <label className="block text-slate-500 text-[11px] font-medium mb-1">Card Number</label>
+              <label className="block text-slate-500 text-[11px] font-medium mb-1">{t("vcFx.cardNumber")}</label>
               <div className="flex min-w-0 items-center justify-between gap-2 px-3 py-2 rounded-lg border border-slate-200 bg-slate-50 text-slate-800 font-mono text-[11px]">
                 <span className="min-w-0 truncate">•••• •••• •••• 4242</span>
                 <span className="text-[10px] font-bold text-slate-400">VISA</span>
@@ -93,11 +94,11 @@ function CheckoutUiContent({ isFixed }: { isFixed: boolean }) {
                 className="w-full py-2.5 sm:py-3 rounded-xl bg-slate-200 text-slate-500 font-bold text-xs sm:text-sm flex items-center justify-center gap-2 cursor-not-allowed border border-slate-300"
               >
                 <Icon icon="tabler:loader-2" className="w-4 h-4 animate-spin" />
-                <span>Processing Payment... (Retry Failed)</span>
+                <span>{t("vcFx.processingRetry")}</span>
               </button>
               <div className="flex items-center justify-center gap-1.5 text-[10px] text-red-500 font-medium text-center">
                 <Icon icon="tabler:x" className="w-3 h-3" />
-                <span>Error code: PAY_504_TIMEOUT (Attempt 3/3)</span>
+                <span>{t("vcFx.errorCode")}</span>
               </div>
             </div>
           ) : (
@@ -107,11 +108,11 @@ function CheckoutUiContent({ isFixed }: { isFixed: boolean }) {
                 className="w-full py-2.5 sm:py-3 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition-transform active:scale-[0.99] cursor-pointer"
               >
                 <Icon icon="tabler:shield-check" className="w-4 h-4" />
-                <span>Complete Purchase ($49.00 / mo)</span>
+                <span>{t("vcFx.completePurchase")}</span>
               </button>
               <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-500 text-center">
                 <Icon icon="tabler:lock" className="w-3 h-3 text-emerald-500" />
-                <span>Encrypted with 256-bit SSL · Cancel anytime</span>
+                <span>{t("vcFx.sslNote")}</span>
               </div>
             </div>
           )}
@@ -257,46 +258,46 @@ export function VisualCompareContent() {
   const features = [
     {
       icon: "tabler:layout-columns",
-      title: t("vc.feat1Title") || "Split Slider",
-      desc: t("vc.feat1Desc") || "Drag the slider across overlaid screenshots to reveal UI differences pixel by pixel.",
+      title: t("vc.feat1Title"),
+      desc: t("vc.feat1Desc"),
       badge: "Split Mode",
     },
     {
       icon: "tabler:layout-columns",
-      title: t("vc.feat2Title") || "Side-by-Side View",
-      desc: t("vc.feat2Desc") || "Inspect both captures next to each other with clear Before and After badges.",
+      title: t("vc.feat2Title"),
+      desc: t("vc.feat2Desc"),
       badge: "Side by Side",
     },
     {
       icon: "tabler:layers-difference",
-      title: t("vc.feat3Title") || "Diff Overlay",
-      desc: t("vc.feat3Desc") || "Pixel-level blending isolates changes. Unchanged areas go dark while differences stand out clearly.",
+      title: t("vc.feat3Title"),
+      desc: t("vc.feat3Desc"),
       badge: "Diff Blend",
     },
     {
       icon: "tabler:upload",
-      title: t("vc.feat4Title") || "Drop In Any Image",
-      desc: t("vc.feat4Desc") || "Compare BugSnap captures or just upload screenshots directly from your files.",
+      title: t("vc.feat4Title"),
+      desc: t("vc.feat4Desc"),
       badge: "Zero Setup",
     },
     {
       icon: "tabler:repeat",
-      title: t("vc.feat5Title") || "Swap Before and After",
-      desc: t("vc.feat5Desc") || "Flip Before and After positions instantly without having to re-upload.",
+      title: t("vc.feat5Title"),
+      desc: t("vc.feat5Desc"),
       badge: "Instant Swap",
     },
     {
       icon: "tabler:link",
-      title: t("vc.feat6Title") || "Instant Share Links",
-      desc: t("vc.feat6Desc") || "Paste direct comparison links into Jira, Linear, GitHub PRs, or Slack so your team can verify in seconds.",
+      title: t("vc.feat6Title"),
+      desc: t("vc.feat6Desc"),
       badge: "Shareable",
     },
   ];
 
   const modes: { id: CompareMode; icon: string; label: string }[] = [
-    { id: "split", icon: "tabler:layout-columns", label: t("compare.splitMode") || "Split Slider" },
-    { id: "side",  icon: "tabler:layout-columns",  label: t("compare.sideBySideMode") || "Side by Side" },
-    { id: "diff",  icon: "tabler:layers-difference", label: t("compare.diffMode") || "Diff Overlay" },
+    { id: "split", icon: "tabler:layout-columns", label: t("compare.splitMode") },
+    { id: "side",  icon: "tabler:layout-columns",  label: t("compare.sideBySideMode") },
+    { id: "diff",  icon: "tabler:layers-difference", label: t("compare.diffMode") },
   ];
 
   return (
@@ -310,31 +311,30 @@ export function VisualCompareContent() {
           <Reveal delay={0}>
             <nav
               className="inline-flex items-center justify-center gap-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 mb-6"
-              aria-label="Breadcrumb"
+              aria-label={t("vcFx.breadcrumbLabel")}
             >
               <Link href="/" className="hover:text-slate-900 dark:hover:text-white transition-colors">
-                {t("landing.home") || "Home"}
+                {t("landing.home")}
               </Link>
               <span className="text-slate-400 dark:text-slate-600" aria-hidden="true">/</span>
               <span className="text-slate-900 dark:text-white font-medium">
-                {t("vc.pageTitle") || "Visual Compare"}
+                {t("vc.pageTitle")}
               </span>
             </nav>
           </Reveal>
 
           <Reveal delay={0.06}>
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12] mb-4 text-balance">
-              {t("vc.heroTitle") || "See every fix."}{" "}
+              {t("vc.heroTitle")}{" "}
               <span className="text-[#1D4ED8] dark:text-[#93C5FD]">
-                {t("vc.heroTitleAccent") || "Pixel by pixel."}
+                {t("vc.heroTitleAccent")}
               </span>
             </h1>
           </Reveal>
 
           <Reveal delay={0.14}>
             <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl mx-auto mb-7">
-              {t("compare.subtitle") ||
-                "Compare two screenshot captures side-by-side or with an interactive split slider to verify bug fixes and UI changes."}
+              {t("compare.subtitle")}
             </p>
           </Reveal>
 
@@ -347,14 +347,14 @@ export function VisualCompareContent() {
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-sm shadow-md transition-all cursor-pointer active:scale-95"
               >
                 <Icon icon="logos:chrome" className="w-5 h-5 shrink-0" aria-hidden="true" />
-                <span>{t("extension.addToChrome") || "Add to Chrome"}</span>
+                <span>{t("extension.addToChrome")}</span>
               </Link>
               <Link
                 href="/compare"
                 className="inline-flex items-center gap-2 px-6 py-3 rounded-full border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-800 dark:text-slate-200 font-semibold text-sm hover:bg-slate-50 dark:hover:bg-slate-800 shadow-xs transition-all cursor-pointer"
               >
                 <Icon icon="tabler:player-play" width={15} />
-                <span>{t("vc.openCompareTool") || "Open Compare Tool"}</span>
+                <span>{t("vc.openCompareTool")}</span>
               </Link>
             </div>
           </Reveal>
@@ -385,7 +385,7 @@ export function VisualCompareContent() {
 
               <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-[#2563EB] animate-pulse" />
-                <span>Interactive Live Preview · Try dragging or switching modes</span>
+                <span>{t("vcFx.livePreviewHint")}</span>
               </div>
             </div>
 
@@ -403,10 +403,10 @@ export function VisualCompareContent() {
           <Reveal delay={0}>
             <div className="text-center mb-10">
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug mb-2">
-                {t("vc.modesTitle") || "Three ways to compare. Switch views instantly."}
+                {t("vc.modesTitle")}
               </h2>
               <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 max-w-xl mx-auto">
-                {t("vc.allFeaturesTitle") || "Everything you need to verify fixes quickly"}
+                {t("vc.allFeaturesTitle")}
               </p>
             </div>
           </Reveal>
@@ -443,14 +443,13 @@ export function VisualCompareContent() {
             <div className="rounded-2xl sm:rounded-3xl border border-blue-100 dark:border-blue-900/40 bg-[#f0f6ff] dark:bg-blue-950/25 p-6 sm:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm min-w-0">
               <div className="space-y-1.5 max-w-xl min-w-0">
                 <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                  {t("vc.ctaEyebrow") || "READY TO COMPARE?"}
+                  {t("vc.ctaEyebrow")}
                 </div>
                 <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                  {t("vc.ctaTitle") || "Start comparing screenshots"}
+                  {t("vc.ctaTitle")}
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                  {t("vc.ctaDesc") ||
-                    "Install BugSnap, capture your before and after, and compare visually in seconds."}
+                  {t("vc.ctaDesc")}
                 </p>
               </div>
 
@@ -462,7 +461,7 @@ export function VisualCompareContent() {
                   className="inline-flex items-center gap-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold px-6 py-3.5 rounded-xl shadow-md transition-all hover:scale-[1.02] active:scale-[0.99] shrink-0 touch-manipulation whitespace-nowrap"
                 >
                   <Icon icon="logos:chrome" className="w-5 h-5 shrink-0" aria-hidden="true" />
-                  <span>{t("extension.addToChrome") || "Add to Chrome"}</span>
+                  <span>{t("extension.addToChrome")}</span>
                 </a>
                 <a
                   href={FIREFOX_STORE_URL}

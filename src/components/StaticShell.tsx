@@ -51,7 +51,7 @@ export function StaticShell({
               {/* breadcrumb */}
               <nav
                 className="inline-flex items-center justify-center gap-1.5 text-xs text-site-text-2 mb-3 sm:mb-4 max-w-full px-2"
-                aria-label="Breadcrumb"
+                aria-label={t("sharedFx.breadcrumb")}
               >
                 <Link href="/" className="shrink-0 hover:text-site-text transition-colors">
                   {t("landing.home")}

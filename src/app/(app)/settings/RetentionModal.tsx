@@ -23,7 +23,7 @@ export function RetentionModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs" role="dialog" aria-modal="true">
-      <button className="absolute inset-0 bg-transparent" aria-label="Close" onClick={onClose} />
+      <button className="absolute inset-0 bg-transparent" aria-label={t("modalFx.closeLabel")} onClick={onClose} />
       <div className="relative w-[min(28rem,calc(100vw-2rem))] rounded-2xl border border-border bg-background p-4 sm:p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95 duration-200">
         <div className="w-12 h-12 rounded-2xl bg-amber-100 dark:bg-amber-950/60 border border-amber-300 dark:border-amber-700 flex items-center justify-center mx-auto shadow-inner">
           <Icon icon="lucide:gift" className="w-6 h-6 text-amber-600 dark:text-amber-400 shrink-0" />
@@ -54,7 +54,7 @@ export function RetentionModal({
             {copiedCode ? (
               <span className="inline-flex items-center gap-1.5">
                 <Icon icon="lucide:check" className="w-3.5 h-3.5 shrink-0 brightness-0 invert" />
-                <span>Copied SAVE50!</span>
+                <span>{t("modalFx.copiedCode", { code: "SAVE50" })}</span>
               </span>
             ) : (
               <span>{t("settings.churnApplyCode")}</span>

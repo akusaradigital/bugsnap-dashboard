@@ -205,11 +205,11 @@ function FormattedJsonBody({
           className="px-1.5 py-0.5 rounded text-[10px] text-muted hover:text-foreground bg-subtle hover:bg-subtle/80 border border-border transition-colors flex items-center gap-1 cursor-pointer"
         >
           {copied ? (
-            <span className="text-emerald-600 dark:text-emerald-400 font-medium">{t("dt.urlCopied") || "Copied!"}</span>
+            <span className="text-emerald-600 dark:text-emerald-400 font-medium">{t("dt.urlCopied")}</span>
           ) : (
             <>
               <Icon icon="lucide:copy" className="w-2.5 h-2.5" />
-              <span>{t("dt.copy") || "Copy"}</span>
+              <span>{t("dt.copy")}</span>
             </>
           )}
         </button>
@@ -242,13 +242,13 @@ function EmptyLogState({
   return (
     <div className="py-14 flex flex-col items-center gap-2 text-center text-xs text-muted px-4">
       <Icon icon="lucide:search" className="w-7 h-7 opacity-30" />
-      <p>{t("dt.noMatches") || "No rows match the current filters"}</p>
+      <p>{t("dt.noMatches")}</p>
       <button
         type="button"
         onClick={onReset}
         className="mt-1 px-2.5 py-1 rounded-md text-[11px] font-medium bg-subtle border border-border text-foreground hover:bg-subtle/70 transition-colors"
       >
-        {t("dt.resetFilters") || "Reset filters"}
+        {t("dt.resetFilters")}
       </button>
     </div>
   );
@@ -266,14 +266,14 @@ function ActionBreadcrumb({
        breadcrumb, and `Clicked button: "Re...` identifies nothing. */
     <div className="mt-1.5 flex flex-wrap items-baseline gap-x-1.5 gap-y-0.5 text-[10px] text-zinc-600 dark:text-zinc-400 bg-amber-500/10 dark:bg-amber-500/15 px-2 py-1 rounded-md border border-amber-500/20 dark:border-amber-500/30 font-sans">
       <span className="text-amber-600 dark:text-amber-400 font-semibold shrink-0">
-        ↳ {t("dt.triggeredAfter") || "Triggered after"}:
+        ↳ {t("dt.triggeredAfter")}:
       </span>
       <span className="font-medium text-foreground break-words min-w-0">
         {action.message}
       </span>
       {action.deltaSec != null && (
         <span className="text-[9px] font-mono text-muted shrink-0 tabular-nums">
-          ({action.deltaSec < 1 ? "<1s" : `${action.deltaSec.toFixed(1)}s`} {t("dt.prior") || "prior"})
+          ({action.deltaSec < 1 ? "<1s" : `${action.deltaSec.toFixed(1)}s`} {t("dt.prior")})
         </span>
       )}
     </div>
@@ -347,15 +347,15 @@ function NetworkDetail({
             type="button"
             onClick={(e) => onCopyCurl(log, e)}
             className="shrink-0 text-[10px] px-2 py-1 rounded bg-subtle hover:bg-subtle/80 text-muted hover:text-foreground border border-border transition-colors flex items-center gap-1 cursor-pointer"
-            title={t("dt.copyCurl") || "Copy as cURL"}
+            title={t("dt.copyCurl")}
           >
             {copiedCurl === log.url ? (
               <>
                 <Icon icon="lucide:check" className="w-3 h-3 text-emerald-600 dark:text-emerald-400" />
-                <span className="text-emerald-600 dark:text-emerald-400 font-medium">{t("dt.curlCopied") || "Copied!"}</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-medium">{t("dt.curlCopied")}</span>
               </>
             ) : (
-              <span className="font-mono text-[9px] font-bold text-[#2563EB] dark:text-[#3B82F6]">{t("dt.copyCurl") || "Copy cURL"}</span>
+              <span className="font-mono text-[9px] font-bold text-[#2563EB] dark:text-[#3B82F6]">{t("dt.copyCurl")}</span>
             )}
           </button>
         )}
@@ -373,12 +373,12 @@ function NetworkDetail({
             {/* General: top detail block with standard field order */}
             <div className="rounded-lg border border-border overflow-hidden">
               <div className="px-2.5 py-1.5 bg-subtle border-b border-border/60 text-[10px] font-semibold uppercase tracking-wider text-muted">
-                {t("dt.general") || "General"}
+                {t("dt.general")}
               </div>
               <dl className="divide-y divide-border/40">
                 {log.url && (
                   <div className="flex flex-col gap-0.5 px-2.5 py-1.5">
-                    <dt className="text-[10px] font-semibold text-muted">{t("dt.requestUrl") || "Request URL"}</dt>
+                    <dt className="text-[10px] font-semibold text-muted">{t("dt.requestUrl")}</dt>
                     <dd className="min-w-0 flex items-start gap-1.5">
                       <span className="font-mono text-[10px] text-foreground break-all select-all min-w-0">{log.url}</span>
                       <button
@@ -393,11 +393,11 @@ function NetworkDetail({
                   </div>
                 )}
                 <div className="flex flex-col gap-0.5 px-2.5 py-1.5">
-                  <dt className="text-[10px] font-semibold text-muted">{t("dt.requestMethod") || "Request Method"}</dt>
+                  <dt className="text-[10px] font-semibold text-muted">{t("dt.requestMethod")}</dt>
                   <dd className="font-mono text-[10px] text-foreground">{log.method || "GET"}</dd>
                 </div>
                 <div className="flex flex-col gap-0.5 px-2.5 py-1.5">
-                  <dt className="text-[10px] font-semibold text-muted">{t("dt.statusCode") || "Status Code"}</dt>
+                  <dt className="text-[10px] font-semibold text-muted">{t("dt.statusCode")}</dt>
                   <dd className="flex items-center gap-1.5 font-mono text-[10px]">
                     <span
                       className={`w-1.5 h-1.5 rounded-full shrink-0 ${
@@ -406,32 +406,32 @@ function NetworkDetail({
                       aria-hidden="true"
                     />
                     <span className={isFailed ? "text-red-600 dark:text-red-400 font-semibold" : "text-foreground"}>
-                      {log.status || t("dt.statusFailed") || "Failed"}
+                      {log.status || t("dt.statusFailed")}
                       {statusText ? ` ${statusText}` : ""}
                     </span>
                   </dd>
                 </div>
                 {log.protocol && (
                   <div className="flex flex-col gap-0.5 px-2.5 py-1.5">
-                    <dt className="text-[10px] font-semibold text-muted">{t("dt.protocol") || "Protocol"}</dt>
+                    <dt className="text-[10px] font-semibold text-muted">{t("dt.protocol")}</dt>
                     <dd className="font-mono text-[10px] text-foreground">{log.protocol}</dd>
                   </div>
                 )}
                 {log.mimeType && (
                   <div className="flex flex-col gap-0.5 px-2.5 py-1.5">
-                    <dt className="text-[10px] font-semibold text-muted">MIME type</dt>
+                    <dt className="text-[10px] font-semibold text-muted">{t("dt.mimeType")}</dt>
                     <dd className="font-mono text-[10px] text-foreground break-all">{log.mimeType}</dd>
                   </div>
                 )}
                 {log.size != null && (
                   <div className="flex flex-col gap-0.5 px-2.5 py-1.5">
-                    <dt className="text-[10px] font-semibold text-muted">{t("dt.size") || "Size"}</dt>
+                    <dt className="text-[10px] font-semibold text-muted">{t("dt.size")}</dt>
                     <dd className="font-mono text-[10px] text-foreground tabular-nums" title={`${log.size} bytes`}>{formatBytes(log.size)}</dd>
                   </div>
                 )}
                 {log.responseBodySize != null && (
                   <div className="flex flex-col gap-0.5 px-2.5 py-1.5">
-                    <dt className="text-[10px] font-semibold text-muted">Response body</dt>
+                    <dt className="text-[10px] font-semibold text-muted">{t("dt.responseBody")}</dt>
                     <dd className="font-mono text-[10px] text-foreground tabular-nums">{formatBytes(log.responseBodySize)}</dd>
                   </div>
                 )}
@@ -444,12 +444,12 @@ function NetworkDetail({
                   </div>
                 )}
                 <div className="flex flex-col gap-0.5 px-2.5 py-1.5">
-                  <dt className="text-[10px] font-semibold text-muted">{t("dt.frame") || "Frame"}</dt>
+                  <dt className="text-[10px] font-semibold text-muted">{t("dt.frame")}</dt>
                   <dd className="font-mono text-[10px] text-foreground">{formatFrameDetailed(log.frameId)}</dd>
                 </div>
                 {count > 1 && (
                   <div className="flex flex-col gap-0.5 px-2.5 py-1.5">
-                    <dt className="text-[10px] font-semibold text-muted">{t("dt.occurrences") || "Occurrences"}</dt>
+                    <dt className="text-[10px] font-semibold text-muted">{t("dt.occurrences")}</dt>
                     <dd className="font-mono text-[10px] text-foreground tabular-nums">×{count}</dd>
                   </div>
                 )}
@@ -462,10 +462,10 @@ function NetworkDetail({
               </dl>
             </div>
 
-            <HeaderTable headers={log.responseHeaders} title={t("dt.responseHeaders") || "Response headers"} defaultOpen />
-            <HeaderTable headers={log.requestHeaders} title={t("dt.requestHeaders") || "Request headers"} defaultOpen />
+            <HeaderTable headers={log.responseHeaders} title={t("dt.responseHeaders")} defaultOpen />
+            <HeaderTable headers={log.requestHeaders} title={t("dt.requestHeaders")} defaultOpen />
             {!log.responseHeaders && !log.requestHeaders && (
-              <p className="px-1 text-[11px] text-muted italic">{t("dt.noHeaders") || "No headers were recorded for this request."}</p>
+              <p className="px-1 text-[11px] text-muted italic">{t("dt.noHeaders")}</p>
             )}
           </>
         )}
@@ -474,7 +474,7 @@ function NetworkDetail({
           log.requestBody != null && log.requestBody !== "" ? (
             <FormattedJsonBody content={log.requestBody} title={t("dt.requestBody")} t={t} />
           ) : (
-            <p className="px-1 text-[11px] text-muted italic">{t("dt.noRequestBody") || "This request had no body."}</p>
+            <p className="px-1 text-[11px] text-muted italic">{t("dt.noRequestBody")}</p>
           )
         )}
 
@@ -495,24 +495,24 @@ function NetworkDetail({
           if (!tb) {
             return (
               <p className="px-1 text-[11px] text-muted italic">
-                {t("dt.noTimingData") || "No granular timing breakdown recorded for this request."}
+                {t("dt.noTimingData")}
               </p>
             );
           }
           const total = tb.total || log.duration || 1;
           const phases = [
-            { key: "dns", label: t("dt.timing.dns") || "DNS Lookup", val: tb.dns, color: "bg-cyan-500" },
-            { key: "connect", label: t("dt.timing.connect") || "Initial Connection", val: tb.connect, color: "bg-blue-500" },
-            { key: "ssl", label: t("dt.timing.ssl") || "SSL Handshake", val: tb.ssl, color: "bg-indigo-500" },
-            { key: "ttfb", label: t("dt.timing.ttfb") || "Waiting (TTFB)", val: tb.ttfb, color: "bg-amber-500" },
-            { key: "download", label: t("dt.timing.download") || "Content Download", val: tb.download, color: "bg-emerald-500" },
+            { key: "dns", label: t("dt.timing.dns"), val: tb.dns, color: "bg-cyan-500" },
+            { key: "connect", label: t("dt.timing.connect"), val: tb.connect, color: "bg-blue-500" },
+            { key: "ssl", label: t("dt.timing.ssl"), val: tb.ssl, color: "bg-indigo-500" },
+            { key: "ttfb", label: t("dt.timing.ttfb"), val: tb.ttfb, color: "bg-amber-500" },
+            { key: "download", label: t("dt.timing.download"), val: tb.download, color: "bg-emerald-500" },
           ].filter((p) => p.val != null && p.val > 0);
 
           return (
             <div className="space-y-3">
               <div className="rounded-lg border border-border p-3 bg-subtle/40 space-y-2">
                 <div className="flex items-center justify-between text-[11px]">
-                  <span className="font-semibold text-foreground">{t("dt.timing.total") || "Total Duration"}</span>
+                  <span className="font-semibold text-foreground">{t("dt.timing.total")}</span>
                   <span className="font-mono font-bold text-foreground tabular-nums">{log.duration ?? total} ms</span>
                 </div>
                 <div className="h-2 rounded-full bg-border/60 overflow-hidden flex w-full">
@@ -616,15 +616,15 @@ function NetworkTable({
               {/* Row number: numbers rows consecutively as the stable way to
                   refer to one request among repeated polls of the same endpoint. */}
               <th scope="col" className="hidden sm:table-cell px-1.5 py-1.5 font-semibold border-b border-border w-9 text-right tabular-nums">#</th>
-              <th scope="col" className="px-2 py-1.5 font-semibold border-b border-border min-w-0">{t("dt.col.name") || "Name"}</th>
-              <th scope="col" className="hidden md:table-cell px-2 py-1.5 font-semibold border-b border-border w-16">{t("dt.col.method") || "Method"}</th>
-              <th scope="col" className="px-2 py-1.5 font-semibold border-b border-border w-14">{t("dt.col.status") || "Status"}</th>
-              <th scope="col" className="hidden lg:table-cell px-2 py-1.5 font-semibold border-b border-border w-28">{t("dt.col.domain") || "Domain"}</th>
-              <th scope="col" className="hidden sm:table-cell px-2 py-1.5 font-semibold border-b border-border w-20">{t("dt.col.type") || "Type"}</th>
-              <th scope="col" className="hidden sm:table-cell px-2 py-1.5 font-semibold border-b border-border w-20 text-right">{t("dt.col.size") || "Size"}</th>
-              <th scope="col" className="px-2 py-1.5 font-semibold border-b border-border w-20 text-right">{t("dt.col.time") || "Time"}</th>
-              <th scope="col" className="hidden md:table-cell px-2 py-1.5 font-semibold border-b border-border w-14">{t("dt.col.frame") || "Frame"}</th>
-              <th scope="col" className="hidden sm:table-cell px-2 py-1.5 font-semibold border-b border-border w-24">{t("dt.col.waterfall") || "Waterfall"}</th>
+              <th scope="col" className="px-2 py-1.5 font-semibold border-b border-border min-w-0">{t("dt.col.name")}</th>
+              <th scope="col" className="hidden md:table-cell px-2 py-1.5 font-semibold border-b border-border w-16">{t("dt.col.method")}</th>
+              <th scope="col" className="px-2 py-1.5 font-semibold border-b border-border w-14">{t("dt.col.status")}</th>
+              <th scope="col" className="hidden lg:table-cell px-2 py-1.5 font-semibold border-b border-border w-28">{t("dt.col.domain")}</th>
+              <th scope="col" className="hidden sm:table-cell px-2 py-1.5 font-semibold border-b border-border w-20">{t("dt.col.type")}</th>
+              <th scope="col" className="hidden sm:table-cell px-2 py-1.5 font-semibold border-b border-border w-20 text-right">{t("dt.col.size")}</th>
+              <th scope="col" className="px-2 py-1.5 font-semibold border-b border-border w-20 text-right">{t("dt.col.time")}</th>
+              <th scope="col" className="hidden md:table-cell px-2 py-1.5 font-semibold border-b border-border w-14">{t("dt.col.frame")}</th>
+              <th scope="col" className="hidden sm:table-cell px-2 py-1.5 font-semibold border-b border-border w-24">{t("dt.col.waterfall")}</th>
             </tr>
           </thead>
           <tbody>
@@ -707,7 +707,7 @@ function NetworkTable({
                     {/* A cache hit has no transfer time; printing "0 ms" reads as a
                         suspiciously fast request rather than as no request at all. */}
                     {log.fromCache
-                      ? (t("dt.cached") || "(Cached)")
+                      ? (t("dt.cached"))
                       : log.duration != null
                       ? `${log.duration} ms`
                       : "-"}
@@ -775,7 +775,7 @@ function NetworkTable({
       {selected && (
         <div
           role="dialog"
-          aria-label={t("dt.detail.headers") || "Request details"}
+          aria-label={t("dt.detail.headers")}
           /* Covers the table. The panel is only ~440px wide on the capture page,
              so insetting the drawer to keep a row strip visible left ~288px for
              URLs and headers - they shredded one character per line.
@@ -790,8 +790,8 @@ function NetworkTable({
             <button
               type="button"
               onClick={() => onSelect(null)}
-              aria-label={t("dt.closeDetail") || "Close details"}
-              title={t("dt.closeDetail") || "Close details"}
+              aria-label={t("dt.closeDetail")}
+              title={t("dt.closeDetail")}
               className="shrink-0 p-0.5 rounded text-muted hover:text-foreground hover:bg-background transition-colors cursor-pointer"
             >
               <Icon icon="lucide:x" className="w-3.5 h-3.5" />
@@ -916,11 +916,11 @@ function McpTabPanel({
         <div className="flex items-center gap-2">
           <span className="px-2 py-0.5 rounded bg-[#2563EB] text-white font-mono text-[10px] font-bold">MCP</span>
           <h3 className="text-sm font-bold text-foreground">
-            {t("dt.mcp.title") || "Fix with AI Coding Agents (BugSnap MCP)"}
+            {t("dt.mcp.title")}
           </h3>
         </div>
         <p className="text-muted leading-relaxed text-[11px]">
-          {t("dt.mcp.desc") || "Give Claude Code, Cursor, Windsurf, or Claude Desktop direct context to fix this bug report without manual copy-pasting."}
+          {t("dt.mcp.desc")}
         </p>
       </div>
 
@@ -968,7 +968,7 @@ function McpTabPanel({
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-1.5 font-semibold text-foreground text-xs">
             <Icon icon="lucide:terminal" className="w-4 h-4 text-[#2563EB]" />
-            <span>{t("dt.mcp.claudeCliTitle") || "Claude Code CLI Command"}</span>
+            <span>{t("dt.mcp.claudeCliTitle")}</span>
           </div>
           <button
             type="button"
@@ -976,7 +976,7 @@ function McpTabPanel({
             className="px-3 py-1.5 rounded-md text-xs font-semibold bg-[#2563EB] hover:bg-[#1D4ED8] text-white transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
           >
             <Icon icon={copiedCmd === "claude-run" ? "lucide:check" : "lucide:copy"} className="w-3.5 h-3.5" />
-            <span>{copiedCmd === "claude-run" ? (t("dt.mcp.cliCopied") || "Command Copied!") : (t("dt.mcp.copyCli") || "Copy CLI Command")}</span>
+            <span>{copiedCmd === "claude-run" ? (t("dt.mcp.cliCopied")) : (t("dt.mcp.copyCli"))}</span>
           </button>
         </div>
         <pre className="p-3 rounded-lg bg-slate-900 text-slate-100 dark:bg-slate-950 dark:text-slate-200 border border-slate-800 font-mono text-[11px] leading-relaxed whitespace-pre-wrap select-all overflow-x-auto">
@@ -989,7 +989,7 @@ function McpTabPanel({
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-1.5 font-semibold text-foreground text-xs">
             <Icon icon="lucide:sparkles" className="w-4 h-4 text-[#2563EB] dark:text-[#3B82F6]" />
-            <span>{t("dt.mcp.promptTitle") || "Prompt for AI Assistant"}</span>
+            <span>{t("dt.mcp.promptTitle")}</span>
           </div>
           <button
             type="button"
@@ -997,7 +997,7 @@ function McpTabPanel({
             className="px-3 py-1.5 rounded-md text-xs font-semibold bg-background hover:bg-subtle text-foreground border border-border transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
           >
             <Icon icon={copiedPrompt ? "lucide:check" : "lucide:copy"} className="w-3.5 h-3.5" />
-            <span>{copiedPrompt ? (t("dt.mcp.promptCopied") || "Prompt Copied!") : (t("dt.mcp.copyPrompt") || "Copy AI Prompt")}</span>
+            <span>{copiedPrompt ? (t("dt.mcp.promptCopied")) : (t("dt.mcp.copyPrompt"))}</span>
           </button>
         </div>
         <pre className="p-3 rounded-lg bg-subtle text-foreground border border-border font-mono text-[11px] leading-relaxed whitespace-pre-wrap select-all overflow-x-auto">
@@ -1009,12 +1009,12 @@ function McpTabPanel({
       {mcpAction === "setup" && <div className="rounded-xl border border-border bg-subtle/80 p-4 space-y-3">
         <div className="flex items-center gap-1.5 font-semibold text-foreground text-xs">
           <Icon icon="lucide:terminal" className="w-4 h-4 text-[#2563EB]" />
-          <span>{t("dt.mcp.setupTitle") || "Connect BugSnap MCP Server"}</span>
+          <span>{t("dt.mcp.setupTitle")}</span>
         </div>
 
         <div className="space-y-2">
           <div className="flex items-center justify-between text-[11px] font-medium text-muted">
-            <span>Claude Code Setup Command</span>
+            <span>{t("dt.claudeSetup")}</span>
             <button
               type="button"
               onClick={() => handleCopyCmd(claudeCodeCmd, "claude-code")}
@@ -1031,7 +1031,7 @@ function McpTabPanel({
 
         <div className="space-y-2 pt-1">
           <div className="flex items-center justify-between text-[11px] font-medium text-muted">
-            <span>Cursor / Claude Desktop JSON</span>
+            <span>{t("dt.cursorJson")}</span>
             <button
               type="button"
               onClick={() => handleCopyCmd(claudeDesktopConfig, "claude-desktop")}
@@ -1048,9 +1048,9 @@ function McpTabPanel({
 
         <div className="pt-2 flex flex-wrap items-center gap-4 text-[11px]">
           <span className="text-muted">
-            {t("dt.mcp.apiKeyHint") || "Need an API key? Generate one in"}{" "}
+            {t("dt.mcp.apiKeyHint")}{" "}
             <a href="/settings?tab=integrations#bugsnap-api-keys" className="font-semibold text-[#2563EB] dark:text-[#3B82F6] hover:underline">
-              {t("dt.mcp.settingsLink") || "Settings  BugSnap API Keys"}
+              {t("dt.mcp.settingsLink")}
             </a>
           </span>
           <a
@@ -1059,7 +1059,7 @@ function McpTabPanel({
             rel="noopener noreferrer"
             className="text-[#2563EB] dark:text-[#3B82F6] font-semibold hover:underline flex items-center gap-1 ml-auto"
           >
-            <span>{t("dt.mcp.docsLink") || "View Full MCP Tutorial"}</span>
+            <span>{t("dt.mcp.docsLink")}</span>
             <Icon icon="lucide:external-link" className="w-3 h-3" />
           </a>
         </div>
@@ -1726,7 +1726,7 @@ ${stack}` : body);
   };
 
   const tabName = (tab: Tab) => {
-    if (tab === "MCP") return t("dt.tab.mcp") || "MCP";
+    if (tab === "MCP") return t("dt.tab.mcp");
     return t(`dt.${tab.toLowerCase()}`);
   };
 
@@ -1734,13 +1734,13 @@ ${stack}` : body);
   const eventBreakdown = (() => {
     const rows = summary
       ? [
-          { key: "errors", label: t("dt.errors") || "Errors", n: summary.errors || 0 },
-          { key: "warnings", label: t("dt.warnings") || "Warnings", n: summary.warnings || 0 },
-          { key: "failed", label: t("dt.failedReq") || "Failed requests", n: summary.failedRequests || 0 },
+          { key: "errors", label: t("dt.errors"), n: summary.errors || 0 },
+          { key: "warnings", label: t("dt.warnings"), n: summary.warnings || 0 },
+          { key: "failed", label: t("dt.failedReq"), n: summary.failedRequests || 0 },
         ]
       : [
-          { key: "errors", label: t("dt.errors") || "Errors", n: consoleErrors.length },
-          { key: "failed", label: t("dt.failedReq") || "Failed requests", n: networkErrors.length },
+          { key: "errors", label: t("dt.errors"), n: consoleErrors.length },
+          { key: "failed", label: t("dt.failedReq"), n: networkErrors.length },
           { key: "console", label: tabName("Console"), n: consoleLogs.length },
           { key: "network", label: tabName("Network"), n: networkLogs.length },
           { key: "actions", label: tabName("Actions"), n: actionLogs.length },
@@ -1799,7 +1799,7 @@ ${stack}` : body);
           readers now announce "tab 3 of 6" and arrow keys move between tabs. */}
       <div
         role="tablist"
-        aria-label={t("dt.title") || "DevTools"}
+        aria-label={t("dt.title")}
         onKeyDown={onTabKeyDown}
         className="flex border-b border-border shrink-0 px-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
@@ -1865,8 +1865,8 @@ ${stack}` : body);
                 <button
                   type="button"
                   onClick={() => setLogSearch("")}
-                  aria-label={t("dt.clearSearch") || "Clear search"}
-                  title={t("dt.clearSearch") || "Clear search"}
+                  aria-label={t("dt.clearSearch")}
+                  title={t("dt.clearSearch")}
                   className="absolute right-2 top-1/2 -translate-y-1/2 text-muted hover:text-foreground transition-colors cursor-pointer"
                 >
                   <Icon icon="lucide:x" className="w-3.5 h-3.5" />
@@ -1885,7 +1885,7 @@ ${stack}` : body);
                   value={consoleLevelFilter}
                   onChange={(val) => setConsoleLevelFilter(val as typeof consoleLevelFilter)}
                   options={[
-                    { value: "all", label: t("dt.allLevels") || "All levels" },
+                    { value: "all", label: t("dt.allLevels") },
                     ...(["error", "warn", "info", "log", "debug"] as const)
                       .filter((lvl) => consoleLevelCounts.has(lvl))
                       .map((lvl) => ({
@@ -1909,7 +1909,7 @@ ${stack}` : body);
                     className="w-3 h-3 rounded border-border accent-red-600 cursor-pointer"
                   />
                   <span className={consoleErrorsOnly ? "text-red-700 dark:text-red-300 font-semibold" : ""}>
-                    {t("dt.errorsOnly") || "Errors only"}
+                    {t("dt.errorsOnly")}
                   </span>
                   <span className="tabular-nums">({consoleErrors.length})</span>
                 </label>
@@ -1939,7 +1939,7 @@ ${stack}` : body);
                         }`}
                       >
                         {k === "all"
-                          ? `${t("dt.all") || "All"} (${allActionLogs.length})`
+                          ? `${t("dt.all")} (${allActionLogs.length})`
                           : `${t(`dt.act.${k}`)} (${actionKindCounts.get(k)})`}
                       </button>
                     );
@@ -1962,7 +1962,7 @@ ${stack}` : body);
                             : "text-muted hover:text-foreground border border-transparent"
                         }`}
                       >
-                        {t("dt.allStatuses") || "All"}
+                        {t("dt.allStatuses")}
                       </button>
                       {count4xx > 0 && (
                         <button
@@ -1976,7 +1976,7 @@ ${stack}` : body);
                           }`}
                         >
                           <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-                          {t("dt.status4xx") || "4xx"} ({count4xx})
+                          {t("dt.status4xx")} ({count4xx})
                         </button>
                       )}
                       {count5xx > 0 && (
@@ -1991,7 +1991,7 @@ ${stack}` : body);
                           }`}
                         >
                           <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
-                          {t("dt.status5xx") || "5xx"} ({count5xx})
+                          {t("dt.status5xx")} ({count5xx})
                         </button>
                       )}
                       {countFailed > 0 && (
@@ -2006,7 +2006,7 @@ ${stack}` : body);
                           }`}
                         >
                           <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-                          {t("dt.statusFailed") || "Failed"} ({countFailed})
+                          {t("dt.statusFailed")} ({countFailed})
                         </button>
                       )}
                     </>
@@ -2018,10 +2018,10 @@ ${stack}` : body);
                     type="button"
                     onClick={handleExportHar}
                     className="px-2 py-0.5 rounded-md text-[10px] font-medium transition-colors bg-subtle hover:bg-subtle/80 text-muted hover:text-foreground border border-border flex items-center gap-1 cursor-pointer ml-auto shrink-0"
-                    title={t("dt.exportHar") || "Export network session as HTTP Archive (.har)"}
+                    title={t("dt.exportHar")}
                   >
                     <Icon icon="lucide:download" className="w-3 h-3" />
-                    <span>{t("dt.exportHar") || "Export HAR"}</span>
+                    <span>{t("dt.exportHar")}</span>
                   </button>
                 )}
               </div>
@@ -2081,7 +2081,7 @@ ${stack}` : body);
                   {showTzMenu && (
                     <div role="menu" className="absolute right-0 top-full mt-1.5 z-50 w-56 rounded-xl border border-border bg-white dark:bg-background p-1.5 text-left text-xs text-foreground shadow-xl animate-in fade-in zoom-in-95 duration-100">
                       <div className="px-2 py-1 text-left text-[10px] font-semibold text-muted uppercase tracking-wider">
-                        Select Timezone
+                        {t("dt.selectTimezone")}
                       </div>
 
                       <button
@@ -2093,7 +2093,7 @@ ${stack}` : body);
                         }`}
                       >
                         <div>
-                          <p className="leading-none">Captured time</p>
+                          <p className="leading-none">{t("dt.capturedTime")}</p>
                           <p className="text-[10px] text-muted mt-0.5 font-normal">{captureTimeZoneLabel}</p>
                         </div>
                         {timeZoneMode === "capture" && (
@@ -2110,7 +2110,7 @@ ${stack}` : body);
                         }`}
                       >
                         <div>
-                          <p className="leading-none">Your time</p>
+                          <p className="leading-none">{t("dt.yourTime")}</p>
                           <p className="text-[10px] text-muted mt-0.5 font-normal">{viewerTimeZoneLabel}</p>
                         </div>
                         {timeZoneMode === "local" && (
@@ -2127,7 +2127,7 @@ ${stack}` : body);
                         }`}
                       >
                         <div>
-                          <p className="leading-none">Universal time</p>
+                          <p className="leading-none">{t("dt.universalTime")}</p>
                           <p className="text-[10px] text-muted mt-0.5 font-normal">UTC</p>
                         </div>
                         {timeZoneMode === "utc" && (
@@ -2172,23 +2172,23 @@ ${stack}` : body);
 
             {metrics && (
               <div>
-                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted mb-1.5">Web Vitals & Performance</p>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-muted mb-1.5">{t("dt.webVitals")}</p>
                 <div className="grid grid-cols-2 gap-2">
                   <div className="p-2.5 rounded-xl border border-border bg-subtle/80 flex flex-col justify-between">
-                    <span className="text-[10px] text-muted font-medium">LCP (Largest Paint)</span>
+                    <span className="text-[10px] text-muted font-medium">{t("dt.lcp")}</span>
                     <span className={`text-xs font-mono font-bold mt-1 ${metrics.lcpMs && metrics.lcpMs > 2500 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}`}>
                       {metrics.lcpMs != null ? `${metrics.lcpMs}ms` : "-"}
                     </span>
                   </div>
                   <div className="p-2.5 rounded-xl border border-border bg-subtle/80 flex flex-col justify-between">
-                    <span className="text-[10px] text-muted font-medium">CLS (Layout Shift)</span>
+                    <span className="text-[10px] text-muted font-medium">{t("dt.cls")}</span>
                     <span className={`text-xs font-mono font-bold mt-1 ${metrics.cls && metrics.cls > 0.1 ? "text-amber-600 dark:text-amber-400" : "text-emerald-600 dark:text-emerald-400"}`}>
                       {metrics.cls != null ? metrics.cls : "0"}
                     </span>
                   </div>
                   <div className="p-2.5 rounded-xl border border-border bg-subtle/80 flex flex-col justify-between">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] text-muted font-medium">JS Heap Memory</span>
+                      <span className="text-[10px] text-muted font-medium">{t("dt.jsHeap")}</span>
                       {metrics.heapGrowthMB != null && metrics.heapGrowthMB > 0 && (
                         <span className="text-[9px] font-mono font-bold text-amber-600 dark:text-amber-400">
                           +{metrics.heapGrowthMB}MB
@@ -2201,7 +2201,7 @@ ${stack}` : body);
                   </div>
                   <div className="p-2.5 rounded-xl border border-border bg-subtle/80 flex flex-col justify-between">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] text-muted font-medium">DOM Elements</span>
+                      <span className="text-[10px] text-muted font-medium">{t("dt.domElements")}</span>
                       {metrics.domGrowthPct != null && metrics.domGrowthPct > 0 && (
                         <span className="text-[9px] font-mono font-bold text-amber-600 dark:text-amber-400">
                           +{metrics.domGrowthPct}%
@@ -2343,8 +2343,8 @@ ${stack}` : body);
                         <button
                           type="button"
                           onClick={(e) => handleCopyConsole(log, e)}
-                          aria-label={t("dt.copyLog") || "Copy log"}
-                          title={t("dt.copyLog") || "Copy log"}
+                          aria-label={t("dt.copyLog")}
+                          title={t("dt.copyLog")}
                           className="shrink-0 p-1 rounded text-muted opacity-0 group-hover:opacity-100 focus:opacity-100 hover:text-foreground hover:bg-subtle transition-all cursor-pointer"
                         >
                           {copiedConsole === consoleText(log) ? (

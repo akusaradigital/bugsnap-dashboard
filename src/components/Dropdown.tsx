@@ -12,7 +12,7 @@ interface DropdownProps {
   value: string;
   options: DropdownOption[];
   onChange: (value: string) => void;
-  variant?: "field" | "pill" | "inline" | "toolbar";
+  variant?: "field" | "field-white" | "pill" | "pill-white" | "inline" | "toolbar";
   placeholder?: string;
   className?: string;
   direction?: "down" | "up";
@@ -23,7 +23,9 @@ interface DropdownProps {
 const TRIGGER_BASE = "flex items-center gap-2 outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-1 focus-visible:ring-offset-background transition-all duration-150";
 const TRIGGER_VARIANT: Record<NonNullable<DropdownProps["variant"]>, string> = {
   field: "w-full rounded-lg border border-border px-3 py-2 text-sm bg-subtle text-foreground justify-between hover:border-accent/40 hover:bg-subtle/80",
+  "field-white": "w-full rounded-lg border border-border px-3 py-2 text-sm bg-white dark:bg-zinc-900 text-foreground justify-between hover:border-accent/40 hover:bg-border/30",
   pill: "border border-border bg-subtle rounded-lg px-2.5 py-1.5 text-xs text-muted hover:text-foreground hover:border-accent/40 hover:bg-subtle/80",
+  "pill-white": "border border-border bg-white dark:bg-zinc-900 rounded-lg px-2.5 py-1.5 text-xs text-muted hover:text-foreground hover:border-accent/40 hover:bg-border/30",
   // For a select nested inside an already-styled wrapper pill (e.g. "Tag:" label + this trigger).
   inline: "bg-transparent font-medium text-foreground hover:text-accent",
   toolbar: "min-h-[38px] px-3 rounded-xl border border-border bg-background hover:bg-subtle text-xs font-semibold text-foreground transition-all shadow-xs cursor-pointer justify-between",
@@ -139,9 +141,13 @@ export function Dropdown({ value, options, onChange, variant = "field", placehol
 
   const selected = options.find((o) => o.value === value);
   const isUp = computedDirection === "up";
+  const shownLabel = selected?.label ?? placeholder ?? value;
+  // Width follows the longest label (see the stacked grid below). "field" is a
+  // full-width form input, and any className that sets w-full or flex-1 owns its width.
+  const fitsContent = variant !== "field" && !/(^|\s)(w-full|flex-1)(\s|$)/.test(className ?? "");
 
   return (
-    <div ref={ref} onKeyDown={handleKeyDown} className={`relative min-w-0 ${className || ""}`}>
+    <div ref={ref} onKeyDown={handleKeyDown} className={`relative min-w-0 ${fitsContent ? "w-fit max-w-full" : ""} ${className || ""}`}>
       <button
         ref={triggerRef}
         type="button"
@@ -150,9 +156,21 @@ export function Dropdown({ value, options, onChange, variant = "field", placehol
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-controls={open ? listboxId : undefined}
-        className={`${TRIGGER_BASE} ${TRIGGER_VARIANT[variant]} ${disabled ? "opacity-50 cursor-not-allowed pointer-events-none" : ""}`}
+        className={`${TRIGGER_BASE} ${TRIGGER_VARIANT[variant]} ${fitsContent ? "w-full" : ""} ${disabled ? "opacity-50 cursor-not-allowed pointer-events-none" : ""}`}
       >
-        <span className="truncate">{selected?.label ?? placeholder ?? value}</span>
+        {/* Every label is laid out in the same grid cell; only the selected one is visible,
+            so the trigger is exactly as wide as the longest label. */}
+        <span className="grid min-w-0 text-left">
+          {options.map((o) => (
+            <span
+              key={o.value}
+              className={`col-start-1 row-start-1 truncate ${o.value === value ? "" : "invisible"}`}
+            >
+              {o.label}
+            </span>
+          ))}
+          {!selected && <span className="col-start-1 row-start-1 truncate">{shownLabel}</span>}
+        </span>
         <Icon
           icon="lucide:chevron-down"
           className={`w-3.5 h-3.5 shrink-0 text-muted transition-transform duration-150 ${open ? "rotate-180" : ""}`}

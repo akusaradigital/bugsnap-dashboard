@@ -25,8 +25,8 @@ export function HelpContent() {
 
   return (
     <StaticShell
-      title={t("help.title") || "Help center &"}
-      titleHighlight={t("help.titleHighlight") || "frequently asked questions"}
+      title={t("help.title")}
+      titleHighlight={t("help.titleHighlight")}
       breadcrumb={isId ? "Pusat Bantuan" : "Help"}
       subtitle={t("help.subtitle")}
       compactHero={true}

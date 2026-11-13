@@ -121,32 +121,31 @@ export function ExtensionContent() {
             {/* Breadcrumb */}
             <nav
               className="inline-flex items-center justify-center gap-1.5 text-xs text-site-text-2 mb-4 sm:mb-5"
-              aria-label="Breadcrumb"
+              aria-label={t("modalFx.breadcrumbLabel")}
             >
               <Link href="/" className="hover:text-site-text transition-colors">
-                {t("landing.home") || "Home"}
+                {t("landing.home")}
               </Link>
               <span className="text-site-text-2/60" aria-hidden="true">
                 &gt;
               </span>
               <span className="text-site-text font-medium">
-                {t("site.nav.extension") || "Extension"}
+                {t("site.nav.extension")}
               </span>
             </nav>
 
             {/* Title */}
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12]">
-              {t("extension.title") || "Capture & debug bugs"}
+              {t("extension.title")}
               <br />
               <span className="text-[#5B8C2A] dark:text-[#A8D666]">
-                {t("extension.titleHighlight") || "directly in your browser"}
+                {t("extension.titleHighlight")}
               </span>
             </h1>
 
             {/* Subtitle */}
             <p className="text-sm sm:text-base text-site-text-2 leading-relaxed max-w-2xl mx-auto">
-              {t("extension.subtitle") ||
-                "Capture, inspect, and communicate bugs with automated DevTools telemetry, screen recording, and direct sync to your Google Drive."}
+              {t("extension.subtitle")}
             </p>
 
             {/* Action Buttons */}
@@ -158,7 +157,7 @@ export function ExtensionContent() {
                 className="inline-flex items-center justify-center gap-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold px-6 py-3 min-h-[44px] rounded-xl transition-all shadow-sm active:scale-[0.99] touch-manipulation w-full sm:w-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#2563EB] dark:focus-visible:ring-[#3B82F6]"
               >
                 <Icon icon="logos:chrome" className="w-5 h-5 shrink-0" aria-hidden="true" />
-                <span>{t("extension.addToChrome") || "Add to Chrome"}</span>
+                <span>{t("extension.addToChrome")}</span>
               </a>
               <a
                 href={FIREFOX_STORE_URL}
@@ -167,13 +166,13 @@ export function ExtensionContent() {
                 className="inline-flex items-center justify-center gap-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold px-6 py-3 min-h-[44px] rounded-xl transition-all shadow-sm active:scale-[0.99] touch-manipulation w-full sm:w-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#2563EB] dark:focus-visible:ring-[#3B82F6]"
               >
                 <Icon icon="logos:firefox" className="w-5 h-5 shrink-0" aria-hidden="true" />
-                <span>{t("extension.addToFirefox") || "Add to Firefox"}</span>
+                <span>{t("extension.addToFirefox")}</span>
               </a>
               <Link
                 href="/docs"
                 className="inline-flex items-center justify-center gap-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold px-5 py-3 min-h-[44px] rounded-xl transition-all shadow-sm active:scale-[0.99] touch-manipulation w-full sm:w-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#2563EB] dark:focus-visible:ring-[#3B82F6]"
               >
-                <span>{t("extension.viewDocs") || "View Documentation"}</span>
+                <span>{t("extension.viewDocs")}</span>
               </Link>
             </div>
 
@@ -185,15 +184,13 @@ export function ExtensionContent() {
             <div className="lg:col-span-7 space-y-6">
               <div className="space-y-2">
                 <span className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-[#5B8C2A] dark:text-[#A8D666]">
-                  {t("extension.shortcutsEyebrow") || "CUSTOMIZABLE BROWSER SHORTCUTS"}
+                  {t("extension.shortcutsEyebrow")}
                 </span>
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white leading-snug tracking-tight">
-                  {t("extension.shortcutsHeading") ||
-                    "Set your own shortcuts in your browser. Take screenshots or record your screen from any tab."}
+                  {t("extension.shortcutsHeading")}
                 </h2>
                 <p className="text-xs sm:text-sm text-site-text-2 leading-relaxed">
-                  {t("extension.shortcutsDesc") ||
-                    "BugSnap lets you customize your shortcuts directly in your browser settings. You can even set them to Global mode to trigger BugSnap while using other desktop apps."}
+                  {t("extension.shortcutsDesc")}
                 </p>
               </div>
 
@@ -207,21 +204,20 @@ export function ExtensionContent() {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="text-sm font-bold text-site-text">
-                          {t("extension.takeScreenshot") || "Take Screenshot"}
+                          {t("extension.takeScreenshot")}
                         </h3>
                         <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-blue-500/10 text-[#5B8C2A] dark:text-[#A8D666] border border-blue-500/20">
-                          {t("extension.shortcutsCustomBadge") || "Bisa Diubah"}
+                          {t("extension.shortcutsCustomBadge")}
                         </span>
                       </div>
                       <p className="text-xs text-site-text-2 truncate">
-                        {t("extension.takeScreenshotDesc") ||
-                          "Capture current visible tab or selected window."}
+                        {t("extension.takeScreenshotDesc")}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-site-border/60 shrink-0">
                     <span className="text-[11px] text-site-text-2 font-medium inline">
-                      {t("extension.shortcutsDefaultBadge") || "Saran bawaan:"}
+                      {t("extension.shortcutsDefaultBadge")}
                     </span>
                     <kbd className="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-site-border bg-site-surface-2 text-xs font-mono font-bold text-site-text shadow-2xs">
                       Ctrl + Shift + S
@@ -238,21 +234,20 @@ export function ExtensionContent() {
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="text-sm font-bold text-site-text">
-                          {t("extension.startRecording") || "Start Recording"}
+                          {t("extension.startRecording")}
                         </h3>
                         <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-500/10 text-rose-700 dark:text-rose-300 border border-rose-500/20">
-                          {t("extension.shortcutsCustomBadge") || "Bisa Diubah"}
+                          {t("extension.shortcutsCustomBadge")}
                         </span>
                       </div>
                       <p className="text-xs text-site-text-2 truncate">
-                        {t("extension.startRecordingDesc") ||
-                          "Take screenshots or record a screen, tab, or window with microphone audio."}
+                        {t("extension.startRecordingDesc")}
                       </p>
                     </div>
                   </div>
                   <div className="flex items-center justify-between sm:justify-end gap-2 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-t-0 border-site-border/60 shrink-0">
                     <span className="text-[11px] text-site-text-2 font-medium inline">
-                      {t("extension.shortcutsDefaultBadge") || "Saran bawaan:"}
+                      {t("extension.shortcutsDefaultBadge")}
                     </span>
                     <kbd className="px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-lg border border-site-border bg-site-surface-2 text-xs font-mono font-bold text-site-text shadow-2xs">
                       Ctrl + Shift + F
@@ -265,13 +260,13 @@ export function ExtensionContent() {
                   <div className="flex items-center justify-between gap-2 flex-wrap">
                     <div className="flex items-center gap-2 text-xs sm:text-sm font-bold text-site-text">
                       <Icon icon="lucide:settings" className="w-4 h-4 text-[#5B8C2A] dark:text-[#A8D666] shrink-0" aria-hidden="true" />
-                      <span>{t("extension.shortcutsSetupTitle") || "Cara atur shortcut sendiri di browsermu:"}</span>
+                      <span>{t("extension.shortcutsSetupTitle")}</span>
                     </div>
 
                     <button
                       type="button"
                       onClick={handleCopyUrl}
-                      aria-label={`${copiedUrl ? (t("extension.shortcutsCopied") || "Tersalin!") : (t("extension.shortcutsCopyUrl") || "Salin URL")} ${activeTutorial.url}`}
+                      aria-label={`${copiedUrl ? (t("extension.shortcutsCopied")) : (t("extension.shortcutsCopyUrl"))} ${activeTutorial.url}`}
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[36px] rounded-md text-xs font-semibold bg-site-surface border border-site-border hover:bg-site-surface-2 text-site-text transition-colors cursor-pointer shrink-0 touch-manipulation focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2563EB] dark:focus-visible:ring-[#3B82F6] focus-visible:ring-offset-1 focus-visible:ring-offset-site-surface"
                       title={`Salin ${activeTutorial.url} ke clipboard`}
                     >
@@ -281,7 +276,7 @@ export function ExtensionContent() {
                         aria-hidden="true"
                       />
                       <span aria-live="polite">
-                        {copiedUrl ? (t("extension.shortcutsCopied") || "Tersalin!") : (t("extension.shortcutsCopyUrl") || "Salin URL")}
+                        {copiedUrl ? (t("extension.shortcutsCopied")) : (t("extension.shortcutsCopyUrl"))}
                       </span>
                     </button>
                   </div>
@@ -290,7 +285,7 @@ export function ExtensionContent() {
                   <div
                     className="flex items-center gap-1.5 p-1 bg-site-surface border border-site-border rounded-lg w-full sm:w-fit flex-wrap"
                     role="tablist"
-                    aria-label={t("extension.shortcutsSetupTitle") || "Pilih browser"}
+                    aria-label={t("extension.shortcutsSetupTitle")}
                   >
                     {BROWSER_TUTORIALS.map((b, idx) => {
                       const isActive = activeBrowser === b.id;
@@ -395,13 +390,13 @@ export function ExtensionContent() {
                   {/* Tabs */}
                   <div className="flex items-center gap-5 border-b border-site-border text-xs font-medium pb-2">
                     <span className="text-[#5B8C2A] dark:text-[#A8D666] font-semibold cursor-pointer border-b-2 border-[#5B8C2A] dark:border-[#A8D666] pb-2 -mb-2">
-                      {t("extension.tabCapture") || "Capture"}
+                      {t("extension.tabCapture")}
                     </span>
                     <span className="text-site-text-2 hover:text-site-text cursor-pointer">
-                      {t("extension.tabRecent") || "Recent"}
+                      {t("extension.tabRecent")}
                     </span>
                     <span className="text-site-text-2 hover:text-site-text cursor-pointer">
-                      {t("extension.tabSettings") || "Settings"}
+                      {t("extension.tabSettings")}
                     </span>
                   </div>
 
@@ -414,11 +409,10 @@ export function ExtensionContent() {
                         </div>
                         <div className="min-w-0">
                           <div className="text-xs font-bold text-site-text">
-                            {t("extension.takeScreenshot") || "Take Screenshot"}
+                            {t("extension.takeScreenshot")}
                           </div>
                           <div className="text-[11px] text-site-text-2 truncate">
-                            {t("extension.popupScreenshotDesc") ||
-                              "Capture current tab or selected area"}
+                            {t("extension.popupScreenshotDesc")}
                           </div>
                         </div>
                       </div>
@@ -434,11 +428,10 @@ export function ExtensionContent() {
                         </div>
                         <div className="min-w-0">
                           <div className="text-xs font-bold text-site-text">
-                            {t("extension.startRecording") || "Start Recording"}
+                            {t("extension.startRecording")}
                           </div>
                           <div className="text-[11px] text-site-text-2 truncate">
-                            {t("extension.popupRecordingDesc") ||
-                              "Record screen, tab, or window with audio"}
+                            {t("extension.popupRecordingDesc")}
                           </div>
                         </div>
                       </div>
@@ -451,18 +444,17 @@ export function ExtensionContent() {
                   {/* Other Actions Header & List */}
                   <div className="pt-2">
                     <div className="text-[11px] font-semibold text-site-text-2 mb-3">
-                      {t("extension.otherActions") || "Other Actions"}
+                      {t("extension.otherActions")}
                     </div>
                     <div className="space-y-3">
                       <div className="flex items-start gap-3">
                         <Icon icon="lucide:edit-3" className="w-4 h-4 text-site-text-2 mt-0.5 shrink-0" aria-hidden="true" />
                         <div className="min-w-0">
                           <div className="text-xs font-bold text-site-text">
-                            {t("extension.openAnnotator") || "Open Annotator"}
+                            {t("extension.openAnnotator")}
                           </div>
                           <div className="text-[11px] text-site-text-2">
-                            {t("extension.openAnnotatorDesc") ||
-                              "Edit and annotate your screenshot or recording"}
+                            {t("extension.openAnnotatorDesc")}
                           </div>
                         </div>
                       </div>
@@ -471,11 +463,10 @@ export function ExtensionContent() {
                         <Icon icon="lucide:file-text" className="w-4 h-4 text-site-text-2 mt-0.5 shrink-0" aria-hidden="true" />
                         <div className="min-w-0">
                           <div className="text-xs font-bold text-site-text">
-                            {t("extension.viewRecentFiles") || "View Recent Files"}
+                            {t("extension.viewRecentFiles")}
                           </div>
                           <div className="text-[11px] text-site-text-2">
-                            {t("extension.viewRecentFilesDesc") ||
-                              "Open your latest captures in Google Drive"}
+                            {t("extension.viewRecentFilesDesc")}
                           </div>
                         </div>
                       </div>
@@ -484,11 +475,10 @@ export function ExtensionContent() {
                         <Icon icon="lucide:settings" className="w-4 h-4 text-site-text-2 mt-0.5 shrink-0" aria-hidden="true" />
                         <div className="min-w-0">
                           <div className="text-xs font-bold text-site-text">
-                            {t("extension.openSettings") || "Open Settings"}
+                            {t("extension.openSettings")}
                           </div>
                           <div className="text-[11px] text-site-text-2">
-                            {t("extension.openSettingsDesc") ||
-                              "Configure shortcuts and permissions"}
+                            {t("extension.openSettingsDesc")}
                           </div>
                         </div>
                       </div>
@@ -507,18 +497,17 @@ export function ExtensionContent() {
                 <Icon icon="lucide:cpu" className="w-5 h-5" aria-hidden="true" />
               </div>
               <h3 className="text-base sm:text-lg font-bold text-site-text">
-                {t("extension.feat1Title") || "Minimal Memory Footprint"}
+                {t("extension.feat1Title")}
               </h3>
               <p className="text-xs sm:text-sm text-site-text-2 leading-relaxed">
-                {t("extension.feat1Desc") ||
-                  "Optimized to run in background with low resource usage, so it won't slow down your browser."}
+                {t("extension.feat1Desc")}
               </p>
               <div>
                 <Link
                   href="/features"
                   className="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-[#5B8C2A] dark:text-[#A8D666] hover:underline"
                 >
-                  <span>{t("extension.learnMore") || "Learn more"}</span>
+                  <span>{t("extension.learnMore")}</span>
                   <span aria-hidden="true">&rarr;</span>
                 </Link>
               </div>
@@ -530,18 +519,17 @@ export function ExtensionContent() {
                 <Icon icon="lucide:bar-chart-2" className="w-5 h-5" aria-hidden="true" />
               </div>
               <h3 className="text-base sm:text-lg font-bold text-site-text">
-                {t("extension.feat2Title") || "Passive Diagnostics"}
+                {t("extension.feat2Title")}
               </h3>
               <p className="text-xs sm:text-sm text-site-text-2 leading-relaxed">
-                {t("extension.feat2Desc") ||
-                  "Automatically captures DevTools context, console logs, network logs, and system info when you report a bug."}
+                {t("extension.feat2Desc")}
               </p>
               <div>
                 <Link
                   href="/features"
                   className="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-[#5B8C2A] dark:text-[#A8D666] hover:underline"
                 >
-                  <span>{t("extension.learnMore") || "Learn more"}</span>
+                  <span>{t("extension.learnMore")}</span>
                   <span aria-hidden="true">&rarr;</span>
                 </Link>
               </div>
@@ -553,18 +541,17 @@ export function ExtensionContent() {
                 <Icon icon="lucide:file-text" className="w-5 h-5" aria-hidden="true" />
               </div>
               <h3 className="text-base sm:text-lg font-bold text-site-text">
-                {t("extension.feat3Title") || "Local-First Buffering"}
+                {t("extension.feat3Title")}
               </h3>
               <p className="text-xs sm:text-sm text-site-text-2 leading-relaxed">
-                {t("extension.feat3Desc") ||
-                  "Your captures are stored locally first, then synced to Google Drive with your permission for better control."}
+                {t("extension.feat3Desc")}
               </p>
               <div>
                 <Link
                   href="/features"
                   className="inline-flex items-center gap-1 text-xs sm:text-sm font-semibold text-[#5B8C2A] dark:text-[#A8D666] hover:underline"
                 >
-                  <span>{t("extension.learnMore") || "Learn more"}</span>
+                  <span>{t("extension.learnMore")}</span>
                   <span aria-hidden="true">&rarr;</span>
                 </Link>
               </div>
@@ -575,14 +562,13 @@ export function ExtensionContent() {
           <div className="space-y-6">
             <div className="space-y-1">
               <span className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-[#5B8C2A] dark:text-[#A8D666]">
-                {t("extension.permissionsEyebrow") || "SECURITY & PRIVACY"}
+                {t("extension.permissionsEyebrow")}
               </span>
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
-                {t("extension.permissionsTitle") || "Transparent Chrome Permissions"}
+                {t("extension.permissionsTitle")}
               </h2>
               <p className="text-xs sm:text-sm text-site-text-2">
-                {t("extension.permissionsSub") ||
-                  "Only the permissions needed for core features. No hidden access. You're in control."}
+                {t("extension.permissionsSub")}
               </p>
             </div>
 
@@ -590,10 +576,10 @@ export function ExtensionContent() {
               <table className="w-full text-left text-xs border-collapse min-w-[640px]">
                 <thead>
                   <tr className="border-b border-site-border text-site-text-2 text-[11px]">
-                    <th className="py-3 pr-4 font-semibold">{t("extension.thPermission") || "Permission"}</th>
-                    <th className="py-3 px-4 font-semibold">{t("extension.thPurpose") || "Purpose"}</th>
-                    <th className="py-3 px-4 font-semibold">{t("extension.thWhatWeDo") || "What We Do"}</th>
-                    <th className="py-3 pl-4 font-semibold">{t("extension.thAccess") || "Access"}</th>
+                    <th className="py-3 pr-4 font-semibold">{t("extension.thPermission")}</th>
+                    <th className="py-3 px-4 font-semibold">{t("extension.thPurpose")}</th>
+                    <th className="py-3 px-4 font-semibold">{t("extension.thWhatWeDo")}</th>
+                    <th className="py-3 pl-4 font-semibold">{t("extension.thAccess")}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-site-border-subtle">
@@ -602,14 +588,13 @@ export function ExtensionContent() {
                       activeTab
                     </td>
                     <td className="py-3.5 px-4 text-site-text font-medium">
-                      {t("extension.p1Purpose") || "Capture current tab"}
+                      {t("extension.p1Purpose")}
                     </td>
                     <td className="py-3.5 px-4 text-site-text-2 leading-relaxed">
-                      {t("extension.p1What") ||
-                        "Access the active tab when you trigger a screenshot or recording."}
+                      {t("extension.p1What")}
                     </td>
                     <td className="py-3.5 pl-4 text-site-text">
-                      {t("extension.accessOnlyUsed") || "Only when used"}
+                      {t("extension.accessOnlyUsed")}
                     </td>
                   </tr>
                   <tr>
@@ -617,13 +602,13 @@ export function ExtensionContent() {
                       storage
                     </td>
                     <td className="py-3.5 px-4 text-site-text font-medium">
-                      {t("extension.p2Purpose") || "Save local settings"}
+                      {t("extension.p2Purpose")}
                     </td>
                     <td className="py-3.5 px-4 text-site-text-2 leading-relaxed">
-                      {t("extension.p2What") || "Store your preferences and temporary data."}
+                      {t("extension.p2What")}
                     </td>
                     <td className="py-3.5 pl-4 text-site-text">
-                      {t("extension.accessLocalOnly") || "Local only"}
+                      {t("extension.accessLocalOnly")}
                     </td>
                   </tr>
                   <tr>
@@ -631,14 +616,13 @@ export function ExtensionContent() {
                       identity
                     </td>
                     <td className="py-3.5 px-4 text-site-text font-medium">
-                      {t("extension.p3Purpose") || "Google Drive access"}
+                      {t("extension.p3Purpose")}
                     </td>
                     <td className="py-3.5 px-4 text-site-text-2 leading-relaxed">
-                      {t("extension.p3What") ||
-                        "Authenticate with Google to save your captures to your own Google Drive."}
+                      {t("extension.p3What")}
                     </td>
                     <td className="py-3.5 pl-4 text-site-text">
-                      {t("extension.accessOnlyUsed") || "Only when used"}
+                      {t("extension.accessOnlyUsed")}
                     </td>
                   </tr>
                   <tr>
@@ -646,14 +630,13 @@ export function ExtensionContent() {
                       scripting
                     </td>
                     <td className="py-3.5 px-4 text-site-text font-medium">
-                      {t("extension.p4Purpose") || "Inject content scripts"}
+                      {t("extension.p4Purpose")}
                     </td>
                     <td className="py-3.5 px-4 text-site-text-2 leading-relaxed">
-                      {t("extension.p4What") ||
-                        "Enable capture, console, network, and page context collection."}
+                      {t("extension.p4What")}
                     </td>
                     <td className="py-3.5 pl-4 text-site-text">
-                      {t("extension.accessActiveTab") || "Only on active tab"}
+                      {t("extension.accessActiveTab")}
                     </td>
                   </tr>
                   <tr>
@@ -661,14 +644,13 @@ export function ExtensionContent() {
                       cookies (if enabled)
                     </td>
                     <td className="py-3.5 px-4 text-site-text font-medium">
-                      {t("extension.p5Purpose") || "Include relevant context"}
+                      {t("extension.p5Purpose")}
                     </td>
                     <td className="py-3.5 px-4 text-site-text-2 leading-relaxed">
-                      {t("extension.p5What") ||
-                        "Read specific cookies (optional) to help with debugging authentication issues."}
+                      {t("extension.p5What")}
                     </td>
                     <td className="py-3.5 pl-4 font-semibold text-rose-500 dark:text-rose-400">
-                      {t("extension.accessOptional") || "Optional (off by default)"}
+                      {t("extension.accessOptional")}
                     </td>
                   </tr>
                 </tbody>
@@ -680,14 +662,13 @@ export function ExtensionContent() {
           <div className="space-y-6">
             <div className="space-y-1">
               <span className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-[#5B8C2A] dark:text-[#A8D666]">
-                {t("extension.sectionCompatibility") || "COMPATIBILITY"}
+                {t("extension.sectionCompatibility")}
               </span>
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
-                {t("extension.browsersTitle") || "Supported Browsers"}
+                {t("extension.browsersTitle")}
               </h2>
               <p className="text-xs sm:text-sm text-site-text-2">
-                {t("extension.browsersSub") ||
-                  "BugSnap works on all major Chromium-based and modern browsers."}
+                {t("extension.browsersSub")}
               </p>
             </div>
 
@@ -696,9 +677,9 @@ export function ExtensionContent() {
               <div className="flex items-center gap-4">
                 <Icon icon="logos:chrome-web-store" className="w-10 h-10 shrink-0" aria-hidden="true" />
                 <div className="min-w-0">
-                  <h3 className="text-sm sm:text-base font-bold text-site-text">Google Chrome</h3>
+                  <h3 className="text-sm sm:text-base font-bold text-site-text">{t("modalFx.chromeStoreName")}</h3>
                   <p className="text-xs text-site-text-2">
-                    {t("extension.fullSupport") || "Full support with all features"}
+                    {t("extension.fullSupport")}
                   </p>
                   <a
                     href={CHROME_STORE_URL}
@@ -706,7 +687,7 @@ export function ExtensionContent() {
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-xs font-semibold text-[#5B8C2A] dark:text-[#A8D666] hover:underline mt-1"
                   >
-                    <span>{t("extension.addToChrome") || "Add to Chrome"}</span>
+                    <span>{t("extension.addToChrome")}</span>
                     <span aria-hidden="true">&rarr;</span>
                   </a>
                 </div>
@@ -716,9 +697,9 @@ export function ExtensionContent() {
               <div className="flex items-center gap-4">
                 <Icon icon="logos:firefox" className="w-10 h-10 shrink-0" aria-hidden="true" />
                 <div className="min-w-0">
-                  <h3 className="text-sm sm:text-base font-bold text-site-text">Mozilla Firefox</h3>
+                  <h3 className="text-sm sm:text-base font-bold text-site-text">{t("modalFx.firefoxStoreName")}</h3>
                   <p className="text-xs text-site-text-2">
-                    {t("extension.fullSupport") || "Full support with all features"}
+                    {t("extension.fullSupport")}
                   </p>
                   <a
                     href={FIREFOX_STORE_URL}
@@ -726,7 +707,7 @@ export function ExtensionContent() {
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-xs font-semibold text-[#5B8C2A] dark:text-[#A8D666] hover:underline mt-1"
                   >
-                    <span>{t("extension.addToFirefox") || "Add to Firefox"}</span>
+                    <span>{t("extension.addToFirefox")}</span>
                     <span aria-hidden="true">&rarr;</span>
                   </a>
                 </div>
@@ -738,10 +719,10 @@ export function ExtensionContent() {
           <div className="space-y-6">
             <div className="space-y-1">
               <span className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-[#5B8C2A] dark:text-[#A8D666]">
-                {t("extension.faqEyebrow") || "FREQUENTLY ASKED QUESTIONS"}
+                {t("extension.faqEyebrow")}
               </span>
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
-                {t("extension.faqTitle") || "Frequently Asked Questions"}
+                {t("extension.faqTitle")}
               </h2>
             </div>
 
@@ -750,13 +731,12 @@ export function ExtensionContent() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-4">
                   <h3 className="text-sm font-bold text-site-text">
-                    {t("extension.faqImg1Q") || "Is the BugSnap Chrome Extension really free?"}
+                    {t("extension.faqImg1Q")}
                   </h3>
                   
                 </div>
                 <p className="text-xs text-site-text-2 leading-relaxed">
-                  {t("extension.faqImg1A") ||
-                    "Yes. You can install and use the extension for free. All captures are saved to your own Google Drive. No server lock-in, no hidden fees."}
+                  {t("extension.faqImg1A")}
                 </p>
               </div>
 
@@ -764,13 +744,12 @@ export function ExtensionContent() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-4">
                   <h3 className="text-sm font-bold text-site-text">
-                    {t("extension.faqImg2Q") || "Where are my recordings and screenshots saved?"}
+                    {t("extension.faqImg2Q")}
                   </h3>
                   
                 </div>
                 <p className="text-xs text-site-text-2 leading-relaxed">
-                  {t("extension.faqImg2A") ||
-                    "Your captures are stored in your own Google Drive with your permission. You can organize them in any folder."}
+                  {t("extension.faqImg2A")}
                 </p>
               </div>
 
@@ -778,13 +757,12 @@ export function ExtensionContent() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-4">
                   <h3 className="text-sm font-bold text-site-text">
-                    {t("extension.faqImg3Q") || "Does the extension store data on BugSnap's servers?"}
+                    {t("extension.faqImg3Q")}
                   </h3>
                   
                 </div>
                 <p className="text-xs text-site-text-2 leading-relaxed">
-                  {t("extension.faqImg3A") ||
-                    "No. Files are saved directly to your Google Drive. We do not store your screenshots or recordings on our servers."}
+                  {t("extension.faqImg3A")}
                 </p>
               </div>
 
@@ -792,13 +770,12 @@ export function ExtensionContent() {
               <div className="space-y-2">
                 <div className="flex items-center justify-between gap-4">
                   <h3 className="text-sm font-bold text-site-text">
-                    {t("extension.faqImg4Q") || "Do you support other browsers?"}
+                    {t("extension.faqImg4Q")}
                   </h3>
                   
                 </div>
                 <p className="text-xs text-site-text-2 leading-relaxed">
-                  {t("extension.faqImg4A") ||
-                    "Yes. BugSnap supports Google Chrome and Mozilla Firefox, with all features working the same across supported browsers."}
+                  {t("extension.faqImg4A")}
                 </p>
               </div>
             </div>
@@ -808,14 +785,13 @@ export function ExtensionContent() {
           <div className="rounded-2xl sm:rounded-3xl border border-blue-100 dark:border-blue-900/40 bg-[#f0f6ff] dark:bg-blue-950/25 p-6 sm:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm min-w-0">
             <div className="space-y-1.5 max-w-xl min-w-0">
               <span className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                {t("extension.ctaEyebrow") || "READY TO GET STARTED?"}
+                {t("extension.ctaEyebrow")}
               </span>
               <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
-                {t("extension.ctaTitle") || "Start capturing bugs with DevTools telemetry"}
+                {t("extension.ctaTitle")}
               </h2>
               <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400">
-                {t("extension.ctaImgSub") ||
-                  "Install the BugSnap Chrome Extension and bring clarity to every bug report."}
+                {t("extension.ctaImgSub")}
               </p>
             </div>
             <div className="flex flex-wrap items-center gap-3 shrink-0 min-w-0">
@@ -826,7 +802,7 @@ export function ExtensionContent() {
                 className="inline-flex items-center gap-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold px-6 py-3.5 rounded-xl shadow-md transition-all hover:scale-[1.02] active:scale-[0.99] shrink-0 touch-manipulation whitespace-nowrap"
               >
                 <Icon icon="logos:chrome" className="w-5 h-5 shrink-0" aria-hidden="true" />
-                <span>{t("extension.addToChrome") || "Add to Chrome"}</span>
+                <span>{t("extension.addToChrome")}</span>
               </a>
               <a
                 href={FIREFOX_STORE_URL}

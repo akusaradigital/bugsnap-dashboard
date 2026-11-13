@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import {
   finishConnectionByEmailCode,
   driveAccessToken,
+  DriveGrantRevokedError,
 } from "@/lib/google-drive";
 import { createServiceClient } from "@/lib/supabase-server";
 import { createHash, randomBytes, timingSafeEqual } from "crypto";
@@ -25,26 +26,42 @@ export async function POST(request: Request) {
   }
 
   const action = typeof body.action === "string" ? body.action : "";
+  // Each extension install sends its own stable, locally-generated device_id
+  // so its secret is paired per-device (extension_device_connections), not
+  // per-user. Without this, connecting Google Drive on a second laptop would
+  // overwrite the first laptop's only secret and kick it out, surfacing as a
+  // false "session expired" error even though the Drive grant itself was fine.
+  const deviceId = typeof body.device_id === "string" ? body.device_id.trim().slice(0, 128) : "";
 
   // 0. DISCONNECT / REVOKE FLOW
-  // Invalidates the paired extension secret on the server so old credentials cannot be reused
+  // Invalidates this device's paired secret only - other devices paired to
+  // the same account are untouched.
   if (action === "disconnect") {
     const email =
       typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
     const secret = typeof body.secret === "string" ? body.secret.trim() : "";
-    if (email && secret) {
+    if (email && secret && deviceId) {
       try {
         const db = createServiceClient();
         const { data: conn } = await db
           .from("google_drive_connections")
-          .select("user_id, extension_secret_hash")
+          .select("user_id")
           .eq("google_email", email)
           .maybeSingle();
-        if (conn && secretMatches(secret, conn.extension_secret_hash)) {
-          await db
-            .from("google_drive_connections")
-            .update({ extension_secret_hash: null })
-            .eq("user_id", conn.user_id);
+        if (conn) {
+          const { data: device } = await db
+            .from("extension_device_connections")
+            .select("extension_secret_hash")
+            .eq("user_id", conn.user_id)
+            .eq("device_id", deviceId)
+            .maybeSingle();
+          if (device && secretMatches(secret, device.extension_secret_hash)) {
+            await db
+              .from("extension_device_connections")
+              .delete()
+              .eq("user_id", conn.user_id)
+              .eq("device_id", deviceId);
+          }
         }
       } catch (err) {
         console.warn("[/api/extension/drive-connect] Disconnect revocation error:", err);
@@ -64,11 +81,17 @@ export async function POST(request: Request) {
         { status: 400 },
       );
     }
+    if (!deviceId) {
+      return NextResponse.json(
+        { error: "device_id is required for refresh" },
+        { status: 400 },
+      );
+    }
 
     const db = createServiceClient();
     const { data: conn, error: connError } = await db
       .from("google_drive_connections")
-      .select("user_id, refresh_token, google_email, extension_secret_hash")
+      .select("user_id, refresh_token, google_email")
       .eq("google_email", email)
       .maybeSingle();
 
@@ -85,9 +108,17 @@ export async function POST(request: Request) {
     // The device secret is the ONLY credential on this branch - an email alone
     // is public knowledge. Without this check anyone could POST an email and
     // receive a live Google Drive access token for that account.
-    if (!conn.extension_secret_hash) {
-      // Never had a secret issued: the extension must re-run the code exchange,
-      // which is the only flow that proves possession of the Google account.
+    const { data: device } = await db
+      .from("extension_device_connections")
+      .select("extension_secret_hash")
+      .eq("user_id", conn.user_id)
+      .eq("device_id", deviceId)
+      .maybeSingle();
+
+    if (!device) {
+      // This device never had a secret issued: the extension must re-run the
+      // code exchange, which is the only flow that proves possession of the
+      // Google account.
       return NextResponse.json(
         {
           error: "Extension is not paired with this connection",
@@ -96,7 +127,7 @@ export async function POST(request: Request) {
         { status: 409 },
       );
     }
-    if (!secretMatches(secret, conn.extension_secret_hash)) {
+    if (!secretMatches(secret, device.extension_secret_hash)) {
       return NextResponse.json(
         { error: "Invalid extension secret", code: "RECONNECT_REQUIRED" },
         { status: 401 },
@@ -105,6 +136,12 @@ export async function POST(request: Request) {
 
     try {
       const token = await driveAccessToken(conn.user_id);
+
+      await db
+        .from("extension_device_connections")
+        .update({ last_used_at: new Date().toISOString() })
+        .eq("user_id", conn.user_id)
+        .eq("device_id", deviceId);
 
       return NextResponse.json({
         connected: true,
@@ -121,14 +158,28 @@ export async function POST(request: Request) {
       const isScopeError =
         err instanceof Error &&
         /DRIVE_PERMISSION_DENIED|drive\.file|insufficient/i.test(err.message);
+      if (isScopeError) {
+        return NextResponse.json(
+          {
+            error: "Google Drive permission was not granted. Please reconnect and check the Drive permission box.",
+            code: "DRIVE_PERMISSION_DENIED",
+          },
+          { status: 403 },
+        );
+      }
+      // Only a genuinely revoked grant should ever tell the extension to stop
+      // retrying and prompt the user to reconnect. A transient failure (network
+      // blip, Google outage) gets a 503 instead of 409, so fetchWithTokenRefresh
+      // on the extension side treats it like any other retryable server error.
+      if (err instanceof DriveGrantRevokedError) {
+        return NextResponse.json(
+          { error: "Google Drive access was revoked. Please reconnect.", code: "RECONNECT_REQUIRED" },
+          { status: 409 },
+        );
+      }
       return NextResponse.json(
-        {
-          error: isScopeError
-            ? "Google Drive permission was not granted. Please reconnect and check the Drive permission box."
-            : "Token refresh failed",
-          code: isScopeError ? "DRIVE_PERMISSION_DENIED" : "RECONNECT_REQUIRED",
-        },
-        { status: isScopeError ? 403 : 409 },
+        { error: "Token refresh failed temporarily", code: "TRANSIENT_REFRESH_FAILURE" },
+        { status: 503 },
       );
     }
   }
@@ -140,6 +191,13 @@ export async function POST(request: Request) {
   if (!code || !redirectUri) {
     return NextResponse.json(
       { error: "code and redirect_uri are required" },
+      { status: 400 },
+    );
+  }
+
+  if (!deviceId) {
+    return NextResponse.json(
+      { error: "device_id is required" },
       { status: 400 },
     );
   }
@@ -156,10 +214,15 @@ export async function POST(request: Request) {
       .update(extensionSecret)
       .digest("hex");
     const db = createServiceClient();
+    // upsert, not insert: reconnecting the same device (e.g. after a manual
+    // disconnect) must replace that device's own secret, not create a
+    // duplicate row or collide on the (user_id, device_id) primary key.
     await db
-      .from("google_drive_connections")
-      .update({ extension_secret_hash: secretHash })
-      .eq("user_id", userId);
+      .from("extension_device_connections")
+      .upsert(
+        { user_id: userId, device_id: deviceId, extension_secret_hash: secretHash, last_used_at: new Date().toISOString() },
+        { onConflict: "user_id,device_id" },
+      );
 
     return NextResponse.json({
       connected: true,

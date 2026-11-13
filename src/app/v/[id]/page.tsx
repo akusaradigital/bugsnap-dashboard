@@ -15,7 +15,7 @@ import { useT } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
 import { Dropdown } from "@/components/Dropdown";
 import { SubsystemErrorBoundary } from "@/components/SubsystemErrorBoundary";
-import { Icon } from "@/lib/iconify";
+import { Icon, withAssetVersion } from "@/lib/iconify";
 
 const DevToolsPanel = dynamic(() => import("@/components/DevToolsPanel"), {
   ssr: false,
@@ -1315,7 +1315,7 @@ function SingleViewContent() {
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/icons/google.svg"
+                  src={withAssetVersion("/icons/google.svg")}
                   alt=""
                   aria-hidden="true"
                   width={16}

@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, useEffect, useRef, ReactNode } from "react";
 import { Icon } from "@/lib/iconify";
+import { useT } from "@/components/I18nProvider";
 
 export type ToastType = "success" | "error" | "info" | "loading";
 
@@ -64,6 +65,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
 }
 
 function Toast({ toast, onDismiss }: { toast: ToastItem; onDismiss: (id: number) => void }) {
+  const { t } = useT();
   const duration = toast.duration || 3500;
   const [isPaused, setIsPaused] = useState(false);
   const [progress, setProgress] = useState(1);
@@ -157,7 +159,7 @@ function Toast({ toast, onDismiss }: { toast: ToastItem; onDismiss: (id: number)
           onDismiss(toast.id);
         }}
         className={`ml-auto transition-colors p-1 ${closeButtonStyles[toast.type]}`}
-        aria-label="Close"
+        aria-label={t("sharedFx.close")}
       >
         <Icon icon="lucide:x" className="w-3 h-3" />
       </button>

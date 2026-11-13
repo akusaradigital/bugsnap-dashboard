@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
 import { IconHome, IconMenu2, IconX } from "./TablerIcons";
+import { withAssetVersion } from "@/lib/iconify";
 
 export function SiteNavbar() {
   const { t } = useT();
@@ -75,7 +76,7 @@ export function SiteNavbar() {
     >
       <div className="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
         {/* Brand */}
-        <Link href="/" className="flex min-w-0 items-center gap-2 group shrink-0" aria-label="BugSnap. From Click to Fix.">
+        <Link href="/" className="flex min-w-0 items-center gap-2 group shrink-0" aria-label={t("siteFx.logoLabel")}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/bugsnap-icon-day.svg"
@@ -86,7 +87,7 @@ export function SiteNavbar() {
           />
           <span className="flex min-w-0 flex-col justify-center leading-tight">
             <span className="text-base font-bold tracking-tight text-slate-900 dark:text-white">BugSnap</span>
-            <span className="max-w-[180px] truncate text-[10px] font-medium tracking-[0.12em] text-slate-600 dark:text-slate-300 sm:max-w-[220px]">From Click to Fix.</span>
+            <span className="max-w-[180px] truncate text-[10px] font-medium tracking-[0.12em] text-slate-600 dark:text-slate-300 sm:max-w-[220px]">{t("siteFx.tagline")}</span>
           </span>
         </Link>
 
@@ -130,7 +131,7 @@ export function SiteNavbar() {
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
-                src="/icons/google.svg"
+                src={withAssetVersion("/icons/google.svg")}
                 alt=""
                 aria-hidden="true"
                 width={16}
@@ -146,7 +147,7 @@ export function SiteNavbar() {
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="lg:hidden inline-flex items-center justify-center min-w-[44px] min-h-[44px] p-2 rounded-md text-site-text-2 hover:text-site-text hover:bg-site-surface-2 transition-colors touch-manipulation"
-            aria-label="Toggle Navigation Menu"
+            aria-label={t("siteFx.toggleNav")}
             aria-expanded={mobileMenuOpen}
           >
             {mobileMenuOpen ? <IconX size={20} /> : <IconMenu2 size={20} />}
@@ -193,7 +194,7 @@ export function SiteNavbar() {
               >
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src="/icons/google.svg"
+                  src={withAssetVersion("/icons/google.svg")}
                   alt=""
                   aria-hidden="true"
                   width={16}

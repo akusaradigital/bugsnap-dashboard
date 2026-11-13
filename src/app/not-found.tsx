@@ -86,7 +86,7 @@ export default function NotFound() {
             />
             <span className="flex min-w-0 flex-col justify-center leading-tight">
               <span className="text-base font-bold tracking-tight text-slate-900 dark:text-white">BugSnap</span>
-              <span className="max-w-[180px] truncate text-[10px] font-medium tracking-[0.12em] text-slate-600 dark:text-slate-300 sm:max-w-[220px]">From Click to Fix.</span>
+              <span className="max-w-[180px] truncate text-[10px] font-medium tracking-[0.12em] text-slate-600 dark:text-slate-300 sm:max-w-[220px]">{t("nfFx.tagline")}</span>
             </span>
           </Link>
         </div>
@@ -163,11 +163,11 @@ export default function NotFound() {
       <footer className="relative z-10 border-t border-site-border py-4 text-center text-xs text-site-text-2 bg-site-surface px-4 flex flex-wrap items-center justify-center gap-3">
         <span>© {new Date().getFullYear()} BugSnap by Akusara Digital</span>
         <span>•</span>
-        <Link href="/terms" className="hover:text-site-text hover:underline">Terms</Link>
+        <Link href="/terms" className="hover:text-site-text hover:underline">{t("nfFx.footerTerms")}</Link>
         <span>•</span>
-        <Link href="/privacy" className="hover:text-site-text hover:underline">Privacy</Link>
+        <Link href="/privacy" className="hover:text-site-text hover:underline">{t("nfFx.footerPrivacy")}</Link>
         <span>•</span>
-        <Link href="/contact#complaint" className="hover:text-site-text hover:underline text-emerald-600 dark:text-emerald-400">Pengaduan Konsumen</Link>
+        <Link href="/contact#complaint" className="hover:text-site-text hover:underline text-emerald-600 dark:text-emerald-400">{t("nfFx.footerComplaint")}</Link>
       </footer>
     </div>
   );

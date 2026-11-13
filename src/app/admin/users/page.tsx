@@ -1,11 +1,13 @@
 ﻿"use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useToast } from "@/components/Toast";
 import { useT } from "@/components/I18nProvider";
 import { getAdminHeaders } from "@/lib/admin-cache";
 import { Icon } from "@/lib/iconify";
 import { Dropdown } from "@/components/Dropdown";
+import { AdminPagination } from "@/components/AdminPagination";
+import { useConfirm } from "@/components/ConfirmDialog";
 
 interface UserItem {
   id: string;
@@ -57,6 +59,7 @@ interface CommentInfo {
 export default function AdminUsersPage() {
   const { showToast } = useToast();
   const { t } = useT();
+  const confirm = useConfirm();
 
   const [loading, setLoading] = useState(true);
   const [users, setUsers] = useState<UserItem[]>([]);
@@ -64,6 +67,7 @@ export default function AdminUsersPage() {
   const [planFilter, setPlanFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
@@ -77,6 +81,7 @@ export default function AdminUsersPage() {
 
   // Action states
   const [togglingUser, setTogglingUser] = useState<string | null>(null);
+  const [openRowMenu, setOpenRowMenu] = useState<string | null>(null);
   const [planModalUser, setPlanModalUser] = useState<UserItem | null>(null);
   const [selectedNewPlan, setSelectedNewPlan] = useState<string>("free");
   const [selectedDuration, setSelectedDuration] = useState<string>("permanent");
@@ -84,30 +89,61 @@ export default function AdminUsersPage() {
   const [syncingSubscription, setSyncingSubscription] = useState(false);
   const [sendingReengagement, setSendingReengagement] = useState(false);
 
+  // Close the row action menu when clicking anywhere else.
   useEffect(() => {
-    loadUsers();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, planFilter, statusFilter]);
+    if (!openRowMenu) return;
+    const close = () => setOpenRowMenu(null);
+    document.addEventListener("click", close);
+    return () => document.removeEventListener("click", close);
+  }, [openRowMenu]);
 
+  // Per-page cache keyed by filters, so going back to a page is instant.
+  const pageCache = useRef(new Map<string, { users: UserItem[]; totalPages: number; total: number }>());
+
+  function pageKey(p: number, size: number, plan: string, status: string, search: string) {
+    return `${p}|${size}|${plan}|${status}|${search}`;
+  }
+
+  async function fetchPage(p: number, size: number, plan: string, status: string, search: string) {
+    const key = pageKey(p, size, plan, status, search);
+    const cachedPage = pageCache.current.get(key);
+    if (cachedPage) return cachedPage;
+
+    const headers = await getAdminHeaders();
+    const params = new URLSearchParams({
+      page: p.toString(),
+      limit: String(size),
+      plan,
+      status,
+      search,
+    });
+    const res = await fetch(`/api/admin/users?${params.toString()}`, { headers });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || t("admin.loadFailed"));
+
+    const result = {
+      users: (json.users || []) as UserItem[],
+      totalPages: json.pagination?.totalPages || 1,
+      total: json.pagination?.total || 0,
+    };
+    pageCache.current.set(key, result);
+    return result;
+  }
+
+  // Keep the previous rows visible while the next page loads (no blank flash).
   async function loadUsers() {
     setLoading(true);
     try {
-      const headers = await getAdminHeaders();
-      const params = new URLSearchParams({
-        page: page.toString(),
-        limit: "20",
-        plan: planFilter,
-        status: statusFilter,
-        search: searchQuery.trim(),
-      });
+      const search = searchQuery.trim();
+      const result = await fetchPage(page, pageSize, planFilter, statusFilter, search);
+      setUsers(result.users);
+      setTotalPages(result.totalPages);
+      setTotalCount(result.total);
 
-      const res = await fetch(`/api/admin/users?${params.toString()}`, { headers });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json.error || t("admin.loadFailed"));
-
-      setUsers(json.users || []);
-      setTotalPages(json.pagination?.totalPages || 1);
-      setTotalCount(json.pagination?.total || 0);
+      // Prefetch the next page so clicking Next feels instant.
+      if (page < result.totalPages) {
+        fetchPage(page + 1, pageSize, planFilter, statusFilter, search).catch(() => {});
+      }
     } catch (err: unknown) {
       showToast((err as Error)?.message || t("admin.loadFailed"), "error");
     } finally {
@@ -115,10 +151,19 @@ export default function AdminUsersPage() {
     }
   }
 
+  useEffect(() => {
+    loadUsers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, pageSize, planFilter, statusFilter]);
+
   function handleSearchSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setPage(1);
-    loadUsers();
+    pageCache.current.clear();
+    if (page !== 1) {
+      setPage(1);
+    } else {
+      loadUsers();
+    }
   }
 
   async function openUserDetail(user: UserItem) {
@@ -147,11 +192,12 @@ export default function AdminUsersPage() {
 
   async function handleToggleSuspend(user: UserItem) {
     const nextState = !user.suspended;
-    const confirmMsg = nextState
-      ? `Suspend user ${user.email}?`
-      : `Unsuspend user ${user.email}?`;
-
-    if (!confirm(confirmMsg)) return;
+    const ok = await confirm({
+      title: nextState ? t("admin.suspendConfirmTitle") : t("admin.unsuspendConfirmTitle"),
+      message: user.email,
+      danger: nextState,
+    });
+    if (!ok) return;
 
     setTogglingUser(user.id);
     try {
@@ -162,8 +208,9 @@ export default function AdminUsersPage() {
         body: JSON.stringify({ user_id: user.id, action: "toggle_suspend", suspended: nextState }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed to toggle suspend");
+      if (!res.ok) throw new Error(json.error || t("adminUsers.errToggle"));
 
+      pageCache.current.clear();
       setUsers((prev) =>
         prev.map((u) => (u.id === user.id ? { ...u, suspended: nextState } : u))
       );
@@ -172,7 +219,7 @@ export default function AdminUsersPage() {
       }
       showToast(nextState ? t("admin.suspended") : t("admin.active"), "success");
     } catch (err: unknown) {
-      showToast((err as Error)?.message || "Failed to update status", "error");
+      showToast((err as Error)?.message || t("adminUsers.errStatus"), "error");
     } finally {
       setTogglingUser(null);
     }
@@ -194,9 +241,10 @@ export default function AdminUsersPage() {
         }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed to update plan");
+      if (!res.ok) throw new Error(json.error || t("adminUsers.errPlan"));
 
       const updatedExpiry = json.user?.plan_expires_at || null;
+      pageCache.current.clear();
       setUsers((prev) =>
         prev.map((u) =>
           u.id === planModalUser.id ? { ...u, plan: selectedNewPlan, plan_expires_at: updatedExpiry } : u
@@ -210,7 +258,7 @@ export default function AdminUsersPage() {
       showToast(t("admin.planChanged"), "success");
       setPlanModalUser(null);
     } catch (err: unknown) {
-      showToast((err as Error)?.message || "Failed to change plan", "error");
+      showToast((err as Error)?.message || t("adminUsers.errPlanToast"), "error");
     } finally {
       setSavingPlan(false);
     }
@@ -226,9 +274,10 @@ export default function AdminUsersPage() {
         body: JSON.stringify({ user_id: user.id, action: "sync_subscription" }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed to sync subscription");
+      if (!res.ok) throw new Error(json.error || t("adminUsers.errSync"));
       if (json.synced && json.plan) {
-        showToast(json.message || "Subscription synced!", "success");
+        showToast(json.message || t("adminUsers.syncedToast"), "success");
+        pageCache.current.clear();
         setUsers((prev) =>
           prev.map((u) => (u.id === user.id ? { ...u, plan: json.plan, plan_expires_at: null } : u))
         );
@@ -236,10 +285,10 @@ export default function AdminUsersPage() {
           setSelectedUser((prev) => (prev ? { ...prev, plan: json.plan, plan_expires_at: null } : null));
         }
       } else {
-        showToast(json.message || "No active gateway subscription found", "info");
+        showToast(json.message || t("adminUsers.noGateway"), "info");
       }
     } catch (err: unknown) {
-      showToast((err as Error)?.message || "Failed to sync", "error");
+      showToast((err as Error)?.message || t("adminUsers.errSyncToast"), "error");
     } finally {
       setSyncingSubscription(false);
     }
@@ -265,7 +314,11 @@ export default function AdminUsersPage() {
   }
 
   async function handleSendResetPassword(user: UserItem) {
-    if (!confirm(`Send password reset email to ${user.email}?`)) return;
+    const ok = await confirm({
+      title: t("admin.resetPasswordConfirmTitle"),
+      message: user.email,
+    });
+    if (!ok) return;
     try {
       const headers = await getAdminHeaders();
       const res = await fetch("/api/admin/users", {
@@ -274,17 +327,21 @@ export default function AdminUsersPage() {
         body: JSON.stringify({ user_id: user.id, action: "reset_password" }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed to send reset email");
+      if (!res.ok) throw new Error(json.error || t("adminUsers.errReset"));
 
       showToast(t("admin.resetPasswordSent", { email: user.email }), "success");
     } catch (err: unknown) {
-      showToast((err as Error)?.message || "Failed to send reset email", "error");
+      showToast((err as Error)?.message || t("adminUsers.errResetToast"), "error");
     }
   }
 
   async function handleDeleteUser(user: UserItem) {
-    const confirmMsg = t("admin.deleteUserConfirm", { email: user.email });
-    if (!confirm(confirmMsg)) return;
+    const ok = await confirm({
+      title: t("admin.deleteUserConfirmTitle"),
+      message: t("admin.deleteUserConfirm", { email: user.email }),
+      danger: true,
+    });
+    if (!ok) return;
 
     try {
       const headers = await getAdminHeaders();
@@ -293,13 +350,14 @@ export default function AdminUsersPage() {
         headers,
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed to delete user");
+      if (!res.ok) throw new Error(json.error || t("adminUsers.errDelete"));
 
+      pageCache.current.clear();
       setUsers((prev) => prev.filter((u) => u.id !== user.id));
       if (selectedUser?.id === user.id) setSelectedUser(null);
       showToast(t("admin.userDeleted"), "success");
     } catch (err: unknown) {
-      showToast((err as Error)?.message || "Failed to delete user", "error");
+      showToast((err as Error)?.message || t("adminUsers.errDeleteToast"), "error");
     }
   }
 
@@ -309,17 +367,17 @@ export default function AdminUsersPage() {
         <div>
           <h2 className="text-base font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
             <span className="flex items-center gap-2"><Icon icon="lucide:users" className="w-4 h-4 shrink-0 text-[#2563EB] dark:text-[#3B82F6]" /> {t("admin.manageUsers")}</span>
-            <span className="text-xs px-2 py-0.5 rounded-md bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-400 font-normal">
-              {totalCount.toLocaleString()} {t("admin.user")}
-            </span>
           </h2>
           <p className="text-xs text-slate-500 dark:text-zinc-400 mt-0.5">
-            {t("admin.subtitle")}
+            {totalCount.toLocaleString()} {t("admin.user")} · {t("admin.subtitle")}
           </p>
         </div>
         <button
           type="button"
-          onClick={() => loadUsers()}
+          onClick={() => {
+            pageCache.current.clear();
+            loadUsers();
+          }}
           disabled={loading}
           className="self-start sm:self-auto px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-xs font-semibold text-slate-700 dark:text-zinc-300 transition-colors shadow-xs cursor-pointer"
         >
@@ -338,13 +396,12 @@ export default function AdminUsersPage() {
             }}
             options={[
               { value: "all", label: t("admin.allPlans") },
-              { value: "free", label: "Free" },
-              { value: "pro", label: "Pro" },
-              { value: "pro_plus", label: "Pro Plus" },
-              { value: "enterprise", label: "Enterprise" },
+              { value: "free", label: t("adminUsers.planFree") },
+              { value: "pro", label: t("adminUsers.planPro") },
+              { value: "pro_plus", label: t("adminUsers.planProPlus") },
+              { value: "enterprise", label: t("adminUsers.planEnterprise") },
             ]}
-            variant="pill"
-            className="flex-1 sm:flex-none min-w-[120px]"
+            variant="field-white"
           />
 
           <Dropdown
@@ -359,8 +416,22 @@ export default function AdminUsersPage() {
               { value: "suspended", label: t("admin.suspended") },
               { value: "stuck", label: t("admin.statusStuck") },
             ]}
-            variant="pill"
-            className="flex-1 sm:flex-none min-w-[120px]"
+            variant="field-white"
+          />
+
+          <Dropdown
+            value={String(pageSize)}
+            onChange={(val) => {
+              setPageSize(Number(val));
+              setPage(1);
+            }}
+            options={[
+              { value: "10", label: "10" },
+              { value: "20", label: "20" },
+              { value: "50", label: "50" },
+              { value: "100", label: "100" },
+            ]}
+            variant="field-white"
           />
         </div>
 
@@ -394,8 +465,8 @@ export default function AdminUsersPage() {
                 <th className="py-3 px-4 text-right">{t("admin.actions")}</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 dark:divide-zinc-800">
-              {loading ? (
+            <tbody className={`divide-y divide-slate-100 dark:divide-zinc-800 transition-opacity ${loading && users.length > 0 ? "opacity-50" : ""}`}>
+              {loading && users.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="p-8 text-center text-slate-400">
                     {t("common.loading")}
@@ -411,22 +482,11 @@ export default function AdminUsersPage() {
                 users.map((u) => (
                   <tr key={u.id} className="hover:bg-slate-50 dark:hover:bg-zinc-800/50 transition-colors">
                     <td className="py-3 px-4 whitespace-nowrap">
-                      <div className="font-bold text-slate-900 dark:text-white flex items-center gap-2">
-                        <span>{u.full_name || "Tanpa Nama"}</span>
-                        {u.google_drive_connected && (
-                          <span className="inline-flex items-center gap-1 text-[10px] px-1.5 py-0.2 rounded bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 font-mono">
-                            <span>Drive</span>
-                            <Icon icon="lucide:check" className="w-2.5 h-2.5 shrink-0" />
-                          </span>
-                        )}
+                      <div className="font-bold text-slate-900 dark:text-white">
+                        {u.full_name || t("adminUsers.noName")}
                       </div>
-                      <div className="text-[11px] text-slate-500 dark:text-zinc-400 font-mono flex items-center gap-1.5 mt-0.5">
-                        <span>{u.email}</span>
-                        {u.is_disposable && (
-                          <span className="px-1.5 py-0.2 rounded text-[9px] font-bold uppercase bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300 border border-amber-300 dark:border-amber-800" title="Disposable/Throwaway Email Domain">
-                            Temp Mail
-                          </span>
-                        )}
+                      <div className="text-[11px] text-slate-500 dark:text-zinc-400 font-mono mt-0.5">
+                        {u.email}
                       </div>
                     </td>
                     <td className="py-3 px-4 whitespace-nowrap">
@@ -438,11 +498,10 @@ export default function AdminUsersPage() {
                             setSelectedNewPlan(u.plan || "free");
                             setSelectedDuration("permanent");
                           }}
-                          className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-blue-50 dark:bg-blue-950/20 text-[#2563EB] dark:text-[#3B82F6] border border-blue-200 dark:border-blue-900/40 hover:ring-1 hover:ring-[#2563EB]/40 cursor-pointer transition-all inline-flex items-center gap-1"
+                          className="text-xs font-semibold uppercase tracking-wider text-slate-700 dark:text-zinc-300 hover:text-[#2563EB] dark:hover:text-[#3B82F6] cursor-pointer transition-colors"
                           title={t("admin.changePlan")}
                         >
-                          <span>{u.plan || "free"}</span>
-                          <Icon icon="lucide:pencil" className="w-2.5 h-2.5 shrink-0" />
+                          {u.plan || "free"}
                         </button>
                         {u.plan_expires_at && (
                           <span className="text-[9px] text-slate-400">
@@ -472,43 +531,59 @@ export default function AdminUsersPage() {
                       )}
                     </td>
                     <td className="py-3 px-4 text-right whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          type="button"
-                          onClick={() => openUserDetail(u)}
-                          className="p-1 rounded text-xs font-semibold border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors inline-flex items-center justify-center"
-                          aria-label={t("admin.viewDetail") || "View detail"}
-                        >
-                          <Icon icon="lucide:eye" className="w-3.5 h-3.5 shrink-0" />
-                        </button>
+                      <div className="relative flex items-center justify-end gap-1.5">
                         <button
                           type="button"
                           disabled={togglingUser === u.id}
                           onClick={() => handleToggleSuspend(u)}
-                          className={`px-2.5 py-1 rounded text-xs font-semibold border transition-colors ${
+                          title={u.suspended ? t("admin.activate") : t("admin.suspend")}
+                          aria-label={u.suspended ? t("admin.activate") : t("admin.suspend")}
+                          className={`p-1.5 rounded-md transition-colors cursor-pointer disabled:opacity-50 ${
                             u.suspended
-                              ? "border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
-                              : "border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40"
+                              ? "text-emerald-600 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-950/40"
+                              : "text-amber-600 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-950/40"
                           }`}
                         >
-                          {togglingUser === u.id ? "..." : u.suspended ? t("admin.activate") : t("admin.suspend")}
+                          <Icon
+                            icon={togglingUser === u.id ? "lucide:loader-2" : u.suspended ? "lucide:play" : "lucide:pause"}
+                            className={`w-4 h-4 ${togglingUser === u.id ? "animate-spin" : ""}`}
+                            aria-hidden="true"
+                          />
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleSendResetPassword(u)}
-                          className="px-2 py-1 rounded text-xs font-semibold border border-slate-200 dark:border-zinc-700 text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors inline-flex items-center justify-center"
-                          title={t("admin.resetPassword")} aria-label={t("admin.resetPassword")}
+                          onClick={() => setOpenRowMenu(openRowMenu === u.id ? null : u.id)}
+                          aria-label={t("adminUsers.moreActions")}
+                          aria-expanded={openRowMenu === u.id}
+                          className="p-1 rounded text-slate-500 hover:bg-slate-100 dark:text-zinc-400 dark:hover:bg-zinc-800 transition-colors"
                         >
-                          <Icon icon="lucide:key" className="w-3.5 h-3.5 shrink-0" />
+                          <Icon icon="lucide:ellipsis" className="w-4 h-4" />
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteUser(u)}
-                          className="px-2 py-1 rounded text-xs font-semibold border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors inline-flex items-center justify-center"
-                          title={t("admin.deleteAccount")} aria-label={t("admin.deleteAccount")}
-                        >
-                          <Icon icon="lucide:trash-2" className="w-3.5 h-3.5 shrink-0" />
-                        </button>
+                        {openRowMenu === u.id && (
+                          <div className="absolute right-0 top-full mt-1 z-20 w-44 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-xl p-1 text-xs">
+                            <button
+                              type="button"
+                              onClick={() => { setOpenRowMenu(null); openUserDetail(u); }}
+                              className="w-full text-left px-3 py-2 rounded-lg text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                            >
+                              {t("adminUsers.viewDetail")}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => { setOpenRowMenu(null); handleSendResetPassword(u); }}
+                              className="w-full text-left px-3 py-2 rounded-lg text-slate-700 dark:text-zinc-300 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                            >
+                              {t("admin.resetPassword")}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => { setOpenRowMenu(null); handleDeleteUser(u); }}
+                              className="w-full text-left px-3 py-2 rounded-lg text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                            >
+                              {t("admin.deleteAccount")}
+                            </button>
+                          </div>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -518,30 +593,16 @@ export default function AdminUsersPage() {
           </table>
         </div>
 
-        {/* Pagination Bar */}
         {totalPages > 1 && (
-          <div className="p-3 border-t border-slate-200 dark:border-zinc-800 flex items-center justify-between text-xs text-slate-500 dark:text-zinc-400">
-            <span>
-              Page {page} of {totalPages}
-            </span>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                disabled={page <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="px-2.5 py-1 rounded border border-slate-200 dark:border-zinc-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-zinc-800"
-              >
-                Prev
-              </button>
-              <button
-                type="button"
-                disabled={page >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                className="px-2.5 py-1 rounded border border-slate-200 dark:border-zinc-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-zinc-800"
-              >
-                Next
-              </button>
-            </div>
+          <div className="p-3 border-t border-slate-200 dark:border-zinc-800">
+            <AdminPagination
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              disabled={loading}
+              prevLabel={t("admin.prev")}
+              nextLabel={t("admin.next")}
+            />
           </div>
         )}
       </div>
@@ -567,7 +628,7 @@ export default function AdminUsersPage() {
                       : "border-slate-200 dark:border-zinc-800 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800"
                   }`}
                 >
-                  <span className="capitalize">{p === "pro_plus" ? "Pro Plus" : p}</span>
+                  <span className="capitalize">{p === "pro_plus" ? t("adminUsers.planProPlus") : p}</span>
                   <input
                     type="radio"
                     name="plan"
@@ -589,10 +650,10 @@ export default function AdminUsersPage() {
                   value={selectedDuration}
                   onChange={(val) => setSelectedDuration(val)}
                   options={[
-                    { value: "permanent", label: "Permanen / Langganan Rutin (Tanpa Expire)" },
-                    { value: "7d", label: "7 Hari (Trial / Demo)" },
-                    { value: "30d", label: "1 Bulan (30 Hari)" },
-                    { value: "90d", label: "3 Bulan (Quarterly Gift)" },
+                    { value: "permanent", label: t("adminUsers.durPermanent") },
+                    { value: "7d", label: t("adminUsers.durTrial") },
+                    { value: "30d", label: t("adminUsers.dur30") },
+                    { value: "90d", label: t("adminUsers.dur90") },
                     { value: "180d", label: "6 Bulan" },
                     { value: "365d", label: "1 Tahun (365 Hari)" },
                   ]}
@@ -642,7 +703,7 @@ export default function AdminUsersPage() {
                 type="button"
                 onClick={() => setSelectedUser(null)}
                 className="text-slate-400 hover:text-slate-600 dark:hover:text-white p-1"
-                aria-label="Close"
+                aria-label={t("adminUsers.close")}
               >
                 <Icon icon="lucide:x" className="w-4 h-4 shrink-0" />
               </button>
@@ -657,7 +718,7 @@ export default function AdminUsersPage() {
                   <div className="p-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950">
                     <span className="text-[10px] text-slate-500 dark:text-zinc-400 uppercase font-bold block">Status</span>
                     <span className={`font-bold ${selectedUser.suspended ? "text-rose-600 dark:text-rose-400" : "text-emerald-600 dark:text-emerald-400"}`}>
-                      {selectedUser.suspended ? "Suspended" : "Active"}
+                      {selectedUser.suspended ? t("adminUsers.statusSuspended") : t("adminUsers.statusActive")}
                     </span>
                   </div>
                   <div className="p-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-950">
@@ -665,11 +726,11 @@ export default function AdminUsersPage() {
                     <span className="font-bold text-slate-800 dark:text-zinc-200 inline-flex items-center gap-1">
                       {selectedUser.google_drive_connected ? (
                         <>
-                          <span>Connected</span>
+                          <span>{t("adminUsers.driveConnected")}</span>
                           <Icon icon="lucide:check" className="w-3 h-3 text-emerald-500 shrink-0" />
                         </>
                       ) : (
-                        "Not Linked"
+                        t("adminUsers.driveNotLinked")
                       )}
                     </span>
                   </div>
@@ -729,7 +790,7 @@ export default function AdminUsersPage() {
                             (Expires: {new Date(selectedUser.plan_expires_at).toLocaleDateString("id-ID", { day: "numeric", month: "short", year: "numeric" })})
                           </span>
                         ) : (
-                          <span className="ml-1 text-slate-400">(Permanent / Regular)</span>
+                          <span className="ml-1 text-slate-400">{t("adminUsers.permanentRegular")}</span>
                         )}
                       </p>
                     </div>
@@ -738,19 +799,19 @@ export default function AdminUsersPage() {
                       disabled={syncingSubscription}
                       onClick={() => handleSyncSubscription(selectedUser)}
                       className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs shadow-[#2563EB]/25 disabled:opacity-50 transition-all flex items-center gap-1.5"
-                      title="Tarik status langganan live dari Stripe/Paddle"
+                      title={t("adminUsers.gatewayTitle")}
                     >
-                      {syncingSubscription ? "Syncing..." : (
+                      {syncingSubscription ? t("adminUsers.syncing") : (
                         <>
                           <Icon icon="lucide:zap" className="w-3.5 h-3.5 shrink-0 brightness-0 invert" />
-                          <span>Sync from Gateway</span>
+                          <span>{t("adminUsers.syncGateway")}</span>
                         </>
                       )}
                     </button>
                   </div>
 
                   <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-200/60 dark:border-zinc-800/60">
-                    <span className="text-[10px] uppercase font-bold text-slate-400">Direct Gateway Search:</span>
+                    <span className="text-[10px] uppercase font-bold text-slate-400">{t("adminUsers.gatewaySearch")}</span>
                     <a
                       href={selectedUser.stripe_search_url || `https://dashboard.stripe.com/customers?query=${encodeURIComponent(selectedUser.email)}`}
                       target="_blank"
@@ -779,7 +840,7 @@ export default function AdminUsersPage() {
                     {t("admin.userWorkspaces")}
                   </h4>
                   {userWorkspaces.length === 0 ? (
-                    <p className="text-slate-400 italic">No workspaces</p>
+                    <p className="text-slate-400 italic">{t("adminUsers.noWorkspaces")}</p>
                   ) : (
                     <div className="space-y-1.5 max-h-36 overflow-y-auto">
                       {userWorkspaces.map((ws) => (
@@ -803,7 +864,7 @@ export default function AdminUsersPage() {
                     {t("admin.userCaptures")}
                   </h4>
                   {userCaptures.length === 0 ? (
-                    <p className="text-slate-400 italic">No captures recorded</p>
+                    <p className="text-slate-400 italic">{t("adminUsers.noCaptures")}</p>
                   ) : (
                     <div className="space-y-1.5 max-h-40 overflow-y-auto">
                       {userCaptures.map((cap) => (
@@ -812,7 +873,7 @@ export default function AdminUsersPage() {
                           className="flex items-center justify-between p-2 rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950"
                         >
                           <div>
-                            <span className="font-medium text-slate-900 dark:text-white">{cap.title || "Untitled"}</span>
+                            <span className="font-medium text-slate-900 dark:text-white">{cap.title || t("adminUsers.untitled")}</span>
                             <span className="text-[10px] text-slate-400 ml-2">({cap.type})</span>
                           </div>
                           <a
@@ -845,7 +906,7 @@ export default function AdminUsersPage() {
                         >
                           <div className="flex items-center justify-between gap-2 min-w-0">
                             <span className="font-medium text-slate-900 dark:text-white truncate">
-                              {c.author_name || "Anonymous"}
+                              {c.author_name || t("adminUsers.anonymous")}
                             </span>
                             <span className="text-[10px] text-slate-400 shrink-0">
                               {new Date(c.created_at).toLocaleDateString()}

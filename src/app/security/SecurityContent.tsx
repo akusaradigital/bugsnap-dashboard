@@ -49,8 +49,8 @@ export function SecurityContent() {
 
   return (
     <StaticShell
-      title={t("security.title") || "Security built on"}
-      titleHighlight={t("security.titleHighlight") || "trust & transparency"}
+      title={t("security.title")}
+      titleHighlight={t("security.titleHighlight")}
       breadcrumb={isId ? "Keamanan" : "Security"}
       subtitle={t("security.subtitle")}
       hideDivider={true}
@@ -245,7 +245,7 @@ export function SecurityContent() {
           <div className="rounded-2xl sm:rounded-3xl border border-blue-100 dark:border-blue-900/40 bg-[#f0f6ff] dark:bg-blue-950/25 p-6 sm:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 shadow-sm min-w-0">
             <div className="space-y-1.5 max-w-xl min-w-0">
               <div className="text-[11px] sm:text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                {t("security.ctaEyebrow") || "READY TO GET STARTED?"}
+                {t("security.ctaEyebrow")}
               </div>
               <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight">
                 {t("security.ctaTitle")}

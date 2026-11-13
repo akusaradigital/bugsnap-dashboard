@@ -319,7 +319,7 @@ export default function HelpMenu({ className = "" }: HelpMenuProps) {
                     <Icon icon="logos:chrome-web-store" className="w-4 h-4 shrink-0" aria-hidden="true" />
                     <span className="truncate font-medium">{t("helpMenu.installChrome")}</span>
                   </div>
-                  <span className="text-[10px] text-muted shrink-0">Store</span>
+                  <span className="text-[10px] text-muted shrink-0">{t("helpMenu.store")}</span>
                 </a>
 
                 {/* Firefox */}
@@ -335,7 +335,7 @@ export default function HelpMenu({ className = "" }: HelpMenuProps) {
                     <Icon icon="logos:firefox" className="w-4 h-4 shrink-0" aria-hidden="true" />
                     <span className="truncate font-medium">{t("helpMenu.installFirefox")}</span>
                   </div>
-                  <span className="text-[10px] text-muted shrink-0">Store</span>
+                  <span className="text-[10px] text-muted shrink-0">{t("helpMenu.store")}</span>
                 </a>
               </div>
             )}
@@ -354,7 +354,7 @@ export default function HelpMenu({ className = "" }: HelpMenuProps) {
                     <Icon icon="logos:chrome-web-store" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                     <span className="truncate">{t("helpMenu.installChrome")}</span>
                   </div>
-                  <span className="text-[9px] text-muted">Store</span>
+                  <span className="text-[9px] text-muted">{t("helpMenu.store")}</span>
                 </a>
 
                 <a
@@ -368,7 +368,7 @@ export default function HelpMenu({ className = "" }: HelpMenuProps) {
                     <Icon icon="logos:firefox" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                     <span className="truncate">{t("helpMenu.installFirefox")}</span>
                   </div>
-                  <span className="text-[9px] text-muted">Store</span>
+                  <span className="text-[9px] text-muted">{t("helpMenu.store")}</span>
                 </a>
               </div>
             )}

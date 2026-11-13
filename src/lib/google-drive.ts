@@ -71,10 +71,43 @@ export async function consumeState(value: string) {
   return state.userId;
 }
 
+// Thrown only when Google has permanently rejected the refresh token itself
+// (invalid_grant: revoked access, expired after 6 months unused, password
+// change, etc.) - the one case that genuinely requires the user to
+// reconnect. Every other failure (network blip, Google 5xx, timeout, a
+// transient non-JSON error page) is a plain Error, so callers can retry
+// instead of forcing a reconnect for something that will likely succeed on
+// the next attempt.
+export class DriveGrantRevokedError extends Error {
+  constructor(message = "Google Drive refresh token was revoked") {
+    super(message);
+    this.name = "DriveGrantRevokedError";
+  }
+}
+
 async function tokenRequest(params: Record<string, string>) {
-  const response = await fetch(GOOGLE_TOKEN, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ client_id: env("GOOGLE_DRIVE_CLIENT_ID"), client_secret: env("GOOGLE_DRIVE_CLIENT_SECRET"), ...params }), cache: "no-store" });
-  const body = await response.json();
-  if (!response.ok || typeof body.access_token !== "string") throw new Error("Google token exchange failed");
+  let response: Response;
+  try {
+    response = await fetch(GOOGLE_TOKEN, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ client_id: env("GOOGLE_DRIVE_CLIENT_ID"), client_secret: env("GOOGLE_DRIVE_CLIENT_SECRET"), ...params }), cache: "no-store" });
+  } catch {
+    throw new Error("Google token endpoint unreachable");
+  }
+
+  let body: { access_token?: string; refresh_token?: string; expires_in?: number; scope?: string; error?: string };
+  try {
+    body = await response.json();
+  } catch {
+    // A non-JSON body on a non-2xx response is Google having an outage
+    // (HTML error page), not a verdict on the grant - never a permanent revoke.
+    throw new Error(`Google token endpoint returned ${response.status} with a non-JSON body`);
+  }
+
+  if (!response.ok || typeof body.access_token !== "string") {
+    if (response.status === 400 && body.error === "invalid_grant") {
+      throw new DriveGrantRevokedError();
+    }
+    throw new Error(`Google token exchange failed (HTTP ${response.status}${body.error ? `: ${body.error}` : ""})`);
+  }
   return body as { access_token: string; refresh_token?: string; expires_in?: number; scope?: string };
 }
 
@@ -235,7 +268,14 @@ export async function driveAccessToken(userId: string) {
     if (err instanceof Error && err.message.includes("DRIVE_PERMISSION_DENIED")) {
       throw err;
     }
-    throw new Error("Google Drive needs to be reconnected");
+    // Only a genuinely revoked grant is unrecoverable - surface that distinctly
+    // so the caller can tell the user to reconnect. Everything else (network
+    // blip, Google outage, transient error) stays a plain Error so the caller
+    // can retry instead of forcing a reconnect for something transient.
+    if (err instanceof DriveGrantRevokedError) {
+      throw err;
+    }
+    throw new Error(`Google Drive token refresh failed transiently: ${err instanceof Error ? err.message : String(err)}`);
   }
 }
 

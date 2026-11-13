@@ -1,5 +1,5 @@
-// Single source of truth for admin nav routes, shared by layout.tsx (sidebar)
-// and CommandPalette.tsx (Ctrl+K) so the two can't drift out of sync.
+// Single source of truth for admin nav routes, used by layout.tsx (sidebar)
+// so hub metadata and routes can't drift out of sync.
 
 import { APP_ICONS } from "@/lib/icons";
 
@@ -28,7 +28,7 @@ export const ADMIN_NAV_ROUTES: AdminNavRoute[] = [
     id: "users",
     href: "/admin/users",
     icon: APP_ICONS.nav.users,
-    titleKey: "admin.manageUsers",
+    titleKey: "admin.navUsers",
     keywords: ["users", "pengguna", "accounts", "pelanggan", "members"],
     hub: "users",
   },
@@ -82,6 +82,14 @@ export const ADMIN_NAV_ROUTES: AdminNavRoute[] = [
     hub: "operations",
   },
   {
+    id: "uninstall-feedback",
+    href: "/admin/uninstall-feedback",
+    icon: APP_ICONS.nav.uninstallFeedback,
+    titleKey: "admin.uninstallFeedbackTitle",
+    keywords: ["uninstall", "feedback", "churn", "keluhan", "copot", "hapus ekstensi"],
+    hub: "operations",
+  },
+  {
     id: "email",
     href: "/admin/email-health",
     icon: APP_ICONS.nav.emailHealth,
@@ -117,7 +125,7 @@ export const ADMIN_NAV_ROUTES: AdminNavRoute[] = [
     id: "security",
     href: "/admin/security-audit",
     icon: APP_ICONS.nav.securityAudit,
-    titleKey: "admin.auditTitle",
+    titleKey: "admin.navSecurity",
     keywords: ["security", "audit", "logs", "keamanan", "access"],
     hub: "system",
   },

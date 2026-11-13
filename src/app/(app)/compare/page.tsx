@@ -306,7 +306,7 @@ function CompareContent() {
       />
 
       {/* Main Container */}
-      <div className="w-full min-w-0 p-3 sm:p-8 max-w-7xl mx-auto flex-1 flex flex-col">
+      <div className="w-full min-w-0 p-3 sm:p-8 pb-10 sm:pb-14 max-w-7xl mx-auto flex-1 flex flex-col">
         <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 sm:mb-8 gap-4">
           <div className="min-w-0">
             <h1 className="text-2xl font-bold tracking-tight text-foreground">
@@ -378,113 +378,95 @@ function CompareContent() {
           </div>
         </div>
 
-        {/* Slot Headers / Switchers Bar */}
+        {/* Before / After Slot Panels */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
-          {/* Left Slot Card */}
-          <div className="border border-border rounded-2xl bg-subtle p-3 sm:p-4 flex flex-col justify-between gap-3 shadow-xs min-w-0">
-            <div className="flex items-center justify-between gap-2 min-w-0">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="font-semibold text-xs text-foreground truncate">
-                  {leftSlot ? leftSlot.title : t("compare.selectLeft")}
-                </span>
-              </div>
-              {leftSlot && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setLeftSlot(null);
-                    updateUrlParams(undefined, rightSlot?.id);
-                  }}
-                  className="text-xs text-muted hover:text-red-500 transition-colors"
-                  title={t("compare.clear")}
-                  aria-label={t("compare.clear")}
-                >
-                  <Icon icon="lucide:x" className="w-3.5 h-3.5 shrink-0" />
-                </button>
+          {[
+            { side: "left" as const, slot: leftSlot, label: t("compare.beforeLabel"), tone: "bg-[#DC2626]/10 text-[#B91C1C] dark:text-[#F87171] border-[#DC2626]/30", dot: "bg-[#DC2626]" },
+            { side: "right" as const, slot: rightSlot, label: t("compare.afterLabel"), tone: "bg-[#89BD49]/15 text-[#4D7A24] dark:text-[#A3D977] border-[#89BD49]/40", dot: "bg-[#89BD49]" },
+          ].map(({ side, slot, label, tone, dot }) => (
+            <div
+              key={side}
+              className="border border-border rounded-2xl bg-subtle p-4 sm:p-5 min-h-[220px] flex flex-col items-center justify-center gap-3 text-center shadow-xs min-w-0"
+            >
+              {slot ? (
+                <>
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-semibold ${tone}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
+                    {label}
+                  </span>
+                  <p className="font-semibold text-sm text-foreground truncate max-w-full">{slot.title}</p>
+                  <p className="text-[11px] text-muted">
+                    {slot.dimensions
+                      ? `${t("compare.dimensions")}: ${slot.dimensions}`
+                      : slot.createdAt
+                      ? timeAgo(slot.createdAt, t)
+                      : ""}
+                  </p>
+                  <div className="flex flex-wrap items-center justify-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => void openPickerModal(side)}
+                      className="px-3 py-1.5 min-h-[36px] rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer touch-manipulation"
+                    >
+                      <Icon icon="lucide:camera" className="w-3.5 h-3.5 shrink-0 brightness-0 invert" />
+                      <span>{t("compare.change")}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleTriggerUpload(side)}
+                      className="px-3 py-1.5 min-h-[36px] rounded-xl border border-border bg-background hover:bg-subtle text-foreground font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer touch-manipulation"
+                    >
+                      <Icon icon="lucide:upload" className="w-3.5 h-3.5 shrink-0" />
+                      <span>{t("compare.uploadImage")}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (side === "left") {
+                          setLeftSlot(null);
+                          updateUrlParams(undefined, rightSlot?.id);
+                        } else {
+                          setRightSlot(null);
+                          updateUrlParams(leftSlot?.id, undefined);
+                        }
+                      }}
+                      className="px-3 py-1.5 min-h-[36px] rounded-xl border border-border bg-background hover:bg-subtle text-muted hover:text-red-500 font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer touch-manipulation"
+                      title={t("compare.clear")}
+                      aria-label={t("compare.clear")}
+                    >
+                      <Icon icon="lucide:x" className="w-3.5 h-3.5 shrink-0" />
+                      <span>{t("compare.clear")}</span>
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <span className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-semibold ${tone}`}>
+                    <span className={`w-1.5 h-1.5 rounded-full ${dot}`} />
+                    {label}
+                  </span>
+                  <div className="flex flex-wrap items-center justify-center gap-3">
+                    <button
+                      type="button"
+                      onClick={() => void openPickerModal(side)}
+                      className="px-4 py-2 min-h-[44px] rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer touch-manipulation"
+                    >
+                      <Icon icon="lucide:camera" className="w-4 h-4 shrink-0 brightness-0 invert" />
+                      <span>{t("compare.pickCapture")}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleTriggerUpload(side)}
+                      className="px-4 py-2 min-h-[44px] rounded-xl border border-border bg-subtle hover:bg-background text-foreground font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer touch-manipulation"
+                    >
+                      <Icon icon="lucide:upload" className="w-4 h-4 shrink-0" />
+                      <span>{t("compare.uploadImage")}</span>
+                    </button>
+                  </div>
+                </>
               )}
             </div>
-
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-border/50 text-[11px] text-muted">
-              <span className="truncate">
-                {leftSlot?.dimensions
-                  ? `${t("compare.dimensions")}: ${leftSlot.dimensions}`
-                  : leftSlot?.createdAt
-                  ? timeAgo(leftSlot.createdAt, t)
-                  : t("compare.emptyStateDesc")}
-              </span>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => void openPickerModal("left")}
-                  className="px-2.5 py-1 min-h-[36px] sm:min-h-0 rounded-lg border border-border bg-subtle hover:bg-background text-foreground font-medium transition-colors cursor-pointer touch-manipulation flex items-center justify-center text-xs"
-                >
-                  {leftSlot ? t("compare.change") : t("compare.pickCapture")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleTriggerUpload("left")}
-                  className="px-2.5 py-1 min-h-[36px] sm:min-h-0 rounded-lg border border-border bg-subtle hover:bg-background text-muted hover:text-foreground font-medium transition-colors cursor-pointer touch-manipulation flex items-center justify-center gap-1.5 text-xs"
-                  title={t("compare.uploadImage")}
-                >
-                  <Icon icon="lucide:upload" className="w-3.5 h-3.5 shrink-0" />
-                  <span className="hidden sm:inline">{t("compare.uploadImage")}</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Right Slot Card */}
-          <div className="border border-border rounded-2xl bg-subtle p-3 sm:p-4 flex flex-col justify-between gap-3 shadow-xs min-w-0">
-            <div className="flex items-center justify-between gap-2 min-w-0">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="font-semibold text-xs text-foreground truncate">
-                  {rightSlot ? rightSlot.title : t("compare.selectRight")}
-                </span>
-              </div>
-              {rightSlot && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setRightSlot(null);
-                    updateUrlParams(leftSlot?.id, undefined);
-                  }}
-                  className="text-xs text-muted hover:text-red-500 transition-colors"
-                  title={t("compare.clear")}
-                  aria-label={t("compare.clear")}
-                >
-                  <Icon icon="lucide:x" className="w-3.5 h-3.5 shrink-0" />
-                </button>
-              )}
-            </div>
-
-            <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-border/50 text-[11px] text-muted">
-              <span className="truncate">
-                {rightSlot?.dimensions
-                  ? `${t("compare.dimensions")}: ${rightSlot.dimensions}`
-                  : rightSlot?.createdAt
-                  ? timeAgo(rightSlot.createdAt, t)
-                  : t("compare.emptyStateDesc")}
-              </span>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <button
-                  type="button"
-                  onClick={() => void openPickerModal("right")}
-                  className="px-2.5 py-1 min-h-[36px] sm:min-h-0 rounded-lg border border-border bg-subtle hover:bg-background text-foreground font-medium transition-colors cursor-pointer touch-manipulation flex items-center justify-center text-xs"
-                >
-                  {rightSlot ? t("compare.change") : t("compare.pickCapture")}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleTriggerUpload("right")}
-                  className="px-2.5 py-1 min-h-[36px] sm:min-h-0 rounded-lg border border-border bg-subtle hover:bg-background text-muted hover:text-foreground font-medium transition-colors cursor-pointer touch-manipulation flex items-center justify-center gap-1.5 text-xs"
-                  title={t("compare.uploadImage")}
-                >
-                  <Icon icon="lucide:upload" className="w-3.5 h-3.5 shrink-0" />
-                  <span className="hidden sm:inline">{t("compare.uploadImage")}</span>
-                </button>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
 
         {/* Loading Spinner */}
@@ -495,39 +477,6 @@ function CompareContent() {
               className="w-6 h-6 animate-spin text-[#2563EB] mb-3"
             />
             <p className="text-xs text-muted">{t("compare.loading")}</p>
-          </div>
-        )}
-
-        {/* Empty State (when neither slot is selected) */}
-        {!loadingCaptures && !hasAnySelected && (
-          <div className="flex-1 flex flex-col items-center justify-center p-8 sm:p-12 border-2 border-dashed border-border rounded-3xl bg-subtle/30 text-center min-w-0">
-            <div className="w-14 h-14 rounded-2xl bg-[#DC2626]/10 text-[#B91C1C] dark:text-[#F87171] flex items-center justify-center mb-4">
-              <Icon icon="lucide:columns-2" className="w-7 h-7" />
-            </div>
-            <h2 className="text-base sm:text-lg font-bold text-foreground">
-              {t("compare.emptyStateTitle")}
-            </h2>
-            <p className="text-xs text-muted max-w-md mt-1 mb-6">
-              {t("compare.emptyStateDesc")}
-            </p>
-            <div className="flex flex-wrap items-center justify-center gap-3">
-              <button
-                type="button"
-                onClick={() => void openPickerModal(!leftSlot ? "left" : "right")}
-                className="px-4 py-2 min-h-[44px] rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-sm cursor-pointer touch-manipulation"
-              >
-                <Icon icon="lucide:camera" className="w-4 h-4 shrink-0 brightness-0 invert" />
-                <span>{t("compare.pickCapture")}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleTriggerUpload(!leftSlot ? "left" : "right")}
-                className="px-4 py-2 min-h-[44px] rounded-xl border border-border bg-subtle hover:bg-background text-foreground font-semibold text-xs transition-colors flex items-center gap-1.5 shadow-xs cursor-pointer touch-manipulation"
-              >
-                <Icon icon="lucide:upload" className="w-4 h-4 shrink-0" />
-                <span>{t("compare.uploadImage")}</span>
-              </button>
-            </div>
           </div>
         )}
 
@@ -1008,7 +957,7 @@ function CompareContent() {
 
               {!loadingList &&
                 filteredWorkspaceCaptures.map((c) => {
-                  const thumb = driveThumbUrl(c.drive_url, 300);
+                  const { imageUrl: thumb, fallbackUrl: thumbFallback } = getCaptureImageUrl(c);
                   const isCurrentLeft = leftSlot?.id === c.id;
                   const isCurrentRight = rightSlot?.id === c.id;
 
@@ -1030,6 +979,11 @@ function CompareContent() {
                           <img
                             src={thumb}
                             alt={c.title}
+                            onError={(e) => {
+                              if (thumbFallback && e.currentTarget.src !== thumbFallback) {
+                                e.currentTarget.src = thumbFallback;
+                              }
+                            }}
                             className="w-full h-full object-cover"
                           />
                         ) : (
@@ -1047,12 +1001,12 @@ function CompareContent() {
                             {c.title}
                           </span>
                           {isCurrentLeft && (
-                            <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-blue-500/20 text-blue-500 shrink-0">
+                            <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-[#DC2626]/15 text-[#B91C1C] dark:text-[#F87171] shrink-0">
                               {t("compare.original")}
                             </span>
                           )}
                           {isCurrentRight && (
-                            <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-[#DC2626]/20 text-[#B91C1C] dark:text-[#F87171] shrink-0">
+                            <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-[#89BD49]/20 text-[#4D7A24] dark:text-[#A3D977] shrink-0">
                               {t("compare.modified")}
                             </span>
                           )}

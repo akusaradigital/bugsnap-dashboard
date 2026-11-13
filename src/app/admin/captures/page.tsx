@@ -1,11 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useToast } from "@/components/Toast";
 import { useT } from "@/components/I18nProvider";
 import { getAdminHeaders } from "@/lib/admin-cache";
 import { Icon } from "@/lib/iconify";
 import { Dropdown } from "@/components/Dropdown";
+import { AdminPagination } from "@/components/AdminPagination";
+import { useConfirm } from "@/components/ConfirmDialog";
 
 interface CaptureItem {
   id: string;
@@ -22,16 +25,19 @@ interface CaptureItem {
   workspace_name: string;
 }
 
-export default function AdminCapturesPage() {
+function AdminCapturesContent() {
   const { showToast } = useToast();
   const { t } = useT();
+  const confirm = useConfirm();
 
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(true);
   const [captures, setCaptures] = useState<CaptureItem[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState(() => searchParams.get("q") || "");
   const [typeFilter, setTypeFilter] = useState("all");
   const [visibilityFilter, setVisibilityFilter] = useState("all");
   const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
 
@@ -40,7 +46,7 @@ export default function AdminCapturesPage() {
   useEffect(() => {
     loadCaptures();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page, typeFilter, visibilityFilter]);
+  }, [page, pageSize, typeFilter, visibilityFilter]);
 
   async function loadCaptures() {
     setLoading(true);
@@ -48,7 +54,7 @@ export default function AdminCapturesPage() {
       const headers = await getAdminHeaders();
       const params = new URLSearchParams({
         page: page.toString(),
-        limit: "20",
+        limit: String(pageSize),
         search: searchQuery.trim(),
         type: typeFilter,
         visibility: visibilityFilter,
@@ -89,7 +95,7 @@ export default function AdminCapturesPage() {
         }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed to update visibility");
+      if (!res.ok) throw new Error(json.error || t("adminMisc.errVisibility"));
 
       setCaptures((prev) =>
         prev.map((c) => (c.id === capture.id ? { ...c, is_public: nextPublic } : c))
@@ -103,9 +109,12 @@ export default function AdminCapturesPage() {
   }
 
   async function handleTakedown(capture: CaptureItem) {
-    if (!confirm(t("admin.takedownConfirm", { title: capture.title || capture.id }))) {
-      return;
-    }
+    const ok = await confirm({
+      title: t("admin.takedownConfirmTitle"),
+      message: t("admin.takedownConfirm", { title: capture.title || capture.id }),
+      danger: true,
+    });
+    if (!ok) return;
 
     setActionLoading(capture.id);
     try {
@@ -164,8 +173,7 @@ export default function AdminCapturesPage() {
               { value: "video", label: t("admin.formatVideo") },
               { value: "screenshot", label: t("admin.formatScreenshot") },
             ]}
-            variant="pill"
-            className="min-w-[130px]"
+            variant="field-white"
           />
 
           <Dropdown
@@ -179,8 +187,22 @@ export default function AdminCapturesPage() {
               { value: "public", label: t("admin.accessPublic") },
               { value: "private", label: t("admin.accessPrivate") },
             ]}
-            variant="pill"
-            className="min-w-[130px]"
+            variant="field-white"
+          />
+
+          <Dropdown
+            value={String(pageSize)}
+            onChange={(val) => {
+              setPageSize(Number(val));
+              setPage(1);
+            }}
+            options={[
+              { value: "10", label: "10" },
+              { value: "20", label: "20" },
+              { value: "50", label: "50" },
+              { value: "100", label: "100" },
+            ]}
+            variant="field-white"
           />
         </div>
 
@@ -240,7 +262,7 @@ export default function AdminCapturesPage() {
                         />
                         <div>
                           <div className="font-bold text-slate-900 dark:text-white max-w-xs truncate">
-                            {cap.title || "Untitled Capture"}
+                            {cap.title || t("adminMisc.untitledCapture")}
                           </div>
                           <div className="text-[10px] text-slate-400 font-mono">
                             {cap.id.slice(0, 14)}…
@@ -270,24 +292,11 @@ export default function AdminCapturesPage() {
                         <span className="text-slate-400">-</span>
                       )}
                     </td>
-                    <td className="py-3 px-4 whitespace-nowrap">
-                      {cap.is_public ? (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400">
-                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-600" />
-                          {t("admin.badgePublic")}
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-400">
-                          <span className="h-1.5 w-1.5 rounded-full bg-slate-400" />
-                          {t("admin.badgePrivate")}
-                        </span>
-                      )}
+                    <td className="py-3 px-4 whitespace-nowrap text-slate-600 dark:text-zinc-300">
+                      {cap.is_public ? t("admin.badgePublic") : t("admin.badgePrivate")}
                     </td>
-                    <td className="py-3 px-4 whitespace-nowrap font-semibold text-slate-700 dark:text-zinc-300">
-                      <span className="inline-flex items-center gap-1">
-                        <Icon icon="lucide:eye" className="w-3.5 h-3.5 shrink-0 text-slate-400" />
-                        <span>{cap.views_count || 0}</span>
-                      </span>
+                    <td className="py-3 px-4 whitespace-nowrap tabular-nums font-semibold text-slate-700 dark:text-zinc-300">
+                      {cap.views_count || 0}
                     </td>
                     <td className="py-3 px-4 whitespace-nowrap text-slate-500 dark:text-zinc-400">
                       {new Date(cap.created_at).toLocaleDateString("id-ID", {
@@ -297,39 +306,36 @@ export default function AdminCapturesPage() {
                       })}
                     </td>
                     <td className="py-3 px-4 text-right whitespace-nowrap">
-                      <div className="flex items-center justify-end gap-1.5">
+                      <div className="flex items-center justify-end gap-1">
                         <a
                           href={`/v/${cap.id}`}
                           target="_blank"
                           rel="noreferrer"
-                          className="px-2.5 py-1 rounded text-xs font-semibold border border-blue-200 dark:border-blue-900/40 text-[#2563EB] dark:text-[#3B82F6] hover:bg-blue-50 dark:hover:bg-blue-950/20 transition-colors"
                           title={t("admin.openSharePage")}
+                          aria-label={t("admin.openSharePage")}
+                          className="p-1.5 rounded-md text-slate-500 hover:text-[#2563EB] hover:bg-slate-100 dark:text-zinc-400 dark:hover:text-[#3B82F6] dark:hover:bg-zinc-800"
                         >
-                          {t("admin.openSharePage")}
+                          <Icon icon="lucide:external-link" className="w-4 h-4" aria-hidden="true" />
                         </a>
                         <button
                           type="button"
                           disabled={actionLoading === cap.id}
                           onClick={() => handleToggleVisibility(cap)}
-                          className={`px-2 py-1 rounded text-xs font-semibold border transition-colors inline-flex items-center gap-1 ${
-                            cap.is_public
-                              ? "border-amber-200 dark:border-amber-800 text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-amber-950/40"
-                              : "border-emerald-200 dark:border-emerald-800 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
-                          }`}
                           title={cap.is_public ? t("admin.makePrivate") : t("admin.makePublic")}
+                          aria-label={cap.is_public ? t("admin.makePrivate") : t("admin.makePublic")}
+                          className="p-1.5 rounded-md text-slate-500 hover:text-slate-900 hover:bg-slate-100 dark:text-zinc-400 dark:hover:text-white dark:hover:bg-zinc-800 disabled:opacity-50 cursor-pointer"
                         >
-                          <Icon icon={cap.is_public ? "lucide:lock" : "lucide:globe"} className="w-3.5 h-3.5 shrink-0" />
-                          <span>{cap.is_public ? t("admin.makePrivate") : t("admin.makePublic")}</span>
+                          <Icon icon={cap.is_public ? "lucide:lock" : "lucide:globe"} className="w-4 h-4" aria-hidden="true" />
                         </button>
                         <button
                           type="button"
                           disabled={actionLoading === cap.id}
                           onClick={() => handleTakedown(cap)}
-                          className="px-2 py-1 rounded text-xs font-semibold border border-rose-200 dark:border-rose-900 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 transition-colors inline-flex items-center gap-1"
                           title={t("admin.takedown")}
+                          aria-label={t("admin.takedown")}
+                          className="p-1.5 rounded-md text-rose-600 hover:bg-rose-50 dark:text-rose-400 dark:hover:bg-rose-950/40 disabled:opacity-50 cursor-pointer"
                         >
-                          <Icon icon="lucide:trash-2" className="w-3.5 h-3.5 shrink-0" />
-                          <span>{t("admin.takedown")}</span>
+                          <Icon icon="lucide:trash-2" className="w-4 h-4" aria-hidden="true" />
                         </button>
                       </div>
                     </td>
@@ -340,33 +346,26 @@ export default function AdminCapturesPage() {
           </table>
         </div>
 
-        {/* Pagination */}
         {totalPages > 1 && (
-          <div className="p-3 border-t border-slate-200 dark:border-zinc-800 flex items-center justify-between text-xs text-slate-500 dark:text-zinc-400">
-            <span>
-              {t("admin.pageOf", { page: String(page), totalPages: String(totalPages) })}
-            </span>
-            <div className="flex items-center gap-1">
-              <button
-                type="button"
-                disabled={page <= 1}
-                onClick={() => setPage((p) => Math.max(1, p - 1))}
-                className="px-2.5 py-1 rounded border border-slate-200 dark:border-zinc-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-zinc-800"
-              >
-                {t("admin.prev")}
-              </button>
-              <button
-                type="button"
-                disabled={page >= totalPages}
-                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-                className="px-2.5 py-1 rounded border border-slate-200 dark:border-zinc-800 disabled:opacity-40 hover:bg-slate-100 dark:hover:bg-zinc-800"
-              >
-                {t("admin.next")}
-              </button>
-            </div>
+          <div className="p-3 border-t border-slate-200 dark:border-zinc-800">
+            <AdminPagination
+              page={page}
+              totalPages={totalPages}
+              onPageChange={setPage}
+              prevLabel={t("admin.prev")}
+              nextLabel={t("admin.next")}
+            />
           </div>
         )}
       </div>
     </div>
+  );
+}
+
+export default function AdminCapturesPage() {
+  return (
+    <Suspense fallback={null}>
+      <AdminCapturesContent />
+    </Suspense>
   );
 }

@@ -11,28 +11,30 @@ describe("E2E Audit: Breadcrumb Pill Cleanup & Browser Store Parity", () => {
     assert(!welcome.includes("welcome.heroBadge"), "welcome.heroBadge must be completely removed");
     assert(!welcome.includes("Extension Installed & Ready"), "Literal text 'Extension Installed & Ready' must be removed from hero");
     assert(!welcome.includes("lucide:sparkles"), "Sparkles icon pill must be removed from welcome hero");
-    assert(welcome.includes('aria-label="Breadcrumb"'), "Clean breadcrumb nav must be present");
+    assert(/aria-label=("Breadcrumb"|\{t\("[A-Za-z.]*[Bb]readcrumb[A-Za-z.]*"\)\}|\{t\("sharedFx\.breadcrumb"\)\})/.test(welcome), "Clean breadcrumb nav must be present");
   });
 
   it("ensures IntegrationsDocsContent has no Setup Guides pill in breadcrumb", () => {
     const content = fs.readFileSync(path.join(root, "src/app/docs/integrations/IntegrationsDocsContent.tsx"), "utf8");
     assert(!content.includes("Setup Guides"), "Setup Guides pill badge must be removed from breadcrumb");
-    assert(content.includes('aria-label="Breadcrumb"'), "Clean breadcrumb nav must be present");
+    assert(/aria-label=("Breadcrumb"|\{t\("(sharedFx\.breadcrumb|vcFx\.breadcrumbLabel)"\)\})/.test(content), "Clean breadcrumb nav must be present");
   });
 
   it("ensures McpDocsContent has no 3D cube or Docs badge in breadcrumb", () => {
     const content = fs.readFileSync(path.join(root, "src/app/docs/mcp/McpDocsContent.tsx"), "utf8");
     assert(!content.includes("3D isometric green stacked cubes"), "3D isometric cubes comment/SVG must be removed from breadcrumb");
     assert(!content.includes(">Docs<"), "Docs badge text must be removed from breadcrumb");
-    assert(content.includes('aria-label="Breadcrumb"'), "Clean breadcrumb nav must be present");
+    assert(/aria-label=("Breadcrumb"|\{t\("(sharedFx\.breadcrumb|vcFx\.breadcrumbLabel)"\)\})/.test(content), "Clean breadcrumb nav must be present");
   });
 
   it("ensures VisualCompareContent has no eyebrow pill under breadcrumb", () => {
     const content = fs.readFileSync(path.join(root, "src/app/visual-compare/VisualCompareContent.tsx"), "utf8");
     assert(!content.includes("vc.eyebrow"), "vc.eyebrow pill badge must be removed");
-    assert(content.includes('aria-label="Breadcrumb"'), "Clean breadcrumb nav must be present");
+    assert(/aria-label=("Breadcrumb"|\{t\("(sharedFx\.breadcrumb|vcFx\.breadcrumbLabel)"\)\})/.test(content), "Clean breadcrumb nav must be present");
     // Ensure breadcrumb is directly followed by H1 section without an eyebrow badge
-    const afterBreadcrumb = content.slice(content.indexOf('aria-label="Breadcrumb"'));
+    const crumbStart = content.search(/aria-label=("Breadcrumb"|\{t\("(sharedFx\.breadcrumb|vcFx\.breadcrumbLabel)"\)\})/);
+    assert(crumbStart >= 0, "Breadcrumb anchor must be found");
+    const afterBreadcrumb = content.slice(crumbStart);
     const h1Idx = afterBreadcrumb.indexOf("<h1");
     const intermediate = afterBreadcrumb.slice(0, h1Idx);
     assert(!intermediate.includes("rounded-full"), "No pill badge allowed between breadcrumb and H1 headline");

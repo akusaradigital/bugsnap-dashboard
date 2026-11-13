@@ -559,7 +559,7 @@ function ManageFoldersContent() {
                 type="text"
                 value={newFolderName}
                 onChange={(e) => { setNewFolderName(e.target.value); setCreateError(null); }}
-                placeholder="Name your folder"
+                placeholder={t("nonAdminFx.folderNamePlaceholder")}
                 className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#2563EB] bg-subtle text-foreground placeholder:text-muted"
                 autoFocus
                 onKeyDown={(e) => { if (e.key === "Enter" && newFolderName.trim()) handleCreateFolder(); }}

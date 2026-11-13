@@ -270,7 +270,7 @@ describe("i18n Strict Parity & Missing Keys Quality Gate", async () => {
     });
 
     it("ensures landing page FAQ question and answer keys exist in en and id", () => {
-      const pageFile = path.join(srcDir, "app", "page.tsx");
+      const pageFile = path.join(srcDir, "app", "HomeContent.tsx");
       const content = fs.readFileSync(pageFile, "utf8");
       const keys = [...content.matchAll(/(?:q|a):\s*["']([^"']+)["']/g)].map((m) => m[1]);
 

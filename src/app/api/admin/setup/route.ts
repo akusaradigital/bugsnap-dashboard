@@ -130,15 +130,12 @@ function getEnvStatus(): ServiceCheck[] {
     },
     {
       id: "admin_auth",
-      name: "Super Admin Credentials",
+      name: "Super Admin Access",
       category: "Security",
-      isConfigured: Boolean(
-        (process.env.ADMIN_USERNAME && process.env.ADMIN_PASSWORD) ||
-        process.env.SUPER_ADMIN_EMAILS
-      ),
-      status: ((process.env.ADMIN_USERNAME && process.env.ADMIN_PASSWORD) || process.env.SUPER_ADMIN_EMAILS) ? "configured" : "missing",
-      description: "Super admin access credentials and authorization whitelist.",
-      requiredVars: ["ADMIN_USERNAME", "ADMIN_PASSWORD", "SUPER_ADMIN_EMAILS"],
+      isConfigured: Boolean(process.env.SUPER_ADMIN_EMAILS),
+      status: process.env.SUPER_ADMIN_EMAILS ? "configured" : "missing",
+      description: "Google-account whitelist authorized to sign in to the admin console.",
+      requiredVars: ["SUPER_ADMIN_EMAILS"],
     },
     {
       id: "cron",

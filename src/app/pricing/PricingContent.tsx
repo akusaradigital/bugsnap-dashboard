@@ -10,8 +10,8 @@ export function PricingContent() {
 
   return (
     <StaticShell
-      title={t("pricing.title") || "Simple & transparent"}
-      titleHighlight={t("pricing.titleHighlight") || "team pricing"}
+      title={t("pricing.title")}
+      titleHighlight={t("pricing.titleHighlight")}
       breadcrumb={isId ? "Harga" : "Pricing"}
       subtitle={t("pricing.subtitle")}
     >

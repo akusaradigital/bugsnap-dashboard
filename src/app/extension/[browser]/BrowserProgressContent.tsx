@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useT } from "@/lib/i18n";
-import { Icon } from "@/lib/iconify";
+import { Icon, withAssetVersion } from "@/lib/iconify";
 import { FIREFOX_STORE_URL } from "@/lib/constants";
 
 interface BrowserProgressContentProps {
@@ -28,7 +28,7 @@ export function BrowserProgressContent({}: BrowserProgressContentProps) {
           className="inline-flex items-center gap-2 text-xs sm:text-sm font-medium text-site-text-2 hover:text-site-text transition-colors group"
         >
           
-          <span>{t("storeProgress.backHome") || "Back to Home"}</span>
+          <span>{t("storeProgress.backHome")}</span>
         </Link>
       </div>
 
@@ -38,14 +38,13 @@ export function BrowserProgressContent({}: BrowserProgressContentProps) {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 pt-1">
           <Icon icon="logos:firefox" className="w-12 h-12 sm:w-16 sm:h-16 shrink-0" />
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-site-text tracking-tight min-w-0 break-words">
-            {t("storeProgress.firefoxTitle") || "BugSnap for Firefox"}
+            {t("storeProgress.firefoxTitle")}
           </h1>
         </div>
 
         {/* Description */}
         <p className="text-xs sm:text-sm md:text-base text-site-text-2 leading-relaxed max-w-xl mx-auto">
-          {t("storeProgress.firefoxDesc") ||
-            "Install BugSnap from the official Mozilla Add-ons listing."}
+          {t("storeProgress.firefoxDesc")}
         </p>
 
         {/* Status Pill */}
@@ -55,10 +54,10 @@ export function BrowserProgressContent({}: BrowserProgressContentProps) {
               icon="tabler:check"
               className="w-3.5 h-3.5 shrink-0 text-emerald-600 dark:text-emerald-400"
             />
-            <span>{t("storeProgress.firefoxStatus") || "Available on Firefox"}</span>
+            <span>{t("storeProgress.firefoxStatus")}</span>
           </div>
           <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-medium bg-site-surface-2 text-site-text-2 border border-site-border">
-            <span>{t("storeProgress.firefoxSubStatus") || "Official Mozilla Add-ons listing"}</span>
+            <span>{t("storeProgress.firefoxSubStatus")}</span>
           </div>
         </div>
 
@@ -71,7 +70,7 @@ export function BrowserProgressContent({}: BrowserProgressContentProps) {
             className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-3 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] dark:bg-[#89BD49] dark:hover:bg-[#6B9A35] text-white font-semibold text-sm transition-all shadow-xs"
           >
             <Icon icon="logos:firefox" className="w-5 h-5 shrink-0" />
-            <span>{t("storeProgress.installFirefox") || "Install from Mozilla Add-ons"}</span>
+            <span>{t("storeProgress.installFirefox")}</span>
             <Icon icon="tabler:external-link" className="w-4 h-4 shrink-0" />
           </a>
         </div>
@@ -85,11 +84,10 @@ export function BrowserProgressContent({}: BrowserProgressContentProps) {
         />
         <div className="space-y-1 min-w-0">
           <h2 className="text-sm sm:text-base font-bold text-site-text">
-            {t("storeProgress.firefoxTipTitle") || "Firefox compatibility"}
+            {t("storeProgress.firefoxTipTitle")}
           </h2>
           <p className="text-xs sm:text-sm text-site-text-2 leading-relaxed break-words">
-            {t("storeProgress.firefoxTip") ||
-              "Use the official Mozilla Add-ons listing to install the Firefox package and receive browser updates."}
+            {t("storeProgress.firefoxTip")}
           </p>
         </div>
       </div>
@@ -98,7 +96,7 @@ export function BrowserProgressContent({}: BrowserProgressContentProps) {
       <div className="w-full rounded-2xl overflow-hidden bg-site-surface border border-site-border p-2 sm:p-4 flex items-center justify-center shadow-xs">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img
-          src="/illustrations/browser-progress.svg"
+          src={withAssetVersion("/illustrations/browser-progress.svg")}
           alt="Browser extension progress illustration"
           width={800}
           height={480}
@@ -114,7 +112,7 @@ export function BrowserProgressContent({}: BrowserProgressContentProps) {
             <Icon icon="tabler:shield-check" className="w-5 h-5" />
           </div>
           <h2 className="text-base sm:text-lg font-bold text-site-text min-w-0 truncate">
-            {t("storeProgress.specTitle") || "Technical Specifications & Store Parity"}
+            {t("storeProgress.specTitle")}
           </h2>
         </div>
 

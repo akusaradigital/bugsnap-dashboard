@@ -1,7 +1,7 @@
 "use client";
 
 import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
-import { detectLocale, setLocalePref, translate, Locale } from "@/lib/i18n";
+import { Locale, Dict, translate, setLocalePref, detectLocale, buildDict } from "@/lib/i18n";
 import { supabase } from "@/lib/supabase";
 
 type Translator = (key: string, vars?: Record<string, string | number>) => string;
@@ -20,22 +20,45 @@ const I18nContext = createContext<I18nContextValue>({
   dir: "ltr",
 });
 
-export function I18nProvider({ children }: { children: ReactNode }) {
-  const [locale, setLocaleState] = useState<Locale>("en");
+/**
+ * `initialLocale` / `initialDict` come from the server, so the first render already
+ * uses the right language (no flash, no layout shift). The provider only carries the
+ * active language's dictionary, never both.
+ *
+ * Switching language saves a cookie and reloads the page. That keeps one language in
+ * the bundle and avoids swapping text while the page is mounted.
+ */
+export function I18nProvider({
+  children,
+  initialLocale = "en",
+  initialDict,
+}: {
+  children: ReactNode;
+  initialLocale?: Locale;
+  initialDict?: Dict;
+}) {
+  const [locale, setLocaleState] = useState<Locale>(initialLocale);
+  // Fixed for the life of this page load: changing language reloads, so the dictionary never swaps in place.
+  const [dict] = useState<Dict>(() => initialDict ?? buildDict(initialLocale));
 
-  // Synchronize detected locale on client mount
+  // If the cookie disagrees with what the server rendered (e.g. the server could not
+  // read it), reload once so the page matches the user's saved choice.
   useEffect(() => {
-    const detected = detectLocale();
-    setLocaleState(detected);
+    const saved = detectLocale();
+    if (saved !== initialLocale) {
+      setLocalePref(saved);
+      window.location.reload();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const setLocale = useCallback((newLocale: Locale) => {
     setLocalePref(newLocale);
     setLocaleState(newLocale);
+    window.location.reload();
   }, []);
 
   useEffect(() => {
-    setLocalePref(locale);
     document.documentElement.lang = locale;
     // id is an LTR script - always ltr for now. If a future locale needs
     // rtl, set dir from the locale here.
@@ -70,8 +93,8 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const t = useCallback<Translator>(
-    (key, vars) => translate(locale, key, vars),
-    [locale]
+    (key, vars) => translate(dict, key, vars),
+    [dict]
   );
 
   return (

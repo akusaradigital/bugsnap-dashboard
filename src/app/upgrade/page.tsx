@@ -15,7 +15,7 @@ export default function UpgradePage() {
         <InProgressView
           featureName="Pro & Billing"
           backHref="/settings"
-          backLabel={t("settings.title") || "Settings"}
+          backLabel={t("settings.title")}
         />
       </main>
       <SiteFooter />

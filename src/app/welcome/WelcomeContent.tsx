@@ -68,24 +68,23 @@ export function WelcomeContent() {
           <div className="text-center space-y-4 max-w-3xl mx-auto">
             <nav
               className="inline-flex items-center justify-center gap-1.5 text-xs text-site-text-2 mb-6"
-              aria-label="Breadcrumb"
+              aria-label={t("sharedFx.breadcrumb")}
             >
               <Link href="/" className="hover:text-site-text transition-colors">
-                {t("landing.home") || "Home"}
+                {t("landing.home")}
               </Link>
               <span className="text-site-text-2/60" aria-hidden="true">&gt;</span>
               <span className="text-site-text font-medium">
-                {t("welcome.breadcrumb") || "Quick Start"}
+                {t("welcome.breadcrumb")}
               </span>
             </nav>
 
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12]">
-              {t("welcome.title") || "Welcome to BugSnap"}
+              {t("welcome.title")}
             </h1>
 
             <p className="text-sm sm:text-base text-site-text-2 leading-relaxed max-w-2xl mx-auto">
-              {t("welcome.subtitle") ||
-                "Follow these 3 quick steps to set up BugSnap and start capturing bugs with DevTools telemetry directly to your Google Drive."}
+              {t("welcome.subtitle")}
             </p>
 
             {/* Quick Action CTA */}
@@ -96,13 +95,13 @@ export function WelcomeContent() {
                 className="inline-flex items-center justify-center gap-2.5 bg-[#89BD49] hover:bg-[#6B9A35] text-white text-sm font-bold px-6 py-3 min-h-[44px] rounded-xl transition-all shadow-sm active:scale-[0.99] touch-manipulation w-full sm:w-auto cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#89BD49] dark:focus-visible:ring-[#A8D666]"
               >
                 <Icon icon="lucide:scan" className="w-4 h-4 shrink-0 brightness-0 invert" aria-hidden="true" />
-                <span>{t("welcome.testCaptureBtn") || "Test Instant Capture"}</span>
+                <span>{t("welcome.testCaptureBtn")}</span>
               </button>
               <Link
                 href="/dashboard"
                 className="inline-flex items-center justify-center gap-2 border border-site-border bg-site-surface hover:bg-site-surface-2 text-site-text text-sm font-semibold px-5 py-3 min-h-[44px] rounded-xl transition-colors touch-manipulation shadow-2xs w-full sm:w-auto focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#89BD49] dark:focus-visible:ring-[#A8D666]"
               >
-                <span>{t("welcome.goDashboard") || "Go to Dashboard "}</span>
+                <span>{t("welcome.goDashboard")}</span>
               </Link>
             </div>
 
@@ -112,19 +111,19 @@ export function WelcomeContent() {
                 <span className="w-4 h-4 rounded-full bg-[#89BD49] dark:bg-[#A8D666] text-white dark:text-slate-900 flex items-center justify-center shrink-0">
                   <Icon icon="lucide:check" className="w-2.5 h-2.5 stroke-[3] brightness-0 invert dark:invert-0" aria-hidden="true" />
                 </span>
-                <span>{t("welcome.trustFree") || "Free & Unlimited"}</span>
+                <span>{t("welcome.trustFree")}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-4 h-4 rounded-full bg-[#89BD49] dark:bg-[#A8D666] text-white dark:text-slate-900 flex items-center justify-center shrink-0">
                   <Icon icon="lucide:check" className="w-2.5 h-2.5 stroke-[3] brightness-0 invert dark:invert-0" aria-hidden="true" />
                 </span>
-                <span>{t("welcome.trustDrive") || "Direct Sync to Google Drive"}</span>
+                <span>{t("welcome.trustDrive")}</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="w-4 h-4 rounded-full bg-[#89BD49] dark:bg-[#A8D666] text-white dark:text-slate-900 flex items-center justify-center shrink-0">
                   <Icon icon="lucide:check" className="w-2.5 h-2.5 stroke-[3] brightness-0 invert dark:invert-0" aria-hidden="true" />
                 </span>
-                <span>{t("welcome.trustDevtools") || "Automated DevTools Telemetry"}</span>
+                <span>{t("welcome.trustDevtools")}</span>
               </div>
             </div>
           </div>
@@ -140,8 +139,8 @@ export function WelcomeContent() {
                 <div className="flex items-center gap-2 flex-wrap">
                   <p className="text-sm font-bold text-site-text">
                     {extensionDetected
-                      ? t("welcome.connected") || "BugSnap Extension Connected!"
-                      : t("welcome.installed") || "Extension Installed Successfully"}
+                      ? t("welcome.connected")
+                      : t("welcome.installed")}
                   </p>
                   <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
                     {extensionDetected ? "Active" : "Detected"}
@@ -150,7 +149,7 @@ export function WelcomeContent() {
                 <p className="text-xs text-site-text-2 break-all mt-0.5">
                   {userEmail
                     ? t("welcome.loggedInAs", { email: userEmail })
-                    : t("welcome.connectPrompt") || "Connect your Google account to sync captures to Drive"}
+                    : t("welcome.connectPrompt")}
                 </p>
               </div>
             </div>
@@ -159,7 +158,7 @@ export function WelcomeContent() {
                 href="/login"
                 className="inline-flex items-center justify-center shrink-0 px-4 py-2 min-h-[40px] text-xs font-bold rounded-xl bg-emerald-500 text-slate-950 hover:bg-emerald-400 transition-colors shadow-xs"
               >
-                {t("welcome.connectBtn") || "Connect Account "}
+                {t("welcome.connectBtn")}
               </Link>
             )}
           </div>
@@ -184,37 +183,37 @@ export function WelcomeContent() {
                       1
                     </span>
                     <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-site-surface-2 text-site-text border border-site-border">
-                      {t("welcome.step1Badge") || "Crucial"}
+                      {t("welcome.step1Badge")}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 mb-2">
                     <Icon icon="lucide:pin" className="w-5 h-5 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
                     <h3 className="text-base sm:text-lg font-bold text-site-text">
-                      {t("welcome.step1Title") || "Pin to Toolbar"}
+                      {t("welcome.step1Title")}
                     </h3>
                   </div>
                   <p className="text-xs sm:text-sm text-site-text-2 leading-relaxed mb-4">
-                    {t("welcome.step1Pre") || "Click the"}{" "}
+                    {t("welcome.step1Pre")}{" "}
                     <span className="inline-flex items-center gap-1 font-semibold text-site-text">
                       <Icon icon="lucide:puzzle" className="w-3.5 h-3.5 text-site-text" aria-hidden="true" />
-                      {t("welcome.step1Puzzle") || "puzzle icon"}
+                      {t("welcome.step1Puzzle")}
                     </span>{" "}
-                    {t("welcome.step1Mid") || "at the top right of your browser, then click the"}{" "}
+                    {t("welcome.step1Mid")}{" "}
                     <span className="inline-flex items-center gap-1 font-semibold text-site-text">
                       <Icon icon="lucide:pin" className="w-3.5 h-3.5 text-site-text" aria-hidden="true" />
-                      {t("welcome.step1Pin") || "pin icon"}
+                      {t("welcome.step1Pin")}
                     </span>{" "}
-                    {t("welcome.step1Post") || "next to BugSnap so it is always accessible."}
+                    {t("welcome.step1Post")}
                   </p>
                 </div>
                 <div className="space-y-2 pt-2 border-t border-site-border/60">
                   <div className="rounded-xl border border-site-border/70 bg-site-surface-2/60 p-2.5 text-center">
                     <span className="text-xs font-medium text-site-text-2">
-                      {t("welcome.step1Hint") || "Toolbar icon: keep BugSnap within reach"}
+                      {t("welcome.step1Hint")}
                     </span>
                   </div>
                   <p className="text-[11px] text-site-text-2/80 italic">
-                    {t("welcome.step1ProTip") || "Pro Tip: Pinned extensions stay accessible even when DevTools or full screen is open."}
+                    {t("welcome.step1ProTip")}
                   </p>
                 </div>
               </div>
@@ -227,29 +226,28 @@ export function WelcomeContent() {
                       2
                     </span>
                     <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-blue-500/10 text-blue-700 dark:text-blue-300 border border-blue-500/20">
-                      {t("welcome.step2Badge") || "BYOS"}
+                      {t("welcome.step2Badge")}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 mb-2">
                     <Icon icon="logos:google-drive" className="w-5 h-5" aria-hidden="true" />
                     <h3 className="text-base sm:text-lg font-bold text-site-text">
-                      {t("welcome.step2Title") || "Your Google Drive"}
+                      {t("welcome.step2Title")}
                     </h3>
                   </div>
                   <p className="text-xs sm:text-sm text-site-text-2 leading-relaxed mb-4">
-                    {t("welcome.step2Desc") ||
-                      "All recordings and screenshots save straight to your own Google Drive. We never hold your videos on third-party servers. You own 100% of your data."}
+                    {t("welcome.step2Desc")}
                   </p>
                 </div>
                 <div className="space-y-2 pt-2 border-t border-site-border/60">
                   <div className="rounded-xl border border-site-border/70 bg-site-surface-2/60 p-2.5 text-center flex items-center justify-center gap-2">
                     <Icon icon="lucide:folder" className="w-3.5 h-3.5 text-site-text-2" aria-hidden="true" />
                     <span className="text-xs font-medium text-site-text-2">
-                      {t("welcome.step2Hint") || "Folder: My Drive / BugSnap"}
+                      {t("welcome.step2Hint")}
                     </span>
                   </div>
                   <p className="text-[11px] text-site-text-2/80 italic">
-                    {t("welcome.step2StorageNote") || "Zero third-party storage liability. Your files stay in your Google cloud."}
+                    {t("welcome.step2StorageNote")}
                   </p>
                 </div>
               </div>
@@ -262,30 +260,29 @@ export function WelcomeContent() {
                       3
                     </span>
                     <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-purple-500/10 text-purple-700 dark:text-purple-300 border border-purple-500/20">
-                      {t("welcome.step3Badge") || "Instant"}
+                      {t("welcome.step3Badge")}
                     </span>
                   </div>
                   <div className="flex items-center gap-2 mb-2">
                     <Icon icon="lucide:keyboard" className="w-5 h-5 text-purple-600 dark:text-purple-400" aria-hidden="true" />
                     <h3 className="text-base sm:text-lg font-bold text-site-text">
-                      {t("welcome.step3Title") || "Instant Shortcuts"}
+                      {t("welcome.step3Title")}
                     </h3>
                   </div>
                   <p className="text-xs sm:text-sm text-site-text-2 leading-relaxed mb-4">
-                    {t("welcome.step3Desc") ||
-                      "Trigger captures from any web page without even opening the popup using global shortcuts:"}
+                    {t("welcome.step3Desc")}
                   </p>
                 </div>
                 <div className="space-y-2 pt-2 border-t border-site-border/60">
                   <div className="space-y-2 rounded-xl border border-site-border/70 bg-site-surface-2/60 p-2.5 text-xs font-mono">
                     <div className="flex items-center justify-between text-site-text-2">
-                      <span>{t("welcome.areaSnap") || "Area Snap:"}</span>
+                      <span>{t("welcome.areaSnap")}</span>
                       <kbd className="px-2 py-0.5 rounded border border-site-border bg-site-surface text-emerald-600 dark:text-emerald-400 font-bold">
                         {modKey}+Shift+S
                       </kbd>
                     </div>
                     <div className="flex items-center justify-between text-site-text-2">
-                      <span>{t("welcome.recordVideo") || "Record Video:"}</span>
+                      <span>{t("welcome.recordVideo")}</span>
                       <kbd className="px-2 py-0.5 rounded border border-site-border bg-site-surface text-emerald-600 dark:text-emerald-400 font-bold">
                         {modKey}+Shift+F
                       </kbd>
@@ -295,7 +292,7 @@ export function WelcomeContent() {
                     href="/extension"
                     className="block text-[11px] text-emerald-600 dark:text-emerald-400 hover:underline pt-1"
                   >
-                    {t("welcome.step3CustomShortcuts") || "Want different keys? Customize shortcuts anytime in browser settings "}
+                    {t("welcome.step3CustomShortcuts")}
                   </Link>
                 </div>
               </div>
@@ -309,11 +306,10 @@ export function WelcomeContent() {
                 AUTOMATED TELEMETRY
               </span>
               <h2 className="text-xl sm:text-2xl font-extrabold text-site-text tracking-tight">
-                {t("welcome.previewHeading") || "What BugSnap captures automatically"}
+                {t("welcome.previewHeading")}
               </h2>
               <p className="text-xs sm:text-sm text-site-text-2">
-                {t("welcome.previewSub") ||
-                  "Every capture comes packed with technical diagnostics so engineers can fix bugs immediately without asking for repro steps."}
+                {t("welcome.previewSub")}
               </p>
             </div>
 
@@ -323,11 +319,10 @@ export function WelcomeContent() {
                   <Icon icon="lucide:terminal" className="w-4 h-4" aria-hidden="true" />
                 </div>
                 <h4 className="text-sm font-bold text-site-text">
-                  {t("welcome.previewConsoleTitle") || "Console Logs & Errors"}
+                  {t("welcome.previewConsoleTitle")}
                 </h4>
                 <p className="text-xs text-site-text-2 leading-relaxed">
-                  {t("welcome.previewConsoleDesc") ||
-                    "Uncaught errors, exceptions, and stack traces extracted right from the browser."}
+                  {t("welcome.previewConsoleDesc")}
                 </p>
               </div>
 
@@ -336,11 +331,10 @@ export function WelcomeContent() {
                   <Icon icon="lucide:activity" className="w-4 h-4" aria-hidden="true" />
                 </div>
                 <h4 className="text-sm font-bold text-site-text">
-                  {t("welcome.previewNetworkTitle") || "Network 4xx/5xx Failures"}
+                  {t("welcome.previewNetworkTitle")}
                 </h4>
                 <p className="text-xs text-site-text-2 leading-relaxed">
-                  {t("welcome.previewNetworkDesc") ||
-                    "Failed API calls, request payload, status codes, and latency headers."}
+                  {t("welcome.previewNetworkDesc")}
                 </p>
               </div>
 
@@ -349,11 +343,10 @@ export function WelcomeContent() {
                   <Icon icon="lucide:monitor" className="w-4 h-4" aria-hidden="true" />
                 </div>
                 <h4 className="text-sm font-bold text-site-text">
-                  {t("welcome.previewSystemTitle") || "System & Browser Specs"}
+                  {t("welcome.previewSystemTitle")}
                 </h4>
                 <p className="text-xs text-site-text-2 leading-relaxed">
-                  {t("welcome.previewSystemDesc") ||
-                    "OS, screen resolution, viewport, browser version, and connection type."}
+                  {t("welcome.previewSystemDesc")}
                 </p>
               </div>
             </div>
@@ -365,11 +358,10 @@ export function WelcomeContent() {
               <Icon icon="lucide:camera" className="w-6 h-6" aria-hidden="true" />
             </div>
             <h3 className="text-xl sm:text-2xl font-extrabold text-site-text">
-              {t("welcome.readyTitle") || "Ready to test it out?"}
+              {t("welcome.readyTitle")}
             </h3>
             <p className="text-xs sm:text-sm text-site-text-2 max-w-lg mx-auto leading-relaxed">
-              {t("welcome.readyDesc") ||
-                "Take your first test screenshot now or head over to your dashboard to manage capture settings and workspaces."}
+              {t("welcome.readyDesc")}
             </p>
             <div className="pt-2 flex flex-wrap items-center justify-center gap-3">
               <button
@@ -384,7 +376,7 @@ export function WelcomeContent() {
                 href="/dashboard"
                 className="px-6 py-3 min-h-[44px] rounded-xl border border-site-border bg-site-surface-2 hover:bg-site-surface text-site-text font-semibold text-sm transition-colors inline-flex items-center gap-2 touch-manipulation shadow-2xs"
               >
-                <span>{t("welcome.goDashboard") || "Go to Dashboard "}</span>
+                <span>{t("welcome.goDashboard")}</span>
               </Link>
             </div>
           </div>

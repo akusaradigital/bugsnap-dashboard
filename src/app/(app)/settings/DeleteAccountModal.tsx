@@ -1,5 +1,7 @@
 "use client";
 
+import { useT } from "@/components/I18nProvider";
+
 import { Icon } from "@/lib/iconify";
 
 interface DeleteAccountModalProps {
@@ -15,13 +17,14 @@ export function DeleteAccountModal({
   onConfirm,
   deleting,
 }: DeleteAccountModalProps) {
+  const { t } = useT();
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
       <button
         className="absolute inset-0 bg-black/40 backdrop-blur-xs"
-        aria-label="Close"
+        aria-label={t("common.close")}
         onClick={() => !deleting && onClose()}
       />
       <div className="relative w-[min(28rem,calc(100vw-2rem))] rounded-2xl border border-border bg-subtle p-4 sm:p-6 shadow-2xl space-y-4">
@@ -48,7 +51,7 @@ export function DeleteAccountModal({
             disabled={deleting}
             className="px-4 py-2 text-xs font-semibold text-foreground hover:bg-border/30 rounded-xl transition-colors disabled:opacity-50"
           >
-            Cancel
+            {t("common.cancel")}
           </button>
           <button
             type="button"

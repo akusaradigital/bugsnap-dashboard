@@ -66,10 +66,9 @@ export function DocsContent() {
   const navCards = [
     {
       id: "getting-started",
-      title: t("docs.gettingStarted") || "Getting Started",
+      title: t("docs.gettingStarted"),
       desc:
-        t("docs.navGettingStartedDesc") ||
-        "Install the extension and link your Google Drive.",
+        t("docs.navGettingStartedDesc"),
       href: "#getting-started",
       illustration: (
         <div className="relative w-28 h-20 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm p-2 flex flex-col justify-between overflow-hidden">
@@ -90,10 +89,9 @@ export function DocsContent() {
     },
     {
       id: "shortcuts",
-      title: t("docs.shortcuts") || "Keyboard Shortcuts",
+      title: t("docs.shortcuts"),
       desc:
-        t("docs.navShortcutsDesc") ||
-        "Capture instantly with hotkeys without opening menus.",
+        t("docs.navShortcutsDesc"),
       href: "#shortcuts",
       illustration: (
         <div className="w-full h-20 flex items-center justify-center gap-1.5">
@@ -111,10 +109,9 @@ export function DocsContent() {
     },
     {
       id: "drive-setup",
-      title: t("docs.driveSetup") || "Google Drive Setup",
+      title: t("docs.driveSetup"),
       desc:
-        t("docs.navDriveSetupDesc") ||
-        "Understand permissions and private cloud storage.",
+        t("docs.navDriveSetupDesc"),
       href: "#drive-setup",
       illustration: (
         <div className="relative w-28 h-20 flex items-center justify-center">
@@ -128,10 +125,9 @@ export function DocsContent() {
     },
     {
       id: "sharing",
-      title: t("docs.viewAndShare") || "Sharing & Permissions",
+      title: t("docs.viewAndShare"),
       desc:
-        t("docs.navViewAndShareDesc") ||
-        "Password protection, expiration dates, and links.",
+        t("docs.navViewAndShareDesc"),
       href: "#sharing",
       illustration: (
         <div className="relative w-28 h-20 flex items-center justify-center">
@@ -157,10 +153,9 @@ export function DocsContent() {
     },
     {
       id: "integrations",
-      title: t("docs.integrationsTitle") || "Integrations & Trackers",
+      title: t("docs.integrationsTitle"),
       desc:
-        t("docs.navIntegrationsDesc") ||
-        "Push captures directly to GitHub, Linear, Jira, Slack, Notion, and 9+ tools.",
+        t("docs.navIntegrationsDesc"),
       href: "#integrations",
       illustration: (
         <div className="relative w-28 h-20 flex items-center justify-center">
@@ -180,10 +175,9 @@ export function DocsContent() {
     },
     {
       id: "mcp",
-      title: t("docs.mcp") || "MCP for AI Agents",
+      title: t("docs.mcp"),
       desc:
-        t("docs.navMcpDesc") ||
-        "Let Claude Code, Claude Desktop, or Cursor read your bug reports directly.",
+        t("docs.navMcpDesc"),
       href: "/docs/mcp",
       illustration: (
         <div className="relative w-28 h-20 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 shadow-sm p-2 flex flex-col justify-between overflow-hidden">
@@ -220,35 +214,34 @@ export function DocsContent() {
               {/* Breadcrumb */}
               <nav
                 className="inline-flex items-center justify-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mb-6"
-                aria-label="Breadcrumb"
+                aria-label={t("modalFx.breadcrumbLabel")}
               >
                 <Link
                   href="/"
                   className="hover:text-slate-900 dark:hover:text-white transition-colors"
                 >
-                  {t("landing.home") || "Home"}
+                  {t("landing.home")}
                 </Link>
                 <span className="text-slate-300 dark:text-slate-600" aria-hidden="true">/</span>
                 <span className="text-slate-700 dark:text-slate-300 font-medium">
-                  {t("site.nav.docs") || "Docs"}
+                  {t("site.nav.docs")}
                 </span>
               </nav>
             </Reveal>
 
             <Reveal delay={0.07}>
               <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12]">
-                {t("docs.title") || "Guides, references &"}
+                {t("docs.title")}
                 <br />
                 <span className="text-emerald-600 dark:text-emerald-400">
-                  {t("docs.titleHighlight") || "developer docs"}
+                  {t("docs.titleHighlight")}
                 </span>
               </h1>
             </Reveal>
 
             <Reveal delay={0.14}>
               <p className="mt-4 text-sm sm:text-lg text-slate-500 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
-                {t("docs.subtitle") ||
-                  "Guides, hotkeys, and integration references to get the most out of BugSnap."}
+                {t("docs.subtitle")}
               </p>
             </Reveal>
           </div>
@@ -304,14 +297,14 @@ export function DocsContent() {
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div>
                   <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                    {t("docs.installHeading") || "Installation & Setup"}
+                    {t("docs.installHeading")}
                   </h2>
                   <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-1">
-                    {t("docs.installDesc") || "Get BugSnap running on your preferred desktop browser in under 60 seconds."}
+                    {t("docs.installDesc")}
                   </p>
                 </div>
                 <span className="text-xs sm:text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-                  {t("docs.quickReference") || "Step 1 of 3"}
+                  {t("docs.quickReference")}
                 </span>
               </div>
 
@@ -321,11 +314,11 @@ export function DocsContent() {
                   <div className="flex items-center gap-2.5">
                     <Icon icon="logos:chrome" className="w-6 h-6" />
                     <h3 className="font-bold text-sm text-slate-900 dark:text-white">
-                      {t("docs.installChromeTitle") || "Google Chrome & Chromium"}
+                      {t("docs.installChromeTitle")}
                     </h3>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                    {t("docs.installChromeDesc") || "Install directly from Chrome Web Store (supports Brave, Arc, Kiwi, and Opera)."}
+                    {t("docs.installChromeDesc")}
                   </p>
                   <a
                     href="https://chromewebstore.google.com/detail/bugsnap/kddhkfbefmflgkicgeplbbepohdggcfb"
@@ -333,7 +326,7 @@ export function DocsContent() {
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline pt-1"
                   >
-                    <span>Chrome Web Store</span>
+                    <span>{t("modalFx.chromeStoreName")}</span>
                     <Icon icon="lucide:external-link" className="w-3.5 h-3.5" />
                   </a>
                 </div>
@@ -343,11 +336,11 @@ export function DocsContent() {
                   <div className="flex items-center gap-2.5">
                     <Icon icon="logos:firefox" className="w-6 h-6" />
                     <h3 className="font-bold text-sm text-slate-900 dark:text-white">
-                      {t("docs.installFirefoxTitle") || "Mozilla Firefox"}
+                      {t("docs.installFirefoxTitle")}
                     </h3>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                    {t("docs.installFirefoxDesc") || "Install isolated package from Mozilla Add-ons (AMO)."}
+                    {t("docs.installFirefoxDesc")}
                   </p>
                   <a
                     href={FIREFOX_STORE_URL}
@@ -355,7 +348,7 @@ export function DocsContent() {
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline pt-1"
                   >
-                    <span>Firefox Add-ons</span>
+                    <span>{t("modalFx.firefoxStoreName")}</span>
                     <Icon icon="lucide:external-link" className="w-3.5 h-3.5" />
                   </a>
                 </div>
@@ -372,10 +365,10 @@ export function DocsContent() {
               {/* Header */}
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                  {t("docs.shortcuts") || "Keyboard Shortcuts"}
+                  {t("docs.shortcuts")}
                 </h2>
                 <span className="text-xs sm:text-sm font-semibold text-emerald-600 dark:text-emerald-400">
-                  {t("docs.quickReference") || "Quick Reference"}
+                  {t("docs.quickReference")}
                 </span>
               </div>
 
@@ -385,11 +378,10 @@ export function DocsContent() {
                 <div className="rounded-xl bg-[#f8fafc] dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 p-4 sm:p-6 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
                   <div className="min-w-0">
                     <div className="font-bold text-sm text-slate-900 dark:text-white">
-                      {t("docs.shortcutScreenshot") || "Instant Screenshot"}
+                      {t("docs.shortcutScreenshot")}
                     </div>
                     <div className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
-                      {t("docs.shortcutScreenshotDesc") ||
-                        "Capture current visible tab or selected window."}
+                      {t("docs.shortcutScreenshotDesc")}
                     </div>
                   </div>
                   <div className="border border-slate-200/90 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg text-xs font-mono font-semibold text-slate-800 dark:text-slate-200 shadow-2xs whitespace-nowrap shrink-0">
@@ -401,11 +393,10 @@ export function DocsContent() {
                 <div className="rounded-xl bg-[#f8fafc] dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 p-4 sm:p-6 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-6">
                   <div className="min-w-0">
                     <div className="font-bold text-sm text-slate-900 dark:text-white">
-                      {t("docs.shortcutRecording") || "Start Screen Recording"}
+                      {t("docs.shortcutRecording")}
                     </div>
                     <div className="text-xs text-slate-500 dark:text-slate-400 mt-1.5 leading-relaxed">
-                      {t("docs.shortcutRecordingDesc") ||
-                        "Take screenshots or record a screen, tab, or window with microphone audio."}
+                      {t("docs.shortcutRecordingDesc")}
                     </div>
                   </div>
                   <div className="border border-slate-200/90 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-1.5 rounded-lg text-xs font-mono font-semibold text-slate-800 dark:text-slate-200 shadow-2xs whitespace-nowrap shrink-0">
@@ -461,8 +452,8 @@ export function DocsContent() {
                     onClick={() => copyToClipboard(activeBrowser.url, "hotkeys")}
                   >
                     {copiedKey === "hotkeys"
-                      ? t("docs.terminalCopied") || "Copied!"
-                      : t("docs.copyCode") || "Copy"}
+                      ? t("docs.terminalCopied")
+                      : t("docs.copyCode")}
                   </button>
                 </div>
 
@@ -504,18 +495,17 @@ export function DocsContent() {
             >
               <div className="space-y-3 min-w-0 max-w-2xl">
                 <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                  {t("docs.driveSetup") || "Google Drive Setup"}
+                  {t("docs.driveSetup")}
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
-                  {t("docs.driveScopeDesc") ||
-                    "BugSnap requests the standard Google Drive drive.file scope. This means BugSnap can only read and write files it created itself; it can never see, read, or modify your personal files or spreadsheets."}
+                  {t("docs.driveScopeDesc")}
                 </p>
                 <div className="flex flex-wrap items-center gap-2 pt-1 text-xs sm:text-sm font-semibold text-emerald-600 dark:text-emerald-400">
                   <Link
                     href="/help"
                     className="hover:underline inline-flex items-center gap-1"
                   >
-                    {t("docs.viewHelpFaqs") || "View Help Center FAQs "}
+                    {t("docs.viewHelpFaqs")}
                   </Link>
                   <span className="text-slate-400 font-bold" aria-hidden="true">
                     ·
@@ -524,7 +514,7 @@ export function DocsContent() {
                     href="/contact"
                     className="hover:underline inline-flex items-center gap-1"
                   >
-                    {t("docs.contactSupport") || "Contact Technical Support "}
+                    {t("docs.contactSupport")}
                   </Link>
                 </div>
               </div>
@@ -560,10 +550,10 @@ export function DocsContent() {
             >
               <div className="space-y-2">
                 <h2 className="text-xl font-bold text-slate-900 dark:text-white">
-                  {t("docs.shareHeading") || "Sharing, Permissions & Ticket Export"}
+                  {t("docs.shareHeading")}
                 </h2>
                 <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed max-w-2xl">
-                  {t("docs.shareDesc") || "Turn captures into actionable tickets across your team's existing issue trackers."}
+                  {t("docs.shareDesc")}
                 </p>
               </div>
 
@@ -571,30 +561,30 @@ export function DocsContent() {
                 <div className="rounded-xl bg-[#f8fafc] dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 p-4 sm:p-6 space-y-2">
                   <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-sm">
                     <Icon icon="lucide:link" className="w-4 h-4" />
-                    <span>{t("docs.shareLinkTitle") || "Instant Shareable Link"}</span>
+                    <span>{t("docs.shareLinkTitle")}</span>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                    {t("docs.shareLinkDesc") || "Generate public or workspace links instantly. Viewers do not need an account to review."}
+                    {t("docs.shareLinkDesc")}
                   </p>
                 </div>
 
                 <div className="rounded-xl bg-[#f8fafc] dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 p-4 sm:p-6 space-y-2">
                   <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-bold text-sm">
                     <Icon icon="lucide:file-text" className="w-4 h-4" />
-                    <span>{t("docs.shareMarkdownTitle") || "Export Issue"}</span>
+                    <span>{t("docs.shareMarkdownTitle")}</span>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                    {t("docs.shareMarkdownDesc") || "Copy formatted Markdown ready to paste into Jira, GitHub Issues, Linear, or Slack."}
+                    {t("docs.shareMarkdownDesc")}
                   </p>
                 </div>
 
                 <div className="rounded-xl bg-[#f8fafc] dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 p-4 sm:p-6 space-y-2">
                   <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-bold text-sm">
                     <Icon icon="lucide:lock" className="w-4 h-4" />
-                    <span>{t("docs.shareSecurityTitle") || "Password Protection & Expiry"}</span>
+                    <span>{t("docs.shareSecurityTitle")}</span>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
-                    {t("docs.shareSecurityDesc") || "Protect confidential captures with optional passwords and auto-expiring links."}
+                    {t("docs.shareSecurityDesc")}
                   </p>
                 </div>
               </div>
@@ -607,7 +597,7 @@ export function DocsContent() {
                   href="/docs/integrations"
                   className="inline-flex items-center gap-1.5 text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
                 >
-                  <span>Explore Integrations & Setup Guides </span>
+                  <span>{t("modalFx.exploreIntegrations")} </span>
                 </Link>
               </div>
             </div>
@@ -624,14 +614,13 @@ export function DocsContent() {
                 <div className="space-y-1.5 max-w-2xl min-w-0">
                   <div className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 border border-emerald-200/60 dark:border-emerald-800/60 w-fit">
                     <Icon icon="lucide:plug" className="w-3.5 h-3.5" />
-                    <span>{t("docs.howWeTest") || "Universal Credential Probe"}</span>
+                    <span>{t("docs.howWeTest")}</span>
                   </div>
                   <h2 className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white">
-                    {t("docs.integrationsHeading") || "Third-Party Integrations & Issue Trackers"}
+                    {t("docs.integrationsHeading")}
                   </h2>
                   <p className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 leading-relaxed break-words">
-                    {t("docs.integrationsSectionDesc") ||
-                      "BugSnap connects with your team's existing developer toolchain. Send captures, video replays, console stack traces, and network logs to the tools your team already uses."}
+                    {t("docs.integrationsSectionDesc")}
                   </p>
                 </div>
                 <Link
@@ -639,7 +628,7 @@ export function DocsContent() {
                   className="inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold rounded-xl bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors whitespace-nowrap shrink-0 shadow-xs"
                 >
                   <Icon icon="lucide:book-open" className="w-4 h-4 brightness-0 invert" />
-                  <span>{t("docs.viewAllIntegrationsBtn") || "Full Setup Guides "}</span>
+                  <span>{t("docs.viewAllIntegrationsBtn")}</span>
                 </Link>
               </div>
 
@@ -648,30 +637,30 @@ export function DocsContent() {
                 <div className="rounded-xl bg-[#f8fafc] dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 space-y-2">
                   <div className="flex items-center gap-2 text-blue-600 dark:text-blue-400 font-bold text-xs sm:text-sm">
                     <span className="w-5 h-5 rounded-full bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center text-[10px] font-extrabold">1</span>
-                    <span>{t("docs.flowStep1Title") || "Capture & Diagnose"}</span>
+                    <span>{t("docs.flowStep1Title")}</span>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed break-words">
-                    {t("docs.flowStep1Desc") || "BugSnap records HD video, screenshots, console errors, and 4xx/5xx network failures in the background."}
+                    {t("docs.flowStep1Desc")}
                   </p>
                 </div>
 
                 <div className="rounded-xl bg-[#f8fafc] dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 space-y-2">
                   <div className="flex items-center gap-2 text-amber-600 dark:text-amber-400 font-bold text-xs sm:text-sm">
                     <span className="w-5 h-5 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center text-[10px] font-extrabold">2</span>
-                    <span>{t("docs.flowStep2Title") || "Zero-Storage Redaction"}</span>
+                    <span>{t("docs.flowStep2Title")}</span>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed break-words">
-                    {t("docs.flowStep2Desc") || "Tokens, auth cookies, and sensitive PII are scrubbed client-side before dispatching to external APIs."}
+                    {t("docs.flowStep2Desc")}
                   </p>
                 </div>
 
                 <div className="rounded-xl bg-[#f8fafc] dark:bg-slate-800/40 border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 space-y-2">
                   <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-xs sm:text-sm">
                     <span className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center text-[10px] font-extrabold">3</span>
-                    <span>{t("docs.flowStep3Title") || "Send to Connected Tools"}</span>
+                    <span>{t("docs.flowStep3Title")}</span>
                   </div>
                   <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed break-words">
-                    {t("docs.flowStep3Desc") || "Push formatted issues, rich cards, or notification embeds to any configured workspace tool."}
+                    {t("docs.flowStep3Desc")}
                   </p>
                 </div>
               </div>
@@ -680,10 +669,10 @@ export function DocsContent() {
               <div className="space-y-3 sm:space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1">
                   <h3 className="font-bold text-sm text-slate-900 dark:text-white">
-                    {t("docs.supportedToolsTitle") || "Supported Platforms & Tools"}
+                    {t("docs.supportedToolsTitle")}
                   </h3>
                   <span className="text-xs text-slate-500 dark:text-slate-400">
-                    {t("docs.supportedToolsDesc") || "Click any tool to view token requirements and setup tutorial"}
+                    {t("docs.supportedToolsDesc")}
                   </span>
                 </div>
 
@@ -725,11 +714,10 @@ export function DocsContent() {
                 <div className="space-y-1 max-w-2xl min-w-0">
                   <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400 font-bold text-xs sm:text-sm">
                     <Icon icon="lucide:shield-check" className="w-4 h-4 shrink-0" />
-                    <span>{t("docs.probeTitle") || "Pre-flight Verification Engine Built-In"}</span>
+                    <span>{t("docs.probeTitle")}</span>
                   </div>
                   <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed break-words">
-                    {t("docs.probeDesc") ||
-                      "Every integration in BugSnap features a non-mutating 'Test Connection' probe. It validates your tokens, project keys, and database permissions using read-only API calls -without spamming your issue trackers with fake test tickets or consuming chat prompt quotas."}
+                    {t("docs.probeDesc")}
                   </p>
                 </div>
                 <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
@@ -738,13 +726,13 @@ export function DocsContent() {
                     className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-blue-600 dark:bg-blue-500 text-white hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors shadow-2xs"
                   >
                     <Icon icon="lucide:settings" className="w-3.5 h-3.5 brightness-0 invert" />
-                    <span>{t("docs.openSettings") || "Test in Settings "}</span>
+                    <span>{t("docs.openSettings")}</span>
                   </Link>
                   <Link
                     href="/docs/integrations"
                     className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/60 transition-colors shadow-2xs"
                   >
-                    <span>{t("docs.directSetupGuide") || "Setup Guides "}</span>
+                    <span>{t("docs.directSetupGuide")}</span>
                   </Link>
                 </div>
               </div>

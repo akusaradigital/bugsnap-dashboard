@@ -7,6 +7,7 @@ import { SecurityEvent } from "@/lib/security-audit";
 import { getAdminHeaders, getAdminCache, setAdminCache } from "@/lib/admin-cache";
 import { Icon } from "@/lib/iconify";
 import { Dropdown } from "@/components/Dropdown";
+import { useConfirm } from "@/components/ConfirmDialog";
 
 interface AuditStats {
   total: number;
@@ -62,6 +63,7 @@ function TrendChart({ data }: { data: TrendPoint[] }) {
 }
 
 export default function AdminSecurityAuditPage() {
+  const confirm = useConfirm();
   const { showToast } = useToast();
   const { t } = useT();
   const cached = getAdminCache<{ logs: SecurityEvent[]; stats: AuditStats; trend: TrendPoint[] }>("admin_security_data");
@@ -104,31 +106,41 @@ export default function AdminSecurityAuditPage() {
   }
 
   async function handlePurgeOldLogs() {
-    if (!confirm(t("admin.purge90Confirm"))) return;
+    const ok = await confirm({
+      title: t("admin.purge90ConfirmTitle"),
+      message: t("admin.purge90Confirm"),
+      danger: true,
+    });
+    if (!ok) return;
     setPurging(true);
     try {
       const headers = await getAdminHeaders();
       const res = await fetch("/api/admin/security-audit?days=90", { method: "DELETE", headers });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed to purge old logs");
+      if (!res.ok) throw new Error(json.error || t("secAudit.errPurge"));
 
       showToast(t("admin.purge90Success"), "success");
       await loadLogs();
     } catch (err: unknown) {
-      showToast((err as Error)?.message || "Failed to purge logs", "error");
+      showToast((err as Error)?.message || t("secAudit.errPurgeToast"), "error");
     } finally {
       setPurging(false);
     }
   }
 
   async function handleClearLogs() {
-    if (!confirm(t("admin.clearLogsConfirm"))) return;
+    const ok = await confirm({
+      title: t("admin.clearLogsConfirmTitle"),
+      message: t("admin.clearLogsConfirm"),
+      danger: true,
+    });
+    if (!ok) return;
     setClearing(true);
     try {
       const headers = await getAdminHeaders();
       const res = await fetch("/api/admin/security-audit", { method: "DELETE", headers });
       const json = await res.json();
-      if (!res.ok) throw new Error(json.error || "Failed to clear logs");
+      if (!res.ok) throw new Error(json.error || t("secAudit.errClear"));
 
       setLogs([]);
       setStats({ total: 0, honeypot: 0, spam_email: 0, turnstile_fail: 0, admin_login: 0, admin_action: 0 });
@@ -138,7 +150,7 @@ export default function AdminSecurityAuditPage() {
       });
       showToast(t("admin.clearLogsSuccess"), "success");
     } catch (err: unknown) {
-      showToast((err as Error)?.message || "Failed to clear logs", "error");
+      showToast((err as Error)?.message || t("secAudit.errClearToast"), "error");
     } finally {
       setClearing(false);
     }
@@ -219,11 +231,11 @@ export default function AdminSecurityAuditPage() {
       {/* Stats Counter Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
         {[
-          { label: "Total Events", value: stats.total, color: "text-slate-900 dark:text-white", border: "border-slate-200 dark:border-zinc-800" },
-          { label: "Admin Actions", value: stats.admin_action, color: "text-[#2563EB] dark:text-[#3B82F6]", border: "border-blue-200 dark:border-blue-900/40" },
-          { label: "Bot Honeypots", value: stats.honeypot, color: "text-rose-600 dark:text-rose-400", border: "border-rose-200 dark:border-rose-900/50" },
-          { label: "Disposable Emails", value: stats.spam_email, color: "text-amber-600 dark:text-amber-400", border: "border-amber-200 dark:border-amber-900/50" },
-          { label: "Turnstile Fails", value: stats.turnstile_fail, color: "text-slate-700 dark:text-slate-300", border: "border-slate-300 dark:border-zinc-700" },
+          { label: t("secAudit.statTotal"), value: stats.total, color: "text-slate-900 dark:text-white", border: "border-slate-200 dark:border-zinc-800" },
+          { label: t("secAudit.statAdmin"), value: stats.admin_action, color: "text-[#2563EB] dark:text-[#3B82F6]", border: "border-blue-200 dark:border-blue-900/40" },
+          { label: t("secAudit.statHoneypot"), value: stats.honeypot, color: "text-rose-600 dark:text-rose-400", border: "border-rose-200 dark:border-rose-900/50" },
+          { label: t("secAudit.statDisposable"), value: stats.spam_email, color: "text-amber-600 dark:text-amber-400", border: "border-amber-200 dark:border-amber-900/50" },
+          { label: t("secAudit.statTurnstile"), value: stats.turnstile_fail, color: "text-slate-700 dark:text-slate-300", border: "border-slate-300 dark:border-zinc-700" },
         ].map((s) => (
           <div key={s.label} className={`rounded-xl border ${s.border} bg-white dark:bg-zinc-900 p-3.5 shadow-sm min-w-0`}>
             <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 truncate block">{s.label}</span>
@@ -237,14 +249,14 @@ export default function AdminSecurityAuditPage() {
         <div className="rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 sm:p-6 shadow-sm min-w-0">
           <div className="flex items-center justify-between mb-3 min-w-0">
             <h3 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 truncate">
-              30-Day Activity Trend
+              {t("secAudit.trendTitle")}
             </h3>
             <div className="flex items-center gap-3 text-[10px] text-slate-500 dark:text-zinc-400 shrink-0">
               <span className="flex items-center gap-1">
-                <span className="h-2 w-2 rounded-sm bg-slate-300 dark:bg-zinc-700 inline-block" /> Total
+                <span className="h-2 w-2 rounded-sm bg-slate-300 dark:bg-zinc-700 inline-block" /> {t("secAudit.legendTotal")}
               </span>
               <span className="flex items-center gap-1">
-                <span className="h-2 w-2 rounded-sm bg-rose-500 inline-block" /> Threats
+                <span className="h-2 w-2 rounded-sm bg-rose-500 inline-block" /> {t("secAudit.legendThreats")}
               </span>
             </div>
           </div>
@@ -259,17 +271,17 @@ export default function AdminSecurityAuditPage() {
             value={typeFilter}
             onChange={(val) => setTypeFilter(val)}
             options={[
-              { value: "all", label: "All Event Types" },
-              { value: "admin_action", label: "Admin Actions" },
-              { value: "admin_password_change", label: "Admin Password Change" },
-              { value: "rate_limit", label: "Rate Limit" },
-              { value: "honeypot_trap", label: "Honeypot Bot Trap" },
-              { value: "spam_email", label: "Disposable Email Block" },
-              { value: "turnstile_fail", label: "Turnstile Fail" },
-              { value: "admin_login_success", label: "Admin Login Success" },
-              { value: "admin_login_failed", label: "Admin Login Failed" },
+              { value: "all", label: t("secAudit.filterAll") },
+              { value: "admin_action", label: t("secAudit.filterAdmin") },
+              { value: "admin_password_change", label: t("secAudit.filterPassword") },
+              { value: "rate_limit", label: t("secAudit.filterRateLimit") },
+              { value: "honeypot_trap", label: t("secAudit.filterHoneypot") },
+              { value: "spam_email", label: t("secAudit.filterDisposable") },
+              { value: "turnstile_fail", label: t("secAudit.filterTurnstile") },
+              { value: "admin_login_success", label: t("secAudit.filterLoginOk") },
+              { value: "admin_login_failed", label: t("secAudit.filterLoginFail") },
             ]}
-            variant="pill"
+            variant="field-white"
             className="w-full sm:w-auto min-w-[160px]"
           />
         </div>
@@ -277,7 +289,7 @@ export default function AdminSecurityAuditPage() {
         <div className="w-full sm:w-64 min-w-0">
           <input
             type="text"
-            placeholder="Search IP, title, details..."
+            placeholder={t("secAudit.searchPlaceholder")}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full text-xs rounded-lg border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2 outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB]/20 text-slate-900 dark:text-white"
@@ -291,11 +303,11 @@ export default function AdminSecurityAuditPage() {
           <table className="w-full text-left text-xs">
             <thead className="border-b border-slate-200 dark:border-zinc-800 bg-slate-50 dark:bg-zinc-900 text-slate-500 dark:text-zinc-400 font-bold uppercase tracking-wider text-[10px]">
               <tr>
-                <th className="py-3 px-4">Event Type</th>
-                <th className="py-3 px-4">Incident / Action</th>
-                <th className="py-3 px-4">Telemetry Detail</th>
-                <th className="py-3 px-4">Origin IP</th>
-                <th className="py-3 px-4 text-right">Timestamp</th>
+                <th className="py-3 px-4">{t("secAudit.colType")}</th>
+                <th className="py-3 px-4">{t("secAudit.colIncident")}</th>
+                <th className="py-3 px-4">{t("secAudit.colDetail")}</th>
+                <th className="py-3 px-4">{t("secAudit.colIp")}</th>
+                <th className="py-3 px-4 text-right">{t("secAudit.colTime")}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-zinc-800">
@@ -308,7 +320,7 @@ export default function AdminSecurityAuditPage() {
               ) : filteredLogs.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="p-8 text-center text-slate-400">
-                    No security or admin actions recorded matching this filter.
+                    {t("secAudit.empty")}
                   </td>
                 </tr>
               ) : (
@@ -319,49 +331,49 @@ export default function AdminSecurityAuditPage() {
                         {log.type === "admin_action" && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 dark:bg-blue-950/20 text-[#2563EB] dark:text-[#3B82F6] border border-blue-200 dark:border-blue-900/40">
                             <Icon icon="lucide:zap" className="w-3 h-3 shrink-0" />
-                            <span>ADMIN ACTION</span>
+                            <span>{t("secAudit.badgeAdmin")}</span>
                           </span>
                         )}
                         {log.type === "admin_password_change" && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-700 dark:bg-blue-950/60 dark:text-blue-400">
                             <Icon icon="lucide:lock" className="w-3 h-3 shrink-0" />
-                            <span>PASSWORD CHANGE</span>
+                            <span>{t("secAudit.badgePassword")}</span>
                           </span>
                         )}
                         {log.type === "honeypot_trap" && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400">
                             <Icon icon="lucide:shield-alert" className="w-3 h-3 shrink-0" />
-                            <span>HONEYPOT</span>
+                            <span>{t("secAudit.badgeHoneypot")}</span>
                           </span>
                         )}
                         {log.type === "spam_email" && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-400">
                             <Icon icon="lucide:ban" className="w-3 h-3 shrink-0" />
-                            <span>DISPOSABLE</span>
+                            <span>{t("secAudit.badgeDisposable")}</span>
                           </span>
                         )}
                         {log.type === "turnstile_fail" && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 text-slate-700 dark:bg-zinc-800 dark:text-zinc-300 border border-slate-300 dark:border-zinc-700">
                             <Icon icon="lucide:shield-check" className="w-3 h-3 shrink-0" />
-                            <span>TURNSTILE</span>
+                            <span>{t("secAudit.badgeTurnstile")}</span>
                           </span>
                         )}
                         {log.type === "admin_login_success" && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400">
                             <Icon icon="lucide:key" className="w-3 h-3 shrink-0" />
-                            <span>LOGIN OK</span>
+                            <span>{t("secAudit.badgeLoginOk")}</span>
                           </span>
                         )}
                         {log.type === "admin_login_failed" && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-400">
                             <Icon icon="lucide:alert-triangle" className="w-3 h-3 shrink-0" />
-                            <span>LOGIN FAIL</span>
+                            <span>{t("secAudit.badgeLoginFail")}</span>
                           </span>
                         )}
                         {log.type === "rate_limit" && (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-700 dark:bg-orange-950/60 dark:text-orange-400">
                             <Icon icon="lucide:clock" className="w-3 h-3 shrink-0" />
-                            <span>RATE LIMIT</span>
+                            <span>{t("secAudit.badgeRateLimit")}</span>
                           </span>
                         )}
                       </td>

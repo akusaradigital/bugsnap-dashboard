@@ -30,31 +30,30 @@ export function HowItWorksContent() {
                 href="/"
                 className="hover:text-slate-900 dark:hover:text-white transition-colors"
               >
-                {t("landing.home") || "Home"}
+                {t("landing.home")}
               </Link>
               <span className="text-slate-300 dark:text-slate-600 font-normal select-none" aria-hidden="true">
                 /
               </span>
               <span className="font-semibold text-slate-800 dark:text-slate-200">
-                {t("howItWorks.breadcrumb") || "How BugSnap Works"}
+                {t("howItWorks.breadcrumb")}
               </span>
             </nav>
           </Reveal>
 
           <Reveal delay={0.06}>
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12]">
-              {t("howItWorks.title") || "From instant capture"}
+              {t("howItWorks.title")}
               <br />
               <span className="text-emerald-600 dark:text-emerald-400">
-                {t("howItWorks.titleHighlight") || "to the root-cause fix"}
+                {t("howItWorks.titleHighlight")}
               </span>
             </h1>
           </Reveal>
 
           <Reveal delay={0.12}>
             <p className="mt-4 text-sm sm:text-base md:text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
-              {t("howItWorks.subtitle") ||
-                "No complex setup. No dev tools. Just capture, record, redact, and share actionable bug reports."}
+              {t("howItWorks.subtitle")}
             </p>
           </Reveal>
         </section>
@@ -956,7 +955,7 @@ export function HowItWorksContent() {
                   className="inline-flex items-center gap-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-bold px-6 py-3.5 rounded-xl shadow-md transition-all hover:scale-[1.02] active:scale-[0.99] shrink-0 touch-manipulation whitespace-nowrap"
                 >
                   <Icon icon="logos:chrome" className="w-5 h-5 shrink-0" />
-                  <span>{t("extension.addToChrome") || "Add to Chrome"}</span>
+                  <span>{t("extension.addToChrome")}</span>
                 </a>
                 <a
                   href={FIREFOX_STORE_URL}
