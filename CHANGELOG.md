@@ -91,6 +91,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [bugsnap-extension]
 
+### 2026-11-13 (v1.0.79)
+- **fix**: Keep a transient Google Drive token-refresh failure (network blip, Google or dashboard outage) retryable instead of showing a false "reconnect your account" message. It now gets two short retries before the upload gives up.
+- **fix**: Show a dedicated "Could not reach Google Drive right now" message for transient refresh failures, separate from a revoked connection, in English and Indonesian.
+- **fix**: Give each install a stable per-device identifier so one laptop's pairing no longer overwrites another's. Matches the dashboard's new `extension_device_connections` table.
+- **feat**: Point the uninstall survey URL at the current dashboard base and extension version, refreshed on every install and startup.
+- **chore**: Use the Chrome Web Store short description "Chrome bug report extension: screenshots and screen recordings..." in the English locale and store listing.
+
 ### 2026-11-09 (v1.0.74)
 - **feat**: Smooth, fast visual upload progress animation from the first real percentage toward 99%, reserving 100% strictly for confirmed Google Drive success
 - **feat**: Add modular real-browser upload-link coverage and organize test support utilities under `test/support/`

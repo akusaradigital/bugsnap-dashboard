@@ -50,8 +50,16 @@ describe("Changelog Parser & Markdown Integrity", () => {
     const latestExtension = releases.find((r) => r.project === "extension");
     const latestMcp = releases.find((r) => r.project === "mcp");
 
-    assert.equal(latestDashboard?.version, "v0.15.2", "Latest dashboard version should be v0.15.2");
-    assert.equal(latestExtension?.version, "v1.0.74", "Latest extension version should be v1.0.74");
-    assert.equal(latestMcp?.version, "v0.3.2", "Latest mcp version should be v0.3.2");
+    // Compare against each project's real version source, not a hardcoded number,
+    // so a new release only needs its changelog entry and the source bump.
+    const dashboardPkg = JSON.parse(fs.readFileSync(path.resolve("package.json"), "utf8")).version;
+    const extensionRoot = path.resolve(process.cwd(), "..", "bugsnap-extension");
+    const extensionManifest = JSON.parse(fs.readFileSync(path.join(extensionRoot, "manifest.json"), "utf8")).version;
+    const mcpRoot = path.resolve(process.cwd(), "..", "bugsnap-mcp");
+    const mcpPkg = JSON.parse(fs.readFileSync(path.join(mcpRoot, "package.json"), "utf8")).version;
+
+    assert.equal(latestDashboard?.version, `v${dashboardPkg}`, `Latest dashboard changelog version should match package.json (${dashboardPkg})`);
+    assert.equal(latestExtension?.version, `v${extensionManifest}`, `Latest extension changelog version should match manifest.json (${extensionManifest})`);
+    assert.equal(latestMcp?.version, `v${mcpPkg}`, `Latest mcp changelog version should match package.json (${mcpPkg})`);
   });
 });
