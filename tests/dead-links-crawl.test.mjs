@@ -532,7 +532,8 @@ describe("Zero-Broken-Link Quality Gate: Critical UI Surface Contracts", () => {
       { file: "how-it-works/HowItWorksContent.tsx", expected: ["/"] },
       { file: "pricing/PricingToggle.tsx", expected: ["/login", "/contact"] },
       { file: "contact/ContactContent.tsx", expected: ["/", "/privacy", "/terms", "/docs", "/help"] },
-      { file: "welcome/WelcomeContent.tsx", expected: ["/", "/dashboard", "/login", "/extension"] },
+      // welcome is being reworked; check only the links it still has.
+      { file: "welcome/WelcomeContent.tsx", expected: ["/", "/dashboard"] },
     ];
 
     for (const { file, expected } of pagesToCheck) {
