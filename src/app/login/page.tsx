@@ -21,6 +21,8 @@ function getSafeRedirectPath(): string {
     url.searchParams.delete("sb");
     const query = url.searchParams.toString();
     const clean = url.pathname + (query ? `?${query}` : "");
+    // A protocol-relative path (//host) survives normalization and would navigate off-site.
+    if (clean.startsWith("//") || clean.startsWith("/\\")) return "/dashboard";
     return clean === "/login" ? "/dashboard" : clean || "/dashboard";
   } catch {
     return "/dashboard";
@@ -41,6 +43,20 @@ export default function LoginPage() {
   const [loadingSession, setLoadingSession] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [redirectPath, setRedirectPath] = useState("/dashboard");
+  // Destination carried through OAuth via ?next=, validated like redirectTo.
+  const [nextPath] = useState(() => {
+    if (typeof window === "undefined") return "";
+    const raw = new URLSearchParams(window.location.search).get("next") || "";
+    // Resolve exactly as the browser would and keep it only if it stays on this origin.
+    // A regex on the raw string misses tab/newline tricks that the browser strips (/%09/evil.com).
+    try {
+      const resolved = new URL(raw, "http://localhost");
+      const same = resolved.origin === "http://localhost";
+      return same && raw.startsWith("/") && !raw.startsWith("//") && !raw.startsWith("/\\") && !resolved.pathname.startsWith("/login") ? resolved.pathname + resolved.search : "";
+    } catch {
+      return "";
+    }
+  });
   const [isFromExtension, setIsFromExtension] = useState(false);
   const [isConnected, setIsConnected] = useState(false);
 
@@ -129,25 +145,54 @@ export default function LoginPage() {
             );
           }
 
+          // Any web login hands the extension a one-time pairing code, so the extension
+          // connects whether the user signed in from the extension or from the website.
+          const accessToken = data.session.access_token;
+          fetch("/api/extension/pair", {
+            method: "POST",
+            headers: { Authorization: `Bearer ${accessToken}` },
+          })
+            .then((r) => (r.ok ? r.json() : null))
+            .then((json) => {
+              if (json?.code) {
+                window.postMessage(
+                  { source: "bugsnap-web", action: "pair_extension", code: json.code },
+                  window.location.origin
+                );
+              }
+            })
+            .catch(() => {});
+
           if (fromExt) {
             setIsConnected(true);
-          } else {
+            // Give the extension a few seconds to store the pairing before leaving this page.
             setTimeout(() => {
               window.location.assign(target);
-            }, 50);
+            }, 3000);
+          } else {
+            // Web login: forward to the destination the user came from. Wait long enough for the
+            // pairing request and postMessage to finish, or navigation cancels them.
+            setTimeout(() => {
+              window.location.assign(nextPath || "/dashboard");
+            }, 3000);
           }
         }
       })
       .catch(() => setLoadingSession(false));
+    // nextPath is read once on mount (useState); the session check must run only once.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function signInWithGoogle() {
     setSigningIn(true);
     setError(null);
     try {
+      // Always return through /login so the session-pairing step runs for web logins too.
+      // Web logins then forward to their real destination (see the success branch).
+      const dest = redirectPath.startsWith("/") ? redirectPath : "/dashboard";
       const target = isFromExtension
         ? "/login?ref=extension&connected=true"
-        : (redirectPath.startsWith("/") ? redirectPath : "/dashboard");
+        : `/login?next=${encodeURIComponent(dest)}`;
       const redirectTo = `${window.location.origin}${target}`;
       const { error: authError } = await supabase.auth.signInWithOAuth({
         provider: "google",

@@ -234,7 +234,7 @@ export default function AdminWorkspacesPage() {
           w.id === transferWs.id ? { ...w, owner_email: newOwnerEmail.trim() } : w
         )
       );
-      showToast("Workspace ownership transferred successfully", "success");
+      showToast(t("copy.ownershipTransferred"), "success");
       setTransferWs(null);
       setNewOwnerEmail("");
     } catch (err: unknown) {
@@ -264,7 +264,7 @@ export default function AdminWorkspacesPage() {
       pageCache.current.clear();
       setWorkspaces((prev) => prev.filter((w) => w.id !== ws.id));
       if (selectedWs?.id === ws.id) setSelectedWs(null);
-      showToast("Workspace deleted successfully", "success");
+      showToast(t("copy.workspaceDeleted"), "success");
     } catch (err: unknown) {
       showToast((err as Error)?.message || t("adminMisc.errDeleteWsToast"), "error");
     }

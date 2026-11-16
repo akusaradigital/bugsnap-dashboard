@@ -187,7 +187,7 @@ export function AdminAiConfigCard() {
 
   async function handlePing() {
     if (!endpointUrl.trim()) {
-      showToast("URL Endpoint tidak boleh kosong", "error");
+      showToast(t("copy.endpointRequired"), "error");
       return;
     }
     if (!model.trim()) {
@@ -218,7 +218,7 @@ export function AdminAiConfigCard() {
       setPingResult(json);
 
       if (json.ok) {
-        showToast(`Terhubung! Latensi: ${json.latencyMs}ms (${json.model})`, "success");
+        showToast(t("copy.endpointOk", { ms: json.latencyMs, model: json.model }), "success");
       } else {
         showToast(json.error || t("admin.aiPingFail"), "error");
       }
@@ -265,7 +265,7 @@ export function AdminAiConfigCard() {
       setPolishResult(json);
 
       if (json.ok) {
-        showToast(`AI Polish sukses! (${json.latencyMs}ms)`, "success");
+        showToast(t("copy.aiPolishOk", { ms: json.latencyMs }), "success");
       } else {
         showToast(json.error || t("admin.aiPolishFailed"), "error");
       }
@@ -280,7 +280,7 @@ export function AdminAiConfigCard() {
 
   async function handleSave() {
     if (!endpointUrl.trim()) {
-      showToast("URL Endpoint wajib diisi", "error");
+      showToast(t("copy.endpointRequired"), "error");
       return;
     }
     if (!model.trim()) {

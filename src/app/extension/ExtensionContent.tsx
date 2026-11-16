@@ -138,7 +138,7 @@ export function ExtensionContent() {
             <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 dark:text-white leading-[1.12]">
               {t("extension.title")}
               <br />
-              <span className="text-[#5B8C2A] dark:text-[#A8D666]">
+              <span className="text-emerald-600 dark:text-emerald-400">
                 {t("extension.titleHighlight")}
               </span>
             </h1>
@@ -183,7 +183,7 @@ export function ExtensionContent() {
             {/* Left Column: Text & Shortcut Cards */}
             <div className="lg:col-span-7 space-y-6">
               <div className="space-y-2">
-                <span className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-[#5B8C2A] dark:text-[#A8D666]">
+                <span className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
                   {t("extension.shortcutsEyebrow")}
                 </span>
                 <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white leading-snug tracking-tight">
@@ -561,7 +561,7 @@ export function ExtensionContent() {
           {/* Security & Privacy - Transparent Chrome Permissions */}
           <div className="space-y-6">
             <div className="space-y-1">
-              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-[#5B8C2A] dark:text-[#A8D666]">
+              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
                 {t("extension.permissionsEyebrow")}
               </span>
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
@@ -661,7 +661,7 @@ export function ExtensionContent() {
           {/* Compatibility - Supported Browsers */}
           <div className="space-y-6">
             <div className="space-y-1">
-              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-[#5B8C2A] dark:text-[#A8D666]">
+              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
                 {t("extension.sectionCompatibility")}
               </span>
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">
@@ -718,7 +718,7 @@ export function ExtensionContent() {
           {/* Frequently Asked Questions */}
           <div className="space-y-6">
             <div className="space-y-1">
-              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-[#5B8C2A] dark:text-[#A8D666]">
+              <span className="text-[11px] sm:text-xs font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">
                 {t("extension.faqEyebrow")}
               </span>
               <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 dark:text-white tracking-tight leading-snug">

@@ -990,11 +990,11 @@ function SingleViewContent() {
           : prev
       );
       setEditModalOpen(false);
-      showToast("Capture saved", "success");
+      showToast(t("copy.captureSaved"), "success");
     } catch (err) {
       console.warn("Failed to save captures changes:", err);
       setEditError(t("v.saveError"));
-      showToast("Save failed", "error");
+      showToast(t("copy.captureSaveFailed"), "error");
     } finally {
       setSavingEdit(false);
     }
@@ -1069,7 +1069,7 @@ function SingleViewContent() {
       showToast(folderName ? `Moved to "${folderName}"` : "Removed from folder", "success");
     } catch (err) {
       console.warn("Failed to move capture:", err);
-      showToast("Move failed", "error");
+      showToast(t("copy.moveFailed"), "error");
     } finally {
       setMovingCapture(false);
     }
@@ -1123,7 +1123,7 @@ function SingleViewContent() {
       if (captureResult?.ok) {
         setDeleteCaptureModalOpen(false);
         setDeleteOperationId(null);
-        showToast("Capture deleted", "success");
+        showToast(t("copy.captureDeleted"), "success");
         router.push("/captures");
         return;
       }
@@ -1144,7 +1144,7 @@ function SingleViewContent() {
     } catch (err) {
       console.warn("Failed to delete capture:", err);
       setDeleteCaptureError(err instanceof Error ? err.message : t("v.deleteFailed"));
-      showToast("Delete failed", "error");
+      showToast(t("copy.captureDeleteFailed"), "error");
     } finally {
       setDeletingCapture(false);
     }

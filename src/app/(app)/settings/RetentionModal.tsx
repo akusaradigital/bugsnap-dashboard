@@ -64,7 +64,7 @@ export function RetentionModal({
           <button
             type="button"
             onClick={() => {
-              showToast("Opening customer portal to pause your subscription...", "info");
+              showToast(t("copy.drivePaused"), "info");
               openPaddleCustomerPortal();
               onClose();
             }}

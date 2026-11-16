@@ -111,7 +111,7 @@ export default function AdminExtensionFleetPage() {
       if (!res.ok) throw new Error(json.error || t("adminMisc.errExtSave"));
 
       setAdminCache("admin_extension_data", { config, errors });
-      showToast("Konfigurasi extension fleet berhasil disimpan!", "success");
+      showToast(t("copy.configSaved"), "success");
     } catch (err: unknown) {
       showToast((err as Error)?.message || t("adminMisc.errExtSaveToast"), "error");
     } finally {

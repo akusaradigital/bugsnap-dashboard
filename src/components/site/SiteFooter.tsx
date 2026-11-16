@@ -46,7 +46,7 @@ export function SiteFooter() {
                 href={CHROME_STORE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-xs text-site-text-2 hover:text-site-text transition-colors w-fit max-w-full"
+                className="inline-flex items-center gap-2 min-h-[44px] text-xs text-site-text-2 hover:text-site-text transition-colors w-fit max-w-full"
               >
                 <Icon icon="logos:chrome-web-store" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                 <span className="truncate">{t("landing.chromeWebStore")}</span>
@@ -55,7 +55,7 @@ export function SiteFooter() {
                 href={FIREFOX_STORE_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 text-xs text-site-text-2 hover:text-site-text transition-colors w-fit max-w-full"
+                className="inline-flex items-center gap-2 min-h-[44px] text-xs text-site-text-2 hover:text-site-text transition-colors w-fit max-w-full"
               >
                 <Icon icon="logos:firefox" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
                 <span className="truncate">{t("landing.firefoxAddons")}</span>
@@ -71,13 +71,13 @@ export function SiteFooter() {
                 {t("landing.product")}
               </h5>
               <ul className="space-y-2 text-xs text-site-text-2">
-                <li><Link href="/features" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("site.nav.features")}</Link></li>
-                <li><Link href="/solutions" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("site.nav.solutions")}</Link></li>
-                <li><Link href="/extension" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("site.nav.extension")}</Link></li>
-                <li><Link href="/how-it-works" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("site.nav.howItWorks")}</Link></li>
-                <li><Link href="/visual-compare" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("landing.compare")}</Link></li>
+                <li><Link href="/features" className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate">{t("site.nav.features")}</Link></li>
+                <li><Link href="/solutions" className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate">{t("site.nav.solutions")}</Link></li>
+                <li><Link href="/extension" className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate">{t("site.nav.extension")}</Link></li>
+                <li><Link href="/how-it-works" className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate">{t("site.nav.howItWorks")}</Link></li>
+                <li><Link href="/visual-compare" className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate">{t("landing.compare")}</Link></li>
                 {/* Payment UI temporarily commented out until ready: */}
-                {/* <li><Link href="/pricing" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("site.nav.pricing")}</Link></li> */}
+                {/* <li><Link href="/pricing" className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate">{t("site.nav.pricing")}</Link></li> */}
               </ul>
             </Reveal>
 
@@ -87,16 +87,16 @@ export function SiteFooter() {
                 {t("landing.resources")}
               </h5>
               <ul className="space-y-2 text-xs text-site-text-2">
-                <li><Link href="/docs" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("landing.docs")}</Link></li>
+                <li><Link href="/docs" className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate">{t("landing.docs")}</Link></li>
                 <li>
-                  <Link href="/docs/mcp" className="hover:text-site-text transition-colors block py-0.5 truncate flex items-center gap-1.5">
+                  <Link href="/docs/mcp" className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate flex items-center gap-1.5">
                     <span>{t("landing.mcpDocs")}</span>
                     <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-blue-100 dark:bg-blue-950/40 text-[#2563EB] dark:text-[#3B82F6]">AI</span>
                   </Link>
                 </li>
-                <li><Link href="/blog" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("site.nav.blog")}</Link></li>
-                <li><Link href="/status" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("landing.status")}</Link></li>
-                <li><Link href="/help" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("landing.help")}</Link></li>
+                <li><Link href="/blog" className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate">{t("site.nav.blog")}</Link></li>
+                <li><Link href="/status" className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate">{t("landing.status")}</Link></li>
+                <li><Link href="/help" className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate">{t("landing.help")}</Link></li>
               </ul>
             </Reveal>
 
@@ -106,9 +106,9 @@ export function SiteFooter() {
                 {t("landing.legal")}
               </h5>
               <ul className="space-y-2 text-xs text-site-text-2">
-                <li><Link href="/terms" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("landing.terms")}</Link></li>
-                <li><Link href="/privacy" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("landing.privacy")}</Link></li>
-                <li><Link href="/security" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("landing.security")}</Link></li>
+                <li><Link href="/terms" className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate">{t("landing.terms")}</Link></li>
+                <li><Link href="/privacy" className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate">{t("landing.privacy")}</Link></li>
+                <li><Link href="/security" className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate">{t("landing.security")}</Link></li>
               </ul>
             </Reveal>
 
@@ -118,14 +118,14 @@ export function SiteFooter() {
                 {t("landing.company")}
               </h5>
               <ul className="space-y-2 text-xs text-site-text-2">
-                <li><Link href="/about" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("landing.about")}</Link></li>
-                <li><Link href="/contact" className="hover:text-site-text transition-colors block py-0.5 truncate">{t("landing.contact")}</Link></li>
+                <li><Link href="/about" className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate">{t("landing.about")}</Link></li>
+                <li><Link href="/contact" className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate">{t("landing.contact")}</Link></li>
                 <li>
                   <a
                     href="https://akusaradigital.com"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="hover:text-site-text transition-colors block py-0.5 truncate"
+                    className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate"
                   >
                     Akusara Digital
                   </a>
@@ -149,7 +149,7 @@ export function SiteFooter() {
           <div className="flex flex-wrap items-center gap-3 shrink-0 self-start md:self-auto pt-1 md:pt-0">
             <Link
               href="/status"
-              className="inline-flex items-center gap-2 hover:text-site-text transition-colors"
+              className="inline-flex items-center gap-2 min-h-[44px] hover:text-site-text transition-colors"
             >
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />

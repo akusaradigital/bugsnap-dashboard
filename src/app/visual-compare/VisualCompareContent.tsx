@@ -107,7 +107,7 @@ function CheckoutUiContent({ isFixed }: { isFixed: boolean }) {
                 type="button"
                 className="w-full py-2.5 sm:py-3 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition-transform active:scale-[0.99] cursor-pointer"
               >
-                <Icon icon="tabler:shield-check" className="w-4 h-4" />
+                <Icon icon="tabler:shield-check" className="w-4 h-4 invert" />
                 <span>{t("vcFx.completePurchase")}</span>
               </button>
               <div className="flex items-center justify-center gap-1.5 text-[10px] text-slate-500 text-center">

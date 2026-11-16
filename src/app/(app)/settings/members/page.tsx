@@ -130,10 +130,10 @@ export default function TeamManagementPage() {
       });
       if (membersError) throw membersError;
       setMembers((data as Member[]) ?? []);
-      showToast(`Invite sent to ${email}`, "success");
+      showToast(t("copy.inviteSent", { email }), "success");
     } catch (err) {
       setError((err as { message?: string })?.message || t("members.inviteFailed"));
-      showToast("Could not send invite", "error");
+      showToast(t("copy.inviteFailed"), "error");
     } finally {
       setInviting(false);
     }
@@ -159,10 +159,10 @@ export default function TeamManagementPage() {
       if (error) throw error;
       if (!data || data.length === 0) throw new Error(t("members.removeError"));
       setMembers((prev) => prev.filter((m) => m.user_id !== member.user_id));
-      showToast(`${member.email} removed`, "success");
+      showToast(t("copy.memberRemoved", { email: member.email }), "success");
     } catch {
       setError(t("members.removeError"));
-      showToast("Could not remove member", "error");
+      showToast(t("copy.memberRemoveFailed"), "error");
     }
   }
 

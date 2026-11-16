@@ -144,7 +144,7 @@ export default function AdminRevenuePage() {
   function handleExportCsv() {
     if (activeTab === "subscribers") {
       if (payingCustomers.length === 0) {
-        showToast("Tidak ada data pelanggan berbayar untuk diekspor", "info");
+        showToast(t("copy.exportNoData"), "info");
         return;
       }
       const rows = payingCustomers.map((c) => ({
@@ -171,11 +171,11 @@ export default function AdminRevenuePage() {
         RegisteredAt: h.created_at,
       }));
       exportToCsv("bugsnap_hot_leads", rows);
-      showToast("Daftar prospek berhasil diekspor ke CSV", "success");
+      showToast(t("copy.exportDone"), "success");
     } else if (activeTab === "experiments") {
       const expList = Object.entries(data?.abExperiments || {});
       if (expList.length === 0) {
-        showToast("Tidak ada data eksperimen untuk diekspor", "info");
+        showToast(t("copy.exportNoData"), "info");
         return;
       }
       const rows: Record<string, unknown>[] = [];
@@ -192,10 +192,10 @@ export default function AdminRevenuePage() {
         }
       }
       exportToCsv("bugsnap_ab_experiments", rows);
-      showToast("Data eksperimen berhasil diekspor ke CSV", "success");
+      showToast(t("copy.exportDone"), "success");
     } else if (activeTab === "atrisk") {
       if (atRiskCustomers.length === 0) {
-        showToast("Tidak ada pelanggan berisiko untuk diekspor", "info");
+        showToast(t("copy.exportNoData"), "info");
         return;
       }
       const rows = atRiskCustomers.map((c) => ({
@@ -206,10 +206,10 @@ export default function AdminRevenuePage() {
         JoinedDate: c.created_at,
       }));
       exportToCsv("bugsnap_at_risk_customers", rows);
-      showToast("Data pelanggan berisiko berhasil diekspor ke CSV", "success");
+      showToast(t("copy.exportDone"), "success");
     } else {
       if (abandonedCheckouts.length === 0) {
-        showToast("Tidak ada keranjang ditinggalkan untuk diekspor", "info");
+        showToast(t("copy.exportNoData"), "info");
         return;
       }
       const rows = abandonedCheckouts.map((a) => ({
@@ -221,7 +221,7 @@ export default function AdminRevenuePage() {
         RegisteredAt: a.created_at,
       }));
       exportToCsv("bugsnap_abandoned_checkouts", rows);
-      showToast("Data keranjang berhasil diekspor ke CSV", "success");
+      showToast(t("copy.exportDone"), "success");
     }
   }
 

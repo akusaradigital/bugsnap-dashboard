@@ -58,6 +58,20 @@ export function ExtensionSyncBridge() {
         if (e.data.action === "ready") {
           const { data } = await supabase.auth.getSession().catch(() => ({ data: { session: null } }));
           broadcastSession(data.session?.user || null);
+          // Extension is installed but not paired yet: hand it a one-time pairing code.
+          if (data.session && e.data.paired === false) {
+            fetch("/api/extension/pair", {
+              method: "POST",
+              headers: { Authorization: `Bearer ${data.session.access_token}` },
+            })
+              .then((r) => (r.ok ? r.json() : null))
+              .then((json) => {
+                if (json?.code) {
+                  window.postMessage({ source: "bugsnap-web", action: "pair_extension", code: json.code }, window.location.origin);
+                }
+              })
+              .catch(() => {});
+          }
         } else if (e.data.action === "extension_logout") {
           try {
             localStorage.removeItem("BugSnap_notif_last_seen");

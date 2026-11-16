@@ -19,6 +19,7 @@ import {
   IconX,
 } from "@/components/site/TablerIcons";
 import { Reveal } from "@/components/site/motion";
+import { Parallax } from "@/components/site/motion/Parallax";
 import { SiteBackground } from "@/components/site/SiteBackground";
 import { Icon } from "@/lib/iconify";
 import { FIREFOX_STORE_URL } from "@/lib/constants";
@@ -346,10 +347,10 @@ export function HomeContent() {
                       <span className="text-slate-900 dark:text-white block">
                         {t("site.hero.headlineDark2")}
                       </span>
-                      <span className="text-[#2563EB] dark:text-[#3B82F6] block">
+                      <span className="text-emerald-600 dark:text-emerald-400 block">
                         {t("site.hero.headlineBlue1")}
                       </span>
-                      <span className="text-[#2563EB] dark:text-[#3B82F6] block">
+                      <span className="text-emerald-600 dark:text-emerald-400 block">
                         {t("site.hero.headlineBlue2")}
                       </span>
                     </h1>
@@ -445,9 +446,11 @@ export function HomeContent() {
                 </div>
 
                 {/* RIGHT - Screen Recorder + DevTools Mockup */}
-                <Reveal delay={0.1}>
-                  <HeroRecorderPreview />
-                </Reveal>
+                <Parallax offset={18}>
+                  <Reveal delay={0.1}>
+                    <HeroRecorderPreview />
+                  </Reveal>
+                </Parallax>
               </div>
             </div>
           </section>

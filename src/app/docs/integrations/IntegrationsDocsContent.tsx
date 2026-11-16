@@ -650,7 +650,7 @@ export function IntegrationsDocsContent() {
                   href="/settings"
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 dark:bg-blue-500 hover:bg-blue-700 dark:hover:bg-blue-600 text-white font-semibold text-xs sm:text-sm shadow-sm transition-colors"
                 >
-                  <Icon icon="lucide:settings" className="w-4 h-4" />
+                  <Icon icon="lucide:settings" className="w-4 h-4 invert" />
                   {t("docs.goToSettings")}
                 </Link>
                 <a

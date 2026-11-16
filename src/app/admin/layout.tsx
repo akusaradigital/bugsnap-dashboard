@@ -221,7 +221,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 const meta = user.user_metadata || {};
                 loadAdminAvatar(email, meta.avatar_url, meta.picture);
                 setIsAuthenticated(true);
-                showToast("Login Google Admin Berhasil", "success");
+                showToast(t("copy.adminLoginOk"), "success");
                 loadNotifications();
               }
             } else {

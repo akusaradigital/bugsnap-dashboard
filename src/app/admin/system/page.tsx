@@ -168,7 +168,7 @@ export default function AdminSystemPage() {
       if (!res.ok) throw new Error(json.error || t("adminSys.errScan"));
 
       setOrphanData(json);
-      showToast(`Pemindaian selesai. Ditemukan ${json.orphanCount} file orphan.`, "info");
+      showToast(t("copy.scanDone", { count: json.orphanCount }), "info");
     } catch (err: unknown) {
       const msg = (err as Error)?.message || t("adminSys.errScanToast");
       setDriveError(msg);
@@ -201,7 +201,7 @@ export default function AdminSystemPage() {
       const json = await res.json();
       if (!res.ok) throw new Error(json.error || t("adminSys.errClean"));
 
-      showToast(`Berhasil membersihkan ${json.trashed} file dari Drive!`, "success");
+      showToast(t("copy.cleanDone", { count: json.trashed }), "success");
       handleScanDrive();
     } catch (err: unknown) {
       showToast((err as Error)?.message || t("adminSys.errCleanToast"), "error");

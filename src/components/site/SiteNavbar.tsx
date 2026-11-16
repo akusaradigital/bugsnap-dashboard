@@ -76,7 +76,7 @@ export function SiteNavbar() {
     >
       <div className="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
         {/* Brand */}
-        <Link href="/" className="flex min-w-0 items-center gap-2 group shrink-0" aria-label={t("siteFx.logoLabel")}>
+        <Link href="/" className="flex min-w-0 items-center gap-2 group shrink-0 min-h-[44px] py-1" aria-label={t("siteFx.logoLabel")}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
             src="/bugsnap-icon-day.svg"

@@ -317,7 +317,7 @@ function SettingsContent() {
       const r = await driveRequest("/api/google-drive/connect", { method: "POST" });
       if (!r.url) throw new Error(t("settings.noAuthUrl"));
       window.location.assign(r.url);
-    } catch (e) { setDriveError(e instanceof Error ? e.message : t("settings.connectError")); showToast("Drive connection failed", "error"); setDriveActionLoading(false); }
+    } catch (e) { setDriveError(e instanceof Error ? e.message : t("settings.connectError")); showToast(t("copy.driveConnectFailed"), "error"); setDriveActionLoading(false); }
   }
 
   async function disconnectDrive() {
@@ -332,8 +332,8 @@ function SettingsContent() {
     try {
       await driveRequest("/api/google-drive/disconnect", { method: "DELETE" });
       setDriveStatus("not_connected"); setDriveEmail(null); setDriveQuota(null);
-      showToast("Drive disconnected", "success");
-    } catch (e) { setDriveError(e instanceof Error ? e.message : t("settings.disconnectError")); showToast("Drive disconnect failed", "error"); }
+      showToast(t("copy.driveDisconnected"), "success");
+    } catch (e) { setDriveError(e instanceof Error ? e.message : t("settings.disconnectError")); showToast(t("copy.driveDisconnectFailed"), "error"); }
     finally { setDriveActionLoading(false); }
   }
 
@@ -382,21 +382,21 @@ function SettingsContent() {
       if (error) throw error;
       setWsIntegrations(updatedIntegrations);
       setSaved(true); setTimeout(() => setSaved(false), 3000);
-      showToast("Saved", "success");
+      showToast(t("copy.saved"), "success");
       if (effectiveAutoDelete !== 0) {
         for (let i = 0; i < 20; i++) {
           const { data, error: e2 } = await supabase.rpc("delete_expired_captures", { p_workspace_id: activeWsId, p_batch_limit: 100 });
           if (e2 || !data || Number(data) <= 0) break;
         }
       }
-    } catch (e) { setSaveError(e instanceof Error ? e.message : t("settings.failedSave")); showToast("Save failed", "error"); }
+    } catch (e) { setSaveError(e instanceof Error ? e.message : t("settings.failedSave")); showToast(t("copy.saveFailed"), "error"); }
     finally { setSaving(false); }
   }
 
   async function handleWorkspaceIconUpload(file: File) {
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) {
-      showToast("Image file size must be less than 2MB", "error");
+      showToast(t("copy.imageTooLarge"), "error");
       return;
     }
     const reader = new FileReader();
@@ -412,7 +412,7 @@ function SettingsContent() {
             window.dispatchEvent(new CustomEvent("bugsnap:workspace-updated", {
               detail: { id: activeWsId, name: workspaceName.trim() || undefined, avatarUrl: dataUrl }
             }));
-            showToast("Workspace icon updated", "success");
+            showToast(t("copy.iconUpdated"), "success");
           } catch (err) {
             setWorkspaceAvatar(previousAvatar);
             showToast(err instanceof Error ? err.message : "Failed to save workspace icon", "error");
@@ -433,7 +433,7 @@ function SettingsContent() {
         window.dispatchEvent(new CustomEvent("bugsnap:workspace-updated", {
           detail: { id: activeWsId, name: workspaceName.trim() || undefined, avatarUrl: null }
         }));
-        showToast("Workspace icon removed", "success");
+        showToast(t("copy.iconRemoved"), "success");
       } catch (err) {
         setWorkspaceAvatar(previousAvatar);
         showToast(err instanceof Error ? err.message : "Failed to remove workspace icon", "error");
@@ -474,10 +474,10 @@ function SettingsContent() {
       window.dispatchEvent(new CustomEvent("bugsnap:profile-updated", { detail: { fullName, avatarUrl: result.avatar_url ?? avatarUrl } }));
       setProfileSaved(true);
       setTimeout(() => setProfileSaved(false), 3000);
-      showToast("Profile saved", "success");
+      showToast(t("copy.profileSaved"), "success");
     } catch (e) {
       setProfileSaveError(e instanceof Error ? e.message : "Failed to save profile");
-      showToast("Profile save failed", "error");
+      showToast(t("copy.profileSaveFailed"), "error");
     } finally {
       setProfileSaving(false);
     }
@@ -499,7 +499,7 @@ function SettingsContent() {
       const result = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(result.error || "Failed to delete account");
 
-      showToast("Account deleted successfully", "success");
+      showToast(t("copy.accountDeleted"), "success");
       await supabase.auth.signOut();
       window.location.assign("/login");
     } catch (err) {
@@ -529,11 +529,11 @@ function SettingsContent() {
         body: JSON.stringify({ email, workspaceId: activeWsId }),
       }).catch(() => null);
       setInviteEmail("");
-      setInviteMsg({ type:"ok", text: `Invite sent to ${email}` });
-      showToast("Invite sent", "success");
+      setInviteMsg({ type:"ok", text: t("copy.inviteSent", { email }) });
+      showToast(t("copy.inviteSentShort"), "success");
       const { data: fresh } = await supabase.rpc("get_workspace_members", { p_workspace_id: activeWsId });
       setMembers((fresh as typeof members) ?? []);
-    } catch (e) { setInviteMsg({ type:"err", text: (e as {message?:string})?.message || t("members.inviteFailed") }); showToast("Invite failed", "error"); }
+    } catch { setInviteMsg({ type:"err", text: t("copy.inviteFailed") }); showToast(t("copy.inviteFailed"), "error"); }
     finally { setInviting(false); }
   }
 
@@ -561,7 +561,7 @@ function SettingsContent() {
       if (!res.ok) throw new Error(json.error || "Failed to update member role");
 
       setMembers((prev) => prev.map((m) => (m.user_id === userId ? { ...m, role: newRole } : m)));
-      showToast(`Member role updated to ${newRole === "creator" ? "Creator" : "Viewer"}`, "success");
+      showToast(t("copy.memberRoleUpdated", { role: newRole === "creator" ? "Creator" : "Viewer" }), "success");
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Failed to update member role", "error");
     } finally {
@@ -588,7 +588,7 @@ function SettingsContent() {
 
       setMembers((prev) => prev.filter((m) => m.user_id !== member.user_id));
       setMemberToRemove(null);
-      showToast(`${member.email} removed from workspace`, "success");
+      showToast(t("copy.memberRemovedShort", { email: member.email }), "success");
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Failed to remove member", "error");
     } finally {
@@ -629,7 +629,7 @@ function SettingsContent() {
       setWsIntegrations(updatedIntegrations);
       setActiveModalInt(null);
       const intDef = INTEGRATIONS.find(i => i.id === id);
-      showToast(`${intDef?.name || "Integration"} saved successfully`, "success");
+      showToast(t("copy.integrationSaved", { name: intDef?.name || "Integration" }), "success");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to save integration";
       showToast(msg, "error");
@@ -660,7 +660,7 @@ function SettingsContent() {
       if (error) throw error;
       setWsIntegrations(updatedIntegrations);
       setActiveModalInt(null);
-      showToast("Integration disconnected", "success");
+      showToast(t("copy.integrationDisconnected"), "success");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to disconnect";
       showToast(msg, "error");
@@ -709,7 +709,7 @@ function SettingsContent() {
       if (!res.ok) throw new Error(data.error || "Failed to create API key");
       setRevealedBugsnapKey({ rawKey: data.key.rawKey, name: data.key.name });
       setNewKeyName("");
-      showToast("BugSnap API key created", "success");
+      showToast(t("copy.apiKeyCreated"), "success");
       await loadBugsnapApiKeys();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to create key";
@@ -737,7 +737,7 @@ function SettingsContent() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed to revoke API key");
-      showToast("API key revoked", "success");
+      showToast(t("copy.apiKeyRevoked"), "success");
       await loadBugsnapApiKeys();
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Failed to revoke key";
@@ -833,12 +833,12 @@ function SettingsContent() {
       }
 
       setNotifSyncStatus("synced");
-      showToast("Notification preferences updated", "success");
+      showToast(t("copy.notifPrefsSaved"), "success");
     } catch (err) {
       console.error("Failed to update notification preferences:", err);
       setNotifPrefs(previous);
       setNotifSyncStatus("error");
-      showToast("Failed to save notification preference", "error");
+      showToast(t("copy.notifPrefFailed"), "error");
     } finally {
       setNotifSavingKey(null);
     }
@@ -1205,7 +1205,7 @@ function SettingsContent() {
                               const file = e.target.files?.[0];
                               if (file) {
                                 if (file.size > 2 * 1024 * 1024) {
-                                  showToast("Logo file size must be less than 2MB", "error");
+                                  showToast(t("copy.logoTooLarge"), "error");
                                   return;
                                 }
                                 const reader = new FileReader();
@@ -1779,7 +1779,7 @@ function SettingsContent() {
                       type="button"
                       onClick={() => {
                         navigator.clipboard.writeText(revealedBugsnapKey.rawKey);
-                        showToast("API key copied!", "success");
+                        showToast(t("copy.apiKeyCopied"), "success");
                       }}
                       className="px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded text-xs font-medium shrink-0"
                     >

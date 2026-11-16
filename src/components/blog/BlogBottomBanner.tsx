@@ -48,7 +48,7 @@ export function BlogBottomBanner() {
 
       setSubscribed(true);
     } catch {
-      setError("Network error. Please try again later.");
+      setError(t("copy.networkError"));
     } finally {
       setLoading(false);
     }

@@ -95,7 +95,7 @@ export default function AdminSupportPage() {
       if (selectedTicket && selectedTicket.id === ticketId) {
         setSelectedTicket({ ...selectedTicket, status: newStatus });
       }
-      showToast(`Status tiket berhasil diubah ke ${newStatus}`, "success");
+      showToast(t("copy.ticketStatusUpdated", { status: newStatus }), "success");
     } catch (err: unknown) {
       showToast((err as Error)?.message || t("adminMisc.errStatus"), "error");
     } finally {

@@ -100,7 +100,7 @@ export default function EditModal({ capture, onClose, onSaved }: EditModalProps)
     if (error) {
       console.warn("Error updating capture:", error);
       setError(t("cap.saveError"));
-      showToast("Save failed", "error");
+      showToast(t("copy.captureSaveFailed"), "error");
       setSaving(false);
       return;
     }
@@ -116,7 +116,7 @@ export default function EditModal({ capture, onClose, onSaved }: EditModalProps)
       allowed_domains,
       allowed_ips,
     } as Capture);
-    showToast("Capture saved", "success");
+    showToast(t("copy.captureSaved"), "success");
     onClose();
   }
 
