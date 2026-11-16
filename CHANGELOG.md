@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [bugsnap-dashboard]
 
+### 2026-11-16 (v0.16.0)
+- **feat**: Pair the browser extension from a website login. Signing in on the website now connects the installed extension without a second Google consent screen.
+- **feat**: Translate dashboard toasts and inline errors into English and Indonesian. Error messages no longer show raw server text.
+- **fix**: Close an open redirect on the login page: the destination after sign-in is now validated the way the browser resolves it.
+- **fix**: Limit open pairing codes to five per account, and refuse to pair a device already linked to another account.
+- **fix**: Give the footer links and the logo a 44 px tap target on phones.
+- **fix**: Use the emerald accent on the extension page and homepage headline.
+- **chore**: Move GitHub Actions checkout and setup-node to v7 to clear the Node 20 deprecation warning.
+
 ### 2026-11-13 (v0.15.4)
 - **feat**: Translate remaining admin, settings, legal, marketing, and docs UI copy into English and Indonesian through the shared dictionary. Legal pages now load their copy per locale without a full-page reload.
 - **feat**: Add three English blog posts (bug report template, bug report with screenshot and console logs, reproducing bugs with clear steps) with matching cover images.
@@ -90,6 +99,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 ---
 
 ## [bugsnap-extension]
+
+### 2026-11-16 (v1.0.80)
+- **fix**: Pair the extension against the origin that issued the code, so a stale stored dashboard URL no longer sends pairing to production.
+- **fix**: Stop a failed fallback re-pair from wiping a token that a parallel refresh just stored.
+- **fix**: Keep the auth heartbeat from disconnecting on message-text matches. Only a confirmed revoke disconnects.
+- **fix**: Distinguish a never-connected install from an expired session in the popup copy.
+- **chore**: Translate editor toasts through the editor dictionary in English and Indonesian.
 
 ### 2026-11-13 (v1.0.79)
 - **fix**: Keep a transient Google Drive token-refresh failure (network blip, Google or dashboard outage) retryable instead of showing a false "reconnect your account" message. It now gets two short retries before the upload gives up.
