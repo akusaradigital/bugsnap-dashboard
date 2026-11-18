@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [bugsnap-dashboard]
 
+### 2026-11-18 (v0.17.0)
+- **feat**: Standardize all dashboard modals to a unified centered layout (`max-w-md` / `max-w-lg`), ARIA dialog attributes, Escape-key handling, BugSnap Green (`#89BD49`) positive submit CTAs, and concise English and Indonesian copy.
+- **feat**: Add hover flyout workspace switcher with workspace badges, building icon, and direct Workspace Settings link.
+- **feat**: Add unified latest-UI Product Showcase Gallery on `/` and `/extension` and generate 12 consistent latest-UI showcase visuals across `/how-it-works`, `/features`, `/solutions`, and `/docs/mcp`.
+- **feat**: Upgrade the floating Customer Support widget with the 3D headset mascot icon.
+- **fix**: Remove the duplicate Sign out action from the sidebar workspace dropdown and refine spacing and typography hierarchy across dashboard pages.
+
 ### 2026-11-16 (v0.16.0)
 - **feat**: Pair the browser extension from a website login. Signing in on the website now connects the installed extension without a second Google consent screen.
 - **feat**: Translate dashboard toasts and inline errors into English and Indonesian. Error messages no longer show raw server text.
@@ -99,6 +106,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 ---
 
 ## [bugsnap-extension]
+
+### 2026-11-18 (v1.0.81)
+- **feat**: Standardize popup, options, and editor modals to a unified centered layout with ARIA dialog roles, BugSnap Green (`#89BD49`) positive action buttons, and clearer, more concise copy.
+- **feat**: Generate 5 unified `1280×800` latest-UI showcase screenshots for Chrome Web Store and Firefox Add-ons listings.
+- **fix**: Fix test runner discovery in `run-all.js` and run telemetry and Shadow DOM E2E tests against external public pages rather than the excluded BugSnap domain.
 
 ### 2026-11-16 (v1.0.80)
 - **fix**: Pair the extension against the origin that issued the code, so a stale stored dashboard URL no longer sends pairing to production.
