@@ -1618,17 +1618,15 @@ export default function DashboardLayout({
               {/* Workspace Popover Dropdown (Loom/Notion Style with Hover Flyout) */}
               {sidebarWsOpen && (
                 <div
-                  className="absolute left-3 right-3 top-full mt-1.5 z-50 rounded-2xl border border-border/80 bg-white dark:bg-zinc-950 shadow-xl p-1.5 space-y-0.5 divide-y divide-border/60"
+                  className="absolute left-3 right-3 top-full mt-1.5 z-50 rounded-2xl border border-border/80 bg-white dark:bg-zinc-950 shadow-xl p-1.5 space-y-0.5"
                   role="menu"
                 >
-                  {/* Primary group: Switch workspace + Settings */}
-                  <div className="space-y-0.5 pb-0.5">
-                    {/* Switch workspace item with hover flyout */}
-                    <div
-                      className="relative"
-                      onMouseEnter={handleSidebarWsPickerEnter}
-                      onMouseLeave={handleSidebarWsPickerLeave}
-                    >
+                  {/* Switch workspace item with hover flyout */}
+                  <div
+                    className="relative"
+                    onMouseEnter={handleSidebarWsPickerEnter}
+                    onMouseLeave={handleSidebarWsPickerLeave}
+                  >
                       <button
                         type="button"
                         onClick={() => {
@@ -1761,20 +1759,6 @@ export default function DashboardLayout({
                       <Icon icon="lucide:settings" className="w-4 h-4 text-muted shrink-0" />
                       <span>{t("sp.workspaceSettings")}</span>
                     </Link>
-                  </div>
-
-                  {/* Log out item */}
-                  <div className="pt-1">
-                    <button
-                      type="button"
-                      onClick={handleLogout}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl transition-colors text-left"
-                      role="menuitem"
-                    >
-                      <Icon icon="lucide:log-out" className="w-4 h-4 shrink-0" />
-                      <span>{t("nav.signOut")}</span>
-                    </button>
-                  </div>
                 </div>
               )}
             </div>
