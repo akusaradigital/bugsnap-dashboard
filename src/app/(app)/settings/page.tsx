@@ -2282,8 +2282,8 @@ function SettingsContent() {
 
         return (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
-            <button className="absolute inset-0 bg-black/40 backdrop-blur-xs" aria-label={t("sp.closeLabel")} onClick={() => !intModalSaving && setActiveModalInt(null)} />
-            <div className="relative w-[min(28rem,calc(100vw-2rem))] min-w-0 rounded-xl border border-border bg-background p-4 sm:p-6 shadow-xl space-y-4 max-h-[90vh] overflow-y-auto overflow-x-hidden">
+            <button className="absolute inset-0 bg-black/50 backdrop-blur-xs" aria-label={t("sp.closeLabel")} onClick={() => !intModalSaving && setActiveModalInt(null)} />
+            <div className="relative w-[min(28rem,calc(100vw-2rem))] max-w-md min-w-0 rounded-2xl border border-border bg-subtle p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto overflow-x-hidden">
               <div className="flex items-center gap-3">
                 <div className="shrink-0 w-10 h-10 rounded-lg border border-border bg-background flex items-center justify-center p-2">
                   {activeDef?.iconSrc && (

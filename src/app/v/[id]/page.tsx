@@ -1967,30 +1967,35 @@ function SingleViewContent() {
       {/* Edit Modal (Workspace Members only) */}
       {editModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setEditModalOpen(false)} />
-          <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-xl bg-white dark:bg-zinc-900 shadow-xl border border-border p-4 sm:p-6">
-            <h2 className="text-base font-bold text-foreground mb-4">{t("v.editCapture")}</h2>
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-xs" onClick={() => !savingEdit && setEditModalOpen(false)} aria-hidden="true" />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="v-edit-title"
+            className="relative w-[min(30rem,calc(100vw-2rem))] max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-subtle shadow-2xl border border-border p-6"
+          >
+            <h2 id="v-edit-title" className="text-base font-bold text-foreground text-center mb-5">{t("v.editCapture")}</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-muted mb-1.5">{t("v.titleLabel")}</label>
+                <label className="block text-xs font-medium text-foreground mb-1.5">{t("v.titleLabel")}</label>
                 <input
                   type="text"
                   value={editTitle}
                   onChange={(e) => setEditTitle(e.target.value)}
-                  className="w-full text-sm rounded-lg border border-border px-3 py-2 bg-white dark:bg-zinc-800 text-foreground"
+                  className="w-full text-sm rounded-xl border border-border px-3.5 py-2.5 bg-background text-foreground outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-all"
                 />
               </div>
               <div>
-                <label className="block text-xs font-semibold text-muted mb-1.5">{t("v.descLabel")}</label>
+                <label className="block text-xs font-medium text-foreground mb-1.5">{t("v.descLabel")}</label>
                 <textarea
                   value={editDesc}
                   onChange={(e) => setEditDesc(e.target.value)}
-                  className="w-full text-sm rounded-lg border border-border px-3 py-2 bg-white dark:bg-zinc-800 text-foreground min-h-[72px] resize-none"
+                  className="w-full text-sm rounded-xl border border-border px-3.5 py-2.5 bg-background text-foreground min-h-[72px] resize-none outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-all"
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-semibold text-muted mb-1.5">{t("v.tagLabel")}</label>
+                  <label className="block text-xs font-medium text-foreground mb-1.5">{t("v.tagLabel")}</label>
                   <Dropdown
                     variant="field"
                     value={editTag}
@@ -1999,7 +2004,7 @@ function SingleViewContent() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-muted mb-1.5">{t("v.statusLabel")}</label>
+                  <label className="block text-xs font-medium text-foreground mb-1.5">{t("v.statusLabel")}</label>
                   <Dropdown
                     variant="field"
                     value={editStatus}
@@ -2011,33 +2016,45 @@ function SingleViewContent() {
 
               <div className="pt-2 border-t border-border/60 space-y-3">
                 <div>
-                  <label className="block text-xs font-semibold text-muted mb-1">{t("v.domainsLabel")}</label>
+                  <label className="block text-xs font-medium text-foreground mb-1">{t("v.domainsLabel")}</label>
                   <input
                     type="text"
                     value={editAllowedDomains}
                     onChange={(e) => setEditAllowedDomains(e.target.value)}
                     placeholder={t("v.domainsPlaceholder")}
-                    className="w-full text-xs font-mono rounded-lg border border-border px-3 py-2 bg-white dark:bg-zinc-800 text-foreground"
+                    className="w-full text-xs font-mono rounded-xl border border-border px-3.5 py-2.5 bg-background text-foreground outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-all"
                   />
-                  <p className="text-[10px] text-muted mt-1">{t("v.domainsHint")}</p>
+                  <p className="text-[11px] text-muted mt-1">{t("v.domainsHint")}</p>
                 </div>
                 <div>
-                  <label className="block text-xs font-semibold text-muted mb-1">{t("v.ipsLabel")}</label>
+                  <label className="block text-xs font-medium text-foreground mb-1">{t("v.ipsLabel")}</label>
                   <input
                     type="text"
                     value={editAllowedIps}
                     onChange={(e) => setEditAllowedIps(e.target.value)}
                     placeholder={t("v.ipsPlaceholder")}
-                    className="w-full text-xs font-mono rounded-lg border border-border px-3 py-2 bg-white dark:bg-zinc-800 text-foreground"
+                    className="w-full text-xs font-mono rounded-xl border border-border px-3.5 py-2.5 bg-background text-foreground outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-all"
                   />
-                  <p className="text-[10px] text-muted mt-1">{t("v.ipsHint")}</p>
+                  <p className="text-[11px] text-muted mt-1">{t("v.ipsHint")}</p>
                 </div>
               </div>
-              {editError && <p className="text-xs text-red-600 dark:text-red-400">{editError}</p>}
+              {editError && <p className="text-xs text-rose-600 dark:text-rose-400">{editError}</p>}
             </div>
-            <div className="flex justify-end gap-2 mt-6 pt-4 border-t border-border">
-              <button onClick={() => setEditModalOpen(false)} className="px-4 py-2 text-xs font-medium text-muted hover:text-foreground">{t("common.cancel")}</button>
-              <button onClick={handleSaveEdit} disabled={savingEdit} className="px-4 py-2 text-xs font-semibold bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs shadow-[#2563EB]/25 rounded-lg disabled:opacity-50 min-w-[125px] inline-flex items-center justify-center gap-1.5">
+            <div className="grid grid-cols-2 gap-2.5 mt-6 pt-4 border-t border-border/50">
+              <button
+                type="button"
+                disabled={savingEdit}
+                onClick={() => setEditModalOpen(false)}
+                className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 text-xs font-semibold text-foreground border border-border bg-background hover:bg-subtle rounded-xl disabled:opacity-50 transition-colors cursor-pointer select-none"
+              >
+                {t("common.cancel")}
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveEdit}
+                disabled={savingEdit}
+                className="w-full inline-flex items-center justify-center gap-1.5 whitespace-nowrap px-3.5 py-2.5 text-xs font-semibold bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1e40af] text-white shadow-xs rounded-xl disabled:opacity-50 transition-colors cursor-pointer select-none"
+              >
                 {savingEdit ? (
                   <>
                     <Icon icon="lucide:loader-circle" className="w-3.5 h-3.5 animate-spin text-white brightness-0 invert" />
@@ -2056,40 +2073,47 @@ function SingleViewContent() {
       {/* Delete Capture Modal */}
       {deleteCaptureModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => { if (!deletingCapture) { setDeleteCaptureModalOpen(false); setDeleteOperationId(null); } }} />
-          <div className="relative w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-zinc-900 shadow-xl border border-border p-5 sm:p-6 text-center">
-            <div className="text-center space-y-1.5 mb-4 pt-1">
-              <h2 className="text-lg font-bold text-foreground">{t("v.deleteCaptureQ")}</h2>
-              <p className="text-xs text-muted leading-relaxed">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-xs" onClick={() => { if (!deletingCapture) { setDeleteCaptureModalOpen(false); setDeleteOperationId(null); } }} aria-hidden="true" />
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="v-delete-title"
+            className="relative w-[min(28rem,calc(100vw-2rem))] max-w-md max-h-[90vh] overflow-y-auto rounded-2xl bg-subtle shadow-2xl border border-border p-6 text-center"
+          >
+            <div className="text-center space-y-1.5 mb-5 pt-1">
+              <h2 id="v-delete-title" className="text-base font-bold text-foreground break-words">{t("v.deleteCaptureQ")}</h2>
+              <p className="text-xs text-muted leading-relaxed text-balance break-words">
                 {t("v.deleteConfirm", { title: capture?.title ?? "" })}
               </p>
             </div>
             <fieldset className="space-y-2 text-left mb-4" disabled={deletingCapture}>
-              <legend className="text-xs font-semibold text-foreground mb-2">{t("v.deleteFrom")}</legend>
-              <label className="flex items-start gap-2 rounded-lg border border-border p-3 cursor-pointer">
+              <legend className="text-xs font-medium text-foreground mb-2">{t("v.deleteFrom")}</legend>
+              <label className={`flex items-start gap-2.5 rounded-xl border p-3 cursor-pointer transition-colors ${deleteMode === "drive_trash" ? "border-[#2563EB] bg-blue-50/60 dark:bg-blue-950/25" : "border-border bg-background/60"}`}>
                 <input type="radio" name="delete-mode" value="drive_trash" checked={deleteMode === "drive_trash"} onChange={() => { setDeleteMode("drive_trash"); setDeleteOperationId(crypto.randomUUID()); }} className="mt-0.5" />
                 <span><span className="block text-xs font-semibold text-foreground">{t("v.moveToTrash")}</span><span className="block text-[11px] text-muted mt-0.5">{t("v.trashHint")}</span></span>
               </label>
-              <label className="flex items-start gap-2 rounded-lg border border-border p-3 cursor-pointer">
+              <label className={`flex items-start gap-2.5 rounded-xl border p-3 cursor-pointer transition-colors ${deleteMode === "app_only" ? "border-[#2563EB] bg-blue-50/60 dark:bg-blue-950/25" : "border-border bg-background/60"}`}>
                 <input type="radio" name="delete-mode" value="app_only" checked={deleteMode === "app_only"} onChange={() => { setDeleteMode("app_only"); setDeleteOperationId(crypto.randomUUID()); setDriveIssue(null); setDeleteCaptureError(null); }} className="mt-0.5" />
                 <span><span className="block text-xs font-semibold text-foreground">{t("v.BugSnapOnly")}</span><span className="block text-[11px] text-muted mt-0.5">{t("v.BugSnapOnlyHint")}</span></span>
               </label>
             </fieldset>
-            {driveIssue && <div className="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-lg p-2 mb-3 flex items-center justify-between gap-3"><span>{driveIssue === "reconnect_required" ? t("cap.driveReconnectRequired") : t("v.driveNotConnected")}</span><button type="button" onClick={() => void startDriveConnect()} className="font-semibold text-[#2563EB] dark:text-[#3B82F6] hover:underline">{driveIssue === "reconnect_required" ? t("cap.reconnectDrive") : t("cap.connectDrive")}</button></div>}
-            {deleteCaptureError && <p role="alert" className="text-xs text-red-600 dark:text-red-400 mb-3">{deleteCaptureError}</p>}
+            {driveIssue && <div className="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-xl p-2.5 mb-3 flex items-center justify-between gap-3"><span>{driveIssue === "reconnect_required" ? t("cap.driveReconnectRequired") : t("v.driveNotConnected")}</span><button type="button" onClick={() => void startDriveConnect()} className="font-semibold text-[#2563EB] dark:text-[#3B82F6] hover:underline shrink-0">{driveIssue === "reconnect_required" ? t("cap.reconnectDrive") : t("cap.connectDrive")}</button></div>}
+            {deleteCaptureError && <p role="alert" className="text-xs text-rose-600 dark:text-rose-400 mb-3">{deleteCaptureError}</p>}
             
-            <div className="grid grid-cols-2 gap-3 pt-4 border-t border-border">
+            <div className="grid grid-cols-2 gap-2.5 pt-4 border-t border-border/50">
               <button
+                type="button"
                 onClick={() => { setDeleteCaptureModalOpen(false); setDeleteOperationId(null); }}
                 disabled={deletingCapture}
-                className="w-full py-2.5 px-4 text-xs font-semibold text-foreground border border-border bg-background hover:bg-subtle rounded-xl transition-colors disabled:opacity-50 text-center inline-flex items-center justify-center select-none"
+                className="w-full py-2.5 px-4 text-xs font-semibold text-foreground border border-border bg-background hover:bg-subtle rounded-xl transition-colors disabled:opacity-50 text-center inline-flex items-center justify-center whitespace-nowrap cursor-pointer select-none"
               >
                 {t("common.cancel")}
               </button>
               <button
+                type="button"
                 onClick={submitDeleteCapture}
                 disabled={deletingCapture}
-                className="w-full py-2.5 px-4 rounded-xl bg-red-600 text-white text-xs font-semibold hover:bg-red-700 disabled:opacity-50 transition-colors text-center inline-flex items-center justify-center shadow-xs select-none"
+                className="w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white text-xs font-semibold disabled:opacity-50 transition-colors text-center inline-flex items-center justify-center whitespace-nowrap cursor-pointer shadow-xs select-none"
               >
                 {deletingCapture ? t("v.deleting") : t("v.confirmDelete")}
               </button>

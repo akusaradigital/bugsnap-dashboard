@@ -313,16 +313,59 @@ export default function DashboardLayout({
   }, [wsOpen, workspacePickerOpen, notifOpen, folderMenuOpen, sidebarWsOpen, sidebarWsPickerOpen]);
 
   useEffect(() => {
-    if (!createWsModalOpen) return;
+    const anyModalOpen =
+      createWsModalOpen ||
+      inviteModalOpen ||
+      createProjectModalOpen ||
+      Boolean(projectToRename) ||
+      Boolean(projectToDelete) ||
+      createFolderModalOpen ||
+      renameFolderModalOpen ||
+      deleteFolderModalOpen ||
+      folderColorModalOpen;
+    if (!anyModalOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && !creating) {
+      if (e.key !== "Escape") return;
+      if (createWsModalOpen && !creating) {
         setCreateWsModalOpen(false);
         setCreateWsError(null);
+      } else if (inviteModalOpen && !inviting) {
+        setInviteModalOpen(false);
+        setInviteError(null);
+      } else if (createProjectModalOpen && !creatingProject) {
+        setCreateProjectModalOpen(false);
+        setCreateProjectError(null);
+      } else if (projectToRename && !renamingProject) {
+        setProjectToRename(null);
+        setRenameProjectError(null);
+      } else if (projectToDelete && !deletingProject) {
+        setProjectToDelete(null);
+      } else if (createFolderModalOpen && !creatingFolder) {
+        setCreateFolderModalOpen(false);
+        setParentFolderId(null);
+        setCreateFolderError(null);
+      } else if (renameFolderModalOpen) {
+        setRenameFolderModalOpen(false);
+        setRenameFolderError(null);
+      } else if (deleteFolderModalOpen && !deletingFolder) {
+        setDeleteFolderModalOpen(false);
+      } else if (folderColorModalOpen && !savingFolderColor) {
+        setFolderColorModalOpen(false);
       }
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [createWsModalOpen, creating]);
+  }, [
+    createWsModalOpen, creating,
+    inviteModalOpen, inviting,
+    createProjectModalOpen, creatingProject,
+    projectToRename, renamingProject,
+    projectToDelete, deletingProject,
+    createFolderModalOpen, creatingFolder,
+    renameFolderModalOpen,
+    deleteFolderModalOpen, deletingFolder,
+    folderColorModalOpen, savingFolderColor,
+  ]);
 
   useEffect(() => {
     const updateFolder = () => {
@@ -2142,40 +2185,74 @@ export default function DashboardLayout({
 
         {/* Invite Modal */}
         {inviteModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
-            <div className="absolute inset-0 bg-black/40" onClick={() => setInviteModalOpen(false)} />
-            <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6">
-              <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.inviteToWorkspace")}</h2>
-              <p className="text-sm text-muted mb-5">
-                {t("layout.inviteDescPre")} <span className="font-semibold text-foreground">{activeWsName}</span> {t("layout.inviteDescPost")}
-              </p>
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("layout.emailAddress")}</label>
-                  <input
-                    type="email"
-                    value={inviteEmail}
-                    onChange={(e) => setInviteEmail(e.target.value)}
-                    placeholder="colleague@example.com"
-                    className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#2563EB] bg-subtle text-foreground placeholder:text-muted"
-                    autoFocus
-                  />
-                </div>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black/50 backdrop-blur-xs"
+              onClick={() => {
+                if (inviting) return;
+                setInviteModalOpen(false);
+                setInviteError(null);
+              }}
+              aria-hidden="true"
+            />
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="invite-modal-title"
+              aria-describedby="invite-modal-desc"
+              className="relative w-[min(28rem,calc(100vw-2rem))] max-w-md rounded-2xl border border-border bg-subtle shadow-2xl p-6 space-y-5"
+            >
+              <div className="text-center space-y-1.5 pt-1">
+                <h2 id="invite-modal-title" className="text-base font-bold text-foreground break-words">
+                  {t("layout.inviteToWorkspace")}
+                </h2>
+                <p id="invite-modal-desc" className="text-xs text-muted leading-relaxed text-balance break-words">
+                  {t("layout.inviteDescPre")} <span className="font-semibold text-foreground">{activeWsName}</span> {t("layout.inviteDescPost")}
+                </p>
+              </div>
+              <div>
+                <label htmlFor="invite-member-email" className="block text-xs font-medium text-foreground mb-1.5">
+                  {t("layout.emailAddress")}
+                </label>
+                <input
+                  id="invite-member-email"
+                  type="email"
+                  value={inviteEmail}
+                  onChange={(e) => {
+                    setInviteEmail(e.target.value);
+                    if (inviteError) setInviteError(null);
+                  }}
+                  placeholder="colleague@example.com"
+                  className="w-full text-sm rounded-xl border border-border bg-background px-3.5 py-2.5 outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 text-foreground placeholder:text-muted transition-all"
+                  autoFocus
+                  disabled={inviting}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && inviteEmail.trim() && !inviting) {
+                      handleInvite();
+                    }
+                  }}
+                />
                 {inviteError && (
-                  <p className="text-xs text-red-600 dark:text-red-400">{inviteError}</p>
+                  <p className="text-xs text-rose-600 dark:text-rose-400 mt-1.5">{inviteError}</p>
                 )}
               </div>
-              <div className="flex items-center justify-end gap-3 mt-6">
+              <div className="grid grid-cols-2 gap-2.5 pt-3 border-t border-border/50">
                 <button
-                  onClick={() => setInviteModalOpen(false)}
-                  className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors"
+                  type="button"
+                  disabled={inviting}
+                  onClick={() => {
+                    setInviteModalOpen(false);
+                    setInviteError(null);
+                  }}
+                  className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs font-semibold text-foreground hover:bg-subtle disabled:opacity-50 transition-colors cursor-pointer select-none"
                 >
                   {t("common.cancel")}
                 </button>
                 <button
+                  type="button"
                   onClick={handleInvite}
                   disabled={!inviteEmail.trim() || inviting}
-                  className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors shadow-sm shadow-[#89BD49]/25"
+                  className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1e40af] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
                 >
                   {t("layout.sendInvite")}
                 </button>
@@ -2297,41 +2374,75 @@ export default function DashboardLayout({
 
         {/* Create Project Modal */}
         {createProjectModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
-            <div className="absolute inset-0 bg-black/40" onClick={() => setCreateProjectModalOpen(false)} />
-            <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6">
-              <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.createProjectTitle")}</h2>
-              <p className="text-sm text-muted mb-5">{t("layout.createProjectSubtitle")}</p>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black/50 backdrop-blur-xs"
+              onClick={() => {
+                if (creatingProject) return;
+                setCreateProjectModalOpen(false);
+                setCreateProjectError(null);
+              }}
+              aria-hidden="true"
+            />
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="create-project-title"
+              aria-describedby="create-project-desc"
+              className="relative w-[min(28rem,calc(100vw-2rem))] max-w-md rounded-2xl border border-border bg-subtle shadow-2xl p-6 space-y-5"
+            >
+              <div className="text-center space-y-1.5 pt-1">
+                <h2 id="create-project-title" className="text-base font-bold text-foreground break-words">
+                  {t("layout.createProjectTitle")}
+                </h2>
+                <p id="create-project-desc" className="text-xs text-muted leading-relaxed text-balance break-words">
+                  {t("layout.createProjectSubtitle")}
+                </p>
+              </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("layout.projectName")}</label>
+                <label htmlFor="create-project-name" className="block text-xs font-medium text-foreground mb-1.5">
+                  {t("layout.projectName")}
+                </label>
                 <input
+                  id="create-project-name"
                   type="text"
                   value={newProjectName}
-                  onChange={(e) => setNewProjectName(e.target.value)}
+                  maxLength={60}
+                  onChange={(e) => {
+                    setNewProjectName(e.target.value);
+                    if (createProjectError) setCreateProjectError(null);
+                  }}
                   placeholder={t("layout.projectNamePlaceholder")}
-                  className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#2563EB] bg-subtle text-foreground placeholder:text-muted"
+                  className="w-full text-sm rounded-xl border border-border bg-background px-3.5 py-2.5 outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 text-foreground placeholder:text-muted transition-all"
                   autoFocus
+                  disabled={creatingProject}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" && newProjectName.trim()) {
+                    if (e.key === "Enter" && newProjectName.trim() && !creatingProject) {
                       handleCreateProject(newProjectName.trim());
                     }
                   }}
                 />
                 {createProjectError && (
-                  <p className="text-xs text-red-600 dark:text-red-400 mt-1.5">{createProjectError}</p>
+                  <p className="text-xs text-rose-600 dark:text-rose-400 mt-1.5">{createProjectError}</p>
                 )}
               </div>
-              <div className="flex items-center justify-end gap-3 mt-6">
+              <div className="grid grid-cols-2 gap-2.5 pt-3 border-t border-border/50">
                 <button
-                  onClick={() => setCreateProjectModalOpen(false)}
-                  className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors"
+                  type="button"
+                  disabled={creatingProject}
+                  onClick={() => {
+                    setCreateProjectModalOpen(false);
+                    setCreateProjectError(null);
+                  }}
+                  className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs font-semibold text-foreground hover:bg-subtle disabled:opacity-50 transition-colors cursor-pointer select-none"
                 >
                   {t("common.cancel")}
                 </button>
                 <button
+                  type="button"
                   onClick={() => handleCreateProject(newProjectName.trim())}
                   disabled={!newProjectName.trim() || creatingProject}
-                  className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors shadow-sm shadow-[#89BD49]/25"
+                  className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1e40af] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
                 >
                   {creatingProject ? t("layout.creating") : t("layout.createProject")}
                 </button>
@@ -2342,28 +2453,73 @@ export default function DashboardLayout({
 
         {/* Rename Project Modal */}
         {projectToRename && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
-            <div className="absolute inset-0 bg-black/40" onClick={() => setProjectToRename(null)} />
-            <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6">
-              <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.renameProjectTitle")}</h2>
-              <p className="text-sm text-muted mb-5">{t("layout.renameProjectSubtitle")}</p>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black/50 backdrop-blur-xs"
+              onClick={() => {
+                if (renamingProject) return;
+                setProjectToRename(null);
+                setRenameProjectError(null);
+              }}
+              aria-hidden="true"
+            />
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="rename-project-title"
+              aria-describedby="rename-project-desc"
+              className="relative w-[min(28rem,calc(100vw-2rem))] max-w-md rounded-2xl border border-border bg-subtle shadow-2xl p-6 space-y-5"
+            >
+              <div className="text-center space-y-1.5 pt-1">
+                <h2 id="rename-project-title" className="text-base font-bold text-foreground break-words">
+                  {t("layout.renameProjectTitle")}
+                </h2>
+                <p id="rename-project-desc" className="text-xs text-muted leading-relaxed text-balance break-words">
+                  {t("layout.renameProjectSubtitle")}
+                </p>
+              </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("layout.projectName")}</label>
+                <label htmlFor="rename-project-name" className="block text-xs font-medium text-foreground mb-1.5">
+                  {t("layout.projectName")}
+                </label>
                 <input
+                  id="rename-project-name"
                   type="text"
                   value={renameProjectName}
-                  onChange={(e) => setRenameProjectName(e.target.value)}
-                  className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#2563EB] bg-subtle text-foreground placeholder:text-muted"
+                  maxLength={60}
+                  onChange={(e) => {
+                    setRenameProjectName(e.target.value);
+                    if (renameProjectError) setRenameProjectError(null);
+                  }}
+                  className="w-full text-sm rounded-xl border border-border bg-background px-3.5 py-2.5 outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 text-foreground placeholder:text-muted transition-all"
                   autoFocus
+                  disabled={renamingProject}
                   onKeyDown={(e) => {
-                    if (e.key === "Enter" && renameProjectName.trim()) submitRenameProject();
+                    if (e.key === "Enter" && renameProjectName.trim() && !renamingProject) submitRenameProject();
                   }}
                 />
-                {renameProjectError && <p className="text-xs text-red-600 dark:text-red-400 mt-1.5">{renameProjectError}</p>}
+                {renameProjectError && (
+                  <p className="text-xs text-rose-600 dark:text-rose-400 mt-1.5">{renameProjectError}</p>
+                )}
               </div>
-              <div className="flex items-center justify-end gap-3 mt-6">
-                <button onClick={() => setProjectToRename(null)} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors">{t("common.cancel")}</button>
-                <button onClick={submitRenameProject} disabled={!renameProjectName.trim() || renamingProject} className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors shadow-sm shadow-[#89BD49]/25">
+              <div className="grid grid-cols-2 gap-2.5 pt-3 border-t border-border/50">
+                <button
+                  type="button"
+                  disabled={renamingProject}
+                  onClick={() => {
+                    setProjectToRename(null);
+                    setRenameProjectError(null);
+                  }}
+                  className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs font-semibold text-foreground hover:bg-subtle disabled:opacity-50 transition-colors cursor-pointer select-none"
+                >
+                  {t("common.cancel")}
+                </button>
+                <button
+                  type="button"
+                  onClick={submitRenameProject}
+                  disabled={!renameProjectName.trim() || renamingProject}
+                  className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1e40af] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
+                >
                   {renamingProject ? t("common.saving") : t("common.save")}
                 </button>
               </div>
@@ -2373,14 +2529,42 @@ export default function DashboardLayout({
 
         {/* Delete Project Modal */}
         {projectToDelete && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
-            <div className="absolute inset-0 bg-black/40" onClick={() => setProjectToDelete(null)} />
-            <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6 text-center">
-              <h2 className="text-lg font-bold text-foreground mb-2">{t("layout.deleteProjectTitle")}</h2>
-              <p className="text-xs text-muted leading-relaxed mb-6">{t("layout.deleteProjectConfirm", { name: projectToDelete.name })}</p>
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
-                <button onClick={() => setProjectToDelete(null)} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors">{t("common.cancel")}</button>
-                <button onClick={submitDeleteProject} disabled={deletingProject} className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black/50 backdrop-blur-xs"
+              onClick={() => !deletingProject && setProjectToDelete(null)}
+              aria-hidden="true"
+            />
+            <div
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="delete-project-title"
+              aria-describedby="delete-project-desc"
+              className="relative w-[min(28rem,calc(100vw-2rem))] max-w-md rounded-2xl border border-border bg-subtle shadow-2xl p-6 space-y-5"
+            >
+              <div className="text-center space-y-1.5 pt-1">
+                <h2 id="delete-project-title" className="text-base font-bold text-foreground break-words">
+                  {t("layout.deleteProjectTitle")}
+                </h2>
+                <p id="delete-project-desc" className="text-xs text-muted leading-relaxed text-balance break-words">
+                  {t("layout.deleteProjectConfirm", { name: projectToDelete.name })}
+                </p>
+              </div>
+              <div className="grid grid-cols-2 gap-2.5 pt-3 border-t border-border/50">
+                <button
+                  type="button"
+                  disabled={deletingProject}
+                  onClick={() => setProjectToDelete(null)}
+                  className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs font-semibold text-foreground hover:bg-subtle disabled:opacity-50 transition-colors cursor-pointer select-none"
+                >
+                  {t("common.cancel")}
+                </button>
+                <button
+                  type="button"
+                  onClick={submitDeleteProject}
+                  disabled={deletingProject}
+                  className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
+                >
                   {deletingProject ? t("layout.deleting") : t("common.delete")}
                 </button>
               </div>
@@ -2390,63 +2574,95 @@ export default function DashboardLayout({
 
         {/* Create Folder Modal */}
         {createFolderModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
-            <div className="absolute inset-0 bg-black/40" onClick={() => setCreateFolderModalOpen(false)} />
-            <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6">
-              <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.createFolderTitle")}</h2>
-              <p className="text-sm text-muted mb-5">
-                {t("layout.createFolderDesc")}
-              </p>
-              <div>
-                <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("layout.folderName")}</label>
-                <input
-                  type="text"
-                  value={newFolderName}
-                  onChange={(e) => {
-                    setNewFolderName(e.target.value);
-                    setCreateFolderError(null);
-                  }}
-                  placeholder="Name your folder"
-                  className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#2563EB] bg-subtle text-foreground placeholder:text-muted"
-                  autoFocus
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && newFolderName.trim()) {
-                      handleCreateFolder(newFolderName.trim(), parentFolderId);
-                    }
-                  }}
-                />
-                {createFolderError && (
-                  <p className="text-xs text-red-600 dark:text-red-400 mt-1.5">{createFolderError}</p>
-                )}
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black/50 backdrop-blur-xs"
+              onClick={() => {
+                if (creatingFolder) return;
+                setCreateFolderModalOpen(false);
+                setParentFolderId(null);
+                setCreateFolderError(null);
+              }}
+              aria-hidden="true"
+            />
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="create-folder-title"
+              aria-describedby="create-folder-desc"
+              className="relative w-[min(28rem,calc(100vw-2rem))] max-w-md rounded-2xl border border-border bg-subtle shadow-2xl p-6 space-y-5"
+            >
+              <div className="text-center space-y-1.5 pt-1">
+                <h2 id="create-folder-title" className="text-base font-bold text-foreground break-words">
+                  {t("layout.createFolderTitle")}
+                </h2>
+                <p id="create-folder-desc" className="text-xs text-muted leading-relaxed text-balance break-words">
+                  {t("layout.createFolderDesc")}
+                </p>
+              </div>
+              <div className="space-y-4">
+                <div>
+                  <label htmlFor="layout-create-folder-name" className="block text-xs font-medium text-foreground mb-1.5">
+                    {t("layout.folderName")}
+                  </label>
+                  <input
+                    id="layout-create-folder-name"
+                    type="text"
+                    value={newFolderName}
+                    maxLength={60}
+                    onChange={(e) => {
+                      setNewFolderName(e.target.value);
+                      setCreateFolderError(null);
+                    }}
+                    placeholder="Name your folder"
+                    className="w-full text-sm rounded-xl border border-border bg-background px-3.5 py-2.5 outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 text-foreground placeholder:text-muted transition-all"
+                    autoFocus
+                    disabled={creatingFolder}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && newFolderName.trim() && !creatingFolder) {
+                        handleCreateFolder(newFolderName.trim(), parentFolderId);
+                      }
+                    }}
+                  />
+                  {createFolderError && (
+                    <p className="text-xs text-rose-600 dark:text-rose-400 mt-1.5">{createFolderError}</p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-xs font-medium text-foreground mb-1.5">
+                    {t("layout.parentFolder")}
+                  </label>
+                  <Dropdown
+                    value={parentFolderId || ""}
+                    onChange={(val) => setParentFolderId(val || null)}
+                    options={[
+                      { value: "", label: t("layout.topLevelFolder") },
+                      ...folderItems.map((f) => ({ value: f.id, label: f.name })),
+                    ]}
+                    variant="field"
+                  />
+                </div>
               </div>
 
-              <div className="mt-4">
-                <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("layout.parentFolder")}</label>
-                <Dropdown
-                  value={parentFolderId || ""}
-                  onChange={(val) => setParentFolderId(val || null)}
-                  options={[
-                    { value: "", label: t("layout.topLevelFolder") },
-                    ...folderItems.map((f) => ({ value: f.id, label: f.name })),
-                  ]}
-                  variant="field"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-3 mt-6">
+              <div className="grid grid-cols-2 gap-2.5 pt-3 border-t border-border/50">
                 <button
+                  type="button"
+                  disabled={creatingFolder}
                   onClick={() => {
                     setCreateFolderModalOpen(false);
                     setParentFolderId(null);
+                    setCreateFolderError(null);
                   }}
-                  className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors"
+                  className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs font-semibold text-foreground hover:bg-subtle disabled:opacity-50 transition-colors cursor-pointer select-none"
                 >
                   {t("common.cancel")}
                 </button>
                 <button
+                  type="button"
                   onClick={() => handleCreateFolder(newFolderName.trim(), parentFolderId)}
                   disabled={!newFolderName.trim() || creatingFolder}
-                  className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors shadow-sm shadow-[#89BD49]/25"
+                  className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1e40af] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
                 >
                   {creatingFolder ? t("layout.creating") : t("layout.createFolderTitle")}
                 </button>
@@ -2457,24 +2673,45 @@ export default function DashboardLayout({
 
         {/* Rename Folder Modal */}
         {renameFolderModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
-            <div className="absolute inset-0 bg-black/40" onClick={() => setRenameFolderModalOpen(false)} />
-            <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6">
-              <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.renameFolder")}</h2>
-              <p className="text-sm text-muted mb-5">
-                {t("layout.renameFolderDesc")}
-              </p>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black/50 backdrop-blur-xs"
+              onClick={() => {
+                setRenameFolderModalOpen(false);
+                setRenameFolderError(null);
+              }}
+              aria-hidden="true"
+            />
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="rename-folder-title"
+              aria-describedby="rename-folder-desc"
+              className="relative w-[min(28rem,calc(100vw-2rem))] max-w-md rounded-2xl border border-border bg-subtle shadow-2xl p-6 space-y-5"
+            >
+              <div className="text-center space-y-1.5 pt-1">
+                <h2 id="rename-folder-title" className="text-base font-bold text-foreground break-words">
+                  {t("layout.renameFolder")}
+                </h2>
+                <p id="rename-folder-desc" className="text-xs text-muted leading-relaxed text-balance break-words">
+                  {t("layout.renameFolderDesc")}
+                </p>
+              </div>
               <div>
-                <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("layout.newFolderName")}</label>
+                <label htmlFor="layout-rename-folder-name" className="block text-xs font-medium text-foreground mb-1.5">
+                  {t("layout.newFolderName")}
+                </label>
                 <input
+                  id="layout-rename-folder-name"
                   type="text"
                   value={renameFolderNameInput}
+                  maxLength={60}
                   onChange={(e) => {
                     setRenameFolderNameInput(e.target.value);
                     setRenameFolderError(null);
                   }}
                   placeholder="Name your folder"
-                  className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#2563EB] bg-subtle text-foreground placeholder:text-muted"
+                  className="w-full text-sm rounded-xl border border-border bg-background px-3.5 py-2.5 outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 text-foreground placeholder:text-muted transition-all"
                   autoFocus
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && renameFolderNameInput.trim()) {
@@ -2483,20 +2720,25 @@ export default function DashboardLayout({
                   }}
                 />
                 {renameFolderError && (
-                  <p className="text-xs text-red-600 dark:text-red-400 mt-1.5">{renameFolderError}</p>
+                  <p className="text-xs text-rose-600 dark:text-rose-400 mt-1.5">{renameFolderError}</p>
                 )}
               </div>
-              <div className="flex items-center justify-end gap-3 mt-6">
+              <div className="grid grid-cols-2 gap-2.5 pt-3 border-t border-border/50">
                 <button
-                  onClick={() => setRenameFolderModalOpen(false)}
-                  className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors"
+                  type="button"
+                  onClick={() => {
+                    setRenameFolderModalOpen(false);
+                    setRenameFolderError(null);
+                  }}
+                  className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs font-semibold text-foreground hover:bg-subtle transition-colors cursor-pointer select-none"
                 >
                   {t("common.cancel")}
                 </button>
                 <button
+                  type="button"
                   onClick={submitRenameFolder}
                   disabled={!renameFolderNameInput.trim() || renameFolderNameInput.trim() === folderToRename}
-                  className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors shadow-sm shadow-[#89BD49]/25"
+                  className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1e40af] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
                 >
                   {t("layout.saveChanges")}
                 </button>
@@ -2505,30 +2747,44 @@ export default function DashboardLayout({
           </div>
         )}
 
-        {/* Delete Folder Modal (Jira Style Popup Confirmation) */}
+        {/* Delete Folder Modal */}
         {deleteFolderModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
-            <div className="absolute inset-0 bg-black/40" onClick={() => setDeleteFolderModalOpen(false)} />
-            <div className="relative w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6 text-center">
-              <div className="mx-auto mb-4 w-12 h-12 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 flex items-center justify-center text-red-600 dark:text-red-400">
-                <Icon icon="lucide:trash-2" className="w-6 h-6" aria-hidden="true" />
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black/50 backdrop-blur-xs"
+              onClick={() => !deletingFolder && setDeleteFolderModalOpen(false)}
+              aria-hidden="true"
+            />
+            <div
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="delete-folder-title"
+              aria-describedby="delete-folder-desc"
+              className="relative w-[min(28rem,calc(100vw-2rem))] max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-border bg-subtle shadow-2xl p-6 space-y-5"
+            >
+              <div className="text-center space-y-1.5 pt-1">
+                <h2 id="delete-folder-title" className="text-base font-bold text-foreground break-words">
+                  {t("layout.deleteFolderQ")}
+                </h2>
+                <p id="delete-folder-desc" className="text-xs text-muted leading-relaxed text-balance break-words">
+                  {t("layout.deleteFolderDesc", { name: folderToDelete ?? "" })}
+                </p>
               </div>
-              <h2 className="text-lg font-bold text-foreground mb-2">{t("layout.deleteFolderQ")}</h2>
-              <p className="text-xs text-muted leading-relaxed mb-6">
-                {t("layout.deleteFolderDesc", { name: folderToDelete ?? "" })}
-              </p>
 
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
+              <div className="grid grid-cols-2 gap-2.5 pt-3 border-t border-border/50">
                 <button
+                  type="button"
+                  disabled={deletingFolder}
                   onClick={() => setDeleteFolderModalOpen(false)}
-                  className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors"
+                  className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs font-semibold text-foreground hover:bg-subtle disabled:opacity-50 transition-colors cursor-pointer select-none"
                 >
                   {t("common.cancel")}
                 </button>
                 <button
+                  type="button"
                   onClick={submitDeleteFolder}
                   disabled={deletingFolder}
-                  className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors"
+                  className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
                 >
                   {deletingFolder ? t("layout.deleting") : t("layout.deleteFolderTitle")}
                 </button>
@@ -2539,16 +2795,30 @@ export default function DashboardLayout({
 
         {/* Folder Color Modal (Google Drive Style) */}
         {folderColorModalOpen && folderToColor && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
-            <div className="absolute inset-0 bg-black/40" onClick={() => setFolderColorModalOpen(false)} />
-            <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6">
-              <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.folderColor")}</h2>
-              <p className="text-xs text-muted mb-4">
-                {t("layout.folderColorDesc")}
-              </p>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div
+              className="absolute inset-0 bg-black/50 backdrop-blur-xs"
+              onClick={() => !savingFolderColor && setFolderColorModalOpen(false)}
+              aria-hidden="true"
+            />
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="folder-color-title"
+              aria-describedby="folder-color-desc"
+              className="relative w-[min(28rem,calc(100vw-2rem))] max-w-md rounded-2xl border border-border bg-subtle shadow-2xl p-6 space-y-5"
+            >
+              <div className="text-center space-y-1.5 pt-1">
+                <h2 id="folder-color-title" className="text-base font-bold text-foreground break-words">
+                  {t("layout.folderColor")}
+                </h2>
+                <p id="folder-color-desc" className="text-xs text-muted leading-relaxed text-balance break-words">
+                  {t("layout.folderColorDesc")}
+                </p>
+              </div>
 
               {/* Folder preview */}
-              <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-card mb-4">
+              <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-background">
                 <Icon
                   icon={selectedFolderColor ? "custom:folder-filled" : "lucide:folder"}
                   className={`w-6 h-6 shrink-0 transition-colors ${selectedFolderColor ? "" : "text-muted"}`}
@@ -2569,7 +2839,7 @@ export default function DashboardLayout({
               </div>
 
               {/* Google Drive Color Grid */}
-              <div className="grid grid-cols-5 gap-2.5 mb-3 justify-items-center">
+              <div className="grid grid-cols-5 gap-2.5 justify-items-center">
                 {GOOGLE_DRIVE_FOLDER_COLORS.map((c) => {
                   const isSelected = selectedFolderColor?.toLowerCase() === c.value.toLowerCase();
                   return (
@@ -2594,7 +2864,7 @@ export default function DashboardLayout({
               </div>
 
               {/* Reset to default color */}
-              <div className="flex items-center justify-between pt-2 mb-5 border-t border-border/60">
+              <div className="flex items-center justify-between pt-2 border-t border-border/60">
                 <button
                   type="button"
                   onClick={() => setSelectedFolderColor(null)}
@@ -2610,11 +2880,12 @@ export default function DashboardLayout({
                 )}
               </div>
 
-              <div className="flex items-center justify-end gap-3">
+              <div className="grid grid-cols-2 gap-2.5 pt-3 border-t border-border/50">
                 <button
                   type="button"
+                  disabled={savingFolderColor}
                   onClick={() => setFolderColorModalOpen(false)}
-                  className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors"
+                  className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs font-semibold text-foreground hover:bg-subtle disabled:opacity-50 transition-colors cursor-pointer select-none"
                 >
                   {t("common.cancel")}
                 </button>
@@ -2622,7 +2893,7 @@ export default function DashboardLayout({
                   type="button"
                   onClick={submitFolderColor}
                   disabled={savingFolderColor}
-                  className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] disabled:opacity-50 transition-colors shadow-sm shadow-[#89BD49]/25"
+                  className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1e40af] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
                 >
                   {savingFolderColor ? t("layout.saving") : t("layout.saveChanges")}
                 </button>

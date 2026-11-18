@@ -498,44 +498,52 @@ export default function AdminWorkspacesPage() {
 
       {/* Transfer Ownership Modal */}
       {transferWs && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="admin-transfer-title"
+        >
           <form
             onSubmit={handleTransferOwnership}
-            className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-2xl space-y-4"
+            className="w-[min(28rem,calc(100vw-2rem))] max-w-md rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-2xl space-y-5"
           >
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-              {t("admin.transferOwner")} - {transferWs.name}
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-zinc-400">
-              Masukkan email pengguna terdaftar yang akan dijadikan pemilik utama workspace ini.
-            </p>
+            <div className="text-center space-y-1.5 pt-1">
+              <h3 id="admin-transfer-title" className="text-base font-bold text-slate-900 dark:text-white break-words">
+                {t("admin.transferOwner")} - {transferWs.name}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed text-balance">
+                Masukkan email pengguna terdaftar yang akan dijadikan pemilik utama workspace ini.
+              </p>
+            </div>
 
             <div>
-              <label className="text-[11px] font-bold text-slate-600 dark:text-zinc-400 block mb-1">
+              <label htmlFor="transfer-owner-email" className="text-xs font-medium text-slate-700 dark:text-zinc-300 block mb-1.5">
                 New Owner Email
               </label>
               <input
+                id="transfer-owner-email"
                 type="email"
                 required
                 value={newOwnerEmail}
                 onChange={(e) => setNewOwnerEmail(e.target.value)}
                 placeholder="user@example.com"
-                className="w-full text-xs rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3 py-2.5 outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600/20 text-slate-900 dark:text-white font-mono"
+                className="w-full text-xs rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-3.5 py-2.5 outline-none focus:border-rose-600 focus:ring-2 focus:ring-rose-600/20 text-slate-900 dark:text-white font-mono transition-all"
               />
             </div>
 
-            <div className="flex items-center justify-end gap-2 pt-2">
+            <div className="grid grid-cols-2 gap-2.5 pt-3 border-t border-slate-200/70 dark:border-zinc-800">
               <button
                 type="button"
                 onClick={() => setTransferWs(null)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
               >
                 {t("common.cancel")}
               </button>
               <button
                 type="submit"
                 disabled={transferring}
-                className="px-4 py-2 rounded-xl text-xs font-semibold bg-red-600 hover:bg-red-700 text-white shadow-xs shadow-red-600/25 transition-colors disabled:opacity-50"
+                className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
               >
                 {transferring ? t("common.loading") : t("admin.transferOwner")}
               </button>
@@ -546,11 +554,16 @@ export default function AdminWorkspacesPage() {
 
       {/* 360 Workspace Detail Modal */}
       {selectedWs && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="admin-ws360-title"
+        >
           <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-2xl space-y-5">
             <div className="flex items-start justify-between border-b border-slate-100 dark:border-zinc-800 pb-3">
               <div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <h3 id="admin-ws360-title" className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   <span className="flex items-center gap-1.5"><Icon icon="lucide:building-2" className="w-4 h-4 shrink-0 text-red-700 dark:text-red-300" /> {selectedWs.name}</span>
                   {selectedWs.is_vip && (
                     <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 border border-amber-300 dark:border-amber-800">

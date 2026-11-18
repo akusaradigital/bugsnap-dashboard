@@ -548,32 +548,52 @@ function ManageFoldersContent() {
 
       {/* Create Folder Modal */}
       {createOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setCreateOpen(false)} />
-          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6">
-            <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.createFolderTitle")}</h2>
-            <p className="text-sm text-muted mb-5">{t("layout.createFolderDesc")}</p>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-xs" onClick={() => !creating && setCreateOpen(false)} aria-hidden="true" />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="folders-create-title"
+            aria-describedby="folders-create-desc"
+            className="relative w-[min(28rem,calc(100vw-2rem))] max-w-md rounded-2xl border border-border bg-subtle shadow-2xl p-6 space-y-5"
+          >
+            <div className="text-center space-y-1.5 pt-1">
+              <h2 id="folders-create-title" className="text-base font-bold text-foreground break-words">{t("layout.createFolderTitle")}</h2>
+              <p id="folders-create-desc" className="text-xs text-muted leading-relaxed text-balance break-words">{t("layout.createFolderDesc")}</p>
+            </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("layout.folderName")}</label>
+              <label htmlFor="folders-create-name" className="block text-xs font-medium text-foreground mb-1.5">{t("layout.folderName")}</label>
               <input
+                id="folders-create-name"
                 type="text"
                 value={newFolderName}
+                maxLength={60}
                 onChange={(e) => { setNewFolderName(e.target.value); setCreateError(null); }}
                 placeholder={t("nonAdminFx.folderNamePlaceholder")}
-                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#2563EB] bg-subtle text-foreground placeholder:text-muted"
+                className="w-full text-sm rounded-xl border border-border bg-background px-3.5 py-2.5 outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 text-foreground placeholder:text-muted transition-all"
                 autoFocus
-                onKeyDown={(e) => { if (e.key === "Enter" && newFolderName.trim()) handleCreateFolder(); }}
+                disabled={creating}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && newFolderName.trim() && !creating) handleCreateFolder();
+                  if (e.key === "Escape" && !creating) setCreateOpen(false);
+                }}
               />
-              {createError && <p className="text-xs text-red-600 dark:text-red-400 mt-1.5">{createError}</p>}
+              {createError && <p className="text-xs text-rose-600 dark:text-rose-400 mt-1.5">{createError}</p>}
             </div>
-            <div className="flex items-center justify-end gap-3 mt-6">
-              <button onClick={() => setCreateOpen(false)} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-background rounded-lg transition-colors">
+            <div className="grid grid-cols-2 gap-2.5 pt-3 border-t border-border/50">
+              <button
+                type="button"
+                disabled={creating}
+                onClick={() => setCreateOpen(false)}
+                className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs font-semibold text-foreground hover:bg-subtle disabled:opacity-50 transition-colors cursor-pointer select-none"
+              >
                 {t("common.cancel")}
               </button>
               <button
+                type="button"
                 onClick={handleCreateFolder}
                 disabled={!newFolderName.trim() || creating}
-                className="px-4 py-2 rounded-lg bg-[#2563EB] text-white text-sm font-semibold hover:bg-[#1D4ED8] disabled:opacity-50 transition-colors shadow-sm shadow-[#2563EB]/25"
+                className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1e40af] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
               >
                 {creating ? t("layout.creating") : t("layout.createFolderTitle")}
               </button>
@@ -584,31 +604,51 @@ function ManageFoldersContent() {
 
       {/* Rename Folder Modal */}
       {renameTarget && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setRenameTarget(null)} />
-          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6">
-            <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.renameFolder")}</h2>
-            <p className="text-sm text-muted mb-5">{t("layout.renameFolderDesc")}</p>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-xs" onClick={() => !renaming && setRenameTarget(null)} aria-hidden="true" />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="folders-rename-title"
+            aria-describedby="folders-rename-desc"
+            className="relative w-[min(28rem,calc(100vw-2rem))] max-w-md rounded-2xl border border-border bg-subtle shadow-2xl p-6 space-y-5"
+          >
+            <div className="text-center space-y-1.5 pt-1">
+              <h2 id="folders-rename-title" className="text-base font-bold text-foreground break-words">{t("layout.renameFolder")}</h2>
+              <p id="folders-rename-desc" className="text-xs text-muted leading-relaxed text-balance break-words">{t("layout.renameFolderDesc")}</p>
+            </div>
             <div>
-              <label className="block text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">{t("layout.newFolderName")}</label>
+              <label htmlFor="folders-rename-name" className="block text-xs font-medium text-foreground mb-1.5">{t("layout.newFolderName")}</label>
               <input
+                id="folders-rename-name"
                 type="text"
                 value={renameValue}
+                maxLength={60}
                 onChange={(e) => { setRenameValue(e.target.value); setRenameError(null); }}
-                className="w-full text-sm rounded-lg border border-border px-3 py-2.5 outline-none focus:border-[#2563EB] bg-subtle text-foreground placeholder:text-muted"
+                className="w-full text-sm rounded-xl border border-border bg-background px-3.5 py-2.5 outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 text-foreground placeholder:text-muted transition-all"
                 autoFocus
-                onKeyDown={(e) => { if (e.key === "Enter" && renameValue.trim()) submitRename(); }}
+                disabled={renaming}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && renameValue.trim() && !renaming) submitRename();
+                  if (e.key === "Escape" && !renaming) setRenameTarget(null);
+                }}
               />
-              {renameError && <p className="text-xs text-red-600 dark:text-red-400 mt-1.5">{renameError}</p>}
+              {renameError && <p className="text-xs text-rose-600 dark:text-rose-400 mt-1.5">{renameError}</p>}
             </div>
-            <div className="flex items-center justify-end gap-3 mt-6">
-              <button onClick={() => setRenameTarget(null)} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-background rounded-lg transition-colors">
+            <div className="grid grid-cols-2 gap-2.5 pt-3 border-t border-border/50">
+              <button
+                type="button"
+                disabled={renaming}
+                onClick={() => setRenameTarget(null)}
+                className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs font-semibold text-foreground hover:bg-subtle disabled:opacity-50 transition-colors cursor-pointer select-none"
+              >
                 {t("common.cancel")}
               </button>
               <button
+                type="button"
                 onClick={submitRename}
                 disabled={!renameValue.trim() || renameValue.trim() === renameTarget.name || renaming}
-                className="px-4 py-2 rounded-lg bg-[#2563EB] text-white text-sm font-semibold hover:bg-[#1D4ED8] disabled:opacity-50 transition-colors shadow-sm shadow-[#2563EB]/25"
+                className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1e40af] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
               >
                 {t("layout.saveChanges")}
               </button>
@@ -619,22 +659,33 @@ function ManageFoldersContent() {
 
       {/* Delete Folder Modal */}
       {deleteTarget && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setDeleteTarget(null)} />
-          <div className="relative w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6 text-center">
-            <div className="mx-auto mb-4 w-12 h-12 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/50 flex items-center justify-center text-red-600 dark:text-red-400">
-              <Icon icon="lucide:trash-2" className="w-6 h-6" aria-hidden="true" />
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-xs" onClick={() => !deleting && setDeleteTarget(null)} aria-hidden="true" />
+          <div
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="folders-delete-title"
+            aria-describedby="folders-delete-desc"
+            className="relative w-[min(28rem,calc(100vw-2rem))] max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-border bg-subtle shadow-2xl p-6 space-y-5"
+          >
+            <div className="text-center space-y-1.5 pt-1">
+              <h2 id="folders-delete-title" className="text-base font-bold text-foreground break-words">{t("layout.deleteFolderQ")}</h2>
+              <p id="folders-delete-desc" className="text-xs text-muted leading-relaxed text-balance break-words">{t("layout.deleteFolderDesc", { name: deleteTarget.name })}</p>
             </div>
-            <h2 className="text-lg font-bold text-foreground mb-2">{t("layout.deleteFolderQ")}</h2>
-            <p className="text-xs text-muted leading-relaxed mb-6">{t("layout.deleteFolderDesc", { name: deleteTarget.name })}</p>
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
-              <button onClick={() => setDeleteTarget(null)} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-background rounded-lg transition-colors">
+            <div className="grid grid-cols-2 gap-2.5 pt-3 border-t border-border/50">
+              <button
+                type="button"
+                disabled={deleting}
+                onClick={() => setDeleteTarget(null)}
+                className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs font-semibold text-foreground hover:bg-subtle disabled:opacity-50 transition-colors cursor-pointer select-none"
+              >
                 {t("common.cancel")}
               </button>
               <button
+                type="button"
                 onClick={submitDelete}
                 disabled={deleting}
-                className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 disabled:opacity-50 transition-colors"
+                className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
               >
                 {deleting ? t("layout.deleting") : t("layout.deleteFolderTitle")}
               </button>
@@ -645,13 +696,21 @@ function ManageFoldersContent() {
 
       {/* Folder Color Modal */}
       {colorTarget && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
-          <div className="absolute inset-0 bg-black/40" onClick={() => setColorTarget(null)} />
-          <div className="relative w-full max-w-sm rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6">
-            <h2 className="text-lg font-bold text-foreground mb-1">{t("layout.folderColor")}</h2>
-            <p className="text-xs text-muted mb-4">{t("layout.folderColorDesc")}</p>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-xs" onClick={() => !savingColor && setColorTarget(null)} aria-hidden="true" />
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="folders-color-title"
+            aria-describedby="folders-color-desc"
+            className="relative w-[min(28rem,calc(100vw-2rem))] max-w-md rounded-2xl border border-border bg-subtle shadow-2xl p-6 space-y-5"
+          >
+            <div className="text-center space-y-1.5 pt-1">
+              <h2 id="folders-color-title" className="text-base font-bold text-foreground break-words">{t("layout.folderColor")}</h2>
+              <p id="folders-color-desc" className="text-xs text-muted leading-relaxed text-balance break-words">{t("layout.folderColorDesc")}</p>
+            </div>
 
-            <div className="flex items-center gap-3 p-3 rounded-lg border border-border bg-background mb-4">
+            <div className="flex items-center gap-3 p-3 rounded-xl border border-border bg-background">
               <Icon
                 icon={selectedColor ? "custom:folder-filled" : "lucide:folder"}
                 className={`w-6 h-6 shrink-0 transition-colors ${selectedColor ? "" : "text-muted"}`}
@@ -667,7 +726,7 @@ function ManageFoldersContent() {
               </div>
             </div>
 
-            <div className="grid grid-cols-5 gap-2.5 mb-3 justify-items-center">
+            <div className="grid grid-cols-5 gap-2.5 justify-items-center">
               {GOOGLE_DRIVE_FOLDER_COLORS.map((c) => {
                 const isSelected = selectedColor?.toLowerCase() === c.value.toLowerCase();
                 return (
@@ -687,7 +746,7 @@ function ManageFoldersContent() {
               })}
             </div>
 
-            <div className="flex items-center justify-between pt-2 mb-5 border-t border-border/60">
+            <div className="flex items-center justify-between pt-2 border-t border-border/60">
               <button
                 type="button"
                 onClick={() => setSelectedColor(null)}
@@ -699,15 +758,20 @@ function ManageFoldersContent() {
               {selectedColor && <span className="text-[11px] font-mono text-muted uppercase">{selectedColor}</span>}
             </div>
 
-            <div className="flex items-center justify-end gap-3">
-              <button type="button" onClick={() => setColorTarget(null)} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-background rounded-lg transition-colors">
+            <div className="grid grid-cols-2 gap-2.5 pt-3 border-t border-border/50">
+              <button
+                type="button"
+                disabled={savingColor}
+                onClick={() => setColorTarget(null)}
+                className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs font-semibold text-foreground hover:bg-subtle disabled:opacity-50 transition-colors cursor-pointer select-none"
+              >
                 {t("common.cancel")}
               </button>
               <button
                 type="button"
                 onClick={submitColor}
                 disabled={savingColor}
-                className="px-4 py-2 rounded-lg bg-[#2563EB] text-white text-sm font-semibold hover:bg-[#1D4ED8] disabled:opacity-50 transition-colors shadow-sm shadow-[#2563EB]/25"
+                className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1e40af] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
               >
                 {savingColor ? t("common.saving") : t("common.save")}
               </button>

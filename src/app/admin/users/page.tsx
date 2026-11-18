@@ -624,14 +624,21 @@ export default function AdminUsersPage() {
 
       {/* Plan Override Modal */}
       {planModalUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="w-full max-w-md rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 sm:p-6 shadow-2xl space-y-4">
-            <h3 className="text-sm font-bold text-slate-900 dark:text-white">
-              {t("admin.changePlan")} - {planModalUser.email}
-            </h3>
-            <p className="text-xs text-slate-500 dark:text-zinc-400">
-              Ubah paket langganan secara manual untuk akun ini. Perubahan akan langsung aktif di database.
-            </p>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="admin-plan-title"
+        >
+          <div className="w-[min(28rem,calc(100vw-2rem))] max-w-md rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-2xl space-y-5">
+            <div className="text-center space-y-1.5 pt-1">
+              <h3 id="admin-plan-title" className="text-base font-bold text-slate-900 dark:text-white break-words">
+                {t("admin.changePlan")} - {planModalUser.email}
+              </h3>
+              <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed text-balance">
+                Ubah paket langganan secara manual untuk akun ini. Perubahan akan langsung aktif di database.
+              </p>
+            </div>
 
             <div className="space-y-2">
               {(["free", "pro", "pro_plus", "enterprise"] as const).map((p) => (
@@ -658,7 +665,7 @@ export default function AdminUsersPage() {
 
             {selectedNewPlan !== "free" && (
               <div className="pt-1">
-                <label className="block text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-zinc-400 mb-1">
+                <label className="block text-xs font-medium text-slate-700 dark:text-zinc-300 mb-1.5">
                   Durasi Paket (Comp / Gift / Trial)
                 </label>
                 <Dropdown
@@ -677,11 +684,11 @@ export default function AdminUsersPage() {
               </div>
             )}
 
-            <div className="flex items-center justify-end gap-2 pt-2">
+            <div className="grid grid-cols-2 gap-2.5 pt-3 border-t border-slate-200/70 dark:border-zinc-800">
               <button
                 type="button"
                 onClick={() => setPlanModalUser(null)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:bg-slate-100 dark:hover:bg-zinc-800"
+                className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-700 bg-white dark:bg-zinc-950 text-xs font-semibold text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
               >
                 {t("common.cancel")}
               </button>
@@ -689,7 +696,7 @@ export default function AdminUsersPage() {
                 type="button"
                 disabled={savingPlan}
                 onClick={handleSavePlan}
-                className="px-4 py-2 rounded-xl text-xs font-semibold bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-xs shadow-[#2563EB]/25 transition-colors disabled:opacity-50"
+                className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1e40af] text-white shadow-xs transition-colors disabled:opacity-50 cursor-pointer"
               >
                 {savingPlan ? t("common.loading") : t("admin.savePlan")}
               </button>
@@ -700,11 +707,16 @@ export default function AdminUsersPage() {
 
       {/* 360° User Detail Modal */}
       {selectedUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs">
-          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-4 sm:p-6 shadow-2xl space-y-5">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="admin-user360-title"
+        >
+          <div className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 shadow-2xl space-y-5">
             <div className="flex items-start justify-between border-b border-slate-100 dark:border-zinc-800 pb-3">
               <div>
-                <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <h3 id="admin-user360-title" className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
                   <span>{t("admin.userProfileTitle")}</span>
                   <span className="px-2 py-0.5 rounded text-[10px] uppercase font-bold bg-blue-50 dark:bg-blue-950/20 text-[#2563EB] dark:text-[#3B82F6] border border-blue-200 dark:border-blue-900/40">
                     {selectedUser.plan}

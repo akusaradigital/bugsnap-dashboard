@@ -345,12 +345,17 @@ export default function AdminSupportPage() {
 
       {/* Ticket Detail Modal */}
       {selectedTicket && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-xs"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="admin-ticket-title"
+        >
           <div className="w-full max-w-2xl max-h-[90vh] rounded-2xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 shadow-2xl flex flex-col overflow-hidden">
             {/* Modal Header */}
             <div className="p-4 sm:p-5 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between gap-3">
               <div className="flex items-center gap-2 min-w-0">
-                <span className="text-sm font-bold text-slate-900 dark:text-white shrink-0">
+                <span id="admin-ticket-title" className="text-sm font-bold text-slate-900 dark:text-white shrink-0">
                   Tiket #{selectedTicket.id.slice(-6)}
                 </span>
                 <span className="text-xs text-slate-400 shrink-0">•</span>

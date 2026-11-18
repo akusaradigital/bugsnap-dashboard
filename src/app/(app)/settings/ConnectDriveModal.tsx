@@ -22,15 +22,31 @@ export function ConnectDriveModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
-      <button className="absolute inset-0 bg-black/40" aria-label={t("common.close")} onClick={() => !loading && onClose()} />
-      <div className="relative w-[min(24rem,calc(100vw-2rem))] rounded-xl border border-border bg-background p-4 sm:p-6 shadow-xl">
-        <h2 className="text-lg font-bold text-foreground">{t("settings.connectDriveQ")}</h2>
-        <p className="text-sm text-muted mt-2">{t("settings.connectDriveDesc")}</p>
-        {driveError && <p className="text-xs text-red-600 dark:text-red-400 mt-3">{driveError}</p>}
-        <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-border">
-          <button type="button" onClick={onClose} disabled={loading} className="px-4 py-2 text-sm font-medium text-foreground hover:bg-border/30 rounded-lg disabled:opacity-50">{t("common.cancel")}</button>
-          <button type="button" onClick={onConnect} disabled={loading} className="px-4 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] shadow-xs shadow-[#89BD49]/25 disabled:opacity-50">{loading ? t("settings.connecting") : driveStatus === "reconnect_required" ? "Reconnect with Google" : t("settings.continueToGoogle")}</button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true" aria-labelledby="connect-drive-title">
+      <button className="absolute inset-0 bg-black/50 backdrop-blur-xs" aria-label={t("common.close")} onClick={() => !loading && onClose()} />
+      <div className="relative w-[min(28rem,calc(100vw-2rem))] max-w-md rounded-2xl border border-border bg-subtle p-6 shadow-2xl space-y-5">
+        <div className="text-center space-y-1.5 pt-1">
+          <h2 id="connect-drive-title" className="text-base font-bold text-foreground break-words">{t("settings.connectDriveQ")}</h2>
+          <p className="text-xs text-muted leading-relaxed text-balance break-words">{t("settings.connectDriveDesc")}</p>
+        </div>
+        {driveError && <p className="text-xs text-rose-600 dark:text-rose-400 text-center">{driveError}</p>}
+        <div className="grid grid-cols-2 gap-2.5 pt-3 border-t border-border/50">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={loading}
+            className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs font-semibold text-foreground hover:bg-subtle disabled:opacity-50 transition-colors cursor-pointer select-none"
+          >
+            {t("common.cancel")}
+          </button>
+          <button
+            type="button"
+            onClick={onConnect}
+            disabled={loading}
+            className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1e40af] text-white text-xs font-semibold shadow-xs disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer select-none"
+          >
+            {loading ? t("settings.connecting") : driveStatus === "reconnect_required" ? t("settings.reconnectGoogle") : t("settings.continueToGoogle")}
+          </button>
         </div>
       </div>
     </div>

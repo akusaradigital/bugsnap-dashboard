@@ -3168,7 +3168,7 @@ function CapturesContent() {
               <div className="grid grid-cols-1 md:grid-cols-[1fr_240px] gap-6 items-start">
                 {/* Left Column: Folders */}
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-2.5">
+                  <label className="block text-xs font-medium text-foreground mb-2.5">
                     {t("cap.folderInWs", {
                       name:
                         moveWorkspaces.find(
@@ -3183,7 +3183,7 @@ function CapturesContent() {
                       onClick={() => setMoveTargetFolderName("")}
                       className={`w-full flex items-center justify-between rounded-xl border px-3.5 py-2.5 text-left transition-all ${
                         moveTargetFolderName === ""
-                          ? "border-[#89BD49] bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] ring-1 ring-[#89BD49]"
+                          ? "border-[#2563EB] bg-blue-50/70 dark:bg-blue-950/30 text-[#2563EB] dark:text-[#3B82F6] ring-1 ring-[#2563EB]"
                           : "border-border bg-slate-50/50 dark:bg-background/50 hover:bg-slate-100 dark:hover:bg-background text-foreground"
                       }`}
                     >
@@ -3216,7 +3216,7 @@ function CapturesContent() {
                           style={{ paddingLeft: `${14 + folderEntry.depth * 14}px` }}
                           className={`w-full flex items-center justify-between rounded-xl border px-3.5 py-2.5 text-left transition-all ${
                             isSelected
-                              ? "border-[#89BD49] bg-[#89BD49]/10 dark:bg-[#89BD49]/20 text-[#6B9A35] dark:text-[#A8D666] ring-1 ring-[#89BD49]"
+                              ? "border-[#2563EB] bg-blue-50/70 dark:bg-blue-950/30 text-[#2563EB] dark:text-[#3B82F6] ring-1 ring-[#2563EB]"
                               : "border-border bg-slate-50/50 dark:bg-background/50 hover:bg-slate-100 dark:hover:bg-background text-foreground"
                           }`}
                         >
@@ -3317,7 +3317,7 @@ function CapturesContent() {
 
                 {/* Right Column: Workspaces */}
                 <div>
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-muted mb-2.5">
+                  <label className="block text-xs font-medium text-foreground mb-2.5">
                     {t("cap.targetWorkspace")}
                   </label>
                   <div className="rounded-xl border border-border bg-slate-50/50 dark:bg-background/40 p-1.5 space-y-1">
@@ -3337,7 +3337,7 @@ function CapturesContent() {
                           <span
                             className={`w-6 h-6 rounded-md flex items-center justify-center text-xs font-bold shrink-0 ${
                               isTargetWs
-                                ? "bg-[#89BD49] text-white"
+                                ? "bg-[#2563EB] text-white"
                                 : "bg-slate-200 dark:bg-zinc-800 text-foreground"
                             }`}
                           >
@@ -3352,18 +3352,18 @@ function CapturesContent() {
               </div>
 
               {uploadError && (
-                <div className="mt-4 rounded-lg border border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-950/20 px-3 py-2 text-xs text-red-700 dark:text-red-400">
+                <div className="mt-4 rounded-xl border border-rose-200 dark:border-rose-800/40 bg-rose-50 dark:bg-rose-950/20 px-3 py-2 text-xs text-rose-700 dark:text-rose-400">
                   {uploadError}
                 </div>
               )}
             </div>
 
-            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-border bg-slate-50/50 dark:bg-background/50">
+            <div className="flex items-center justify-end gap-2.5 px-6 py-4 border-t border-border bg-slate-50/50 dark:bg-background/50">
               <button
                 type="button"
                 onClick={() => setMoveToOpen(false)}
                 disabled={moving}
-                className="px-4 py-2 text-sm font-medium text-foreground hover:bg-slate-200/60 dark:hover:bg-subtle rounded-lg transition-colors disabled:opacity-50"
+                className="inline-flex items-center justify-center whitespace-nowrap px-4 py-2.5 text-xs font-semibold text-foreground border border-border bg-background hover:bg-subtle rounded-xl transition-colors disabled:opacity-50 cursor-pointer"
               >
                 {t("common.cancel")}
               </button>
@@ -3371,7 +3371,7 @@ function CapturesContent() {
                 type="button"
                 onClick={() => void submitMoveTo()}
                 disabled={moving || !moveTargetWorkspaceId}
-                className="px-5 py-2 rounded-lg bg-[#89BD49] text-white text-sm font-semibold hover:bg-[#6B9A35] shadow-xs shadow-[#89BD49]/25 disabled:opacity-50 transition-colors"
+                className="inline-flex items-center justify-center whitespace-nowrap px-5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1e40af] text-white text-xs font-semibold shadow-xs disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
                 {moving ? t("cap.moving") : t("cap.move")}
               </button>
@@ -3383,26 +3383,26 @@ function CapturesContent() {
       {deleteRequest && (
         <div
           className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-          role="dialog"
+          role="alertdialog"
           aria-modal="true"
           aria-labelledby="delete-captures-title"
         >
           <button
-            className="absolute inset-0 bg-black/40"
+            className="absolute inset-0 bg-black/50 backdrop-blur-xs"
             aria-label="Close confirmation"
             onClick={() => !deleting && setDeleteRequest(null)}
           />
-          <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl bg-subtle shadow-xl border border-border p-5 sm:p-6">
+          <div className="relative w-[min(28rem,calc(100vw-2rem))] max-w-md max-h-[90vh] overflow-y-auto rounded-2xl bg-subtle shadow-2xl border border-border p-6">
             <div className="text-center space-y-1.5 mb-5 pt-1">
               <h2
                 id="delete-captures-title"
-                className="text-lg font-bold text-foreground"
+                className="text-base font-bold text-foreground break-words"
               >
                 {deleteRequest.ids.length === 1
                   ? t("cap.deleteTitleOne")
                   : t("cap.deleteTitleMany", { count: deleteRequest.ids.length })}
               </h2>
-              <p className="text-sm text-muted leading-relaxed">
+              <p className="text-xs text-muted leading-relaxed text-balance break-words">
                 {deleteRequest.title ? (
                   <>{t("cap.deleteWillRemove", { name: deleteRequest.title })}</>
                 ) : (
@@ -3413,7 +3413,7 @@ function CapturesContent() {
 
             <div className="space-y-2">
               <label
-                className={`block rounded-lg border p-3 cursor-pointer ${deleteMode === "drive_trash" ? "border-[#89BD49] bg-[#89BD49]/10 dark:bg-[#89BD49]/20" : "border-border"}`}
+                className={`block rounded-xl border p-3 cursor-pointer transition-colors ${deleteMode === "drive_trash" ? "border-[#2563EB] bg-blue-50/60 dark:bg-blue-950/25" : "border-border bg-background/60"}`}
               >
                 <span className="flex gap-3">
                   <input
@@ -3443,7 +3443,7 @@ function CapturesContent() {
                 </span>
               </label>
               <label
-                className={`block rounded-lg border p-3 cursor-pointer ${deleteMode === "app_only" ? "border-[#89BD49] bg-[#89BD49]/10 dark:bg-[#89BD49]/20" : "border-border"}`}
+                className={`block rounded-xl border p-3 cursor-pointer transition-colors ${deleteMode === "app_only" ? "border-[#2563EB] bg-blue-50/60 dark:bg-blue-950/25" : "border-border bg-background/60"}`}
               >
                 <span className="flex gap-3">
                   <input
@@ -3504,18 +3504,18 @@ function CapturesContent() {
               </div>
             )}
 
-            <div className="grid grid-cols-2 gap-3 mt-6 pt-4 border-t border-border">
+            <div className="grid grid-cols-2 gap-2.5 mt-6 pt-4 border-t border-border/50">
               <button
                 onClick={() => setDeleteRequest(null)}
                 disabled={deleting}
-                className="w-full py-2.5 px-4 text-xs font-semibold text-foreground border border-border bg-background hover:bg-subtle rounded-xl disabled:opacity-50 transition-colors cursor-pointer text-center inline-flex items-center justify-center select-none"
+                className="w-full py-2.5 px-4 text-xs font-semibold text-foreground border border-border bg-background hover:bg-subtle rounded-xl disabled:opacity-50 transition-colors cursor-pointer text-center inline-flex items-center justify-center whitespace-nowrap select-none"
               >
                 {t("common.cancel")}
               </button>
               <button
                 onClick={submitDelete}
                 disabled={deleting}
-                className="w-full py-2.5 px-4 rounded-xl bg-red-600 text-white text-xs font-semibold hover:bg-red-700 disabled:opacity-50 transition-colors cursor-pointer text-center inline-flex items-center justify-center shadow-xs select-none"
+                className="w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white text-xs font-semibold disabled:opacity-50 transition-colors cursor-pointer text-center inline-flex items-center justify-center whitespace-nowrap shadow-xs select-none"
               >
                 {deleting
                   ? deleteProgress && deleteProgress.total > 50

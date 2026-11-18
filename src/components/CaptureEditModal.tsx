@@ -124,12 +124,13 @@ export default function EditModal({ capture, onClose, onSaved }: EditModalProps)
     "w-full text-sm rounded-lg border border-border px-3 py-2 outline-none focus:border-red-600 focus:ring-1 focus:ring-red-600/20 bg-subtle text-foreground placeholder:text-muted";
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
-      <div className="absolute inset-0 bg-black/40" onClick={onClose} />
-      <div role="dialog" aria-modal="true" aria-labelledby="edit-modal-title" className="relative w-full max-w-md rounded-xl bg-subtle shadow-xl border border-border flex flex-col max-h-[85vh] overflow-hidden">
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-border shrink-0">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-xs" onClick={onClose} aria-hidden="true" />
+      <div role="dialog" aria-modal="true" aria-labelledby="edit-modal-title" className="relative w-[min(30rem,calc(100vw-2rem))] max-w-lg rounded-2xl bg-subtle shadow-2xl border border-border flex flex-col max-h-[85vh] overflow-hidden">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
           <h2 id="edit-modal-title" className="text-base font-bold text-foreground">{t("cap.editTitle")}</h2>
           <button
+            type="button"
             onClick={onClose}
             aria-label={t("common.close")}
             className="text-muted hover:text-foreground transition-colors"
@@ -139,18 +140,18 @@ export default function EditModal({ capture, onClose, onSaved }: EditModalProps)
         </div>
 
         {/* Scrollable Body */}
-        <div className="flex-1 overflow-y-auto px-4 sm:px-6 py-4">
+        <div className="flex-1 overflow-y-auto px-6 py-4">
           <div className="space-y-4">
           <div>
-            <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">
-              <Icon icon="lucide:pencil" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+            <label className="flex items-center gap-1.5 text-xs font-medium text-foreground mb-1.5">
+              <Icon icon="lucide:pencil" className="w-3.5 h-3.5 text-muted shrink-0" aria-hidden="true" />
               {t("cap.titleLabel")}
             </label>
             <input className={inputClasses} value={title} onChange={(e) => setTitle(e.target.value)} />
           </div>
           <div>
-            <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">
-              <Icon icon="lucide:file-text" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+            <label className="flex items-center gap-1.5 text-xs font-medium text-foreground mb-1.5">
+              <Icon icon="lucide:file-text" className="w-3.5 h-3.5 text-muted shrink-0" aria-hidden="true" />
               {t("cap.descLabel")}
             </label>
             <textarea
@@ -168,8 +169,8 @@ export default function EditModal({ capture, onClose, onSaved }: EditModalProps)
             <div className="space-y-4">
               {/* Tag */}
               <div>
-                <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">
-              <Icon icon="lucide:tag" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                <label className="flex items-center gap-1.5 text-xs font-medium text-foreground mb-1.5">
+              <Icon icon="lucide:tag" className="w-3.5 h-3.5 text-muted shrink-0" aria-hidden="true" />
               {t("cap.tagLabel")}
             </label>
                 <Dropdown
@@ -181,8 +182,8 @@ export default function EditModal({ capture, onClose, onSaved }: EditModalProps)
               </div>
               {/* Status */}
               <div>
-                <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">
-              <Icon icon="lucide:crosshair" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                <label className="flex items-center gap-1.5 text-xs font-medium text-foreground mb-1.5">
+              <Icon icon="lucide:crosshair" className="w-3.5 h-3.5 text-muted shrink-0" aria-hidden="true" />
               {t("cap.statusLabel")}
             </label>
                 <Dropdown
@@ -193,8 +194,8 @@ export default function EditModal({ capture, onClose, onSaved }: EditModalProps)
                 />
               </div>
               <div>
-                <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">
-              <Icon icon="lucide:lock" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                <label className="flex items-center gap-1.5 text-xs font-medium text-foreground mb-1.5">
+              <Icon icon="lucide:lock" className="w-3.5 h-3.5 text-muted shrink-0" aria-hidden="true" />
               {t("cap.passwordLabel")}
             </label>
                 <input
@@ -206,8 +207,8 @@ export default function EditModal({ capture, onClose, onSaved }: EditModalProps)
                 />
               </div>
               <div>
-                <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-muted mb-1.5">
-              <Icon icon="lucide:clock" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                <label className="flex items-center gap-1.5 text-xs font-medium text-foreground mb-1.5">
+              <Icon icon="lucide:clock" className="w-3.5 h-3.5 text-muted shrink-0" aria-hidden="true" />
               {t("cap.expiresLabel")}
             </label>
                 <div className="inline-flex rounded-lg border border-border bg-subtle p-1 w-full">
@@ -290,21 +291,25 @@ export default function EditModal({ capture, onClose, onSaved }: EditModalProps)
         </div>
 
         {/* Sticky Footer Actions */}
-        <div className="flex flex-wrap sm:flex-nowrap items-center justify-end gap-2 px-4 sm:px-6 py-3.5 sm:py-4 border-t border-border shrink-0">
-          {error && <p className="mr-auto text-xs text-red-600 dark:text-red-400 w-full sm:w-auto">{error}</p>}
-          <button
-            onClick={onClose}
-            className="flex-1 sm:flex-initial rounded-lg border border-border bg-subtle px-4 py-2 text-sm font-medium text-foreground hover:bg-background transition-colors text-center"
-          >
-            {t("common.cancel")}
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            className="flex-1 sm:flex-initial rounded-lg bg-[#89BD49] px-4 py-2 text-sm font-semibold text-white hover:bg-[#6B9A35] disabled:opacity-60 shadow-xs shadow-[#89BD49]/25 transition-colors text-center"
-          >
-            {saving ? t("settings.saving") : t("cap.saveChanges")}
-          </button>
+        <div className="px-6 py-4 border-t border-border/50 shrink-0 space-y-2.5">
+          {error && <p className="text-xs text-rose-600 dark:text-rose-400 text-center">{error}</p>}
+          <div className="grid grid-cols-2 gap-2.5">
+            <button
+              type="button"
+              onClick={onClose}
+              className="w-full inline-flex items-center justify-center whitespace-nowrap rounded-xl border border-border bg-background px-3.5 py-2.5 text-xs font-semibold text-foreground hover:bg-subtle transition-colors cursor-pointer select-none"
+            >
+              {t("common.cancel")}
+            </button>
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              className="w-full inline-flex items-center justify-center whitespace-nowrap rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1e40af] px-3.5 py-2.5 text-xs font-semibold text-white disabled:opacity-50 disabled:cursor-not-allowed shadow-xs transition-colors cursor-pointer select-none"
+            >
+              {saving ? t("settings.saving") : t("cap.saveChanges")}
+            </button>
+          </div>
         </div>
       </div>
     </div>
