@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useT } from "@/components/I18nProvider";
 import { SiteNavbar } from "@/components/site/SiteNavbar";
 import { SiteFooter } from "@/components/site/SiteFooter";
+import { ProductShowcaseGallery } from "@/components/site/ProductShowcaseGallery";
 import { Icon } from "@/lib/iconify";
 import { CHROME_STORE_URL, FIREFOX_STORE_URL } from "@/lib/constants";
 import { HERO_SUBTITLE_CLS } from "@/lib/heroStyles";
@@ -178,6 +179,9 @@ export function ExtensionContent() {
             </div>
 
           </div>
+
+          {/* Real Latest UI Showcase Carousel (Synced with Chrome Web Store & Firefox Add-ons) */}
+          <ProductShowcaseGallery />
 
           {/* Global Browser Shortcuts & Extension Popup Mockup */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
