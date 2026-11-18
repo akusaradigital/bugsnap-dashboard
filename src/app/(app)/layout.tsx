@@ -1648,7 +1648,7 @@ export default function DashboardLayout({
                         aria-haspopup="true"
                       >
                         <span className="flex items-center gap-2.5">
-                          <Icon icon="lucide:arrow-left-right" className="w-4 h-4 text-muted shrink-0" />
+                          <Icon icon="lucide:building-2" className="w-4 h-4 text-muted shrink-0" />
                           <span>{t("layout.switchWorkspace")}</span>
                         </span>
                         <Icon icon="lucide:chevron-right" className="w-3.5 h-3.5 text-muted shrink-0" aria-hidden="true" />
@@ -1750,7 +1750,7 @@ export default function DashboardLayout({
 
                     {/* Workspace Settings link */}
                     <Link
-                      href={activeWsId ? `/settings?ws=${activeWsId}` : "/settings"}
+                      href={activeWsId ? `/settings?ws=${activeWsId}&tab=general` : "/settings?tab=general"}
                       onClick={() => {
                         setSidebarWsOpen(false);
                         setSidebarOpen(false);
@@ -1759,7 +1759,7 @@ export default function DashboardLayout({
                       role="menuitem"
                     >
                       <Icon icon="lucide:settings" className="w-4 h-4 text-muted shrink-0" />
-                      <span>{t("nav.settings")}</span>
+                      <span>{t("sp.workspaceSettings")}</span>
                     </Link>
                   </div>
 
@@ -2032,7 +2032,7 @@ export default function DashboardLayout({
                             className="w-full flex items-center justify-between gap-3 rounded-lg py-1 text-left text-sm font-medium text-foreground hover:bg-subtle transition-colors"
                           >
                             <span className="flex items-center gap-3">
-                              <Icon icon="lucide:arrow-left-right" className="w-4 h-4 text-muted shrink-0" />
+                              <Icon icon="lucide:building-2" className="w-4 h-4 text-muted shrink-0" />
                               {t("layout.switchWorkspace")}
                             </span>
                             <Icon icon="lucide:chevron-right" className="w-4 h-4 text-muted shrink-0" aria-hidden="true" />
