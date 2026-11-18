@@ -2533,7 +2533,7 @@ function SettingsContent() {
                     type="button"
                     onClick={() => setActiveModalInt(null)}
                     disabled={intModalSaving}
-                    className="px-3 py-1.5 text-xs font-medium text-foreground hover:bg-border/30 rounded-lg disabled:opacity-50"
+                    className="inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2 text-xs font-semibold text-foreground border border-border bg-background hover:bg-subtle rounded-xl disabled:opacity-50 transition-colors cursor-pointer"
                   >
                     {t("common.cancel")}
                   </button>
@@ -2541,7 +2541,7 @@ function SettingsContent() {
                     type="button"
                     onClick={() => handleSaveIntegration(activeModalInt)}
                     disabled={intModalSaving}
-                    className="px-4 py-1.5 rounded-lg bg-[#2563EB] text-white text-xs font-semibold hover:bg-[#1D4ED8] shadow-xs shadow-[#2563EB]/25 disabled:opacity-50 min-w-[130px] inline-flex items-center justify-center gap-1.5"
+                    className="px-4 py-2 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] active:bg-[#5B852B] text-white text-xs font-semibold shadow-xs disabled:opacity-50 min-w-[130px] inline-flex items-center justify-center gap-1.5 whitespace-nowrap transition-colors cursor-pointer"
                   >
                     {intModalSaving ? (
                       <>

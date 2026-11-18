@@ -593,7 +593,7 @@ function ManageFoldersContent() {
                 type="button"
                 onClick={handleCreateFolder}
                 disabled={!newFolderName.trim() || creating}
-                className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1e40af] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
+                className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] active:bg-[#5B852B] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
               >
                 {creating ? t("layout.creating") : t("layout.createFolderTitle")}
               </button>
@@ -648,7 +648,7 @@ function ManageFoldersContent() {
                 type="button"
                 onClick={submitRename}
                 disabled={!renameValue.trim() || renameValue.trim() === renameTarget.name || renaming}
-                className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1e40af] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
+                className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] active:bg-[#5B852B] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
               >
                 {t("layout.saveChanges")}
               </button>
@@ -771,7 +771,7 @@ function ManageFoldersContent() {
                 type="button"
                 onClick={submitColor}
                 disabled={savingColor}
-                className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1e40af] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
+                className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] active:bg-[#5B852B] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
               >
                 {savingColor ? t("common.saving") : t("common.save")}
               </button>

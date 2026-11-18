@@ -90,7 +90,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
                 type="button"
                 onClick={() => close(true)}
                 className={`w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl text-xs font-semibold text-white transition-colors cursor-pointer shadow-xs select-none ${
-                  options.danger ? "bg-rose-600 hover:bg-rose-700 active:bg-rose-800" : "bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1e40af]"
+                  options.danger ? "bg-rose-600 hover:bg-rose-700 active:bg-rose-800" : "bg-[#89BD49] hover:bg-[#6B9A35] active:bg-[#5B852B]"
                 }`}
               >
                 {options.confirmLabel ?? (options.danger ? t("common.delete") : t("common.confirm"))}

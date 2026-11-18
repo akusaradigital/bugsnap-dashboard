@@ -43,7 +43,7 @@ export function ConnectDriveModal({
             type="button"
             onClick={onConnect}
             disabled={loading}
-            className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1e40af] text-white text-xs font-semibold shadow-xs disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer select-none"
+            className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] active:bg-[#5B852B] text-white text-xs font-semibold shadow-xs disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer select-none"
           >
             {loading ? t("settings.connecting") : driveStatus === "reconnect_required" ? t("settings.reconnectGoogle") : t("settings.continueToGoogle")}
           </button>

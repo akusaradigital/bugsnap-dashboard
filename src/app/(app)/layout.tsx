@@ -2252,7 +2252,7 @@ export default function DashboardLayout({
                   type="button"
                   onClick={handleInvite}
                   disabled={!inviteEmail.trim() || inviting}
-                  className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1e40af] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
+                  className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] active:bg-[#5B852B] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
                 >
                   {t("layout.sendInvite")}
                 </button>
@@ -2338,7 +2338,7 @@ export default function DashboardLayout({
                     if (name) handleCreateWorkspace(name);
                   }}
                   disabled={!newWsName.trim() || creating}
-                  className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1e40af] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
+                  className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] active:bg-[#5B852B] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
                 >
                   {creating ? t("layout.creatingWorkspace") : t("layout.createWorkspace")}
                 </button>
@@ -2442,7 +2442,7 @@ export default function DashboardLayout({
                   type="button"
                   onClick={() => handleCreateProject(newProjectName.trim())}
                   disabled={!newProjectName.trim() || creatingProject}
-                  className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1e40af] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
+                  className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] active:bg-[#5B852B] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
                 >
                   {creatingProject ? t("layout.creating") : t("layout.createProject")}
                 </button>
@@ -2518,7 +2518,7 @@ export default function DashboardLayout({
                   type="button"
                   onClick={submitRenameProject}
                   disabled={!renameProjectName.trim() || renamingProject}
-                  className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1e40af] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
+                  className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] active:bg-[#5B852B] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
                 >
                   {renamingProject ? t("common.saving") : t("common.save")}
                 </button>
@@ -2662,7 +2662,7 @@ export default function DashboardLayout({
                   type="button"
                   onClick={() => handleCreateFolder(newFolderName.trim(), parentFolderId)}
                   disabled={!newFolderName.trim() || creatingFolder}
-                  className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1e40af] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
+                  className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] active:bg-[#5B852B] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
                 >
                   {creatingFolder ? t("layout.creating") : t("layout.createFolderTitle")}
                 </button>
@@ -2738,7 +2738,7 @@ export default function DashboardLayout({
                   type="button"
                   onClick={submitRenameFolder}
                   disabled={!renameFolderNameInput.trim() || renameFolderNameInput.trim() === folderToRename}
-                  className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1e40af] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
+                  className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] active:bg-[#5B852B] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
                 >
                   {t("layout.saveChanges")}
                 </button>
@@ -2893,7 +2893,7 @@ export default function DashboardLayout({
                   type="button"
                   onClick={submitFolderColor}
                   disabled={savingFolderColor}
-                  className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1e40af] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
+                  className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] active:bg-[#5B852B] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
                 >
                   {savingFolderColor ? t("layout.saving") : t("layout.saveChanges")}
                 </button>

@@ -2053,7 +2053,7 @@ function SingleViewContent() {
                 type="button"
                 onClick={handleSaveEdit}
                 disabled={savingEdit}
-                className="w-full inline-flex items-center justify-center gap-1.5 whitespace-nowrap px-3.5 py-2.5 text-xs font-semibold bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1e40af] text-white shadow-xs rounded-xl disabled:opacity-50 transition-colors cursor-pointer select-none"
+                className="w-full inline-flex items-center justify-center gap-1.5 whitespace-nowrap px-3.5 py-2.5 text-xs font-semibold bg-[#89BD49] hover:bg-[#6B9A35] active:bg-[#5B852B] text-white shadow-xs rounded-xl disabled:opacity-50 transition-colors cursor-pointer select-none"
               >
                 {savingEdit ? (
                   <>

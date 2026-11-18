@@ -3371,7 +3371,7 @@ function CapturesContent() {
                 type="button"
                 onClick={() => void submitMoveTo()}
                 disabled={moving || !moveTargetWorkspaceId}
-                className="inline-flex items-center justify-center whitespace-nowrap px-5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1e40af] text-white text-xs font-semibold shadow-xs disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
+                className="inline-flex items-center justify-center whitespace-nowrap px-5 py-2.5 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] active:bg-[#5B852B] text-white text-xs font-semibold shadow-xs disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer"
               >
                 {moving ? t("cap.moving") : t("cap.move")}
               </button>
