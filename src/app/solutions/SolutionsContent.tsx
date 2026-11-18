@@ -1,12 +1,12 @@
 "use client";
 
 import { HERO_BREADCRUMB_CLS, HERO_SUBTITLE_CLS } from "@/lib/heroStyles";
-import { useState } from "react";
 import Link from "next/link";
 import { useT } from "@/components/I18nProvider";
 import { SiteNavbar } from "@/components/site/SiteNavbar";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Reveal } from "@/components/site/motion";
+import { ShowcaseVisualCard } from "@/components/site/ShowcaseVisualCard";
 import { Icon } from "@/lib/iconify";
 import { FIREFOX_STORE_URL } from "@/lib/constants";
 
@@ -15,13 +15,6 @@ const CHROME_STORE_URL =
 
 export function SolutionsContent() {
   const { t } = useT();
-  const [copiedItem, setCopiedItem] = useState<string | null>(null);
-
-  const copyText = (text: string, id: string) => {
-    navigator.clipboard?.writeText(text);
-    setCopiedItem(id);
-    setTimeout(() => setCopiedItem(null), 2000);
-  };
 
   return (
     <div className="min-h-screen text-slate-800 dark:text-slate-100 font-site flex flex-col bg-[#fcfdfe] dark:bg-[#0b0f17]">
@@ -114,209 +107,26 @@ export function SolutionsContent() {
               </ul>
             </Reveal>
 
-            {/* Right: Mockup */}
+            {/* Right: QA Workflow Visual */}
             <Reveal delay={0.16} className="lg:col-span-6 min-w-0">
-              <div className="relative">
-                {/* Decorative Sparkles on Top-Left */}
-                <div className="absolute -top-3.5 -left-3.5 pointer-events-none text-blue-500 select-none z-10 hidden sm:block">
-                  <svg
-                    className="w-6 h-6 text-blue-500"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    strokeWidth="2.5"
-                    strokeLinecap="round"
-                  >
-                    <path d="M4 14L8 10M10 4L8 10" />
-                  </svg>
-                </div>
-
-                {/* Decorative Pointer Cursor on Bottom-Right */}
-                <div className="absolute -bottom-3.5 -right-3 pointer-events-none text-blue-600 select-none z-20">
-                  <svg
-                    className="w-6 h-6 text-blue-600 drop-shadow-md"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                  >
-                    <path d="M4 3l7 17 2.5-6.5L20 11 4 3z" />
-                  </svg>
-                </div>
-
-                {/* Window Container */}
-                <div className="rounded-2xl border border-slate-200/90 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-xl p-5 sm:p-6 space-y-4">
-                  {/* macOS Dots */}
-                  <div className="flex items-center gap-1.5 pb-2 border-b border-slate-100 dark:border-slate-800/80">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#ef4444]" />
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#f59e0b]" />
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#10b981]" />
-                  </div>
-
-                  {/* Header Subrow */}
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                      <span className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">
-                        QA Step & Audio Log
-                      </span>
-                    </div>
-                    <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 px-2.5 py-0.5 rounded-md">
-                      Sync to Jira
-                    </span>
-                  </div>
-
-                  {/* Step 1 */}
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between text-[11px] text-emerald-600 dark:text-emerald-400">
-                      <span>Step 1 (00:04)</span>
-                      <span className="font-mono">10:14:23</span>
-                    </div>
-                    <div className="text-xs sm:text-sm font-semibold text-slate-800 dark:text-slate-200">
-                      User typed &quot;sampress&quot;
-                    </div>
-                  </div>
-
-                  {/* Step 2 - Alert Box */}
-                  <div className="rounded-xl bg-red-50/80 dark:bg-red-950/25 border border-red-100 dark:border-red-900/40 p-3 sm:p-3.5 space-y-1">
-                    <div className="flex items-center justify-between text-xs font-bold text-red-600 dark:text-red-400">
-                      <span>Step 2 (00:12) – Exception</span>
-                      <span className="text-[11px] font-mono text-red-400/80 dark:text-red-400">
-                        10:14:35
-                      </span>
-                    </div>
-                    <div className="text-xs font-mono font-medium text-red-600 dark:text-red-400 break-all">
-                      POST /api/projects/apply &gt; 500 - Unexpected token
-                    </div>
-                  </div>
-
-                  {/* Audio Player Bar */}
-                  <div className="rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 p-2.5 sm:p-3 flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-6 h-6 rounded-full bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-                        <Icon
-                          icon="lucide:play"
-                          className="w-3 h-3 fill-current ml-0.5"
-                        />
-                      </div>
-                      <span className="text-xs text-slate-700 dark:text-slate-300 font-medium truncate">
-                        Audio: &quot;saat klik save muncul error&quot;
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-1.5 shrink-0 text-xs text-emerald-600 dark:text-emerald-400 font-mono">
-                      <span>00:00 / 00:24</span>
-                      
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <ShowcaseVisualCard
+                src="/showcase/ui-qa-workflow.png"
+                alt="BugSnap extension recording tab alongside automatic QA step timeline, voice narration, and Jira sync"
+              />
             </Reveal>
           </div>
 
           {/* Section 2: Engineering */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center">
-            {/* Left: Mockup */}
+            {/* Left: Engineering DevTools Visual */}
             <Reveal
               delay={0.16}
               className="lg:col-span-6 min-w-0 order-2 lg:order-1"
             >
-              <div className="rounded-2xl border border-slate-200/70 dark:border-slate-800/80 bg-slate-50/80 dark:bg-slate-900/40 p-4 sm:p-6 shadow-sm">
-                <div className="rounded-xl bg-[#0c1322] border border-slate-800 p-4 sm:p-5 font-mono shadow-md space-y-4">
-                  {/* Terminal Header */}
-                  <div className="flex items-center justify-between pb-3 border-b border-slate-800/80">
-                    <div className="flex items-center gap-2.5">
-                      <div className="flex items-center gap-1.5">
-                        <span className="w-2.5 h-2.5 rounded-full bg-[#ef4444]" />
-                        <span className="w-2.5 h-2.5 rounded-full bg-[#f59e0b]" />
-                        <span className="w-2.5 h-2.5 rounded-full bg-[#10b981]" />
-                      </div>
-                      <span className="text-xs font-semibold text-slate-200 font-sans ml-1">
-                        Developer Debug Console
-                      </span>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() =>
-                        copyText(
-                          "curl -X POST https://app.example.com/api/projects -H 'Content-Type: application/json'",
-                          "curl"
-                        )
-                      }
-                      className="text-[10px] text-slate-300 bg-slate-800 hover:bg-slate-700 border border-slate-700 px-2 py-0.5 rounded flex items-center gap-1 font-sans transition-colors cursor-pointer"
-                    >
-                      <span>cURL</span>
-                      <Icon
-                        icon={
-                          copiedItem === "curl"
-                            ? "lucide:check"
-                            : "lucide:copy"
-                        }
-                        className="w-3 h-3 text-slate-400"
-                      />
-                    </button>
-                  </div>
-
-                  {/* Terminal Content */}
-                  <div className="space-y-3 text-xs">
-                    {/* Error Stack */}
-                    <div className="text-red-400 leading-relaxed break-all font-mono">
-                      <div>TypeError: Cannot read properties of undefined</div>
-                      <div className="pl-4 text-red-400/80">
-                        at onSubmit (Form.tsx:48:12)
-                      </div>
-                    </div>
-
-                    {/* Network Request 1 */}
-                    <div className="flex items-center justify-between pt-2 border-t border-slate-800/60 font-mono">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <span className="text-slate-300 truncate">
-                          GET /api/users
-                        </span>
-                        <span className="text-emerald-400 font-bold whitespace-nowrap">
-                          200{" "}
-                          <span className="text-slate-500 font-normal">
-                            (342 ms)
-                          </span>
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          copyText("curl https://app.example.com/api/users", "users")
-                        }
-                        className="text-teal-400 hover:text-teal-300 text-xs font-sans font-medium transition-colors ml-2 shrink-0 cursor-pointer"
-                      >
-                        {copiedItem === "users" ? "Copied!" : "Copy"}
-                      </button>
-                    </div>
-
-                    {/* Network Request 2 */}
-                    <div className="flex items-center justify-between pt-1 font-mono">
-                      <div className="flex items-center gap-3 min-w-0">
-                        <span className="text-slate-300 truncate">
-                          POST /api/projects
-                        </span>
-                        <span className="text-red-400 font-bold whitespace-nowrap">
-                          500{" "}
-                          <span className="text-slate-500 font-normal">
-                            (123 ms)
-                          </span>
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          copyText(
-                            "curl -X POST https://app.example.com/api/projects",
-                            "projects"
-                          )
-                        }
-                        className="text-teal-400 hover:text-teal-300 text-xs font-sans font-medium transition-colors ml-2 shrink-0 cursor-pointer"
-                      >
-                        {copiedItem === "projects" ? "Copied!" : "Copy"}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <ShowcaseVisualCard
+                src="/showcase/ui-devtools-telemetry.png"
+                alt="BugSnap engineering debug view with HTTP 500 request headers, redacted tokens, console stack trace, and Copy cURL"
+              />
             </Reveal>
 
             {/* Right: Text */}
@@ -409,158 +219,26 @@ export function SolutionsContent() {
               </ul>
             </Reveal>
 
-            {/* Right: Mockup */}
+            {/* Right: Product Review Visual */}
             <Reveal delay={0.16} className="lg:col-span-6 min-w-0">
-              <div className="rounded-2xl border border-slate-200/70 dark:border-slate-800/80 bg-slate-50/80 dark:bg-slate-900/40 p-4 sm:p-6 shadow-sm">
-                <div className="rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 shadow-md overflow-hidden relative">
-                  {/* Browser Dots */}
-                  <div className="flex items-center gap-1.5 p-3 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-800/40">
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#ef4444]" />
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#f59e0b]" />
-                    <span className="w-2.5 h-2.5 rounded-full bg-[#10b981]" />
-                  </div>
-
-                  {/* Browser Mockup Body */}
-                  <div className="flex p-3 sm:p-4 gap-3 relative min-h-[220px]">
-                    {/* Mini Sidebar */}
-                    <div className="w-7 sm:w-8 shrink-0 flex flex-col items-center gap-2.5 py-1 border-r border-slate-100 dark:border-slate-800 pr-2">
-                      <div className="w-4 h-4 rounded bg-slate-300 dark:bg-slate-700" />
-                      <div className="w-4 h-4 rounded bg-blue-500" />
-                      <div className="w-4 h-4 rounded bg-slate-200 dark:bg-slate-700" />
-                      <div className="w-4 h-4 rounded bg-slate-200 dark:bg-slate-700" />
-                      <div className="w-4 h-4 rounded bg-slate-200 dark:bg-slate-700" />
-                    </div>
-
-                    {/* Canvas */}
-                    <div className="flex-1 space-y-3 min-w-0">
-                      {/* Top Toolbar */}
-                      <div className="flex items-center justify-between pb-2 border-b border-slate-100 dark:border-slate-800">
-                        <div className="flex items-center gap-2">
-                          <div className="w-12 h-2.5 rounded bg-slate-200 dark:bg-slate-700" />
-                          <div className="w-8 h-2 rounded bg-slate-100 dark:bg-slate-800" />
-                        </div>
-                        <div className="w-16 h-4 rounded-full bg-slate-100 dark:bg-slate-800" />
-                      </div>
-
-                      {/* Comment Annotation & Red Dashed Box */}
-                      <div className="relative pt-1 pb-1">
-                        {/* Floating Comment Bubble */}
-                        <div className="flex items-center gap-2 justify-end mb-1.5">
-                          <div className="flex items-center gap-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-md rounded-xl px-2.5 py-1.5 z-10">
-                            <div className="w-5 h-5 rounded-full bg-gradient-to-tr from-amber-500 to-rose-400 text-white flex items-center justify-center text-[10px] font-bold shrink-0">
-                              <span>S</span>
-                            </div>
-                            <span className="text-[11px] font-medium text-slate-800 dark:text-slate-200 whitespace-nowrap">
-                              This discount text should only appear for members.
-                            </span>
-                          </div>
-                        </div>
-
-                        {/* Red Curved Arrow */}
-                        <div className="flex justify-center -my-1">
-                          <svg
-                            className="w-7 h-7 text-red-500 shrink-0"
-                            viewBox="0 0 32 32"
-                            fill="none"
-                          >
-                            <path
-                              d="M22 3 C19 11, 16 16, 16 26"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                            />
-                            <path
-                              d="M12 21 L16 26 L20 21"
-                              stroke="currentColor"
-                              strokeWidth="2"
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                            />
-                          </svg>
-                        </div>
-
-                        {/* Red Dashed Box */}
-                        <div className="rounded-lg border-2 border-dashed border-red-500/80 bg-red-50/40 dark:bg-red-950/20 py-2 px-4 text-center">
-                          <span className="text-xs sm:text-sm font-bold text-red-600 dark:text-red-400">
-                            Get 30% off for members
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Skeleton Cards */}
-                      <div className="grid grid-cols-2 gap-2 pt-1">
-                        <div className="rounded bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 p-2 space-y-1.5">
-                          <div className="w-10 h-2 rounded bg-slate-200 dark:bg-slate-700" />
-                          <div className="w-full h-1.5 rounded bg-slate-100 dark:bg-slate-800" />
-                          <div className="w-2/3 h-1.5 rounded bg-slate-100 dark:bg-slate-800" />
-                        </div>
-                        <div className="rounded bg-slate-50 dark:bg-slate-800/40 border border-slate-100 dark:border-slate-800 p-2 space-y-1.5">
-                          <div className="w-10 h-2 rounded bg-slate-200 dark:bg-slate-700" />
-                          <div className="w-full h-1.5 rounded bg-slate-100 dark:bg-slate-800" />
-                          <div className="w-2/3 h-1.5 rounded bg-slate-100 dark:bg-slate-800" />
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <ShowcaseVisualCard
+                src="/showcase/ui-product-review.png"
+                alt="BugSnap visual feedback view with numbered pinned comments on a pricing page during product review"
+              />
             </Reveal>
           </div>
 
           {/* Section 4: Customer Support */}
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-14 items-center">
-            {/* Left: Mockup */}
+            {/* Left: Support Escalation Visual */}
             <Reveal
               delay={0.16}
               className="lg:col-span-6 min-w-0 order-2 lg:order-1"
             >
-              <div className="rounded-2xl border border-slate-200/70 dark:border-slate-800/80 bg-slate-50/80 dark:bg-slate-900/40 p-4 sm:p-6 shadow-sm">
-                <div className="rounded-xl bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 p-5 shadow-sm space-y-4">
-                  {/* Card Title */}
-                  <div className="flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-md bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center shrink-0">
-                      <Icon icon="lucide:ticket" className="w-3.5 h-3.5" />
-                    </div>
-                    <span className="font-bold text-xs sm:text-sm text-slate-900 dark:text-white">
-                      Customer Escalation Ticket
-                    </span>
-                  </div>
-
-                  {/* Body Content */}
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="space-y-1 min-w-0">
-                      <div className="text-xs text-slate-500 dark:text-slate-400">
-                        Customer: E-Commerce Admin
-                      </div>
-                      <div className="text-xs sm:text-sm font-bold text-slate-900 dark:text-white leading-snug">
-                        User cannot submit VAT for exemption form
-                      </div>
-                    </div>
-
-                    {/* Video Recording Thumbnail */}
-                    <div className="w-24 sm:w-28 h-16 sm:h-18 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex items-center justify-center relative overflow-hidden shrink-0 shadow-2xs">
-                      <div className="absolute inset-0 opacity-40 bg-[radial-gradient(#94a3b8_1px,transparent_1px)] [background-size:6px_6px]" />
-                      <div className="w-7 h-7 rounded-full bg-slate-900/80 text-white flex items-center justify-center text-[10px] shadow-md pl-0.5 z-10">
-                        <Icon
-                          icon="lucide:play"
-                          className="w-3 h-3 fill-current ml-0.5"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Metadata Footer */}
-                  <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400 font-mono">
-                    <Icon
-                      icon="lucide:calendar"
-                      className="w-3.5 h-3.5 text-slate-400 shrink-0"
-                    />
-                    <span className="truncate">
-                      Indonesia · Chrome 128 · 1920 × 1080 · 00:42
-                    </span>
-                  </div>
-                </div>
-              </div>
+              <ShowcaseVisualCard
+                src="/showcase/ui-support-escalation.png"
+                alt="BugSnap customer support escalation card with session video, auto-attached HTTP 500 diagnostics, and Slack or Jira handoff"
+              />
             </Reveal>
 
             {/* Right: Text */}

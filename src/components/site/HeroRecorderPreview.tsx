@@ -168,10 +168,10 @@ export function HeroRecorderPreview() {
             {/* System Specs Tags */}
             <div className="flex flex-wrap items-center gap-2 pt-0.5 text-[11px] text-slate-600 dark:text-slate-300">
               <span className="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700">
-                Chrome 128
+                Chrome 134
               </span>
               <span className="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700">
-                macOS 14.5
+                macOS 15
               </span>
               <span className="px-2.5 py-1 rounded-md bg-slate-100 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700">
                 1920×1080

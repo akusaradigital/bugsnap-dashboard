@@ -6,6 +6,7 @@ import { useT } from "@/components/I18nProvider";
 import { SiteNavbar } from "@/components/site/SiteNavbar";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Reveal } from "@/components/site/motion";
+import { ShowcaseVisualCard } from "@/components/site/ShowcaseVisualCard";
 import { Icon } from "@/lib/iconify";
 
 export function McpDocsContent() {
@@ -217,6 +218,17 @@ export function McpDocsContent() {
                 </div>
               </div>
             </div>
+          </Reveal>
+
+          {/* MCP End-to-End Architecture Visual */}
+          <Reveal delay={0.19}>
+            <ShowcaseVisualCard
+              src="/showcase/ui-mcp-workflow.png"
+              alt="BugSnap MCP pipeline connecting live capture reports through @bugsnap/mcp server tools directly into Claude Code and Cursor"
+              width={1200}
+              height={620}
+              aspectClassName="aspect-[1200/620]"
+            />
           </Reveal>
 
           {/* Step 1: Generate a BugSnap API key */}

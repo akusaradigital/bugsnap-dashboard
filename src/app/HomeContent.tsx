@@ -7,6 +7,7 @@ import { useT } from "@/components/I18nProvider";
 import { SiteNavbar } from "@/components/site/SiteNavbar";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { HeroRecorderPreview } from "@/components/site/HeroRecorderPreview";
+import { ProductShowcaseGallery } from "@/components/site/ProductShowcaseGallery";
 import {
   DevToolsCard,
   GoogleDriveProofCard,
@@ -509,6 +510,15 @@ export function HomeContent() {
               </Reveal>
               <Reveal delay={0.1}>
                 <ProductVideoDemo />
+              </Reveal>
+            </div>
+          </section>
+
+          {/* Product Showcase Gallery (Latest Real UI) */}
+          <section className="py-12 sm:py-16 px-4 sm:px-6 bg-white dark:bg-slate-950 border-b border-site-border">
+            <div className="mx-auto max-w-6xl">
+              <Reveal>
+                <ProductShowcaseGallery />
               </Reveal>
             </div>
           </section>
