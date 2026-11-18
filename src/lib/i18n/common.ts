@@ -12,7 +12,7 @@ export const commonEn: Dict = {
   "nav.snaptest": "SnapTest (AI QA)",
   "nav.signOut": "Sign out",
   "auth.logoutConfirmTitle": "Log out of BugSnap?",
-  "auth.logoutConfirmDesc": "Are you sure you want to log out? You will need to sign in again to access your captures and settings.",
+  "auth.logoutConfirmDesc": "You'll need to sign in again to access your captures.",
   "auth.logoutConfirmBtn": "Log out",
   "notif.newComment": "{count} new comment on your captures",
   "notif.newComments": "{count} new comments on your captures",
@@ -52,8 +52,8 @@ export const commonEn: Dict = {
   "layout.inviteToWorkspace": "Invite to Workspace",
   "layout.inviteDesc":
     "Add members to {name} so they can view and collaborate on captures.",
-  "layout.inviteDescPre": "Add members to",
-  "layout.inviteDescPost": "so they can view and collaborate on captures.",
+  "layout.inviteDescPre": "Invite a teammate to",
+  "layout.inviteDescPost": "to view and share captures.",
   "layout.emailAddress": "Email Address",
   "layout.sendInvite": "Send Invite",
   "layout.createWorkspace": "Create workspace",
@@ -83,20 +83,20 @@ export const commonEn: Dict = {
   "layout.mockUpgrade": "Upgrade Now",
   "layout.createFolderTitle": "Create Folder",
   "layout.createFolderDesc":
-    "Folders are synced with your Google Drive. Captures uploaded to this folder will be organized physically under this name in your Drive.",
+    "Synced with Google Drive so captures stay organized in one folder.",
   "layout.folderName": "Folder Name",
   "layout.creating": "Creating…",
   "layout.deleteFolderTitle": "Delete Folder",
   "layout.renameFolder": "Rename Folder",
   "layout.renameFolderDesc":
-    "Enter a new name for this folder. The change will sync to Google Drive.",
+    "The new folder name syncs automatically with Google Drive.",
   "layout.addSubfolder": "Add subfolder",
   "layout.parentFolder": "Parent Folder (optional)",
   "layout.topLevelFolder": "Top-level (no parent)",
   "layout.changeColor": "Change color",
   "layout.folderColor": "Folder Color",
   "layout.folderColorDesc":
-    "Choose a color for this folder to organize it like Google Drive.",
+    "Pick a color to spot this folder faster.",
   "layout.colorUpdated": "Folder color updated",
   "layout.errColorFolder": "Failed to update folder color",
   "layout.resetColor": "Reset to default",
@@ -106,7 +106,7 @@ export const commonEn: Dict = {
   "layout.saving": "Saving…",
   "layout.deleteFolderQ": "Delete Folder?",
   "layout.deleteFolderDesc":
-    "Are you sure you want to delete {name}? WARNING: All captures inside this folder will be permanently deleted from this dashboard and Google Drive.",
+    "Permanently deletes {name} and all captures inside from BugSnap and Google Drive.",
   "layout.deleting": "Deleting…",
   "layout.createProjectTitle": "Create Project",
   "layout.createProjectSubtitle": "Organize captures inside this workspace.",
@@ -117,12 +117,12 @@ export const commonEn: Dict = {
   "layout.renameProjectSubtitle": "Update the project name for this workspace.",
   "layout.deleteProjectTitle": "Delete Project?",
   "layout.deleteProjectConfirm":
-    "{name} will be removed and captures will stay unassigned.",
+    "Deletes {name}. Any captures inside will stay safely in this workspace.",
   "layout.renameWorkspace": "Rename Workspace",
   "layout.renameWsDesc": "Enter a new name for this workspace.",
   "layout.deleteWorkspaceQ": "Delete Workspace?",
   "layout.deleteWsDesc":
-    "Are you sure you want to delete this workspace? WARNING: All its members and captures will be permanently deleted.",
+    "Permanently deletes this workspace, its members, and all captures inside.",
   "layout.seatLimit":
     "Free workspaces are limited to 5 members. Upgrade to Pro for unlimited seats.",
   "layout.errCreateFolder": "Could not create folder. Maybe it already exists?",
@@ -258,7 +258,7 @@ export const commonId: Dict = {
   "nav.snaptest": "SnapTest (AI QA)",
   "nav.signOut": "Keluar",
   "auth.logoutConfirmTitle": "Keluar dari BugSnap?",
-  "auth.logoutConfirmDesc": "Apakah Anda yakin ingin keluar? Anda harus masuk kembali untuk mengakses tangkapan dan pengaturan Anda.",
+  "auth.logoutConfirmDesc": "Anda perlu masuk kembali untuk mengakses tangkapan Anda.",
   "auth.logoutConfirmBtn": "Keluar",
   "notif.newComment": "{count} komentar baru di tangkapan Anda",
   "notif.newComments": "{count} komentar baru di tangkapan Anda",
@@ -298,9 +298,8 @@ export const commonId: Dict = {
   "layout.inviteToWorkspace": "Undang ke Workspace",
   "layout.inviteDesc":
     "Tambahkan anggota ke {name} agar mereka dapat melihat dan berkolaborasi pada tangkapan.",
-  "layout.inviteDescPre": "Tambahkan anggota ke",
-  "layout.inviteDescPost":
-    "agar mereka dapat melihat dan berkolaborasi pada tangkapan.",
+  "layout.inviteDescPre": "Undang anggota ke",
+  "layout.inviteDescPost": "untuk melihat dan berbagi tangkapan.",
   "layout.emailAddress": "Alamat Email",
   "layout.sendInvite": "Kirim Undangan",
   "layout.createWorkspace": "Buat workspace",
@@ -330,20 +329,20 @@ export const commonId: Dict = {
   "layout.mockUpgrade": "Upgrade Sekarang",
   "layout.createFolderTitle": "Buat Folder",
   "layout.createFolderDesc":
-    "Folder disinkronkan dengan Google Drive Anda. Tangkapan yang diunggah ke folder ini akan diatur secara fisik dengan nama ini di Drive Anda.",
+    "Tersinkron dengan Google Drive agar tangkapan tertata dalam satu folder.",
   "layout.folderName": "Nama Folder",
   "layout.creating": "Membuat…",
   "layout.deleteFolderTitle": "Hapus Folder",
   "layout.renameFolder": "Ubah Nama Folder",
   "layout.renameFolderDesc":
-    "Masukkan nama baru untuk folder ini. Perubahan akan disinkronkan ke Google Drive.",
+    "Nama folder baru otomatis tersinkron ke Google Drive.",
   "layout.addSubfolder": "Tambah subfolder",
   "layout.parentFolder": "Folder Induk (opsional)",
   "layout.topLevelFolder": "Tingkat atas (tanpa induk)",
   "layout.changeColor": "Ubah warna",
   "layout.folderColor": "Warna Folder",
   "layout.folderColorDesc":
-    "Pilih warna untuk folder ini agar tertata seperti di Google Drive.",
+    "Pilih warna agar folder ini lebih mudah dikenali.",
   "layout.colorUpdated": "Warna folder diperbarui",
   "layout.errColorFolder": "Gagal memperbarui warna folder",
   "layout.resetColor": "Kembalikan ke awal",
@@ -353,7 +352,7 @@ export const commonId: Dict = {
   "layout.saving": "Menyimpan…",
   "layout.deleteFolderQ": "Hapus Folder?",
   "layout.deleteFolderDesc":
-    "Yakin ingin menghapus {name}? PERINGATAN: Semua tangkapan di dalam folder ini akan dihapus permanen dari dasbor ini dan Google Drive.",
+    "Menghapus {name} dan seluruh tangkapan di dalamnya secara permanen dari BugSnap dan Google Drive.",
   "layout.deleting": "Menghapus…",
   "layout.createProjectTitle": "Buat Proyek",
   "layout.createProjectSubtitle": "Atur tangkapan di dalam ruang kerja ini.",
@@ -364,12 +363,12 @@ export const commonId: Dict = {
   "layout.renameProjectSubtitle": "Perbarui nama proyek untuk ruang kerja ini.",
   "layout.deleteProjectTitle": "Hapus Proyek?",
   "layout.deleteProjectConfirm":
-    "{name} akan dihapus dan tangkapan akan tetap tidak ditugaskan.",
+    "Proyek {name} akan dihapus, sedangkan tangkapan di dalamnya tetap aman.",
   "layout.renameWorkspace": "Ubah Nama Workspace",
   "layout.renameWsDesc": "Masukkan nama baru untuk workspace ini.",
   "layout.deleteWorkspaceQ": "Hapus Workspace?",
   "layout.deleteWsDesc":
-    "Yakin ingin menghapus workspace ini? PERINGATAN: Semua anggota dan tangkapan akan dihapus permanen.",
+    "Menghapus workspace ini beserta seluruh anggota dan tangkapan di dalamnya secara permanen.",
   "layout.seatLimit":
     "Workspace gratis dibatasi 5 anggota. Upgrade ke Pro untuk kursi tanpa batas.",
   "layout.errCreateFolder": "Tidak dapat membuat folder. Mungkin sudah ada?",

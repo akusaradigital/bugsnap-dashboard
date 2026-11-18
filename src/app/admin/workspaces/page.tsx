@@ -513,7 +513,7 @@ export default function AdminWorkspacesPage() {
                 {t("admin.transferOwner")} - {transferWs.name}
               </h3>
               <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed text-balance">
-                Masukkan email pengguna terdaftar yang akan dijadikan pemilik utama workspace ini.
+                Masukkan email pengguna terdaftar sebagai pemilik baru workspace ini.
               </p>
             </div>
 

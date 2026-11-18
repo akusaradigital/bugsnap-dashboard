@@ -27,26 +27,26 @@ export function RemoveMemberModal({
   if (!member) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="dialog" aria-modal="true">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" role="alertdialog" aria-modal="true" aria-labelledby="remove-member-title">
       <button
-        className="absolute inset-0 bg-black/40 backdrop-blur-xs"
+        className="absolute inset-0 bg-black/50 backdrop-blur-xs"
         aria-label={t("common.close")}
         onClick={() => !removingMemberId && onClose()}
       />
-      <div className="relative w-[min(28rem,calc(100vw-2rem))] rounded-2xl border border-border bg-subtle p-5 sm:p-6 shadow-2xl space-y-4">
+      <div className="relative w-[min(28rem,calc(100vw-2rem))] max-w-md rounded-2xl border border-border bg-subtle p-6 shadow-2xl space-y-5">
         <div className="text-center space-y-1.5 pt-1">
-          <h2 className="text-base font-bold text-foreground">{t("modalFx.removeMemberTitle")}</h2>
-          <p className="text-xs text-muted leading-relaxed">
-            Are you sure you want to remove <span className="font-semibold text-foreground break-all">{member.email}</span> from this workspace? They will immediately lose access to all captures and team discussions.
+          <h2 id="remove-member-title" className="text-base font-bold text-foreground break-words">{t("modalFx.removeMemberTitle")}</h2>
+          <p className="text-xs text-muted leading-relaxed text-balance break-words">
+            {t("modalFx.removeMemberDescPre")} <span className="font-semibold text-foreground break-all">{member.email}</span> {t("modalFx.removeMemberDescPost")}
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-2.5 pt-2 border-t border-border">
+        <div className="grid grid-cols-2 gap-2.5 pt-3 border-t border-border/50">
           <button
             type="button"
             onClick={onClose}
             disabled={Boolean(removingMemberId)}
-            className="w-full inline-flex items-center justify-center px-3.5 py-2.5 text-xs font-semibold text-foreground border border-border bg-background hover:bg-subtle rounded-xl transition-colors disabled:opacity-50 select-none cursor-pointer"
+            className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 text-xs font-semibold text-foreground border border-border bg-background hover:bg-subtle rounded-xl transition-colors disabled:opacity-50 select-none cursor-pointer"
           >
             {t("common.cancel")}
           </button>
@@ -54,7 +54,7 @@ export function RemoveMemberModal({
             type="button"
             onClick={() => onConfirm(member)}
             disabled={Boolean(removingMemberId)}
-            className="w-full inline-flex items-center justify-center px-3.5 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-semibold transition-colors disabled:opacity-50 gap-1.5 shadow-xs select-none cursor-pointer"
+            className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white text-xs font-semibold transition-colors disabled:opacity-50 gap-1.5 shadow-xs select-none cursor-pointer"
           >
             {removingMemberId === member.user_id ? (
               <>

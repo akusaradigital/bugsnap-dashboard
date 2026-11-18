@@ -636,7 +636,7 @@ export default function AdminUsersPage() {
                 {t("admin.changePlan")} - {planModalUser.email}
               </h3>
               <p className="text-xs text-slate-500 dark:text-zinc-400 leading-relaxed text-balance">
-                Ubah paket langganan secara manual untuk akun ini. Perubahan akan langsung aktif di database.
+                Ubah paket langganan akun ini. Perubahan langsung aktif.
               </p>
             </div>
 
