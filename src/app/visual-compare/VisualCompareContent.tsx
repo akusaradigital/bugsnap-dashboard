@@ -1,5 +1,6 @@
 "use client";
 
+import { HERO_BREADCRUMB_CLS, HERO_SUBTITLE_CLS } from "@/lib/heroStyles";
 import Link from "next/link";
 import { useState, useRef, useCallback } from "react";
 import { useT } from "@/components/I18nProvider";
@@ -310,7 +311,7 @@ export function VisualCompareContent() {
         <section className="pt-8 sm:pt-12 pb-8 sm:pb-10 text-center max-w-5xl mx-auto px-4 sm:px-6">
           <Reveal delay={0}>
             <nav
-              className="inline-flex items-center justify-center gap-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 mb-6"
+              className={HERO_BREADCRUMB_CLS}
               aria-label={t("vcFx.breadcrumbLabel")}
             >
               <Link href="/" className="hover:text-slate-900 dark:hover:text-white transition-colors">
@@ -333,7 +334,7 @@ export function VisualCompareContent() {
           </Reveal>
 
           <Reveal delay={0.14}>
-            <p className="text-base sm:text-lg text-slate-600 dark:text-slate-400 leading-relaxed max-w-2xl mx-auto mb-7">
+            <p className={`${HERO_SUBTITLE_CLS} mb-7`}>
               {t("compare.subtitle")}
             </p>
           </Reveal>

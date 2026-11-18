@@ -8,7 +8,7 @@
 1. **Graphify, push, versioning, gates, subagent delegation**: see `../CLAUDE.md` §1-4. This repo's gate command is in §7 below.
 2. **Tooling**: `PowerShell`/`Bash`, `Read`, `Edit`, `Write`, `Grep`, `Glob`, `Agent`. No `cat`. PowerShell 5.1 has no `&&` - use `;` or the Bash tool.
 3. **No `any` TS type** - `@typescript-eslint/no-explicit-any` is enforced.
-4. **Icon registry**: use `src/lib/icons.ts` as the shared registry for nav/action/status icons; run `tests/icons.test.mjs` after adding one. Third-party logos go through `src/lib/third-party-logos.json` + `src/lib/iconify.ts`, per `../BRAND.md`. BugSnap's own logo is immutable - exclude it from any visual audit/edit.
+4. **Icon registry**: use `src/lib/icons.ts` as the shared registry for nav/action/status icons; run `npm run test:audits` (or `node --test tests/audits/icons.test.mjs`) after adding one. Third-party logos go through `src/lib/third-party-logos.json` + `src/lib/iconify.ts`, per `../BRAND.md`. BugSnap's own logo is immutable - exclude it from any visual audit/edit.
 5. **DB changes apply immediately**:
 
 ```bash
@@ -19,12 +19,13 @@ node scripts/apply-migration.mjs --sql "<verification query>"                   
 
    Uses `SUPABASE_PAT` + `NEXT_PUBLIC_SUPABASE_URL` from `.env.local` (Management API, no CLI/DB password needed). Save the pre-change definition to `supabase/.rollback-<object>-<date>.json`. Never leave a migration written-but-unapplied.
 6. **Focused validation**: for a dashboard-only change, run `npm run typecheck` + targeted tests + `npm run lint` (JSX/TSX) first - don't run extension/MCP suites. Use the full gate (§7) for release/commit validation.
+7. **No "- Free" / "- Gratis" in CTAs or Page Copy (STRICT)**: Never append or use "- Free" or "- Gratis" on buttons, CTAs, marketing banners, or page headers across all pages. Use clean phrasing: "Add to Chrome", "Add to Firefox", "Tambah ke Chrome", "Tambah ke Firefox".
 
-## 2. Versioning
+## 2. Versioning & Production Releases
 
-- **Every code change bumps the version** (see `../CLAUDE.md` §2). Bump `package.json` and `package-lock.json` together before the change is committed. Current: **`0.16.0`**.
-- PATCH `0.7.0→0.7.1` bugfix/hotfix/copy/asset/dependency · MINOR `0.7.x→0.8.0` new feature/route/module · MAJOR `0.x→1.0.0` breaking change.
-- Every bump needs a matching changelog entry in `CHANGELOG.md` (root and this repo, kept in sync).
+- **Bump version only for production releases** (see `../CLAUDE.md` §2). Version bumps are NOT performed on routine code changes. Bumping `package.json` and `package-lock.json` is done when preparing a production release/deployment. Current: **`0.16.0`**.
+- SemVer: PATCH `0.7.0→0.7.1` bugfix/hotfix/copy/asset/dependency · MINOR `0.7.x→0.8.0` new feature/route/module · MAJOR `0.x→1.0.0` breaking change.
+- **Changelog updated only for production releases**: Changelog entries in `CHANGELOG.md` (root and this repo, kept in sync) are added ONLY when preparing a production release, summarizing changes since the previous release (not created on every routine change).
 - CI does **not** auto-tag on push (removed 2026-11-10) - this repo is Vercel-deployed and never carries GitHub Releases; tag/release manually only if asked.
 
 ## 3. Architecture & Data Flow
@@ -58,10 +59,16 @@ See `../CLAUDE.md` §7 for the cross-repo flow. Dashboard-specific:
 ## 7. Build & Test Commands
 
 ```bash
-npm test           # 20+ unit & contract suites (Node test runner)
-npm run build      # Production build - must exit with 0 errors
-npm run lint       # ESLint
-npm run typecheck  # tsc --noEmit
-npm run dev        # Local dev (HMR auto - restart only if .env.local or next.config.mjs changes)
-node tests/check-assets.js  # Audit static asset paths in public/
+npm test                  # All unit, contract, and audit suites (338 tests, Node test runner)
+npm run test:unit         # Unit tests (23 suites in tests/unit/)
+npm run test:contracts    # Contract & schema tests (6 suites in tests/contracts/)
+npm run test:audits       # UI, link & i18n audits (7 suites in tests/audits/)
+npm run test:integration # Live DB/Server integration tests (tests/integration/)
+npm run test:e2e          # Playwright specs (tests/playwright/)
+npm run build             # Production build - must exit with 0 errors
+npm run lint              # ESLint
+npm run typecheck         # tsc --noEmit
+npm run dev               # Local dev (HMR auto - restart only if .env.local or next.config.mjs changes)
+node tests/check-assets.js # Audit static asset paths in public/
+npm run gate:pre-push     # Full pre-push quality gate orchestrator
 ```

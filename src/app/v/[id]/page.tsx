@@ -7,7 +7,7 @@ import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { type CapturedLogs } from "@/components/DevToolsPanel";
 import { isIgnoredUrl } from "@/lib/ignored-urls";
-import { timeAgo } from "@/lib/capture-utils";
+import { timeAgo, generateBugReport } from "@/lib/capture-utils";
 import Comments from "@/components/Comments";
 import MediaViewer, { type ErrorMarker } from "@/components/MediaViewer";
 import CaptureFooter from "@/components/CaptureFooter";
@@ -326,7 +326,8 @@ function SingleViewContent() {
   const { t } = useT();
   const { showToast } = useToast();
 
-  const hideDevTools = searchParams.get("devtools") === "false" || searchParams.get("embed") === "true";
+  const isEmbedMode = searchParams.get("embed") === "true";
+  const hideDevTools = searchParams.get("devtools") === "false" || isEmbedMode;
 
   const [capture, setCapture] = useState<Capture | null>(null);
   const [status, setStatus] = useState<"loading" | "locked" | "expired" | "notfound" | "unauthorized_ip" | "needs_login" | "unauthorized_domain" | "ready">("loading");
@@ -346,6 +347,8 @@ function SingleViewContent() {
   // Modals & Popovers
   const [moveSubmenuOpen, setMoveSubmenuOpen] = useState(false);
   const moveMenuRef = useRef<HTMLDivElement>(null);
+  const [exportMenuOpen, setExportMenuOpen] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement>(null);
   const [capFolders, setCapFolders] = useState<string[]>([]);
   const [capFolderEntries, setCapFolderEntries] = useState<
     Array<{ id: string; name: string; color?: string | null; parent_id?: string | null; depth: number }>
@@ -355,7 +358,7 @@ function SingleViewContent() {
   const [newFolderMode, setNewFolderMode] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [copied, setCopied] = useState(false);
-  const [shareType, setShareType] = useState<"devtools" | "content">("devtools");
+  const [shareType, setShareType] = useState<"devtools" | "content" | "embed">("devtools");
   const [accessMode, setAccessMode] = useState<"public" | "members">("public");
   const [accessSaving, setAccessSaving] = useState(false);
   const [accessOpen, setAccessOpen] = useState(false);
@@ -554,12 +557,15 @@ function SingleViewContent() {
       if (integrationMenuOpen && integrationMenuRef.current && !integrationMenuRef.current.contains(e.target as Node)) {
         setIntegrationMenuOpen(false);
       }
+      if (exportMenuOpen && exportMenuRef.current && !exportMenuRef.current.contains(e.target as Node)) {
+        setExportMenuOpen(false);
+      }
     }
-    if (moveSubmenuOpen || accessOpen || integrationMenuOpen) {
+    if (moveSubmenuOpen || accessOpen || integrationMenuOpen || exportMenuOpen) {
       document.addEventListener("mousedown", handleClickOutside);
       return () => document.removeEventListener("mousedown", handleClickOutside);
     }
-  }, [moveSubmenuOpen, accessOpen, integrationMenuOpen]);
+  }, [moveSubmenuOpen, accessOpen, integrationMenuOpen, exportMenuOpen]);
 
   // 1. Initial Access Check (Non-Login default)
   useEffect(() => {
@@ -663,7 +669,46 @@ function SingleViewContent() {
         if (!data || data.length === 0) { setStatus("notfound"); return; }
 
         const row = data[0] as Capture & { status: string };
-        
+
+        setAccessMode(row.access_mode === "members" ? "members" : "public");
+
+        // FAST PATH: If the capture is granted and ok, render IMMEDIATELY!
+        // Eliminates 300-500ms of member-check waterfall delay.
+        if (row.status === "ok") {
+          setCapture(row);
+          setStatus("ready");
+
+          // Asynchronously resolve team membership & ownership in background without blocking UI
+          void (async () => {
+            try {
+              const { data: authData } = await supabase.auth.getSession();
+              const userId = authData.session?.user?.id;
+              if (!userId || cancelled) return;
+              const wsId = row.workspace_id;
+              if (wsId) {
+                const [wsInfoRes, membersRes] = await Promise.all([
+                  supabase.from("workspaces").select("owner_user_id").eq("id", wsId).maybeSingle(),
+                  supabase.rpc("get_workspace_members", { p_workspace_id: wsId }),
+                ]);
+                if (cancelled) return;
+                const wsInfo = wsInfoRes.data;
+                if (wsInfo?.owner_user_id === userId) {
+                  setIsTeamMember(true);
+                  setIsWorkspaceOwner(true);
+                } else {
+                  const memberList = (membersRes.data ?? []) as { user_id: string; role?: string }[];
+                  const currentMember = memberList.find((member) => member.user_id === userId);
+                  if (currentMember) {
+                    setIsTeamMember(true);
+                    setIsWorkspaceOwner(currentMember.role === "owner");
+                  }
+                }
+              }
+            } catch {}
+          })();
+          return;
+        }
+
         // Check if the user is a logged-in member to bypass password/whitelist gates
         let bypass = false;
         try {
@@ -726,8 +771,6 @@ function SingleViewContent() {
           }
           return;
         }
-
-        setAccessMode(row.access_mode === "members" ? "members" : "public");
 
         switch (row.status) {
           case "not_found":
@@ -913,12 +956,31 @@ function SingleViewContent() {
   async function handleCopyLink() {
     if (!capture) return;
     try {
-      const url = shareType === "content"
-        ? `${window.location.origin}/v/${capture.id}?devtools=false`
-        : `${window.location.origin}/v/${capture.id}`;
-      await navigator.clipboard.writeText(url);
+      let text = "";
+      if (shareType === "content") {
+        text = `${window.location.origin}/v/${capture.id}?devtools=false`;
+      } else if (shareType === "embed") {
+        text = `<iframe src="${window.location.origin}/v/${capture.id}?embed=true" width="100%" height="600" frameborder="0" allowfullscreen></iframe>`;
+      } else {
+        text = `${window.location.origin}/v/${capture.id}`;
+      }
+      await navigator.clipboard.writeText(text);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
+      showToast(t(shareType === "embed" ? "v.copiedEmbed" : "v.linkCopied"), "success");
+    } catch {
+      showToast(t("v.clipboardDenied"), "error");
+    }
+  }
+
+  async function handleExportTicket(format: "markdown" | "jira" | "linear" | "text") {
+    if (!capture) return;
+    try {
+      const shareUrl = `${window.location.origin}/v/${capture.id}`;
+      const report = generateBugReport(capture, format, shareUrl);
+      await navigator.clipboard.writeText(report);
+      setExportMenuOpen(false);
+      showToast(t("v.ticketCopied"), "success");
     } catch {
       showToast(t("v.clipboardDenied"), "error");
     }
@@ -1186,6 +1248,7 @@ function SingleViewContent() {
           : "bg-slate-50 dark:bg-background text-slate-900 dark:text-foreground relative justify-between overflow-x-hidden"
       }`}
     >
+      {!isEmbedMode && (
       <header className="h-16 border-b border-border/80 bg-white/80 dark:bg-background/80 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between shrink-0 relative sm:sticky top-0 z-30">
         <div className="flex items-center gap-3 min-w-0">
           <Link href={isTeamMember ? "/dashboard" : "/"} className="flex items-center gap-2.5 hover:opacity-90 transition-opacity min-w-0 group">
@@ -1223,6 +1286,55 @@ function SingleViewContent() {
         <div className="flex items-center gap-2 sm:gap-3">
           {status === "ready" && capture && (
             <div className="flex items-center gap-2">
+              {/* Export as Issue / Ticket dropdown */}
+              <div ref={exportMenuRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setExportMenuOpen((o) => !o)}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-border bg-white dark:bg-background px-2.5 sm:px-3 py-1.5 sm:py-2 min-h-[38px] text-xs font-semibold text-foreground shadow-xs hover:bg-subtle cursor-pointer touch-manipulation"
+                  title={t("v.exportTicket")}
+                >
+                  <Icon icon="lucide:file-output" className="h-4 w-4 shrink-0 text-sky-600 dark:text-sky-400" />
+                  <span className="hidden sm:inline">{t("v.exportTicket")}</span>
+                  <Icon icon="lucide:chevron-down" className={`h-3.5 w-3.5 text-muted transition-transform ${exportMenuOpen ? "rotate-180" : ""}`} />
+                </button>
+                {exportMenuOpen && (
+                  <div className="absolute right-0 top-full z-50 mt-1.5 w-56 rounded-xl border border-border bg-white dark:bg-zinc-900 p-1.5 shadow-xl space-y-0.5 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => handleExportTicket("markdown")}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left hover:bg-subtle transition-colors cursor-pointer text-foreground"
+                    >
+                      <Icon icon="lucide:file-text" className="w-4 h-4 text-emerald-500 shrink-0" />
+                      <span>{t("v.copyMarkdown")}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleExportTicket("jira")}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left hover:bg-subtle transition-colors cursor-pointer text-foreground"
+                    >
+                      <Icon icon="lucide:layers" className="w-4 h-4 text-blue-500 shrink-0" />
+                      <span>{t("v.copyJira")}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleExportTicket("linear")}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left hover:bg-subtle transition-colors cursor-pointer text-foreground"
+                    >
+                      <Icon icon="lucide:check-circle-2" className="w-4 h-4 text-purple-500 shrink-0" />
+                      <span>{t("v.copyLinear")}</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleExportTicket("text")}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left hover:bg-subtle transition-colors cursor-pointer text-foreground"
+                    >
+                      <Icon icon="lucide:align-left" className="w-4 h-4 text-muted shrink-0" />
+                      <span>{t("v.copyText")}</span>
+                    </button>
+                  </div>
+                )}
+              </div>
               {isTeamMember && configuredIntegrations.length === 1 && (
                 <button
                   type="button"
@@ -1328,6 +1440,7 @@ function SingleViewContent() {
           )}
         </div>
       </header>
+      )}
 
       {status !== "ready" && (
         <div className="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 my-auto">
@@ -1576,8 +1689,8 @@ function SingleViewContent() {
 
       {status === "ready" && capture && (
         <main className="flex-1 overflow-y-auto bg-[#fbfbfd] dark:bg-background flex flex-col justify-between">
-          <div className="mx-auto flex w-full max-w-[1560px] flex-col gap-3 px-3 sm:px-6 pt-3 sm:pt-4 pb-12 sm:pb-16 lg:pb-20">
-            {isTeamMember && (
+          <div className={isEmbedMode ? "w-full p-2 flex flex-col" : "mx-auto flex w-full max-w-[1560px] flex-col gap-4 sm:gap-6 px-4 sm:px-6 lg:px-8 pt-3 sm:pt-4 pb-12 sm:pb-16 lg:pb-20"}>
+            {!isEmbedMode && isTeamMember && (
               <div className="flex items-center justify-between gap-2 w-full flex-wrap">
                 <Link
                   href="/captures"
@@ -1665,7 +1778,7 @@ function SingleViewContent() {
               </div>
             )}
 
-            <div className="grid grid-cols-1 gap-3 xl:grid-cols-[minmax(0,1fr)_500px] xl:items-start">
+            <div className={isEmbedMode ? "w-full" : "grid grid-cols-1 gap-4 lg:gap-6 xl:grid-cols-[minmax(0,1fr)_500px] xl:items-start"}>
               <section className="rounded-xl border border-border bg-white p-4 sm:p-6 lg:p-7 shadow-sm dark:bg-background">
                 <SubsystemErrorBoundary fallbackTitle="Media player error" fallbackDescription="An unexpected error occurred in the media player. Click retry to reload.">
                   <MediaViewer
@@ -1751,88 +1864,103 @@ function SingleViewContent() {
                     {capture.expires_at && <p className="mt-2 text-[11px] font-medium text-muted">{getExpiryCountdown(capture.expires_at, t)}</p>}
 
                   </div>
-                  <div className="border-t border-border pt-3 min-w-0">
-                    <SubsystemErrorBoundary fallbackTitle="Comments unavailable" fallbackDescription="An unexpected error occurred while loading comments.">
-                      <Comments
-                        captureId={capture.id}
-                        isVideo={capture.type === "video"}
-                        authorName={viewerEmail ? viewerEmail.split("@")[0] : undefined}
-                        authorEmail={viewerEmail || undefined}
-                        onSeek={handleSeek}
-                        getCurrentTime={getCurrentPlaybackTime}
-                      />
-                    </SubsystemErrorBoundary>
-                  </div>
+                  {!isEmbedMode && (
+                    <div className="border-t border-border pt-3 min-w-0">
+                      <SubsystemErrorBoundary fallbackTitle="Comments unavailable" fallbackDescription="An unexpected error occurred while loading comments.">
+                        <Comments
+                          captureId={capture.id}
+                          isVideo={capture.type === "video"}
+                          authorName={viewerEmail ? viewerEmail.split("@")[0] : undefined}
+                          authorEmail={viewerEmail || undefined}
+                          onSeek={handleSeek}
+                          getCurrentTime={getCurrentPlaybackTime}
+                        />
+                      </SubsystemErrorBoundary>
+                    </div>
+                  )}
                 </div>
               </section>
 
-              <aside className="flex flex-col gap-3 xl:sticky xl:top-4 xl:self-start">
-                {!hideDevTools && (
-                  <SubsystemErrorBoundary fallbackTitle="DevTools unavailable" fallbackDescription="An unexpected error occurred in the DevTools panel.">
-                    <DevToolsPanel
-                      capture={capture as unknown as React.ComponentProps<typeof DevToolsPanel>["capture"]}
-                      currentTime={playbackTime}
-                      unlockPassword={unlockedPassword}
-                      initialTab={activeDevToolsTab}
-                      onSeekToTime={(t) => setSeekTargetTime((prev) => (prev === t ? t + 0.0001 : t))}
-                    />
-                  </SubsystemErrorBoundary>
-                )}
-                <section className="rounded-xl border border-border bg-white p-4 sm:p-6 lg:p-7 shadow-sm dark:bg-background">
-                  <div>
-                    <h3 className="mb-4 text-base font-bold text-foreground">{t("v.shareCapture")}</h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5 text-center items-stretch">
-                      <button type="button" onClick={() => setShareType("devtools")} className={`h-full flex flex-col items-center rounded-lg border p-3 sm:p-4 text-xs font-semibold ${shareType === "devtools" ? "border-[#2563EB] text-[#2563EB] dark:text-[#3B82F6]" : "border-border text-muted hover:text-foreground"}`}>
-                        <div className="mb-2 sm:mb-3 flex h-10 sm:h-12 w-16 sm:w-20 items-center justify-center rounded-md border border-[#2563EB]/30 bg-[#2563EB]/10 text-[#2563EB] dark:text-[#3B82F6] text-xs sm:text-sm">▷ ▯</div>
-                        <span>{t("v.withDevTools")}</span>
-                        <p className="mt-1 text-[10px] font-normal text-muted">{t("v.withDevToolsHint")}</p>
-                      </button>
-                      <button type="button" onClick={() => setShareType("content")} className={`h-full flex flex-col items-center rounded-lg border p-3 sm:p-4 text-xs font-semibold ${shareType === "content" ? "border-[#2563EB] text-[#2563EB] dark:text-[#3B82F6]" : "border-border text-muted hover:text-foreground"}`}>
-                        <div className="mb-2 sm:mb-3 flex h-10 sm:h-12 w-16 sm:w-20 items-center justify-center rounded-md border border-[#2563EB]/30 bg-[#2563EB]/10 text-[#2563EB] dark:text-[#3B82F6] text-xs sm:text-sm">▷</div>
-                        <span>{t("v.contentOnly")}</span>
-                        <p className="mt-1 text-[10px] font-normal text-muted">{t("v.contentOnlyHint")}</p>
-                      </button>
-                    </div>
-                    {(isTeamMember || isWorkspaceOwner) && (
-                      <div className="mt-5">
-                        <label className="mb-2 block text-xs font-semibold text-muted">{t("v.generalAccess")}</label>
-                        <div ref={accessMenuRef} className="relative">
-                          <button type="button" onClick={() => setAccessOpen((open) => !open)} className="flex w-full items-center justify-between rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-subtle">
-                            <span className="flex items-center gap-2"><Icon icon="lucide:globe" className="h-4 w-4" />{accessMode === "members" ? t("v.membersOnly") : t("v.anyoneWithLink")}</span>
-                            <Icon icon="lucide:chevron-down" className={`h-4 w-4 text-muted shrink-0 transition-transform ${accessOpen ? "rotate-180" : ""}`} />
-                          </button>
-                          {accessOpen && (
-                            <div className="absolute left-0 right-0 top-full z-50 mt-2 rounded-xl border border-border bg-white dark:bg-zinc-900 p-1 shadow-xl">
-                              <button type="button" onClick={() => void saveAccessMode("public")} disabled={accessSaving} className="w-full rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50">{t("v.anyoneWithLink")}</button>
-                              <button type="button" onClick={() => void saveAccessMode("members")} disabled={accessSaving} className="w-full rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50">{t("v.membersOnly")}</button>
-                            </div>
-                          )}
-                        </div>
+              {!isEmbedMode && (
+                <aside className="flex flex-col gap-4 sm:gap-6 xl:sticky xl:top-4 xl:self-start">
+                  {!hideDevTools && (
+                    <SubsystemErrorBoundary fallbackTitle="DevTools unavailable" fallbackDescription="An unexpected error occurred in the DevTools panel.">
+                      <DevToolsPanel
+                        capture={capture as unknown as React.ComponentProps<typeof DevToolsPanel>["capture"]}
+                        currentTime={playbackTime}
+                        unlockPassword={unlockedPassword}
+                        initialTab={activeDevToolsTab}
+                        onSeekToTime={(t) => setSeekTargetTime((prev) => (prev === t ? t + 0.0001 : t))}
+                      />
+                    </SubsystemErrorBoundary>
+                  )}
+                  <section className="rounded-xl border border-border bg-white p-4 sm:p-6 lg:p-7 shadow-sm dark:bg-background">
+                    <div>
+                      <h3 className="mb-4 text-base font-bold text-foreground">{t("v.shareCapture")}</h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-center items-stretch">
+                        <button type="button" onClick={() => setShareType("devtools")} className={`h-full flex flex-col items-center rounded-lg border p-3 sm:p-4 text-xs font-semibold cursor-pointer ${shareType === "devtools" ? "border-[#2563EB] text-[#2563EB] dark:text-[#3B82F6]" : "border-border text-muted hover:text-foreground"}`}>
+                          <div className="mb-2 sm:mb-3 flex h-10 sm:h-12 w-16 sm:w-20 items-center justify-center rounded-md border border-[#2563EB]/30 bg-[#2563EB]/10 text-[#2563EB] dark:text-[#3B82F6] text-xs sm:text-sm">▷ ▯</div>
+                          <span>{t("v.withDevTools")}</span>
+                          <p className="mt-1 text-[10px] font-normal text-muted">{t("v.withDevToolsHint")}</p>
+                        </button>
+                        <button type="button" onClick={() => setShareType("content")} className={`h-full flex flex-col items-center rounded-lg border p-3 sm:p-4 text-xs font-semibold cursor-pointer ${shareType === "content" ? "border-[#2563EB] text-[#2563EB] dark:text-[#3B82F6]" : "border-border text-muted hover:text-foreground"}`}>
+                          <div className="mb-2 sm:mb-3 flex h-10 sm:h-12 w-16 sm:w-20 items-center justify-center rounded-md border border-[#2563EB]/30 bg-[#2563EB]/10 text-[#2563EB] dark:text-[#3B82F6] text-xs sm:text-sm">▷</div>
+                          <span>{t("v.contentOnly")}</span>
+                          <p className="mt-1 text-[10px] font-normal text-muted">{t("v.contentOnlyHint")}</p>
+                        </button>
+                        <button type="button" onClick={() => setShareType("embed")} className={`h-full flex flex-col items-center rounded-lg border p-3 sm:p-4 text-xs font-semibold cursor-pointer ${shareType === "embed" ? "border-[#2563EB] text-[#2563EB] dark:text-[#3B82F6]" : "border-border text-muted hover:text-foreground"}`}>
+                          <div className="mb-2 sm:mb-3 flex h-10 sm:h-12 w-16 sm:w-20 items-center justify-center rounded-md border border-[#2563EB]/30 bg-[#2563EB]/10 text-[#2563EB] dark:text-[#3B82F6] text-xs sm:text-sm font-mono">&lt;/&gt;</div>
+                          <span>{t("v.embedOption")}</span>
+                          <p className="mt-1 text-[10px] font-normal text-muted">{t("v.embedOptionHint")}</p>
+                        </button>
                       </div>
-                    )}
-                  </div>
-                  <div className="mt-6 pt-2">
-                    <button type="button" onClick={handleCopyLink} className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] py-3 min-h-[44px] text-sm font-semibold text-white shadow-xs shadow-[#2563EB]/25 touch-manipulation cursor-pointer">
-                      <Icon icon="lucide:link" className="h-4 w-4 brightness-0 invert" />
-                      {copied ? t("v.copiedLink") : t("v.copyLinkBtn")}
-                    </button>
-                    {isWorkspaceOwner && (
-                      <button
-                        type="button"
-                        onClick={handleDeleteCapture}
-                        className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-lg border border-rose-200 dark:border-rose-900/60 bg-white dark:bg-rose-950/20 py-2.5 min-h-[44px] text-xs font-semibold text-rose-600 dark:text-rose-400 shadow-sm hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:border-rose-300 dark:hover:border-rose-800 transition-colors touch-manipulation cursor-pointer"
-                      >
-                        <Icon icon="lucide:trash-2" className="h-3.5 w-3.5" />
-                        {t("v.deleteCapture")}
+                      {(isTeamMember || isWorkspaceOwner) && (
+                        <div className="mt-5">
+                          <label className="mb-2 block text-xs font-semibold text-muted">{t("v.generalAccess")}</label>
+                          <div ref={accessMenuRef} className="relative">
+                            <button type="button" onClick={() => setAccessOpen((open) => !open)} className="flex w-full items-center justify-between rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground hover:bg-subtle">
+                              <span className="flex items-center gap-2"><Icon icon="lucide:globe" className="h-4 w-4" />{accessMode === "members" ? t("v.membersOnly") : t("v.anyoneWithLink")}</span>
+                              <Icon icon="lucide:chevron-down" className={`h-4 w-4 text-muted shrink-0 transition-transform ${accessOpen ? "rotate-180" : ""}`} />
+                            </button>
+                            {accessOpen && (
+                              <div className="absolute left-0 right-0 top-full z-50 mt-2 rounded-xl border border-border bg-white dark:bg-zinc-900 p-1 shadow-xl">
+                                <button type="button" onClick={() => void saveAccessMode("public")} disabled={accessSaving} className="w-full rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50">{t("v.anyoneWithLink")}</button>
+                                <button type="button" onClick={() => void saveAccessMode("members")} disabled={accessSaving} className="w-full rounded-lg px-3 py-2 text-left text-xs hover:bg-subtle disabled:opacity-50">{t("v.membersOnly")}</button>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-6 pt-2">
+                      <button type="button" onClick={handleCopyLink} className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] py-3 min-h-[44px] text-sm font-semibold text-white shadow-xs shadow-[#2563EB]/25 touch-manipulation cursor-pointer">
+                        <Icon icon={shareType === "embed" ? "lucide:code" : "lucide:link"} className="h-4 w-4 brightness-0 invert" />
+                        {copied
+                          ? shareType === "embed"
+                            ? t("v.copiedEmbed")
+                            : t("v.copiedLink")
+                          : shareType === "embed"
+                            ? t("v.copyEmbedBtn")
+                            : t("v.copyLinkBtn")}
                       </button>
-                    )}
-                  </div>
-                </section>
-              </aside>
+                      {isWorkspaceOwner && (
+                        <button
+                          type="button"
+                          onClick={handleDeleteCapture}
+                          className="mt-2.5 flex w-full items-center justify-center gap-2 rounded-lg border border-rose-200 dark:border-rose-900/60 bg-white dark:bg-rose-950/20 py-2.5 min-h-[44px] text-xs font-semibold text-rose-600 dark:text-rose-400 shadow-sm hover:bg-rose-50 dark:hover:bg-rose-950/40 hover:border-rose-300 dark:hover:border-rose-800 transition-colors touch-manipulation cursor-pointer"
+                        >
+                          <Icon icon="lucide:trash-2" className="h-3.5 w-3.5" />
+                          {t("v.deleteCapture")}
+                        </button>
+                      )}
+                    </div>
+                  </section>
+                </aside>
+              )}
             </div>
           </div>
           {/* Footer at the bottom of natural scroll flow (hidden if workspace has hideWatermark enabled) */}
-          {!brand.hideWatermark && <CaptureFooter className="mt-4 sm:mt-6" />}
+          {!brand.hideWatermark && !isEmbedMode && <CaptureFooter className="mt-4 sm:mt-6" />}
         </main>
       )}
 
@@ -1929,14 +2057,13 @@ function SingleViewContent() {
       {deleteCaptureModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => { if (!deletingCapture) { setDeleteCaptureModalOpen(false); setDeleteOperationId(null); } }} />
-          <div className="relative w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-xl bg-white dark:bg-zinc-900 shadow-xl border border-border p-6 text-center">
-            <div className="mx-auto mb-4 w-12 h-12 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 flex items-center justify-center text-red-600 dark:text-red-400">
-              <Icon icon="lucide:trash-2" className="w-6 h-6" />
+          <div className="relative w-full max-w-sm max-h-[90vh] overflow-y-auto rounded-2xl bg-white dark:bg-zinc-900 shadow-xl border border-border p-5 sm:p-6 text-center">
+            <div className="text-center space-y-1.5 mb-4 pt-1">
+              <h2 className="text-lg font-bold text-foreground">{t("v.deleteCaptureQ")}</h2>
+              <p className="text-xs text-muted leading-relaxed">
+                {t("v.deleteConfirm", { title: capture?.title ?? "" })}
+              </p>
             </div>
-            <h2 className="text-lg font-bold text-foreground mb-2">{t("v.deleteCaptureQ")}</h2>
-            <p className="text-xs text-muted leading-relaxed mb-4">
-              {t("v.deleteConfirm", { title: capture?.title ?? "" })}
-            </p>
             <fieldset className="space-y-2 text-left mb-4" disabled={deletingCapture}>
               <legend className="text-xs font-semibold text-foreground mb-2">{t("v.deleteFrom")}</legend>
               <label className="flex items-start gap-2 rounded-lg border border-border p-3 cursor-pointer">
@@ -1951,18 +2078,18 @@ function SingleViewContent() {
             {driveIssue && <div className="text-xs text-amber-700 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 rounded-lg p-2 mb-3 flex items-center justify-between gap-3"><span>{driveIssue === "reconnect_required" ? t("cap.driveReconnectRequired") : t("v.driveNotConnected")}</span><button type="button" onClick={() => void startDriveConnect()} className="font-semibold text-[#2563EB] dark:text-[#3B82F6] hover:underline">{driveIssue === "reconnect_required" ? t("cap.reconnectDrive") : t("cap.connectDrive")}</button></div>}
             {deleteCaptureError && <p role="alert" className="text-xs text-red-600 dark:text-red-400 mb-3">{deleteCaptureError}</p>}
             
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-border">
+            <div className="grid grid-cols-2 gap-3 pt-4 border-t border-border">
               <button
                 onClick={() => { setDeleteCaptureModalOpen(false); setDeleteOperationId(null); }}
                 disabled={deletingCapture}
-                className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg transition-colors disabled:opacity-50"
+                className="w-full py-2.5 px-4 text-xs font-semibold text-foreground border border-border bg-background hover:bg-subtle rounded-xl transition-colors disabled:opacity-50 text-center inline-flex items-center justify-center select-none"
               >
                 {t("common.cancel")}
               </button>
               <button
                 onClick={submitDeleteCapture}
                 disabled={deletingCapture}
-                className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 disabled:opacity-50 transition-colors"
+                className="w-full py-2.5 px-4 rounded-xl bg-red-600 text-white text-xs font-semibold hover:bg-red-700 disabled:opacity-50 transition-colors text-center inline-flex items-center justify-center shadow-xs select-none"
               >
                 {deletingCapture ? t("v.deleting") : t("v.confirmDelete")}
               </button>

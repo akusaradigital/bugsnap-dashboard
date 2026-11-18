@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
 import { SiteThemeToggle } from "@/components/site/SiteThemeToggle";
@@ -38,6 +39,7 @@ function GoogleLogo({ className = "w-5 h-5 shrink-0" }: { className?: string }) 
 }
 
 export default function LoginPage() {
+  const router = useRouter();
   const { t } = useT();
   const [signingIn, setSigningIn] = useState(false);
   const [loadingSession, setLoadingSession] = useState(true);
@@ -129,52 +131,30 @@ export default function LoginPage() {
         setLoadingSession(false);
         // If session exists and no auth error
         if (data.session?.user && !hasAuthError) {
-          if (typeof window !== "undefined") {
-            window.postMessage(
-              {
-                source: "bugsnap-web",
-                action: "sync_session",
-                user: {
-                  id: data.session.user.id,
-                  email: data.session.user.email,
-                  name: data.session.user.user_metadata?.full_name || "",
-                  avatar: data.session.user.user_metadata?.avatar_url || "",
-                },
-              },
-              window.location.origin
-            );
-          }
-
-          // Any web login hands the extension a one-time pairing code, so the extension
-          // connects whether the user signed in from the extension or from the website.
-          const accessToken = data.session.access_token;
-          fetch("/api/extension/pair", {
-            method: "POST",
-            headers: { Authorization: `Bearer ${accessToken}` },
-          })
-            .then((r) => (r.ok ? r.json() : null))
-            .then((json) => {
-              if (json?.code) {
-                window.postMessage(
-                  { source: "bugsnap-web", action: "pair_extension", code: json.code },
-                  window.location.origin
-                );
-              }
-            })
-            .catch(() => {});
-
+          try { sessionStorage.removeItem("bugsnap_signed_out"); } catch {}
+          const auth = { Authorization: `Bearer ${data.session.access_token}` };
+          // Session sync and extension pairing run in ExtensionSyncBridge (root layout), once per page.
           if (fromExt) {
             setIsConnected(true);
-            // Give the extension a few seconds to store the pairing before leaving this page.
-            setTimeout(() => {
-              window.location.assign(target);
-            }, 3000);
+            fetch("/api/google-drive/status?fast=true", { headers: auth })
+              .then((r) => (r.ok ? r.json() : null))
+              .then((drive) =>
+                drive && drive.connected === false
+                  ? fetch("/api/google-drive/connect", { method: "POST", headers: auth }).then((r) => (r.ok ? r.json() : null))
+                  : null
+              )
+              .catch(() => null)
+              .then((connect) => {
+                if (connect?.url) {
+                  window.location.assign(connect.url);
+                } else {
+                  router.replace(target || "/dashboard");
+                }
+              });
           } else {
-            // Web login: forward to the destination the user came from. Wait long enough for the
-            // pairing request and postMessage to finish, or navigation cancels them.
-            setTimeout(() => {
-              window.location.assign(nextPath || "/dashboard");
-            }, 3000);
+            // Web login: instant redirect to destination, zero artificial delays!
+            // Drive status & pairing happen smoothly in ExtensionSyncBridge and dashboard components.
+            router.replace(nextPath || target || "/dashboard");
           }
         }
       })
@@ -187,12 +167,10 @@ export default function LoginPage() {
     setSigningIn(true);
     setError(null);
     try {
-      // Always return through /login so the session-pairing step runs for web logins too.
-      // Web logins then forward to their real destination (see the success branch).
       const dest = redirectPath.startsWith("/") ? redirectPath : "/dashboard";
       const target = isFromExtension
         ? "/login?ref=extension&connected=true"
-        : `/login?next=${encodeURIComponent(dest)}`;
+        : dest;
       const redirectTo = `${window.location.origin}${target}`;
       const { error: authError } = await supabase.auth.signInWithOAuth({
         provider: "google",

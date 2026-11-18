@@ -306,10 +306,10 @@ function CompareContent() {
       />
 
       {/* Main Container */}
-      <div className="w-full min-w-0 p-3 sm:p-8 pb-10 sm:pb-14 max-w-7xl mx-auto flex-1 flex flex-col">
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 sm:mb-8 gap-4">
+      <div className="w-full min-w-0 p-4 sm:p-6 lg:p-8 pb-12 sm:pb-16 max-w-7xl mx-auto space-y-6 sm:space-y-8 flex-1 flex flex-col">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="min-w-0">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
               {t("compare.title")}
             </h1>
           </div>
@@ -379,7 +379,7 @@ function CompareContent() {
         </div>
 
         {/* Before / After Slot Panels */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {[
             { side: "left" as const, slot: leftSlot, label: t("compare.beforeLabel"), tone: "bg-[#DC2626]/10 text-[#B91C1C] dark:text-[#F87171] border-[#DC2626]/30", dot: "bg-[#DC2626]" },
             { side: "right" as const, slot: rightSlot, label: t("compare.afterLabel"), tone: "bg-[#89BD49]/15 text-[#4D7A24] dark:text-[#A3D977] border-[#89BD49]/40", dot: "bg-[#89BD49]" },
@@ -430,7 +430,7 @@ function CompareContent() {
                           updateUrlParams(leftSlot?.id, undefined);
                         }
                       }}
-                      className="px-3 py-1.5 min-h-[36px] rounded-xl border border-border bg-background hover:bg-subtle text-muted hover:text-red-500 font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer touch-manipulation"
+                      className="px-3 py-1.5 min-h-[36px] rounded-xl border border-rose-200 dark:border-rose-900/40 bg-background hover:bg-rose-50 dark:hover:bg-rose-950/20 text-rose-600 dark:text-rose-400 hover:text-rose-700 dark:hover:text-rose-300 font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer touch-manipulation"
                       title={t("compare.clear")}
                       aria-label={t("compare.clear")}
                     >

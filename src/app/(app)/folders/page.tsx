@@ -397,7 +397,7 @@ function ManageFoldersContent() {
           <button
             type="button"
             onClick={() => { setCreateError(null); setNewFolderName(""); setCreateOpen(true); }}
-            className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] bg-[#2563EB] hover:bg-[#1D4ED8] active:scale-95 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs shadow-[#2563EB]/25 transition-all hover:shadow-md touch-manipulation shrink-0"
+            className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs shadow-[#2563EB]/25 transition-all hover:shadow-md touch-manipulation shrink-0"
           >
             <Icon icon="lucide:plus" className="w-4 h-4 brightness-0 invert" aria-hidden="true" />
             <span>{t("folders.newFolder")}</span>
@@ -467,7 +467,7 @@ function ManageFoldersContent() {
                   aria-hidden="true"
                 />
               </span>
-              <h3 className="text-sm font-bold text-foreground truncate pr-6">{folder.name}</h3>
+              <h3 className="text-sm font-semibold text-foreground truncate pr-6">{folder.name}</h3>
               <p className="text-xs text-muted mt-1">
                 {t("qa.capturesCount", { count: folder.captureCount })}
               </p>

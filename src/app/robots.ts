@@ -12,7 +12,7 @@ const PRIVATE_DISALLOW = [
   '/settings',
   '/welcome',
   '/upgrade',
-  '/v',
+  '/v/',
   '/uninstall-feedback',
 ];
 
@@ -46,7 +46,6 @@ export default function robots(): MetadataRoute.Robots {
   return {
     rules: [
       { userAgent: '*', allow: PUBLIC_ALLOW, disallow: PRIVATE_DISALLOW },
-      { userAgent: 'Googlebot', allow: PUBLIC_ALLOW, disallow: PRIVATE_DISALLOW },
     ],
     sitemap: `${baseUrl}/sitemap.xml`,
   };

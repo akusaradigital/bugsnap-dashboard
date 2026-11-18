@@ -129,7 +129,7 @@ export default function CaptureFooter({ className = "" }: { className?: string }
                   href="https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:scale-95 text-white text-xs font-semibold shadow-xs hover:shadow-md shadow-[#2563EB]/25 transition-all duration-150 w-fit group"
+                  className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold shadow-xs hover:shadow-md shadow-[#2563EB]/25 transition-all duration-150 w-fit group"
                   title={t("footer.addToChrome")}
                 >
                   <ChromeLogo className="w-3.5 h-3.5 shrink-0" />
@@ -139,7 +139,7 @@ export default function CaptureFooter({ className = "" }: { className?: string }
                   href={FIREFOX_STORE_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:scale-95 text-white text-xs font-semibold shadow-xs hover:shadow-md shadow-[#2563EB]/25 transition-all duration-150 w-fit group"
+                  className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold shadow-xs hover:shadow-md shadow-[#2563EB]/25 transition-all duration-150 w-fit group"
                   title={t("footer.addToFirefox")}
                 >
                   <FirefoxLogo className="w-3.5 h-3.5 shrink-0" />

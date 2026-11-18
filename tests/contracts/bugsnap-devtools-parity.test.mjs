@@ -13,8 +13,8 @@ import { dirname, join } from "node:path";
 // inlined redactor literal against redact.js.
 
 const here = dirname(fileURLToPath(import.meta.url));
-const dashboardRoot = join(here, "..");
-const root = join(here, "..", "..");
+const dashboardRoot = join(here, "..", "..");
+const root = join(here, "..", "..", "..");
 
 const read = (p) => {
   const relPath = p.replace(/^bugsnap-dashboard\//, "");

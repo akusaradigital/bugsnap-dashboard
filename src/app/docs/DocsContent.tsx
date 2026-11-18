@@ -1,5 +1,6 @@
 "use client";
 
+import { HERO_BREADCRUMB_CLS, HERO_SUBTITLE_CLS } from "@/lib/heroStyles";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useT } from "@/components/I18nProvider";
@@ -213,7 +214,7 @@ export function DocsContent() {
             <Reveal delay={0}>
               {/* Breadcrumb */}
               <nav
-                className="inline-flex items-center justify-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mb-6"
+                className={HERO_BREADCRUMB_CLS}
                 aria-label={t("modalFx.breadcrumbLabel")}
               >
                 <Link
@@ -240,7 +241,7 @@ export function DocsContent() {
             </Reveal>
 
             <Reveal delay={0.14}>
-              <p className="mt-4 text-sm sm:text-lg text-slate-500 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
+              <p className={HERO_SUBTITLE_CLS}>
                 {t("docs.subtitle")}
               </p>
             </Reveal>

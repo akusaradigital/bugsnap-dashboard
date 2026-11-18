@@ -77,7 +77,7 @@ export const metadata: Metadata = {
     title: "BugSnap - Screenshot, Screen Recorder & Bug Tracker",
     description:
       "Capture bugs with screenshots, screen recordings, console logs, and network requests. Free browser extension with automatic Google Drive storage.",
-    images: [`${siteUrl}/opengraph-image.png`],
+    images: [`${siteUrl}/twitter-image.png`],
   },
   verification: {
     google: "googlee6dec3ee74d840e8.html",
@@ -122,6 +122,13 @@ const jsonLd = {
         name: "Akusara Digital",
         url: "https://akusaradigital.com",
       },
+    },
+    {
+      "@type": "Organization",
+      "@id": `${siteUrl}/#organization`,
+      name: "Akusara Digital",
+      url: "https://akusaradigital.com",
+      logo: `${siteUrl}/icon.png`,
     },
     {
       "@type": "WebSite",
@@ -197,7 +204,7 @@ export default function RootLayout({
         <script
           dangerouslySetInnerHTML={{
             __html:
-              "(function(){try{var m=document.cookie.match(/(?:^|;\s*)BugSnap\.locale=(en|id)/);if(m){document.documentElement.lang=m[1];}}catch(e){}})();",
+              "(function(){try{var m=document.cookie.match(/(?:^|;\\s*)BugSnap\.locale=(en|id)/);if(m){document.documentElement.lang=m[1];}}catch(e){}})();",
           }}
         />
         <script

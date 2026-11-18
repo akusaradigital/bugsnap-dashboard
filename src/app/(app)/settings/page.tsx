@@ -332,6 +332,9 @@ function SettingsContent() {
     try {
       await driveRequest("/api/google-drive/disconnect", { method: "DELETE" });
       setDriveStatus("not_connected"); setDriveEmail(null); setDriveQuota(null);
+      if (typeof window !== "undefined") {
+        window.postMessage({ source: "bugsnap-web", action: "sync_drive_disconnect" }, window.location.origin);
+      }
       showToast(t("copy.driveDisconnected"), "success");
     } catch (e) { setDriveError(e instanceof Error ? e.message : t("settings.disconnectError")); showToast(t("copy.driveDisconnectFailed"), "error"); }
     finally { setDriveActionLoading(false); }
@@ -500,7 +503,27 @@ function SettingsContent() {
       if (!res.ok) throw new Error(result.error || "Failed to delete account");
 
       showToast(t("copy.accountDeleted"), "success");
-      await supabase.auth.signOut();
+      try {
+        sessionStorage.setItem("bugsnap_signed_out", "true");
+        localStorage.removeItem("BugSnap_notif_last_seen");
+        localStorage.removeItem("BugSnap_notif_read_ids");
+        localStorage.removeItem("BugSnap_promo_dismissed");
+        sessionStorage.removeItem("bs_drive_quota");
+      } catch {}
+      await new Promise<void>((resolve) => {
+        let done = false;
+        const timer = setTimeout(() => {
+          if (!done) { done = true; window.removeEventListener("message", onDone); resolve(); }
+        }, 350);
+        function onDone(e: MessageEvent) {
+          if (e.source === window && e.data?.source === "bugsnap-extension" && e.data?.action === "sync_logout_done") {
+            if (!done) { done = true; clearTimeout(timer); window.removeEventListener("message", onDone); resolve(); }
+          }
+        }
+        window.addEventListener("message", onDone);
+        window.postMessage({ source: "bugsnap-web", action: "sync_logout" }, window.location.origin);
+      });
+      await supabase.auth.signOut().catch(() => {});
       window.location.assign("/login");
     } catch (err) {
       showToast(err instanceof Error ? err.message : "Failed to delete account", "error");
@@ -983,18 +1006,18 @@ function SettingsContent() {
         </div>
 
         {/* Desktop Sticky Header */}
-        <div className="hidden lg:block sticky top-0 z-10 bg-background border-b border-border px-8 lg:px-10 py-7">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">{t(TAB_TITLES[activeTab].title)}</h1>
-          <p className="text-[15px] text-muted mt-2">{t(TAB_TITLES[activeTab].subtitle)}</p>
+        <div className="hidden lg:block sticky top-0 z-10 bg-background border-b border-border px-8 lg:px-10 py-6">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">{t(TAB_TITLES[activeTab].title)}</h1>
+          <p className="text-sm text-muted mt-1.5">{t(TAB_TITLES[activeTab].subtitle)}</p>
         </div>
 
         {/* Mobile Page Title */}
         <div className="lg:hidden px-4 pt-4 pb-1">
-          <h1 className="text-xl font-bold text-foreground">{t(TAB_TITLES[activeTab].title)}</h1>
-          <p className="text-xs text-muted mt-1">{t(TAB_TITLES[activeTab].subtitle)}</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">{t(TAB_TITLES[activeTab].title)}</h1>
+          <p className="text-sm text-muted mt-1">{t(TAB_TITLES[activeTab].subtitle)}</p>
         </div>
 
-        <div className="max-w-5xl mx-auto w-full p-4 sm:p-6 lg:p-10">
+        <div className="max-w-5xl mx-auto w-full p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
 
         {/* ── General ────────────────────────────── */}
         {activeTab === "general" && (
@@ -1345,7 +1368,7 @@ function SettingsContent() {
               <button
                 type="submit"
                 disabled={saving || (workspaceRoleLoaded && !canEditWorkspaceSettings)}
-                className={`rounded-xl px-6 py-2.5 text-sm font-semibold transition-all shadow-xs shadow-[#2563EB]/25 active:scale-[0.99] min-w-[145px] flex items-center justify-center gap-2 ${
+                className={`rounded-xl px-6 py-2.5 text-sm font-semibold transition-all shadow-xs shadow-[#2563EB]/25 min-w-[145px] flex items-center justify-center gap-2 ${
                   saved
                     ? "bg-emerald-600 text-white"
                     : "bg-[#2563EB] text-white hover:bg-[#1D4ED8] disabled:opacity-60"
@@ -2055,7 +2078,7 @@ function SettingsContent() {
               <button
                 type="submit"
                 disabled={profileSaving}
-                className={`rounded-lg px-5 py-2 text-sm font-semibold transition-all shadow-sm active:scale-[0.99] min-w-[130px] inline-flex items-center justify-center gap-2 ${
+                className={`rounded-lg px-5 py-2 text-sm font-semibold transition-all shadow-sm min-w-[130px] inline-flex items-center justify-center gap-2 ${
                   profileSaved
                     ? "bg-emerald-600 text-white"
                     : "bg-[#2563EB] text-white hover:bg-[#1D4ED8] shadow-xs shadow-[#2563EB]/25 disabled:opacity-60"
@@ -2105,7 +2128,7 @@ function SettingsContent() {
                   type="button"
                   onClick={() => setDeleteAccountModalOpen(true)}
                   disabled={accountDeleting}
-                  className="shrink-0 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-red-600 hover:bg-red-700 text-white shadow-xs transition-all active:scale-[0.98] disabled:opacity-50"
+                  className="shrink-0 inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold bg-red-600 hover:bg-red-700 text-white shadow-xs transition-all disabled:opacity-50"
                 >
                   <Icon icon="lucide:trash-2" className="w-3.5 h-3.5 shrink-0 brightness-0 invert" aria-hidden="true" />
                   {t("settings.deleteAccountBtn")}

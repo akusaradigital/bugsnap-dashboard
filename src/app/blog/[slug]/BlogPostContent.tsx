@@ -322,9 +322,15 @@ export function BlogPostContent({ slug }: { slug: string }) {
                 <div className="flex items-center gap-1.5 font-semibold text-slate-700 dark:text-slate-200">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
-                    src="/icon.svg"
+                    src="/logo-day.svg"
                     alt="BugSnap"
-                    className="w-4 h-4 object-contain shrink-0"
+                    className="w-4 h-4 object-contain shrink-0 dark:hidden"
+                  />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/logo-dark.svg"
+                    alt="BugSnap"
+                    className="w-4 h-4 object-contain shrink-0 hidden dark:block"
                   />
                   <span>By {post.author}</span>
                 </div>

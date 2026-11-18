@@ -7,7 +7,7 @@ import vm from "node:vm";
 import ts from "typescript";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const src = readFileSync(path.resolve(here, "../src/lib/ai-endpoint.ts"), "utf8");
+const src = readFileSync(path.resolve(here, "../../src/lib/ai-endpoint.ts"), "utf8");
 const transpiled = ts.transpileModule(src, {
   compilerOptions: { module: ts.ModuleKind.CommonJS },
 }).outputText;

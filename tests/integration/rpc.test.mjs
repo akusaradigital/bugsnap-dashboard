@@ -16,7 +16,7 @@ import {
   trackCapture,
   randomEmail,
   sql,
-} from "./config.mjs";
+} from "../helpers/config.mjs";
 
 // ---------------------------------------------------------------------------
 // 1. insert_capture_by_email - the extension bridge

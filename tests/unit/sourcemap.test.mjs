@@ -11,7 +11,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 // Transpile and run the real module. The import of @/lib/safe-url and the
 // "server-only" marker are stubbed: this suite tests the mapping maths, and the
 // SSRF guard has its own suite (tests/safe-url.test.mjs).
-const src = readFileSync(path.resolve(here, "../src/lib/sourcemap.ts"), "utf8");
+const src = readFileSync(path.resolve(here, "../../src/lib/sourcemap.ts"), "utf8");
 // target matters: the default (ES5) downlevels [...map.keys()] onto a
 // Symbol.iterator helper that silently yields [] inside a bare vm context, so
 // the module under test would appear broken when it is not. Next.js compiles

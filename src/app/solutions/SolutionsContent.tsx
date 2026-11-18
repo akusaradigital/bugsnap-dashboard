@@ -1,5 +1,6 @@
 "use client";
 
+import { HERO_BREADCRUMB_CLS, HERO_SUBTITLE_CLS } from "@/lib/heroStyles";
 import { useState } from "react";
 import Link from "next/link";
 import { useT } from "@/components/I18nProvider";
@@ -32,7 +33,7 @@ export function SolutionsContent() {
           <Reveal delay={0}>
             {/* Breadcrumb */}
             <nav
-              className="inline-flex items-center justify-center gap-2 text-xs sm:text-sm text-slate-500 dark:text-slate-400 mb-6"
+              className={HERO_BREADCRUMB_CLS}
               aria-label="Breadcrumb"
             >
               <Link
@@ -61,7 +62,7 @@ export function SolutionsContent() {
           </Reveal>
 
           <Reveal delay={0.12}>
-            <p className="mt-4 sm:mt-5 text-sm sm:text-base lg:text-lg text-slate-500 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
+            <p className={HERO_SUBTITLE_CLS}>
               {t("solutions.subtitle")}
             </p>
           </Reveal>

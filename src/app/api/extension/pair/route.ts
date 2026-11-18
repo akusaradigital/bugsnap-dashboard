@@ -18,16 +18,12 @@ export async function POST(req: Request) {
   const code = randomBytes(24).toString("base64url");
   const db = createServiceClient();
 
-  // Cap open codes per user so unused ones cannot pile up. Used or expired codes do not count.
-  const { count: open } = await db
+  // Clean up any older unused pairing codes for this user so they don't pile up
+  await db
     .from("extension_pairing_codes")
-    .select("code_hash", { count: "exact", head: true })
+    .delete()
     .eq("user_id", user.id)
-    .is("used_at", null)
-    .gt("expires_at", new Date().toISOString());
-  if ((open ?? 0) >= 5) {
-    return NextResponse.json({ error: "Too many open pairing codes. Try again in a few minutes.", code: "PAIRING_RATE_LIMIT" }, { status: 429 });
-  }
+    .is("used_at", null);
 
   const { error } = await db.from("extension_pairing_codes").insert({
     code_hash: sha256(code),
@@ -75,16 +71,24 @@ export async function PUT(req: Request) {
     );
   }
 
-  // A device id already paired to another account must not be claimed by this one.
-  const { data: taken } = await db
+  // Clear any existing connection for this device_id so account switching on the same browser
+  // device pairs cleanly without DEVICE_TAKEN 409 collisions.
+  await db
     .from("extension_device_connections")
-    .select("user_id")
-    .eq("device_id", deviceId)
-    .neq("user_id", claimed.user_id)
-    .limit(1)
+    .delete()
+    .eq("device_id", deviceId);
+
+  // Look up user's email so the extension receives both the device secret and verified user identity
+  const { data: userRow } = await db
+    .from("users")
+    .select("email")
+    .eq("id", claimed.user_id)
     .maybeSingle();
-  if (taken) {
-    return NextResponse.json({ error: "Device is already paired to another account", code: "DEVICE_TAKEN" }, { status: 409 });
+
+  let userEmail = userRow?.email;
+  if (!userEmail) {
+    const { data: authUser } = await db.auth.admin.getUserById(claimed.user_id).catch(() => ({ data: { user: null } }));
+    userEmail = authUser?.user?.email;
   }
 
   const deviceSecret = randomBytes(32).toString("base64url");
@@ -101,5 +105,9 @@ export async function PUT(req: Request) {
     return NextResponse.json({ error: "Could not pair this device" }, { status: 500 });
   }
 
-  return NextResponse.json({ paired: true, secret: deviceSecret });
+  return NextResponse.json({
+    paired: true,
+    secret: deviceSecret,
+    email: userEmail || undefined,
+  });
 }

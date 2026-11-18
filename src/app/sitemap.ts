@@ -1,5 +1,5 @@
 import { MetadataRoute } from 'next';
-import { getAllSlugs } from '@/content/blog';
+import { blogPosts } from '@/content/blog';
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_API_URL || 'https://bugsnap.akusaraproject.my.id';
@@ -25,18 +25,21 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { path: '/contact',         priority: 0.6, changeFrequency: 'monthly' as const },
     { path: '/privacy',         priority: 0.5, changeFrequency: 'monthly' as const },
     { path: '/terms',           priority: 0.5, changeFrequency: 'monthly' as const },
-    { path: '/login',           priority: 0.4, changeFrequency: 'monthly' as const },
   ];
 
-  const blogSlugs = getAllSlugs().map((slug) => ({
-    path: `/blog/${slug}`,
+  const blogSlugs = blogPosts.map((post) => ({
+    path: `/blog/${post.slug}`,
     priority: 0.7 as const,
     changeFrequency: 'monthly' as const,
+    lastModified: new Date(post.date),
   }));
 
-  return [...routes, ...blogSlugs].map((r) => ({
+  return [
+    ...routes.map((r) => ({ ...r, lastModified: now })),
+    ...blogSlugs,
+  ].map((r) => ({
     url: `${baseUrl}${r.path}`,
-    lastModified: now,
+    lastModified: r.lastModified,
     changeFrequency: r.changeFrequency,
     priority: r.priority,
   }));

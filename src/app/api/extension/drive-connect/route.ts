@@ -15,6 +15,31 @@ function secretMatches(provided: string, expectedHash: string): boolean {
   return a.length === b.length && timingSafeEqual(a, b);
 }
 
+type Db = ReturnType<typeof createServiceClient>;
+
+// The email the extension sends is the BugSnap login. It can also be the Drive account of a different
+// user, so the device secret decides which of the two accounts this device really belongs to.
+async function resolveDeviceOwner(db: Db, email: string, deviceId: string, secret: string) {
+  const [account, drive] = await Promise.all([
+    db.from("users").select("id").eq("email", email).maybeSingle(),
+    db.from("google_drive_connections").select("user_id").eq("google_email", email).maybeSingle(),
+  ]);
+  const candidates = Array.from(new Set([account.data?.id, drive.data?.user_id].filter((id): id is string => Boolean(id))));
+  let paired = false;
+  for (const userId of candidates) {
+    const { data: device } = await db
+      .from("extension_device_connections")
+      .select("extension_secret_hash")
+      .eq("user_id", userId)
+      .eq("device_id", deviceId)
+      .maybeSingle();
+    if (!device) continue;
+    paired = true;
+    if (secretMatches(secret, device.extension_secret_hash)) return { userId, candidates, paired };
+  }
+  return { userId: null, candidates, paired };
+}
+
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
@@ -43,25 +68,13 @@ export async function POST(request: Request) {
     if (email && secret && deviceId) {
       try {
         const db = createServiceClient();
-        const { data: conn } = await db
-          .from("google_drive_connections")
-          .select("user_id")
-          .eq("google_email", email)
-          .maybeSingle();
-        if (conn) {
-          const { data: device } = await db
+        const { userId } = await resolveDeviceOwner(db, email, deviceId, secret);
+        if (userId) {
+          await db
             .from("extension_device_connections")
-            .select("extension_secret_hash")
-            .eq("user_id", conn.user_id)
-            .eq("device_id", deviceId)
-            .maybeSingle();
-          if (device && secretMatches(secret, device.extension_secret_hash)) {
-            await db
-              .from("extension_device_connections")
-              .delete()
-              .eq("user_id", conn.user_id)
-              .eq("device_id", deviceId);
-          }
+            .delete()
+            .eq("user_id", userId)
+            .eq("device_id", deviceId);
         }
       } catch (err) {
         console.warn("[/api/extension/drive-connect] Disconnect revocation error:", err);
@@ -89,13 +102,19 @@ export async function POST(request: Request) {
     }
 
     const db = createServiceClient();
-    const { data: conn, error: connError } = await db
-      .from("google_drive_connections")
-      .select("user_id, refresh_token, google_email")
-      .eq("google_email", email)
-      .maybeSingle();
+    // The device secret is the ONLY credential on this branch - an email alone
+    // is public knowledge. Without this check anyone could POST an email and
+    // receive a live Google Drive access token for that account.
+    const owner = await resolveDeviceOwner(db, email, deviceId, secret);
+    const { data: connections, error: connError } = owner.candidates.length
+      ? await db
+          .from("google_drive_connections")
+          .select("user_id, refresh_token")
+          .in("user_id", owner.userId ? [owner.userId] : owner.candidates)
+      : { data: [], error: null };
+    const usable = (connections ?? []).filter((c) => c.refresh_token);
 
-    if (connError || !conn || !conn.refresh_token) {
+    if (connError || usable.length === 0) {
       return NextResponse.json(
         {
           error: "No Google Drive connection found for this email",
@@ -104,35 +123,14 @@ export async function POST(request: Request) {
         { status: 404 },
       );
     }
-
-    // The device secret is the ONLY credential on this branch - an email alone
-    // is public knowledge. Without this check anyone could POST an email and
-    // receive a live Google Drive access token for that account.
-    const { data: device } = await db
-      .from("extension_device_connections")
-      .select("extension_secret_hash")
-      .eq("user_id", conn.user_id)
-      .eq("device_id", deviceId)
-      .maybeSingle();
-
-    if (!device) {
-      // This device never had a secret issued: the extension must re-run the
-      // code exchange, which is the only flow that proves possession of the
-      // Google account.
-      return NextResponse.json(
-        {
-          error: "Extension is not paired with this connection",
-          code: "RECONNECT_REQUIRED",
-        },
-        { status: 409 },
-      );
+    if (!owner.userId) {
+      // Unpaired device: the extension must re-run the code exchange, the only
+      // flow that proves possession of the Google account.
+      return owner.paired
+        ? NextResponse.json({ error: "Invalid extension secret", code: "RECONNECT_REQUIRED" }, { status: 401 })
+        : NextResponse.json({ error: "Extension is not paired with this connection", code: "RECONNECT_REQUIRED" }, { status: 409 });
     }
-    if (!secretMatches(secret, device.extension_secret_hash)) {
-      return NextResponse.json(
-        { error: "Invalid extension secret", code: "RECONNECT_REQUIRED" },
-        { status: 401 },
-      );
-    }
+    const conn = { user_id: owner.userId };
 
     try {
       const token = await driveAccessToken(conn.user_id);
@@ -145,7 +143,8 @@ export async function POST(request: Request) {
 
       return NextResponse.json({
         connected: true,
-        email: conn.google_email,
+        // Echo the BugSnap login email: the extension keys its session on it, not on the Drive account.
+        email,
         access_token: token,
         secret,
         expires_in: 3000,

@@ -27,6 +27,7 @@ import {
   driveThumbUrl,
   formatDuration,
   getAvatarColor,
+  getCaptureErrorCounts,
   getOwnerInitial,
   timeAgo,
 } from "@/lib/capture-utils";
@@ -308,6 +309,7 @@ function CapturesContent() {
   const [filterStatus, setFilterStatus] = useState(
     () => searchParams.get("status") || "",
   );
+  const [hasErrorsOnly, setHasErrorsOnly] = useState(false);
 
   // Typing must not fire a query per keystroke.
   const [debouncedSearch, setDebouncedSearch] = useState(search.trim());
@@ -464,7 +466,7 @@ function CapturesContent() {
   }, [sortMode, workspaceParam]);
 
   const CAPTURES_COLUMNS =
-    "id, title, type, drive_url, created_at, window_size, workspace_id, folder_name, project_id, source, tag, status, expires_at, password, duration, owner_email, burn_after_read, error_fingerprint";
+    "id, title, type, drive_url, created_at, window_size, workspace_id, folder_name, project_id, source, tag, status, expires_at, password, duration, owner_email, burn_after_read, error_fingerprint, dev_logs";
 
   const loadPage = useCallback(
     async (replace: boolean) => {
@@ -1336,12 +1338,14 @@ function CapturesContent() {
     (showVideo || showScreenshot ? 1 : 0) +
     (filterTag ? 1 : 0) +
     (filterStatus ? 1 : 0) +
+    (hasErrorsOnly ? 1 : 0) +
     (search.trim() ? 1 : 0);
   function clearAllFilters() {
     setShowVideo(false);
     setShowScreenshot(false);
     setFilterTag("");
     setFilterStatus("");
+    setHasErrorsOnly(false);
     setSearch("");
     if (folderParam || projectParam) {
       const url = new URL(window.location.href);
@@ -1356,8 +1360,17 @@ function CapturesContent() {
   // returns one representative capture per distinct error, already ordered.
   // While it is still loading (null) the normal grid stays on screen rather
   // than flashing an empty state.
-  const filteredCaptures =
+  const rawFilteredCaptures =
     sortMode === "frequent" && topErrors !== null ? topErrors : workspaceCaptures;
+
+  const filteredCaptures = useMemo(() => {
+    if (!hasErrorsOnly) return rawFilteredCaptures;
+    return rawFilteredCaptures.filter((c) => {
+      if (c.error_fingerprint) return true;
+      const counts = getCaptureErrorCounts(c.dev_logs);
+      return counts.total > 0;
+    });
+  }, [rawFilteredCaptures, hasErrorsOnly]);
 
   // Type counts are for the whole scope, not the loaded page - a head count is
   // the cheapest way to get that without fetching the rows.
@@ -1391,7 +1404,7 @@ function CapturesContent() {
 
   return (
     <div
-      className="w-full min-w-0 p-3 sm:p-8 max-w-7xl mx-auto"
+      className="w-full min-w-0 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 sm:space-y-8"
       onDragEnter={(e) => {
         e.preventDefault();
         setDragActive(true);
@@ -1452,8 +1465,8 @@ function CapturesContent() {
           </div>
         </div>
       )}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between mb-6 sm:mb-8 gap-4">
-        <h1 className="text-2xl font-bold tracking-tight text-foreground">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">
           {t("cap.title")}
         </h1>
 
@@ -1556,8 +1569,71 @@ function CapturesContent() {
       </div>
 
       {/* Filter & Selection Row - sticky so filters and multi-select actions stay accessible while scrolling */}
-      <div className="relative sm:sticky top-0 z-30 flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 mb-6 pb-4 pt-3 border-b border-border bg-background">
+      <div className="relative sm:sticky top-0 z-30 flex flex-wrap items-center justify-between gap-2.5 sm:gap-3 pb-4 pt-3 border-b border-border bg-background">
         <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          {/* Quick Filter Chips */}
+          <div className="flex items-center gap-1 p-0.5 rounded-lg border border-border bg-subtle">
+            <button
+              type="button"
+              onClick={() => {
+                setHasErrorsOnly(false);
+                setShowVideo(false);
+                setShowScreenshot(false);
+              }}
+              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                !hasErrorsOnly && !showVideo && !showScreenshot
+                  ? "bg-white dark:bg-background text-foreground shadow-xs font-semibold"
+                  : "text-muted hover:text-foreground"
+              }`}
+            >
+              {t("cap.quickAll")}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setHasErrorsOnly((prev) => !prev);
+              }}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                hasErrorsOnly
+                  ? "bg-rose-500 text-white shadow-xs font-semibold"
+                  : "text-muted hover:text-foreground"
+              }`}
+            >
+              <span className={`w-1.5 h-1.5 rounded-full ${hasErrorsOnly ? "bg-white" : "bg-rose-500"}`} />
+              {t("cap.hasErrors")}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setHasErrorsOnly(false);
+                setShowVideo(true);
+                setShowScreenshot(false);
+              }}
+              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                showVideo && !showScreenshot && !hasErrorsOnly
+                  ? "bg-white dark:bg-background text-foreground shadow-xs font-semibold"
+                  : "text-muted hover:text-foreground"
+              }`}
+            >
+              {t("cap.videosOnly")}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setHasErrorsOnly(false);
+                setShowVideo(false);
+                setShowScreenshot(true);
+              }}
+              className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors cursor-pointer ${
+                showScreenshot && !showVideo && !hasErrorsOnly
+                  ? "bg-white dark:bg-background text-foreground shadow-xs font-semibold"
+                  : "text-muted hover:text-foreground"
+              }`}
+            >
+              {t("cap.screenshotsOnly")}
+            </button>
+          </div>
+
           <div ref={typeMenuRef} className="relative min-w-0">
             <button
               onClick={() => setTypeMenuOpen((o) => !o)}
@@ -1650,25 +1726,27 @@ function CapturesContent() {
                   <span className="text-xs text-muted">({videoCount})</span>
                 </label>
 
-                <div className="border-t border-border mt-1 px-3 py-2 flex justify-between">
+                <div className="border-t border-border mt-1 px-3 py-2 flex justify-between items-center">
                   <button
                     onClick={() => {
                       setShowVideo(true);
                       setShowScreenshot(true);
                     }}
-                    className="text-xs text-muted hover:text-foreground transition-colors"
+                    className="text-xs text-muted hover:text-foreground transition-colors cursor-pointer"
                   >
                     {t("cap.selectAll")}
                   </button>
-                  <button
-                    onClick={() => {
-                      setShowVideo(false);
-                      setShowScreenshot(false);
-                    }}
-                    className="text-xs text-muted hover:text-foreground transition-colors"
-                  >
-                    {t("cap.clear")}
-                  </button>
+                  {(showVideo || showScreenshot) && (
+                    <button
+                      onClick={() => {
+                        setShowVideo(false);
+                        setShowScreenshot(false);
+                      }}
+                      className="text-xs font-medium text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 transition-colors cursor-pointer"
+                    >
+                      {t("cap.clear")}
+                    </button>
+                  )}
                 </div>
               </div>
             )}
@@ -1706,6 +1784,7 @@ function CapturesContent() {
                       <label className="block text-[10px] font-medium text-muted mb-1">{t("cap.tagFilter")}</label>
                       <Dropdown
                         variant="field-white"
+                        className="w-full"
                         value={filterTag}
                         onChange={setFilterTag}
                         options={[
@@ -1718,9 +1797,9 @@ function CapturesContent() {
                       <label className="block text-[10px] font-medium text-muted mb-1">{t("cap.statusFilter")}</label>
                       <Dropdown
                         variant="field-white"
+                        className="w-full"
                         value={filterStatus}
                         onChange={setFilterStatus}
-                        align="right"
                         options={[
                           { value: "", label: t("cap.all") },
                           ...STATUS_OPTIONS.map((status) => ({ value: status, label: status })),
@@ -1735,6 +1814,7 @@ function CapturesContent() {
                   </label>
                   <Dropdown
                     variant="field-white"
+                    className="w-full"
                     value={sortMode}
                     onChange={(value) => setSortMode(value === "frequent" ? "frequent" : "newest")}
                     options={[
@@ -1743,6 +1823,21 @@ function CapturesContent() {
                     ]}
                   />
                 </div>
+                {(filterTag || filterStatus || sortMode !== "newest") && (
+                  <div className="border-t border-border pt-2 flex justify-end">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFilterTag("");
+                        setFilterStatus("");
+                        setSortMode("newest");
+                      }}
+                      className="text-xs font-medium text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 transition-colors cursor-pointer"
+                    >
+                      {t("cap.clear")}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
           </div>
@@ -1750,9 +1845,9 @@ function CapturesContent() {
           {activeFilterCount > 0 && (
             <button
               onClick={clearAllFilters}
-              className="flex items-center gap-1 text-xs text-muted hover:text-foreground transition-colors"
+              className="flex items-center gap-1.5 text-xs font-medium text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 transition-colors cursor-pointer"
             >
-              <span className="w-4 h-4 rounded-md bg-[#89BD49] text-white text-[10px] font-bold flex items-center justify-center">
+              <span className="w-4 h-4 rounded-md bg-rose-500 text-white text-[10px] font-bold flex items-center justify-center">
                 {activeFilterCount}
               </span>
               {t("cap.clearFilters")}
@@ -2091,7 +2186,7 @@ function CapturesContent() {
 
       {/* Ghost Cleanup Banner for Missing Drive Files */}
       {allMissingDriveIds.length > 0 && !currentUpload && uploadTasks.length === 0 && (
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/20 px-4 py-3 text-xs text-amber-900 dark:text-amber-200 shadow-sm animate-in fade-in duration-200">
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-200 dark:border-amber-900/50 bg-amber-50 dark:bg-amber-950/20 px-4 py-3 text-xs text-amber-900 dark:text-amber-200 shadow-sm animate-in fade-in duration-200">
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-7 h-7 rounded-lg bg-amber-100 dark:bg-amber-900/40 flex items-center justify-center shrink-0 text-amber-600 dark:text-amber-400">
               <Icon icon="lucide:alert-triangle" className="w-4 h-4 shrink-0" />
@@ -2190,7 +2285,7 @@ function CapturesContent() {
             </div>
             <button
               onClick={clearAllFilters}
-              className="mt-1 px-4 py-2 rounded-lg border border-border bg-subtle text-sm font-semibold text-foreground hover:bg-subtle/80 transition-colors"
+              className="mt-1 px-4 py-2 rounded-lg border border-rose-200 dark:border-rose-900/40 bg-rose-50 dark:bg-rose-950/20 text-sm font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-100 dark:hover:bg-rose-900/30 transition-colors cursor-pointer"
             >
               {t("cap.clearFilters")}
             </button>
@@ -2472,6 +2567,26 @@ function CapturesContent() {
                           {item.status}
                         </span>
                       )}
+                      {(() => {
+                        const errs = getCaptureErrorCounts(item.dev_logs);
+                        if (errs.total === 0) return null;
+                        return (
+                          <>
+                            {errs.consoleErrors > 0 && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-red-500/10 border border-red-500/20 text-[10px] text-red-600 dark:text-red-400 font-medium">
+                                <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                                {t("cap.badgeErrors", { count: errs.consoleErrors })}
+                              </span>
+                            )}
+                            {errs.networkErrors > 0 && (
+                              <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded bg-amber-500/10 border border-amber-500/20 text-[10px] text-amber-600 dark:text-amber-400 font-medium">
+                                <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                                {t("cap.badgeFails", { count: errs.networkErrors })}
+                              </span>
+                            )}
+                          </>
+                        );
+                      })()}
                     </div>
                   </div>
 
@@ -2846,7 +2961,7 @@ function CapturesContent() {
                             "app_only",
                           );
                         }}
-                        className="absolute bottom-2.5 left-2.5 z-20 inline-flex items-center gap-1 rounded-md bg-amber-600/90 hover:bg-amber-700 active:scale-95 backdrop-blur-sm text-white text-[10px] font-semibold px-2 py-0.5 shadow-sm transition-all cursor-pointer"
+                        className="absolute bottom-2.5 left-2.5 z-20 inline-flex items-center gap-1 rounded-md bg-amber-600/90 hover:bg-amber-700 backdrop-blur-sm text-white text-[10px] font-semibold px-2 py-0.5 shadow-sm transition-all cursor-pointer"
                         title={t("cap.driveMissingTooltip")}
                       >
                         <Icon
@@ -2886,6 +3001,32 @@ function CapturesContent() {
                             </span>
                           </span>
                         )}
+                      {(() => {
+                        const errs = getCaptureErrorCounts(item.dev_logs);
+                        if (errs.total === 0) return null;
+                        return (
+                          <div className="mt-1 flex flex-wrap items-center gap-1">
+                            {errs.consoleErrors > 0 && (
+                              <span
+                                className="inline-flex items-center gap-1 rounded bg-red-500/10 px-1.5 py-0.5 text-[10px] font-medium text-red-600 dark:text-red-400 border border-red-500/20"
+                                title={`${errs.consoleErrors} console errors`}
+                              >
+                                <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+                                {t("cap.badgeErrors", { count: errs.consoleErrors })}
+                              </span>
+                            )}
+                            {errs.networkErrors > 0 && (
+                              <span
+                                className="inline-flex items-center gap-1 rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-medium text-amber-600 dark:text-amber-400 border border-amber-500/20"
+                                title={`${errs.networkErrors} network failures`}
+                              >
+                                <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />
+                                {t("cap.badgeFails", { count: errs.networkErrors })}
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })()}
                     </div>
                     <span className="text-muted shrink-0">
                       {timeAgo(item.created_at, t)}
@@ -3251,25 +3392,24 @@ function CapturesContent() {
             aria-label="Close confirmation"
             onClick={() => !deleting && setDeleteRequest(null)}
           />
-          <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6">
-            <div className="mb-4 w-12 h-12 rounded-xl bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800/40 flex items-center justify-center text-red-600 dark:text-red-400">
-              <Icon icon="lucide:trash-2" className="w-6 h-6 shrink-0" />
+          <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl bg-subtle shadow-xl border border-border p-5 sm:p-6">
+            <div className="text-center space-y-1.5 mb-5 pt-1">
+              <h2
+                id="delete-captures-title"
+                className="text-lg font-bold text-foreground"
+              >
+                {deleteRequest.ids.length === 1
+                  ? t("cap.deleteTitleOne")
+                  : t("cap.deleteTitleMany", { count: deleteRequest.ids.length })}
+              </h2>
+              <p className="text-sm text-muted leading-relaxed">
+                {deleteRequest.title ? (
+                  <>{t("cap.deleteWillRemove", { name: deleteRequest.title })}</>
+                ) : (
+                  t("cap.deleteChoose")
+                )}
+              </p>
             </div>
-            <h2
-              id="delete-captures-title"
-              className="text-lg font-bold text-foreground mb-1"
-            >
-              {deleteRequest.ids.length === 1
-                ? t("cap.deleteTitleOne")
-                : t("cap.deleteTitleMany", { count: deleteRequest.ids.length })}
-            </h2>
-            <p className="text-sm text-muted mb-5">
-              {deleteRequest.title ? (
-                <>{t("cap.deleteWillRemove", { name: deleteRequest.title })}</>
-              ) : (
-                t("cap.deleteChoose")
-              )}
-            </p>
 
             <div className="space-y-2">
               <label
@@ -3364,18 +3504,18 @@ function CapturesContent() {
               </div>
             )}
 
-            <div className="flex items-center justify-end gap-3 mt-6 pt-4 border-t border-border">
+            <div className="grid grid-cols-2 gap-3 mt-6 pt-4 border-t border-border">
               <button
                 onClick={() => setDeleteRequest(null)}
                 disabled={deleting}
-                className="px-4 py-2 text-sm font-medium text-foreground hover:bg-subtle rounded-lg disabled:opacity-50 transition-colors"
+                className="w-full py-2.5 px-4 text-xs font-semibold text-foreground border border-border bg-background hover:bg-subtle rounded-xl disabled:opacity-50 transition-colors cursor-pointer text-center inline-flex items-center justify-center select-none"
               >
                 {t("common.cancel")}
               </button>
               <button
                 onClick={submitDelete}
                 disabled={deleting}
-                className="px-4 py-2 rounded-lg bg-red-600 text-white text-sm font-semibold hover:bg-red-700 disabled:opacity-50 transition-colors"
+                className="w-full py-2.5 px-4 rounded-xl bg-red-600 text-white text-xs font-semibold hover:bg-red-700 disabled:opacity-50 transition-colors cursor-pointer text-center inline-flex items-center justify-center shadow-xs select-none"
               >
                 {deleting
                   ? deleteProgress && deleteProgress.total > 50
@@ -3425,7 +3565,7 @@ function CapturesContent() {
             <button
               type="button"
               onClick={clearSelection}
-              className="text-xs text-muted hover:text-foreground underline underline-offset-2 transition-colors cursor-pointer whitespace-nowrap"
+              className="text-xs font-medium text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 underline underline-offset-2 transition-colors cursor-pointer whitespace-nowrap"
               title={t("cap.deselect")}
             >
               {t("cap.deselect")}

@@ -5,7 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const SRC_DIR = path.resolve(__dirname, "../src");
+const SRC_DIR = path.resolve(__dirname, "../../src");
 
 function walkDir(dir, fileList = []) {
   const files = fs.readdirSync(dir);

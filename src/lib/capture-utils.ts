@@ -119,3 +119,181 @@ export function formatBytes(bytes: number, decimals = 1): string {
   const i = Math.floor(Math.log(bytes) / Math.log(k));
   return `${parseFloat((bytes / Math.pow(k, i)).toFixed(decimals))} ${sizes[i]}`;
 }
+
+export interface CaptureErrorCounts {
+  consoleErrors: number;
+  networkErrors: number;
+  hasErrors: boolean;
+  total: number;
+}
+
+export function getCaptureErrorCounts(dev_logs: unknown): CaptureErrorCounts {
+  if (!dev_logs || typeof dev_logs !== "object") {
+    return { consoleErrors: 0, networkErrors: 0, hasErrors: false, total: 0 };
+  }
+
+  let consoleErrors = 0;
+  let networkErrors = 0;
+
+  const logs = dev_logs as Record<string, unknown>;
+
+  // Structured { console: [...], network: [...] }
+  if (Array.isArray(logs.console)) {
+    for (const item of logs.console) {
+      if (item && typeof item === "object" && (item as { level?: string }).level === "error") {
+        consoleErrors += Number((item as { count?: number }).count || 1);
+      }
+    }
+  }
+
+  if (Array.isArray(logs.network)) {
+    for (const item of logs.network) {
+      if (item && typeof item === "object") {
+        const net = item as { status?: number; level?: string; count?: number };
+        if ((typeof net.status === "number" && net.status >= 400) || net.level === "error") {
+          networkErrors += Number(net.count || 1);
+        }
+      }
+    }
+  }
+
+  // Flat array of logs [{ type: 'console', level: 'error' }, ...]
+  if (Array.isArray(dev_logs)) {
+    for (const item of dev_logs) {
+      if (item && typeof item === "object") {
+        const entry = item as { type?: string; level?: string; status?: number; count?: number };
+        if (entry.type === "console" && entry.level === "error") {
+          consoleErrors += Number(entry.count || 1);
+        } else if (entry.type === "network" && ((entry.status && entry.status >= 400) || entry.level === "error")) {
+          networkErrors += Number(entry.count || 1);
+        }
+      }
+    }
+  }
+
+  // Summary object fallback { errors: number }
+  if (consoleErrors === 0 && networkErrors === 0 && typeof logs.errors === "number") {
+    consoleErrors = logs.errors;
+  }
+
+  const total = consoleErrors + networkErrors;
+  return {
+    consoleErrors,
+    networkErrors,
+    hasErrors: total > 0,
+    total,
+  };
+}
+
+export function generateBugReport(
+  capture: {
+    title?: string;
+    site_url?: string | null;
+    browser?: string | null;
+    os?: string | null;
+    window_size?: string | null;
+    description?: string | null;
+    dev_logs?: unknown;
+  },
+  format: "markdown" | "jira" | "linear" | "text",
+  shareUrl: string,
+): string {
+  const title = capture.title || "Bug Report";
+  const siteUrl = capture.site_url || "N/A";
+  const browser = capture.browser || "N/A";
+  const os = capture.os || "N/A";
+  const windowSize = capture.window_size || "N/A";
+  const desc = capture.description ? capture.description.trim() : "";
+
+  const errorCounts = getCaptureErrorCounts(capture.dev_logs);
+  const consoleErrors: string[] = [];
+  const networkErrors: string[] = [];
+
+  if (capture.dev_logs && typeof capture.dev_logs === "object") {
+    const logs = capture.dev_logs as Record<string, unknown>;
+    if (Array.isArray(logs.console)) {
+      for (const item of logs.console) {
+        if (item && typeof item === "object" && (item as { level?: string }).level === "error") {
+          const msg = (item as { message?: string; text?: string }).message || (item as { text?: string }).text || "Unknown error";
+          consoleErrors.push(msg.trim().slice(0, 160));
+        }
+      }
+    }
+    if (Array.isArray(logs.network)) {
+      for (const item of logs.network) {
+        if (item && typeof item === "object") {
+          const net = item as { method?: string; url?: string; status?: number; level?: string };
+          if ((typeof net.status === "number" && net.status >= 400) || net.level === "error") {
+            networkErrors.push(`${net.method || "GET"} ${net.url || ""} (${net.status || "FAIL"})`.trim().slice(0, 160));
+          }
+        }
+      }
+    }
+  }
+
+  if (format === "jira") {
+    let out = `h3. Bug Report: ${title}\n\n`;
+    if (desc) out += `*Description:* ${desc}\n\n`;
+    out += `*Environment:*\n`;
+    out += `* *Page URL:* ${siteUrl}\n`;
+    out += `* *Browser:* ${browser}\n`;
+    out += `* *OS:* ${os}\n`;
+    out += `* *Resolution:* ${windowSize}\n`;
+    out += `* *BugSnap Recording:* [View Capture|${shareUrl}]\n\n`;
+
+    if (consoleErrors.length > 0) {
+      out += `h4. Console Errors (${consoleErrors.length}):\n`;
+      consoleErrors.slice(0, 5).forEach((err) => {
+        out += `* {noformat}${err}{noformat}\n`;
+      });
+      out += `\n`;
+    }
+
+    if (networkErrors.length > 0) {
+      out += `h4. Failed Network Requests (${networkErrors.length}):\n`;
+      networkErrors.slice(0, 5).forEach((net) => {
+        out += `* {noformat}${net}{noformat}\n`;
+      });
+      out += `\n`;
+    }
+
+    return out.trim();
+  }
+
+  if (format === "text") {
+    let out = `[BUG REPORT] ${title}\n`;
+    if (desc) out += `Description: ${desc}\n`;
+    out += `Page URL: ${siteUrl}\n`;
+    out += `Browser: ${browser} | OS: ${os} | Size: ${windowSize}\n`;
+    out += `Capture Link: ${shareUrl}\n`;
+    if (errorCounts.consoleErrors > 0) out += `Console Errors: ${errorCounts.consoleErrors}\n`;
+    if (errorCounts.networkErrors > 0) out += `Network Failures: ${errorCounts.networkErrors}\n`;
+    return out.trim();
+  }
+
+  // Default: Markdown (compatible with GitHub & Linear)
+  let md = `### 🐛 Bug: ${title}\n\n`;
+  if (desc) md += `> ${desc}\n\n`;
+  md += `**Environment:**\n`;
+  md += `- **URL**: ${siteUrl}\n`;
+  md += `- **Browser / OS**: ${browser} on ${os} (${windowSize})\n`;
+  md += `- **Interactive Replay**: [View BugSnap Capture](${shareUrl})\n\n`;
+
+  if (consoleErrors.length > 0) {
+    md += `#### 🔴 Console Errors (${consoleErrors.length}):\n`;
+    consoleErrors.slice(0, 5).forEach((err) => {
+      md += `- \`${err}\`\n`;
+    });
+    md += `\n`;
+  }
+
+  if (networkErrors.length > 0) {
+    md += `#### 🟠 Failed Network Requests (${networkErrors.length}):\n`;
+    networkErrors.slice(0, 5).forEach((net) => {
+      md += `- \`${net}\`\n`;
+    });
+    md += `\n`;
+  }
+
+  return md.trim();
+}

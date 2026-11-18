@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 // Wrapped as (select auth.uid()) it becomes an InitPlan, evaluated once per
 // statement. Migration 20260928120000 fixed 27 policies; this guards the
 // migration history so a future one cannot reintroduce the bare form.
-const MIGRATIONS = new URL('../supabase/migrations/', import.meta.url);
+const MIGRATIONS = new URL('../../supabase/migrations/', import.meta.url);
 
 const policyBodies = (sql) =>
   [...sql.matchAll(/CREATE\s+POLICY[\s\S]*?;/gi)].map((m) => m[0]);

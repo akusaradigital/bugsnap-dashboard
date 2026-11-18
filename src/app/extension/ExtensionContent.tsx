@@ -7,6 +7,7 @@ import { SiteNavbar } from "@/components/site/SiteNavbar";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { Icon } from "@/lib/iconify";
 import { CHROME_STORE_URL, FIREFOX_STORE_URL } from "@/lib/constants";
+import { HERO_SUBTITLE_CLS } from "@/lib/heroStyles";
 
 type BrowserType = "chrome" | "firefox";
 
@@ -144,7 +145,7 @@ export function ExtensionContent() {
             </h1>
 
             {/* Subtitle */}
-            <p className="text-sm sm:text-base text-site-text-2 leading-relaxed max-w-2xl mx-auto">
+            <p className={HERO_SUBTITLE_CLS}>
               {t("extension.subtitle")}
             </p>
 

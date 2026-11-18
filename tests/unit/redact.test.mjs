@@ -11,7 +11,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 // -----------------------------------------------------------------------------
 // Dashboard redact.ts suite (server-side LLM ingestion & integration scrubbing)
 // -----------------------------------------------------------------------------
-const dashRedactPath = path.resolve(here, "../src/lib/redact.ts");
+const dashRedactPath = path.resolve(here, "../../src/lib/redact.ts");
 const dashSrc = readFileSync(dashRedactPath, "utf8");
 const transpiled = ts.transpileModule(dashSrc, {
   compilerOptions: { module: ts.ModuleKind.CommonJS },
@@ -174,7 +174,7 @@ test("dashboard redact.ts: sanitizeErrorMessage scrubs db connection strings, in
 // -----------------------------------------------------------------------------
 // Sibling extension redact.js suite (when extension is present)
 // -----------------------------------------------------------------------------
-const extDir = path.resolve(here, "../../bugsnap-extension");
+const extDir = path.resolve(here, "../../../bugsnap-extension");
 const hasExtension = existsSync(path.join(extDir, "redact.js"));
 
 if (!hasExtension) {

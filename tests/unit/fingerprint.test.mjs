@@ -10,7 +10,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 
 // Transpile and run the real module rather than restating its logic here, so a
 // change to fingerprint.ts cannot pass a stale copy of itself.
-const src = readFileSync(path.resolve(here, "../src/lib/fingerprint.ts"), "utf8");
+const src = readFileSync(path.resolve(here, "../../src/lib/fingerprint.ts"), "utf8");
 const transpiled = ts.transpileModule(src, {
   compilerOptions: { module: ts.ModuleKind.CommonJS },
 }).outputText;

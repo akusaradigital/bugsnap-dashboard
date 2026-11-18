@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Icon } from "@/lib/iconify";
+import { Icon, withAssetVersion } from "@/lib/iconify";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
 import { validateEmail } from "@/lib/email-validator";
@@ -58,6 +58,16 @@ export default function FloatingSupport() {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [honeypot, setHoneypot] = useState("");
+
+  // Auto-fill user email from active session if available
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      const uEmail = data.session?.user?.email;
+      if (uEmail) {
+        setEmail((prev) => prev || uEmail);
+      }
+    });
+  }, []);
 
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -315,19 +325,28 @@ export default function FloatingSupport() {
 
       {/* Support Pop-up Modal Card */}
       {isOpen && (
-        <div className={`absolute bottom-[calc(100%+0.75rem)] right-0 w-[min(400px,calc(100vw-2rem))] min-w-0 max-h-[min(640px,calc(100vh-5rem))] flex flex-col overflow-hidden shadow-2xl transition-all duration-200 ${supportView === "welcome" ? "rounded-2xl bg-[linear-gradient(145deg,#2563EB_0%,#1D4ED8_100%)] p-2.5" : "rounded-2xl border border-slate-200 bg-white dark:border-zinc-800 dark:bg-zinc-950"}`}>
+        <div className="absolute bottom-[calc(100%+0.75rem)] right-0 w-[min(390px,calc(100vw-2rem))] min-w-0 max-h-[min(650px,calc(100vh-5rem))] flex flex-col overflow-hidden shadow-2xl transition-all duration-200 rounded-2xl border border-slate-200/90 bg-white dark:border-zinc-800 dark:bg-zinc-950">
+          {/* Header for Form View */}
           {supportView === "form" && (
-            <div className="relative flex items-center justify-between border-b border-slate-200 bg-white px-5 py-4 dark:border-zinc-800 dark:bg-zinc-950">
-              <div className="flex min-w-0 items-center gap-3 pl-1">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#2563EB]/10 text-[#2563EB] dark:bg-blue-500/15 dark:text-blue-400">
-                  <Icon icon="lucide:message-square" className="h-5 w-5" />
-                </span>
+            <div className="relative flex items-center justify-between border-b border-slate-200/80 bg-white px-4 py-3.5 dark:border-zinc-800 dark:bg-zinc-950 shrink-0">
+              <div className="flex min-w-0 items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setSupportView("welcome")}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-800 dark:hover:text-white transition-colors"
+                  title={t("support.back")}
+                  aria-label={t("support.back")}
+                >
+                  <Icon icon="lucide:arrow-left" className="h-4 w-4" />
+                </button>
                 <div className="min-w-0">
                   <div className="flex items-center gap-2">
-                    <h3 className="truncate text-sm font-bold leading-tight text-slate-950 dark:text-white">{t("support.title")}</h3>
+                    <h3 className="truncate text-sm font-bold leading-tight text-slate-950 dark:text-white">
+                      {t("support.title")}
+                    </h3>
                     <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-[#89BD49]" aria-label={t("support.onlineLabel")} />
                   </div>
-                  <p className="mt-1 truncate text-[11px] leading-tight text-slate-500 dark:text-zinc-400">
+                  <p className="truncate text-[11px] leading-tight text-slate-500 dark:text-zinc-400">
                     {t("support.subtitle")}
                   </p>
                 </div>
@@ -335,7 +354,7 @@ export default function FloatingSupport() {
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="ml-3 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-800 dark:hover:text-white"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-zinc-800 dark:hover:text-white transition-colors"
                 aria-label={t("support.close")}
               >
                 <Icon icon="lucide:x" className="h-4 w-4" />
@@ -343,43 +362,155 @@ export default function FloatingSupport() {
             </div>
           )}
 
-          <div className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-5 py-5 text-slate-800 dark:text-zinc-200 sm:px-6 sm:py-6">
-            {supportView === "welcome" ? (
-              <div className="-mx-5 -my-5 flex min-h-[380px] flex-col justify-between rounded-xl bg-slate-50 p-5 sm:-mx-6 sm:-my-6 sm:p-6 dark:bg-zinc-950">
-                <div>
-                  <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-full bg-white text-xl shadow-sm dark:bg-zinc-900" aria-hidden="true">
-                    👋
-                  </div>
-                  <h4 className="text-xl font-bold tracking-tight text-slate-950 dark:text-white">
+          {/* Welcome Screen Top Hero Banner */}
+          {supportView === "welcome" && (
+            <div className="relative overflow-hidden bg-gradient-to-br from-blue-50/90 via-sky-50 to-blue-100/40 dark:from-blue-950/40 dark:via-zinc-900 dark:to-zinc-900 border-b border-blue-100/70 dark:border-zinc-800/80 px-4 pt-3.5 pb-4 shrink-0">
+              {/* Decorative background: dot grid + wave shape clipped to header */}
+              <div className="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
+                <div
+                  className="absolute inset-y-0 left-1/4 w-32 opacity-25 dark:opacity-10"
+                  style={{
+                    backgroundImage: "radial-gradient(circle, #2563EB 1px, transparent 1px)",
+                    backgroundSize: "10px 10px",
+                  }}
+                />
+                <svg
+                  className="absolute inset-0 w-full h-full"
+                  viewBox="0 0 400 120"
+                  preserveAspectRatio="none"
+                  fill="none"
+                >
+                  <path d="M220 0 C 280 40, 260 90, 320 120 L400 120 L400 0 Z" fill="#93C5FD" fillOpacity="0.4" />
+                  <path d="M270 0 C 330 35, 310 95, 360 120 L400 120 L400 0 Z" fill="#60A5FA" fillOpacity="0.3" />
+                  <path d="M320 0 C 360 30, 350 100, 390 120 L400 120 L400 0 Z" fill="#3B82F6" fillOpacity="0.25" />
+                </svg>
+              </div>
+
+              {/* Top bar with Status & Close button */}
+              <div className="relative z-10 flex items-center justify-between">
+                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/80 dark:bg-zinc-800/80 backdrop-blur-xs border border-blue-200/50 dark:border-zinc-700/60 shadow-2xs">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#89BD49] opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-[#89BD49]" />
+                  </span>
+                  <span className="text-[11px] font-bold text-slate-800 dark:text-zinc-200 tracking-tight">
+                    BugSnap Support • {t("support.onlineLabel")}
+                  </span>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setIsOpen(false)}
+                  className="flex h-7 w-7 items-center justify-center rounded-full bg-white/80 dark:bg-zinc-800/80 hover:bg-white dark:hover:bg-zinc-700 text-slate-400 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-white border border-slate-200/60 dark:border-zinc-700/60 transition-colors shadow-2xs"
+                  aria-label={t("support.close")}
+                >
+                  <Icon icon="lucide:x" className="h-3.5 w-3.5" />
+                </button>
+              </div>
+
+              {/* Hero presentation with 3D illustration */}
+              <div className="relative z-10 flex items-center gap-3.5 mt-3.5">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={withAssetVersion("/illustrations/support-headset.png")}
+                  alt="Customer Support"
+                  className="w-16 h-16 sm:w-18 sm:h-18 object-contain shrink-0 drop-shadow-sm select-none"
+                />
+                <div className="min-w-0">
+                  <h4 className="text-base sm:text-lg font-bold tracking-tight text-slate-950 dark:text-white">
                     {t("support.welcomeTitle")}
                   </h4>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-500 dark:text-zinc-400">
+                  <p className="mt-0.5 text-xs text-slate-600 dark:text-zinc-400 leading-snug">
                     {t("support.welcomeDesc")}
                   </p>
                 </div>
-                <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_2px_4px_rgba(15,23,42,0.08)] dark:border-zinc-800 dark:bg-zinc-900">
+              </div>
+            </div>
+          )}
+
+          {/* Body Content */}
+          <div className="min-w-0 flex-1 overflow-x-hidden overflow-y-auto px-4 py-4 text-slate-800 dark:text-zinc-200 sm:px-5 sm:py-5">
+            {supportView === "welcome" ? (
+              <div className="flex flex-col gap-3.5">
+                {/* Online Card Banner */}
+                <div className="rounded-xl border border-blue-100 dark:border-blue-900/40 bg-gradient-to-br from-blue-50/60 via-white to-sky-50/30 dark:from-zinc-900 dark:to-zinc-900/60 p-3.5 shadow-2xs">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <h5 className="text-sm font-bold text-slate-950 dark:text-white">{t("support.onlineTitle")}</h5>
-                      <p className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-zinc-400">{t("support.onlineDesc")}</p>
+                      <div className="flex items-center gap-1.5">
+                        <Icon icon="lucide:zap" className="w-3.5 h-3.5 text-amber-500 shrink-0" />
+                        <h5 className="text-xs font-bold text-slate-900 dark:text-white">{t("support.onlineTitle")}</h5>
+                      </div>
+                      <p className="mt-1 text-[11px] text-slate-500 dark:text-zinc-400 leading-relaxed">
+                        {t("support.onlineDesc")}
+                      </p>
                     </div>
-                    <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-[#89BD49]" aria-label={t("support.onlineLabel")} />
                   </div>
                   <button
                     type="button"
-                    onClick={() => setSupportView("form")}
-                    className="mt-3 inline-flex items-center gap-1.5 text-sm font-semibold text-[#2563EB] transition-colors hover:text-[#1D4ED8] dark:text-blue-400"
+                    onClick={() => {
+                      setCategory("bug");
+                      setSupportView("form");
+                    }}
+                    className="mt-3 w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold shadow-xs shadow-[#2563EB]/20 transition-all"
                   >
-                    {t("support.startConversation")}
-                    <Icon icon="lucide:arrow-right" className="h-3.5 w-3.5" />
+                    <span>{t("support.startConversation")}</span>
+                    <Icon icon="lucide:arrow-right" className="h-3.5 w-3.5 brightness-0 invert" />
                   </button>
+                </div>
+
+                {/* Quick Topic Shortcuts */}
+                <div className="space-y-1.5">
+                  <span className="block text-[10px] font-bold uppercase tracking-wider text-slate-400 dark:text-zinc-500 px-0.5">
+                    {t("support.topics")}
+                  </span>
+                  <div className="grid grid-cols-1 gap-1.5">
+                    {categories.map((cat) => (
+                      <button
+                        key={cat.id}
+                        type="button"
+                        onClick={() => {
+                          setCategory(cat.id);
+                          setSupportView("form");
+                        }}
+                        className="w-full flex items-center justify-between p-2.5 rounded-xl border border-slate-100 dark:border-zinc-800/80 bg-slate-50/60 dark:bg-zinc-900/40 hover:bg-white dark:hover:bg-zinc-900 hover:border-blue-200 dark:hover:border-blue-800/60 hover:shadow-xs transition-all group text-left"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-white dark:bg-zinc-800 border border-slate-200/60 dark:border-zinc-700/60 text-[#2563EB] dark:text-[#3B82F6] shadow-2xs group-hover:scale-105 transition-transform">
+                            <Icon icon={cat.icon} className="h-4 w-4" />
+                          </span>
+                          <div className="min-w-0">
+                            <div className="text-xs font-bold text-slate-800 dark:text-zinc-200 group-hover:text-[#2563EB] dark:group-hover:text-[#3B82F6] transition-colors truncate">
+                              {cat.label}
+                            </div>
+                            <div className="text-[11px] text-slate-500 dark:text-zinc-400 truncate">
+                              {cat.desc}
+                            </div>
+                          </div>
+                        </div>
+                        <Icon icon="lucide:chevron-right" className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#2563EB] group-hover:translate-x-0.5 transition-all shrink-0 ml-2" />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Direct email link */}
+                <div className="pt-1.5 text-center border-t border-slate-100 dark:border-zinc-800/80">
+                  <a
+                    href="mailto:support@akusaradigital.com"
+                    className="text-[11px] text-slate-500 dark:text-zinc-400 hover:text-[#2563EB] dark:hover:text-[#3B82F6] transition-colors"
+                  >
+                    Direct: <span className="font-semibold underline">support@akusaradigital.com</span>
+                  </a>
                 </div>
               </div>
             ) : success ? (
-              <div className="flex flex-col items-center justify-center py-6 text-center space-y-4">
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400 text-2xl">
-                  <Icon icon="lucide:check" className="h-7 w-7" />
-                </div>
+              <div className="flex flex-col items-center justify-center py-5 text-center space-y-4">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={withAssetVersion("/illustrations/contact-email.png")}
+                  alt="Email Sent"
+                  className="w-20 h-auto object-contain drop-shadow-sm select-none"
+                />
                 <div>
                   <h4 className="text-base font-bold text-slate-950 dark:text-white">
                     {t("support.successTitle")}
@@ -389,7 +520,7 @@ export default function FloatingSupport() {
                   </p>
                 </div>
 
-                <div className="flex flex-col gap-2 w-full pt-2">
+                <div className="flex flex-col gap-2 w-full pt-1">
                   {mailtoBackup && (
                     <a
                       href={mailtoBackup}
@@ -401,14 +532,14 @@ export default function FloatingSupport() {
                   <button
                     type="button"
                     onClick={handleReset}
-                    className="w-full rounded-lg bg-[#89BD49] hover:bg-[#6B9A35] text-white text-xs font-semibold py-2.5 transition-colors shadow-sm"
+                    className="w-full rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold py-2.5 transition-colors shadow-xs shadow-[#2563EB]/25"
                   >
                     {t("support.sendAnother")}
                   </button>
                 </div>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="min-w-0 space-y-4">
+              <form onSubmit={handleSubmit} className="min-w-0 space-y-3.5">
                 {/* Anti-spam Honeypot (hidden from human users, traps automated scrapers) */}
                 <div className="absolute -left-[9999px] top-0 opacity-0 pointer-events-none" aria-hidden="true">
                   <input
@@ -443,7 +574,6 @@ export default function FloatingSupport() {
                           <Icon
                             icon={cat.icon}
                             className="w-3.5 h-3.5 shrink-0 text-[#2563EB] dark:text-[#3B82F6]"
-                            style={{ filter: "brightness(0) saturate(100%) invert(35%) sepia(98%) saturate(1685%) hue-rotate(205deg) brightness(94%) contrast(94%)" }}
                             aria-hidden="true"
                           />
                           <span className="truncate">{cat.label}</span>
@@ -472,7 +602,7 @@ export default function FloatingSupport() {
                       if (errorMessage) setErrorMessage(null);
                     }}
                     placeholder={t("support.emailPlaceholder")}
-                    className="block w-full min-w-0 max-w-full text-xs rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-[#2563EB] transition-colors"
+                    className="block w-full min-w-0 max-w-full text-xs rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/60 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10 transition-colors"
                   />
                 </div>
 
@@ -486,7 +616,7 @@ export default function FloatingSupport() {
                     value={subject}
                     onChange={(e) => setSubject(e.target.value)}
                     placeholder={activeCategoryMeta.subjectPlaceholder}
-                    className="block w-full min-w-0 max-w-full text-xs rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-[#2563EB] transition-colors"
+                    className="block w-full min-w-0 max-w-full text-xs rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/60 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10 transition-colors"
                   />
                 </div>
 
@@ -504,7 +634,7 @@ export default function FloatingSupport() {
                       if (errorMessage) setErrorMessage(null);
                     }}
                     placeholder={activeCategoryMeta.placeholder}
-                    className="block w-full min-w-0 max-w-full text-xs rounded-lg border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-[#2563EB] transition-colors resize-none leading-relaxed"
+                    className="block w-full min-w-0 max-w-full text-xs rounded-xl border border-slate-200 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-900/60 px-3 py-2 text-slate-900 dark:text-white outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/10 transition-colors resize-none leading-relaxed"
                   />
                 </div>
 
@@ -514,12 +644,12 @@ export default function FloatingSupport() {
                   </div>
                 )}
 
-                {/* Submit Button - Brand Green */}
+                {/* Submit Button */}
                 <div className="pt-1">
                   <button
                     type="submit"
                     disabled={submitting || !email.trim() || !message.trim()}
-                    className="w-full flex items-center justify-center gap-2 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white text-xs font-bold py-2.5 transition-colors shadow-sm"
+                    className="w-full flex items-center justify-center gap-2 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] disabled:opacity-50 text-white text-xs font-bold py-2.5 transition-all shadow-sm shadow-[#2563EB]/25"
                   >
                     {submitting ? (
                       <>
@@ -527,11 +657,13 @@ export default function FloatingSupport() {
                         <span>{t("support.sending")}</span>
                       </>
                     ) : (
-                      <span>{t("support.sendBtn")}</span>
+                      <>
+                        <span>{t("support.sendBtn")}</span>
+                        <Icon icon="lucide:arrow-right" className="h-3.5 w-3.5 brightness-0 invert" />
+                      </>
                     )}
                   </button>
                 </div>
-
               </form>
             )}
           </div>
@@ -545,29 +677,43 @@ export default function FloatingSupport() {
             setIsOpen(true);
             dismissPrompt();
           }}
-          className="absolute bottom-[calc(100%+0.75rem)] right-0 mb-0 flex items-center gap-2.5 rounded-xl border border-slate-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 px-3.5 py-2.5 shadow-xl animate-in fade-in slide-in-from-bottom-2 duration-300 text-xs font-semibold text-slate-800 dark:text-zinc-100 cursor-pointer hover:border-[#2563EB] dark:hover:border-[#2563EB] transition-all group w-[min(280px,calc(100vw-2rem))] z-50"
+          className="absolute bottom-[calc(100%+0.85rem)] right-0 flex items-center gap-3 rounded-2xl border border-slate-200/90 dark:border-zinc-800 bg-white dark:bg-zinc-900 p-2.5 pl-3 shadow-xl hover:shadow-2xl animate-in fade-in slide-in-from-bottom-2 duration-300 text-xs font-semibold text-slate-800 dark:text-zinc-100 cursor-pointer hover:border-[#2563EB]/60 dark:hover:border-[#2563EB]/60 transition-all group w-[min(300px,calc(100vw-2rem))] z-50 after:content-[''] after:absolute after:-bottom-1.5 after:right-6 after:w-3 after:h-3 after:bg-white dark:after:bg-zinc-900 after:rotate-45 after:border-b after:border-r after:border-slate-200/90 dark:after:border-zinc-800"
         >
-          <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#2563EB]/15 text-[#2563EB] dark:text-[#3B82F6] text-sm">
-            <Icon icon="lucide:hand" className="w-3.5 h-3.5" />
-          </span>
-          <div className="flex-1 min-w-0">
-            <p className="text-[12px] font-bold leading-tight group-hover:text-[#2563EB] dark:group-hover:text-[#3B82F6] transition-colors">
+          <div className="relative shrink-0 flex items-center justify-center w-10 h-10 rounded-full bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-blue-950/80 dark:to-zinc-800 border border-blue-200/60 dark:border-blue-900/50 shadow-2xs">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src={withAssetVersion("/illustrations/support-headset.png")}
+              alt=""
+              className="w-8 h-8 object-contain drop-shadow-xs select-none"
+            />
+            <span className="absolute -bottom-0.5 -right-0.5 flex h-2.5 w-2.5">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#89BD49] opacity-75" />
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#89BD49] ring-2 ring-white dark:ring-zinc-900" />
+            </span>
+          </div>
+          <div className="flex-1 min-w-0 pr-1">
+            <div className="flex items-center gap-1.5 mb-0.5">
+              <span className="text-[11px] font-bold text-slate-900 dark:text-white tracking-tight">
+                BugSnap Support
+              </span>
+            </div>
+            <p className="text-[12px] font-medium leading-snug text-slate-600 dark:text-zinc-300 group-hover:text-[#2563EB] dark:group-hover:text-[#3B82F6] transition-colors line-clamp-2">
               {t("support.helpPrompt")}
             </p>
           </div>
           <button
             type="button"
             onClick={dismissPrompt}
-            className="text-slate-500 hover:text-slate-700 dark:text-zinc-400 dark:hover:text-zinc-200 p-1 rounded-md transition-colors"
+            className="self-start text-slate-400 hover:text-slate-600 dark:text-zinc-500 dark:hover:text-zinc-200 p-1 -mr-0.5 -mt-0.5 rounded-lg hover:bg-slate-100 dark:hover:bg-zinc-800 transition-colors"
             title={t("support.close")}
             aria-label={t("support.close")}
           >
-            <Icon icon="lucide:x" className="w-3 h-3" />
+            <Icon icon="lucide:x" className="w-3.5 h-3.5" />
           </button>
         </div>
       )}
 
-      {/* Floating trigger: compact when closed, clear action label. */}
+      {/* Floating trigger: compact when closed, circular white close button when open. */}
       <button
         type="button"
         onClick={() => {
@@ -579,21 +725,26 @@ export default function FloatingSupport() {
           }
           if (showPrompt) dismissPrompt();
         }}
-        className={`relative flex items-center gap-2 px-3.5 sm:px-4 h-12 rounded-full shadow-lg transition-all hover:-translate-y-0.5 active:scale-95 border border-white/20 ${
+        className={`relative flex items-center justify-center transition-all duration-200 ${
           isOpen
-            ? "bg-slate-900 dark:bg-zinc-800 text-white"
-            : "bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-[#2563EB]/25"
+            ? "w-12 h-12 rounded-full p-0 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-200 border border-slate-200/90 dark:border-zinc-800 shadow-xl hover:bg-slate-50 dark:hover:bg-zinc-800"
+            : "gap-2.5 pl-2.5 pr-4 h-12 rounded-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-lg shadow-[#2563EB]/30 hover:shadow-[#2563EB]/45 hover:-translate-y-0.5 border border-white/20 active:translate-y-0"
         }`}
         title={isOpen ? t("support.close") : t("support.btn")}
         aria-label={t("support.btn")}
       >
         {isOpen ? (
-          <Icon icon="custom:x-white" className="h-5 w-5" />
+          <Icon icon="lucide:x" className="h-5 w-5" />
         ) : (
           <>
-            <span className="relative flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-white text-[#2563EB]" aria-hidden="true">
-              <Icon icon="lucide:message-square" className="h-3.5 w-3.5" />
-              <span className="absolute -right-0.5 -top-0.5 h-2 w-2 rounded-full bg-[#89BD49] ring-2 ring-white" />
+            <span className="relative flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/95 dark:bg-zinc-900 p-0.5 shadow-xs" aria-hidden="true">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={withAssetVersion("/illustrations/support-headset.png")}
+                alt=""
+                className="w-5.5 h-5.5 object-contain select-none"
+              />
+              <span className="absolute -right-0.5 -bottom-0.5 h-2 w-2 rounded-full bg-[#89BD49] ring-2 ring-white dark:ring-zinc-900" />
             </span>
             <span className="hidden sm:inline text-sm font-bold tracking-tight">
               {t("support.btn")}

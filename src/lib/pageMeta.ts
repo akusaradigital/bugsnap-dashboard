@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
-const SITE_URL = "https://bugsnap.akusaraproject.my.id";
-const OG_IMAGE = { url: `${SITE_URL}/bugsnap-full-day.png`, width: 1200, height: 1200, alt: "BugSnap - From Click to Fix" };
+const SITE_URL = process.env.NEXT_PUBLIC_APP_URL || "https://bugsnap.akusaraproject.my.id";
+const OG_IMAGE = { url: `${SITE_URL}/opengraph-image.png`, width: 1200, height: 630, alt: "BugSnap - From Click to Fix" };
 
 /** Build page-level metadata with proper OG/Twitter cards. */
 export function pageMeta(opts: {
@@ -25,7 +25,7 @@ export function pageMeta(opts: {
       card: "summary_large_image",
       title: opts.title,
       description: opts.description,
-      images: ["/opengraph-image.png"],
+      images: [`${SITE_URL}/twitter-image.png`],
     },
   };
 }

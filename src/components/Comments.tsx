@@ -292,7 +292,7 @@ function Comments({
     let timer: ReturnType<typeof setInterval> | null = null;
 
     // Refetch the thread: first load + a 30s poll while the tab is open.
-    // The 30s poll replaces the Realtime postgres_changes channel - free-tier
+    // The 30s poll replaces the Realtime postgres_changes channel (tier optimization)
     // Realtime caps at 200 concurrent connections, and one channel per video
     // tab exhausts it (T-022). New comments appear within 30s, which is
     // ample for a comment thread.

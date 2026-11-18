@@ -130,6 +130,8 @@ function MediaViewer({
 
   // Audio and PiP states
   const [volumeState, setVolumeState] = useState(getSavedVolume);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const shortcutsRef = useRef<HTMLDivElement>(null);
   const [isPip, setIsPip] = useState(false);
   const isPipSupported =
     typeof document !== "undefined" &&
@@ -1048,7 +1050,18 @@ function MediaViewer({
     };
   }, []);
 
-  // Keyboard shortcuts matching extension editor: Space (play/pause), Left/Right (seek), F (fullscreen), M (mute)
+  useEffect(() => {
+    if (!shortcutsOpen) return;
+    const handleClickOutside = (e: MouseEvent) => {
+      if (shortcutsRef.current && !shortcutsRef.current.contains(e.target as Node)) {
+        setShortcutsOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [shortcutsOpen]);
+
+  // Keyboard shortcuts matching extension editor: Space/K (play/pause), Left/Right/J/L (seek 5s), Up/Down (volume), F (fullscreen), M (mute)
   useEffect(() => {
     if (type !== "video") return;
 
@@ -1070,17 +1083,17 @@ function MediaViewer({
       const vid = videoRef.current;
       if (!vid) return;
 
-      if (e.key === " " || e.key === "Spacebar") {
+      if (e.key === " " || e.key === "Spacebar" || e.key === "k" || e.key === "K") {
         e.preventDefault();
         togglePlayPause();
-      } else if (e.key === "ArrowLeft") {
+      } else if (e.key === "ArrowLeft" || e.key === "j" || e.key === "J") {
         e.preventDefault();
         const targetSec = Math.max(0, vid.currentTime - 5);
         try { vid.currentTime = targetSec; } catch {}
         setCurrentPlaybackTime(targetSec);
         if (effectiveDuration > 0) updateScrubberDom((targetSec / effectiveDuration) * 100);
         onTimeUpdate?.(targetSec);
-      } else if (e.key === "ArrowRight") {
+      } else if (e.key === "ArrowRight" || e.key === "l" || e.key === "L") {
         e.preventDefault();
         const maxSec = effectiveDuration > 0 ? effectiveDuration : vid.duration || Infinity;
         const targetSec = Math.min(maxSec, vid.currentTime + 5);
@@ -1088,6 +1101,29 @@ function MediaViewer({
         setCurrentPlaybackTime(targetSec);
         if (effectiveDuration > 0) updateScrubberDom((targetSec / effectiveDuration) * 100);
         onTimeUpdate?.(targetSec);
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setVolumeState((prev) => {
+          const nextVol = Math.min(1, Math.round((prev.volume + 0.1) * 10) / 10);
+          if (videoRef.current) {
+            videoRef.current.muted = false;
+            videoRef.current.volume = nextVol;
+          }
+          saveVolumeState(nextVol, false);
+          return { volume: nextVol, muted: false };
+        });
+      } else if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setVolumeState((prev) => {
+          const nextVol = Math.max(0, Math.round((prev.volume - 0.1) * 10) / 10);
+          const nextMuted = nextVol === 0 ? true : prev.muted;
+          if (videoRef.current) {
+            videoRef.current.volume = nextVol;
+            if (nextVol === 0) videoRef.current.muted = true;
+          }
+          saveVolumeState(nextVol, nextMuted);
+          return { volume: nextVol, muted: nextMuted };
+        });
       } else if (e.key === "f" || e.key === "F") {
         e.preventDefault();
         toggleFullscreen();
@@ -1128,7 +1164,7 @@ function MediaViewer({
         <button
           type="button"
           onClick={togglePlayPause}
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-md shadow-[#89BD49]/25 hover:scale-105 active:scale-95 transition-all cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-[#89BD49]/40"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#89BD49] hover:bg-[#6B9A35] text-white shadow-md shadow-[#89BD49]/25 transition-all cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-[#89BD49]/40"
           aria-label={isPlaying ? t("mv.pause") : t("mv.play")}
           title={isPlaying ? t("mv.pause") : t("mv.play")}
         >
@@ -1352,6 +1388,73 @@ function MediaViewer({
             </button>
           )}
 
+          {/* Keyboard shortcuts info button & popover */}
+          <div ref={inFs ? undefined : shortcutsRef} className="relative shrink-0">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShortcutsOpen((o) => !o);
+              }}
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md transition-colors cursor-pointer focus:outline-hidden ${
+                shortcutsOpen
+                  ? "bg-sky-500/20 text-sky-600 dark:text-sky-400"
+                  : inFs
+                    ? "text-white hover:bg-white/20 hover:text-white"
+                    : "hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+              }`}
+              aria-label={t("mv.shortcutsTitle")}
+              title={t("mv.shortcutsTitle")}
+            >
+              <Icon icon="lucide:keyboard" className="w-4 h-4" aria-hidden="true" />
+            </button>
+            {shortcutsOpen && (
+              <div
+                onClick={(e) => e.stopPropagation()}
+                className="absolute bottom-full right-0 mb-2 w-64 rounded-xl border border-border bg-white dark:bg-zinc-900 p-3 shadow-xl z-50 text-xs animate-in fade-in zoom-in-95"
+              >
+                <div className="flex items-center justify-between font-semibold pb-2 mb-2 border-b border-border text-foreground">
+                  <span>{t("mv.shortcutsTitle")}</span>
+                  <button
+                    type="button"
+                    onClick={() => setShortcutsOpen(false)}
+                    className="text-muted hover:text-foreground p-0.5 cursor-pointer"
+                  >
+                    <Icon icon="lucide:x" className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+                <div className="space-y-1.5 text-muted">
+                  <div className="flex items-center justify-between">
+                    <span>{t("mv.shortcutPlay")}</span>
+                    <div className="flex items-center gap-1 font-mono text-[10px]">
+                      <kbd className="px-1.5 py-0.5 rounded bg-subtle border border-border">Space</kbd>
+                      <kbd className="px-1.5 py-0.5 rounded bg-subtle border border-border">K</kbd>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>{t("mv.shortcutSeek")}</span>
+                    <div className="flex items-center gap-1 font-mono text-[10px]">
+                      <kbd className="px-1.5 py-0.5 rounded bg-subtle border border-border">J / L</kbd>
+                      <kbd className="px-1.5 py-0.5 rounded bg-subtle border border-border">← / →</kbd>
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>{t("mv.shortcutVolume")}</span>
+                    <kbd className="px-1.5 py-0.5 rounded bg-subtle border border-border font-mono text-[10px]">↑ / ↓</kbd>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>{t("mv.shortcutMute")}</span>
+                    <kbd className="px-1.5 py-0.5 rounded bg-subtle border border-border font-mono text-[10px]">M</kbd>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>{t("mv.shortcutFullscreen")}</span>
+                    <kbd className="px-1.5 py-0.5 rounded bg-subtle border border-border font-mono text-[10px]">F</kbd>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Fullscreen button */}
           <button
             type="button"
@@ -1378,11 +1481,11 @@ function MediaViewer({
 
       {/* Tooltip on hovered marker */}
       {hoveredMarker && (
-        <div className={`mt-2 text-xs font-mono truncate flex items-center gap-1 ${
+        <div className={`mt-2 text-xs font-mono min-w-0 flex items-center gap-1 ${
           inFs ? "text-rose-400" : "text-rose-600 dark:text-rose-400"
         }`}>
           <Icon icon="lucide:map-pin" className="w-3.5 h-3.5 shrink-0" />
-          <span>[{formatSec(hoveredMarker.timeSec)}] {hoveredMarker.label}</span>
+          <span className="truncate min-w-0">[{formatSec(hoveredMarker.timeSec)}] {hoveredMarker.label}</span>
         </div>
       )}
     </>
@@ -1555,7 +1658,7 @@ function MediaViewer({
                 }`}
               >
                 <div
-                  className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-white/95 hover:bg-white text-slate-900 shadow-2xl transition-all duration-200 hover:scale-108 active:scale-95 border border-white/40 cursor-pointer pointer-events-auto"
+                  className="flex h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-full bg-white/95 hover:bg-white text-slate-900 shadow-2xl transition-all duration-200 border border-white/40 cursor-pointer pointer-events-auto"
                   aria-label={t("mv.play")}
                   title={t("mv.play")}
                 >
@@ -1577,9 +1680,9 @@ function MediaViewer({
                       : "opacity-0 -translate-y-4 pointer-events-none"
                   }`}
                 >
-                  <div className="flex items-center gap-2 rounded-xl bg-black/75 backdrop-blur-md px-3.5 py-1.5 text-xs text-white/90 border border-white/15 shadow-xl">
-                    <span className="h-2 w-2 rounded-full bg-[#DC2626] animate-pulse" />
-                    <span className="font-medium truncate max-w-xs sm:max-w-md">{title || "Video Capture"}</span>
+                  <div className="flex items-center gap-2 rounded-xl bg-black/75 backdrop-blur-md px-3.5 py-1.5 text-xs text-white/90 border border-white/15 shadow-xl min-w-0 max-w-[calc(100%-80px)]">
+                    <span className="h-2 w-2 rounded-full bg-[#DC2626] animate-pulse shrink-0" />
+                    <span className="font-medium truncate min-w-0">{title || "Video Capture"}</span>
                   </div>
 
                   <button
@@ -1588,7 +1691,7 @@ function MediaViewer({
                       e.stopPropagation();
                       toggleFullscreen();
                     }}
-                    className="flex items-center gap-1.5 rounded-xl bg-black/75 hover:bg-black/90 active:scale-95 backdrop-blur-md px-3.5 py-1.5 text-xs font-semibold text-white border border-white/20 hover:border-white/40 transition-all shadow-xl cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-white/40"
+                    className="flex items-center gap-1.5 rounded-xl bg-black/75 hover:bg-black/90 backdrop-blur-md px-3.5 py-1.5 text-xs font-semibold text-white border border-white/20 hover:border-white/40 transition-all shadow-xl cursor-pointer focus:outline-hidden focus:ring-2 focus:ring-white/40"
                     title={t("mv.exitFullscreen")}
                     aria-label={t("mv.exitFullscreen")}
                   >

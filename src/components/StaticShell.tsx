@@ -59,7 +59,7 @@ export function StaticShell({
                 <span className="text-site-text-2/40 shrink-0" aria-hidden="true">
                   /
                 </span>
-                <span className="text-site-text font-medium truncate max-w-[200px] sm:max-w-none">
+                <span className="text-site-text font-medium truncate max-w-[200px] sm:max-w-none min-w-0">
                   {breadcrumb || title}
                 </span>
               </nav>

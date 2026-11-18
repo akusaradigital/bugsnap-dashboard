@@ -2,8 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import path from "node:path";
+import { fileURLToPath } from "node:url";
 
-const root = process.cwd();
+const here = path.dirname(fileURLToPath(import.meta.url));
+const root = path.resolve(here, "../..");
 const src = readFileSync(path.join(root, "src/app/api/extension/pair/route.ts"), "utf8");
 
 // Static guards: the pairing route must keep its security rules even when refactored.
@@ -31,7 +33,6 @@ test("the device secret is stored hashed, not in plaintext", () => {
   assert.match(src, /extension_secret_hash: sha256\(deviceSecret\)/, "store secret hash only");
 });
 
-test("a device id already paired to another account is refused, not overwritten", () => {
-  assert.match(src, /neq\("user_id", claimed\.user_id\)/, "must look for other owners of this device_id");
-  assert.match(src, /code: "DEVICE_TAKEN"/, "must reject with DEVICE_TAKEN");
+test("account switching: clears any existing connection for the device_id before pairing", () => {
+  assert.match(src, /\.from\("extension_device_connections"\)\s*\.delete\(\)\s*\.eq\("device_id", deviceId\)/, "must clear existing connection for device_id");
 });

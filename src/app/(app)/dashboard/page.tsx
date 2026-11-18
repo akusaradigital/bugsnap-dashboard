@@ -8,6 +8,7 @@ import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
 import { fetchDriveStatus } from "@/lib/google-drive-values";
 import { Dropdown } from "@/components/Dropdown";
+import { CHROME_STORE_URL, FIREFOX_STORE_URL } from "@/lib/constants";
 
 interface DayCount {
   day: number; // 1 to 31
@@ -96,7 +97,7 @@ export default function DashboardAnalyticsPage() {
   return (
     <Suspense
       fallback={
-        <div className="p-8 sm:p-12 max-w-6xl mx-auto flex flex-col items-center justify-center gap-3 min-h-[300px]" role="status" aria-label="Loading dashboard">
+        <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto flex flex-col items-center justify-center gap-3 min-h-[300px]" role="status" aria-label="Loading dashboard">
           <div className="inline-flex items-center gap-2.5 px-4 py-2 rounded-xl bg-subtle border border-border text-xs text-muted shadow-xs">
             <Icon icon="lucide:loader-2" className="w-4 h-4 animate-spin text-[#2563EB] dark:text-[#3B82F6] shrink-0" aria-hidden="true" />
             <span className="font-medium">Loading dashboard…</span>
@@ -144,21 +145,19 @@ function DashboardContent() {
   useEffect(() => {
     let cancelled = false;
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (cancelled) return;
-      const u = data.session?.user;
-      if (u) {
-        const meta = u.user_metadata || {};
-        setSession({
-          name: meta.full_name || meta.name || u.email?.split("@")[0] || "User",
-          email: u.email || "",
-        });
-      }
-    });
-
     (async () => {
       try {
         const { data: sessionData } = await supabase.auth.getSession();
+        if (cancelled) return;
+        const u = sessionData.session?.user;
+        if (u) {
+          const meta = u.user_metadata || {};
+          setSession({
+            name: meta.full_name || meta.name || u.email?.split("@")[0] || "User",
+            email: u.email || "",
+          });
+        }
+
         const token = sessionData.session?.access_token;
         const currentUserId = sessionData.session?.user?.id;
         if (!token) return;
@@ -396,7 +395,7 @@ function DashboardContent() {
 
   if (loading) {
     return (
-      <div className="p-4 sm:p-8 max-w-6xl mx-auto space-y-6 min-w-0 w-full overflow-x-hidden" role="status" aria-label={locale === "id" ? "Memuat analitik..." : "Loading analytics..."}>
+      <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 sm:space-y-8 min-w-0 w-full overflow-x-hidden" role="status" aria-label={locale === "id" ? "Memuat analitik..." : "Loading analytics..."}>
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/40 text-xs text-[#2563EB] dark:text-[#3B82F6] font-medium">
           <Icon icon="lucide:loader-2" className="w-3.5 h-3.5 animate-spin shrink-0 text-[#2563EB] dark:text-[#3B82F6]" aria-hidden="true" />
           <span>{locale === "id" ? "Memuat analitik..." : "Loading analytics..."}</span>
@@ -460,13 +459,59 @@ function DashboardContent() {
 
           <Link
             href="/captures"
-            className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] bg-[#2563EB] hover:bg-[#1D4ED8] active:scale-95 text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs shadow-[#2563EB]/25 transition-all hover:shadow-md touch-manipulation shrink-0"
+            className="inline-flex items-center gap-2 px-4 py-2.5 min-h-[44px] bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-sm font-semibold rounded-xl shadow-xs shadow-[#2563EB]/25 transition-all hover:shadow-md touch-manipulation shrink-0"
           >
             <span>{t("dash.viewAll")}</span>
             <Icon icon="lucide:arrow-right" className="w-4 h-4 brightness-0 invert" />
           </Link>
         </div>
       </div>
+
+      {/* Extension Install Quickstart Banner (shown for users without captures) */}
+      {totalCount === 0 && (
+        <div className="rounded-2xl border border-blue-200 dark:border-blue-900/50 bg-gradient-to-br from-blue-50/80 via-white to-blue-50/50 dark:from-blue-950/20 dark:via-background dark:to-blue-950/10 p-5 sm:p-6 shadow-xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="space-y-1">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-100 text-[#2563EB] dark:bg-blue-950/80 dark:text-[#3B82F6]">
+                <Icon icon="lucide:sparkles" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                <span>Quickstart</span>
+              </div>
+              <h2 className="text-base sm:text-lg font-bold text-foreground">
+                {t("dash.bannerTitle")}
+              </h2>
+              <p className="text-xs sm:text-sm text-muted max-w-2xl leading-relaxed">
+                {t("dash.bannerDesc")}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+              <a
+                href={CHROME_STORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold shadow-xs transition-all hover:shadow-md"
+              >
+                <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span>{t("dash.bannerCta")}</span>
+              </a>
+              <a
+                href={FIREFOX_STORE_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-subtle hover:bg-background text-foreground text-xs font-semibold shadow-xs transition-all hover:shadow-md"
+              >
+                <Icon icon="logos:firefox" className="w-4 h-4 shrink-0" aria-hidden="true" />
+                <span>{t("dash.bannerCtaFirefox")}</span>
+              </a>
+            </div>
+          </div>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted pt-3 border-t border-border/50">
+            <span className="flex items-center gap-1.5 font-medium text-foreground">
+              <Icon icon="lucide:keyboard" className="w-4 h-4 text-muted shrink-0" aria-hidden="true" />
+              <span>{t("dash.bannerHotkeys")}</span>
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">

@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useToast } from "@/components/Toast";
 import { useT } from "@/components/I18nProvider";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { PageLoader } from "@/components/PageLoader";
 import { Icon, withAssetVersion } from "@/lib/iconify";
 import { clearAdminCache } from "@/lib/admin-cache";
@@ -32,6 +33,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const [adminSearch, setAdminSearch] = useState("");
   const { showToast } = useToast();
   const { t } = useT();
+  const confirm = useConfirm();
 
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -293,8 +295,18 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   async function handleLogout() {
-    setIsAuthenticated(false);
     setProfileOpen(false);
+    const ok = await confirm({
+      title: t("auth.logoutConfirmTitle"),
+      message: t("auth.logoutConfirmDesc"),
+      confirmLabel: t("auth.logoutConfirmBtn"),
+      cancelLabel: t("common.cancel"),
+      danger: true,
+      icon: "lucide:log-out",
+    });
+    if (!ok) return;
+
+    setIsAuthenticated(false);
     clearAdminCache();
     await fetch("/api/admin/logout", { method: "POST" }).catch(() => {});
     await supabase.auth.signOut().catch(() => {});

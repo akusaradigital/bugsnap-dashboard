@@ -2,10 +2,14 @@ import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import path from "node:path";
-import { parseChangelog } from "../src/lib/changelog.ts";
+import { fileURLToPath } from "node:url";
+import { parseChangelog } from "../../src/lib/changelog.ts";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const dashboardRoot = path.resolve(__dirname, "../..");
+const changelogPath = path.join(dashboardRoot, "CHANGELOG.md");
 
 describe("Changelog Parser & Markdown Integrity", () => {
-  const changelogPath = path.resolve("CHANGELOG.md");
 
   it("ensures CHANGELOG.md exists in repository", () => {
     assert(fs.existsSync(changelogPath), "CHANGELOG.md must exist in bugsnap-dashboard root");
@@ -52,12 +56,12 @@ describe("Changelog Parser & Markdown Integrity", () => {
 
     // Compare against each project's real version source, not a hardcoded number,
     // so a new release only needs its changelog entry and the source bump.
-    const dashboardPkg = JSON.parse(fs.readFileSync(path.resolve("package.json"), "utf8")).version;
+    const dashboardPkg = JSON.parse(fs.readFileSync(path.join(dashboardRoot, "package.json"), "utf8")).version;
     assert.equal(latestDashboard?.version, `v${dashboardPkg}`, `Latest dashboard changelog version should match package.json (${dashboardPkg})`);
 
     // The extension and MCP repos are sibling checkouts. CI checks out only this repo,
     // so those comparisons run only where the siblings exist (same as bugsnap-devtools-parity).
-    const extensionManifestPath = path.resolve(process.cwd(), "..", "bugsnap-extension", "manifest.json");
+    const extensionManifestPath = path.resolve(dashboardRoot, "..", "bugsnap-extension", "manifest.json");
     if (fs.existsSync(extensionManifestPath)) {
       const extensionManifest = JSON.parse(fs.readFileSync(extensionManifestPath, "utf8")).version;
       assert.equal(latestExtension?.version, `v${extensionManifest}`, `Latest extension changelog version should match manifest.json (${extensionManifest})`);
@@ -65,7 +69,7 @@ describe("Changelog Parser & Markdown Integrity", () => {
       t.diagnostic("bugsnap-extension sibling directory not present in CI environment; skipping extension version check");
     }
 
-    const mcpPkgPath = path.resolve(process.cwd(), "..", "bugsnap-mcp", "package.json");
+    const mcpPkgPath = path.resolve(dashboardRoot, "..", "bugsnap-mcp", "package.json");
     if (fs.existsSync(mcpPkgPath)) {
       const mcpPkg = JSON.parse(fs.readFileSync(mcpPkgPath, "utf8")).version;
       assert.equal(latestMcp?.version, `v${mcpPkg}`, `Latest mcp changelog version should match package.json (${mcpPkg})`);

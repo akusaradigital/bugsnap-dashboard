@@ -197,12 +197,21 @@ export function McpDocsContent() {
                   <div className="absolute top-[23px] sm:top-[27px] left-1/2 -translate-x-1/2 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center pointer-events-none drop-shadow-xs">
                     {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src="/icon.svg"
+                      src="/logo-day.svg"
                       alt=""
                       aria-hidden="true"
                       width={34}
                       height={34}
-                      className="w-full h-full object-contain"
+                      className="w-full h-full object-contain dark:hidden"
+                    />
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src="/logo-dark.svg"
+                      alt=""
+                      aria-hidden="true"
+                      width={34}
+                      height={34}
+                      className="w-full h-full object-contain hidden dark:block"
                     />
                   </div>
                 </div>

@@ -5,7 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const dashboardRoot = path.join(here, "..");
+const dashboardRoot = path.join(here, "..", "..");
 const extensionRoot = path.join(dashboardRoot, "..", "bugsnap-extension");
 
 const read = (...parts) => fs.readFileSync(path.join(...parts), "utf8");

@@ -8,6 +8,9 @@ import { Reveal } from "./motion/Reveal";
 import { CookieConsentBanner } from "./CookieConsentBanner";
 import { BackToTop } from "./BackToTop";
 
+// 44px tap target on mobile; compact rows from sm up.
+const LINK_CLS = "hover:text-site-text transition-colors flex items-center min-h-[44px] sm:min-h-0 sm:py-1 truncate";
+
 export function SiteFooter() {
   const { t } = useT();
 
@@ -70,12 +73,12 @@ export function SiteFooter() {
               <h5 className="text-xs font-bold text-site-text uppercase tracking-wider truncate">
                 {t("landing.product")}
               </h5>
-              <ul className="space-y-2 text-xs text-site-text-2">
-                <li><Link href="/features" className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate">{t("site.nav.features")}</Link></li>
-                <li><Link href="/solutions" className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate">{t("site.nav.solutions")}</Link></li>
-                <li><Link href="/extension" className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate">{t("site.nav.extension")}</Link></li>
-                <li><Link href="/how-it-works" className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate">{t("site.nav.howItWorks")}</Link></li>
-                <li><Link href="/visual-compare" className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate">{t("landing.compare")}</Link></li>
+              <ul className="space-y-0 sm:space-y-1 text-xs text-site-text-2">
+                <li><Link href="/features" className={LINK_CLS}>{t("site.nav.features")}</Link></li>
+                <li><Link href="/solutions" className={LINK_CLS}>{t("site.nav.solutions")}</Link></li>
+                <li><Link href="/extension" className={LINK_CLS}>{t("site.nav.extension")}</Link></li>
+                <li><Link href="/how-it-works" className={LINK_CLS}>{t("site.nav.howItWorks")}</Link></li>
+                <li><Link href="/visual-compare" className={LINK_CLS}>{t("landing.compare")}</Link></li>
                 {/* Payment UI temporarily commented out until ready: */}
                 {/* <li><Link href="/pricing" className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate">{t("site.nav.pricing")}</Link></li> */}
               </ul>
@@ -86,17 +89,17 @@ export function SiteFooter() {
               <h5 className="text-xs font-bold text-site-text uppercase tracking-wider truncate">
                 {t("landing.resources")}
               </h5>
-              <ul className="space-y-2 text-xs text-site-text-2">
-                <li><Link href="/docs" className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate">{t("landing.docs")}</Link></li>
+              <ul className="space-y-0 sm:space-y-1 text-xs text-site-text-2">
+                <li><Link href="/docs" className={LINK_CLS}>{t("landing.docs")}</Link></li>
                 <li>
-                  <Link href="/docs/mcp" className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate flex items-center gap-1.5">
+                  <Link href="/docs/mcp" className={`${LINK_CLS} gap-1.5`}>
                     <span>{t("landing.mcpDocs")}</span>
-                    <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-blue-100 dark:bg-blue-950/40 text-[#2563EB] dark:text-[#3B82F6]">AI</span>
+                    <span className="text-[9px] font-bold px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-950/40 text-[#2563EB] dark:text-[#3B82F6]">AI</span>
                   </Link>
                 </li>
-                <li><Link href="/blog" className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate">{t("site.nav.blog")}</Link></li>
-                <li><Link href="/status" className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate">{t("landing.status")}</Link></li>
-                <li><Link href="/help" className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate">{t("landing.help")}</Link></li>
+                <li><Link href="/blog" className={LINK_CLS}>{t("site.nav.blog")}</Link></li>
+                <li><Link href="/status" className={LINK_CLS}>{t("landing.status")}</Link></li>
+                <li><Link href="/help" className={LINK_CLS}>{t("landing.help")}</Link></li>
               </ul>
             </Reveal>
 
@@ -105,10 +108,10 @@ export function SiteFooter() {
               <h5 className="text-xs font-bold text-site-text uppercase tracking-wider truncate">
                 {t("landing.legal")}
               </h5>
-              <ul className="space-y-2 text-xs text-site-text-2">
-                <li><Link href="/terms" className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate">{t("landing.terms")}</Link></li>
-                <li><Link href="/privacy" className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate">{t("landing.privacy")}</Link></li>
-                <li><Link href="/security" className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate">{t("landing.security")}</Link></li>
+              <ul className="space-y-0 sm:space-y-1 text-xs text-site-text-2">
+                <li><Link href="/terms" className={LINK_CLS}>{t("landing.terms")}</Link></li>
+                <li><Link href="/privacy" className={LINK_CLS}>{t("landing.privacy")}</Link></li>
+                <li><Link href="/security" className={LINK_CLS}>{t("landing.security")}</Link></li>
               </ul>
             </Reveal>
 
@@ -117,15 +120,15 @@ export function SiteFooter() {
               <h5 className="text-xs font-bold text-site-text uppercase tracking-wider truncate">
                 {t("landing.company")}
               </h5>
-              <ul className="space-y-2 text-xs text-site-text-2">
-                <li><Link href="/about" className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate">{t("landing.about")}</Link></li>
-                <li><Link href="/contact" className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate">{t("landing.contact")}</Link></li>
+              <ul className="space-y-0 sm:space-y-1 text-xs text-site-text-2">
+                <li><Link href="/about" className={LINK_CLS}>{t("landing.about")}</Link></li>
+                <li><Link href="/contact" className={LINK_CLS}>{t("landing.contact")}</Link></li>
                 <li>
                   <a
                     href="https://akusaradigital.com"
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="hover:text-site-text transition-colors block min-h-[44px] flex items-center truncate"
+                    className={LINK_CLS}
                   >
                     Akusara Digital
                   </a>

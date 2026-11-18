@@ -8,7 +8,7 @@ import ts from "typescript";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 
-const src = readFileSync(path.resolve(here, "../src/lib/error-escalation.ts"), "utf8");
+const src = readFileSync(path.resolve(here, "../../src/lib/error-escalation.ts"), "utf8");
 const transpiled = ts.transpileModule(src, {
   compilerOptions: { module: ts.ModuleKind.CommonJS },
 }).outputText;

@@ -911,19 +911,7 @@ function McpTabPanel({
   };
 
   return (
-    <div className="flex-1 min-h-0 h-[36rem] max-h-[60vh] sm:max-h-[36rem] overflow-y-auto p-4 sm:p-6 space-y-5 text-xs">
-      <div className="rounded-xl border border-border bg-blue-50 dark:bg-blue-950/15 p-4 sm:p-5 space-y-2">
-        <div className="flex items-center gap-2">
-          <span className="px-2 py-0.5 rounded bg-[#2563EB] text-white font-mono text-[10px] font-bold">MCP</span>
-          <h3 className="text-sm font-bold text-foreground">
-            {t("dt.mcp.title")}
-          </h3>
-        </div>
-        <p className="text-muted leading-relaxed text-[11px]">
-          {t("dt.mcp.desc")}
-        </p>
-      </div>
-
+    <div className="flex-1 min-h-0 h-[36rem] max-h-[60vh] sm:max-h-[36rem] overflow-y-auto p-4 sm:p-6 space-y-5 text-xs" aria-label={t("dt.mcp.title")}>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2" role="tablist" aria-label={t("dt.mcp.actions")}>
         {([
           ["fix", "lucide:wrench", t("dt.mcp.fix")],
@@ -1947,10 +1935,10 @@ ${stack}` : body);
               </div>
             )}
             {/* Quick Filter for Network */}
-            {activeTab === "Network" && (
+            {activeTab === "Network" && (networkErrors.length > 0 || networkLogs.length > 0) && (
               <div className="flex flex-wrap items-center justify-between gap-1.5 pt-0.5">
-                <div className="flex flex-wrap items-center gap-1.5 min-w-0">
-                  {networkErrors.length > 0 && (
+                {networkErrors.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1.5 min-w-0">
                     <>
                       <button
                         type="button"
@@ -2010,8 +1998,8 @@ ${stack}` : body);
                         </button>
                       )}
                     </>
-                  )}
-                </div>
+                  </div>
+                )}
 
                 {networkLogs.length > 0 && (
                   <button

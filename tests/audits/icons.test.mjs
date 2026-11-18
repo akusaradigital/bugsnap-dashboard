@@ -5,7 +5,7 @@ import path from "node:path";
 import { createRequire } from "node:module";
 
 const require = createRequire(import.meta.url);
-const subset = require("../src/lib/lucide-icons.json");
+const subset = require("../../src/lib/lucide-icons.json");
 
 describe("Icon Collection Integrity", () => {
   it("includes all lucide icons referenced in src/", () => {

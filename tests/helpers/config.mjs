@@ -13,7 +13,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Read .env.local like Next.js does (NEXT_PUBLIC_ vars are inlined at build,
 // but for tests we parse the file directly).
 function loadEnv() {
-  const envPath = path.join(__dirname, "..", ".env.local");
+  const envPath = path.join(__dirname, "../..", ".env.local");
   if (!fs.existsSync(envPath)) {
     throw new Error("Missing .env.local - tests need NEXT_PUBLIC_SUPABASE_URL + NEXT_PUBLIC_SUPABASE_ANON_KEY");
   }
@@ -98,7 +98,7 @@ export function randomEmail(prefix = "test") {
 let _pat = null;
 export function getPat() {
   if (_pat) return _pat;
-  const envPath = path.join(__dirname, "..", ".env.local");
+  const envPath = path.join(__dirname, "../..", ".env.local");
   if (fs.existsSync(envPath)) {
     const raw = fs.readFileSync(envPath, "utf8");
     for (const line of raw.split("\n")) {

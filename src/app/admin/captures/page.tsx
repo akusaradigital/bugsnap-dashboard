@@ -204,6 +204,21 @@ function AdminCapturesContent() {
             ]}
             variant="field-white"
           />
+
+          {(typeFilter !== "all" || visibilityFilter !== "all" || searchQuery.trim() !== "") && (
+            <button
+              type="button"
+              onClick={() => {
+                setTypeFilter("all");
+                setVisibilityFilter("all");
+                setSearchQuery("");
+                setPage(1);
+              }}
+              className="text-xs font-medium text-rose-600 hover:text-rose-700 dark:text-rose-400 dark:hover:text-rose-300 transition-colors cursor-pointer px-1 py-1"
+            >
+              {t("cap.clear")}
+            </button>
+          )}
         </div>
 
         <form onSubmit={handleSearchSubmit} className="flex items-center gap-1.5 w-full sm:w-80">

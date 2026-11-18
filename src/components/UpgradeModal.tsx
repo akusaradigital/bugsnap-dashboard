@@ -276,7 +276,7 @@ export function UpgradeModal({
                   type="button"
                   onClick={() => handleUpgrade("pro")}
                   disabled={loading}
-                  className="w-full py-2.5 px-4 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] active:scale-[0.99] text-white font-bold text-sm transition-all shadow-sm shadow-[#89BD49]/25 hover:shadow text-center flex items-center justify-center gap-2"
+                  className="w-full py-2.5 px-4 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] text-white font-bold text-sm transition-all shadow-sm shadow-[#89BD49]/25 hover:shadow text-center flex items-center justify-center gap-2"
                 >
                   {loading ? (
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />

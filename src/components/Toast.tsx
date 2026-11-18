@@ -148,7 +148,10 @@ function Toast({ toast, onDismiss }: { toast: ToastItem; onDismiss: (id: number)
         </span>
       )}
 
-      <span className="leading-snug pr-2 text-xs font-semibold select-none max-w-[280px] truncate">
+      <span
+        className="leading-snug pr-2 text-xs font-semibold select-none max-w-[min(280px,calc(100vw-8rem))] min-w-0 truncate"
+        title={toast.message}
+      >
         {toast.message}
       </span>
 

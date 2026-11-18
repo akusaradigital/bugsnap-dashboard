@@ -8,7 +8,7 @@ export const marketingEn: Dict = {
     "Take a screenshot or record your screen with console, network, and environment context. Files go straight to your Google Drive.",
   "landing.heroSub":
     "Show the problem once. BugSnap pairs your screenshot or screen recording with console errors, failed requests, and environment details, then saves the report to your Google Drive with a share link.",
-  "landing.cta": "Add to Chrome - Free",
+  "landing.cta": "Add to Chrome",
   "landing.ctaVariantSpeed": "Start Catching Bugs (Free)",
   "landing.ctaVariantSpeedSub": "Screen Capture + DevTools Logs",
   "landing.ctaHint":
@@ -373,7 +373,7 @@ export const marketingEn: Dict = {
   "features.bannerSubtitle":
     "Explore payload structure, field definitions, and examples to integrate with your own tools.",
   "features.bannerDocsBtn": "Read Developer Docs",
-  "features.bannerChromeBtn": "Add to Chrome - Free",
+  "features.bannerChromeBtn": "Add to Chrome",
   "features.f1Eyebrow": "Screen & Audio Recording",
   "features.f1Title": "Capture Screenshots & Screen Recordings with Audio",
   "features.f1Desc":
@@ -398,7 +398,7 @@ export const marketingEn: Dict = {
   "features.ctaTitle": "Ready to capture cleaner bug reports?",
   "features.ctaDesc":
     "Install the BugSnap extension and start capturing screenshots, screen recordings, audio, and DevTools logs in seconds, saved directly to your own Google Drive, free, no credit card required.",
-  "features.ctaButton": "Add to Chrome - Free",
+  "features.ctaButton": "Add to Chrome",
   "features.catAll": "All Capabilities",
   "features.catTelemetry": "DevTools & SPA Health",
   "features.catCapture": "Screen & Audio",
@@ -482,7 +482,7 @@ export const marketingEn: Dict = {
   "pricing.bottomCtaEyebrow": "READY TO GET STARTED?",
   "pricing.bottomCtaTitle": "Ready to capture cleaner bug reports?",
   "pricing.bottomCtaSub": "Install the free extension and capture your first bug with DevTools logs today.",
-  "pricing.bottomCtaBtn": "Add to Chrome - Free",
+  "pricing.bottomCtaBtn": "Add to Chrome",
   "pricing.customTitle": "Need a tailored solution?",
   "pricing.customDesc":
     "Dedicated infrastructure, SSO, IP allowlists, or strict compliance requirements? We deliver custom enterprise deployments tailored to your organization's security requirements.",
@@ -496,7 +496,7 @@ export const marketingEn: Dict = {
   "pricing.tierFree": "Free",
   "pricing.tierFreeTagline":
     "Everything saved to your own Google Drive (Free).",
-  "pricing.tierFreeCta": "Add to Chrome - Free",
+  "pricing.tierFreeCta": "Add to Chrome",
   "pricing.fFree1": "5 new captures per week",
   "pricing.fFree2": "Unlimited screenshots and screen recordings (HD)",
   "pricing.fFree3": "Automated console, network headers & SPA health detector",
@@ -632,7 +632,7 @@ export const marketingEn: Dict = {
   "howItWorks.ctaTitle": "Try it on your next bug",
   "howItWorks.ctaDesc":
     "Install the BugSnap Chrome Extension and start capturing actionable bug reports today.",
-  "howItWorks.ctaBtn": "Add to Chrome - Free",
+  "howItWorks.ctaBtn": "Add to Chrome",
   "about.title": "About the team",
   "about.titleHighlight": "behind BugSnap",
   "about.subtitle":
@@ -687,7 +687,7 @@ export const marketingEn: Dict = {
   "about.ctaTitle": "Start capturing and resolving bugs with BugSnap",
   "about.ctaSubtitle":
     "Install the Chrome extension and go from bug discovery to code commit in seconds.",
-  "about.ctaButton": "Add to Chrome - Free",
+  "about.ctaButton": "Add to Chrome",
   "docs.title": "Guides, references &",
   "docs.titleHighlight": "developer docs",
   "docs.subtitle":
@@ -897,7 +897,7 @@ export const marketingEn: Dict = {
   "contact.enterpriseDesc":
     "Need SLA guarantees, SSO, or custom integrations for your team? Contact our sales team to discuss enterprise options.",
   "contact.startCapturing": "Start capturing with BugSnap",
-  "contact.installFree": "Add to Chrome - Free",
+  "contact.installFree": "Add to Chrome",
   "contact.seePricing": "See Pricing",
   "contact.usefulResources": "Useful Resources",
   "contact.privacy": "Privacy Policy",
@@ -1008,6 +1008,8 @@ export const marketingEn: Dict = {
   "support.hide": "Minimize",
   "support.unhide": "Expand",
   "support.close": "Close",
+  "support.back": "Back",
+  "support.topics": "Choose a topic",
   "support.category": "Report Category",
   "support.catBug": "Bug Report",
   "support.catFeature": "New Feature",
@@ -1085,7 +1087,7 @@ export const marketingEn: Dict = {
   "site.hero.mockup.capturedState": "Captured error state",
   "site.hero.body":
     "Capture your screen with automatic console logs, failed network requests, and system specs, saved directly to your Google Drive. Zero server lock-in.",
-  "site.hero.ctaPrimary": "Add to Chrome - Free",
+  "site.hero.ctaPrimary": "Add to Chrome",
   "site.hero.ctaSecondary": "See how it works",
   "site.hero.meta": "Free to use  ·  No credit card required",
 
@@ -1331,7 +1333,7 @@ export const marketingEn: Dict = {
   "solutions.ctaEyebrow": "READY TO SHIP FASTER?",
   "solutions.ctaTitle": "Equip your whole team with BugSnap",
   "solutions.ctaDesc": "Free. Saves directly to your team's Google Drive. No server lock-in.",
-  "solutions.ctaButton": "Add to Chrome - Free",
+  "solutions.ctaButton": "Add to Chrome",
 
   "status.title": "System status &",
   "status.titleHighlight": "service health",
@@ -1384,7 +1386,7 @@ export const marketingEn: Dict = {
   "extension.heroTitle": "The Bug Reporting Extension Built for Developers & QA",
   "extension.heroSub":
     "Take a screenshot or record your screen with audio, silently intercept console errors and HTTP 4xx/5xx failures, and save files directly to your own Google Drive.",
-  "extension.installCta": "Add to Chrome - Free",
+  "extension.installCta": "Add to Chrome",
   "extension.installMeta":
     "Compatible with Google Chrome, Brave, Microsoft Edge, and Chromium browsers.",
   "extension.viewDocs": "View Documentation",
@@ -1636,7 +1638,7 @@ export const marketingEn: Dict = {
   "site.cta.title": "Catch the next bug with full context.",
   "site.cta.sub":
     "Install the free Chrome extension and record your first bug in under 30 seconds. No credit card, no complex setup.",
-  "site.cta.primary": "Add to Chrome - Free",
+  "site.cta.primary": "Add to Chrome",
   "site.cta.demo": "View Live Demo",
   "site.cta.meta": "Free forever for core features  ·  Installs in 30 seconds  ·  No credit card required",
   "site.hotkeys.eyebrow": "Keyboard Shortcuts",
@@ -1667,7 +1669,7 @@ export const marketingEn: Dict = {
   "blog.freeLicense": "Free License Photo",
   "blog.ctaTitle": "Ready to speed up your bug reports?",
   "blog.ctaDesc": "Take screenshots or record your screen with audio, capture console and network logs, and store files directly in your own Google Drive.",
-  "blog.ctaButton": "Add to Chrome - Free",
+  "blog.ctaButton": "Add to Chrome",
   "blog.ctaEyebrow": "BugSnap Chrome Extension",
   "blog.ctaF1": "Screen & audio recording in 1080p 60fps",
   "blog.ctaF2": "Auto-capture console errors & network telemetry",
@@ -1723,7 +1725,7 @@ export const marketingEn: Dict = {
   "blog.promoDesc": "Get practical tutorials, real-world examples, and expert insights on bug reporting, DevTools, Playwright, and developer productivity.",
   "blog.promoDescExact": "Get practical tutorials, real-world examples, and expert insights on bug reporting, DevTools, Playwright, and developer productivity.",
   "blog.promoButton": "Subscribe",
-  "blog.addToChromeFree": "Add to Chrome - Free",
+  "blog.addToChromeFree": "Add to Chrome",
   "blog.promoNoSpam": "No spam. Unsubscribe anytime.",
   "blog.promoTrust": "Google Drive API Verified • Zero 3rd-Party Storage • No credit card required",
   "welcome.title": "Welcome to BugSnap",
@@ -1804,7 +1806,7 @@ export const marketingId: Dict = {
     "Rekam layar Anda dengan konteks DevTools lengkap, tersimpan langsung ke Google Drive milik Anda sendiri. File milik Anda. Selamanya.",
   "landing.heroSub":
     "Hentikan membuang waktu menanyakan 'bisa tolong direproduksi?'. BugSnap merekam layar Anda lengkap dengan log console otomatis, error jaringan, dan spesifikasi lingkungan, lalu menyimpan semuanya langsung ke Google Drive pribadi Anda dan membuat tautan interaktif siap bagi dalam hitungan detik. Gratis, tanpa instalasi rumit.",
-  "landing.cta": "Tambah ke Chrome - Gratis",
+  "landing.cta": "Tambah ke Chrome",
   "landing.ctaVariantSpeed": "Mulai Tangkap Bug (Gratis)",
   "landing.ctaVariantSpeedSub": "Screenshot atau Rekaman Layar + Log DevTools",
   "landing.ctaHint":
@@ -2175,7 +2177,7 @@ export const marketingId: Dict = {
   "features.bannerSubtitle":
     "Jelajahi struktur payload, definisi bidang, dan contoh untuk berintegrasi dengan alat Anda sendiri.",
   "features.bannerDocsBtn": "Baca Dokumentasi Pengembang",
-  "features.bannerChromeBtn": "Tambah ke Chrome - Gratis",
+  "features.bannerChromeBtn": "Tambah ke Chrome",
   "features.f1Eyebrow": "Perekaman Layar & Audio",
   "features.f1Title":
     "Ambil Tangkapan Layar & Rekaman Layar Lengkap dengan Audio",
@@ -2202,7 +2204,7 @@ export const marketingId: Dict = {
     "Siap menangkap laporan bug yang lebih jelas?",
   "features.ctaDesc":
     "Pasang ekstensi BugSnap dan mulai ambil screenshot atau rekam layar dengan audio dan log DevTools dalam hitungan detik, tersimpan langsung ke Google Drive Anda sendiri, gratis, tanpa kartu kredit.",
-  "features.ctaButton": "Tambah ke Chrome - Gratis",
+  "features.ctaButton": "Tambah ke Chrome",
   "features.catAll": "Semua Fitur",
   "features.catTelemetry": "DevTools & Kesehatan SPA",
   "features.catCapture": "Layar & Audio",
@@ -2286,7 +2288,7 @@ export const marketingId: Dict = {
   "pricing.bottomCtaEyebrow": "SIAP MEMULAI?",
   "pricing.bottomCtaTitle": "Siap menangkap laporan bug yang lebih jelas?",
   "pricing.bottomCtaSub": "Pasang ekstensi gratis dan tangkap bug pertama Anda lengkap dengan log DevTools hari ini.",
-  "pricing.bottomCtaBtn": "Tambah ke Chrome - Gratis",
+  "pricing.bottomCtaBtn": "Tambah ke Chrome",
   "pricing.customTitle": "Butuh solusi enterprise khusus?",
   "pricing.customDesc":
     "Infrastruktur khusus, SSO, whitelist IP, atau kebutuhan kepatuhan ketat? Kami menyediakan deployment enterprise kustom sesuai kebijakan keamanan organisasi Anda.",
@@ -2300,7 +2302,7 @@ export const marketingId: Dict = {
   "pricing.tierFree": "Gratis",
   "pricing.tierFreeTagline":
     "Semua tersimpan di Google Drive Anda sendiri (Gratis).",
-  "pricing.tierFreeCta": "Tambah ke Chrome - Gratis",
+  "pricing.tierFreeCta": "Tambah ke Chrome",
   "pricing.fFree1": "5 tangkapan baru per minggu",
   "pricing.fFree2": "Screenshot dan rekaman layar & tab tanpa batas (HD)",
   "pricing.fFree3": "Log konsol, header jaringan & deteksi kebocoran memori SPA",
@@ -2444,7 +2446,7 @@ export const marketingId: Dict = {
   "howItWorks.ctaTitle": "Coba di bug Anda berikutnya",
   "howItWorks.ctaDesc":
     "Pasang BugSnap Chrome Extension dan mulai rekam laporan bug yang siap dieksekusi hari ini.",
-  "howItWorks.ctaBtn": "Tambah ke Chrome - Gratis",
+  "howItWorks.ctaBtn": "Tambah ke Chrome",
   "about.title": "Tentang tim",
   "about.titleHighlight": "di balik BugSnap",
   "about.subtitle":
@@ -2499,7 +2501,7 @@ export const marketingId: Dict = {
   "about.ctaTitle": "Mulai merekam dan menyelesaikan bug dengan BugSnap",
   "about.ctaSubtitle":
     "Pasang ekstensi Chrome dan dari temuan bug ke commit kode cuma hitungan detik.",
-  "about.ctaButton": "Tambah ke Chrome - Gratis",
+  "about.ctaButton": "Tambah ke Chrome",
   "docs.title": "Panduan, referensi &",
   "docs.titleHighlight": "dokumentasi teknis",
   "docs.subtitle":
@@ -2707,7 +2709,7 @@ export const marketingId: Dict = {
   "contact.enterpriseDesc":
     "Butuh jaminan SLA, SSO, atau integrasi kustom untuk tim Anda? Hubungi tim sales kami untuk mendiskusikan opsi enterprise.",
   "contact.startCapturing": "Mulai merekam dengan BugSnap",
-  "contact.installFree": "Tambah ke Chrome - Gratis",
+  "contact.installFree": "Tambah ke Chrome",
   "contact.seePricing": "Lihat Harga",
   "contact.usefulResources": "Sumber Daya Berguna",
   "contact.privacy": "Kebijakan Privasi",
@@ -2819,6 +2821,8 @@ export const marketingId: Dict = {
   "support.hide": "Kecilkan",
   "support.unhide": "Perbesar",
   "support.close": "Tutup",
+  "support.back": "Kembali",
+  "support.topics": "Pilih topik bantuan",
   "support.category": "Kategori Laporan",
   "support.catBug": "Lapor Bug",
   "support.catFeature": "Fitur Baru",
@@ -2896,7 +2900,7 @@ export const marketingId: Dict = {
   "site.hero.mockup.capturedState": "Kondisi error tertangkap",
   "site.hero.body":
     "Rekam layar Anda dilengkapi log console otomatis, kegagalan request jaringan, dan spesifikasi sistem, tersimpan langsung di Google Drive Anda. Bebas lock-in server.",
-  "site.hero.ctaPrimary": "Tambah ke Chrome - Gratis",
+  "site.hero.ctaPrimary": "Tambah ke Chrome",
   "site.hero.ctaSecondary": "Pelajari cara kerja",
   "site.hero.meta": "Gratis digunakan  ·  Tanpa kartu kredit",
 
@@ -3142,7 +3146,7 @@ export const marketingId: Dict = {
   "solutions.ctaEyebrow": "SIAP RILIS LEBIH CEPAT?",
   "solutions.ctaTitle": "Lengkapi seluruh tim Anda dengan BugSnap",
   "solutions.ctaDesc": "Gratis. Tersimpan langsung ke Google Drive tim Anda. Bebas lock-in server.",
-  "solutions.ctaButton": "Tambah ke Chrome - Gratis",
+  "solutions.ctaButton": "Tambah ke Chrome",
 
   "status.title": "Status sistem &",
   "status.titleHighlight": "kesehatan layanan",
@@ -3196,7 +3200,7 @@ export const marketingId: Dict = {
   "extension.heroTitle": "Ekstensi Pelaporan Bug untuk Developer & Tim QA",
   "extension.heroSub":
     "Rekam layar dengan audio, tangkap console error dan kegagalan HTTP 4xx/5xx secara otomatis, dan simpan file langsung ke Google Drive Anda.",
-  "extension.installCta": "Tambah ke Chrome - Gratis",
+  "extension.installCta": "Tambah ke Chrome",
   "extension.installMeta":
     "Kompatibel dengan Google Chrome, Brave, Microsoft Edge, dan peramban Chromium lainnya.",
   "extension.viewDocs": "View Documentation",
@@ -3449,7 +3453,7 @@ export const marketingId: Dict = {
   "site.cta.title": "Tangkap bug berikutnya dengan konteks lengkap.",
   "site.cta.sub":
     "Pasang ekstensi Chrome gratis dan rekam bug pertama Anda dalam waktu kurang dari 30 detik. Tanpa kartu kredit, tanpa pengaturan rumit.",
-  "site.cta.primary": "Tambah ke Chrome - Gratis",
+  "site.cta.primary": "Tambah ke Chrome",
   "site.cta.demo": "Lihat Demo Langsung",
   "site.cta.meta": "Gratis selamanya untuk fitur utama  ·  Terpasang dalam 30 detik  ·  Tanpa perlu kartu kredit",
   "site.hotkeys.eyebrow": "Pintasan Keyboard",
@@ -3480,7 +3484,7 @@ export const marketingId: Dict = {
   "blog.freeLicense": "Foto Lisensi Bebas",
   "blog.ctaTitle": "Siap mempercepat pelaporan bug Anda?",
   "blog.ctaDesc": "Rekam layar dengan audio, tangkap log console & network, dan simpan file langsung di Google Drive Anda sendiri.",
-  "blog.ctaButton": "Tambah ke Chrome - Gratis",
+  "blog.ctaButton": "Tambah ke Chrome",
   "blog.ctaEyebrow": "Ekstensi Chrome BugSnap",
   "blog.ctaF1": "Rekam layar & mikrofon dalam 1080p 60fps",
   "blog.ctaF2": "Otomatis tangkap error console & telemetri network",
@@ -3536,7 +3540,7 @@ export const marketingId: Dict = {
   "blog.promoDesc": "Dapatkan tutorial praktis, contoh nyata, dan wawasan ahli tentang pelaporan bug, DevTools, Playwright, dan produktivitas developer.",
   "blog.promoDescExact": "Dapatkan tutorial praktis, contoh nyata, dan wawasan ahli tentang pelaporan bug, DevTools, Playwright, dan produktivitas developer.",
   "blog.promoButton": "Berlangganan",
-  "blog.addToChromeFree": "Tambah ke Chrome - Gratis",
+  "blog.addToChromeFree": "Tambah ke Chrome",
   "blog.promoNoSpam": "Bebas spam. Berhenti berlangganan kapan saja.",
   "blog.promoTrust": "Terverifikasi Google Drive API • Tanpa Server Pihak Ketiga • Tanpa kartu kredit",
   "welcome.title": "Selamat Datang di BugSnap",

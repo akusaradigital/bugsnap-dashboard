@@ -161,6 +161,20 @@ async function getDriveConnection(userId: string) {
   return (data as Connection | null) ?? null;
 }
 
+export async function getFastDriveStatus(userId: string): Promise<DriveConnectionHealth> {
+  const connection = await getDriveConnection(userId);
+  if (!connection) {
+    return { status: "not_connected", email: null, updatedAt: null, message: "Google Drive is not connected", quota: null };
+  }
+  return {
+    status: "connected",
+    email: connection.google_email ?? null,
+    updatedAt: connection.updated_at ?? null,
+    message: "Google Drive is connected",
+    quota: null,
+  };
+}
+
 export async function getDriveConnectionHealth(userId: string): Promise<DriveConnectionHealth> {
   const connection = await getDriveConnection(userId);
   if (!connection) {

@@ -1,6 +1,6 @@
 import { test, after } from "node:test";
 import assert from "node:assert/strict";
-import { cleanupTestData } from "./config.mjs";
+import { cleanupTestData } from "../helpers/config.mjs";
 
 const API = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
 

@@ -1,5 +1,6 @@
 "use client";
 
+import { HERO_BREADCRUMB_CLS, HERO_SUBTITLE_CLS } from "@/lib/heroStyles";
 import Link from "next/link";
 import { useT } from "@/components/I18nProvider";
 import { SiteNavbar } from "@/components/site/SiteNavbar";
@@ -23,7 +24,7 @@ export function HowItWorksContent() {
         <section className="pt-8 sm:pt-12 pb-8 sm:pb-12 text-center px-4 sm:px-6 max-w-4xl mx-auto">
           <Reveal delay={0}>
             <nav
-              className="inline-flex items-center justify-center gap-2 text-xs text-slate-500 dark:text-slate-400 mb-4 sm:mb-6"
+              className={HERO_BREADCRUMB_CLS}
               aria-label="Breadcrumb"
             >
               <Link
@@ -52,7 +53,7 @@ export function HowItWorksContent() {
           </Reveal>
 
           <Reveal delay={0.12}>
-            <p className="mt-4 text-sm sm:text-base md:text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto leading-relaxed">
+            <p className={HERO_SUBTITLE_CLS}>
               {t("howItWorks.subtitle")}
             </p>
           </Reveal>
@@ -140,11 +141,19 @@ export function HowItWorksContent() {
                     <div className="flex items-center gap-2">
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
-                        src="/icon.svg"
+                        src="/logo-day.svg"
                         alt="BugSnap"
                         width={20}
                         height={20}
-                        className="w-5 h-5 rounded"
+                        className="w-5 h-5 rounded object-contain dark:hidden"
+                      />
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src="/logo-dark.svg"
+                        alt="BugSnap"
+                        width={20}
+                        height={20}
+                        className="w-5 h-5 rounded object-contain hidden dark:block"
                       />
                       <span className="font-bold text-sm text-slate-900 dark:text-white">
                         BugSnap

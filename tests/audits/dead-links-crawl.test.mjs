@@ -5,7 +5,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const ROOT_DIR = path.resolve(__dirname, "..");
+const ROOT_DIR = path.resolve(__dirname, "../..");
 const SRC_DIR = path.join(ROOT_DIR, "src");
 const APP_DIR = path.join(SRC_DIR, "app");
 const PUBLIC_DIR = path.join(ROOT_DIR, "public");

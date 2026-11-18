@@ -6,6 +6,7 @@ import { StaticShell } from "@/components/StaticShell";
 import { useT } from "@/components/I18nProvider";
 import { getSortedBlogPosts, type BlogPost } from "@/content/blog";
 import { BlogBottomBanner } from "@/components/blog/BlogBottomBanner";
+import { Icon } from "@/lib/iconify";
 
 function formatBlogDate(dateStr: string, isId: boolean): string {
   try {
@@ -237,7 +238,7 @@ export function BlogListContent() {
               className="w-8 h-8 rounded-lg border border-slate-200 dark:border-site-border bg-white dark:bg-site-surface hover:bg-slate-50 dark:hover:bg-site-surface-2 disabled:opacity-40 disabled:cursor-not-allowed text-xs text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors touch-manipulation cursor-pointer"
               aria-label={t("blog.pagePrev")}
             >
-              
+              <Icon icon="lucide:chevron-left" className="w-3.5 h-3.5 text-slate-700 dark:text-slate-200" style={{ color: "currentColor", filter: "none" }} aria-hidden="true" />
             </button>
 
             {/* Pages */}
@@ -278,7 +279,7 @@ export function BlogListContent() {
               className="w-8 h-8 rounded-lg border border-slate-200 dark:border-site-border bg-white dark:bg-site-surface hover:bg-slate-50 dark:hover:bg-site-surface-2 disabled:opacity-40 disabled:cursor-not-allowed text-xs text-slate-600 dark:text-slate-300 flex items-center justify-center transition-colors touch-manipulation cursor-pointer"
               aria-label={t("blog.pageNext")}
             >
-              
+              <Icon icon="lucide:chevron-right" className="w-3.5 h-3.5 text-slate-700 dark:text-slate-200" style={{ color: "currentColor", filter: "none" }} aria-hidden="true" />
             </button>
           </nav>
         </div>

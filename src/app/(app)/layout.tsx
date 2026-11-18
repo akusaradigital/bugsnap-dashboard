@@ -1,17 +1,17 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
 import { useToast } from "@/components/Toast";
+import { useConfirm } from "@/components/ConfirmDialog";
 import { PageLoader } from "@/components/PageLoader";
 import { normalizePlan, seatLimit, tierLabel, type Plan } from "@/lib/tiers";
 import { pickAvatar, initialOf, isRealAvatar } from "@/lib/avatar";
 import { AuthRequiredCard } from "@/components/AuthRequiredCard";
 import { AppHeader } from "@/components/AppHeader";
-import DriveStorageMeter from "@/components/DriveStorageMeter";
 import FloatingSupport from "@/components/FloatingSupport";
 import HelpMenu from "@/components/HelpMenu";
 import { SiteThemeToggle } from "@/components/site/SiteThemeToggle";
@@ -23,6 +23,15 @@ const navItems = [
   { labelKey: "nav.dashboard", href: "/dashboard", icon: APP_ICONS.nav.dashboard },
   { labelKey: "nav.captures", href: "/captures", icon: APP_ICONS.nav.captures },
   { labelKey: "nav.compare", href: "/compare", icon: APP_ICONS.nav.compare },
+];
+
+const WS_PALETTES = [
+  { bg: "bg-blue-100 dark:bg-blue-950/60", text: "text-blue-600 dark:text-blue-400" },
+  { bg: "bg-emerald-100 dark:bg-emerald-950/60", text: "text-emerald-700 dark:text-emerald-400" },
+  { bg: "bg-purple-100 dark:bg-purple-950/60", text: "text-purple-700 dark:text-purple-400" },
+  { bg: "bg-amber-100 dark:bg-amber-950/60", text: "text-amber-700 dark:text-amber-400" },
+  { bg: "bg-sky-100 dark:bg-sky-950/60", text: "text-sky-700 dark:text-sky-400" },
+  { bg: "bg-rose-100 dark:bg-rose-950/60", text: "text-rose-700 dark:text-rose-400" },
 ];
 
 const GOOGLE_DRIVE_FOLDER_COLORS = [
@@ -73,13 +82,35 @@ export default function DashboardLayout({
   const [currentFolder, setCurrentFolder] = useState<string | null>(null);
   const { t } = useT();
   const { showToast } = useToast();
+  const confirm = useConfirm();
   const [wsParam, setWsParam] = useState<string | null>(null);
   const [wsOpen, setWsOpen] = useState(false);
+  const [sidebarWsOpen, setSidebarWsOpen] = useState(false);
+  const sidebarWsMenuRef = useRef<HTMLDivElement>(null);
+  const [sidebarWsPickerOpen, setSidebarWsPickerOpen] = useState(false);
+  const sidebarWsPickerTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [workspacePickerOpen, setWorkspacePickerOpen] = useState(false);
   const workspaceMenuRef = useRef<HTMLDivElement>(null);
   const wsPickerTimerRef = useRef<NodeJS.Timeout | null>(null);
   const notifMenuRef = useRef<HTMLDivElement>(null);
   const [topSearch, setTopSearch] = useState("");
+
+  const handleSidebarWsPickerEnter = () => {
+    if (sidebarWsPickerTimerRef.current) {
+      clearTimeout(sidebarWsPickerTimerRef.current);
+      sidebarWsPickerTimerRef.current = null;
+    }
+    setSidebarWsPickerOpen(true);
+  };
+
+  const handleSidebarWsPickerLeave = () => {
+    if (sidebarWsPickerTimerRef.current) {
+      clearTimeout(sidebarWsPickerTimerRef.current);
+    }
+    sidebarWsPickerTimerRef.current = setTimeout(() => {
+      setSidebarWsPickerOpen(false);
+    }, 180);
+  };
 
   const handleWsPickerEnter = () => {
     if (wsPickerTimerRef.current) {
@@ -102,6 +133,9 @@ export default function DashboardLayout({
     return () => {
       if (wsPickerTimerRef.current) {
         clearTimeout(wsPickerTimerRef.current);
+      }
+      if (sidebarWsPickerTimerRef.current) {
+        clearTimeout(sidebarWsPickerTimerRef.current);
       }
     };
   }, []);
@@ -199,9 +233,52 @@ export default function DashboardLayout({
       clearTimeout(wsPickerTimerRef.current);
       wsPickerTimerRef.current = null;
     }
+    if (sidebarWsPickerTimerRef.current) {
+      clearTimeout(sidebarWsPickerTimerRef.current);
+      sidebarWsPickerTimerRef.current = null;
+    }
     setWorkspacePickerOpen(false);
     setWsOpen(false);
+    setSidebarWsPickerOpen(false);
+    setSidebarWsOpen(false);
   }
+
+  const handleLogout = useCallback(async () => {
+    closeWorkspaceMenus();
+    const ok = await confirm({
+      title: t("auth.logoutConfirmTitle"),
+      message: t("auth.logoutConfirmDesc"),
+      confirmLabel: t("auth.logoutConfirmBtn"),
+      cancelLabel: t("common.cancel"),
+      danger: true,
+      icon: "lucide:log-out",
+    });
+    if (!ok) return;
+
+    try {
+      if (typeof window !== "undefined") {
+        sessionStorage.setItem("bugsnap_signed_out", "true");
+        await new Promise<void>((resolve) => {
+          const timer = setTimeout(resolve, 350);
+          const onDone = (e: MessageEvent) => {
+            if (e.source === window && e.data?.source === "bugsnap-extension" && e.data?.action === "sync_logout_done") {
+              window.removeEventListener("message", onDone);
+              clearTimeout(timer);
+              resolve();
+            }
+          };
+          window.addEventListener("message", onDone);
+          window.postMessage({ source: "bugsnap-web", action: "sync_logout" }, window.location.origin);
+        });
+      }
+      localStorage.removeItem("BugSnap_notif_last_seen");
+      localStorage.removeItem("BugSnap_notif_read_ids");
+      localStorage.removeItem("BugSnap_promo_dismissed");
+      sessionStorage.removeItem("bs_drive_quota");
+    } catch { }
+    await supabase.auth.signOut().catch(() => {});
+    window.location.assign("/login");
+  }, [confirm, t]);
 
   // ponytail: sidebar <aside> has a `transform` class, which makes it the
   // containing block for `fixed` descendants - a `fixed inset-0` click-catcher
@@ -210,10 +287,14 @@ export default function DashboardLayout({
   // sidebar dropdown (workspace switcher, notifications, folder menu) closes
   // on any outside click, not just clicks inside the sidebar.
   useEffect(() => {
-    if (!wsOpen && !workspacePickerOpen && !notifOpen && !folderMenuOpen) return;
+    if (!wsOpen && !workspacePickerOpen && !notifOpen && !folderMenuOpen && !sidebarWsOpen && !sidebarWsPickerOpen) return;
     const handleOutsidePointer = (event: PointerEvent) => {
       const target = event.target;
       if (!(target instanceof Node)) return;
+      if (sidebarWsOpen && !sidebarWsMenuRef.current?.contains(target)) {
+        setSidebarWsOpen(false);
+        setSidebarWsPickerOpen(false);
+      }
       // Mobile and desktop headers are both mounted (one is CSS-hidden per
       // breakpoint), so a single ref can't contain both popover copies -
       // check by data attribute instead, which matches whichever is visible.
@@ -229,7 +310,7 @@ export default function DashboardLayout({
     };
     document.addEventListener("pointerdown", handleOutsidePointer, true);
     return () => document.removeEventListener("pointerdown", handleOutsidePointer, true);
-  }, [wsOpen, workspacePickerOpen, notifOpen, folderMenuOpen]);
+  }, [wsOpen, workspacePickerOpen, notifOpen, folderMenuOpen, sidebarWsOpen, sidebarWsPickerOpen]);
 
   useEffect(() => {
     const updateFolder = () => {
@@ -1474,17 +1555,228 @@ export default function DashboardLayout({
             className={`w-60 border-r border-border bg-subtle shrink-0 flex flex-col h-full overflow-visible max-h-screen lg:relative lg:translate-x-0 fixed inset-y-0 left-0 z-50 transform transition-transform duration-200 ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
               }`}
           >
-            <div className="px-5 py-5 border-b border-border flex items-center gap-2.5">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo-day.svg" alt="BugSnap" width={28} height={28} decoding="async" className="w-7 h-7 shrink-0 object-contain dark:hidden" />
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/logo-dark.svg" alt="BugSnap" width={28} height={28} decoding="async" className="w-7 h-7 shrink-0 object-contain hidden dark:block" />
-              <div>
-                <h1 className="text-sm font-bold tracking-tight text-foreground leading-none">
-                  BugSnap
-                </h1>
-                <p className="text-[10px] text-muted mt-1 leading-none font-medium">{t("layout.screenRecorder")}</p>
-              </div>
+            <div className="px-5 py-4 border-b border-border flex items-center justify-between gap-2 shrink-0">
+              <Link href={activeWsId ? `/dashboard?ws=${activeWsId}` : "/dashboard"} className="flex items-center gap-2.5 min-w-0">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo-day.svg" alt="BugSnap" width={28} height={28} decoding="async" className="w-7 h-7 shrink-0 object-contain dark:hidden" />
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src="/logo-dark.svg" alt="BugSnap" width={28} height={28} decoding="async" className="w-7 h-7 shrink-0 object-contain hidden dark:block" />
+                <div>
+                  <h1 className="text-sm font-bold tracking-tight text-foreground leading-none">
+                    BugSnap
+                  </h1>
+                  <p className="text-[10px] text-muted mt-1 leading-none font-medium">{t("layout.screenRecorder")}</p>
+                </div>
+              </Link>
+            </div>
+
+            {/* Workspace Selector (Option 2 - Linear/Notion Style) */}
+            <div className="relative px-3 pt-2.5 pb-2 border-b border-border/60 shrink-0" ref={sidebarWsMenuRef}>
+              <button
+                type="button"
+                onClick={() => setSidebarWsOpen((o) => !o)}
+                className={`w-full flex items-center justify-between gap-2 p-2 rounded-xl text-left transition-all border ${
+                  sidebarWsOpen
+                    ? "bg-background border-border shadow-xs"
+                    : "hover:bg-background/80 border-transparent hover:border-border/60"
+                }`}
+                aria-expanded={sidebarWsOpen}
+                aria-haspopup="true"
+              >
+                <div className="flex items-center gap-2.5 min-w-0 flex-1">
+                  {activeWs?.avatar_url && !failedWsAvatars[activeWs.id] ? (
+                    /* eslint-disable-next-line @next/next/no-img-element */
+                    <img
+                      src={activeWs.avatar_url}
+                      alt={activeWsName}
+                      onError={() => setFailedWsAvatars((prev) => ({ ...prev, [activeWs.id]: true }))}
+                      className="w-7 h-7 rounded-lg object-cover shrink-0 bg-subtle border border-border shadow-xs"
+                    />
+                  ) : (
+                    <div className="w-7 h-7 rounded-lg bg-[#2563EB] text-white font-bold text-xs flex items-center justify-center uppercase shrink-0 shadow-xs">
+                      {(activeWsName || "W").charAt(0)}
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-foreground truncate leading-tight">
+                      {activeWsName}
+                    </p>
+                    <p className="text-[10px] text-muted truncate leading-tight mt-0.5">
+                      {tierLabel(currentUser?.plan ?? "free")} · <span className="capitalize">{activeWsRole || "member"}</span>
+                    </p>
+                  </div>
+                </div>
+                <Icon
+                  icon="lucide:chevron-down"
+                  className={`w-4 h-4 text-muted shrink-0 transition-transform duration-200 ${
+                    sidebarWsOpen ? "rotate-180 text-foreground" : ""
+                  }`}
+                  aria-hidden="true"
+                />
+              </button>
+
+              {/* Workspace Popover Dropdown (Loom/Notion Style with Hover Flyout) */}
+              {sidebarWsOpen && (
+                <div
+                  className="absolute left-3 right-3 top-full mt-1.5 z-50 rounded-2xl border border-border/80 bg-white dark:bg-zinc-950 shadow-xl p-1.5 space-y-0.5 divide-y divide-border/60"
+                  role="menu"
+                >
+                  {/* Primary group: Switch workspace + Settings */}
+                  <div className="space-y-0.5 pb-0.5">
+                    {/* Switch workspace item with hover flyout */}
+                    <div
+                      className="relative"
+                      onMouseEnter={handleSidebarWsPickerEnter}
+                      onMouseLeave={handleSidebarWsPickerLeave}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (sidebarWsPickerTimerRef.current) {
+                            clearTimeout(sidebarWsPickerTimerRef.current);
+                            sidebarWsPickerTimerRef.current = null;
+                          }
+                          setSidebarWsPickerOpen((o) => !o);
+                        }}
+                        className={`w-full flex items-center justify-between gap-2.5 px-3 py-2 text-xs font-medium rounded-xl transition-colors ${
+                          sidebarWsPickerOpen
+                            ? "bg-blue-50/80 dark:bg-blue-950/40 text-[#2563EB] dark:text-[#3B82F6]"
+                            : "text-foreground hover:bg-subtle"
+                        }`}
+                        role="menuitem"
+                        aria-expanded={sidebarWsPickerOpen}
+                        aria-haspopup="true"
+                      >
+                        <span className="flex items-center gap-2.5">
+                          <Icon icon="lucide:arrow-left-right" className="w-4 h-4 text-muted shrink-0" />
+                          <span>{t("layout.switchWorkspace")}</span>
+                        </span>
+                        <Icon icon="lucide:chevron-right" className="w-3.5 h-3.5 text-muted shrink-0" aria-hidden="true" />
+                      </button>
+
+                      {/* Flyout Submenu showing workspaces list */}
+                      {sidebarWsPickerOpen && (
+                        <>
+                          {/* Invisible hover bridge over the margin gap to prevent premature closure */}
+                          <div
+                            className="hidden lg:block absolute left-full top-0 w-3 h-full z-[55]"
+                            onMouseEnter={handleSidebarWsPickerEnter}
+                            onMouseLeave={handleSidebarWsPickerLeave}
+                            aria-hidden="true"
+                          />
+                          <div
+                            onMouseEnter={handleSidebarWsPickerEnter}
+                            onMouseLeave={handleSidebarWsPickerLeave}
+                            className="mt-1.5 w-full rounded-xl border border-border/80 bg-white dark:bg-zinc-950 shadow-md overflow-hidden lg:absolute lg:left-[calc(100%+8px)] lg:top-0 lg:mt-0 lg:w-72 lg:rounded-2xl lg:shadow-xl z-[60]"
+                          >
+                            {/* User Email Header */}
+                            <div className="px-3.5 pt-3 pb-2 text-[11px] font-medium text-muted truncate border-b border-border/60">
+                              {currentUser?.email || activeWs?.name || "Workspace"}
+                            </div>
+
+                            {/* Workspaces List */}
+                            <div className="max-h-56 overflow-y-auto p-1 space-y-0.5">
+                              {workspaces.map((ws, idx) => {
+                                const isSelected = activeWsId === ws.id || (!activeWsId && ws.id === workspaces[0]?.id);
+                                const palette = WS_PALETTES[idx % WS_PALETTES.length];
+                                return (
+                                  <button
+                                    key={ws.id}
+                                    type="button"
+                                    onClick={() => {
+                                      setActiveWsId(ws.id);
+                                      setWsParam(ws.id);
+                                      setCurrentFolder(null);
+                                      setSidebarWsPickerOpen(false);
+                                      setSidebarWsOpen(false);
+                                      setSidebarOpen(false);
+                                      router.replace(`${pathname}?ws=${ws.id}`, { scroll: false });
+                                    }}
+                                    className={`w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-left rounded-xl transition-colors ${
+                                      isSelected
+                                        ? "bg-blue-50/80 dark:bg-blue-950/40 text-[#2563EB] dark:text-[#3B82F6] font-semibold"
+                                        : "text-foreground hover:bg-subtle"
+                                    }`}
+                                    role="menuitem"
+                                  >
+                                    {ws.avatar_url && !failedWsAvatars[ws.id] ? (
+                                      /* eslint-disable-next-line @next/next/no-img-element */
+                                      <img
+                                        src={ws.avatar_url}
+                                        alt={ws.name}
+                                        onError={() => setFailedWsAvatars((prev) => ({ ...prev, [ws.id]: true }))}
+                                        className="w-7 h-7 rounded-lg object-cover shrink-0 bg-subtle border border-border"
+                                      />
+                                    ) : (
+                                      <span
+                                        className={`w-7 h-7 rounded-lg font-bold text-xs flex items-center justify-center shrink-0 uppercase ${palette.bg} ${palette.text}`}
+                                      >
+                                        {ws.name.charAt(0)}
+                                      </span>
+                                    )}
+                                    <span className="truncate flex-1 font-medium">{ws.name}</span>
+                                    <span className="text-[10px] px-2 py-0.5 rounded-md border border-border/80 text-muted shrink-0 font-medium">
+                                      {tierLabel(currentUser?.plan ?? "free")}
+                                    </span>
+                                    {isSelected && (
+                                      <Icon icon="lucide:check" className="w-3.5 h-3.5 text-[#2563EB] dark:text-[#3B82F6] shrink-0" />
+                                    )}
+                                  </button>
+                                );
+                              })}
+                            </div>
+
+                            {/* Join or create workspace */}
+                            <div className="p-1 border-t border-border/60">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setSidebarWsPickerOpen(false);
+                                  setSidebarWsOpen(false);
+                                  setSidebarOpen(false);
+                                  setCreateWsModalOpen(true);
+                                }}
+                                className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-foreground hover:bg-subtle rounded-xl transition-colors text-left font-medium"
+                                role="menuitem"
+                              >
+                                <Icon icon="lucide:plus" className="w-4 h-4 text-muted shrink-0" />
+                                <span>{t("layout.joinOrCreateWorkspace")}</span>
+                              </button>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Workspace Settings link */}
+                    <Link
+                      href={activeWsId ? `/settings?ws=${activeWsId}` : "/settings"}
+                      onClick={() => {
+                        setSidebarWsOpen(false);
+                        setSidebarOpen(false);
+                      }}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-foreground hover:bg-subtle rounded-xl transition-colors text-left"
+                      role="menuitem"
+                    >
+                      <Icon icon="lucide:settings" className="w-4 h-4 text-muted shrink-0" />
+                      <span>{t("nav.settings")}</span>
+                    </Link>
+                  </div>
+
+                  {/* Log out item */}
+                  <div className="pt-1">
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 text-xs font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 rounded-xl transition-colors text-left"
+                      role="menuitem"
+                    >
+                      <Icon icon="lucide:log-out" className="w-4 h-4 shrink-0" />
+                      <span>{t("nav.signOut")}</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
 
             <nav className="flex-1 flex flex-col min-h-0 px-3 py-3 overflow-hidden">
@@ -1568,7 +1860,6 @@ export default function DashboardLayout({
             </nav>
 
             <div className="mt-auto shrink-0" />
-            <DriveStorageMeter />
             <div className="px-3 py-2.5 border-t border-border/60 flex items-center justify-between shrink-0 bg-subtle">
               <HelpMenu />
               <SiteThemeToggle compact />
@@ -1741,7 +2032,7 @@ export default function DashboardLayout({
                             className="w-full flex items-center justify-between gap-3 rounded-lg py-1 text-left text-sm font-medium text-foreground hover:bg-subtle transition-colors"
                           >
                             <span className="flex items-center gap-3">
-                              <Icon icon="lucide:building-2" className="w-4 h-4 text-muted shrink-0" />
+                              <Icon icon="lucide:arrow-left-right" className="w-4 h-4 text-muted shrink-0" />
                               {t("layout.switchWorkspace")}
                             </span>
                             <Icon icon="lucide:chevron-right" className="w-4 h-4 text-muted shrink-0" aria-hidden="true" />
@@ -1760,47 +2051,64 @@ export default function DashboardLayout({
                                 onMouseLeave={handleWsPickerLeave}
                                 className="mt-2 w-full rounded-xl border border-border bg-white dark:bg-background/95 shadow-md overflow-hidden lg:absolute lg:right-full lg:top-0 lg:mr-2 lg:mt-0 lg:w-72 lg:rounded-2xl lg:shadow-xl z-[60] before:hidden lg:before:block before:absolute before:-right-3 before:top-0 before:bottom-0 before:w-3 before:content-['']"
                               >
-                                {workspaces.map((ws) => (
+                                {/* User Email Header */}
+                                <div className="px-3.5 pt-3 pb-2 text-[11px] font-medium text-muted truncate border-b border-border/60">
+                                  {currentUser.email || activeWs?.name || "Workspace"}
+                                </div>
+                                <div className="max-h-56 overflow-y-auto p-1 space-y-0.5">
+                                  {workspaces.map((ws, idx) => {
+                                    const isSelected = activeWsId === ws.id || (!activeWsId && ws.id === workspaces[0]?.id);
+                                    const palette = WS_PALETTES[idx % WS_PALETTES.length];
+                                    return (
+                                      <button
+                                        key={ws.id}
+                                        onClick={() => {
+                                          setActiveWsId(ws.id);
+                                          setWsParam(ws.id);
+                                          setCurrentFolder(null);
+                                          setWorkspacePickerOpen(false);
+                                          setWsOpen(false);
+                                          setSidebarOpen(false);
+                                          router.replace(`${pathname}?ws=${ws.id}`, { scroll: false });
+                                        }}
+                                        className={`w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-left rounded-xl transition-colors ${isSelected ? "bg-blue-50/80 dark:bg-blue-950/40 text-[#2563EB] dark:text-[#3B82F6] font-semibold" : "text-foreground hover:bg-subtle"}`}
+                                      >
+                                        {ws.avatar_url && !failedWsAvatars[ws.id] ? (
+                                          /* eslint-disable-next-line @next/next/no-img-element */
+                                          <img
+                                            src={ws.avatar_url}
+                                            alt={ws.name}
+                                            onError={() => setFailedWsAvatars((prev) => ({ ...prev, [ws.id]: true }))}
+                                            className="w-7 h-7 rounded-lg object-cover shrink-0 bg-subtle border border-border"
+                                          />
+                                        ) : (
+                                          <span className={`w-7 h-7 rounded-lg font-bold text-xs flex items-center justify-center shrink-0 uppercase ${palette.bg} ${palette.text}`}>
+                                            {ws.name.charAt(0)}
+                                          </span>
+                                        )}
+                                        <span className="truncate flex-1 font-medium">{ws.name}</span>
+                                        <span className="text-[10px] px-2 py-0.5 rounded-md border border-border/80 text-muted shrink-0 font-medium">{tierLabel(currentUser.plan)}</span>
+                                        {isSelected && (
+                                          <Icon icon="lucide:check" className="w-3.5 h-3.5 text-[#2563EB] dark:text-[#3B82F6] shrink-0" />
+                                        )}
+                                      </button>
+                                    );
+                                  })}
+                                </div>
+                                <div className="p-1 border-t border-border/60">
                                   <button
-                                    key={ws.id}
                                     onClick={() => {
-                                      setActiveWsId(ws.id);
-                                      setWsParam(ws.id);
-                                      setCurrentFolder(null);
                                       setWorkspacePickerOpen(false);
                                       setWsOpen(false);
                                       setSidebarOpen(false);
-                                      router.replace(`${pathname}?ws=${ws.id}`, { scroll: false });
+                                      setCreateWsModalOpen(true);
                                     }}
-                                    className={`w-full flex items-center gap-3 px-3 py-2.5 text-sm text-left transition-colors ${activeWsId === ws.id ? "bg-background dark:bg-subtle text-foreground font-semibold" : "text-foreground hover:bg-background dark:hover:bg-subtle"}`}
+                                    className="w-full flex items-center gap-2.5 px-2.5 py-2 text-xs text-left text-foreground hover:bg-subtle transition-colors rounded-xl font-medium"
                                   >
-                                    {ws.avatar_url && !failedWsAvatars[ws.id] ? (
-                                      /* eslint-disable-next-line @next/next/no-img-element */
-                                      <img
-                                        src={ws.avatar_url}
-                                        alt={ws.name}
-                                        onError={() => setFailedWsAvatars((prev) => ({ ...prev, [ws.id]: true }))}
-                                        className="w-7 h-7 rounded-lg object-cover shrink-0 bg-subtle border border-border"
-                                      />
-                                    ) : (
-                                      <span className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400 text-sm font-semibold flex items-center justify-center shrink-0">{ws.name.charAt(0)}</span>
-                                    )}
-                                    <span className="truncate flex-1">{ws.name}</span>
-                                    <span className="text-[11px] px-2 py-0.5 rounded-md border border-border text-muted shrink-0">{tierLabel(currentUser.plan)}</span>
+                                    <Icon icon="lucide:plus" className="w-4 h-4 text-muted shrink-0" />
+                                    {t("layout.joinOrCreateWorkspace")}
                                   </button>
-                                ))}
-                                <button
-                                  onClick={() => {
-                                    setWorkspacePickerOpen(false);
-                                    setWsOpen(false);
-                                    setSidebarOpen(false);
-                                    setCreateWsModalOpen(true);
-                                  }}
-                                  className="w-full flex items-center gap-3 px-3 py-3 text-sm text-left text-foreground hover:bg-subtle transition-colors border-t border-border"
-                                >
-                                  <Icon icon="lucide:plus" className="w-4 h-4 shrink-0" />
-                                  {t("layout.joinOrCreateWorkspace")}
-                                </button>
+                                </div>
                               </div>
                             </>
                           )}
@@ -1818,22 +2126,10 @@ export default function DashboardLayout({
                         )}
 
                         <button
-                          onClick={async () => {
-                            try {
-                              if (typeof window !== "undefined") {
-                                window.postMessage({ source: "bugsnap-web", action: "sync_logout" }, window.location.origin);
-                              }
-                              localStorage.removeItem("BugSnap_notif_last_seen");
-                              localStorage.removeItem("BugSnap_notif_read_ids");
-                              localStorage.removeItem("BugSnap_promo_dismissed");
-                              sessionStorage.removeItem("bs_drive_quota");
-                            } catch { }
-                            await supabase.auth.signOut();
-                            window.location.assign("/");
-                          }}
-                          className={`w-full flex items-center gap-3 px-4 py-3 text-sm text-foreground hover:bg-subtle transition-colors ${!isSuperAdmin ? "border-t border-border" : ""}`}
+                          onClick={handleLogout}
+                          className={`w-full flex items-center gap-3 px-4 py-3 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors ${!isSuperAdmin ? "border-t border-border" : ""}`}
                         >
-                          <Icon icon="lucide:log-out" className="w-4 h-4 text-muted shrink-0" />
+                          <Icon icon="lucide:log-out" className="w-4 h-4 shrink-0" />
                           {t("nav.signOut")}
                         </button>
                       </div>

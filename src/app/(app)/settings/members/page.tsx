@@ -167,10 +167,10 @@ export default function TeamManagementPage() {
   }
 
   return (
-    <div className="p-4 sm:p-8 max-w-4xl mx-auto space-y-6 sm:space-y-8">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-4xl mx-auto space-y-6 sm:space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">{t("members.title")}</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">{t("members.title")}</h1>
           <p className="text-sm text-muted mt-1">{t("members.subtitle")}</p>
         </div>
         <Link href="/settings" className="text-sm text-[#2563EB] dark:text-[#3B82F6] hover:text-[#1D4ED8] dark:hover:text-[#60A5FA] font-medium hover:underline">
@@ -191,8 +191,8 @@ export default function TeamManagementPage() {
       </div>
 
       {/* Invite box */}
-      <div className="rounded-xl border border-border bg-subtle p-5">
-        <h2 className="text-sm font-semibold text-foreground mb-1">{t("members.inviteTitle")}</h2>
+      <div className="rounded-2xl border border-border bg-subtle p-5 sm:p-6 shadow-xs">
+        <h2 className="text-base font-bold text-foreground mb-1">{t("members.inviteTitle")}</h2>
         <p className="text-xs text-muted mb-3">{t("members.inviteHint")}</p>
         <p className="text-[11px] text-muted mb-3">Invited teammates will receive an email to join the workspace and download the extension.</p>
         <div className="flex flex-col sm:flex-row gap-2">
@@ -258,7 +258,7 @@ export default function TeamManagementPage() {
       </div>
 
       {/* Member list */}
-      <div className="rounded-xl border border-border bg-subtle overflow-hidden">
+      <div className="rounded-2xl border border-border bg-subtle overflow-hidden shadow-xs">
         <div className="px-5 py-3 border-b border-border bg-subtle/50">
           <h2 className="text-sm font-semibold text-foreground">{t("members.count", { count: members.length })}</h2>
         </div>

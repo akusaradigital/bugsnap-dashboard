@@ -13,7 +13,7 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 // (revenue/route.ts and data/route.ts both import these instead of
 // re-filtering users by hand, after the two had already drifted).
 // -----------------------------------------------------------------------------
-const srcPath = path.resolve(here, "../src/lib/user-segments.ts");
+const srcPath = path.resolve(here, "../../src/lib/user-segments.ts");
 const src = readFileSync(srcPath, "utf8");
 const transpiled = ts.transpileModule(src, {
   compilerOptions: { module: ts.ModuleKind.CommonJS },

@@ -8,6 +8,7 @@ import { SiteFooter } from "@/components/site/SiteFooter";
 import { Reveal } from "@/components/site/motion";
 import { Icon } from "@/lib/iconify";
 import { FIREFOX_STORE_URL } from "@/lib/constants";
+import { HERO_BREADCRUMB_CLS, HERO_SUBTITLE_CLS } from "@/lib/heroStyles";
 
 const CHROME_STORE_URL =
   "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
@@ -61,7 +62,7 @@ export function FeaturesContent() {
             <Reveal delay={0}>
               {/* Breadcrumb */}
               <nav
-                className="inline-flex items-center justify-center gap-1.5 text-xs text-slate-500 dark:text-slate-400 mb-6"
+                className={HERO_BREADCRUMB_CLS}
                 aria-label={t("featFx.breadcrumbLabel")}
               >
                 <Link
@@ -88,7 +89,7 @@ export function FeaturesContent() {
             </Reveal>
 
             <Reveal delay={0.14}>
-              <p className="mt-4 text-sm sm:text-base md:text-lg text-slate-500 dark:text-slate-400 max-w-3xl mx-auto leading-relaxed">
+              <p className={HERO_SUBTITLE_CLS}>
                 {t("features.subtitle")}
               </p>
             </Reveal>

@@ -79,11 +79,19 @@ export function SiteNavbar() {
         <Link href="/" className="flex min-w-0 items-center gap-2 group shrink-0 min-h-[44px] py-1" aria-label={t("siteFx.logoLabel")}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img
-            src="/bugsnap-icon-day.svg"
+            src="/logo-day.svg"
             alt="BugSnap"
             width={32}
             height={32}
-            className="h-8 w-8 shrink-0 object-contain"
+            className="h-8 w-8 shrink-0 object-contain dark:hidden"
+          />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo-dark.svg"
+            alt="BugSnap"
+            width={32}
+            height={32}
+            className="h-8 w-8 shrink-0 object-contain hidden dark:block"
           />
           <span className="flex min-w-0 flex-col justify-center leading-tight">
             <span className="text-base font-bold tracking-tight text-slate-900 dark:text-white">BugSnap</span>

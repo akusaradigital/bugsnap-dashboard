@@ -26,9 +26,9 @@
   --site-danger: #DC2626;
 
   /* Ambient Glow & Gradient Tokens (Light Mode) */
-  --glow-primary: rgba(220, 38, 38, 0.35);
-  --glow-secondary: rgba(14, 165, 233, 0.22);
-  --glow-accent: rgba(220, 38, 38, 0.45);
+  --glow-primary: rgba(37, 99, 235, 0.22);
+  --glow-secondary: rgba(137, 189, 73, 0.18);
+  --glow-accent: rgba(37, 99, 235, 0.35);
 }
 
 /* Dark mode overrides - toggled via .dark class on <html> by ThemeProvider.
@@ -58,9 +58,9 @@
   --site-danger: #F87171;
 
   /* Ambient Glow & Gradient Tokens (Dark Mode) */
-  --glow-primary: rgba(248, 113, 113, 0.32);
-  --glow-secondary: rgba(56, 189, 248, 0.2);
-  --glow-accent: rgba(248, 113, 113, 0.45);
+  --glow-primary: rgba(59, 130, 246, 0.25);
+  --glow-secondary: rgba(137, 189, 73, 0.15);
+  --glow-accent: rgba(59, 130, 246, 0.35);
 }
 
 * {
@@ -183,11 +183,17 @@ button:not(:disabled):hover,
   outline: none;
 }
 
-/* Active/pressed state for mobile touch feedback */
+/* Active/pressed state without transform/scale bounce */
 button:active:not(:disabled),
-a:active {
-  transform: scale(0.97);
-  transition: transform 0.1s ease;
+a:active,
+[role="button"]:active:not([aria-disabled="true"]) {
+  filter: brightness(0.96);
+}
+
+.dark button:active:not(:disabled),
+.dark a:active,
+.dark [role="button"]:active:not([aria-disabled="true"]) {
+  filter: brightness(0.92);
 }
 
 /* Slide-in animation for toasts */
