@@ -65,14 +65,14 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
             aria-modal="true"
             aria-labelledby="confirm-title"
             aria-describedby={options.message ? "confirm-desc" : undefined}
-            className="relative w-[min(24rem,calc(100vw-2rem))] max-w-sm rounded-2xl border border-border bg-subtle shadow-2xl p-6 space-y-4"
+            className="relative w-[min(28rem,calc(100vw-2rem))] max-w-md rounded-2xl border border-border bg-subtle shadow-2xl p-6 space-y-4"
           >
             <div className="text-center space-y-1.5 pt-1">
               <h2 id="confirm-title" className="text-base font-bold text-foreground break-words">
                 {options.title}
               </h2>
               {options.message && (
-                <p id="confirm-desc" className="text-xs text-muted leading-relaxed break-words">
+                <p id="confirm-desc" className="text-xs text-muted leading-relaxed text-balance break-words">
                   {options.message}
                 </p>
               )}
@@ -81,7 +81,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
               <button
                 type="button"
                 onClick={() => close(false)}
-                className="w-full inline-flex items-center justify-center px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs font-semibold text-foreground hover:bg-subtle transition-colors cursor-pointer select-none"
+                className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs font-semibold text-foreground hover:bg-subtle transition-colors cursor-pointer select-none"
               >
                 {options.cancelLabel ?? t("common.cancel")}
               </button>
@@ -89,7 +89,7 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
                 ref={confirmBtnRef}
                 type="button"
                 onClick={() => close(true)}
-                className={`w-full inline-flex items-center justify-center px-3.5 py-2.5 rounded-xl text-xs font-semibold text-white transition-colors cursor-pointer shadow-xs select-none ${
+                className={`w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl text-xs font-semibold text-white transition-colors cursor-pointer shadow-xs select-none ${
                   options.danger ? "bg-rose-600 hover:bg-rose-700 active:bg-rose-800" : "bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1e40af]"
                 }`}
               >

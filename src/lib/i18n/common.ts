@@ -59,7 +59,7 @@ export const commonEn: Dict = {
   "layout.createWorkspace": "Create workspace",
   "layout.createWorkspaceTitle": "Create a workspace",
   "layout.createWorkspaceDesc":
-    "Organize captures, folders, and teammates by team, client, or project.",
+    "Organize captures and members by team, client, or project.",
   "layout.workspaceName": "Workspace name",
   "layout.workspaceNamePlaceholder": "e.g. QA Team, Client Project",
   "layout.createWorkspaceHint": "You can rename this or invite members anytime in Settings.",
@@ -306,7 +306,7 @@ export const commonId: Dict = {
   "layout.createWorkspace": "Buat workspace",
   "layout.createWorkspaceTitle": "Buat workspace baru",
   "layout.createWorkspaceDesc":
-    "Kelompokkan rekaman, folder, dan anggota berdasarkan tim, klien, atau proyek.",
+    "Kelompokkan rekaman dan tim berdasarkan proyek atau klien.",
   "layout.workspaceName": "Nama workspace",
   "layout.workspaceNamePlaceholder": "mis. Tim QA, Proyek Klien",
   "layout.createWorkspaceHint": "Nama & anggota bisa diubah kapan saja di Pengaturan.",

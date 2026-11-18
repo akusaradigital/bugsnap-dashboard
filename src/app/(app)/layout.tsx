@@ -2201,13 +2201,13 @@ export default function DashboardLayout({
               aria-modal="true"
               aria-labelledby="create-ws-title"
               aria-describedby="create-ws-desc"
-              className="relative w-[min(24rem,calc(100vw-2rem))] max-w-sm rounded-2xl border border-border bg-subtle shadow-2xl p-6 space-y-5"
+              className="relative w-[min(28rem,calc(100vw-2rem))] max-w-md rounded-2xl border border-border bg-subtle shadow-2xl p-6 space-y-5"
             >
               <div className="text-center space-y-1.5 pt-1">
                 <h2 id="create-ws-title" className="text-base font-bold text-foreground break-words">
                   {t("layout.createWorkspaceTitle")}
                 </h2>
-                <p id="create-ws-desc" className="text-xs text-muted leading-relaxed break-words">
+                <p id="create-ws-desc" className="text-xs text-muted leading-relaxed text-balance break-words">
                   {t("layout.createWorkspaceDesc")}
                 </p>
               </div>
@@ -2250,7 +2250,7 @@ export default function DashboardLayout({
                     setCreateWsModalOpen(false);
                     setCreateWsError(null);
                   }}
-                  className="w-full inline-flex items-center justify-center px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs font-semibold text-foreground hover:bg-subtle disabled:opacity-50 transition-colors cursor-pointer select-none"
+                  className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl border border-border bg-background text-xs font-semibold text-foreground hover:bg-subtle disabled:opacity-50 transition-colors cursor-pointer select-none"
                 >
                   {t("common.cancel")}
                 </button>
@@ -2261,7 +2261,7 @@ export default function DashboardLayout({
                     if (name) handleCreateWorkspace(name);
                   }}
                   disabled={!newWsName.trim() || creating}
-                  className="w-full inline-flex items-center justify-center px-3.5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1e40af] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
+                  className="w-full inline-flex items-center justify-center whitespace-nowrap px-3.5 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1e40af] text-white text-xs font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-colors cursor-pointer shadow-xs select-none"
                 >
                   {creating ? t("layout.creatingWorkspace") : t("layout.createWorkspace")}
                 </button>
