@@ -70,7 +70,7 @@ jobs:
           GOOGLE_DRIVE_ENCRYPTION_KEY: "12345678901234567890123456789012"
 
       - name: E2E Smoke Test
-        run: node tests/smoke.e2e.mjs
+        run: node tests/integration/smoke.e2e.mjs
         env:
           BASE_URL: http://127.0.0.1:3000
 
