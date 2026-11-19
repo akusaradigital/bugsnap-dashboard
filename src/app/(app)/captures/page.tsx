@@ -683,7 +683,11 @@ function CapturesContent() {
   // (see the fetch effect above), so no redundant client-side re-filter is needed here.
   const workspaceCaptures = captures;
 
+  const lastCopyTimeRef = useRef<number>(0);
   const handleCopyLink = async (id: string) => {
+    const now = Date.now();
+    if (now - lastCopyTimeRef.current < 400) return;
+    lastCopyTimeRef.current = now;
     setDeleteError(null);
     try {
       await navigator.clipboard.writeText(`${window.location.origin}/v/${id}`);
