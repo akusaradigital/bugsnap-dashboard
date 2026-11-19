@@ -16,7 +16,7 @@ import { useToast } from "@/components/Toast";
 import { Dropdown } from "@/components/Dropdown";
 import { Icon } from "@/lib/iconify";
 import { pickAvatar, initialOf } from "@/lib/avatar";
-import { FIREFOX_STORE_URL } from "@/lib/constants";
+import { useExtensionStatus } from "@/lib/useExtensionStatus";
 import EditModal from "@/components/CaptureEditModal";
 import {
   type Capture,
@@ -31,9 +31,6 @@ import {
   getOwnerInitial,
   timeAgo,
 } from "@/lib/capture-utils";
-
-const CHROME_WEB_STORE_URL =
-  "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
 
 const EXPIRY_OPTIONS = [
   { value: "never", labelKey: "cap.never" },
@@ -122,6 +119,7 @@ export default function CapturesList() {
 
 function CapturesContent() {
   const { t } = useT();
+  const ext = useExtensionStatus();
   const { showToast } = useToast();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -2338,26 +2336,43 @@ function CapturesContent() {
                     {t("cap.step1Desc")}
                   </p>
                 </div>
-                <div className="flex flex-col gap-2">
-                  <a
-                    href={CHROME_WEB_STORE_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-start gap-2 px-3.5 py-2 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold shadow-xs shadow-[#2563EB]/25 transition-all w-full"
-                  >
-                    <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
-                    <span>{t("cap.install")}</span>
-                  </a>
-                  <a
-                    href={FIREFOX_STORE_URL}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-start gap-2 px-3.5 py-2 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold shadow-xs shadow-[#2563EB]/25 transition-all w-full"
-                  >
-                    <Icon icon="logos:firefox" className="w-4 h-4 shrink-0" aria-hidden="true" />
-                    <span>{t("cap.installFirefox")}</span>
-                  </a>
-                </div>
+                {ext.installed ? (
+                  <div className="flex flex-col gap-2">
+                    <div className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50 text-emerald-700 dark:text-emerald-400 text-xs font-semibold">
+                      <Icon icon="lucide:check-circle-2" className="w-4 h-4 text-emerald-600 dark:text-emerald-400 shrink-0" aria-hidden="true" />
+                      <span>{t("cap.extInstalled")}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => ext.triggerTestCapture("area")}
+                      className="inline-flex items-center justify-start gap-2 px-3.5 py-2 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold shadow-xs shadow-[#2563EB]/25 transition-all w-full cursor-pointer"
+                    >
+                      <Icon icon="lucide:camera" className="w-4 h-4 shrink-0" aria-hidden="true" />
+                      <span>{t("cap.testCapture")}</span>
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-2">
+                    <a
+                      href={ext.primaryStoreUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-start gap-2 px-3.5 py-2 rounded-lg bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold shadow-xs shadow-[#2563EB]/25 transition-all w-full"
+                    >
+                      <Icon icon={ext.browser === "firefox" ? "logos:firefox" : "logos:chrome"} className="w-4 h-4 shrink-0" aria-hidden="true" />
+                      <span>{ext.browser === "firefox" ? t("cap.installFirefox") : t("cap.install")}</span>
+                    </a>
+                    <a
+                      href={ext.secondaryStoreUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center justify-start gap-2 px-3.5 py-2 rounded-lg border border-border bg-subtle hover:bg-background text-foreground text-xs font-bold shadow-xs transition-all w-full"
+                    >
+                      <Icon icon={ext.browser === "firefox" ? "logos:chrome" : "logos:firefox"} className="w-4 h-4 shrink-0" aria-hidden="true" />
+                      <span>{ext.browser === "firefox" ? t("cap.install") : t("cap.installFirefox")}</span>
+                    </a>
+                  </div>
+                )}
               </div>
 
               <div className="rounded-xl border border-border bg-white dark:bg-subtle p-5 flex flex-col justify-between space-y-4 hover:border-sky-500/40 transition-colors">
@@ -2378,7 +2393,7 @@ function CapturesContent() {
                       {t("cap.hotkeyScreenshot")}
                     </span>
                     <kbd className="px-2 py-0.5 text-[11px] font-mono font-bold bg-white dark:bg-subtle text-foreground border border-slate-300 dark:border-border rounded-md shadow-2xs">
-                      Ctrl + Shift + S
+                      {ext.hotkeyArea}
                     </kbd>
                   </div>
                   <div className="flex items-center gap-2">
@@ -2386,7 +2401,7 @@ function CapturesContent() {
                       {t("cap.hotkeyRecord")}
                     </span>
                     <kbd className="px-2 py-0.5 text-[11px] font-mono font-bold bg-white dark:bg-subtle text-foreground border border-slate-300 dark:border-border rounded-md shadow-2xs">
-                      Ctrl + Shift + F
+                      {ext.hotkeyRecord}
                     </kbd>
                   </div>
                 </div>

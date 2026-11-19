@@ -8,7 +8,7 @@ import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
 import { fetchDriveStatus } from "@/lib/google-drive-values";
 import { Dropdown } from "@/components/Dropdown";
-import { CHROME_STORE_URL, FIREFOX_STORE_URL } from "@/lib/constants";
+import { useExtensionStatus } from "@/lib/useExtensionStatus";
 
 interface DayCount {
   day: number; // 1 to 31
@@ -112,6 +112,7 @@ export default function DashboardAnalyticsPage() {
 
 function DashboardContent() {
   const { t, locale } = useT();
+  const ext = useExtensionStatus();
   const searchParams = useSearchParams();
   const wsParam = searchParams.get("ws");
   const now = new Date();
@@ -467,50 +468,104 @@ function DashboardContent() {
         </div>
       </div>
 
-      {/* Extension Install Quickstart Banner (shown for users without captures) */}
+      {/* Extension Quickstart Banner (shown for users without captures) */}
       {totalCount === 0 && (
-        <div className="rounded-2xl border border-blue-200 dark:border-blue-900/50 bg-gradient-to-br from-blue-50/80 via-white to-blue-50/50 dark:from-blue-950/20 dark:via-background dark:to-blue-950/10 p-5 sm:p-6 shadow-xs space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div className="space-y-1">
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-100 text-[#2563EB] dark:bg-blue-950/80 dark:text-[#3B82F6]">
-                <Icon icon="lucide:sparkles" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
-                <span>Quickstart</span>
+        ext.installed ? (
+          <div className="rounded-2xl border border-emerald-200 dark:border-emerald-900/50 bg-gradient-to-br from-emerald-50/70 via-white to-blue-50/40 dark:from-emerald-950/20 dark:via-background dark:to-blue-950/10 p-5 sm:p-6 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-100 text-emerald-700 dark:bg-emerald-950/80 dark:text-emerald-400">
+                  <Icon icon="lucide:check-circle-2" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                  <span>{t("dash.extReadyBadge")}</span>
+                </div>
+                <h2 className="text-base sm:text-lg font-bold text-foreground">
+                  {t("dash.extReadyTitle")}
+                </h2>
+                <p className="text-xs sm:text-sm text-muted max-w-2xl leading-relaxed">
+                  {t("dash.extReadyDesc")}
+                </p>
               </div>
-              <h2 className="text-base sm:text-lg font-bold text-foreground">
-                {t("dash.bannerTitle")}
-              </h2>
-              <p className="text-xs sm:text-sm text-muted max-w-2xl leading-relaxed">
-                {t("dash.bannerDesc")}
-              </p>
+              <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => ext.triggerTestCapture("area")}
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold shadow-xs transition-all hover:shadow-md cursor-pointer"
+                >
+                  <Icon icon="lucide:camera" className="w-4 h-4 shrink-0" aria-hidden="true" />
+                  <span>{t("dash.testCaptureBtn")}</span>
+                </button>
+                <Link
+                  href="/welcome"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-subtle hover:bg-background text-foreground text-xs font-semibold shadow-xs transition-all hover:shadow-md"
+                >
+                  <Icon icon="lucide:book-open" className="w-4 h-4 shrink-0" aria-hidden="true" />
+                  <span>{t("dash.viewGuide")}</span>
+                </Link>
+              </div>
             </div>
-            <div className="flex flex-wrap items-center gap-2.5 shrink-0">
-              <a
-                href={CHROME_STORE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold shadow-xs transition-all hover:shadow-md"
-              >
-                <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
-                <span>{t("dash.bannerCta")}</span>
-              </a>
-              <a
-                href={FIREFOX_STORE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-subtle hover:bg-background text-foreground text-xs font-semibold shadow-xs transition-all hover:shadow-md"
-              >
-                <Icon icon="logos:firefox" className="w-4 h-4 shrink-0" aria-hidden="true" />
-                <span>{t("dash.bannerCtaFirefox")}</span>
-              </a>
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted pt-3 border-t border-border/50">
+              <span className="flex items-center gap-1.5 font-medium text-foreground">
+                <Icon icon="lucide:keyboard" className="w-4 h-4 text-muted shrink-0" aria-hidden="true" />
+                <span>
+                  Hotkeys: <kbd className="px-1.5 py-0.5 rounded bg-muted/20 font-mono text-[11px] font-semibold">{ext.hotkeyArea}</kbd> ({t("dash.screenshotLabel")}) · <kbd className="px-1.5 py-0.5 rounded bg-muted/20 font-mono text-[11px] font-semibold">{ext.hotkeyRecord}</kbd> ({t("dash.screenrecordLabel")})
+                </span>
+              </span>
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted pt-3 border-t border-border/50">
-            <span className="flex items-center gap-1.5 font-medium text-foreground">
-              <Icon icon="lucide:keyboard" className="w-4 h-4 text-muted shrink-0" aria-hidden="true" />
-              <span>{t("dash.bannerHotkeys")}</span>
-            </span>
+        ) : (
+          <div className="rounded-2xl border border-blue-200 dark:border-blue-900/50 bg-gradient-to-br from-blue-50/80 via-white to-blue-50/50 dark:from-blue-950/20 dark:via-background dark:to-blue-950/10 p-5 sm:p-6 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="space-y-1">
+                <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-blue-100 text-[#2563EB] dark:bg-blue-950/80 dark:text-[#3B82F6]">
+                  <Icon icon="lucide:sparkles" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
+                  <span>{t("dash.extInstallBadge")}</span>
+                </div>
+                <h2 className="text-base sm:text-lg font-bold text-foreground">
+                  {t("dash.bannerTitle")}
+                </h2>
+                <p className="text-xs sm:text-sm text-muted max-w-2xl leading-relaxed">
+                  {t("dash.bannerDesc")}
+                </p>
+              </div>
+              <div className="flex flex-wrap items-center gap-2.5 shrink-0">
+                <a
+                  href={ext.primaryStoreUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold shadow-xs transition-all hover:shadow-md"
+                >
+                  <Icon
+                    icon={ext.browser === "firefox" ? "logos:firefox" : "logos:chrome"}
+                    className="w-4 h-4 shrink-0"
+                    aria-hidden="true"
+                  />
+                  <span>{ext.browser === "firefox" ? t("dash.bannerCtaFirefox") : t("dash.bannerCta")}</span>
+                </a>
+                <a
+                  href={ext.secondaryStoreUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-border bg-subtle hover:bg-background text-foreground text-xs font-semibold shadow-xs transition-all hover:shadow-md"
+                >
+                  <Icon
+                    icon={ext.browser === "firefox" ? "logos:chrome" : "logos:firefox"}
+                    className="w-4 h-4 shrink-0"
+                    aria-hidden="true"
+                  />
+                  <span>{ext.browser === "firefox" ? t("dash.bannerCta") : t("dash.bannerCtaFirefox")}</span>
+                </a>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted pt-3 border-t border-border/50">
+              <span className="flex items-center gap-1.5 font-medium text-foreground">
+                <Icon icon="lucide:keyboard" className="w-4 h-4 text-muted shrink-0" aria-hidden="true" />
+                <span>
+                  Hotkeys: <kbd className="px-1.5 py-0.5 rounded bg-muted/20 font-mono text-[11px] font-semibold">{ext.hotkeyArea}</kbd> ({t("dash.screenshotLabel")}) · <kbd className="px-1.5 py-0.5 rounded bg-muted/20 font-mono text-[11px] font-semibold">{ext.hotkeyRecord}</kbd> ({t("dash.screenrecordLabel")})
+                </span>
+              </span>
+            </div>
           </div>
-        </div>
+        )
       )}
 
       {/* Stat Cards */}

@@ -88,6 +88,11 @@ export function ExtensionSyncBridge() {
       if (e.source !== window) return;
       if (e.data?.source === "bugsnap-extension") {
         if (e.data.action === "ready") {
+          try {
+            sessionStorage.setItem("bugsnap_ext_installed", "true");
+            (window as unknown as { __bugsnap_extension_installed?: boolean }).__bugsnap_extension_installed = true;
+            window.dispatchEvent(new CustomEvent("bugsnap-ext-detected"));
+          } catch {}
           const session = cachedSession || (await supabase.auth.getSession().catch(() => ({ data: { session: null } }))).data?.session;
           if (session) cachedSession = session as typeof cachedSession;
           broadcastSession(session?.user || null);
