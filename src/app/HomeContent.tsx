@@ -143,6 +143,12 @@ export function HomeContent() {
           .catch((err) => {
             console.error("Auto login failed:", err);
             setAutoLoggingIn(false);
+            try {
+              const cleanUrl = new URL(window.location.href);
+              cleanUrl.searchParams.delete("token");
+              cleanUrl.searchParams.delete("provider_token");
+              window.history.replaceState({}, "", cleanUrl.pathname + (cleanUrl.search ? cleanUrl.search : ""));
+            } catch {}
           });
       }
     }

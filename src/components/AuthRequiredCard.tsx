@@ -3,12 +3,15 @@
 import Link from "next/link";
 import { useT } from "@/components/I18nProvider";
 import { Icon } from "@/lib/iconify";
-
-const CHROME_WEB_STORE_URL = "https://chromewebstore.google.com/detail/klbgjodcbhopcjpfehjkbgofjdelohlf";
+import { useExtensionStatus } from "@/lib/useExtensionStatus";
 
 export function AuthRequiredCard({ title }: { title?: string }) {
   const { t } = useT();
+  const ext = useExtensionStatus();
   const heading = title || t("auth.requiredDefaultTitle");
+
+  const currentPath = typeof window !== "undefined" ? window.location.pathname + window.location.search : "/dashboard";
+  const loginHref = `/login?redirectTo=${encodeURIComponent(currentPath.startsWith("/login") ? "/dashboard" : currentPath)}`;
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 sm:p-6 text-foreground font-sans">
@@ -23,7 +26,7 @@ export function AuthRequiredCard({ title }: { title?: string }) {
         </div>
 
         {/* Lock Icon */}
-        <div className="mx-auto w-16 h-16 rounded-2xl bg-red-50 dark:bg-red-950/25 border border-red-200 dark:border-red-900/50 flex items-center justify-center text-red-600 dark:text-red-400">
+        <div className="mx-auto w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-950/25 border border-blue-200 dark:border-blue-900/50 flex items-center justify-center text-blue-600 dark:text-blue-400">
           <Icon icon="lucide:lock" className="w-8 h-8 shrink-0" aria-hidden="true" />
         </div>
 
@@ -38,22 +41,28 @@ export function AuthRequiredCard({ title }: { title?: string }) {
         {/* Actions */}
         <div className="space-y-3 pt-2">
           <Link
-            href="/login"
-            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#89BD49] hover:bg-[#6B9A35] text-white text-sm font-semibold shadow-sm shadow-[#89BD49]/25 transition-colors"
+            href={loginHref}
+            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-sm font-semibold shadow-xs transition-colors"
           >
             <Icon icon="lucide:log-in" className="w-4 h-4 shrink-0 brightness-0 invert" aria-hidden="true" />
             {t("auth.signInBugSnap")}
           </Link>
 
-          <a
-            href={CHROME_WEB_STORE_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-red-200 dark:border-red-800/40 bg-red-50 dark:bg-red-950/30 hover:bg-red-100 dark:hover:bg-red-950/50 text-red-700 dark:text-red-400 text-sm font-semibold transition-colors"
-          >
-            <Icon icon="logos:chrome" className="w-4 h-4 shrink-0" aria-hidden="true" />
-            {t("auth.downloadExtension")}
-          </a>
+          {!ext.installed && (
+            <a
+              href={ext.primaryStoreUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-border bg-subtle hover:bg-background text-foreground text-sm font-semibold transition-colors"
+            >
+              <Icon
+                icon={ext.browser === "firefox" ? "logos:firefox" : "logos:chrome"}
+                className="w-4 h-4 shrink-0"
+                aria-hidden="true"
+              />
+              <span>{ext.browser === "firefox" ? t("dash.bannerCtaFirefox") : t("dash.bannerCta")}</span>
+            </a>
+          )}
         </div>
 
         <p className="text-[11px] text-muted pt-2 border-t border-border/60">

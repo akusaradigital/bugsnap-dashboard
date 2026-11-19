@@ -10,7 +10,8 @@ import { withAssetVersion } from "@/lib/iconify";
 
 function getSafeRedirectPath(): string {
   if (typeof window === "undefined") return "/dashboard";
-  const raw = new URLSearchParams(window.location.search).get("redirectTo") || "/dashboard";
+  const params = new URLSearchParams(window.location.search);
+  const raw = params.get("redirectTo") || params.get("next") || "/dashboard";
   if (!/^\/(?!\/|\\)/.test(raw)) return "/dashboard";
   if (raw.startsWith("/login")) return "/dashboard";
   // Strip auth error query and hash params if previous attempt failed
@@ -72,6 +73,9 @@ export default function LoginPage() {
 
       // Extract any OAuth error passed in query, hash, or nested in redirectTo
       let errDesc = params.get("error_description") || hashParams.get("error_description");
+      const errRaw = params.get("error") || hashParams.get("error");
+      const errCode = params.get("error_code") || hashParams.get("error_code");
+
       if (!errDesc) {
         const rawRedirect = params.get("redirectTo");
         if (rawRedirect) {
@@ -83,12 +87,34 @@ export default function LoginPage() {
           }
         }
       }
-      if (errDesc) {
+
+      if (
+        errRaw === "access_denied" ||
+        errDesc?.toLowerCase().includes("denied") ||
+        errDesc?.toLowerCase().includes("cancelled")
+      ) {
+        hasAuthError = true;
+        setError(t("login.errorCancelled"));
+      } else if (errRaw === "server_error" || errDesc?.toLowerCase().includes("server_error")) {
+        hasAuthError = true;
+        setError(t("login.errorGoogle"));
+      } else if (errDesc) {
         hasAuthError = true;
         setError(decodeURIComponent(errDesc.replace(/\+/g, " ")));
-      } else if (params.has("error") || hashParams.has("error")) {
+      } else if (errCode || errRaw) {
         hasAuthError = true;
-        setError(params.get("error") || hashParams.get("error"));
+        setError(errCode || errRaw || t("login.errorGeneric"));
+      }
+
+      // If auth error existed in URL, clean parameters to prevent persistent errors on reload
+      if (hasAuthError) {
+        try {
+          const cleanUrl = new URL(window.location.href);
+          ["error", "error_description", "error_code", "error_uri"].forEach((k) => {
+            cleanUrl.searchParams.delete(k);
+          });
+          window.history.replaceState({}, "", cleanUrl.pathname + (cleanUrl.search ? cleanUrl.search : ""));
+        } catch {}
       }
 
       // Check for auto-login token from Extension or auth links
@@ -105,13 +131,20 @@ export default function LoginPage() {
             if (data.actionLink) {
               window.location.assign(data.actionLink);
             } else {
-              throw new Error("Invalid token login response");
+              throw new Error(data.error || "Invalid token login response");
             }
           })
           .catch((err) => {
             console.error("Auto login failed:", err);
             setSigningIn(false);
             setLoadingSession(false);
+            setError(t("login.tokenExpired"));
+            try {
+              const cleanUrl = new URL(window.location.href);
+              cleanUrl.searchParams.delete("token");
+              cleanUrl.searchParams.delete("provider_token");
+              window.history.replaceState({}, "", cleanUrl.pathname + (cleanUrl.search ? cleanUrl.search : ""));
+            } catch {}
           });
         return;
       }
@@ -129,6 +162,18 @@ export default function LoginPage() {
         }
       })
       .catch(() => setLoadingSession(false));
+
+    // Listen for cross-tab sign-in or session updates
+    const { data: authSub } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === "SIGNED_IN" && session?.user && !hasAuthError) {
+        try { sessionStorage.removeItem("bugsnap_signed_out"); } catch {}
+        router.replace(nextPath || target || "/dashboard");
+      }
+    });
+
+    return () => {
+      authSub.subscription.unsubscribe();
+    };
     // nextPath is read once on mount (useState); the session check must run only once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);

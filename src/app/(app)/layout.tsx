@@ -433,15 +433,84 @@ export default function DashboardLayout({
   useEffect(() => {
     let active = true;
 
+    const loadUserData = async (u: { id: string; email?: string; user_metadata?: Record<string, unknown> }, accessToken?: string) => {
+      const meta = u.user_metadata || {};
+      const userEmail = u.email || "";
+
+      // Attribute viral signup if referral capture ID exists
+      try {
+        const refCaptureId = localStorage.getItem("bugsnap_ref_capture_id");
+        if (refCaptureId && accessToken) {
+          fetch("/api/track/referral", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${accessToken}`,
+            },
+            body: JSON.stringify({ captureId: refCaptureId }),
+          })
+            .then(() => localStorage.removeItem("bugsnap_ref_capture_id"))
+            .catch(() => { });
+        }
+      } catch { }
+
+      let dbPlan: Plan = normalizePlan(meta.plan as string | undefined);
+      let suspended = false;
+      let dbAvatar: string | undefined;
+      let dbName: string | undefined;
+      if (userEmail) {
+        const { data: userRow } = await supabase
+          .from("users")
+          .select("plan, suspended, avatar_url, full_name")
+          .ilike("email", userEmail)
+          .maybeSingle();
+        if (userRow?.plan) dbPlan = normalizePlan(userRow.plan);
+        if (userRow?.suspended) suspended = true;
+        if (userRow?.avatar_url) dbAvatar = userRow.avatar_url;
+        if (userRow?.full_name) dbName = userRow.full_name;
+      }
+
+      if (suspended) {
+        if (active) setSession({ loading: false, user: null, suspended: true });
+        return;
+      }
+
+      if (active) {
+        setSession({
+          loading: false,
+          user: {
+            id: u.id,
+            email: userEmail,
+            name: dbName || (meta.full_name as string) || (meta.name as string) || userEmail?.split("@")[0] || "User",
+            avatar: pickAvatar(dbAvatar, meta.avatar_url as string | undefined, meta.picture as string | undefined),
+            plan: dbPlan,
+          },
+        });
+      }
+    };
+
     supabase.auth.getSession().then(async ({ data, error }) => {
       if (!active) return;
       if (error) {
         console.warn("Failed to load session:", error);
         setSession({ loading: false, user: null });
+        const cleanPath = window.location.pathname + window.location.search;
+        const loginUrl = new URL("/login", window.location.origin);
+        loginUrl.searchParams.set("redirectTo", cleanPath.startsWith("/login") ? "/dashboard" : cleanPath);
+        loginUrl.searchParams.set("error_description", error.message);
+        router.replace(loginUrl.pathname + loginUrl.search);
         return;
       }
       const u = data.session?.user;
       if (!u) {
+        // If an OAuth code exchange or token is actively pending in the URL, wait for onAuthStateChange
+        if (typeof window !== "undefined") {
+          const hasCode = window.location.search.includes("code=");
+          const hasToken = window.location.hash.includes("access_token=");
+          if (hasCode || hasToken) {
+            return;
+          }
+        }
         setSession({ loading: false, user: null });
         const searchParams = new URLSearchParams(window.location.search);
         const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
@@ -466,67 +535,10 @@ export default function DashboardLayout({
         router.replace(loginUrl.pathname + loginUrl.search);
         return;
       }
-      const meta = u.user_metadata || {};
-      const userEmail = u.email || "";
-
-      // Attribute viral signup if referral capture ID exists
-      try {
-        const refCaptureId = localStorage.getItem("bugsnap_ref_capture_id");
-        if (refCaptureId && data.session?.access_token) {
-          fetch("/api/track/referral", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${data.session.access_token}`,
-            },
-            body: JSON.stringify({ captureId: refCaptureId }),
-          })
-            .then(() => localStorage.removeItem("bugsnap_ref_capture_id"))
-            .catch(() => { });
-        }
-      } catch { }
-
-      // Read the plan from public.users (source of truth updated by the
-      // Stripe webhook) so upgrades take effect immediately without re-login.
-      let dbPlan: Plan = normalizePlan(meta.plan);
-      let suspended = false;
-      // Same source as Settings > Account (avatar_url/full_name) so the
-      // sidebar profile stays in sync with what the user saved there.
-      let dbAvatar: string | undefined;
-      let dbName: string | undefined;
-      if (userEmail) {
-        const { data: userRow } = await supabase
-          .from("users")
-          .select("plan, suspended, avatar_url, full_name")
-          .ilike("email", userEmail)
-          .maybeSingle();
-        // users.plan is the source of truth (Stripe webhook writes it). Fall
-        // back to auth metadata only as a bootstrap for pre-webhook accounts.
-        if (userRow?.plan) dbPlan = normalizePlan(userRow.plan);
-        if (userRow?.suspended) suspended = true;
-        if (userRow?.avatar_url) dbAvatar = userRow.avatar_url;
-        if (userRow?.full_name) dbName = userRow.full_name;
-      }
-
-      // Block suspended users from the app shell.
-      if (suspended) {
-        setSession({ loading: false, user: null, suspended: true });
-        return;
-      }
-
-      setSession({
-        loading: false,
-        user: {
-          id: u.id,
-          email: userEmail,
-          name: dbName || meta.full_name || meta.name || userEmail?.split("@")[0] || "User",
-          avatar: pickAvatar(dbAvatar, meta.avatar_url, meta.picture),
-          plan: dbPlan,
-        },
-      });
+      await loadUserData(u, data.session?.access_token);
     });
 
-    const { data: sub } = supabase.auth.onAuthStateChange((event) => {
+    const { data: sub } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       if (!active) return;
       if (event === "SIGNED_OUT") {
         try {
@@ -539,8 +551,14 @@ export default function DashboardLayout({
           sessionStorage.removeItem("bs_drive_quota");
         } catch { }
         router.replace("/login");
+      } else if (
+        (event === "SIGNED_IN" || event === "USER_UPDATED" || event === "TOKEN_REFRESHED") &&
+        newSession?.user
+      ) {
+        await loadUserData(newSession.user, newSession.access_token);
       }
     });
+
     return () => {
       active = false;
       sub.subscription.unsubscribe();

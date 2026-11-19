@@ -204,6 +204,10 @@ export const commonEn: Dict = {
   "login.errorGeneric": "Something went wrong. Please try again.",
   "login.errorGoogle":
     "Google sign-in is currently unavailable. Please try again.",
+  "login.errorCancelled":
+    "Sign-in was cancelled. Please try again when ready.",
+  "login.tokenExpired":
+    "Session token has expired or is invalid. Please sign in with Google.",
   "login.badgeData": "100% Data Ownership",
   "login.badgeDevTools": "Automated DevTools Logs",
   "login.badgeDrive": "Stored in Your Google Drive",
@@ -454,6 +458,10 @@ export const commonId: Dict = {
   "login.errorGeneric": "Terjadi kesalahan. Silakan coba lagi.",
   "login.errorGoogle":
     "Masuk dengan Google sedang tidak tersedia. Silakan coba lagi.",
+  "login.errorCancelled":
+    "Login dibatalkan. Silakan coba lagi saat Anda siap.",
+  "login.tokenExpired":
+    "Token sesi telah berakhir atau tidak valid. Silakan masuk kembali dengan Google.",
   "login.badgeData": "100% Kepemilikan Data",
   "login.badgeDevTools": "Log DevTools Otomatis",
   "login.badgeDrive": "Tersimpan di Google Drive Anda",
