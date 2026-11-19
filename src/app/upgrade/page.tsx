@@ -14,8 +14,8 @@ export default function UpgradePage() {
       <main className="flex-1 flex items-center justify-center">
         <InProgressView
           featureName="Pro & Billing"
-          backHref="/settings"
-          backLabel={t("settings.title")}
+          backHref="/dashboard"
+          backLabel={t("nav.dashboard")}
         />
       </main>
       <SiteFooter />

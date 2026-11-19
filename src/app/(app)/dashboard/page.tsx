@@ -763,7 +763,7 @@ function DashboardContent() {
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             <Link
-              href="/captures"
+              href={wsParam && wsParam !== "all" ? `/captures?ws=${encodeURIComponent(wsParam)}` : "/captures"}
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-foreground border border-border hover:bg-background transition-colors"
             >
               <span className="w-8 h-8 rounded-lg flex items-center justify-center bg-blue-50 dark:bg-blue-950/30 text-[#2563EB] dark:text-[#3B82F6] shrink-0">
@@ -773,7 +773,7 @@ function DashboardContent() {
               <Icon icon="lucide:chevron-right" className="w-4 h-4 text-muted shrink-0" aria-hidden="true" />
             </Link>
             <Link
-              href="/folders"
+              href={wsParam && wsParam !== "all" ? `/folders?ws=${encodeURIComponent(wsParam)}` : "/folders"}
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-foreground border border-border hover:bg-background transition-colors"
             >
               <span className="w-8 h-8 rounded-lg flex items-center justify-center bg-blue-50 dark:bg-blue-950/30 text-[#2563EB] dark:text-[#3B82F6] shrink-0">
@@ -783,7 +783,7 @@ function DashboardContent() {
               <Icon icon="lucide:chevron-right" className="w-4 h-4 text-muted shrink-0" aria-hidden="true" />
             </Link>
             <Link
-              href="/settings?tab=integrations"
+              href={wsParam && wsParam !== "all" ? `/settings?ws=${encodeURIComponent(wsParam)}&tab=integrations` : "/settings?tab=integrations"}
               className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-foreground border border-border hover:bg-background transition-colors"
             >
               <span className="w-8 h-8 rounded-lg flex items-center justify-center bg-blue-50 dark:bg-blue-950/30 text-[#2563EB] dark:text-[#3B82F6] shrink-0">

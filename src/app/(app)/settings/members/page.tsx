@@ -173,7 +173,7 @@ export default function TeamManagementPage() {
           <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground">{t("members.title")}</h1>
           <p className="text-sm text-muted mt-1">{t("members.subtitle")}</p>
         </div>
-        <Link href="/settings" className="text-sm text-[#2563EB] dark:text-[#3B82F6] hover:text-[#1D4ED8] dark:hover:text-[#60A5FA] font-medium hover:underline">
+        <Link href={activeWsId ? `/settings?ws=${activeWsId}&tab=members` : "/settings?tab=members"} className="text-sm text-[#2563EB] dark:text-[#3B82F6] hover:text-[#1D4ED8] dark:hover:text-[#60A5FA] font-medium hover:underline">
           {t("members.backToSettings")}
         </Link>
       </div>

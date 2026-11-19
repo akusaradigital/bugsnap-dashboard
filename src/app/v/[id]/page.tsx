@@ -844,6 +844,24 @@ function SingleViewContent() {
     };
   }, [id, showToast]);
 
+  // Handle Google Drive OAuth return status if redirected here
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    const driveResult = url.searchParams.get("drive");
+    if (driveResult === "connected") {
+      showToast(t("settings.driveConnectedOk"), "success");
+    } else if (driveResult === "scope_denied") {
+      showToast(t("settings.driveScopeError"), "error");
+    } else if (driveResult === "error") {
+      showToast(t("settings.driveError"), "error");
+    }
+    if (driveResult) {
+      url.searchParams.delete("drive");
+      window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+    }
+  }, [showToast, t]);
+
   // Check integrations configuration whenever capture workspace is known
   useEffect(() => {
     if (!capture?.workspace_id) return;
@@ -1066,7 +1084,15 @@ function SingleViewContent() {
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
     if (!token) throw new Error(t("v.signInToDelete"));
-    const response = await fetch("/api/google-drive/connect", { method: "POST", headers: { Authorization: `Bearer ${token}` } });
+    const returnTo = window.location.pathname + window.location.search;
+    const response = await fetch("/api/google-drive/connect", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ returnTo }),
+    });
     const result = await response.json().catch(() => ({})) as { url?: string; error?: string };
     if (!response.ok || !result.url) throw new Error(result.error || "Could not start Google Drive connection");
     window.location.assign(result.url);

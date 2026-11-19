@@ -11,7 +11,7 @@ const DRIVE_FILES = "https://www.googleapis.com/drive/v3/files";
 const DRIVE_LIST_FIELDS = "files(id,name,webViewLink,createdTime,trashed),nextPageToken";
 const STATE_TTL_MS = 10 * 60_000;
 
-type State = { userId: string; nonce: string; exp: number };
+type State = { userId: string; nonce: string; exp: number; returnTo?: string };
 type Connection = { user_id: string; refresh_token: string; google_email: string | null; updated_at?: string | null };
 export type DriveConnectionStatus = "connected" | "reconnect_required" | "not_connected";
 export type DriveQuota = { usedBytes: number | null; totalBytes: number | null };
@@ -50,25 +50,25 @@ export async function authenticatedUser(request: Request) {
   return error ? null : user;
 }
 
-export async function createConnectUrl(userId: string) {
+export async function createConnectUrl(userId: string, returnTo?: string) {
   const db = createServiceClient();
   const nonce = randomBytes(24).toString("base64url");
   const expiresAt = new Date(Date.now() + STATE_TTL_MS).toISOString();
   const { error } = await db.from("google_drive_oauth_states").insert({ nonce_hash: createHash("sha256").update(nonce).digest("hex"), user_id: userId, expires_at: expiresAt });
   if (error) throw error;
-  const state = encrypt(JSON.stringify({ userId, nonce, exp: Date.now() + STATE_TTL_MS } satisfies State));
+  const state = encrypt(JSON.stringify({ userId, nonce, exp: Date.now() + STATE_TTL_MS, returnTo } satisfies State));
   const params = new URLSearchParams({ client_id: env("GOOGLE_DRIVE_CLIENT_ID"), redirect_uri: env("GOOGLE_DRIVE_REDIRECT_URI"), response_type: "code", scope: "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.email", access_type: "offline", prompt: "consent select_account", state });
   return `${GOOGLE_AUTH}?${params}`;
 }
 
-export async function consumeState(value: string) {
+export async function consumeState(value: string): Promise<{ userId: string; returnTo?: string }> {
   const state = JSON.parse(decrypt(value)) as State;
   if (!isUuid(state.userId) || typeof state.nonce !== "string" || !state.nonce || typeof state.exp !== "number" || state.exp < Date.now()) throw new Error("OAuth state expired");
   const db = createServiceClient();
   const nonceHash = createHash("sha256").update(state.nonce).digest("hex");
   const { data, error } = await db.from("google_drive_oauth_states").delete().eq("nonce_hash", nonceHash).eq("user_id", state.userId).gt("expires_at", new Date().toISOString()).select("user_id").maybeSingle();
   if (error || !data) throw new Error("OAuth state is invalid or already used");
-  return state.userId;
+  return { userId: state.userId, returnTo: state.returnTo };
 }
 
 // Thrown only when Google has permanently rejected the refresh token itself

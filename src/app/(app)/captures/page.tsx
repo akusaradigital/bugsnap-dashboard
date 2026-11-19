@@ -356,6 +356,24 @@ function CapturesContent() {
     router,
   ]);
 
+  // Handle Google Drive OAuth return status if redirected here
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const url = new URL(window.location.href);
+    const driveResult = url.searchParams.get("drive");
+    if (driveResult === "connected") {
+      showToast(t("settings.driveConnectedOk"), "success");
+    } else if (driveResult === "scope_denied") {
+      showToast(t("settings.driveScopeError"), "error");
+    } else if (driveResult === "error") {
+      showToast(t("settings.driveError"), "error");
+    }
+    if (driveResult) {
+      url.searchParams.delete("drive");
+      router.replace(`${url.pathname}${url.search}${url.hash}`, { scroll: false });
+    }
+  }, [router, showToast, t]);
+
   // Close type filter dropdown when clicking outside without blocking scroll
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -683,9 +701,14 @@ function CapturesContent() {
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
     if (!token) throw new Error(t("cap.sessionExpired"));
+    const returnTo = window.location.pathname + window.location.search;
     const res = await fetch("/api/google-drive/connect", {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ returnTo }),
     });
     const result = (await res.json().catch(() => ({}))) as {
       url?: string;

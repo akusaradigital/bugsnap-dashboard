@@ -321,7 +321,14 @@ function SettingsContent() {
     if (driveActionLoading) return;
     setDriveActionLoading(true); setDriveError(null);
     try {
-      const r = await driveRequest("/api/google-drive/connect", { method: "POST" });
+      const returnTo = activeWsId
+        ? `/settings?ws=${encodeURIComponent(activeWsId)}&tab=integrations`
+        : "/settings?tab=integrations";
+      const r = await driveRequest("/api/google-drive/connect", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ returnTo }),
+      });
       if (!r.url) throw new Error(t("settings.noAuthUrl"));
       window.location.assign(r.url);
     } catch (e) { setDriveError(e instanceof Error ? e.message : t("settings.connectError")); showToast(t("copy.driveConnectFailed"), "error"); setDriveActionLoading(false); }

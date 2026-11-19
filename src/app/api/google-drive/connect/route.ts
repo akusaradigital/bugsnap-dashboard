@@ -5,7 +5,12 @@ export async function POST(request: Request) {
   const user = await authenticatedUser(request);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
-    const url = await createConnectUrl(user.id);
+    const body = (await request.json().catch(() => ({}))) as { returnTo?: unknown };
+    const rawReturnTo = typeof body?.returnTo === "string" ? body.returnTo.trim() : "";
+    const safeReturnTo = /^\/(?!\/|\\)/.test(rawReturnTo) && !rawReturnTo.startsWith("/login")
+      ? rawReturnTo
+      : undefined;
+    const url = await createConnectUrl(user.id, safeReturnTo);
     return NextResponse.json({ url });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : String(err);
