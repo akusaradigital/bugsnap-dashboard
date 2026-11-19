@@ -107,6 +107,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [bugsnap-extension]
 
+### 2026-11-19 (v1.0.82)
+- **feat**: Unify and standardize the extension Settings (`options.html`) cards into a clean compact list hierarchy (`.settings-list.compact-list`) with soft separators, consistent padding, and standard toggle switches.
+- **feat**: Redesign Error Log into a unified compact card with subtle status accents, friendly empty-state display, and auto-purge of error logs older than 24 hours to keep local and database storage lightweight.
+- **feat**: Add custom SVG chevron indicators to dropdown selects and ensure uniform input/select element sizing across all options sections.
+- **fix**: Streamline Device Permissions UI into a single smart status badge/action button, eliminating duplicate status labels and repetitive action buttons.
+- **fix**: Prevent layout shifts on hover by locking badge width and using concise descriptions for microphone and webcam permissions.
+- **fix**: Update token login bridge assertion in test suite to match dashboard login redirect.
+
 ### 2026-11-18 (v1.0.81)
 - **feat**: Standardize popup, options, and editor modals to a unified centered layout with ARIA dialog roles, BugSnap Green (`#89BD49`) positive action buttons, and clearer, more concise copy.
 - **feat**: Generate 5 unified `1280×800` latest-UI showcase screenshots for Chrome Web Store and Firefox Add-ons listings.
