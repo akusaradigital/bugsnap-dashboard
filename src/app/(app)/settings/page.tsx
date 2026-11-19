@@ -31,8 +31,15 @@ function SettingsContent() {
 
   const wsParam = searchParams.get("ws") || "";
   const rawTab = searchParams.get("tab") as string | null;
+  const driveParam = searchParams.get("drive");
   // Billing tab temporarily excluded while payment is not ready
-  const activeTab: Tab = rawTab === "webhooks" ? "integrations" : rawTab && ["general","members","integrations","account","notifications"].includes(rawTab) ? (rawTab as Tab) : "account";
+  const activeTab: Tab = rawTab === "webhooks"
+    ? "integrations"
+    : rawTab && ["general","members","integrations","account","notifications"].includes(rawTab)
+      ? (rawTab as Tab)
+      : driveParam
+        ? "integrations"
+        : "account";
 
   useEffect(() => {
     // no-op: referrer-based navigation handled inline in the button
@@ -868,6 +875,27 @@ function SettingsContent() {
   };
 
   // ── Helper ────────────────────────────────────────────────────────────────
+  const handleBackToApp = useCallback(() => {
+    const fallback = wsParam ? `/dashboard?ws=${wsParam}` : "/dashboard";
+    if (typeof window !== "undefined") {
+      try {
+        const refUrl = document.referrer ? new URL(document.referrer) : null;
+        if (
+          refUrl &&
+          refUrl.origin === window.location.origin &&
+          !refUrl.pathname.startsWith("/login") &&
+          !refUrl.pathname.startsWith("/settings")
+        ) {
+          router.back();
+          return;
+        }
+      } catch {
+        // fallback to dashboard
+      }
+    }
+    router.push(fallback);
+  }, [router, wsParam]);
+
   function setTab(tab: Tab) {
     const url = new URL(window.location.href);
     url.searchParams.set("tab", tab);
@@ -916,13 +944,7 @@ function SettingsContent() {
           <div>
             <button
               type="button"
-              onClick={() => {
-                if (typeof window !== "undefined" && window.history.length > 1) {
-                  router.back();
-                } else {
-                  router.push(wsParam ? `/captures?ws=${wsParam}` : "/captures");
-                }
-              }}
+              onClick={handleBackToApp}
               className="w-full flex items-center gap-2 px-3 py-2 text-xs font-medium text-muted hover:text-foreground hover:bg-border/30 rounded-lg transition-colors text-left"
             >
               <Icon icon="lucide:arrow-left" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />
@@ -958,13 +980,7 @@ function SettingsContent() {
           <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
             <button
               type="button"
-              onClick={() => {
-                if (typeof window !== "undefined" && window.history.length > 1) {
-                  router.back();
-                } else {
-                  router.push(wsParam ? `/captures?ws=${wsParam}` : "/captures");
-                }
-              }}
+              onClick={handleBackToApp}
               className="flex items-center gap-1.5 text-xs font-semibold text-muted hover:text-foreground transition-colors"
             >
               <Icon icon="lucide:arrow-left" className="w-3.5 h-3.5 shrink-0" aria-hidden="true" />

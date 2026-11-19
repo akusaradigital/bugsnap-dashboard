@@ -4,6 +4,7 @@ export const runtime = "nodejs";
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const destination = new URL("/settings", process.env.NEXT_PUBLIC_APP_URL ?? url.origin);
+  destination.searchParams.set("tab", "integrations");
   try {
     const code = url.searchParams.get("code");
     const state = url.searchParams.get("state");
