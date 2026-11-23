@@ -266,3 +266,107 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     return NextResponse.json({ error: msg }, { status: 500 });
   }
 }
+
+// PATCH /api/public/v1/captures/:id - Update capture status (open, in-progress, fixed, closed)
+// and optionally append a resolution comment from AI coding agents (Claude, Cursor, Antigravity).
+export async function PATCH(request: Request, { params }: { params: Promise<{ id: string }> }) {
+  try {
+    const auth = await authenticateApiRequest(request);
+    if (!auth) {
+      return NextResponse.json(
+        { error: "Unauthorized. Missing or invalid API key. Expected: Bearer bugsnap_..." },
+        { status: 401 }
+      );
+    }
+
+    if (await isRateLimited(`mcp-patch:${auth.workspaceId}`, 60, 60)) {
+      return NextResponse.json({ error: "Rate limit exceeded (60 req/min)" }, { status: 429 });
+    }
+
+    const { id } = await params;
+    if (!id || !isUuid(id)) {
+      return NextResponse.json({ error: "Invalid capture id - expected a UUID" }, { status: 400 });
+    }
+
+    const body = await request.json().catch(() => null);
+    if (!body || typeof body !== "object") {
+      return NextResponse.json({ error: "Invalid JSON request body" }, { status: 400 });
+    }
+
+    const allowedStatuses = ["open", "in-progress", "fixed", "closed"];
+    const updates: Record<string, unknown> = {};
+
+    if (body.status !== undefined) {
+      if (typeof body.status !== "string" || !allowedStatuses.includes(body.status.toLowerCase())) {
+        return NextResponse.json(
+          { error: `Invalid status. Expected one of: ${allowedStatuses.join(", ")}` },
+          { status: 400 }
+        );
+      }
+      updates.status = body.status.toLowerCase();
+    }
+
+    if (body.tag !== undefined) {
+      updates.tag = typeof body.tag === "string" ? body.tag.trim().slice(0, 50) : null;
+    }
+
+    const db = createServiceClient();
+
+    // Verify capture belongs to authorized workspace
+    const { data: cap, error: fetchErr } = await db
+      .from("captures")
+      .select("id, status")
+      .eq("id", id)
+      .eq("workspace_id", auth.workspaceId)
+      .maybeSingle();
+
+    if (fetchErr) {
+      return NextResponse.json({ error: fetchErr.message }, { status: 500 });
+    }
+    if (!cap) {
+      return NextResponse.json({ error: "Capture not found in authorized workspace" }, { status: 404 });
+    }
+
+    if (Object.keys(updates).length > 0) {
+      const { error: updateErr } = await db
+        .from("captures")
+        .update(updates)
+        .eq("id", id)
+        .eq("workspace_id", auth.workspaceId);
+
+      if (updateErr) {
+        return NextResponse.json({ error: updateErr.message }, { status: 500 });
+      }
+    }
+
+    // Optional comment from AI agent (e.g. "Fixed bug: resolved null check in CartView.tsx")
+    let addedComment: string | null = null;
+    if (typeof body.comment === "string" && body.comment.trim()) {
+      const commentBody = body.comment.trim().slice(0, 2000);
+      const authorName =
+        typeof body.author === "string" && body.author.trim()
+          ? body.author.trim().slice(0, 80)
+          : "BugSnap AI Agent";
+      const { error: commentErr } = await db.from("comments").insert({
+        capture_id: id,
+        author_name: authorName,
+        author_email: "agent@bugsnap.io",
+        body: commentBody,
+      });
+      if (!commentErr) {
+        addedComment = commentBody;
+      }
+    }
+
+    return NextResponse.json({
+      success: true,
+      id,
+      status: updates.status || cap.status,
+      comment: addedComment,
+      message: `Capture status updated to ${updates.status || cap.status}`,
+    });
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : "Internal server error";
+    return NextResponse.json({ error: msg }, { status: 500 });
+  }
+}
