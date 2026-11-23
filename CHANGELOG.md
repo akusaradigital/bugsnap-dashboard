@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [bugsnap-dashboard]
 
+### 2026-11-23 (v0.17.1)
+- **feat**: Add AI Fix Prompt export format in public capture view (`/v/[id]`) for AI coding agents.
+- **feat**: Add `PATCH /api/v1/captures/[id]/status` API endpoint for updating capture triage status and AI agent comments.
+- **feat**: Expand sensitive data auto-redaction for Stripe webhook secrets (`whsec_`), NPM tokens, HuggingFace tokens, and formatted credit card patterns.
+- **fix**: Enforce `overflow-x: hidden` on modal dialogs and drawer scroll views to eliminate unwanted horizontal scrollbars.
+- **fix**: Resolve Mac Safari PKCE cookie adapter exception guards, session race condition, and hanging spinner.
+
 ### 2026-11-18 (v0.17.0)
 - **feat**: Standardize all dashboard modals to a unified centered layout (`max-w-md` / `max-w-lg`), ARIA dialog attributes, Escape-key handling, BugSnap Green (`#89BD49`) positive submit CTAs, and concise English and Indonesian copy.
 - **feat**: Add hover flyout workspace switcher with workspace badges, building icon, and direct Workspace Settings link.
@@ -107,6 +114,16 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [bugsnap-extension]
 
+### 2026-11-23 (v1.0.83)
+- **feat**: Studio-grade noise suppression, echo cancellation, and 48kHz audio recording using Web Audio API DSP pipeline.
+- **feat**: Expand sensitive data auto-redaction to cover Stripe webhook secrets (`whsec_`), NPM tokens, HuggingFace tokens, and formatted credit card patterns across logs and telemetry.
+- **feat**: Replace intrusive popup review banner with an interactive, compact 5-star micro-card.
+- **fix**: Fix popup card state detection to show "Save or discard your work first" when editor tab has an active or uploaded capture.
+- **fix**: Fix Discard and Save to Drafts handlers in popup to correctly detect and close standalone `editor.html` tabs.
+- **fix**: Style "Discard and start over" inline button with default red `#ef4444` and remove browser outline focus ring.
+- **fix**: Fix System Audio and Microphone mute toggles on floating recording bar from reverting to green by correctly computing state in background service worker and routing audio through a Web Audio GainNode.
+- **fix**: Resolve Mac Safari PKCE token storage loss, auth session deadlock on reconnect, and hanging spinner.
+
 ### 2026-11-19 (v1.0.82)
 - **feat**: Unify and standardize the extension Settings (`options.html`) cards into a clean compact list hierarchy (`.settings-list.compact-list`) with soft separators, consistent padding, and standard toggle switches.
 - **feat**: Redesign Error Log into a unified compact card with subtle status accents, friendly empty-state display, and auto-purge of error logs older than 24 hours to keep local and database storage lightweight.
@@ -173,6 +190,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 ---
 
 ## [bugsnap-mcp]
+
+### 2026-11-23 (v0.3.3)
+- **feat**: Add `bugsnap_update_capture_status` tool enabling AI coding agents to update capture triage status and post diagnostic comments directly via MCP.
 
 ### 2026-11-09 (v0.3.2)
 - **feat**: Expose capture-derived Playwright, fix, summary, and workflow context through the MCP detail payload
