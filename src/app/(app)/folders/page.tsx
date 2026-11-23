@@ -666,7 +666,7 @@ function ManageFoldersContent() {
             aria-modal="true"
             aria-labelledby="folders-delete-title"
             aria-describedby="folders-delete-desc"
-            className="relative w-[min(28rem,calc(100vw-2rem))] max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-border bg-subtle shadow-2xl p-6 space-y-5"
+            className="relative w-[min(28rem,calc(100vw-2rem))] max-w-md max-h-[90vh] overflow-y-auto overflow-x-hidden rounded-2xl border border-border bg-subtle shadow-2xl p-6 space-y-5"
           >
             <div className="text-center space-y-1.5 pt-1">
               <h2 id="folders-delete-title" className="text-base font-bold text-foreground break-words">{t("layout.deleteFolderQ")}</h2>

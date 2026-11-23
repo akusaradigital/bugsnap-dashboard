@@ -1813,7 +1813,7 @@ export default function DashboardLayout({
                             </div>
 
                             {/* Workspaces List */}
-                            <div className="max-h-56 overflow-y-auto p-1 space-y-0.5">
+                            <div className="max-h-56 overflow-y-auto overflow-x-hidden p-1 space-y-0.5">
                               {workspaces.map((ws, idx) => {
                                 const isSelected = activeWsId === ws.id || (!activeWsId && ws.id === workspaces[0]?.id);
                                 const palette = WS_PALETTES[idx % WS_PALETTES.length];
@@ -1960,7 +1960,7 @@ export default function DashboardLayout({
                   )}
                 </div>
 
-                <div className="flex-1 overflow-y-auto space-y-0.5 pr-0.5">
+                <div className="flex-1 overflow-y-auto overflow-x-hidden space-y-0.5 pr-0.5">
                   {rootFolders.map((item: FolderItem) => renderFolderItemRow(item, 0))}
 
                   {folders.length === 0 && (
@@ -2043,7 +2043,7 @@ export default function DashboardLayout({
                     <div
                       ref={notifMenuRef}
                       data-notif-menu
-                      className="absolute right-0 top-full mt-2 z-[70] w-72 rounded-xl border border-border bg-subtle shadow-2xl py-2 px-1 max-h-80 overflow-y-auto"
+                      className="absolute right-0 top-full mt-2 z-[70] w-72 rounded-xl border border-border bg-subtle shadow-2xl py-2 px-1 max-h-80 overflow-y-auto overflow-x-hidden"
                     >
                       <div className="flex items-center justify-between px-3 py-1 mb-1 border-b border-border/50 pb-1.5">
                         <p className="text-[10px] font-semibold uppercase tracking-wider text-muted">{t("layout.notifications")}</p>
@@ -2179,7 +2179,7 @@ export default function DashboardLayout({
                                 <div className="px-3.5 pt-3 pb-2 text-[11px] font-medium text-muted truncate border-b border-border/60">
                                   {currentUser.email || activeWs?.name || "Workspace"}
                                 </div>
-                                <div className="max-h-56 overflow-y-auto p-1 space-y-0.5">
+                                <div className="max-h-56 overflow-y-auto overflow-x-hidden p-1 space-y-0.5">
                                   {workspaces.map((ws, idx) => {
                                     const isSelected = activeWsId === ws.id || (!activeWsId && ws.id === workspaces[0]?.id);
                                     const palette = WS_PALETTES[idx % WS_PALETTES.length];
@@ -2436,7 +2436,7 @@ export default function DashboardLayout({
       {billingModalOpen && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4">
           <div className="absolute inset-0 bg-black/40" onClick={() => setBillingModalOpen(false)} />
-          <div className="relative w-full max-w-md max-h-[85vh] overflow-y-auto rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6 text-center">
+          <div className="relative w-full max-w-md max-h-[85vh] overflow-y-auto overflow-x-hidden rounded-xl bg-subtle shadow-xl border border-border p-4 sm:p-6 text-center">
             <h2 className="text-xl font-bold text-foreground mb-1">{t("layout.upgradeTitle")}</h2>
             <p className="text-sm text-muted mb-6">
               {t("layout.upgradeSub")}
@@ -2845,7 +2845,7 @@ export default function DashboardLayout({
               aria-modal="true"
               aria-labelledby="delete-folder-title"
               aria-describedby="delete-folder-desc"
-              className="relative w-[min(28rem,calc(100vw-2rem))] max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-border bg-subtle shadow-2xl p-6 space-y-5"
+              className="relative w-[min(28rem,calc(100vw-2rem))] max-w-md max-h-[90vh] overflow-y-auto overflow-x-hidden rounded-2xl border border-border bg-subtle shadow-2xl p-6 space-y-5"
             >
               <div className="text-center space-y-1.5 pt-1">
                 <h2 id="delete-folder-title" className="text-base font-bold text-foreground break-words">

@@ -2059,7 +2059,7 @@ function CapturesContent() {
                   </div>
 
                   {/* Collapsible item list */}
-                  <div className="max-h-36 overflow-y-auto divide-y divide-border/20 px-3 py-1 bg-subtle/30">
+                  <div className="max-h-36 overflow-y-auto overflow-x-hidden divide-y divide-border/20 px-3 py-1 bg-subtle/30">
                     {uploadTasks.map((taskItem, idx) => (
                       <div
                         key={`${taskItem.name}-${idx}`}
@@ -3206,7 +3206,7 @@ function CapturesContent() {
               </button>
             </div>
 
-            <div className="p-6 overflow-y-auto">
+            <div className="p-6 overflow-y-auto overflow-x-hidden">
               <div className="grid grid-cols-1 md:grid-cols-[1fr_240px] gap-6 items-start">
                 {/* Left Column: Folders */}
                 <div>
@@ -3434,7 +3434,7 @@ function CapturesContent() {
             aria-label="Close confirmation"
             onClick={() => !deleting && setDeleteRequest(null)}
           />
-          <div className="relative w-[min(28rem,calc(100vw-2rem))] max-w-md max-h-[90vh] overflow-y-auto rounded-2xl bg-subtle shadow-2xl border border-border p-6">
+          <div className="relative w-[min(28rem,calc(100vw-2rem))] max-w-md max-h-[90vh] overflow-y-auto overflow-x-hidden rounded-2xl bg-subtle shadow-2xl border border-border p-6">
             <div className="text-center space-y-1.5 mb-5 pt-1">
               <h2
                 id="delete-captures-title"

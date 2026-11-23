@@ -365,7 +365,7 @@ function NetworkDetail({
           content exceeds it. The host is ~252px (flex-1 of the panel), so a long
           Headers tab must scroll; what was wrong before was a scrollbar over
           empty space, caused by the drawer not filling its host. */}
-      <div className="flex-1 min-h-0 overflow-y-auto p-2.5 space-y-2.5 text-xs">
+      <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-2.5 space-y-2.5 text-xs">
         {precedingAction && <ActionBreadcrumb action={precedingAction} t={t} />}
 
         {tab === "headers" && (
@@ -911,7 +911,7 @@ function McpTabPanel({
   };
 
   return (
-    <div className="flex-1 min-h-0 h-[36rem] max-h-[60vh] sm:max-h-[36rem] overflow-y-auto p-4 sm:p-6 space-y-5 text-xs" aria-label={t("dt.mcp.title")}>
+    <div className="flex-1 min-h-0 h-[36rem] max-h-[60vh] sm:max-h-[36rem] overflow-y-auto overflow-x-hidden p-4 sm:p-6 space-y-5 text-xs" aria-label={t("dt.mcp.title")}>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2" role="tablist" aria-label={t("dt.mcp.actions")}>
         {([
           ["fix", "lucide:wrench", t("dt.mcp.fix")],
@@ -2019,7 +2019,7 @@ ${stack}` : body);
 
         {/* INFO TAB */}
         {activeTab === "Info" && (
-          <div className="flex-1 min-h-0 h-[36rem] max-h-[60vh] sm:max-h-[36rem] overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 min-h-0 h-[36rem] max-h-[60vh] sm:max-h-[36rem] overflow-y-auto overflow-x-hidden p-4 space-y-4">
             {capture.site_url && (
               <div>
                 <p className="text-[10px] font-semibold uppercase tracking-widest text-muted mb-1.5">URL</p>
@@ -2230,7 +2230,7 @@ ${stack}` : body);
 
         {/* CONSOLE TAB */}
         {activeTab === "Console" && (
-          <div className="flex-1 min-h-0 h-[36rem] max-h-[60vh] sm:max-h-[36rem] overflow-y-auto">
+          <div className="flex-1 min-h-0 h-[36rem] max-h-[60vh] sm:max-h-[36rem] overflow-y-auto overflow-x-hidden">
             {visibleConsoleLogs.length === 0 ? (
               summary ? (
                 <div className="p-4 space-y-3">
@@ -2435,7 +2435,7 @@ ${stack}` : body);
 
         {/* ACTIONS TAB */}
         {activeTab === "Actions" && (
-          <div className="flex-1 min-h-0 h-[36rem] max-h-[60vh] sm:max-h-[36rem] overflow-y-auto p-3">
+          <div className="flex-1 min-h-0 h-[36rem] max-h-[60vh] sm:max-h-[36rem] overflow-y-auto overflow-x-hidden p-3">
             {actionLogs.length === 0 ? (
               logSearch || actionKindFilter !== "all" ? (
                 <EmptyLogState filtered emptyText="" onReset={resetLogFilters} t={t} />

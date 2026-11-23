@@ -947,7 +947,7 @@ function SettingsContent() {
           </div>
         </div>
 
-        <div className="flex-1 px-3 py-4 space-y-4 overflow-y-auto">
+        <div className="flex-1 px-3 py-4 space-y-4 overflow-y-auto overflow-x-hidden">
           <div>
             <button
               type="button"
@@ -981,7 +981,7 @@ function SettingsContent() {
       </aside>
 
       {/* Panel */}
-      <main className="flex-1 min-w-0 overflow-y-auto w-full bg-background">
+      <main className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden w-full bg-background">
         {/* Mobile Settings Header & Horizontal Tab Bar (visible on <lg) */}
         <div className="lg:hidden sticky top-0 z-20 bg-background/95 backdrop-blur-md border-b border-border">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border/50">
@@ -1993,7 +1993,7 @@ function SettingsContent() {
                   {roleMenuOpen && (
                     <>
                       <div className="fixed inset-0 z-40" onClick={() => setRoleMenuOpen(false)} />
-                      <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-background border border-border rounded-xl shadow-xl py-1 px-1 flex flex-col gap-0.5 max-h-64 overflow-y-auto">
+                      <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-background border border-border rounded-xl shadow-xl py-1 px-1 flex flex-col gap-0.5 max-h-64 overflow-y-auto overflow-x-hidden">
                         {ROLE_OPTIONS.map((opt) => (
                           <button
                             key={opt}

@@ -86,7 +86,7 @@ export function UpgradeModal({
         role="dialog"
         aria-modal="true"
         aria-labelledby="upgrade-modal-title"
-        className="relative w-full max-w-4xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl shadow-2xl p-4 sm:p-10 my-4 sm:my-8 max-h-[90vh] overflow-y-auto"
+        className="relative w-full max-w-4xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 rounded-3xl shadow-2xl p-4 sm:p-10 my-4 sm:my-8 max-h-[90vh] overflow-y-auto overflow-x-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         <button

@@ -140,7 +140,7 @@ export default function EditModal({ capture, onClose, onSaved }: EditModalProps)
         </div>
 
         {/* Scrollable Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-4">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-6 py-4">
           <div className="space-y-4">
           <div>
             <label className="flex items-center gap-1.5 text-xs font-medium text-foreground mb-1.5">
