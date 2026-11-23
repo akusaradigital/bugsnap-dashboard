@@ -489,54 +489,116 @@ export default function DashboardLayout({
       }
     };
 
-    supabase.auth.getSession().then(async ({ data, error }) => {
-      if (!active) return;
-      if (error) {
-        console.warn("Failed to load session:", error);
-        setSession({ loading: false, user: null });
-        const cleanPath = window.location.pathname + window.location.search;
-        const loginUrl = new URL("/login", window.location.origin);
-        loginUrl.searchParams.set("redirectTo", cleanPath.startsWith("/login") ? "/dashboard" : cleanPath);
-        loginUrl.searchParams.set("error_description", error.message);
-        router.replace(loginUrl.pathname + loginUrl.search);
-        return;
+    let authResolved = false;
+    let authTimeout: NodeJS.Timeout | null = null;
+    const hasCode = typeof window !== "undefined" && window.location.search.includes("code=");
+    const hasToken =
+      typeof window !== "undefined" &&
+      (window.location.hash.includes("access_token=") || window.location.search.includes("access_token="));
+
+    if (hasCode && typeof window !== "undefined") {
+      const code = new URLSearchParams(window.location.search).get("code");
+      if (code) {
+        supabase.auth
+          .exchangeCodeForSession(code)
+          .then(async ({ data, error }) => {
+            if (!active) return;
+            if (!error && data.session?.user) {
+              authResolved = true;
+              try {
+                const cleanUrl = new URL(window.location.href);
+                cleanUrl.searchParams.delete("code");
+                cleanUrl.searchParams.delete("sb_flow_id");
+                window.history.replaceState({}, "", cleanUrl.pathname + (cleanUrl.search ? cleanUrl.search : ""));
+              } catch { /* ignore */ }
+              await loadUserData(data.session.user, data.session.access_token);
+            }
+          })
+          .catch(() => { /* handled by getSession/fallback */ });
       }
-      const u = data.session?.user;
-      if (!u) {
-        // If an OAuth code exchange or token is actively pending in the URL, wait for onAuthStateChange
-        if (typeof window !== "undefined") {
-          const hasCode = window.location.search.includes("code=");
-          const hasToken = window.location.hash.includes("access_token=");
+    }
+
+    if (hasCode || hasToken) {
+      authTimeout = setTimeout(async () => {
+        if (!active || authResolved) return;
+        try {
+          const { data } = await supabase.auth.getSession();
+          if (data.session?.user) {
+            authResolved = true;
+            await loadUserData(data.session.user, data.session.access_token);
+            return;
+          }
+        } catch { /* ignore */ }
+        if (!active) return;
+        console.warn("Auth initialization timed out waiting for code/token exchange.");
+        setSession({ loading: false, user: null });
+        const cleanPath = window.location.pathname;
+        const loginUrl = new URL("/login", window.location.origin);
+        loginUrl.searchParams.set("redirectTo", cleanPath.startsWith("/login") ? "/dashboard" : cleanPath || "/dashboard");
+        loginUrl.searchParams.set("error_description", "Sign-in timed out. Please try again.");
+        try {
+          const cleanUrl = new URL(window.location.href);
+          ["code", "state", "error", "error_description", "sb_flow_id"].forEach((k) => cleanUrl.searchParams.delete(k));
+          window.history.replaceState({}, "", cleanUrl.pathname + (cleanUrl.search ? cleanUrl.search : ""));
+        } catch { /* ignore */ }
+        router.replace(loginUrl.pathname + loginUrl.search);
+      }, 6000);
+    }
+
+    supabase.auth
+      .getSession()
+      .then(async ({ data, error }) => {
+        if (!active) return;
+        if (error) {
+          console.warn("Failed to load session:", error);
+          setSession({ loading: false, user: null });
+          const cleanPath = window.location.pathname + window.location.search;
+          const loginUrl = new URL("/login", window.location.origin);
+          loginUrl.searchParams.set("redirectTo", cleanPath.startsWith("/login") ? "/dashboard" : cleanPath);
+          loginUrl.searchParams.set("error_description", error.message);
+          router.replace(loginUrl.pathname + loginUrl.search);
+          return;
+        }
+        const u = data.session?.user;
+        if (!u) {
+          // If an OAuth code exchange or token is actively pending in the URL, wait for exchange / authTimeout
           if (hasCode || hasToken) {
             return;
           }
+          setSession({ loading: false, user: null });
+          const searchParams = new URLSearchParams(window.location.search);
+          const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+          const errDesc = searchParams.get("error_description") || hashParams.get("error_description");
+          const errCode = searchParams.get("error") || hashParams.get("error");
+          const hasAuthError = !!(errDesc || errCode);
+
+          ["error", "error_description", "error_code", "error_uri", "sb", "state", "code"].forEach((k) => {
+            searchParams.delete(k);
+          });
+          const cleanSearch = searchParams.toString() ? `?${searchParams.toString()}` : "";
+          const cleanPath = `${window.location.pathname}${cleanSearch}`;
+          const target = hasAuthError || cleanPath === "/login" ? "/dashboard" : cleanPath || "/dashboard";
+
+          const loginUrl = new URL("/login", window.location.origin);
+          loginUrl.searchParams.set("redirectTo", target);
+          if (errDesc) {
+            loginUrl.searchParams.set("error_description", errDesc);
+          } else if (errCode) {
+            loginUrl.searchParams.set("error_description", errCode);
+          }
+          router.replace(loginUrl.pathname + loginUrl.search);
+          return;
         }
+        authResolved = true;
+        await loadUserData(u, data.session?.access_token);
+      })
+      .catch((err) => {
+        if (!active) return;
+        if (hasCode || hasToken) return;
+        console.warn("Failed to get session:", err);
         setSession({ loading: false, user: null });
-        const searchParams = new URLSearchParams(window.location.search);
-        const hashParams = new URLSearchParams(window.location.hash.replace(/^#/, ""));
-        const errDesc = searchParams.get("error_description") || hashParams.get("error_description");
-        const errCode = searchParams.get("error") || hashParams.get("error");
-        const hasAuthError = !!(errDesc || errCode);
-
-        ["error", "error_description", "error_code", "error_uri", "sb", "state", "code"].forEach((k) => {
-          searchParams.delete(k);
-        });
-        const cleanSearch = searchParams.toString() ? `?${searchParams.toString()}` : "";
-        const cleanPath = `${window.location.pathname}${cleanSearch}`;
-        const target = hasAuthError || cleanPath === "/login" ? "/dashboard" : cleanPath || "/dashboard";
-
-        const loginUrl = new URL("/login", window.location.origin);
-        loginUrl.searchParams.set("redirectTo", target);
-        if (errDesc) {
-          loginUrl.searchParams.set("error_description", errDesc);
-        } else if (errCode) {
-          loginUrl.searchParams.set("error_description", errCode);
-        }
-        router.replace(loginUrl.pathname + loginUrl.search);
-        return;
-      }
-      await loadUserData(u, data.session?.access_token);
-    });
+        router.replace("/login");
+      });
 
     const { data: sub } = supabase.auth.onAuthStateChange(async (event, newSession) => {
       if (!active) return;
@@ -552,15 +614,20 @@ export default function DashboardLayout({
         } catch { }
         router.replace("/login");
       } else if (
-        (event === "SIGNED_IN" || event === "USER_UPDATED" || event === "TOKEN_REFRESHED") &&
+        (event === "SIGNED_IN" ||
+          event === "INITIAL_SESSION" ||
+          event === "USER_UPDATED" ||
+          event === "TOKEN_REFRESHED") &&
         newSession?.user
       ) {
+        authResolved = true;
         await loadUserData(newSession.user, newSession.access_token);
       }
     });
 
     return () => {
       active = false;
+      if (authTimeout) clearTimeout(authTimeout);
       sub.subscription.unsubscribe();
     };
   }, [router]);

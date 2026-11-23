@@ -76,8 +76,8 @@ export function ExtensionSyncBridge() {
         );
       } else if (session?.user) {
         broadcastSession(session.user);
-        if (event === "SIGNED_IN") {
-          // Newly signed in: ping extension to report its pairing status
+        if (event === "SIGNED_IN" || event === "INITIAL_SESSION") {
+          // Newly signed in or restored session: ping extension to report its pairing status
           window.postMessage({ source: "bugsnap-web", action: "hello" }, window.location.origin);
         }
       }
@@ -122,6 +122,8 @@ export function ExtensionSyncBridge() {
             sessionStorage.removeItem("bs_drive_quota");
           } catch { }
           await supabase.auth.signOut().catch(() => { });
+          // Ensure extension receives sync_logout confirmation so it clears web_logout_pending
+          window.postMessage({ source: "bugsnap-web", action: "sync_logout" }, window.location.origin);
           if (onAppPage) {
             window.location.assign("/login");
           } else {

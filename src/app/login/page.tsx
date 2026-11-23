@@ -117,6 +117,36 @@ export default function LoginPage() {
         } catch {}
       }
 
+      // Check for OAuth PKCE callback code directly arriving on /login
+      const code = params.get("code");
+      if (code) {
+        setSigningIn(true);
+        supabase.auth
+          .exchangeCodeForSession(code)
+          .then(({ data, error: exchangeErr }) => {
+            if (!exchangeErr && data.session?.user) {
+              try { sessionStorage.removeItem("bugsnap_signed_out"); } catch {}
+              try {
+                const cleanUrl = new URL(window.location.href);
+                cleanUrl.searchParams.delete("code");
+                cleanUrl.searchParams.delete("sb_flow_id");
+                window.history.replaceState({}, "", cleanUrl.pathname + (cleanUrl.search ? cleanUrl.search : ""));
+              } catch {}
+              router.replace(nextPath || target || "/dashboard");
+            } else {
+              setSigningIn(false);
+              setLoadingSession(false);
+              if (exchangeErr) setError(exchangeErr.message);
+            }
+          })
+          .catch((err) => {
+            setSigningIn(false);
+            setLoadingSession(false);
+            setError(err instanceof Error ? err.message : t("login.errorGeneric"));
+          });
+        return;
+      }
+
       // Check for auto-login token from Extension or auth links
       const token = params.get("token") || params.get("provider_token");
       if (token) {
@@ -163,9 +193,9 @@ export default function LoginPage() {
       })
       .catch(() => setLoadingSession(false));
 
-    // Listen for cross-tab sign-in or session updates
+    // Listen for cross-tab sign-in, initial session settlement, or session updates
     const { data: authSub } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === "SIGNED_IN" && session?.user && !hasAuthError) {
+      if ((event === "SIGNED_IN" || event === "INITIAL_SESSION") && session?.user && !hasAuthError) {
         try { sessionStorage.removeItem("bugsnap_signed_out"); } catch {}
         router.replace(nextPath || target || "/dashboard");
       }
