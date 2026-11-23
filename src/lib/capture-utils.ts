@@ -195,7 +195,7 @@ export function generateBugReport(
     description?: string | null;
     dev_logs?: unknown;
   },
-  format: "markdown" | "jira" | "linear" | "text",
+  format: "markdown" | "jira" | "linear" | "text" | "ai_prompt",
   shareUrl: string,
 ): string {
   const title = capture.title || "Bug Report";
@@ -269,6 +269,24 @@ export function generateBugReport(
     if (errorCounts.consoleErrors > 0) out += `Console Errors: ${errorCounts.consoleErrors}\n`;
     if (errorCounts.networkErrors > 0) out += `Network Failures: ${errorCounts.networkErrors}\n`;
     return out.trim();
+  }
+
+  if (format === "ai_prompt") {
+    let prompt = `Fix this bug in our codebase based on the BugSnap telemetry:\n\n`;
+    prompt += `**Bug Title**: ${title}\n`;
+    if (desc) prompt += `**User Description**: ${desc}\n`;
+    prompt += `**Affected URL**: ${siteUrl}\n`;
+    prompt += `**Environment**: ${browser} on ${os} (${windowSize})\n`;
+    prompt += `**BugSnap Replay & Diagnostics**: ${shareUrl}\n\n`;
+
+    if (consoleErrors.length > 0) {
+      prompt += `**Console Exceptions**:\n\`\`\`\n${consoleErrors.slice(0, 5).join("\n")}\n\`\`\`\n\n`;
+    }
+    if (networkErrors.length > 0) {
+      prompt += `**Failed HTTP Requests**:\n\`\`\`\n${networkErrors.slice(0, 5).join("\n")}\n\`\`\`\n\n`;
+    }
+    prompt += `Please inspect the root cause, identify the files involved, and provide a minimal, verified fix.`;
+    return prompt.trim();
   }
 
   // Default: Markdown (compatible with GitHub & Linear)

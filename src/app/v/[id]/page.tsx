@@ -991,7 +991,7 @@ function SingleViewContent() {
     }
   }
 
-  async function handleExportTicket(format: "markdown" | "jira" | "linear" | "text") {
+  async function handleExportTicket(format: "markdown" | "jira" | "linear" | "text" | "ai_prompt") {
     if (!capture) return;
     try {
       const shareUrl = `${window.location.origin}/v/${capture.id}`;
@@ -1325,7 +1325,16 @@ function SingleViewContent() {
                   <Icon icon="lucide:chevron-down" className={`h-3.5 w-3.5 text-muted transition-transform ${exportMenuOpen ? "rotate-180" : ""}`} />
                 </button>
                 {exportMenuOpen && (
-                  <div className="absolute right-0 top-full z-50 mt-1.5 w-56 rounded-xl border border-border bg-white dark:bg-zinc-900 p-1.5 shadow-xl space-y-0.5 text-xs">
+                  <div className="absolute right-0 top-full z-50 mt-1.5 w-60 rounded-xl border border-border bg-white dark:bg-zinc-900 p-1.5 shadow-xl space-y-0.5 text-xs">
+                    <button
+                      type="button"
+                      onClick={() => handleExportTicket("ai_prompt")}
+                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-left hover:bg-subtle transition-colors cursor-pointer text-foreground font-medium"
+                    >
+                      <Icon icon="lucide:sparkles" className="w-4 h-4 text-amber-500 shrink-0" />
+                      <span>{t("v.copyAiPrompt")}</span>
+                    </button>
+                    <div className="h-px bg-border my-1" />
                     <button
                       type="button"
                       onClick={() => handleExportTicket("markdown")}
