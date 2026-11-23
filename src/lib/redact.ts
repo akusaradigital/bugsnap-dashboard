@@ -27,16 +27,20 @@ export const PATTERNS: Array<[RegExp, string]> = [
   [/\bGOCSPX-[0-9A-Za-z_-]{28,}\b/g, "[GOOGLE SECRET REDACTED]"],
   [/\bxox[baprs]-[0-9A-Za-z\-_]{10,}\b/g, "[SLACK TOKEN REDACTED]"],
   [/\b[rs]k_(?:live|test)_[0-9a-zA-Z]{16,}\b/g, "[STRIPE KEY REDACTED]"],
+  [/\bwhsec_[0-9a-zA-Z]{24,}\b/g, "[STRIPE SECRET REDACTED]"],
   [/\bsk-ant-[A-Za-z0-9_-]{20,}\b/g, "[ANTHROPIC KEY REDACTED]"],
   [/\bsk-(?:proj-)?[A-Za-z0-9_-]{20,}\b/g, "[OPENAI KEY REDACTED]"],
   [/\bgh[pousr]_[A-Za-z0-9]{16,}\b/g, "[GITHUB TOKEN REDACTED]"],
   [/\bgithub_pat_[A-Za-z0-9_]{22,}\b/g, "[GITHUB PAT REDACTED]"],
   [/\bglpat-[A-Za-z0-9\-_]{20,}\b/g, "[GITLAB PAT REDACTED]"],
+  [/\bnpm_[A-Za-z0-9]{36}\b/g, "[NPM TOKEN REDACTED]"],
+  [/\bhf_[A-Za-z0-9]{34,}\b/g, "[HUGGINGFACE TOKEN REDACTED]"],
   [/\bSG\.[A-Za-z0-9_-]{22}\.[A-Za-z0-9_-]{43}\b/g, "[SENDGRID KEY REDACTED]"],
   [/\bre_[0-9a-zA-Z]{16,}\b/g, "[RESEND KEY REDACTED]"],
   [/-----BEGIN (?:[A-Z ]*?)PRIVATE KEY-----[\s\S]*?-----END (?:[A-Z ]*?)PRIVATE KEY-----/g, "[PRIVATE KEY REDACTED]"],
-  // Card numbers (major issuers)
+  // Card numbers (major issuers, both contiguous and separated by dashes/spaces)
   [/\b(?:4[0-9]{12}(?:[0-9]{3})?|5[1-5][0-9]{14}|6(?:011|5[0-9][0-9])[0-9]{12}|3[47][0-9]{13})\b/g, "[CARD REDACTED]"],
+  [/\b(?:4[0-9]{3}|5[1-5][0-9]{2}|6(?:011|5[0-9]{2})|3[47][0-9]{2})([ -])[0-9]{4}\1[0-9]{4}\1[0-9]{1,4}\b/g, "[CARD REDACTED]"],
   // Email addresses
   [/\b[A-Za-z0-9._%+-]{1,64}@[A-Za-z0-9.-]{1,255}\.[A-Za-z]{2,24}\b/g, "[REDACTED_EMAIL]"],
 ];

@@ -37,6 +37,11 @@ const SECRETS = [
   ["sk" + "-proj-" + "AAAAAAAAAAAAAAAAAAAAAAAA", "proj-AAAA"],
   ["ghp" + "_AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA", "AAAA"],
   ["card 4111111111111111 charged", "4111111111111111"],
+  ["card " + "4111-2222-3333-4444" + " charged", "4111-2222-3333-4444"],
+  ["card " + "5555 4444 3333 2222" + " charged", "5555 4444 3333 2222"],
+  ["whsec" + "_1234567890abcdef1234567890abcdef", "1234567890abcdef"],
+  ["npm" + "_1234567890abcdef1234567890abcdef1234", "1234567890abcdef"],
+  ["hf" + "_1234567890abcdef1234567890abcdef12", "1234567890abcdef"],
   ["contact me at dev@example.com", "dev@example.com"],
   ["password=hunter2", "hunter2"],
 ];
