@@ -5,21 +5,34 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || "eyJhbGciOi
 
 function readCookie(name: string): string | null {
   if (typeof document === "undefined") return null;
-  const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${encodeURIComponent(name)}=([^;]*)`));
-  return match ? decodeURIComponent(match[1]) : null;
+  try {
+    const match = document.cookie.match(new RegExp(`(?:^|;\\s*)${encodeURIComponent(name)}=([^;]*)`));
+    return match ? decodeURIComponent(match[1]) : null;
+  } catch {
+    return null;
+  }
 }
 
 function writeCookie(name: string, value: string) {
   if (typeof document === "undefined") return;
-  if (value.length > 3800) return;
-  const isSecure = typeof window !== "undefined" && window.location.protocol === "https:";
-  document.cookie = `${encodeURIComponent(name)}=${encodeURIComponent(value)}; path=/; max-age=31536000; SameSite=Lax${isSecure ? "; Secure" : ""}`;
+  try {
+    const encodedVal = encodeURIComponent(value);
+    if (encodedVal.length > 3800) return;
+    const isSecure = typeof window !== "undefined" && window.location.protocol === "https:";
+    document.cookie = `${encodeURIComponent(name)}=${encodedVal}; path=/; max-age=31536000; SameSite=Lax${isSecure ? "; Secure" : ""}`;
+  } catch {
+    // Blocked cookies or sandboxed iframe
+  }
 }
 
 function removeCookie(name: string) {
   if (typeof document === "undefined") return;
-  const isSecure = typeof window !== "undefined" && window.location.protocol === "https:";
-  document.cookie = `${encodeURIComponent(name)}=; path=/; max-age=0; SameSite=Lax${isSecure ? "; Secure" : ""}`;
+  try {
+    const isSecure = typeof window !== "undefined" && window.location.protocol === "https:";
+    document.cookie = `${encodeURIComponent(name)}=; path=/; max-age=0; SameSite=Lax${isSecure ? "; Secure" : ""}`;
+  } catch {
+    // Blocked cookies or sandboxed iframe
+  }
 }
 
 // Dual storage adapter: mirrors localStorage to first-party SameSite=Lax cookies.
