@@ -8,6 +8,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [bugsnap-dashboard]
 
+### 2026-11-24 (v0.17.2)
+- **fix**: Optimize OpenGraph social share image (`bugsnap-full-day.png`) to a balanced 800×800 square with centered margins, ensuring optimal presentation across mobile, tablet, and desktop WhatsApp link previews without oversized scaling.
+- **fix**: Configure OpenGraph metadata tags on public capture view (`/v/[id]`) and root layout with dedicated square and landscape entries for cross-platform link previews.
+
 ### 2026-11-23 (v0.17.1)
 - **feat**: Add AI Fix Prompt export format in public capture view (`/v/[id]`) for AI coding agents.
 - **feat**: Add `PATCH /api/v1/captures/[id]/status` API endpoint for updating capture triage status and AI agent comments.
@@ -114,6 +118,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [bugsnap-extension]
 
+### 2026-11-24 (v1.0.84)
+- **fix**: Sync release version and maintain strict parity across Chrome, Firefox, and Edge manifests.
+
 ### 2026-11-23 (v1.0.83)
 - **feat**: Studio-grade noise suppression, echo cancellation, and 48kHz audio recording using Web Audio API DSP pipeline.
 - **feat**: Expand sensitive data auto-redaction to cover Stripe webhook secrets (`whsec_`), NPM tokens, HuggingFace tokens, and formatted credit card patterns across logs and telemetry.
@@ -190,6 +197,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 ---
 
 ## [bugsnap-mcp]
+
+### 2026-11-24 (v0.3.4)
+- **chore**: Ecosystem version alignment for unified production release.
 
 ### 2026-11-23 (v0.3.3)
 - **feat**: Add `bugsnap_update_capture_status` tool enabling AI coding agents to update capture triage status and post diagnostic comments directly via MCP.
