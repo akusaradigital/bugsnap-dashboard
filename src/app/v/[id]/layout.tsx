@@ -7,7 +7,7 @@ interface LayoutProps {
 }
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://bugsnap.akusaraproject.my.id";
-const ogImageUrl = `${siteUrl}/opengraph-image.png`;
+const fullDayLogo = `${siteUrl}/bugsnap-full-day.png`;
 
 export async function generateMetadata({ params }: { params: { id: string } }): Promise<Metadata> {
   const { id } = params;
@@ -49,18 +49,18 @@ export async function generateMetadata({ params }: { params: { id: string } }): 
         type: "website",
         images: [
           {
-            url: ogImageUrl,
-            width: 1200,
-            height: 630,
+            url: fullDayLogo,
+            width: 800,
+            height: 800,
             alt: "BugSnap - From Click to Fix",
           },
         ],
       },
       twitter: {
-        card: "summary_large_image",
+        card: "summary",
         title: `BugSnap | ${captureTitle}`,
         description,
-        images: [ogImageUrl],
+        images: [fullDayLogo],
       },
     };
   } catch {
