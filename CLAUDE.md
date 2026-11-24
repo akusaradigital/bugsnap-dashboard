@@ -9,15 +9,16 @@
    - Commit locally often! Whenever an individual task, bugfix, or feature step passes its verification gate (§4), **immediately make a local `git commit`** with a descriptive conventional message (`fix(...)`, `feat(...)`, `refactor(...)`).
    - Do NOT leave completed changes uncommitted in the working tree. Multiple AI agents (Claude Code, Antigravity, Cursor, etc.) work on this workspace; uncommitted in-flight files risk being clobbered, reverted, or overwritten. Local commits preserve full history and rollback capability.
 2. **No auto-push**: never `git push` without explicit instruction in that exact turn. Local commits are safe and encouraged; remote pushes are guarded.
-3. **Push to `main` = Mandatory Full Release Lifecycle (All Three Repos Together)**:
-   Every push to `main` is a production release! When instructed to push to `main`, ALWAYS execute the full release workflow:
-   - Bump version across `package.json`, `package-lock.json`, and all extension manifests (`manifest.json`, `manifest.firefox.json`, `manifest.edge.json`) following SemVer. Parity is strict: Chrome == Firefox == Edge.
-   - Update changelogs (`CHANGELOG.md` at root and `bugsnap-dashboard/CHANGELOG.md`).
-   - Package extension ZIPs (`npm run package:all`) and keep only latest in `releases/` (prune older versions).
-   - Run verification gates (§4) on all repos.
-   - Run Graphify update: `/graphify --update` (see §3).
-   - Push all three repos (`bugsnap-dashboard`, `bugsnap-extension`, `bugsnap-mcp`) to `main` together.
-   - Create annotated git tag `v{version}` and publish GitHub Release (`gh release create v{version}`) attaching the 3 ZIP files with SHA-256 checksums in release notes.
+3. **Push to `main` = Production Release for Changed Repos**:
+   When instructed to push to `main`:
+   - **Bump version ONLY on repos with code changes**: Naik version HANYA jika ada perubahan kode pada repo/komponen tersebut. Jika tidak ada perubahan kode pada suatu repo, versinya JANGAN dinaikkan dan TIDAK perlu di-push ulang.
+   - For `bugsnap-extension` (when it has changes): Manifest version parity is strict: Chrome == Firefox == Edge (`manifest.json`, `manifest.firefox.json`, `manifest.edge.json`, `package.json`, `package-lock.json`). Package extension ZIPs (`npm run package:all`), keep only latest in `releases/`, tag `v{version}`, and create GitHub Release with SHA-256 checksums.
+   - For `bugsnap-dashboard` (when it has changes): Bump version in its `package.json` & `package-lock.json`. It is Vercel-deployed and does not require GitHub Release or extension ZIPs.
+   - For `bugsnap-mcp` (when it has changes): Bump version in its `package.json` & `package-lock.json`.
+   - Update changelogs (`CHANGELOG.md` at root and `bugsnap-dashboard/CHANGELOG.md`) for all changed projects.
+   - Run verification gates (§4) on the changed repos.
+   - Run Graphify update: `/graphify --update` (see §3) before pushing to `main`.
+   - Push changed repos to `origin main`. Unchanged repos without code modifications must NOT be pushed or version-bumped redundantly.
 4. **Pre-push gate is enforced by git itself**: each repo has a tracked `.githooks/pre-push` (wired via `core.hooksPath`, activated by the `prepare` npm script) that runs that repo's verification gate (§4) before any push to `main` and blocks the push on failure. Bypass only with `git push --no-verify`, deliberately.
 5. `bugsnap-dashboard`'s CI does **not** auto-tag on push (removed 2026-11-10, along with 21 stale no-asset tags it had created) - tag/release that repo manually only if asked; it's Vercel-deployed and was never meant to carry GitHub Releases.
 
