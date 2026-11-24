@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [bugsnap-dashboard]
 
+### 2026-11-24 (v0.17.3)
+- **feat**: Integrate `@vercel/analytics` in root layout for visitor and page view telemetry on Vercel deployment.
+
 ### 2026-11-24 (v0.17.2)
 - **fix**: Optimize OpenGraph social share image (`bugsnap-full-day.png`) to a balanced 800×800 square with centered margins, ensuring optimal presentation across mobile, tablet, and desktop WhatsApp link previews without oversized scaling.
 - **fix**: Configure OpenGraph metadata tags on public capture view (`/v/[id]`) and root layout with dedicated square and landscape entries for cross-platform link previews.
@@ -118,6 +121,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [bugsnap-extension]
 
+### 2026-11-24 (v1.0.85)
+- **chore**: Ecosystem version alignment and manifest parity across Chrome, Firefox, and Edge.
+
 ### 2026-11-24 (v1.0.84)
 - **fix**: Sync release version and maintain strict parity across Chrome, Firefox, and Edge manifests.
 
@@ -197,6 +203,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 ---
 
 ## [bugsnap-mcp]
+
+### 2026-11-24 (v0.3.5)
+- **chore**: Ecosystem version alignment for unified production release.
 
 ### 2026-11-24 (v0.3.4)
 - **chore**: Ecosystem version alignment for unified production release.
