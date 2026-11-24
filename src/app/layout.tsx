@@ -68,7 +68,6 @@ export const metadata: Metadata = {
     description:
       "Capture bugs with screenshots, screen recordings, console logs, and network requests. Free browser extension with automatic Google Drive storage.",
     images: [
-      { url: `${siteUrl}/bugsnap-full-day.png`, width: 1200, height: 1200, alt: "BugSnap - From Click to Fix" },
       { url: `${siteUrl}/opengraph-image.png`, width: 1200, height: 630, alt: "BugSnap - From Click to Fix" },
     ],
   },
