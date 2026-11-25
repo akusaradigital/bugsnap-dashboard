@@ -2,7 +2,7 @@
 
 > `CLAUDE.md` (same directory) is canonical and holds every rule - read it. This file exists only because some engines look for `AGENTS.md` by convention; it carries no separate rule text to avoid drifting out of sync. If the two ever disagree, `CLAUDE.md` wins.
 >
-> **Local Commit Rule (MANDATORY for Multi-Agent Safety):** Commit locally often! Whenever a discrete task, bugfix, or feature step passes its verification gate, immediately make a local `git commit` with a clear conventional message (`fix: ...`, `feat: ...`, `refactor: ...`). NEVER leave completed changes uncommitted in the working tree—multiple concurrent agents operate on this repo and uncommitted changes will be overwritten or lost. Local commits are safe, preserve full git history/reflog, and do NOT push to remote.
+> **Local Commit Rule (MANDATORY for Multi-Agent Safety):** Commit locally often! Whenever a discrete task, bugfix, or feature step passes its verification gate, immediately make a local `git commit` with a clear conventional message (`fix: ...`, `feat: ...`, `refactor: ...`). NEVER leave completed changes uncommitted in the working tree-multiple concurrent agents operate on this repo and uncommitted changes will be overwritten or lost. Local commits are safe, preserve full git history/reflog, and do NOT push to remote.
 >
 > **Git Push Rule (STRICT):** NO auto-push without explicit instruction in that exact turn. Push to `main` applies only to repos that actually have code changes. Unchanged repos must NOT be pushed or version-bumped.
 >

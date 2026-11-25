@@ -640,7 +640,7 @@ export const marketingEn: Dict = {
   "about.originTag": "OUR ORIGIN",
   "about.headline": "From Click to Fix: Eliminating Friction in Bug Reports",
   "about.originP1":
-    "Every software engineer has experienced the dread of receiving an ambiguous bug report: \"the checkout button is broken\"—with no reproduction steps, no console errors, and no network details. Hours are wasted on back and forth Slack threads, screen sharing sessions, and attempts to replicate the issue on staging.",
+    "Every software engineer has experienced the dread of receiving an ambiguous bug report: \"the checkout button is broken\"-with no reproduction steps, no console errors, and no network details. Hours are wasted on back and forth Slack threads, screen sharing sessions, and attempts to replicate the issue on staging.",
   "about.originP2":
     "We founded BugSnap at Akusara Digital to fix this broken loop forever. By automatically bundling screen recordings with source-mapped console errors, HTTP waterfalls, and environment specifications, BugSnap gives engineers everything they need to fix issues immediately upon opening a ticket.",
   "about.stat1Value": "0 KB",
@@ -1287,7 +1287,7 @@ export const marketingEn: Dict = {
   "solutions.qa.title": "QA Engineers",
   "solutions.qa.role": "File airtight bug reports in seconds, not minutes",
   "solutions.qa.desc":
-    "Stop typing. BugSnap captures the exact technical context automatically — from screenshots to console logs.",
+    "Stop typing. BugSnap captures the exact technical context automatically - from screenshots to console logs.",
   "solutions.dev.title": "Software Engineers",
   "solutions.dev.role":
     "Fix bugs on the first pass with full diagnostic context",
@@ -1297,7 +1297,7 @@ export const marketingEn: Dict = {
   "solutions.pm.role":
     "Communicate visual anomalies and edge cases with precision",
   "solutions.pm.desc":
-    "Annotate screenshots, add comments or draw directly on the screen. Share, track, and manage issues — all in one place.",
+    "Annotate screenshots, add comments or draw directly on the screen. Share, track, and manage issues - all in one place.",
   "solutions.support.title": "Support Teams",
   "solutions.support.role":
     "Turn customer issues into actionable engineering tickets",
@@ -1616,7 +1616,7 @@ export const marketingEn: Dict = {
   "site.trust.driveDesc": "All videos, screenshots, and telemetry stored in your own Drive",
   "site.trust.serverTitle": "BugSnap Cloud",
   "site.trust.serverBadge": "METADATA ONLY",
-  "site.trust.serverDesc": "Encrypted IDs, timestamps, and permissions — zero media bytes",
+  "site.trust.serverDesc": "Encrypted IDs, timestamps, and permissions - zero media bytes",
   "site.trust.flow1Badge": "Direct Upload via OAuth",
   "site.trust.flow1Sub": "100% Video & DevLogs",
   "site.trust.flow2Badge": "Metadata Only",
@@ -2125,7 +2125,7 @@ export const marketingId: Dict = {
   "features.title": "Toolkit pelaporan bug",
   "features.titleHighlight": "untuk tim berkecepatan tinggi",
   "features.subtitle":
-    "Dari tangkapan cerdas hingga debugging otomatis, BugSnap memberi tim modern visibilitas, konteks, dan data siap-AI — tanpa memperlambat alur kerja mereka.",
+    "Dari tangkapan cerdas hingga debugging otomatis, BugSnap memberi tim modern visibilitas, konteks, dan data siap-AI - tanpa memperlambat alur kerja mereka.",
   "features.breadcrumb": "Kemampuan Produk",
   "features.tabAll": "Semua Fitur",
   "features.tabOverview": "Ringkasan",
@@ -2141,7 +2141,7 @@ export const marketingId: Dict = {
   "features.s1Eyebrow": "DEVTOOLS & TELEMETRI",
   "features.s1Title": "Telemetri Console & Jaringan Otomatis",
   "features.s1Desc":
-    "BugSnap secara otomatis menangkap log konsol browser, permintaan jaringan, error, dan data runtime penting sehingga Anda mendapatkan konteks teknis lengkap — tanpa meminta pengguna melakukan apa pun secara manual.",
+    "BugSnap secara otomatis menangkap log konsol browser, permintaan jaringan, error, dan data runtime penting sehingga Anda mendapatkan konteks teknis lengkap - tanpa meminta pengguna melakukan apa pun secara manual.",
   "features.s1Bullet1":
     "Menangkap log, permintaan jaringan, dan pesan error dengan metadata kaya (URL, header, status, dll.)",
   "features.s1Bullet2":
@@ -2161,11 +2161,11 @@ export const marketingId: Dict = {
   "features.s3Eyebrow": "PRIVASI & KONTROL DATA",
   "features.s3Title": "Redaksi Sisi Klien & Nol-etensi Server",
   "features.s3Desc":
-    "Jaga keamanan informasi sensitif. Redaksi data pribadi langsung di browser Anda sebelum disimpan, dan simpan semuanya di Google Drive Anda sendiri — dengan nol retensi server.",
+    "Jaga keamanan informasi sensitif. Redaksi data pribadi langsung di browser Anda sebelum disimpan, dan simpan semuanya di Google Drive Anda sendiri - dengan nol retensi server.",
   "features.s3Bullet1":
     "Redaksi otomatis dan manual untuk email, token, kartu kredit, nomor telepon, dan pola kustom",
   "features.s3Bullet2":
-    "Data tidak pernah disimpan di server kami — disimpan langsung ke Google Drive Anda",
+    "Data tidak pernah disimpan di server kami - disimpan langsung ke Google Drive Anda",
   "features.s3Bullet3":
     "Kendali penuh atas apa yang ingin disertakan atau dikecualikan",
   "features.s4Eyebrow": "PERFORMA & DIAGNOSTIK",
@@ -2469,7 +2469,7 @@ export const marketingId: Dict = {
   "about.originTag": "ASAL USUL KAMI",
   "about.headline": "From Click to Fix: Menghilangkan Hambatan dalam Pelaporan Bug",
   "about.originP1":
-    "Setiap software engineer pernah mengalami kekesalan saat menerima laporan bug yang ambigu: \"tombol checkout rusak\"—tanpa langkah reproduksi, tanpa error console, dan tanpa detail network. Berjam-jam terbuang untuk diskusi bolak-balik di Slack, sesi screen sharing, dan upaya mereplikasi masalah di staging.",
+    "Setiap software engineer pernah mengalami kekesalan saat menerima laporan bug yang ambigu: \"tombol checkout rusak\"-tanpa langkah reproduksi, tanpa error console, dan tanpa detail network. Berjam-jam terbuang untuk diskusi bolak-balik di Slack, sesi screen sharing, dan upaya mereplikasi masalah di staging.",
   "about.originP2":
     "Kami mendirikan BugSnap di Akusara Digital untuk memutus rantai masalah ini selamanya. Dengan secara otomatis menggabungkan rekaman layar dengan error console ber-source-map, HTTP waterfall, dan spesifikasi lingkungan, BugSnap memberikan semua yang dibutuhkan engineer untuk langsung memperbaiki masalah begitu tiket dibuka.",
   "about.stat1Value": "0 KB",
@@ -2567,7 +2567,7 @@ export const marketingId: Dict = {
   "docs.mcpSubtitle":
     "Hubungkan BugSnap ke Claude Code, Cursor, atau AI agent kompatibel MCP lainnya agar dapat membuat laporan bug lengkap, termasuk rekaman, hanya dengan satu perintah.",
   "docs.mcpIntro":
-    "Gunakan BugSnap sebagai server MCP (Model Context Protocol) untuk memungkinkan AI agent Anda menangkap, menganalisis, dan membuat laporan bug — lengkap dengan rekaman layar, console log, network request, dan info lingkungan.",
+    "Gunakan BugSnap sebagai server MCP (Model Context Protocol) untuk memungkinkan AI agent Anda menangkap, menganalisis, dan membuat laporan bug - lengkap dengan rekaman layar, console log, network request, dan info lingkungan.",
   "docs.mcpStep1Title": "Buat API key BugSnap",
   "docs.mcpStep1Desc": "Buat API key di akun BugSnap Anda untuk mengotorisasi koneksi MCP.",
   "docs.mcpStep1Cta": "Buka Pengaturan  API Keys",
@@ -2599,7 +2599,7 @@ export const marketingId: Dict = {
   "docs.goToSettings": "Konfigurasi di Pengaturan Workspace",
   "docs.howWeTest": "Probe Kredensial Universal",
   "docs.probeTitle": "Mesin Verifikasi Pra-Kirim Terintegrasi",
-  "docs.probeDesc": "Setiap integrasi di BugSnap dilengkapi probe 'Uji Koneksi' non-mutating. Fitur ini memvalidasi token, project key, dan izin database menggunakan panggilan API read-only — tanpa mengirim tiket percobaan palsu atau menghabiskan kuota prompt chat.",
+  "docs.probeDesc": "Setiap integrasi di BugSnap dilengkapi probe 'Uji Koneksi' non-mutating. Fitur ini memvalidasi token, project key, dan izin database menggunakan panggilan API read-only - tanpa mengirim tiket percobaan palsu atau menghabiskan kuota prompt chat.",
   "docs.openSettings": "Uji di Pengaturan ",
   "docs.catAll": "Semua",
   "docs.catTrackers": "Pelacak Masalah",
@@ -3115,7 +3115,7 @@ export const marketingId: Dict = {
   "solutions.qa.title": "QA Engineer",
   "solutions.qa.role": "Kirim laporan bug tanpa celah dalam hitungan detik, bukan menit",
   "solutions.qa.desc":
-    "Berhenti mengetik. BugSnap merekam konteks teknis presisi secara otomatis — dari tangkapan layar hingga log konsol.",
+    "Berhenti mengetik. BugSnap merekam konteks teknis presisi secara otomatis - dari tangkapan layar hingga log konsol.",
   "solutions.dev.title": "Software Engineer",
   "solutions.dev.role":
     "Perbaiki bug di percobaan pertama dengan konteks diagnostik lengkap",
@@ -3125,7 +3125,7 @@ export const marketingId: Dict = {
   "solutions.pm.role":
     "Komunikasikan anomali visual dan edge case secara presisi",
   "solutions.pm.desc":
-    "Anotasikan tangkapan layar, beri komentar, atau gambar langsung di layar. Bagikan, lacak, dan kelola masalah — semua di satu tempat.",
+    "Anotasikan tangkapan layar, beri komentar, atau gambar langsung di layar. Bagikan, lacak, dan kelola masalah - semua di satu tempat.",
   "solutions.support.title": "Tim Support",
   "solutions.support.role":
     "Ubah keluhan pelanggan menjadi tiket teknis siap tindak lanjut",
@@ -3446,7 +3446,7 @@ export const marketingId: Dict = {
   "site.trust.driveDesc": "Semua video, tangkapan layar, dan telemetri tersimpan di Drive Anda sendiri",
   "site.trust.serverTitle": "BugSnap Cloud",
   "site.trust.serverBadge": "HANYA METADATA",
-  "site.trust.serverDesc": "ID terenkripsi, timestamp, dan hak akses — nol byte media",
+  "site.trust.serverDesc": "ID terenkripsi, timestamp, dan hak akses - nol byte media",
   "site.trust.flow1Badge": "Unggah Langsung via OAuth",
   "site.trust.flow1Sub": "100% Video & DevLogs",
   "site.trust.flow2Badge": "Hanya Metadata",

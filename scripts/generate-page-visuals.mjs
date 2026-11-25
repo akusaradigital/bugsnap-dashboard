@@ -570,7 +570,7 @@ async function main() {
         <div class="window" style="width:100%;height:100%;display:flex;flex-direction:column;">
           <div class="win-bar">
             <span class="dot dot-r"></span><span class="dot dot-y"></span><span class="dot dot-g"></span>
-            <div class="url-pill"><img src="${LOGO_DAY_URI}" style="width:14px;height:14px;" /> BugSnap Visual Editor — Checkout Flow</div>
+            <div class="url-pill"><img src="${LOGO_DAY_URI}" style="width:14px;height:14px;" /> BugSnap Visual Editor - Checkout Flow</div>
             <div style="margin-left:auto;display:flex;gap:8px;">
               <span class="pill-blue" style="font-size:11px;padding:3px 10px;">AI Polish Ready</span>
               <span class="pill-green" style="font-size:11px;padding:3px 10px;">Blur PII Applied</span>
@@ -695,11 +695,11 @@ Content-Type: application/json
                 </div>
                 <div style="display:flex;flex-direction:column;gap:12px;">
                   ${[
-                    ["Billing Email", "j••••@acmeshop.io", "Masked"],
-                    ["Credit Card", "•••• •••• •••• 4242", "Masked"],
-                    ["Authorization", "Bearer [REDACTED_TOKEN]", "Stripped"],
-                    ["API Secret Key", "sk_live_••••••••••••••••", "Stripped"],
-                  ].map(([lbl, val, status]) => `
+            ["Billing Email", "j••••@acmeshop.io", "Masked"],
+            ["Credit Card", "•••• •••• •••• 4242", "Masked"],
+            ["Authorization", "Bearer [REDACTED_TOKEN]", "Stripped"],
+            ["API Secret Key", "sk_live_••••••••••••••••", "Stripped"],
+          ].map(([lbl, val, status]) => `
                     <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 14px;border-radius:12px;border:1px solid #E2E8F0;background:#F8FAFC;">
                       <div>
                         <div style="font-size:11px;font-weight:700;color:#64748B;text-transform:uppercase;">${lbl}</div>
@@ -712,7 +712,7 @@ Content-Type: application/json
               </div>
               <div style="margin-top:14px;padding:12px 14px;border-radius:12px;background:#EFF6FF;border:1px solid #BFDBFE;display:flex;align-items:center;gap:10px;font-size:12.5px;color:#1E3A8A;font-weight:600;">
                 <img src="${DRIVE_LOGO_URI}" style="width:20px;height:20px;" />
-                <span>Media uploads directly to your Google Drive — never touches BugSnap servers.</span>
+                <span>Media uploads directly to your Google Drive - never touches BugSnap servers.</span>
               </div>
             </div>
 
@@ -724,12 +724,12 @@ Content-Type: application/json
                 </div>
                 <div style="display:flex;flex-direction:column;gap:12px;">
                   ${[
-                    ["Email Addresses", "[\\w.-]+@[\\w.-]+\\.\\w+", true],
-                    ["Credit Card Numbers", "\\b(?:\\d[- ]*){13,16}\\b", true],
-                    ["Bearer & API Tokens", "(Bearer|sk_live|ghp_)[\\w-]+", true],
-                    ["Phone Numbers", "\\+?\\d{8,15}", true],
-                    ["Session Cookies", "Set-Cookie / Cookie headers", true],
-                  ].map(([name, regex]) => `
+            ["Email Addresses", "[\\w.-]+@[\\w.-]+\\.\\w+", true],
+            ["Credit Card Numbers", "\\b(?:\\d[- ]*){13,16}\\b", true],
+            ["Bearer & API Tokens", "(Bearer|sk_live|ghp_)[\\w-]+", true],
+            ["Phone Numbers", "\\+?\\d{8,15}", true],
+            ["Session Cookies", "Set-Cookie / Cookie headers", true],
+          ].map(([name, regex]) => `
                     <div style="display:flex;align-items:center;justify-content:space-between;padding:11px 14px;border-radius:12px;border:1px solid #E2E8F0;">
                       <div>
                         <div style="font-size:13.5px;font-weight:700;color:#0F172A;">${name}</div>
@@ -779,11 +779,11 @@ Content-Type: application/json
                 </div>
                 <div style="font-size:10.5px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;padding-left:8px;">Folders</div>
                 ${[
-                  ["Checkout Flow", "#2563EB", true, "18"],
-                  ["Auth & Billing", "#89BD49", false, "12"],
-                  ["Mobile Web", "#F59E0B", false, "9"],
-                  ["API Errors", "#EF4444", false, "7"],
-                ].map(([name, color, active, cnt]) => `
+            ["Checkout Flow", "#2563EB", true, "18"],
+            ["Auth & Billing", "#89BD49", false, "12"],
+            ["Mobile Web", "#F59E0B", false, "9"],
+            ["API Errors", "#EF4444", false, "7"],
+          ].map(([name, color, active, cnt]) => `
                   <div style="display:flex;align-items:center;justify-content:space-between;padding:9px 10px;border-radius:10px;margin-bottom:4px;background:${active ? "#EFF6FF" : "transparent"};color:${active ? "#1D4ED8" : "#334155"};font-weight:${active ? "700" : "600"};font-size:13px;">
                     <div style="display:flex;align-items:center;gap:8px;">
                       <span style="width:10px;height:10px;border-radius:3px;background:${color};"></span>
@@ -825,13 +825,13 @@ Content-Type: application/json
                   <span>Capture Artifact</span><span>Size</span><span style="text-align:right;">Uploaded</span>
                 </div>
                 ${[
-                  ["checkout-500-recording.webm", "Video · 60fps Tab Recording", "#FEF3C7", "#D97706", "8.4 MB", "Just now"],
-                  ["checkout-annotated.png", "PNG · 2x Retina Annotated", "#EFF6FF", "#2563EB", "1.2 MB", "Just now"],
-                  ["console-logs.json", "DevTools · 1 Runtime Error", "#FEF2F2", "#DC2626", "48 KB", "Just now"],
-                  ["network-trace.har", "HAR · Bearer Tokens Redacted", "#F2F9E8", "#3D7A24", "312 KB", "Just now"],
-                  ["environment-meta.json", "Env · Chrome 134 · macOS 15", "#F1F5F9", "#475569", "14 KB", "Just now"],
-                  ["checkout-500.spec.ts", "Test · Playwright Regression", "#F5F3FF", "#6D28D9", "3 KB", "Just now"],
-                ].map(([file, sub, bg, col, size, time]) => `
+            ["checkout-500-recording.webm", "Video · 60fps Tab Recording", "#FEF3C7", "#D97706", "8.4 MB", "Just now"],
+            ["checkout-annotated.png", "PNG · 2x Retina Annotated", "#EFF6FF", "#2563EB", "1.2 MB", "Just now"],
+            ["console-logs.json", "DevTools · 1 Runtime Error", "#FEF2F2", "#DC2626", "48 KB", "Just now"],
+            ["network-trace.har", "HAR · Bearer Tokens Redacted", "#F2F9E8", "#3D7A24", "312 KB", "Just now"],
+            ["environment-meta.json", "Env · Chrome 134 · macOS 15", "#F1F5F9", "#475569", "14 KB", "Just now"],
+            ["checkout-500.spec.ts", "Test · Playwright Regression", "#F5F3FF", "#6D28D9", "3 KB", "Just now"],
+          ].map(([file, sub, bg, col, size, time]) => `
                   <div style="display:grid;grid-template-columns:1fr 110px 130px;padding:12px 16px;border-bottom:1px solid #F1F5F9;align-items:center;">
                     <div style="display:flex;align-items:center;gap:12px;">
                       <span style="min-width:68px;text-align:center;padding:5px 8px;border-radius:8px;background:${bg};color:${col};font-size:11px;font-weight:800;">${sub.split(" · ")[0]}</span>
@@ -908,15 +908,15 @@ Content-Type: application/json
               <div style="font-size:12.5px;color:#64748B;margin-bottom:18px;">Sends annotated media, console errors, failed APIs & environment specs</div>
               <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
                 ${[
-                  ["Jira Cloud", "ENG-412 Created", LOGOS.jira, true],
-                  ["Linear", "Connected · ENG", LOGOS.linear, true],
-                  ["GitHub Issues", "acme/web-app", LOGOS.github, true],
-                  ["Slack Alerts", "#qa-triage", LOGOS.slack, true],
-                  ["Notion Docs", "Bug Tracker DB", LOGOS.notion, false],
-                  ["GitLab", "Ready to connect", LOGOS.gitlab, false],
-                  ["ClickUp", "Sprint Backlog", LOGOS.clickup, false],
-                  ["Claude MCP", "Agent Debug", LOGOS.claude, true],
-                ].map(([name, sub, logo, active]) => `
+            ["Jira Cloud", "ENG-412 Created", LOGOS.jira, true],
+            ["Linear", "Connected · ENG", LOGOS.linear, true],
+            ["GitHub Issues", "acme/web-app", LOGOS.github, true],
+            ["Slack Alerts", "#qa-triage", LOGOS.slack, true],
+            ["Notion Docs", "Bug Tracker DB", LOGOS.notion, false],
+            ["GitLab", "Ready to connect", LOGOS.gitlab, false],
+            ["ClickUp", "Sprint Backlog", LOGOS.clickup, false],
+            ["Claude MCP", "Agent Debug", LOGOS.claude, true],
+          ].map(([name, sub, logo, active]) => `
                   <div style="border:1px solid ${active ? "#CBE5AC" : "#E2E8F0"};background:${active ? "#F9FDF4" : "#fff"};border-radius:12px;padding:12px;display:flex;align-items:center;gap:10px;">
                     <img src="${logo}" style="width:28px;height:28px;object-fit:contain;border-radius:6px;" />
                     <div style="min-width:0;">
@@ -953,11 +953,11 @@ Content-Type: application/json
           <div style="flex:1;padding:22px;display:flex;flex-direction:column;gap:18px;background:#fff;">
             <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;">
               ${[
-                ["JS Heap Used", "48.2 MB", "+14.6 MB / 60s", "#DC2626", "#FEF2F2", "#FECACA"],
-                ["DOM Nodes", "1,842", "+410 detached", "#2563EB", "#EFF6FF", "#BFDBFE"],
-                ["Event Listeners", "276", "12 uncleaned", "#D97706", "#FFFBEB", "#FDE68A"],
-                ["Long Tasks", "3 tasks", "Max 142 ms", "#3D7A24", "#F2F9E8", "#CBE5AC"],
-              ].map(([label, val, sub, col, bg, bdr]) => `
+            ["JS Heap Used", "48.2 MB", "+14.6 MB / 60s", "#DC2626", "#FEF2F2", "#FECACA"],
+            ["DOM Nodes", "1,842", "+410 detached", "#2563EB", "#EFF6FF", "#BFDBFE"],
+            ["Event Listeners", "276", "12 uncleaned", "#D97706", "#FFFBEB", "#FDE68A"],
+            ["Long Tasks", "3 tasks", "Max 142 ms", "#3D7A24", "#F2F9E8", "#CBE5AC"],
+          ].map(([label, val, sub, col, bg, bdr]) => `
                 <div style="border:1px solid ${bdr};background:${bg};border-radius:14px;padding:14px 16px;">
                   <div style="font-size:11.5px;font-weight:700;color:#475569;">${label}</div>
                   <div class="mono" style="font-size:24px;font-weight:900;color:#0F172A;margin-top:4px;">${val}</div>
@@ -1036,12 +1036,12 @@ Content-Type: application/json
                 <div style="font-size:14px;font-weight:800;margin-bottom:14px;">Captured User Actions</div>
                 <div style="display:flex;flex-direction:column;gap:10px;">
                   ${[
-                    ["00:01", "Navigate", "app.acmeshop.io/checkout", false],
-                    ["00:03", "Fill Email", "finance@acmeshop.io", false],
-                    ["00:05", "Click Button", 'Pay $2,499.00', false],
-                    ["00:06", "Network 500", "POST /api/v1/checkout/charge", true],
-                    ["00:06", "Console Error", "TypeError: checkoutSessionId", true],
-                  ].map(([t, act, det, err]) => `
+            ["00:01", "Navigate", "app.acmeshop.io/checkout", false],
+            ["00:03", "Fill Email", "finance@acmeshop.io", false],
+            ["00:05", "Click Button", 'Pay $2,499.00', false],
+            ["00:06", "Network 500", "POST /api/v1/checkout/charge", true],
+            ["00:06", "Console Error", "TypeError: checkoutSessionId", true],
+          ].map(([t, act, det, err]) => `
                     <div style="padding:11px 13px;border-radius:12px;border:1px solid ${err ? "#FECACA" : "#E2E8F0"};background:${err ? "#FEF2F2" : "#fff"};display:flex;align-items:flex-start;gap:10px;">
                       <span class="mono" style="font-size:11px;font-weight:700;color:${err ? "#DC2626" : "#2563EB"};background:${err ? "#FEE2E2" : "#EFF6FF"};padding:2px 7px;border-radius:6px;">${t}</span>
                       <div>
@@ -1119,14 +1119,14 @@ Content-Type: application/json
                 </div>
                 <div style="padding:14px 16px;border-radius:14px;border:1px solid #FECACA;background:#FEF2F2;">
                   <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:#DC2626;margin-bottom:4px;">
-                    <span>Step 2 · 00:12 — Unhandled Exception</span><span class="mono" style="color:#DC2626;">10:14:31</span>
+                    <span>Step 2 · 00:12 - Unhandled Exception</span><span class="mono" style="color:#DC2626;">10:14:31</span>
                   </div>
                   <div class="mono" style="font-size:13px;font-weight:700;color:#991B1B;">POST /api/v1/checkout/charge → 500 Internal Server Error</div>
                   <div class="mono" style="font-size:12px;color:#B91C1C;margin-top:4px;">TypeError: Cannot read properties of undefined (checkout.ts:148)</div>
                 </div>
                 <div style="padding:14px 16px;border-radius:14px;border:1px solid #E2E8F0;background:#F8FAFC;">
                   <div style="display:flex;justify-content:space-between;font-size:12px;font-weight:700;color:#3D7A24;margin-bottom:4px;">
-                    <span>Step 3 · 00:18 — Visual Annotation</span><span class="mono" style="color:#64748B;">10:14:37</span>
+                    <span>Step 3 · 00:18 - Visual Annotation</span><span class="mono" style="color:#64748B;">10:14:37</span>
                   </div>
                   <div style="font-size:14px;font-weight:600;color:#334155;">Highlighted failed payment CTA &amp; auto-blurred card digits</div>
                 </div>
@@ -1181,7 +1181,7 @@ Content-Type: application/json
                 </div>
                 <div style="border:2.5px dashed #EF4444;background:#FEF2F2;border-radius:12px;padding:14px 16px;text-align:center;position:relative;margin-bottom:18px;">
                   <span style="position:absolute;top:-14px;left:-14px;width:28px;height:28px;border-radius:50%;background:#EF4444;color:#fff;font-weight:800;font-size:13px;display:grid;place-items:center;box-shadow:0 4px 10px rgba(239,68,68,0.4);">1</span>
-                  <div style="font-size:15px;font-weight:800;color:#DC2626;">Get 30% off for all visitors — Limited Offer</div>
+                  <div style="font-size:15px;font-weight:800;color:#DC2626;">Get 30% off for all visitors - Limited Offer</div>
                 </div>
                 <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
                   <div style="border:1px solid #E2E8F0;border-radius:12px;padding:16px;">
@@ -1272,7 +1272,7 @@ Content-Type: application/json
             <div style="background:#fff;border:1px solid #E2E8F0;border-radius:16px;padding:20px;display:flex;flex-direction:column;justify-content:space-between;">
               <div>
                 <div style="font-size:15px;font-weight:800;margin-bottom:4px;">Zero Back-and-Forth Diagnostics</div>
-                <div style="font-size:12.5px;color:#64748B;margin-bottom:16px;">Captured silently in the background — no DevTools knowledge required.</div>
+                <div style="font-size:12.5px;color:#64748B;margin-bottom:16px;">Captured silently in the background - no DevTools knowledge required.</div>
                 <div style="display:flex;flex-direction:column;gap:10px;">
                   <div style="padding:12px 14px;border-radius:12px;border:1px solid #FECACA;background:#FEF2F2;display:flex;justify-content:space-between;align-items:center;">
                     <div>
@@ -1351,11 +1351,11 @@ Content-Type: application/json
               </div>
               <div style="display:flex;flex-direction:column;gap:10px;">
                 ${[
-                  ["list_reports", "Search captures by workspace"],
-                  ["get_report_context", "Screenshot + logs + blueprint"],
-                  ["create_report", "Capture & file new report"],
-                  ["get_report_status", "Fetch report status & URL"],
-                ].map(([fn, desc]) => `
+            ["list_reports", "Search captures by workspace"],
+            ["get_report_context", "Screenshot + logs + blueprint"],
+            ["create_report", "Capture & file new report"],
+            ["get_report_status", "Fetch report status & URL"],
+          ].map(([fn, desc]) => `
                   <div style="padding:10px 12px;border-radius:10px;background:#F8FAFC;border:1px solid #E2E8F0;">
                     <div class="mono" style="font-size:12px;font-weight:800;color:#2563EB;">${fn}()</div>
                     <div style="font-size:11.5px;color:#475569;margin-top:2px;">${desc}</div>
