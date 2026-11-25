@@ -6,6 +6,7 @@ import { ConfirmProvider } from "@/components/ConfirmDialog";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { ExtensionSyncBridge } from "@/components/ExtensionSyncBridge";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://bugsnap.akusaraproject.my.id";
 
@@ -225,6 +226,7 @@ export default function RootLayout({
           </ThemeProvider>
         </I18nProvider>
         <Analytics />
+        <SpeedInsights />
       </body>
     </html>
   );

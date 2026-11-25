@@ -23,6 +23,7 @@
     "@iconify/react": "^6.0.2",
     "@supabase/supabase-js": "^2.111.0",
     "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.1.0",
     "motion": "^13.4.3",
     "react": "^18",
     "react-dom": "^18"
