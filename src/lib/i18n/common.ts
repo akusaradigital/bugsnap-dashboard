@@ -215,10 +215,11 @@ export const commonEn: Dict = {
   "error.description": "An unexpected error occurred while loading this view.",
   "error.tryAgain": "Try again",
   "error.reload": "Reload page",
-  "notFound.code": "404 Error",
-  "notFound.title": "Page not found",
-  "notFound.description":
-    "Sorry, we couldn't find the page you're looking for. It may have been moved, deleted, or never existed.",
+  "notFound.code": "404",
+  "notFound.title": "Oops! Page Not Found",
+  "notFound.description": "This page is lost or hiding.",
+  "notFound.submessage":
+    "It seems our 'BugSnap' got lost!\nLet's head back to safety.",
   "notFound.backHome": "Back to Home",
   "notFound.goDashboard": "Go to Dashboard",
   "notFound.footer": "BugSnap: From Click to Fix",
@@ -470,10 +471,11 @@ export const commonId: Dict = {
     "Terjadi kesalahan tak terduga saat memuat tampilan ini.",
   "error.tryAgain": "Coba lagi",
   "error.reload": "Muat ulang halaman",
-  "notFound.code": "Kesalahan 404",
-  "notFound.title": "Halaman tidak ditemukan",
-  "notFound.description":
-    "Maaf, kami tidak dapat menemukan halaman yang Anda cari. Halaman mungkin telah dipindahkan, dihapus, atau tidak pernah ada.",
+  "notFound.code": "404",
+  "notFound.title": "Oops! Halaman Tidak Ditemukan",
+  "notFound.description": "Halaman ini hilang atau sedang bersembunyi.",
+  "notFound.submessage":
+    "Sepertinya 'BugSnap' kami tersesat!\nMari kembali ke tempat yang aman.",
   "notFound.backHome": "Kembali ke Beranda",
   "notFound.goDashboard": "Ke Dashboard",
   "notFound.footer": "BugSnap: From Click to Fix",
