@@ -391,13 +391,29 @@ function MediaViewer({
     setImageLoaded(false);
     setLightboxOpen(false);
     setIsPlaying(false);
-    setActiveImageSrc(imageUrl);
+    setActiveImageSrc(needsSig ? streamUrl : imageUrl);
 
     let cancelled = false;
     let probe: HTMLImageElement | null = null;
     let fallbackProbe: HTMLImageElement | null = null;
 
-    if (isImage && imageUrl) {
+    // For members-only or password-protected captures, drive.google.com/thumbnail
+    // always fails; wait for signed streamUrl directly to avoid a wasted error roundtrip.
+    if (isImage && needsSig) {
+      if (streamUrl) {
+        probe = new Image();
+        probe.src = streamUrl;
+        probe.onload = () => {
+          if (cancelled) return;
+          setActiveImageSrc(streamUrl);
+          setImageLoaded(true);
+        };
+        probe.onerror = () => {
+          if (cancelled) return;
+          setImageFailed(true);
+        };
+      }
+    } else if (isImage && imageUrl) {
       probe = new Image();
       probe.referrerPolicy = "no-referrer";
       probe.src = imageUrl;
@@ -445,7 +461,7 @@ function MediaViewer({
         fallbackProbe.onerror = null;
       }
     };
-  }, [driveUrl, type, imageUrl, streamUrl, directUrl, isImage]);
+  }, [driveUrl, type, imageUrl, streamUrl, directUrl, isImage, needsSig]);
 
   useEffect(() => {
     const dialog = dialogRef.current;

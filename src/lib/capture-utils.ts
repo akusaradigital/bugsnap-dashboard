@@ -89,7 +89,7 @@ export function driveFileId(driveUrl: string | null | undefined): string | null 
   return m ? decodeURIComponent(m[1]) : null;
 }
 
-export function driveThumbUrl(driveUrl: string | null | undefined, size = 800): string | null {
+export function driveThumbUrl(driveUrl: string | null | undefined, size = 600): string | null {
   if (!driveUrl) return null;
   const id = driveFileId(driveUrl);
   return id ? `https://drive.google.com/thumbnail?id=${id}&sz=w${size}` : null;

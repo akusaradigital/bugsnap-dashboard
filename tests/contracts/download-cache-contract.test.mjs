@@ -43,4 +43,17 @@ test("extension background.js throttles heartbeat and avoids duplicate 15m auth 
   assert.ok(idleBlockStart > 0 && idleBlockEnd > idleBlockStart);
   const idleBlock = bgSrc.slice(idleBlockStart, idleBlockEnd);
   assert.doesNotMatch(idleBlock, /validateAuthHeartbeat\(/);
+
+  assert.match(bgSrc, /last_userinfo_check_at/);
+  assert.match(bgSrc, /existingExpiry - Date\.now\(\) > 300000/);
+});
+
+test("MediaViewer skips doomed Drive thumbnail probe on restricted captures and health caches briefly", () => {
+  const mvSrc = read(dashboardRoot, "src", "components", "MediaViewer.tsx");
+  const utilsSrc = read(dashboardRoot, "src", "lib", "capture-utils.ts");
+  const healthSrc = read(dashboardRoot, "src", "app", "api", "health", "route.ts");
+
+  assert.match(mvSrc, /if \(isImage && needsSig\)/);
+  assert.match(utilsSrc, /driveThumbUrl\(driveUrl: string \| null \| undefined, size = 600\)/);
+  assert.match(healthSrc, /public, s-maxage=15, stale-while-revalidate=30/);
 });

@@ -18,12 +18,19 @@ export async function GET() {
       );
     }
 
-    return NextResponse.json({
-      status: "healthy",
-      database: "connected",
-      latencyMs: latency,
-      timestamp: new Date().toISOString(),
-    });
+    return NextResponse.json(
+      {
+        status: "healthy",
+        database: "connected",
+        latencyMs: latency,
+        timestamp: new Date().toISOString(),
+      },
+      {
+        headers: {
+          "Cache-Control": "public, s-maxage=15, stale-while-revalidate=30",
+        },
+      }
+    );
   } catch (err) {
     console.error("[HealthCheck] Database connection failed:", err);
     return NextResponse.json(
