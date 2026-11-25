@@ -8,6 +8,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [bugsnap-dashboard]
 
+### 2026-11-25 (v0.17.4)
+- **perf**: Cache public Google Drive media responses on Vercel Edge CDN (`s-maxage=86400`), skip doomed thumbnail probes on private captures, trim list thumbnail size (`w600`), prefetch `/v/[id]` and branding on card hover, and add brief `s-maxage=15` cache on `/api/health`.
+- **perf**: Offload pure-SQL retention pruning (`prune_admin_logs`, `prune_rate_limits`, `prune_capture_views`, `prune_ephemeral_data`) to Supabase `pg_cron` and skip wasted Supabase Auth roundtrips for non-JWT tokens in `/api/extension/heartbeat`.
+- **feat**: Add scheduled GitHub Actions cleanup workflow (`cron-cleanup.yml`), integrate `@vercel/speed-insights`, and refine 404 mascot artwork.
+
 ### 2026-11-24 (v0.17.3)
 - **feat**: Integrate `@vercel/analytics` in root layout for visitor and page view telemetry on Vercel deployment.
 
@@ -121,6 +126,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [bugsnap-extension]
 
+### 2026-11-25 (v1.0.86)
+- **perf**: Throttle server presence heartbeat to 12 hours, widen remote config sync to 6 hours with standard caching, remove duplicate 15-minute idle auth validation polls, throttle Google `userinfo` checks to 4 hours, and widen token refresh buffer to 5 minutes.
+- **perf**: Tune `MediaRecorder` VP9 video recording bitrates (`5 Mbps` for 4K/high, `2.5 Mbps` for 1080p/balanced, `1.5 Mbps` for 720p) for faster Drive uploads without resolution loss.
+
 ### 2026-11-24 (v1.0.85)
 - **chore**: Ecosystem version alignment and manifest parity across Chrome, Firefox, and Edge.
 
@@ -203,6 +212,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 ---
 
 ## [bugsnap-mcp]
+
+### 2026-11-25 (v0.3.6)
+- **feat**: Add an automated reproduce-and-verify fix loop (`Auto-Reproduce & Verify Fix Loop`) to capture blueprints and the `bugsnap_fix_bug` MCP prompt.
 
 ### 2026-11-24 (v0.3.5)
 - **chore**: Ecosystem version alignment for unified production release.
