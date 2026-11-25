@@ -262,6 +262,17 @@ function CapturesContent() {
   }, [missingDriveIds, scannedMissingIds]);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const activeHoverRef = useRef<string | null>(null);
+  const prefetchedIdsRef = useRef<Set<string>>(new Set());
+  const prefetchCapture = useCallback(
+    (id: string) => {
+      if (!id || prefetchedIdsRef.current.has(id)) return;
+      if (prefetchedIdsRef.current.size >= 100) prefetchedIdsRef.current.clear();
+      prefetchedIdsRef.current.add(id);
+      router.prefetch(`/v/${id}`);
+      void fetch(`/api/captures/${encodeURIComponent(id)}/branding`).catch(() => {});
+    },
+    [router],
+  );
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
   const [menuPos, setMenuPos] = useState<{ top: number; left: number } | null>(
     null,
@@ -2467,6 +2478,7 @@ function CapturesContent() {
                 key={item.id}
                 onMouseEnter={() => {
                   activeHoverRef.current = item.id;
+                  prefetchCapture(item.id);
                 }}
                 onMouseLeave={() => {
                   if (activeHoverRef.current === item.id)
@@ -2764,6 +2776,7 @@ function CapturesContent() {
                 key={item.id}
                 onMouseEnter={() => {
                   activeHoverRef.current = item.id;
+                  prefetchCapture(item.id);
                 }}
                 onMouseLeave={() => {
                   if (activeHoverRef.current === item.id)

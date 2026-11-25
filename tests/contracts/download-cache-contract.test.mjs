@@ -57,3 +57,10 @@ test("MediaViewer skips doomed Drive thumbnail probe on restricted captures and 
   assert.match(utilsSrc, /driveThumbUrl\(driveUrl: string \| null \| undefined, size = 600\)/);
   assert.match(healthSrc, /public, s-maxage=15, stale-while-revalidate=30/);
 });
+
+test("captures list prefetches /v/[id] and branding on card hover", () => {
+  const capturesPage = read(dashboardRoot, "src", "app", "(app)", "captures", "page.tsx");
+  assert.match(capturesPage, /const prefetchCapture = useCallback/);
+  assert.match(capturesPage, /router\.prefetch\(`\/v\/\$\{id\}`\)/);
+  assert.match(capturesPage, /prefetchCapture\(item\.id\)/);
+});
