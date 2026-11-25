@@ -24,7 +24,9 @@ export async function POST(req: Request) {
     const supabase = createServiceClient();
     let targetUserId: string | null = null;
 
-    if (token) {
+    // Only Supabase JWTs have 3 dot-separated segments; Google OAuth access
+    // tokens (ya29...) fall through to email lookup without a wasted Auth call.
+    if (token && token.split(".").length === 3) {
       const { data: { user } } = await supabase.auth.getUser(token);
       if (user?.id) targetUserId = user.id;
     }

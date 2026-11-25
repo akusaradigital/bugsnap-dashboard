@@ -5,6 +5,7 @@ import {
   getAuthenticatedUser,
 } from "@/lib/supabase-server";
 import { verifyDownloadSig } from "@/lib/download-signing";
+import { resolveDownloadCacheControl } from "@/lib/download-cache";
 import { clientIp } from "@/lib/rate-limit";
 
 export const runtime = "nodejs";
@@ -161,10 +162,10 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  // Cache-Control: private with stale-while-revalidate prevents shared CDN cache pollution
-  // while allowing browser caching for fast seeking and replay.
-  const cacheControl =
-    "private, max-age=3600, stale-while-revalidate=86400";
+  // Cache public captures at the Vercel Edge CDN (s-maxage) to avoid burning
+  // Fast Origin Transfer on repeat views; keep private/restricted media strictly
+  // browser-private or uncached.
+  const cacheControl = resolveDownloadCacheControl(cap);
 
   const rangeHeader = req.headers.get("range");
   const forwardHeaders: Record<string, string> = {};

@@ -47,19 +47,9 @@ export async function GET(req: Request) {
   let totalDriveTrashed = 0;
   const errors: string[] = [];
 
-  // 0. Age-based retention for the log tables and the rate-limit table. Both
-  // functions existed but nothing ever called them, so the rows only grew.
-  // Best-effort: a failure here must not stop the capture cleanup below.
-  try {
-    await Promise.all([
-      supabase.rpc("prune_admin_logs"),
-      supabase.rpc("prune_rate_limits"),
-      supabase.rpc("prune_capture_views"),
-      supabase.rpc("prune_ephemeral_data"),
-    ]);
-  } catch (pruneErr) {
-    console.warn("[Cron cleanup] prune RPC failed:", pruneErr);
-  }
+  // 0. Log/rate-limit/ephemeral retention pruning is scheduled directly in
+  // Supabase pg_cron (20261125120000_schedule_pg_cron_pruning.sql); this route
+  // handles Drive-coupled cleanup (stale dev_logs, ghost captures, expired captures).
 
   // 0b. Dev logs outlive their usefulness long before the capture does: they
   // carry request/response bodies and stack traces, and used to sit around for
