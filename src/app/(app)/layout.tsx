@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabase";
 import { useT } from "@/components/I18nProvider";
@@ -1984,6 +1985,33 @@ export default function DashboardLayout({
             </nav>
 
             <div className="mt-auto shrink-0" />
+            <div className="px-3 py-2 border-t border-border/60 shrink-0">
+              <div className="px-2 pb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-muted select-none">
+                {t("nav.sisterApps")}
+              </div>
+              <a
+                href={process.env.NEXT_PUBLIC_AKSORA_URL || "https://aksora-orpin.vercel.app/"}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center justify-between gap-2 px-2 py-1.5 text-xs font-medium text-muted hover:text-foreground hover:bg-subtle rounded-lg transition-colors group"
+              >
+                <span className="flex items-center gap-2 min-w-0">
+                  <Image
+                    src="/integrations/aksora.png"
+                    alt="Aksora"
+                    width={16}
+                    height={16}
+                    className="w-4 h-4 rounded-sm shrink-0 object-contain"
+                  />
+                  <span className="truncate">{t("nav.aksora")}</span>
+                </span>
+                <Icon
+                  icon="lucide:external-link"
+                  className="w-3.5 h-3.5 text-muted/70 group-hover:text-foreground shrink-0"
+                  aria-hidden="true"
+                />
+              </a>
+            </div>
             <div className="px-3 py-2.5 border-t border-border/60 flex items-center justify-between shrink-0 bg-subtle">
               <HelpMenu />
               <SiteThemeToggle compact />
