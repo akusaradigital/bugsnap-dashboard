@@ -1997,10 +1997,11 @@ export default function DashboardLayout({
               >
                 <span className="flex items-center gap-2 min-w-0">
                   <Image
-                    src="/integrations/aksora.png"
+                    src={`${(process.env.NEXT_PUBLIC_AKSORA_URL || "https://aksora-orpin.vercel.app").replace(/\/+$/, "")}/logo.svg`}
                     alt="Aksora"
                     width={16}
                     height={16}
+                    unoptimized
                     className="w-4 h-4 rounded-sm shrink-0 object-contain"
                   />
                   <span className="truncate">{t("nav.aksora")}</span>
