@@ -8,6 +8,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) 
 
 ## [bugsnap-dashboard]
 
+### 2026-11-26 (v0.17.5)
+- **feat**: Add **Try Other Apps** link to Aksora (`https://aksora-orpin.vercel.app/`) in the dashboard sidebar, loading the live logo directly from Aksora.
+
 ### 2026-11-25 (v0.17.4)
 - **perf**: Cache public Google Drive media responses on Vercel Edge CDN (`s-maxage=86400`), skip doomed thumbnail probes on private captures, trim list thumbnail size (`w600`), prefetch `/v/[id]` and branding on card hover, and add brief `s-maxage=15` cache on `/api/health`.
 - **perf**: Offload pure-SQL retention pruning (`prune_admin_logs`, `prune_rate_limits`, `prune_capture_views`, `prune_ephemeral_data`) to Supabase `pg_cron` and skip wasted Supabase Auth roundtrips for non-JWT tokens in `/api/extension/heartbeat`.
